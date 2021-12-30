@@ -432,10 +432,6 @@ function _initialize_problem_storage!(
     return simulation_store_params
 end
 
-function _initialize_system_state_storage!(sim::Simulation)
-    system_state = get_system_states(get_simulation_state(sim))
-end
-
 function _build!(sim::Simulation, serialize::Bool)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
