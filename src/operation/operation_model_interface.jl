@@ -144,10 +144,6 @@ set_output_dir!(model::OperationModel, path::AbstractString) =
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
     internal.execution_count += 1
-    # Reset execution count at the end of step
-    #if get_execution_count(model) == get_executions(model)
-    #    internal.execution_count = 0
-    #end
     return
 end
 
