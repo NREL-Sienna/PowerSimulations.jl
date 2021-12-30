@@ -3,7 +3,7 @@ function make_time_series_cache(
     component,
     name,
     initial_time,
-    ::Int;
+    len::Int;
     ignore_scaling_factors = true,
 ) where {T <: PSY.StaticTimeSeries}
     return IS.StaticTimeSeriesCache(
@@ -94,12 +94,12 @@ end
 function get_time_series_values!(
     ::Type{T},
     model::EmulationModel,
-    component,
+    component::U,
     name,
     initial_time,
     len::Int = 1;
     ignore_scaling_factors = true,
-) where {T <: PSY.StaticTimeSeries}
+) where {T <: PSY.StaticTimeSeries, U <: PSY.Component}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
             T,
