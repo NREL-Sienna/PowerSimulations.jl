@@ -61,7 +61,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
             throw(IS.InvalidValue("model data does not define 'name'"))
         end
 
-        problem_params = params.models_params[Symbol(model["name"])]
+        problem_params = params.decision_models_params[Symbol(model["name"])]
         duals = Set(
             deserialize_key(problem_params, x) for
             x in get(model, "duals", Set{ConstraintKey}())

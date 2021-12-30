@@ -515,9 +515,9 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
     num_steps = HDF5.read(HDF5.attributes(group)["num_steps"])
     store.params = SimulationStoreParams(initial_time, step_resolution, num_steps)
     empty!(get_dm_data(store))
-    for problem in HDF5.read(HDF5.attributes(group)["problem_order"])
-        problem_group = store.file["simulation/problems/$problem"]
-        model_name = Symbol(problem)
+    for model in HDF5.read(HDF5.attributes(group)["problem_order"])
+        problem_group = store.file["simulation/decision_models/$model"]
+        model_name = Symbol(model)
         container_metadata =
             deserialize_metadata(OptimizationContainerMetadata, problem_path, model_name)
         store.params.decision_models_params[model_name] = ModelStoreParams(
