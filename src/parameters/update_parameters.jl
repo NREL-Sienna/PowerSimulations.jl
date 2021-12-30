@@ -161,6 +161,17 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    ::AbstractArray{T},
+    ::VariableValueAttributes,
+    ::Type{<:PSY.Component},
+    ::EmulationModel,
+    ::EmulationModelStore,
+) where {T <: Union{PJ.ParameterRef, Float64}}
+    error("The emulation model has parameters that can't be updated from its results")
+    return
+end
+
 """
 Update parameter function an OperationModel
 """
