@@ -5,12 +5,29 @@ get_store_container_type(::ExpressionKey) = STORE_CONTAINER_EXPRESSIONS
 get_store_container_type(::ParameterKey) = STORE_CONTAINER_PARAMETERS
 get_store_container_type(::VariableKey) = STORE_CONTAINER_VARIABLES
 
+# Aliases used for clarity in the method dispatches so it is possible to know if writing to
+# DecisionModel data or EmulationModel data
+const DECISION_MODEL_INDEX = Dates.DateTime
+const EMULATION_MODEL_INDEX = Int
+
 function write_results!(
     store,
     model::OperationModel,
-    index::Union{Dates.DateTime, Int},
-    export_params::Union{Dict{Symbol, Any}, Nothing} = nothing,
+    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX};
+    exports = nothing,
 )
+    if exports !== nothing
+        export_params = Dict{Symbol, Any}(
+            :exports => exports,
+            :exports_path => joinpath(exports.path, string(get_name(model))),
+            :file_type => get_export_file_type(exports),
+            :resolution => get_resolution(model),
+            :horizon => get_horizon(get_settings(model)),
+        )
+    else
+        export_params = nothing
+    end
+
     write_model_dual_results!(store, model, index, export_params)
     write_model_parameter_results!(store, model, index, export_params)
     write_model_variable_results!(store, model, index, export_params)
@@ -21,10 +38,10 @@ end
 
 function write_model_dual_results!(
     store,
-    model::OperationModel,
-    index::Union{Dates.DateTime, Int},
+    model::T,
+    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-)
+) where T <: OperationModel
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -52,10 +69,10 @@ end
 
 function write_model_parameter_results!(
     store,
-    model::OperationModel,
-    index::Union{Dates.DateTime, Int},
+    model::T,
+    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-)
+) where T <: OperationModel
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -89,10 +106,10 @@ end
 
 function write_model_variable_results!(
     store,
-    model::OperationModel,
-    index::Union{Dates.DateTime, Int},
+    model::T,
+    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-)
+) where T <: OperationModel
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -126,10 +143,10 @@ end
 
 function write_model_aux_variable_results!(
     store,
-    model::OperationModel,
-    index::Union{Dates.DateTime, Int},
+    model::T,
+    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-)
+) where T <: OperationModel
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -157,10 +174,10 @@ end
 
 function write_model_expression_results!(
     store,
-    model::OperationModel,
-    index::Union{Dates.DateTime, Int},
+    model::T,
+    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
     export_params::Union{Dict{Symbol, Any}, Nothing},
-)
+) where T <: OperationModel
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
