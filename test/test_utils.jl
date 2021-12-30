@@ -7,32 +7,35 @@ end
     @test !PSI.progress_meter_enabled()
 end
 
-@testset "dense axis to dataframe" begin
+@testset "Axis Array to DataFrame" begin
+    # The axis_array_to_dataframe test the use of the `to_matrix` and `get_column_names` methods
     one = PSI.DenseAxisArray{Float64}(undef, 1:2)
     fill!(one, 1.0)
-    one_df = PSI.axis_array_to_dataframe(one, [:name])
-    test_df = DataFrames.DataFrame(:name => [1.0, 1.0])
+    mock_key = PSI.VariableKey(ActivePowerVariable, ThermalStandard)
+    one_df = PSI.axis_array_to_dataframe(one, mock_key)
+    test_df = DataFrames.DataFrame(PSI.encode_key(mock_key) => [1.0, 1.0])
     @test one_df == test_df
-    three = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3)
-    fill!(three, 1.0)
-    three_df = PSI.axis_array_to_dataframe(three)
-    test_df = DataFrames.DataFrame(
-        :S1 => [1.0, 1.0, 1.0, 2.0, 2.0, 2.0],
-        :a => [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-    )
-    @test three_df == test_df
-    four = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3, 1:5)
-    @test_throws ErrorException PSI.axis_array_to_dataframe(four)
 
-    three_int = PSI.DenseAxisArray{Int}(undef, [:a], 1:2, 1:3)
-    fill!(three_int, 2)
-    three_df = PSI.axis_array_to_dataframe(three_int)
-    test_df = DataFrames.DataFrame(
-        :S1 => [1.0, 1.0, 1.0, 2.0, 2.0, 2.0],
-        :a => [2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
-    )
-    @test three_df == test_df
-    four = PSI.DenseAxisArray{Int}(undef, [:a], 1:2, 1:3, 1:5)
-    fill!(four, 2)
-    @test isempty(PSI.axis_array_to_dataframe(four))
+    two = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2)
+    fill!(two, 1.0)
+    two_df = PSI.axis_array_to_dataframe(two, mock_key)
+    test_df = DataFrames.DataFrame(:a => [1.0, 1.0])
+    @test two_df == test_df
+
+    three = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3)
+    @test_throws ErrorException PSI.axis_array_to_dataframe(three, mock_key)
+
+    four = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3, 1:5)
+    @test_throws ErrorException PSI.axis_array_to_dataframe(four, mock_key)
+
+    sparse_num =
+        JuMP.Containers.@container([i = 1:10, j = (i + 1):10, t = 1:24], 0.0 + i + j + t)
+    @test_throws MethodError PSI.axis_array_to_dataframe(sparse_num, mock_key)
+
+    i_num = 1:10
+    j_vals = Dict("$i" => string.((i + 1):11) for i in i_num)
+    sparse_valid =
+        JuMP.Containers.@container([i = string.(i_num), j = j_vals[i], t = 1:24], rand())
+    df = PSI.axis_array_to_dataframe(sparse_valid, mock_key)
+    @test size(df) == (24, 55)
 end
