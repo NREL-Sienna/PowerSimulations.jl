@@ -45,6 +45,7 @@ function Base.empty!(cache::OptimzationResultCache)
     empty!(cache.data)
     empty!(cache.dirty_timestamps)
     cache.size_per_entry = 0
+    return
 end
 
 """
@@ -75,6 +76,7 @@ end
 function _add_result!(cache::OptimzationResultCache, timestamp, data)
     cache.data[timestamp] = data
     push!(cache.dirty_timestamps, timestamp)
+    return
 end
 
 function discard_results!(cache::OptimzationResultCache, timestamps)
@@ -83,6 +85,7 @@ function discard_results!(cache::OptimzationResultCache, timestamps)
     end
 
     @debug "Removed $(first(timestamps)) - $(last(timestamps)) from cache" cache.key
+    return
 end
 
 function get_data_to_flush!(cache::OptimzationResultCache, flush_size)
