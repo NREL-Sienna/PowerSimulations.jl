@@ -587,23 +587,14 @@ function _update_simulation_state!(sim::Simulation, model::EmulationModel)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     simulation_time = get_current_time(sim)
+
     for key in get_state_keys(system_state)
-        state_data = get_state_data(decision_state, key)
-        last_update = get_last_updated_timestamp(decision_state, key)
-        simulation_time > get_end_of_step_timestamp(state_data) && continue
-        if last_update <= simulation_time
-            # TODO: Implement setter functions for this operation to avoid hardcoding index 1
-            # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
-            # in-place value update
-            get_state_values(system_state, key)[1, :] .=
-                DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
-        else
-            error("Something went really wrong. Please report this error. \\
-                  last_update: $(last_update) \\
-                  simulation_time: $(simulation_time) \\
-                  key: $(encode_key_as_string(key))")
-        end
-        IS.@record :execution StateUpdateEvent(
+        # TODO: Implement setter functions for this operation to avoid hardcoding index 1
+        # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
+        # in-place value update
+        get_state_values(system_state, key)[1, :] .=
+            DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
+         IS.@record :execution StateUpdateEvent(
             key,
             simulation_time,
             get_name(model),
@@ -619,8 +610,8 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
+    model_params = get_decision_model_params(store, model_name)
     for field in fieldnames(ValueStates)
-        model_params = get_decision_model_params(store, model_name)
         for key in list_fields(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             !has_state_data(get_decision_states(state), key) && continue
