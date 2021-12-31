@@ -195,6 +195,7 @@ function export_results(results::SimulationResults, exports)
             export_results(results, exports, store)
         end
     end
+    return
 end
 
 function export_results(results::SimulationResults, exports, store::SimulationStore)
@@ -260,6 +261,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
             export_result(file_type, export_path, df)
         end
     end
+    return
 end
 
 function export_result(
@@ -271,6 +273,7 @@ function export_result(
 )
     name = encode_key_as_string(key)
     export_result(CSV.File, path, name, timestamp, df)
+    return
 end
 
 function export_result(
@@ -282,6 +285,7 @@ function export_result(
 )
     filename = joinpath(path, name * "_" * convert_for_path(timestamp) * ".csv")
     export_result(CSV.File, filename, df)
+    return
 end
 
 function export_result(
@@ -292,6 +296,7 @@ function export_result(
 )
     name = encode_key_as_string(key)
     export_result(CSV.File, path, name, df)
+    return
 end
 
 function export_result(
@@ -302,6 +307,7 @@ function export_result(
 )
     filename = joinpath(path, name * ".csv")
     export_result(CSV.File, filename, df)
+    return
 end
 
 function export_result(::Type{CSV.File}, filename, df::DataFrames.DataFrame)
@@ -310,6 +316,7 @@ function export_result(::Type{CSV.File}, filename, df::DataFrames.DataFrame)
     end
 
     @debug "Exported $filename"
+    return
 end
 
 function _check_status(status::RunStatus, ignore_status)
@@ -322,4 +329,5 @@ function _check_status(status::RunStatus, ignore_status)
             "Simulation was not successful: status = $status. Set ignore_status = true to override.",
         )
     end
+    return
 end
