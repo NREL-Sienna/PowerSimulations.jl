@@ -95,11 +95,15 @@ function read_results(
     data::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index = nothing,
+    index::Union{Int, Nothing} = nothing,
 )
     container = getfield(data, get_store_container_type(key))
     # Return a copy because callers may mutate it.
-    return copy(container[key], copycols = true)
+    if isnothing(index)
+        return copy(container[key], copycols = true)
+    else
+        return copy(container[key], copycols = true)[index, :]
+    end
 end
 
 function write_optimizer_stats!(
