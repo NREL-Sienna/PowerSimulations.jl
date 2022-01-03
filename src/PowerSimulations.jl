@@ -492,7 +492,6 @@ include("devices_models/devices/common/add_constraint_dual.jl")
 include("devices_models/devices/common/rating_constraints.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
-include("devices_models/devices/common/commitment_constraint.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 # Device Modeling components
