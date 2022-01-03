@@ -594,7 +594,7 @@ function _update_simulation_state!(sim::Simulation, model::EmulationModel)
         # in-place value update
         get_state_values(system_state, key)[1, :] .=
             DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
-         IS.@record :execution StateUpdateEvent(
+        IS.@record :execution StateUpdateEvent(
             key,
             simulation_time,
             get_name(model),
