@@ -25,7 +25,7 @@ end
 
 function Base.empty!(store::EmulationModelStore)
     stype = typeof(store)
-    for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
+    for (name, _) in zip(fieldnames(stype), fieldtypes(stype))
         if name == :last_recorded_row
             store.last_recorded_row = 0
         else
