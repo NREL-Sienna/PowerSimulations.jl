@@ -220,9 +220,19 @@ function has_container_key(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: AuxVarKey, U <: Union{PSY.Component, PSY.System}}
+    key = AuxVarKey(T, U, meta)
+    return haskey(container.aux_variables, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintKey, U <: Union{PSY.Component, PSY.System}}
     key = ConstraintKey(T, U, meta)
-    return haskey(container.variables, key)
+    return haskey(container.constraints, key)
 end
 
 function has_container_key(
