@@ -125,6 +125,9 @@ struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
 # Necessary as a work around ofr HVDC models with losses
 struct HVDCTotalPowerDeliveredVariable <: VariableType end
 
+struct PieceWiseLinearCostVariable <: VariableType end
+
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 write_resulting_value(::Type{<:VariableType}) = true
+write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
