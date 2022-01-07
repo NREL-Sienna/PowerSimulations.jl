@@ -134,6 +134,23 @@ function ParameterUpdateEvent(
     )
 end
 
+function ParameterUpdateEvent(
+    parameter_type::Type{<:ParameterType},
+    component_type::DataType,
+    attributes::CostFunctionAttributes,
+    simulation_time::Dates.DateTime,
+    model_name::Symbol,
+)
+    return ParameterUpdateEvent(
+        parameter_type,
+        component_type,
+        # TODO: Store as string in the attributes to avoid interpolations
+        string(get_variable_type(attributes)),
+        simulation_time,
+        model_name,
+    )
+end
+
 struct StateUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
