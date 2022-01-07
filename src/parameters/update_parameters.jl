@@ -226,3 +226,58 @@ function update_parameter_values!(
     #end
     return
 end
+
+function _set_param_value!(
+    param::AbstractArray{Vector{NTuple{2, Float64}}},
+    value::Vector{NTuple{2, Float64}},
+    name::String,
+    t::Int,
+)
+    param[name, t] = value
+    return
+end
+
+function update_parameter_values!(
+    param_array::AbstractArray{Vector{NTuple{2, Float64}}},
+    attributes::CostFunctionAttributes,
+    ::Type{V},
+    model::DecisionModel,
+    ::ValueStates,
+) where {V <: PSY.Component}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    time_steps = get_time_steps(get_optimization_container(model))
+    horizon = time_steps[end]
+    container = get_optimization_container(model)
+    if is_synchronized(container)
+        obj_func = get_cost_function(container)
+        set_synchronized_status(obj_func, false)
+        reset_variant_terms(obj_func)
+    end
+    components = get_available_components(V, get_system(model))
+
+    for component in components
+        if _has_variable_cost_parameter(component)
+            name = PSY.get_name(component)
+            ts_vector = PSY.get_variable_cost(
+                component,
+                PSY.get_operation_cost(component);
+                start_time = initial_forecast_time,
+                len = horizon,
+            )
+            variable_cost_forecast_values = TimeSeries.values(ts_vector)
+            for (t, value) in enumerate(variable_cost_forecast_values)
+                if attributes.uses_compact_power
+                    value, _ = _convert_variable_cost(value)
+                end
+                _set_param_value!(param_array, PSY.get_cost(value), name, t)
+                variable_cost!(container, param_array, attributes, component, t)
+            end
+        end
+    end
+    return
+end
+
+_has_variable_cost_parameter(component::PSY.Component) =
+    _has_variable_cost_parameter(PSY.get_operation_cost(component))
+_has_variable_cost_parameter(::PSY.MarketBidCost) = true
+_has_variable_cost_parameter(::T) where {T <: PSY.OperationalCost} = false
