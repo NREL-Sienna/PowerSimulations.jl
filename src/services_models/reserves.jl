@@ -179,7 +179,11 @@ function cost_function!(
     reserve =
         get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
     for r in reserve
-        JuMP.add_to_expression!(container.cost_function, r, DEFAULT_RESERVE_COST)
+        JuMP.add_to_expression!(
+            container.cost_function.invariant_terms,
+            r,
+            DEFAULT_RESERVE_COST,
+        )
     end
     return
 end

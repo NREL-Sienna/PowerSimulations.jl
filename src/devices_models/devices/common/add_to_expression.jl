@@ -465,7 +465,7 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
@@ -492,7 +492,7 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
@@ -526,7 +526,7 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
@@ -552,7 +552,7 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
@@ -576,7 +576,7 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
 }
     parameter_array = get_parameter_array(container, U(), V)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)

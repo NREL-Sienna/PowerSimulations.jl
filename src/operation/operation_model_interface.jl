@@ -13,6 +13,7 @@ get_internal(model::OperationModel) = model.internal
 get_jump_model(model::OperationModel) = get_internal(model).container.JuMPmodel
 get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
+is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
 
 function get_requires_rebuild(model::OperationModel)
     sim_info = get_internal(model).simulation_info

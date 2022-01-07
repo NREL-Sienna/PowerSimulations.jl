@@ -48,6 +48,27 @@ function Base.isempty(pvc::PrimalValuesCache)
     return isempty(pvc.variables_cache) && isempty(pvc.expressions_cache)
 end
 
+mutable struct ObjectiveFunction
+    invariant_terms::JuMP.AbstractJuMPScalar
+    variant_terms::GAE
+    synchronized::Bool
+end
+
+get_invariant_terms(v::ObjectiveFunction) = v.invariant_terms
+get_variant_terms(v::ObjectiveFunction) = v.variant_terms
+get_objective_fuction(v::ObjectiveFunction) = v.variant_terms + v.invariant_terms
+is_synchronized(v::ObjectiveFunction) = v.synchronized
+set_synchronized_status(v::ObjectiveFunction, value) = v.synchronized = value
+reset_variant_terms(v::ObjectiveFunction) = v.variant_terms = zero(JuMP.AffExpr)
+
+function ObjectiveFunction()
+    return ObjectiveFunction(
+        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+        zero(JuMP.AffExpr),
+        true,
+    )
+end
+
 mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
@@ -58,7 +79,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
-    cost_function::JuMP.AbstractJuMPScalar
+    cost_function::ObjectiveFunction
     expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
@@ -103,7 +124,7 @@ function OptimizationContainer(
         Dict{AuxVarKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
-        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+        ObjectiveFunction(),
         Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         PrimalValuesCache(),
@@ -171,6 +192,48 @@ get_initial_conditions_data(container::OptimizationContainer) =
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
+get_cost_function(container::OptimizationContainer) = container.cost_function
+is_synchronized(container::OptimizationContainer) = container.cost_function.synchronized
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    key = ExpressionKey(T, U, meta)
+    return haskey(container.expressions, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableKey, U <: Union{PSY.Component, PSY.System}}
+    key = VariableKey(T, U, meta)
+    return haskey(container.variables, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintKey, U <: Union{PSY.Component, PSY.System}}
+    key = ConstraintKey(T, U, meta)
+    return haskey(container.variables, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    key = ParameterKey(T, U, meta)
+    return haskey(container.parameters, key)
+end
 
 function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
@@ -496,13 +559,26 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
         @debug "Building Objective" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-        JuMP.@objective(container.JuMPmodel, MOI.MIN_SENSE, container.cost_function)
+        JuMP.@objective(
+            container.JuMPmodel,
+            MOI.MIN_SENSE,
+            get_objective_fuction(container.cost_function)
+        )
     end
     @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
     check_optimization_container(container)
 
+    return
+end
+
+function update_cost_function!(container::OptimizationContainer)
+    JuMP.@objective(
+        container.JuMPmodel,
+        MOI.MIN_SENSE,
+        get_objective_fuction(container.cost_function)
+    )
     return
 end
 
@@ -867,6 +943,23 @@ function _add_param_container!(
     return param_container
 end
 
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::CostFunctionAttributes,
+    axs...,
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    # Temporary solution uses Float64 paramters and re-builds the cost function each time.
+    param_type = Float64
+    param_container = ParameterContainer(
+        attribute,
+        DenseAxisArray{Vector{NTuple{2, Float64}}}(undef, axs...),
+        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
+    )
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
 function add_param_container!(
     container::OptimizationContainer,
     ::T,
@@ -881,6 +974,21 @@ function add_param_container!(
         error("$V can't be abstract: $param_key")
     end
     attributes = TimeSeriesAttributes(V, name)
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    sos_variable::SOSStatusVariable,
+    variable_type::Type{W},
+    uses_compact_power::Bool,
+    axs...;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
+    param_key = ParameterKey(T, U, meta)
+    attributes = CostFunctionAttributes(variable_type, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
@@ -1071,20 +1179,6 @@ function get_expression(
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 
-function has_expression(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    key = ExpressionKey(T, U, meta)
-    var = get(container.expressions, key, nothing)
-    if var === nothing
-        return false
-    end
-    return true
-end
-
 # Special getter functions to handle system balance expressions
 function get_expression(
     container::OptimizationContainer,
@@ -1232,7 +1326,7 @@ function get_initial_conditions_parameter(
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
-    JuMP.add_to_expression!(container.cost_function, expr)
+    JuMP.add_to_expression!(container.cost_function.invariant_terms, expr)
 end
 
 function deserialize_key(container::OptimizationContainer, name::AbstractString)
