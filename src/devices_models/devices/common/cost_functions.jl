@@ -296,13 +296,13 @@ function pwl_gencost_sos!(
             LOG_GROUP_COST_FUNCTIONS
 
     elseif sos_status == SOSStatusVariable.PARAMETER
-        param_key = encode_symbol("ON", string(T))
-        bin = get_parameter(container, param_key).parameter_array[component_name]
-        @debug "Using Piecewise Linear cost function with parameter $(param_key)" _group =
+        bin =
+            get_parameter(container, OnStatusParameter(), T).parameter_array[component_name]
+        @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif sos_status == SOSStatusVariable.VARIABLE
         bin = get_variable(container, OnVariable(), T)[component_name, time_period]
-        @debug "Using Piecewise Linear cost function with variable $(OnVariable)" _group =
+        @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
             LOG_GROUP_COST_FUNCTIONS
     else
         @assert false
@@ -664,7 +664,7 @@ function add_to_cost!(
             parameter_container,
             jump_model,
             PSY.get_cost(variable_cost),
-            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler 
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
             #  of base power times the time delta.
             1.0,
             component_name,
@@ -1131,11 +1131,8 @@ function variable_cost!(
     time_period::Int,
 ) where {T <: PSY.Component}
     param = get_parameter_array(parameter_container)
-    multiplier = get_multiplier_array(parameter_container)
     attributes = get_attributes(parameter_container)
-
     variable_cost!(container, param, attributes, component, time_period)
-
     return
 end
 
