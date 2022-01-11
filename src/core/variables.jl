@@ -127,4 +127,4 @@ struct HVDCTotalPowerDeliveredVariable <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
-write_resulting_value(::Type{<:VariableType}) = true
+should_write_resulting_value(::Type{<:VariableType}) = true

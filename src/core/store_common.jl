@@ -50,7 +50,7 @@ function write_model_dual_results!(
     end
 
     for (key, constraint) in get_duals(container)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, constraint)
 
         if export_params !== nothing &&
@@ -84,7 +84,7 @@ function write_model_parameter_results!(
 
     parameters = get_parameters(container)
     for (key, container) in parameters
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
         @assert_op length(axes(param_array)) == 2
@@ -124,7 +124,7 @@ function write_model_variable_results!(
     end
 
     for (key, variable) in variables
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, variable)
 
         if export_params !== nothing &&
@@ -155,7 +155,7 @@ function write_model_aux_variable_results!(
     end
 
     for (key, variable) in get_aux_variables(container)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, variable)
 
         if export_params !== nothing &&
@@ -192,7 +192,7 @@ function write_model_expression_results!(
     end
 
     for (key, expression) in expressions
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, expression)
 
         if export_params !== nothing &&

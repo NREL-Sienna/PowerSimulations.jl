@@ -104,4 +104,4 @@ end
 
 Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
 
-write_resulting_value(::Type{<:ConstraintType}) = true
+should_write_resulting_value(::Type{<:ConstraintType}) = true

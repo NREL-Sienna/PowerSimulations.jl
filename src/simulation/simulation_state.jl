@@ -32,7 +32,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Peri
         for type in fieldnames(ValueStates)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
-                !write_resulting_value(key) && continue
+                !should_write_resulting_value(key) && continue
                 if !haskey(params, key)
                     params[key] = (
                         horizon = max(simulation_step + time_residual, horizon_step),
@@ -63,7 +63,7 @@ function _initialize_model_states!(
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
         for (key, value) in field_containers
-            !write_resulting_value(key) && continue
+            !should_write_resulting_value(key) && continue
             value_counts = params[key].horizon ÷ params[key].resolution
             column_names = get_column_names(key, value)
             if !haskey(field_states, key) || length(field_states[key]) < value_counts
@@ -124,7 +124,7 @@ function _initialize_system_states!(
     for field in fieldnames(ValueStates)
         field_containers = getfield(emulation_container, field)
         for (key, value) in field_containers
-            !write_resulting_value(key) && continue
+            !should_write_resulting_value(key) && continue
             column_names = get_column_names(key, value)
             set_state_data!(
                 emulator_states,
