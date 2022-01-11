@@ -270,7 +270,7 @@ function update_parameter_values!(
                     value, _ = _convert_variable_cost(value)
                 end
                 _set_param_value!(param_array, PSY.get_cost(value), name, t)
-                variable_cost!(container, param_array, attributes, component, t)
+                update_variable_cost!(container, param_array, attributes, component, t)
             end
         end
     end
