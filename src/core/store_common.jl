@@ -7,13 +7,13 @@ get_store_container_type(::VariableKey) = STORE_CONTAINER_VARIABLES
 
 # Aliases used for clarity in the method dispatches so it is possible to know if writing to
 # DecisionModel data or EmulationModel data
-const DECISION_MODEL_INDEX = Dates.DateTime
-const EMULATION_MODEL_INDEX = Int
+const DecisionModelIndexType = Dates.DateTime
+const EmulationModelIndexType = Int
 
 function write_results!(
     store,
     model::OperationModel,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX};
+    index::Union{DecisionModelIndexType, EmulationModelIndexType};
     exports = nothing,
 )
     if exports !== nothing
@@ -39,7 +39,7 @@ end
 function write_model_dual_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -70,7 +70,7 @@ end
 function write_model_parameter_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -107,7 +107,7 @@ end
 function write_model_variable_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -144,7 +144,7 @@ end
 function write_model_aux_variable_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -175,7 +175,7 @@ end
 function write_model_expression_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)

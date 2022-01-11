@@ -195,7 +195,7 @@ end
 function write_optimizer_stats!(
     store::HdfSimulationStore,
     model::OperationModel,
-    ::DECISION_MODEL_INDEX,
+    ::DecisionModelIndexType,
 )
     stats = get_optimizer_stats(model)
     model_name = get_name(model)
@@ -213,7 +213,7 @@ end
 function write_optimizer_stats!(
     store::HdfSimulationStore,
     model::OperationModel,
-    ::EMULATION_MODEL_INDEX,
+    ::EmulationModelIndexType,
 )
     return
 end
@@ -327,7 +327,7 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     data, columns = _read_data_columns(store, model_name, key, index)
     if ndims(data) < 2 || size(data)[1] == 1
@@ -341,7 +341,7 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     data, columns = _read_data_columns(store, model_name, key, index)
     return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
@@ -352,7 +352,7 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     if is_cached(store.cache, model_name, key, index)
         data = read_result(store.cache, model_name, key, index)
@@ -366,7 +366,7 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     simulation_step, execution_index = _get_indices(store, model_name, index)
     return read_result(store, model_name, key, simulation_step, execution_index)
@@ -417,7 +417,7 @@ function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
     data,
 )
     output_cache = get_output_cache(store.cache, model_name, key)
@@ -451,7 +451,7 @@ function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
     data,
 )
     return

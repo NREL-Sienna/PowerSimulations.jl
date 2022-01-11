@@ -82,7 +82,7 @@ function write_result!(
     data::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
     array,
 )
     container = getfield(data, get_store_container_type(key))
@@ -109,7 +109,7 @@ end
 function write_optimizer_stats!(
     store::EmulationModelStore,
     stats::OptimizerStats,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
 )
     @assert !(index in keys(store.optimizer_stats))
     store.optimizer_stats[index] = stats
