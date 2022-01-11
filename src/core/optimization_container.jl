@@ -210,7 +210,7 @@ function has_container_key(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableKey, U <: Union{PSY.Component, PSY.System}}
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     key = VariableKey(T, U, meta)
     return haskey(container.variables, key)
 end
@@ -220,7 +220,7 @@ function has_container_key(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: AuxVarKey, U <: Union{PSY.Component, PSY.System}}
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
     key = AuxVarKey(T, U, meta)
     return haskey(container.aux_variables, key)
 end
@@ -230,7 +230,7 @@ function has_container_key(
     ::Type{T},
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ConstraintKey, U <: Union{PSY.Component, PSY.System}}
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     key = ConstraintKey(T, U, meta)
     return haskey(container.constraints, key)
 end
@@ -759,6 +759,21 @@ function add_variable_container!(
     return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
+function _get_pwl_variables_container()
+    contents = Dict{Tuple{String, Int, Int}, Any}()
+    return SparseAxisArray(contents)
+end
+
+function add_variable_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+) where {T <: PieceWiseLinearCostVariable, U <: Union{PSY.Component, PSY.System}}
+    var_key = VariableKey(T, U)
+    _assign_container!(container.variables, var_key, _get_pwl_variables_container())
+    return container.variables[var_key]
+end
+
 function get_variable_keys(container::OptimizationContainer)
     return collect(keys(container.variables))
 end
@@ -768,7 +783,7 @@ function get_variable(container::OptimizationContainer, key::VariableKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        throw(IS.InvalidValue("variable $name is not stored"))
+        throw(IS.InvalidValue("variable $name is not stored. $keys"))
     end
     return var
 end
