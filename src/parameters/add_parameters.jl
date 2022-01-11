@@ -112,6 +112,50 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
+    ::T,
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: ObjectiveFunctionParameter,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    ts_type = get_default_time_series_type(container)
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
+        error(
+            "add_parameters! for ObjectiveFunctionParameter is not compatible with $ts_type",
+        )
+    end
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    ts_name = get_time_series_names(model)[T]
+    time_series_mult_id = create_time_series_multiplier_index(model, T)
+    @debug "adding" T ts_name ts_type time_series_mult_id _group =
+        LOG_GROUP_OPTIMIZATION_CONTAINER
+    parameter_container =
+        add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
+    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
+    jump_model = get_jump_model(container)
+    for d in devices
+        name = PSY.get_name(d)
+        ts_vector = get_time_series(container, d, T())
+        multiplier = get_multiplier_value(T(), d, W())
+        for t in time_steps
+            set_parameter!(
+                parameter_container,
+                jump_model,
+                ts_vector[t],
+                multiplier,
+                name,
+                t,
+            )
+        end
+    end
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
     ::Type{T},
     key::VariableKey{U, S},
     model::ServiceModel{S, W},

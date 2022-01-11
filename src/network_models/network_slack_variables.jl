@@ -20,30 +20,6 @@ function add_variables!(
     return
 end
 
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    ::PSY.System,
-    ::NetworkModel{W},
-    ::Type{W},
-) where {
-    T <: SystemBalanceExpressions,
-    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    W <: Union{CopperPlatePowerModel, StandardPTDFModel},
-}
-    variable = get_variable(container, U(), PSY.System)
-    expression = get_expression(container, T(), PSY.System)
-    for t in get_time_steps(container)
-        add_to_jump_expression!(
-            expression[t],
-            variable[t],
-            get_variable_multiplier(U(), PSY.System, W()),
-        )
-    end
-    return
-end
-
 function cost_function!(
     container,
     ::Type{PSY.System},

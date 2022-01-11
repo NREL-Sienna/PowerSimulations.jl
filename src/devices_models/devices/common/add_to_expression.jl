@@ -61,7 +61,7 @@ end
 
 # Note: add_to_jump_expression! are legacy when more control was needed over the calls to
 # add_to_expression. These might be removed post JuMP 1.0 release.
-function add_to_jump_expression!(
+function _add_to_jump_expression!(
     expression::T,
     var::JuMP.VariableRef,
     multiplier::Float64,
@@ -70,7 +70,7 @@ function add_to_jump_expression!(
     return
 end
 
-function add_to_jump_expression!(
+function _add_to_jump_expression!(
     expression::T,
     value::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
@@ -78,7 +78,7 @@ function add_to_jump_expression!(
     return
 end
 
-function add_to_jump_expression!(
+function _add_to_jump_expression!(
     expression::T,
     parameter::PJ.ParameterRef,
     multiplier::Float64,
@@ -87,23 +87,23 @@ function add_to_jump_expression!(
     return
 end
 
-function add_to_jump_expression!(
+function _add_to_jump_expression!(
     expression::T,
     var::Union{JuMP.VariableRef, PJ.ParameterRef},
     multiplier::Float64,
     constant::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
-    add_to_jump_expression!(expression, constant)
-    add_to_jump_expression!(expression, var, multiplier)
+    _add_to_jump_expression!(expression, constant)
+    _add_to_jump_expression!(expression, var, multiplier)
     return
 end
 
-function add_to_jump_expression!(
+function _add_to_jump_expression!(
     expression::T,
     parameter::Float64,
     multiplier::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
-    add_to_jump_expression!(expression, parameter * multiplier)
+    _add_to_jump_expression!(expression, parameter * multiplier)
     return
 end
 
@@ -129,7 +129,7 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = get_name(d)
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             get_expression(container, T(), X)[bus_number, t],
             parameter[name, t],
             multiplier[name, t],
@@ -153,13 +153,12 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
-    multiplier = get_parameter_multiplier_array(container, U(), V)
 
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = get_name(d)
         mult = get_expression_multiplier(U(), T(), d, W())
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             get_expression(container, T(), X)[bus_number, t],
             parameter[name, t],
             mult,
@@ -190,7 +189,7 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             expression[bus_number, t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
@@ -220,7 +219,7 @@ function add_to_expression!(
     multiplier = get_parameter_multiplier_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
         name = get_name(d)
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             get_expression(container, T(), X)[t],
             parameter[name, t],
             multiplier[name, t],
@@ -244,11 +243,10 @@ function add_to_expression!(
     X <: CopperPlatePowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
-    multiplier = get_parameter_multiplier_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
         name = get_name(d)
         mult = get_expression_multiplier(U(), T(), d, W())
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             get_expression(container, T(), X)[t],
             parameter[name, t],
             mult,
@@ -278,7 +276,7 @@ function add_to_expression!(
     expression = get_expression(container, T(), X)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             expression[t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
@@ -311,8 +309,8 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
-        add_to_jump_expression!(sys_expr[t], parameter[name, t], multiplier[name, t])
-        add_to_jump_expression!(
+        _add_to_jump_expression!(sys_expr[t], parameter[name, t], multiplier[name, t])
+        _add_to_jump_expression!(
             nodal_expr[bus_no, t],
             parameter[name, t],
             multiplier[name, t],
@@ -336,15 +334,14 @@ function add_to_expression!(
     X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
     parameter = get_parameter_array(container, U(), V)
-    multiplier = get_parameter_multiplier_array(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices, t in get_time_steps(container)
         name = get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
         mult = get_expression_multiplier(U(), T(), d, W())
-        add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
-        add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
+        _add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
+        _add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
     end
     return
 end
@@ -372,12 +369,12 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             sys_expr[t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
         )
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             nodal_expr[bus_no, t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
@@ -408,12 +405,12 @@ function add_to_expression!(
     for d in devices
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
-            add_to_jump_expression!(
+            _add_to_jump_expression!(
                 expression[PSY.get_number(PSY.get_arc(d).from), t],
                 flow_variable,
                 -1.0,
             )
-            add_to_jump_expression!(
+            _add_to_jump_expression!(
                 expression[PSY.get_number(PSY.get_arc(d).to), t],
                 flow_variable,
                 1.0,
@@ -441,7 +438,7 @@ function add_to_expression!(
     for d in devices
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
-            add_to_jump_expression!(
+            _add_to_jump_expression!(
                 expression[PSY.get_number(PSY.get_arc(d).to), t],
                 flow_variable,
                 1.0,
@@ -465,13 +462,13 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
+        _add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
     end
     return
 end
@@ -492,7 +489,7 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
@@ -502,7 +499,7 @@ function add_to_expression!(
 
         sub_comp_key = string(sub_comp)
         name = PSY.get_name(d)
-        add_to_jump_expression!(
+        _add_to_jump_expression!(
             expression[name, sub_comp_key, t],
             variable[name, sub_comp_key, t],
             1.0,
@@ -526,13 +523,13 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
+        _add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
     end
     return
 end
@@ -552,13 +549,13 @@ function add_to_expression!(
 }
     service_name = get_service_name(model)
     variable = get_variable(container, U(), X, service_name)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        add_to_jump_expression!(expression[name, t], variable[name, t], -1.0)
+        _add_to_jump_expression!(expression[name, t], variable[name, t], -1.0)
     end
     return
 end
@@ -576,14 +573,14 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
 }
     parameter_array = get_parameter_array(container, U(), V)
-    if !has_expression(container, T, V)
+    if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
     for d in devices, mult in get_expression_multiplier(U(), T(), d, W())
         for t in get_time_steps(container)
             name = PSY.get_name(d)
-            add_to_jump_expression!(
+            _add_to_jump_expression!(
                 expression[name, t],
                 parameter_array[name, t],
                 -mult,
@@ -600,14 +597,54 @@ function add_to_expression!(
     model::ServiceModel{V, W},
     devices_template::Dict{Symbol, DeviceModel},
 ) where {U <: VariableType, V <: PSY.Reserve, W <: AbstractReservesFormulation}
-    service_name = get_service_name(model)
-    variable = get_variable(container, U(), V, service_name)
     contributing_devices_map = get_contributing_devices_map(model)
     for (device_type, devices) in contributing_devices_map
         device_model = get(devices_template, Symbol(device_type), nothing)
         device_model === nothing && continue
         expression_type = get_expression_type_for_reserve(U(), device_type, V)
         add_to_expression!(container, expression_type, U, devices, model)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::PSY.System,
+    ::NetworkModel{W},
+    ::Type{W},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    W <: Union{CopperPlatePowerModel, StandardPTDFModel},
+}
+    variable = get_variable(container, U(), PSY.System)
+    expression = get_expression(container, T(), PSY.System)
+    for t in get_time_steps(container)
+        _add_to_jump_expression!(
+            expression[t],
+            variable[t],
+            get_variable_multiplier(U(), PSY.System, W()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{S},
+    cost_expression::JuMP.AbstractJuMPScalar,
+    component::T,
+    time_period::Int,
+) where {S <: CostExpressions, T <: PSY.Component}
+    if has_container_key(container, S, T)
+        device_cost_expression = get_expression(container, S(), T)
+        component_name = PSY.get_name(component)
+        JuMP.add_to_expression!(
+            device_cost_expression[component_name, time_period],
+            cost_expression,
+        )
     end
     return
 end

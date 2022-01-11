@@ -496,6 +496,7 @@ include("devices_models/devices/common/get_time_series.jl")
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")
 include("devices_models/devices/common/add_to_expression.jl")
+include("devices_models/devices/common/set_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")

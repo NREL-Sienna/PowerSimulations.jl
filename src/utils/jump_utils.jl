@@ -100,6 +100,10 @@ function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
     return join(val, PSI_NAME_DELIMITER)
 end
 
+function encode_tuple_to_column(val::Tuple{String, Int})
+    return join(string.(val), PSI_NAME_DELIMITER)
+end
+
 function _to_matrix(
     array::SparseAxisArray{T, N, K},
     columns,

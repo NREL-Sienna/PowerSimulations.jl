@@ -328,6 +328,9 @@ function update_parameters!(
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)
     end
+    if !is_synchronized(model)
+        update_cost_function!(get_optimization_container(model))
+    end
     return
 end
 
