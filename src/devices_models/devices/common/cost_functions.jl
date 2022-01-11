@@ -123,21 +123,6 @@ function add_to_variant_cost_expression!(
     return
 end
 
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{S},
-    cost_expression::JuMP.AbstractJuMPScalar,
-    component::T,
-    time_period::Int,
-) where {S <: CostExpressions, T <: PSY.Component}
-    if has_container_key(container, S, T)
-        device_cost_expression = get_expression(container, S(), T)
-        component_name = PSY.get_name(component)
-        device_cost_expression[component_name, time_period] = cost_expression
-    end
-    return
-end
-
 function has_on_variable(
     container::OptimizationContainer,
     ::Type{T};
@@ -1229,12 +1214,6 @@ function update_variable_cost!(
     # Attribute doesn't have multiplier
     # gen_cost = attributes.multiplier * gen_cost_
     add_to_variant_cost_expression!(container, gen_cost, component, time_period)
-    add_to_expression!(
-        container,
-        ProductionCostExpression,
-        gen_cost,
-        component,
-        time_period,
-    )
+    set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
 end
