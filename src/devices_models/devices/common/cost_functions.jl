@@ -224,7 +224,7 @@ function _add_pwl_variables!(
         pwlvars[i] =
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "P_{pwl_$(i)}",
+                base_name = "PieceWiseLinearCostVariable_$(T)_{pwl_$(i), $time_period}",
                 start = 0.0,
                 lower_bound = 0.0,
                 upper_bound = 1.0
@@ -241,6 +241,8 @@ function get_pwl_cost_expression(
     cost_data::Vector{NTuple{2, Float64}},
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
     upb = PSY.get_breakpoint_upperbounds(cost_data)
@@ -248,7 +250,7 @@ function get_pwl_cost_expression(
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            slopes[i] * upb[i] * pwl_var_container[(component_name, i, time_period)],
+            slopes[i] * upb[i] * dt * pwl_var_container[(component_name, i, time_period)],
         )
     end
     return gen_cost
@@ -484,8 +486,6 @@ function add_to_cost!(
 )
     component_name = PSY.get_name(component)
     @debug "ThreePartCost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable_cost = spec.variable_cost(cost_data)
     time_steps = get_time_steps(container)
     for t in time_steps
@@ -1099,8 +1099,6 @@ function variable_cost!(
 ) where {T <: PSY.Component}
     component_name = PSY.get_name(component)
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     # If array is full of tuples with zeros return 0.0
     cost_data = PSY.get_cost(cost_component)
     if all(iszero.(last.(cost_data)))
@@ -1120,12 +1118,7 @@ function variable_cost!(
         gen_cost =
             pwl_gencost_linear!(container, spec, component_name, time_period, cost_data, T)
     end
-    add_to_cost_expression!(
-        container,
-        spec.multiplier * gen_cost * dt,
-        component,
-        time_period,
-    )
+    add_to_cost_expression!(container, spec.multiplier * gen_cost, component, time_period)
     return gen_cost
 end
 
