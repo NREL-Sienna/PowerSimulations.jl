@@ -180,5 +180,5 @@ struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-write_resulting_value(::Type{<:ParameterType}) = false
-write_resulting_value(::Type{<:RightHandSideParameter}) = true
+should_write_resulting_value(::Type{<:ParameterType}) = false
+should_write_resulting_value(::Type{<:RightHandSideParameter}) = true

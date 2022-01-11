@@ -45,6 +45,6 @@ struct ComponentActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end
 
-write_resulting_value(::Type{<:ExpressionType}) = false
-write_resulting_value(::Type{<:CostExpressions}) = true
-write_resulting_value(::Type{RawACE}) = true
+should_write_resulting_value(::Type{<:ExpressionType}) = false
+should_write_resulting_value(::Type{<:CostExpressions}) = true
+should_write_resulting_value(::Type{RawACE}) = true

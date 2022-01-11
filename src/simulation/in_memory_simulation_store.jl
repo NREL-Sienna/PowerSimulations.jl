@@ -61,7 +61,7 @@ function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model_name,
     stats::OptimizerStats,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     write_optimizer_stats!(get_dm_data(store)[model_name], stats, index)
     return
@@ -70,7 +70,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     stats::OptimizerStats,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
 )
     write_optimizer_stats!(get_em_data(store), stats, index)
     return
@@ -80,7 +80,7 @@ function write_result!(
     store::InMemorySimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
     array,
 )
     write_result!(get_dm_data(store)[model_name], model_name, key, index, array)
@@ -91,7 +91,7 @@ function write_result!(
     store::InMemorySimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
     array,
 )
     write_result!(get_em_data(store), model_name, key, index, array)
@@ -141,7 +141,7 @@ function read_result(
     store::InMemorySimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     return read_results(get_dm_data(store)[model_name], key, index)
 end
@@ -151,7 +151,16 @@ function read_result(
     store::InMemorySimulationStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
+)
+    return read_results(get_em_data(store), key, index)
+end
+
+function read_result(
+    ::Type{DataFrames.DataFrame},
+    store::InMemorySimulationStore,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
 )
     return read_results(get_em_data(store), key, index)
 end
@@ -171,7 +180,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model::DecisionModel,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     stats = get_optimizer_stats(model)
     dm_data = get_dm_data(store)
@@ -182,7 +191,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model::EmulationModel,
-    index::EMULATION_MODEL_INDEX,
+    index::EmulationModelIndexType,
 )
     stats = get_optimizer_stats(model)
     em_data = get_em_data(store)

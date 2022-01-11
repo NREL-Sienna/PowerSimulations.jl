@@ -326,7 +326,7 @@ function _get_emulation_store_requirements(sim::Simulation)
     reqs = SimulationModelStoreRequirements()
 
     for (key, state_values) in get_duals_values(system_state)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
@@ -339,21 +339,21 @@ function _get_emulation_store_requirements(sim::Simulation)
     end
 
     for (key, state_values) in get_variables_values(system_state)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.aux_variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_expression_values(system_state)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
@@ -568,7 +568,8 @@ end
 
 function _apply_warm_start!(model::OperationModel)
     container = get_optimization_container(model)
-    # If the model was used to retrieve duals from an MILP the logic has to be different
+    # If the model was used to retrieve duals from an MILP the logic has to be different and
+    # the results need to be read from the primal cache
     if isempty(container.primal_values_cache)
         jump_model = get_jump_model(container)
         all_vars = JuMP.all_variables(jump_model)
@@ -586,20 +587,13 @@ end
 function _update_simulation_state!(sim::Simulation, model::EmulationModel)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
-    simulation_time = get_current_time(sim)
 
-    for key in get_state_keys(system_state)
-        # TODO: Implement setter functions for this operation to avoid hardcoding index 1
-        # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
-        # in-place value update
-        get_state_values(system_state, key)[1, :] .=
-            DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            get_name(model),
-            "SystemState",
-        )
+    store = get_simulation_store(sim)
+    em_data = get_em_data(store)
+    ix = get_last_recorded_row(em_data)
+    em_model_name = get_name(model)
+    for key in PSI.list_all_keys(model)
+        res = PSI.read_result(DataFrames.DataFrame, store, em_model_name, key, ix)
     end
     # write_to_em_store()
     return
@@ -755,12 +749,6 @@ function _execute!(
                         _update_simulation_state!(sim, model)
                     end
                 end
-
-                # TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
-                #     if status == RunStatus.SUCCESSFUL
-                #         _set_system_state!(sim, string(model_name))
-                #     end
-                # end
 
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1

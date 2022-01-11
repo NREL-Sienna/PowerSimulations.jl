@@ -7,13 +7,13 @@ get_store_container_type(::VariableKey) = STORE_CONTAINER_VARIABLES
 
 # Aliases used for clarity in the method dispatches so it is possible to know if writing to
 # DecisionModel data or EmulationModel data
-const DECISION_MODEL_INDEX = Dates.DateTime
-const EMULATION_MODEL_INDEX = Int
+const DecisionModelIndexType = Dates.DateTime
+const EmulationModelIndexType = Int
 
 function write_results!(
     store,
     model::OperationModel,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX};
+    index::Union{DecisionModelIndexType, EmulationModelIndexType};
     exports = nothing,
 )
     if exports !== nothing
@@ -39,7 +39,7 @@ end
 function write_model_dual_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -50,7 +50,7 @@ function write_model_dual_results!(
     end
 
     for (key, constraint) in get_duals(container)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, constraint)
 
         if export_params !== nothing &&
@@ -70,7 +70,7 @@ end
 function write_model_parameter_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -84,7 +84,7 @@ function write_model_parameter_results!(
 
     parameters = get_parameters(container)
     for (key, container) in parameters
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
         @assert_op length(axes(param_array)) == 2
@@ -107,7 +107,7 @@ end
 function write_model_variable_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -124,7 +124,7 @@ function write_model_variable_results!(
     end
 
     for (key, variable) in variables
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, variable)
 
         if export_params !== nothing &&
@@ -144,7 +144,7 @@ end
 function write_model_aux_variable_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -155,7 +155,7 @@ function write_model_aux_variable_results!(
     end
 
     for (key, variable) in get_aux_variables(container)
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, variable)
 
         if export_params !== nothing &&
@@ -175,7 +175,7 @@ end
 function write_model_expression_results!(
     store,
     model::T,
-    index::Union{DECISION_MODEL_INDEX, EMULATION_MODEL_INDEX},
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -192,7 +192,7 @@ function write_model_expression_results!(
     end
 
     for (key, expression) in expressions
-        !write_resulting_value(key) && continue
+        !should_write_resulting_value(key) && continue
         write_result!(store, model_name, key, index, expression)
 
         if export_params !== nothing &&

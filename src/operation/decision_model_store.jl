@@ -67,7 +67,7 @@ function write_result!(
     data::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
     array,
 )
     container = getfield(data, get_store_container_type(key))
@@ -80,7 +80,7 @@ function read_results(
     data::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::Union{DECISION_MODEL_INDEX, Nothing} = nothing,
+    index::Union{DecisionModelIndexType, Nothing} = nothing,
 )
     container = getfield(data, get_store_container_type(key))
     data = container[key]
@@ -96,7 +96,7 @@ end
 function write_optimizer_stats!(
     store::DecisionModelStore,
     stats::OptimizerStats,
-    index::DECISION_MODEL_INDEX,
+    index::DecisionModelIndexType,
 )
     @assert !(index in keys(store.optimizer_stats))
     store.optimizer_stats[index] = stats
