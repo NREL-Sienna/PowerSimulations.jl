@@ -172,7 +172,6 @@ get_variables(container::OptimizationContainer) = container.variables
 
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
-get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_cost_function(container::OptimizationContainer) = container.cost_function
 is_synchronized(container::OptimizationContainer) = container.cost_function.synchronized
 
