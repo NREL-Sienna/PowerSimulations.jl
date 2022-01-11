@@ -35,6 +35,11 @@ function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}
     return data
 end
 
+function to_matrix(array::DenseAxisArray{T, 1, K}) where {T <: Real, K <: NTuple{1, Any}}
+    data = reshape(array.data, length(array.data), 1)
+    return data
+end
+
 function to_matrix(array::DenseAxisArray{T, 2, K}) where {T, K <: NTuple{2, Any}}
     ax = axes(array)
     data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
