@@ -119,58 +119,38 @@ function OptimizationContainer(
     )
 end
 
-# TODO: This constructor need to be re-enabled for the deserialization of OptimizationContainer from JSON
-# function OptimizationContainer(filename::AbstractString)
-#     return OptimizationContainer(
-#         jump_model === nothing ? _make_jump_model(settings) :
-#         _finalize_jump_model!(jump_model, settings),
-#         1:1,
-#         IS.time_period_conversion(resolution),
-#         settings,
-#         copy_for_serialization(settings),
-#         Dict{VariableKey, AbstractArray}(),
-#         Dict{AuxVarKey, AbstractArray}(),
-#         Dict{ConstraintKey, AbstractArray}(),
-#         Dict{ConstraintKey, AbstractArray}(),
-#         Dict{String, OptimizationContainerKey}(),
-#         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-#         Dict{ExpressionKey, AbstractArray}(),
-#         Dict{ParameterKey, ParameterContainer}(),
-#         Dict{ICKey, Vector{InitialCondition}}(),
-#         nothing,
-#         PSY.get_base_power(sys),
-#         OptimizerStats(),
-#         false,
-#         PSY.Deterministic,
-#     )
-# end
-
 built_for_recurrent_solves(container::OptimizationContainer) =
     container.built_for_recurrent_solves
 
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
 get_base_power(container::OptimizationContainer) = container.base_power
 get_constraints(container::OptimizationContainer) = container.constraints
+
+function get_container_keys(container::OptimizationContainer)
+    return Iterators.flatten(keys(getfield(container, f)) for f in STORE_CONTAINERS)
+end
+
 get_default_time_series_type(container::OptimizationContainer) =
     container.default_time_series_type
 get_duals(container::OptimizationContainer) = container.duals
 get_expressions(container::OptimizationContainer) = container.expressions
-get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
-get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 get_infeasibility_conflict(container::OptimizationContainer) =
     container.infeasibility_conflict
+get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
+get_initial_conditions_data(container::OptimizationContainer) =
+    container.initial_conditions_data
+get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
+get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_parameters(container::OptimizationContainer) = container.parameters
 get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
-get_initial_conditions_data(container::OptimizationContainer) =
-    container.initial_conditions_data
+
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
-get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 
 function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
@@ -1166,7 +1146,6 @@ function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
 end
 
-# TODO: This code is very similar to the in_memory_model_store function in line 100. Maybe we can do some consolidation
 function write_initial_conditions_data(
     container::OptimizationContainer,
     ic_container::OptimizationContainer,
@@ -1229,10 +1208,6 @@ function get_initial_conditions_parameter(
     ::Type{T},
 ) where {T <: Union{PSY.Component, PSY.System}}
     return get_initial_conditions_parameter(get_initial_conditions_data(container), type, T)
-end
-
-function add_to_objective_function!(container::OptimizationContainer, expr)
-    JuMP.add_to_expression!(container.cost_function, expr)
 end
 
 function deserialize_key(container::OptimizationContainer, name::AbstractString)
