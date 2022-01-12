@@ -1,22 +1,34 @@
 struct SimulationState
     current_time::Base.RefValue{Dates.DateTime}
+    last_decision_model::Base.RefValue{Symbol}
     decision_states::ValueStates
     system_states::ValueStates
 end
 
 function SimulationState()
-    return SimulationState(Ref(UNSET_INI_TIME), ValueStates(), ValueStates())
+    return SimulationState(Ref(UNSET_INI_TIME), Ref(:None), ValueStates(), ValueStates())
 end
 
 get_current_time(s::SimulationState) = s.current_time[]
+get_last_decision_model(s::SimulationState) = s.last_decision_model[]
+get_decision_states(s::SimulationState) = s.decision_states
+get_system_states(s::SimulationState) = s.system_states
+
+# Not to be used in hot loops
+function get_system_states_resolution(s::SimulationState)
+    system_state = get_system_states(s)
+    return minimum(get_data_resolution.(values(system_state.variables)))
+end
 
 function set_current_time!(s::SimulationState, val::Dates.DateTime)
     s.current_time[] = val
     return
 end
 
-get_decision_states(s::SimulationState) = s.decision_states
-get_system_states(s::SimulationState) = s.system_states
+function set_last_decision_model!(s::SimulationState, val::Symbol)
+    s.last_decision_model[] = val
+    return
+end
 
 const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
 
@@ -101,9 +113,9 @@ function _initialize_system_states!(
         set_state_data!(
             emulator_states,
             key,
-            ValueState(
+            SystemValueState(
                 DataFrames.DataFrame(cols .=> NaN),
-                [simulation_initial_time],
+                simulation_initial_time,
                 params[key].resolution,
             ),
         )
@@ -129,9 +141,9 @@ function _initialize_system_states!(
             set_state_data!(
                 emulator_states,
                 key,
-                ValueState(
+                SystemValueState(
                     DataFrames.DataFrame(column_names .=> NaN),
-                    [simulation_initial_time],
+                    simulation_initial_time,
                     get_resolution(emulation_model),
                 ),
             )
@@ -146,9 +158,9 @@ function _initialize_system_states!(
         set_state_data!(
             emulator_states,
             key,
-            ValueState(
+            SystemValueState(
                 DataFrames.DataFrame(cols .=> NaN),
-                [simulation_initial_time],
+                simulation_initial_time,
                 params[key].resolution,
             ),
         )
@@ -172,7 +184,7 @@ function initialize_simulation_state!(
             params,
         )
     end
-
+    set_last_decision_model!(sim_state, get_name(last(get_decision_models(models))))
     em = get_emulation_model(models)
     _initialize_system_states!(sim_state, em, simulation_initial_time, params)
     return
