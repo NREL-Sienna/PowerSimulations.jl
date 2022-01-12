@@ -16,6 +16,14 @@ function ValueState(
     return ValueState(0, values, timestamps, resolution, end_of_step_index)
 end
 
+function SystemValueState(
+    values::DataFrames.DataFrame,
+    timestamp::Dates.DateTime,
+    resolution::Dates.Period,
+)
+    return ValueState(1, values, [timestamp], resolution, 0)
+end
+
 get_last_recorded_row(s::ValueState) = s.last_recorded_row
 Base.length(s::ValueState) = length(s.timestamps)
 get_data_resolution(s::ValueState) = s.resolution
