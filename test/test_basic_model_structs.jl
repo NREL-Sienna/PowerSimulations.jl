@@ -83,3 +83,19 @@ end
         affected_values = [ActivePowerVariable, OnStatusParameter],
     )
 end
+
+@testset "SequentialWriteDataFrame Tests" begin
+    df1 = PSI.SequentialWriteDataFrame(DataFrame(:a => ones(10)))
+    @test isa(df1.data, DataFrames.DataFrame)
+
+    df2 = PSI.SequentialWriteDataFrame(:a => ones(10))
+    @test isa(df1.data, DataFrames.DataFrame)
+
+    @test names(df2) == ["a"]
+
+    df3 = mapcols(x -> 5 * x, df2)
+    @test all(df3.a .== 5.0)
+
+    @test ncol(df3) == 1
+    @test nrow(df3) == 10
+end
