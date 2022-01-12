@@ -230,7 +230,7 @@ function _get_store_value(
     return results
 end
 
-function _validate_keys(existing_keys, container_keys::Vector{<:OptimizationContainerKey})
+function _validate_keys(existing_keys, container_keys)
     existing = Set(existing_keys)
     for key in container_keys
         if key ∉ existing
@@ -238,7 +238,6 @@ function _validate_keys(existing_keys, container_keys::Vector{<:OptimizationCont
             throw(IS.InvalidValue("$key is not stored"))
         end
     end
-    nothing
 end
 
 function _process_timestamps(
@@ -286,41 +285,6 @@ function _read_variables(res::SimulationProblemResults, variable_keys, timestamp
         vals = _get_store_value(res, variable_keys, timestamps, store)
     end
     return vals
-end
-
-"""
-Return the values for the requested variables in DataFrames in a two-level Dict keyed by
-variable names and then timestamps.
-
-If the timestamps and variables were loaded with [load_results!](@ref) or previously
-returned by this function it will return from memory. Otherwise, it will read from the file.
-
-# Arguments
-- `variables::Union{Nothing, Vector{Union{String, Tuple}}}`: If nothing, return all
-   variables. If strings then it must be values returned from [`list_variable_names`](@ref).
-   If tuples then each tuple's contents must be able to be splatted into a VariableKey.
-- `initial_time::Dates.DateTime`: initial of the requested results
-- `count::Int`: Number of results
-- `store::SimulationStore`: a store that has been opened for reading
-
-# Examples
-```julia
-julia> read_variables(res, [(ActivePowerVariable, ThermalStandard)])
-julia> read_variables(res, ["ActivePowerVariable__ThermalStandard")])
-```
-"""
-# TODO: the read.*internal functions can likely be deleted.
-function read_variables_internal(
-    res::SimulationProblemResults;
-    variables::Union{Nothing, Vector{Union{String, Tuple}}} = nothing,
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
-    store = nothing,
-)
-    variable_keys = _get_keys(VariableKey, res, variables)
-    timestamps = _process_timestamps(res, initial_time, count)
-    var_values = _read_variables(res, variable_keys, timestamps, store)
-    return var_values
 end
 
 function _read_duals(res::SimulationProblemResults, dual_keys, timestamps, store)
@@ -529,148 +493,200 @@ function _read_optimizer_stats(res::SimulationProblemResults, store::SimulationS
     return read_optimizer_stats(store, Symbol(res.problem))
 end
 
-#function get_realized_timestamps(
-#    res::SimulationProblemResults;
-#    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-#    len::Union{Int, Nothing} = nothing,
-#)
-#    timestamps = get_timestamps(res)
-#    interval = timestamps.step
-#    resolution = get_resolution(res)
-#    horizon = get_forecast_horizon(res)
-#    initial_time = isnothing(initial_time) ? first(timestamps) : initial_time
-#    end_time =
-#        isnothing(len) ? last(timestamps) + interval - resolution :
-#        initial_time + (len - 1) * resolution
-#
-#    requested_range = initial_time:resolution:end_time
-#    available_range =
-#        first(timestamps):resolution:(last(
-#            timestamps,
-#        ) + (horizon - 1) * resolution)
-#    invalid_timestamps = setdiff(requested_range, available_range)
-#
-#    if !isempty(invalid_timestamps)
-#        msg = "Requested time does not match available results"
-#        @error msg
-#        throw(IS.InvalidValue(msg))
-#    end
-#
-#    return requested_range
-#end
-#
-#function get_realization(
-#    result_values::Dict{Symbol, SortedDict{Dates.DateTime, DataFrames.DataFrame}},
-#    meta::RealizedMeta,
-#    timestamps,
-#)
-#    realized_values = Dict{Symbol, DataFrames.DataFrame}()
-#    for (key, result_value) in result_values
-#        results_concat = Dict{Symbol, Vector{Float64}}()
-#        for (step, (t, df)) in enumerate(result_value)
-#            first_id = step > 1 ? 1 : meta.start_offset
-#            last_id =
-#                step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
-#            result_length = length(first_id:last_id)
-#            for colname in propertynames(df)
-#                colname == :DateTime && continue
-#                if meta.end_of_interval_index == 1 # indicates RH
-#                    col = ones(result_length) .* df[!, colname][1] # realization is first period setpoint
-#                else
-#                    col = df[!, colname][first_id:last_id]
-#                end
-#                if !haskey(results_concat, colname)
-#                    results_concat[colname] = col
-#                else
-#                    results_concat[colname] = vcat(results_concat[colname], col)
-#                end
-#            end
-#        end
-#        realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
-#        DataFrames.insertcols!(realized_values[key], 1, :DateTime => timestamps)
-#    end
-#    return realized_values
-#end
+function get_realized_timestamps(
+    res::SimulationProblemResults;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    timestamps = get_timestamps(res)
+    interval = timestamps.step
+    resolution = get_resolution(res)
+    horizon = get_forecast_horizon(res)
+    initial_time = isnothing(initial_time) ? first(timestamps) : initial_time
+    end_time =
+        isnothing(len) ? last(timestamps) + interval - resolution :
+        initial_time + (len - 1) * resolution
 
-#"""
-#Return the final values for the requested variable names for each time step for a problem.
-#Accepts a vector of names for the return of the values. If the time stamps and names are
-#loaded using the [load_results!](@ref) function it will read from memory.
-#
-## Arguments
-#- `names::Vector{Symbol}` : names of desired results
-#- `initial_time::Dates.DateTime` : initial time of the requested results
-#- `len::Int`: length of results
-#"""
-#function read_realized_variables(
-#    res::SimulationProblemResults;
-#    names::Union{Vector{Symbol}, Nothing} = nothing,
-#    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-#    len::Union{Int, Nothing} = nothing,
-#)
-#    names = isnothing(names) ? collect(keys(res.variable_values)) : names
-#    meta = RealizedMeta(res, initial_time = initial_time, len = len)
-#    result_values = read_variables(
-#        res,
-#        names = names,
-#        initial_time = meta.initial_time,
-#        count = meta.count,
-#    )
-#    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
-#    return get_realization(result_values, meta, timestamps)
-#end
-#
-#"""
-#Return the final values for the requested parameter names for each time step for a problem.
-#If the time stamps and names are loaded using the [load_results!](@ref) function
-#it will read from memory.
-#
-## Arguments
-#- `names::Vector{Symbol}` : names of desired results
-#- `initial_time::Dates.DateTime` : initial time of the requested results
-#- `len::Int`: length of results
-#"""
-#function read_realized_parameters(
-#    res::SimulationProblemResults;
-#    names::Union{Vector{Symbol}, Nothing} = nothing,
-#    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-#    len::Union{Int, Nothing} = nothing,
-#)
-#    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
-#    meta = RealizedMeta(res, initial_time = initial_time, len = len)
-#    result_values = read_parameters(
-#        res,
-#        names = names,
-#        initial_time = meta.initial_time,
-#        count = meta.count,
-#    )
-#    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
-#    return get_realization(result_values, meta, timestamps)
-#end
-#
-#"""
-#Return the final values for the requested dual names for each time step for a problem.
-#Accepts a vector of names for the return of the values. If the time stamps and names are
-#loaded using the [load_results!](@ref) function it will read from memory.
-#
-## Arguments
-#- `names::Vector{Tuple}` : names of desired results
-#- `initial_time::Dates.DateTime` : initial time of the requested results
-#- `len::Int`: length of results
-#"""
-#function read_realized_duals( # TODO: Should this be get_realized_duals_values?
-#    res::SimulationProblemResults;
-#    names::Union{Vector{Symbol}, Nothing} = nothing,
-#    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-#    len::Union{Int, Nothing} = nothing,
-#)
-#    names = isnothing(names) ? collect(keys(res.dual_values)) : names
-#    meta = RealizedMeta(res, initial_time = initial_time, len = len)
-#    result_values =
-#        read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
-#    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
-#    return get_realization(result_values, meta, timestamps)
-#end
+    requested_range = initial_time:resolution:end_time
+    available_range =
+        first(timestamps):resolution:(last(timestamps) + (horizon - 1) * resolution)
+    invalid_timestamps = setdiff(requested_range, available_range)
+
+    if !isempty(invalid_timestamps)
+        msg = "Requested time does not match available results"
+        @error msg
+        throw(IS.InvalidValue(msg))
+    end
+
+    return requested_range
+end
+
+struct RealizedMeta
+    initial_time::Dates.DateTime
+    resolution::Dates.TimePeriod
+    count::Int
+    start_offset::Int
+    end_offset::Int
+    interval_len::Int
+end
+
+function RealizedMeta(
+    res::SimulationProblemResults;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    existing_timestamps = get_timestamps(res)
+    interval = existing_timestamps.step
+    resolution = get_resolution(res)
+    interval_len = Int(interval / resolution)
+    realized_timestamps =
+        get_realized_timestamps(res, initial_time = initial_time, len = len)
+
+    result_initial_time = existing_timestamps[findlast(
+        x -> x .<= first(realized_timestamps),
+        existing_timestamps,
+    )]
+    result_end_time = existing_timestamps[findlast(
+        x -> x .<= last(realized_timestamps),
+        existing_timestamps,
+    )]
+
+    count = length(result_initial_time:interval:result_end_time)
+
+    start_offset = length(result_initial_time:resolution:first(realized_timestamps))
+    end_offset = length(
+        (last(realized_timestamps) + resolution):resolution:(result_end_time + interval - resolution),
+    )
+
+    return RealizedMeta(
+        result_initial_time,
+        resolution,
+        count,
+        start_offset,
+        end_offset,
+        interval_len,
+    )
+end
+
+function get_realization(
+    result_values::Dict{
+        OptimizationContainerKey,
+        SortedDict{Dates.DateTime, DataFrames.DataFrame},
+    },
+    meta::RealizedMeta,
+    timestamps,
+)
+    realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
+    for (key, result_value) in result_values
+        results_concat = Dict{Symbol, Vector{Float64}}()
+        for (step, (t, df)) in enumerate(result_value)
+            first_id = step > 1 ? 1 : meta.start_offset
+            last_id =
+                step == meta.count ? meta.interval_len - meta.end_offset : meta.interval_len
+            result_length = length(first_id:last_id)
+            for colname in propertynames(df)
+                colname == :DateTime && continue
+                # TODO DT: may not be correct
+                col = df[!, colname][first_id:last_id]
+                if !haskey(results_concat, colname)
+                    results_concat[colname] = col
+                else
+                    results_concat[colname] = vcat(results_concat[colname], col)
+                end
+            end
+        end
+        realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
+        DataFrames.insertcols!(realized_values[key], 1, :DateTime => timestamps)
+    end
+    return realized_values
+end
+
+"""
+Return the final values for the requested variable names for each time step for a problem.
+Accepts a vector of names for the return of the values. If the time stamps and names are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `names::Vector{Symbol}` : names of desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_variables(res::SimulationProblemResults; kwargs...)
+    return read_realized_variables(res, collect(keys(res.variable_values)); kwargs...)
+end
+
+function read_realized_variables(res::SimulationProblemResults, variables; kwargs...)
+    return read_realized_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
+end
+
+function read_realized_variables(
+    res::SimulationProblemResults,
+    variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
+    result_values = _read_variables(res, variables, timestamps, nothing)
+    timestamps = get_realized_timestamps(
+        res,
+        initial_time = initial_time,
+        len = meta.count * meta.interval_len,
+    )
+    return get_realization(result_values, meta, timestamps)
+end
+
+"""
+Return the final values for the requested parameter names for each time step for a problem.
+If the time stamps and names are loaded using the [load_results!](@ref) function
+it will read from memory.
+
+# Arguments
+- `names::Vector{Symbol}` : names of desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_parameters(
+    res::SimulationProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = read_parameters(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
+end
+
+"""
+Return the final values for the requested dual names for each time step for a problem.
+Accepts a vector of names for the return of the values. If the time stamps and names are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `names::Vector{Tuple}` : names of desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_duals( # TODO: Should this be get_realized_duals_values?
+    res::SimulationProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    names = isnothing(names) ? collect(keys(res.dual_values)) : names
+    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values =
+        read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
+end
 
 """
     Loads the simulation results into memory for repeated reads. Running this function twice

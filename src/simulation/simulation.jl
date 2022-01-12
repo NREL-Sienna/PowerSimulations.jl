@@ -633,7 +633,7 @@ end
 function _write_state_to_store(store, sim_state::SimulationState)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
-    @show index = get_last_recorded_row(get_em_data(store))
+    index = get_last_recorded_row(get_em_data(store))
     for key in get_state_keys(system_state)
         state_data = get_state_data(system_state, key)
         values = get_last_recorded_value(state_data)

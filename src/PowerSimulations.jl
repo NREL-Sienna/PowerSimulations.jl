@@ -157,11 +157,10 @@ export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
-# TBD if these are going to be developed
-#export read_realized_duals
-#export read_realized_variables
-#export read_realized_parameters
-#export get_realized_timestamps
+export read_realized_duals
+export read_realized_variables
+export read_realized_parameters
+export get_realized_timestamps
 export read_variable
 export read_parameter
 export get_problem_base_power

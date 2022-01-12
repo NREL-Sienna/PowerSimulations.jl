@@ -374,58 +374,69 @@ _get_keys(::Type{ConstraintKey}, res, ::Nothing) = collect(keys(res.dual_values)
 _get_keys(::Type{ParameterKey}, res, ::Nothing) = collect(keys(res.parameter_values))
 _get_keys(::Type{VariableKey}, res, ::Nothing) = collect(keys(res.variable_values))
 
-#=
 function _read_realized_results(
     result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
-    container_keys::Union{Nothing, Vector{<:OptimizationContainerKey}},
+    container_keys,
 )
-    existing_keys = collect(keys(result_values))
+    existing_keys = keys(result_values)
     container_keys = container_keys === nothing ? existing_keys : container_keys
     _validate_keys(existing_keys, container_keys)
-    return Dict(encode_key_string(k) => v for (k, v) in result_values if k in container_keys)
+    return Dict(
+        encode_key_as_string(k) => v for (k, v) in result_values if k in container_keys
+    )
 end
 
-function _read_results(
-    result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
-    container_keys::Union{Nothing, Vector{<:OptimizationContainerKey}},
-    initial_time::Dates.DateTime,
-)
-    realized_results = _read_realized_results(result_values, container_keys)
-    results = FieldResultsByTime()
-    for (key, df) in realized_results
-        results[encode_key_as_string(key)] = ResultsByTime(initial_time => df)
-    end
-    return results
+# TODO: This is not used. Can it be deleted?
+#function _read_results(
+#    result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
+#    container_keys,
+#    initial_time::Dates.DateTime,
+#)
+#    realized_results = _read_realized_results(result_values, container_keys)
+#    results = FieldResultsByTime()
+#    for (key, df) in realized_results
+#        results[encode_key_as_string(key)] = ResultsByTime(initial_time => df)
+#    end
+#    return results
+#end
+
+function read_realized_aux_variables(res::ProblemResults, aux_variable_keys)
+    return _read_realized_results(
+        res.aux_variable_values,
+        [AuxVarKey(x...) for x in aux_variable_keys],
+    )
 end
 
-function read_realized_variables(
-    res::ProblemResults;
-    variable_keys::Union{Vector{Tuple}, Nothing} = nothing,
-)
-    if variable_keys !== nothing
-        variable_keys = [VariableKey(x...) for x in variable_keys]
-    end
-    return _read_realized_results(res.variable_values, variable_keys)
+function read_realized_aux_variables(res::ProblemResults)
+    return _read_realized_results(res.aux_variable_values, nothing)
 end
 
-function read_realized_parameters(
-    res::ProblemResults;
-    parameter_keys::Union{Vector{Tuple}, Nothing} = nothing,
-)
-    if parameter_keys !== nothing
-        parameter_keys = [ParameterKey(x...) for x in parameter_keys]
-    end
-    return _read_realized_results(res.parameter_values, parameter_keys)
+function read_realized_variables(res::ProblemResults, variable_keys)
+    return _read_realized_results(
+        res.variable_values,
+        [VariableKey(x...) for x in variable_keys],
+    )
 end
 
-function read_realized_duals(
-    res::ProblemResults;
-    dual_keys::Union{Vector{Tuple}, Nothing} = nothing,
-)
-    if dual_keys !== nothing
-        dual_keys = [ConstraintKey(x...) for x in dual_keys]
-    end
-    return _read_realized_results(res.dual_values, dual_keys)
+function read_realized_variables(res::ProblemResults)
+    return _read_realized_results(res.variable_values, nothing)
 end
 
-=#
+function read_realized_parameters(res::ProblemResults, parameter_keys)
+    return _read_realized_results(
+        res.parameter_values,
+        [ParameterKey(x...) for x in parameter_keys],
+    )
+end
+
+function read_realized_parameters(res::ProblemResults)
+    return _read_realized_results(res.parameter_values, nothing)
+end
+
+function read_realized_duals(res::ProblemResults, dual_keys)
+    return _read_realized_results(res.dual_values, [ConstraintKey(x...) for x in dual_keys])
+end
+
+function read_realized_duals(res::ProblemResults)
+    return _read_realized_results(res.dual_values, nothing)
+end
