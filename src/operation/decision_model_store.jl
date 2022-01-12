@@ -65,13 +65,24 @@ end
 
 function write_result!(
     data::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    array::AbstractArray,
+)
+    df = axis_array_to_dataframe(array, key)
+    write_result!(data, name, key, index, df)
+    return
+end
+
+function write_result!(
+    data::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
-    array,
+    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
 )
     container = getfield(data, get_store_container_type(key))
-    df = axis_array_to_dataframe(array, key)
     container[key][index] = df
     return
 end

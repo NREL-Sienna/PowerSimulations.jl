@@ -80,14 +80,37 @@ end
 
 function write_result!(
     data::EmulationModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    array::AbstractArray,
+)
+    df = axis_array_to_dataframe(array, key)
+    write_result!(data, name, key, index, df)
+    return
+end
+
+function write_result!(
+    data::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
-    array,
+    df::DataFrames.DataFrame,
 )
     container = getfield(data, get_store_container_type(key))
-    df = axis_array_to_dataframe(array, key)
     container[key][index, :] = df[1, :]
+    return
+end
+
+function write_result!(
+    data::EmulationModelStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    df::DataFrames.DataFrameRow,
+)
+    container = getfield(data, get_store_container_type(key))
+    container[key][index, :] = df
     return
 end
 
