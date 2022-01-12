@@ -324,37 +324,33 @@ function _get_emulation_store_requirements(sim::Simulation)
     system_state = get_system_states(sim_state)
     sim_time = get_steps(sim) * get_step_resolution(get_sequence(sim))
     reqs = SimulationModelStoreRequirements()
+    dims = sim_time ÷ get_system_states_resolution(sim_state)
 
     for (key, state_values) in get_duals_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_parameters_values(system_state)
-        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_variables_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.aux_variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_expression_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
@@ -371,8 +367,6 @@ function _initialize_problem_storage!(
     models = get_models(sim)
     decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
     dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
-    # TODO: Seems unused. Check with DT
-    # num_param_containers = 0
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
         min_flush_size = min_cache_flush_size_mib,
@@ -383,12 +377,6 @@ function _initialize_problem_storage!(
         num_executions = executions_by_model[model_name]
         num_rows = num_executions * get_steps(sim)
         dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)
-        # num_param_containers +=
-        #     length(reqs.duals) +
-        #     length(reqs.parameters) +
-        #     length(reqs.variables) +
-        #     length(reqs.aux_variables) +
-        #     length(reqs.expressions)
     end
 
     em = get_emulation_model(models)
@@ -586,16 +574,25 @@ end
 
 function _update_simulation_state!(sim::Simulation, model::EmulationModel)
     sim_state = get_simulation_state(sim)
+    simulation_time = get_current_time(sim)
     system_state = get_system_states(sim_state)
-
     store = get_simulation_store(sim)
     em_data = get_em_data(store)
     ix = get_last_recorded_row(em_data)
     em_model_name = get_name(model)
     for key in PSI.list_all_keys(model)
         res = PSI.read_result(DataFrames.DataFrame, store, em_model_name, key, ix)
+        # TODO: Implement setter functions for this operation to avoid hardcoding index 1
+        # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
+        # in-place value update
+        get_state_values(system_state, key)[1, :] .= DataFrames.values(res)
+        IS.@record :execution StateUpdateEvent(
+            key,
+            simulation_time,
+            get_name(model),
+            "SystemState",
+        )
     end
-    # write_to_em_store()
     return
 end
 
@@ -627,6 +624,22 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         end
     end
     _set_system_state_from_decision_state!(state, model)
+    if get_name(model) == get_last_decision_model(state)
+        _write_state_to_store(store, state)
+    end
+    return
+end
+
+function _write_state_to_store(store, sim_state::SimulationState)
+    system_state = get_system_states(sim_state)
+    model_name = get_last_decision_model(sim_state)
+    @show index = get_last_recorded_row(get_em_data(store))
+    for key in get_state_keys(system_state)
+        state_data = get_state_data(system_state, key)
+        values = get_last_recorded_value(state_data)
+        write_result!(store, model_name, key, index + 1, values)
+    end
+    set_last_recorded_row!(get_em_data(store), index + 1)
     return
 end
 
@@ -648,7 +661,6 @@ function _set_system_state_from_decision_state!(
             # in-place value update
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
-            # and write to store ()
         else
             error("Something went really wrong. Please report this error. \\
                   last_update: $(last_update) \\
@@ -662,7 +674,7 @@ function _set_system_state_from_decision_state!(
             "SystemState",
         )
     end
-    # if last model -> write to em
+
     return
 end
 
