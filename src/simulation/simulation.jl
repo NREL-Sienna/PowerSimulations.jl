@@ -100,7 +100,7 @@ function get_simulation_time(sim::Simulation, problem_number::Int)
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-IS.get_name(sim::Simulation) = sim.name
+get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
 get_current_execution_index(sim::Simulation) = get_sequence(sim).current_execution_index

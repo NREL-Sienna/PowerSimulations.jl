@@ -329,17 +329,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
-# so that users have access to IS.Results interfaces
-import InfrastructureSystems:
-    get_variables,
-    get_parameters,
-    get_total_cost,
-    write_results,
-    get_timestamp,
-    get_resolution,
-    get_name,
-    @assert_op,
-    list_recorder_events
+import InfrastructureSystems: @assert_op, list_recorder_events
 export get_name
 export get_model_base_power
 export get_total_cost
@@ -433,6 +423,7 @@ include("core/initial_conditions.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("core/optimizer_stats.jl")
+include("core/sequential_write_dataframe.jl")
 include("core/value_states.jl")
 
 include("core/optimization_container.jl")

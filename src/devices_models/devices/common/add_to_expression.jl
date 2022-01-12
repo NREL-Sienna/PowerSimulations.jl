@@ -128,7 +128,7 @@ function add_to_expression!(
     multiplier = get_parameter_multiplier_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
-        name = get_name(d)
+        name = PSY.get_name(d)
         _add_to_jump_expression!(
             get_expression(container, T(), X)[bus_number, t],
             parameter[name, t],
@@ -156,7 +156,7 @@ function add_to_expression!(
 
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
-        name = get_name(d)
+        name = PSY.get_name(d)
         mult = get_expression_multiplier(U(), T(), d, W())
         _add_to_jump_expression!(
             get_expression(container, T(), X)[bus_number, t],
@@ -218,7 +218,7 @@ function add_to_expression!(
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
-        name = get_name(d)
+        name = PSY.get_name(d)
         _add_to_jump_expression!(
             get_expression(container, T(), X)[t],
             parameter[name, t],
@@ -244,7 +244,7 @@ function add_to_expression!(
 }
     parameter = get_parameter_array(container, U(), V)
     for d in devices, t in get_time_steps(container)
-        name = get_name(d)
+        name = PSY.get_name(d)
         mult = get_expression_multiplier(U(), T(), d, W())
         _add_to_jump_expression!(
             get_expression(container, T(), X)[t],
@@ -307,7 +307,7 @@ function add_to_expression!(
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices, t in get_time_steps(container)
-        name = get_name(d)
+        name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
         _add_to_jump_expression!(sys_expr[t], parameter[name, t], multiplier[name, t])
         _add_to_jump_expression!(
@@ -337,7 +337,7 @@ function add_to_expression!(
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices, t in get_time_steps(container)
-        name = get_name(d)
+        name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
         mult = get_expression_multiplier(U(), T(), d, W())
         _add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
