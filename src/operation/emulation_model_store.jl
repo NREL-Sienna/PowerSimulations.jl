@@ -2,23 +2,21 @@
 Stores results data for one EmulationModel
 """
 mutable struct EmulationModelStore <: AbstractModelStore
-    last_recorded_row::Int
-    duals::Dict{ConstraintKey, DataFrames.DataFrame}
-    parameters::Dict{ParameterKey, DataFrames.DataFrame}
-    variables::Dict{VariableKey, DataFrames.DataFrame}
-    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
-    expressions::Dict{ExpressionKey, DataFrames.DataFrame}
+    duals::Dict{ConstraintKey, SequentialWriteDataFrame}
+    parameters::Dict{ParameterKey, SequentialWriteDataFrame}
+    variables::Dict{VariableKey, SequentialWriteDataFrame}
+    aux_variables::Dict{AuxVarKey, SequentialWriteDataFrame}
+    expressions::Dict{ExpressionKey, SequentialWriteDataFrame}
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
 function EmulationModelStore()
     return EmulationModelStore(
-        0,
-        Dict{ConstraintKey, DataFrames.DataFrame}(),
-        Dict{ParameterKey, DataFrames.DataFrame}(),
-        Dict{VariableKey, DataFrames.DataFrame}(),
-        Dict{AuxVarKey, DataFrames.DataFrame}(),
-        Dict{ExpressionKey, DataFrames.DataFrame}(),
+        Dict{ConstraintKey, SequentialWriteDataFrame}(),
+        Dict{ParameterKey, SequentialWriteDataFrame}(),
+        Dict{VariableKey, SequentialWriteDataFrame}(),
+        Dict{AuxVarKey, SequentialWriteDataFrame}(),
+        Dict{ExpressionKey, SequentialWriteDataFrame}(),
         OrderedDict{Int, OptimizerStats}(),
     )
 end
@@ -70,7 +68,7 @@ function initialize_storage!(
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             column_names = get_column_names(key, field_container)
-            results_container[key] = DataFrames.DataFrame(
+            results_container[key] = SequentialWriteDataFrame(
                 OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
             )
         end
@@ -95,22 +93,10 @@ function write_result!(
     ::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
-    df::DataFrames.DataFrame,
+    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
 )
     container = getfield(data, get_store_container_type(key))
-    container[key][index, :] = df[1, :]
-    return
-end
-
-function write_result!(
-    data::EmulationModelStore,
-    ::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    df::DataFrames.DataFrameRow,
-)
-    container = getfield(data, get_store_container_type(key))
-    container[key][index, :] = df
+    set_next_rows!(container[key], df)
     return
 end
 
@@ -143,10 +129,6 @@ function read_optimizer_stats(store::EmulationModelStore)
     return DataFrames.DataFrame([to_namedtuple(x) for x in values(store.optimizer_stats)])
 end
 
-get_last_recorded_row(x::EmulationModelStore) = x.last_recorded_row
-
-function set_last_recorded_row!(store::EmulationModelStore, index)
-    @debug "set_last_recorded_row!" _group = LOG_GROUP_MODEL_STORE index
-    store.last_recorded_row = index
-    return
+function get_last_recorded_row(x::EmulationModelStore, key::OptimizationContainerKey)
+    return get_last_recorded_row(getfield(x, get_store_container_type(key))[key])
 end
