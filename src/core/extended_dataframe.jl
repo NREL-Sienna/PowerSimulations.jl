@@ -5,8 +5,7 @@ struct ExtendedDataFrame <: DataFrames.AbstractDataFrame
     update_timestamp::Base.RefValue{Dates.DateTime}
     ExtendedDataFrame(args...; kw...) =
         new(DataFrames.DataFrame(args...; kw...), Ref(0), Ref(UNSET_INI_TIME))
-    ExtendedDataFrame(df::DataFrames.DataFrame) =
-        new(df, Ref(0), Ref(UNSET_INI_TIME))
+    ExtendedDataFrame(df::DataFrames.DataFrame) = new(df, Ref(0), Ref(UNSET_INI_TIME))
 end
 
 # Don't use .last_recorded_row syntax since it will conflict with the internal df.
