@@ -80,7 +80,7 @@ function _initialize_model_states!(
             column_names = get_column_names(key, value)
             if !haskey(field_states, key) || length(field_states[key]) < value_counts
                 field_states[key] = ValueState(
-                    DataFrames.DataFrame(
+                    SequentialWriteDataFrame(
                         fill(NaN, value_counts, length(column_names)),
                         column_names,
                     ),
@@ -114,7 +114,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             SystemValueState(
-                DataFrames.DataFrame(cols .=> NaN),
+                SequentialWriteDataFrame(cols .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -142,7 +142,7 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 SystemValueState(
-                    DataFrames.DataFrame(column_names .=> NaN),
+                    SequentialWriteDataFrame(column_names .=> NaN),
                     simulation_initial_time,
                     get_resolution(emulation_model),
                 ),
@@ -159,7 +159,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             SystemValueState(
-                DataFrames.DataFrame(cols .=> NaN),
+                SequentialWriteDataFrame(cols .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
