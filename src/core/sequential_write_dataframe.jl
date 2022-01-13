@@ -1,3 +1,4 @@
+
 struct SequentialWriteDataFrame <: DataFrames.AbstractDataFrame
     data::DataFrames.DataFrame
     last_recorded_row::Base.RefValue{Int}
@@ -27,17 +28,33 @@ function set_value!(df::SequentialWriteDataFrame, val)
 end
 
 #! format: off
+const DataAPI = DataFrames.DataAPI
+const InvertedIndices = DataFrames.InvertedIndices
 Base.append!(df1::SequentialWriteDataFrame, df2::DataFrames.DataFrame; kwargs...) = append!(getfield(df1, :data), df2; kwargs...)
 Base.append!(df1::DataFrames.DataFrame, df2::SequentialWriteDataFrame; kwargs...) = append!(df1, getfield(df2, :data); kwargs...)
 Base.copy(df::SequentialWriteDataFrame; kwargs...) = copy(getfield(df, :data); kwargs...)
 Base.delete!(df::SequentialWriteDataFrame, p1; kwargs...) = delete!(getfield(df, :data), p1; kwargs...)
 Base.deleteat!(df::SequentialWriteDataFrame, p1; kwargs...) = deleteat!(getfield(df, :data), p1; kwargs...)
 Base.empty!(df::SequentialWriteDataFrame; kwargs...) = empty!(getfield(df, :data); kwargs...)
-Base.getindex(df::SequentialWriteDataFrame, p1, p2; kwargs...) = getindex(getfield(df, :data), p1, p2; kwargs...)
+
+# Specific getindex methods are needed to avoid ambiguity with AbstractDataFrame
+Base.getindex(p1::SequentialWriteDataFrame, p2, p3::Colon; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::AbstractVector, p3::Union{AbstractString, Signed, Symbol, Unsigned}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::AbstractVector, p3::Union{Colon, Regex, AbstractVector, DataAPI.All, DataAPI.Between, DataAPI.Cols, InvertedIndices.InvertedIndex}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::Colon, p3::Union{AbstractString, Signed, Symbol, Unsigned}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::Colon, p3::Union{Colon, Regex, AbstractVector, DataAPI.All, DataAPI.Between, DataAPI.Cols, InvertedIndices.InvertedIndex}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::Integer, p3::Union{AbstractString, Symbol}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::Integer, p3::Union{Signed, Unsigned}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::InvertedIndices.InvertedIndex, p3::Union{AbstractString, Signed, Symbol, Unsigned}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::InvertedIndices.InvertedIndex, p3::Union{Colon, Regex, AbstractVector, DataAPI.All, DataAPI.Between, DataAPI.Cols, InvertedIndices.InvertedIndex}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::typeof(!), p3::Union{AbstractString, Symbol}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::typeof(!), p3::Union{Colon, Regex, AbstractVector, DataAPI.All, DataAPI.Between, DataAPI.Cols, InvertedIndices.InvertedIndex}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+Base.getindex(p1::SequentialWriteDataFrame, p2::typeof(!), p3::Union{Signed, Unsigned}; kwargs...) = getindex(getfield(p1, :data), p2, p3; kwargs...)
+
 Base.parent(df::SequentialWriteDataFrame) = parent(getfield(df, :data))
 Base.push!(df::SequentialWriteDataFrame, p1::Any; kwargs...) = push!(getfield(df, :data), p1; kwargs...)
-Base.setindex!(df::DataFrames.DataFrame, p1::SequentialWriteDataFrame, p2, p3; kwargs...) = setindex!(df, getfield(p1, :data), p2, p3; kwargs...)
-Base.setindex!(df::SequentialWriteDataFrame, p1, p2, p3; kwargs...) = setindex!(getfield(df, :data), p1, p2, p3; kwargs...)
+# Base.setindex!(df::DataFrames.DataFrame, p1::SequentialWriteDataFrame, p2, p3; kwargs...) = setindex!(df, getfield(p1, :data), p2, p3; kwargs...)
+# Base.setindex!(df::SequentialWriteDataFrame, p1, p2, p3; kwargs...) = setindex!(getfield(df, :data), p1, p2, p3; kwargs...)
 Base.setproperty!(df::SequentialWriteDataFrame, p1, p2; kwargs...) = setproperty!(getfield(df, :data), p1, p2; kwargs...)
 
 DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p1, p2; kwargs...) = DataFrames.DataFrameRow(getfield(df, :data), p1, p2; kwargs...)
