@@ -84,11 +84,11 @@ end
     )
 end
 
-@testset "SequentialWriteDataFrame Tests" begin
-    df1 = PSI.SequentialWriteDataFrame(DataFrame(:a => ones(10)))
+@testset "ExtendedDataFrame Tests" begin
+    df1 = PSI.ExtendedDataFrame(DataFrame(:a => ones(10)))
     @test isa(getfield(df1, :data), DataFrames.DataFrame)
 
-    df2 = PSI.SequentialWriteDataFrame(:a => ones(10))
+    df2 = PSI.ExtendedDataFrame(:a => ones(10))
     @test isa(getfield(df1, :data), DataFrames.DataFrame)
 
     @test names(df2) == ["a"]
@@ -99,22 +99,22 @@ end
     @test ncol(df3) == 1
     @test nrow(df3) == 10
 
-    df4 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
+    df4 = PSI.ExtendedDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
 
     for i in 1:5
         PSI.set_next_rows!(df4, [10 10 10; 20 20 20])
         @test PSI.get_last_recorded_row(df4) == i * 2
     end
 
-    df5 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
+    df5 = PSI.ExtendedDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
 
     for i in 1:5
         PSI.set_next_rows!(df5, [20 20 20])
         @test PSI.get_last_recorded_row(df5) == i
     end
 
-    df6 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
-    df7 = PSI.SequentialWriteDataFrame(
+    df6 = PSI.ExtendedDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
+    df7 = PSI.ExtendedDataFrame(
         :a => 5 * ones(10),
         :b => 7 * ones(10),
         :c => 9 * ones(10),

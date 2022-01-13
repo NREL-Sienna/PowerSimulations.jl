@@ -125,7 +125,7 @@ function initialize_problem_storage!(
     for type in STORE_CONTAINERS
         for (name, reqs) in getfield(em_problem_reqs, type)
             container = getfield(get_em_data(store), type)
-            container[name] = SequentialWriteDataFrame(
+            container[name] = ExtendedDataFrame(
                 OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
             )
             @debug "Added $type $name in emulation store" _group =

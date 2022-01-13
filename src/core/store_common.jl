@@ -13,7 +13,8 @@ const EmulationModelIndexType = Int
 function write_results!(
     store,
     model::OperationModel,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType};
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_time_stamp::Dates.DateTime;
     exports = nothing,
 )
     if exports !== nothing

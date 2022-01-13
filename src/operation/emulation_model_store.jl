@@ -2,21 +2,21 @@
 Stores results data for one EmulationModel
 """
 mutable struct EmulationModelStore <: AbstractModelStore
-    duals::Dict{ConstraintKey, SequentialWriteDataFrame}
-    parameters::Dict{ParameterKey, SequentialWriteDataFrame}
-    variables::Dict{VariableKey, SequentialWriteDataFrame}
-    aux_variables::Dict{AuxVarKey, SequentialWriteDataFrame}
-    expressions::Dict{ExpressionKey, SequentialWriteDataFrame}
+    duals::Dict{ConstraintKey, ExtendedDataFrame}
+    parameters::Dict{ParameterKey, ExtendedDataFrame}
+    variables::Dict{VariableKey, ExtendedDataFrame}
+    aux_variables::Dict{AuxVarKey, ExtendedDataFrame}
+    expressions::Dict{ExpressionKey, ExtendedDataFrame}
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
 function EmulationModelStore()
     return EmulationModelStore(
-        Dict{ConstraintKey, SequentialWriteDataFrame}(),
-        Dict{ParameterKey, SequentialWriteDataFrame}(),
-        Dict{VariableKey, SequentialWriteDataFrame}(),
-        Dict{AuxVarKey, SequentialWriteDataFrame}(),
-        Dict{ExpressionKey, SequentialWriteDataFrame}(),
+        Dict{ConstraintKey, ExtendedDataFrame}(),
+        Dict{ParameterKey, ExtendedDataFrame}(),
+        Dict{VariableKey, ExtendedDataFrame}(),
+        Dict{AuxVarKey, ExtendedDataFrame}(),
+        Dict{ExpressionKey, ExtendedDataFrame}(),
         OrderedDict{Int, OptimizerStats}(),
     )
 end
@@ -68,7 +68,7 @@ function initialize_storage!(
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             column_names = get_column_names(key, field_container)
-            results_container[key] = SequentialWriteDataFrame(
+            results_container[key] = ExtendedDataFrame(
                 OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
             )
         end

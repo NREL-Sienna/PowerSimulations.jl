@@ -1,5 +1,5 @@
 mutable struct ValueState
-    values::SequentialWriteDataFrame
+    values::ExtendedDataFrame
     timestamps::Vector{Dates.DateTime}
     # Resolution is needed because ValueState might have just one entry
     resolution::Dates.Period
@@ -7,7 +7,7 @@ mutable struct ValueState
 end
 
 function SystemValueState(
-    values::SequentialWriteDataFrame,
+    values::ExtendedDataFrame,
     timestamp::Dates.DateTime,
     resolution::Dates.Period,
 )
