@@ -329,7 +329,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
-import InfrastructureSystems: @assert_op, list_recorder_events
+import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
 export get_total_cost
