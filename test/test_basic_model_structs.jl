@@ -98,4 +98,18 @@ end
 
     @test ncol(df3) == 1
     @test nrow(df3) == 10
+
+    df4 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
+
+    for i in 1:5
+        PSI.set_next_rows!(df4, [10 10 10; 20 20 20])
+        @test PSI.get_last_recorded_row(df2) == i*2
+    end
+
+    df5 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
+
+    for i in 1:5
+        PSI.set_next_rows!(df5, [20 20 20])
+        @test PSI.get_last_recorded_row(df2) == i
+    end
 end
