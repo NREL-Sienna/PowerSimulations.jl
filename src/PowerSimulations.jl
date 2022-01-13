@@ -177,7 +177,6 @@ export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
-export write_results
 export write_to_CSV
 
 ## Enums
@@ -332,12 +331,9 @@ import InfrastructureSystems
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
-export get_total_cost
 export get_optimizer_stats
-export get_timestamp
 export get_timestamps
 export get_resolution
-export write_results
 import PowerModels
 import TimerOutputs
 import ProgressMeter
