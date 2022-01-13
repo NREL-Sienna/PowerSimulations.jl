@@ -6,10 +6,12 @@ struct SequentialWriteDataFrame <: DataFrames.AbstractDataFrame
     SequentialWriteDataFrame(df::DataFrames.DataFrame) = new(df, Ref(0))
 end
 
-get_last_recorded_row(df::SequentialWriteDataFrame) = df.last_recorded_row[]
+# Don't use .last_recorded_row syntax since it will conflict with the internal df.
+# last_recorded_row can only be accessed via get/set functions
+get_last_recorded_row(df::SequentialWriteDataFrame) = getfield(df, :last_recorded_row)[]
 
 function set_last_recorded_row!(df::SequentialWriteDataFrame, val::Int)
-    df.last_recorded_row[] = val
+    getfield(df, :last_recorded_row)[] = val
     return
 end
 
