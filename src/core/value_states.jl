@@ -1,30 +1,21 @@
 mutable struct ValueState
-    last_recorded_row::Int
-    values::DataFrames.DataFrame
+    values::SequentialWriteDataFrame
     timestamps::Vector{Dates.DateTime}
     # Resolution is needed because ValueState might have just one entry
     resolution::Dates.Period
     end_of_step_index::Int
 end
 
-function ValueState(
-    values::DataFrames.DataFrame,
-    timestamps::Vector{Dates.DateTime},
-    resolution::Dates.Period,
-    end_of_step_index::Int = 0,
-)
-    return ValueState(0, values, timestamps, resolution, end_of_step_index)
-end
-
 function SystemValueState(
-    values::DataFrames.DataFrame,
+    values::SequentialWriteDataFrame,
     timestamp::Dates.DateTime,
     resolution::Dates.Period,
 )
-    return ValueState(1, values, [timestamp], resolution, 0)
+    set_last_recorded_row!(values, 1)
+    return ValueState(values, [timestamp], resolution, 0)
 end
 
-get_last_recorded_row(s::ValueState) = s.last_recorded_row
+get_last_recorded_row(s::ValueState) = get_last_recorded_row(s.values)
 Base.length(s::ValueState) = length(s.timestamps)
 get_data_resolution(s::ValueState) = s.resolution
 get_timestamps(s::ValueState) = s.timestamps
@@ -39,10 +30,11 @@ function get_end_of_step_timestamp(s::ValueState)
 end
 
 function _get_last_updated_timestamp(s::ValueState)
-    if get_last_recorded_row(s) == 0
+    last_row_ix = get_last_recorded_row(s.values)
+    if last_row_ix == 0
         return UNSET_INI_TIME
     end
-    return get_timestamps(s)[get_last_recorded_row(s)]
+    return get_timestamps(s)[last_row_ix]
 end
 
 function _get_state_value(s::ValueState, date::Dates.DateTime)
@@ -58,14 +50,11 @@ function _get_state_value(s::ValueState, date::Dates.DateTime)
 end
 
 function get_last_recorded_value(s::ValueState)
-    if get_last_recorded_row(s) == 0
-        error("The State hasn't been written yet")
-    end
-    return _get_values(s)[get_last_recorded_row(s), :]
+    get_last_recorded_value(s.values)
 end
 
 function set_last_recorded_row!(s::ValueState, val::Int)
-    s.last_recorded_row = val
+    set_last_recorded_row!(s.values, val)
     return
 end
 
