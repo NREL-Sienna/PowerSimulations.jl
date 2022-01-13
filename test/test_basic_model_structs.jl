@@ -103,7 +103,7 @@ end
 
     for i in 1:5
         PSI.set_next_rows!(df4, [10 10 10; 20 20 20])
-        @test PSI.get_last_recorded_row(df4) == i*2
+        @test PSI.get_last_recorded_row(df4) == i * 2
     end
 
     df5 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
@@ -112,4 +112,17 @@ end
         PSI.set_next_rows!(df5, [20 20 20])
         @test PSI.get_last_recorded_row(df5) == i
     end
+
+    df6 = PSI.SequentialWriteDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
+    df7 = PSI.SequentialWriteDataFrame(
+        :a => 5 * ones(10),
+        :b => 7 * ones(10),
+        :c => 9 * ones(10),
+    )
+
+    PSI.set_next_rows!(df6, df7[3, :])
+    @test PSI.get_last_recorded_row(df6) == 1
+
+    PSI.set_next_rows!(df6, df7[3:9, :])
+    @test PSI.get_last_recorded_row(df6) == 8
 end

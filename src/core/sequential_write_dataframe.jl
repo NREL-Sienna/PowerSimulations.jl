@@ -32,14 +32,20 @@ function get_last_recorded_value(df::SequentialWriteDataFrame)
     return df.data[get_last_recorded_row(df), :]
 end
 
-function set_next_rows!(df::SequentialWriteDataFrame, vals::Union{AbstractVector, DataFrames.DataFrameRow})
+function set_next_rows!(
+    df::SequentialWriteDataFrame,
+    vals::Union{AbstractVector, DataFrames.DataFrameRow},
+)
     last_recorded_row = get_last_recorded_row(df)
     setindex!(getfield(df, :data), vals, last_recorded_row + 1, :)
     set_last_recorded_row!(df, last_recorded_row + 1)
     return
 end
 
-function set_next_rows!(df::SequentialWriteDataFrame, vals::AbstractMatrix)
+function set_next_rows!(
+    df::SequentialWriteDataFrame,
+    vals::Union{AbstractMatrix, DataFrames.AbstractDataFrame},
+)
     row_count = size(vals)[1]
     last_recorded_row = get_last_recorded_row(df)
     range = (last_recorded_row + 1):(last_recorded_row + row_count)
@@ -52,6 +58,13 @@ end
 
 const DataAPI = DataFrames.DataAPI
 const InvertedIndices = DataFrames.InvertedIndices
+
+DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p2::AbstractVector, p3::Any; kwargs...) = DataFrames.DataFrameRow(getfield(p1, :data), p2, p3; kwargs...)
+DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p2::AbstractVector{<:Integer}, p3::Any; kwargs...) = DataFrames.DataFrameRow(getfield(df, :data), p2, p3; kwargs...)
+DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p2::AbstractVector{Bool}, p3::Any; kwargs...) = DataFrames.DataFrameRow(getfield(df, :data), p2, p3; kwargs...)
+DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p2::AbstractVector{Int64}, p3::Any; kwargs...) = DataFrames.DataFrameRow(getfield(df, :data), p2, p3; kwargs...)
+DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p2::Colon, p3::Any; kwargs...) = DataFrames.DataFrameRow(getfield(df, :data), p2, p3; kwargs...)
+DataFrames.DataFrameRow(df::SequentialWriteDataFrame, p2::Integer, p3::Any; kwargs...) = DataFrames.DataFrameRow(getfield(df, :data), p2, p3; kwargs...)
 
 DataFrames.SubDataFrame(df::SequentialWriteDataFrame, p2::AbstractVector, p3::Any; kwargs...) = DataFrames.SubDataFrame(getfield(p1, :data), p2, p3; kwargs...)
 DataFrames.SubDataFrame(df::SequentialWriteDataFrame, p2::AbstractVector{<:Integer}, p3::Any; kwargs...) = DataFrames.SubDataFrame(getfield(df, :data), p2, p3; kwargs...)
