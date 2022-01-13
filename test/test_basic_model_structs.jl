@@ -125,4 +125,6 @@ end
 
     PSI.set_next_rows!(df6, df7[3:9, :])
     @test PSI.get_last_recorded_row(df6) == 8
+
+    PSI.set_update_timestamp!(df6, now())
 end

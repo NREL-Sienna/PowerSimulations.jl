@@ -34,15 +34,11 @@ function _get_last_updated_timestamp(s::ValueState)
     if last_row_ix == 0
         return UNSET_INI_TIME
     end
-    return get_timestamps(s)[last_row_ix]
+    return get_update_timestamp(s.values)
 end
 
 function _get_state_value(s::ValueState, date::Dates.DateTime)
-    if _get_last_updated_timestamp(s) == date
-        s_index = get_last_recorded_row(s)
-    else
-        s_index = find_timestamp_index(get_timestamps(s), date)
-    end
+    s_index = find_timestamp_index(get_timestamps(s), date)
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
     end

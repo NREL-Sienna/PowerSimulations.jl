@@ -4,7 +4,7 @@ struct SequentialWriteDataFrame <: DataFrames.AbstractDataFrame
     last_recorded_row::Base.RefValue{Int}
     update_timestamp::Base.RefValue{Dates.DateTime}
     SequentialWriteDataFrame(args...; kw...) =
-        new(DataFrames.DataFrame(args...; kw...), Ref(0))
+        new(DataFrames.DataFrame(args...; kw...), Ref(0), Ref(UNSET_INI_TIME))
     SequentialWriteDataFrame(df::DataFrames.DataFrame) =
         new(df, Ref(0), Ref(UNSET_INI_TIME))
 end
@@ -21,7 +21,7 @@ end
 get_update_timestamp(df::SequentialWriteDataFrame) = getfield(df, :update_timestamp)[]
 
 function set_update_timestamp!(df::SequentialWriteDataFrame, val::Dates.DateTime)
-    getfield(df, :last_recorded_row)[] = val
+    getfield(df, :update_timestamp)[] = val
     return
 end
 
@@ -32,11 +32,16 @@ function get_last_recorded_value(df::SequentialWriteDataFrame)
     return getfield(df, :data)[get_last_recorded_row(df), :]
 end
 
+function reset_last_recorded_row!(df::SequentialWriteDataFrame)
+    set_last_recorded_row!(df, 0)
+    return
+end
+
 function set_next_rows!(
     df::SequentialWriteDataFrame,
     vals::Union{AbstractVector, DataFrames.DataFrameRow},
 )
-    last_recorded_row = get_last_recorded_row(df)
+    @show last_recorded_row = get_last_recorded_row(df)
     setindex!(getfield(df, :data), vals, last_recorded_row + 1, :)
     set_last_recorded_row!(df, last_recorded_row + 1)
     return
@@ -48,7 +53,7 @@ function set_next_rows!(
 )
     row_count = size(vals)[1]
     last_recorded_row = get_last_recorded_row(df)
-    range = (last_recorded_row + 1):(last_recorded_row + row_count)
+    @show range = (last_recorded_row + 1):(last_recorded_row + row_count)
     setindex!(getfield(df, :data), vals, range, :)
     set_last_recorded_row!(df, range[end])
     return
