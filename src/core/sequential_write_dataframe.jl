@@ -26,10 +26,10 @@ function set_update_timestamp!(df::SequentialWriteDataFrame, val::Dates.DateTime
 end
 
 function get_last_recorded_value(df::SequentialWriteDataFrame)
-    if get_last_recorded_row(s) == 0
+    if get_last_recorded_row(df) == 0
         error("The DataFrame hasn't been written yet")
     end
-    return df.data[get_last_recorded_row(df), :]
+    return getfield(df, :data)[get_last_recorded_row(df), :]
 end
 
 function set_next_rows!(
