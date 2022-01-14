@@ -30,7 +30,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    ::ValueStates,
+    ::DatasetContainer{DataFrameDataset},
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -61,7 +61,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
-    ::ValueStates,
+    ::DatasetContainer{DataFrameDataset},
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -89,7 +89,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::Union{ValueStates, EmulationModelStore},
+    ::DatasetContainer{DataFrameDataset},
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
@@ -113,14 +113,14 @@ function update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::DecisionModel,
-    state::ValueStates,
+    state::DatasetContainer{DataFrameDataset},
 ) where {T <: Union{PJ.ParameterRef, Float64}}
     current_time = get_current_time(model)
-    state_values = get_state_values(state, get_attribute_key(attributes))
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
 
-    state_data = get_state_data(state, get_attribute_key(attributes))
+    state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = get_timestamps(state_data)
     max_state_index = length(state_data)
 
@@ -146,12 +146,12 @@ function update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::EmulationModel,
-    state::ValueStates,
+    state::DatasetContainer{DataFrameDataset},
 ) where {T <: Union{PJ.ParameterRef, Float64}}
     current_time = get_current_time(model)
-    state_values = get_state_values(state, get_attribute_key(attributes))
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(param_array)
-    state_data = get_state_data(state, get_attribute_key(attributes))
+    state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = get_timestamps(state_data)
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
@@ -178,7 +178,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input,#::ValueStates,
+    input::DatasetContainer{DataFrameDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -205,7 +205,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input,#::ValueStates,
+    input::DatasetContainer{DataFrameDataset},
 ) where {T <: ParameterType, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -242,7 +242,7 @@ function update_parameter_values!(
     attributes::CostFunctionAttributes,
     ::Type{V},
     model::DecisionModel,
-    ::ValueStates,
+    ::DatasetContainer{DataFrameDataset},
 ) where {V <: PSY.Component}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     time_steps = get_time_steps(get_optimization_container(model))

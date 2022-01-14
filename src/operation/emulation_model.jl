@@ -323,7 +323,7 @@ end
 
 function update_parameters!(
     model::EmulationModel,
-    store::Union{ValueStates, EmulationModelStore},
+    store::Union{DatasetContainer{DataFrameDataset}, EmulationModelStore},
 )
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, store)

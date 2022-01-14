@@ -12,7 +12,7 @@ abstract type AbstractModelStore end
 function Base.empty!(store::AbstractModelStore)
     stype = typeof(store)
     for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
-        val = getfield(store, name)
+        val = get_data_field(store, name)
         try
             empty!(val)
         catch
@@ -22,10 +22,12 @@ function Base.empty!(store::AbstractModelStore)
     end
 end
 
+get_data_field(store::AbstractModelStore, type) = getfield(store, type)
+
 function Base.isempty(store::AbstractModelStore)
     stype = typeof(store)
     for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
-        val = getfield(store, name)
+        val = get_data_field(store, name)
         try
             !isempty(val) && return false
         catch
@@ -38,7 +40,7 @@ function Base.isempty(store::AbstractModelStore)
 end
 
 function list_fields(store::AbstractModelStore, container_type::Symbol)
-    return keys(getfield(store, container_type))
+    return keys(get_data_field(store, container_type))
 end
 
 function write_result!(store::AbstractModelStore, key, index, array)
@@ -62,7 +64,7 @@ function read_results(
 end
 
 function list_keys(store::AbstractModelStore, container_type)
-    container = getfield(store, container_type)
+    container = get_data_field(store, container_type)
     return collect(keys(container))
 end
 

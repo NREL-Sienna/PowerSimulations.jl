@@ -444,7 +444,10 @@ function solve!(
     return get_run_status(model)
 end
 
-function update_parameters!(model::DecisionModel, decision_states::ValueStates)
+function update_parameters!(
+    model::DecisionModel,
+    decision_states::DatasetContainer{DataFrameDataset},
+)
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, decision_states)
     end
