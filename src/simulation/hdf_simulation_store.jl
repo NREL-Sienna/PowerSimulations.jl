@@ -6,9 +6,14 @@ mutable struct Dataset
     dataset::HDF5.Dataset
     column_dataset::HDF5.Dataset
     write_index::Int
+    last_recorded_row::Int
+    update_timestamp::Dates.DateTime
 end
 
-Dataset(dataset, column_dataset) = Dataset(dataset, column_dataset, 1)
+Dataset(dataset, column_dataset) = Dataset(dataset, column_dataset, 1, 0, UNSET_INI_TIME)
+
+get_last_recorded_row(ds::Dataset) = ds.last_recorded_row
+get_update_timestamp(ds::Dataset) = ds.update_timestamp
 
 # This only applies if chunks are enabled, and that will only likely happen if we enable
 # compression.
