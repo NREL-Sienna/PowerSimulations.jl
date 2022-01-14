@@ -76,37 +76,76 @@ function initialize_storage!(
     return
 end
 
-function write_result!(
-    data::EmulationModelStore,
-    name::Symbol,
+function write_next_result!(
+    store::EmulationModelStore,
     key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
     array::AbstractArray,
 )
     df = axis_array_to_dataframe(array, key)
-    write_result!(data, name, key, index, df)
+    write_result!(store, key, update_timestamp, df)
+    return
+end
+
+function write_next_result!(
+    store::EmulationModelStore,
+    key::OptimizationContainerKey,
+    update_timestamp::Dates.DateTime,
+    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
+)
+    container = getfield(store, get_store_container_type(key))
+    set_next_rows!(container[key], df)
+    set_update_timestamp!(container[key], update_timestamp)
     return
 end
 
 function write_result!(
-    data::EmulationModelStore,
+    store::EmulationModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::AbstractArray,
+)
+    df = axis_array_to_dataframe(array, key)
+    write_result!(store, name, key, index, update_timestamp, df)
+    return
+end
+
+function write_result!(
+    store::EmulationModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
+    df::DataFrames.DataFrame,
+)
+    @assert_op size(df)[1] == 1
+    write_result!(store, name, key, index, update_timestamp, df[1, :])
+    return
+end
+
+function write_result!(
+    store::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
-    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
+    update_timestamp::Dates.DateTime,
+    df_row::DataFrames.DataFrameRow,
 )
-    container = getfield(data, get_store_container_type(key))
-    set_next_rows!(container[key], df)
+    container = getfield(store, get_store_container_type(key))
+    container[key][index, :] = df_row
+    set_update_timestamp!(container[key], update_timestamp)
     return
 end
 
 function read_results(
-    data::EmulationModelStore,
+    store::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
     index::Union{Int, Nothing} = nothing,
 )
-    container = getfield(data, get_store_container_type(key))
+    container = getfield(store, get_store_container_type(key))
     # Return a copy because callers may mutate it.
     if isnothing(index)
         return copy(container[key], copycols = true)
@@ -115,6 +154,14 @@ function read_results(
     end
 end
 
+function get_last_updated_timestamp(
+    store::EmulationModelStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+)
+    container = getfield(store, get_store_container_type(key))
+    return get_update_timestamp(container[key])
+end
 function write_optimizer_stats!(
     store::EmulationModelStore,
     stats::OptimizerStats,

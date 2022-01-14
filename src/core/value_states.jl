@@ -29,9 +29,8 @@ function get_end_of_step_timestamp(s::ValueState)
     return get_timestamps(s)[s.end_of_step_index]
 end
 
-function _get_last_updated_timestamp(s::ValueState)
-    last_row_ix = get_last_recorded_row(s.values)
-    if last_row_ix == 0
+function get_last_updated_timestamp(s::ValueState)
+    if get_last_recorded_row(s.values) == 0
         return UNSET_INI_TIME
     end
     return get_update_timestamp(s.values)
@@ -46,12 +45,20 @@ function _get_state_value(s::ValueState, date::Dates.DateTime)
 end
 
 function get_last_recorded_value(s::ValueState)
-    get_last_recorded_value(s.values)
+    return get_last_recorded_value(s.values)
 end
 
 function set_last_recorded_row!(s::ValueState, val::Int)
     set_last_recorded_row!(s.values, val)
     return
+end
+
+function get_value_timestamp(s::ValueState, date::Dates.DateTime)
+    s_index = find_timestamp_index(get_timestamps(s), date)
+    if isnothing(s_index)
+        error("Request time stamp $date not in the state")
+    end
+    return get_timestamps(s)[s_index]
 end
 
 struct ValueStates
@@ -246,7 +253,7 @@ function get_state_values(
 end
 
 function get_last_updated_timestamp(state::ValueStates, key::OptimizationContainerKey)
-    return _get_last_updated_timestamp(get_state_data(state, key))
+    return get_last_updated_timestamp(get_state_data(state, key))
 end
 
 function get_last_update_value(state::ValueStates, key::OptimizationContainerKey)

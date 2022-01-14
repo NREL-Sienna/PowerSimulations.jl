@@ -64,40 +64,42 @@ function initialize_storage!(
 end
 
 function write_result!(
-    data::DecisionModelStore,
+    store::DecisionModelStore,
     name::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
     array::AbstractArray,
 )
     df = axis_array_to_dataframe(array, key)
-    write_result!(data, name, key, index, df)
+    write_result!(store, name, key, index, update_timestamp, df)
     return
 end
 
 function write_result!(
-    data::DecisionModelStore,
+    store::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
     df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
 )
-    container = getfield(data, get_store_container_type(key))
+    container = getfield(store, get_store_container_type(key))
     container[key][index] = df
     return
 end
 
 function read_results(
-    data::DecisionModelStore,
+    store::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
     index::Union{DecisionModelIndexType, Nothing} = nothing,
 )
-    container = getfield(data, get_store_container_type(key))
+    container = getfield(store, get_store_container_type(key))
     data = container[key]
     if isnothing(index)
-        @assert length(data) == 1
-        index = first(keys(data))
+        @assert length(store) == 1
+        index = first(keys(store))
     end
 
     # Return a copy because callers may mutate it.

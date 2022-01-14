@@ -501,7 +501,13 @@ function solve!(
     @assert get_current_time(model) == start_time
     if get_run_status(model) == RunStatus.SUCCESSFUL
         advance_execution_count!(model)
-        write_results!(store, model, get_execution_count(model); exports = exports)
+        write_results!(
+            store,
+            model,
+            get_execution_count(model),
+            start_time;
+            exports = exports,
+        )
         write_optimizer_stats!(store, model, get_execution_count(model))
     end
     return get_run_status(model)
