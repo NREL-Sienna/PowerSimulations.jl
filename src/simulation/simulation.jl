@@ -578,17 +578,47 @@ function _apply_warm_start!(model::OperationModel)
     return
 end
 
-function _update_simulation_state!(sim::Simulation, model::EmulationModel)
+function _update_system_state!(sim::Simulation, model_name::Symbol)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    decision_state = get_decision_states(sim_state)
+    simulation_time = get_current_time(sim_state)
+    for key in get_dataset_keys(decision_state)
+        state_data = get_dataset(decision_state, key)
+        last_update = get_update_timestamp(decision_state, key)
+        simulation_time > get_end_of_step_timestamp(state_data) && continue
+        if last_update <= simulation_time
+            update_system_state!(system_state, key, decision_state, simulation_time)
+        else
+            error("Something went really wrong. Please report this error. \\
+                  last_update: $(last_update) \\
+                  simulation_time: $(simulation_time) \\
+                  key: $(encode_key_as_string(key))")
+        end
+        IS.@record :execution StateUpdateEvent(
+            key,
+            simulation_time,
+            model_name,
+            "SystemState",
+        )
+    end
+
+    return
+end
+
+function _update_system_state!(sim::Simulation, model::DecisionModel)
+    _update_system_state!(sim, get_name(model))
+    return
+end
+
+function _update_system_state!(sim::Simulation, model::EmulationModel)
     sim_state = get_simulation_state(sim)
     simulation_time = get_current_time(sim)
     system_state = get_system_states(sim_state)
     store = get_simulation_store(sim)
-
     em_model_name = get_name(model)
-    error()
-    @show
-    for key in list_all_keys(model)
-        @error("Updating state from Emulation")
+    for key in get_container_keys(get_optimization_container(model))
+        !should_write_resulting_value(key) && continue
         update_system_state!(system_state, key, store, em_model_name, simulation_time)
         IS.@record :execution StateUpdateEvent(
             key,
@@ -597,6 +627,12 @@ function _update_simulation_state!(sim::Simulation, model::EmulationModel)
             "SystemState",
         )
     end
+    return
+end
+
+function _update_simulation_state!(sim::Simulation, model::EmulationModel)
+    _update_system_state!(sim, get_name(model))
+    _update_system_state!(sim, model)
     return
 end
 
@@ -627,7 +663,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
             )
         end
     end
-    _set_system_state_from_decision_state!(state, model)
+    _update_system_state!(sim, model)
     return
 end
 
@@ -641,55 +677,18 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         em_store = get_em_data(store)
         # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
         store_update_time = get_last_updated_timestamp(em_store, key)
-        state_update_time = get_last_updated_timestamp(system_state, key)
+        state_update_time = get_update_timestamp(system_state, key)
         if store_update_time < state_update_time
             state_values = get_last_recorded_value(state_data)
             write_next_result!(em_store, key, state_update_time, state_values)
         elseif store_update_time == state_update_time
             state_values = get_last_recorded_value(state_data)
             ix = get_last_recorded_row(em_store, key)
-            @show key
-            @show ix
-            @show simulation_time
-            @show store_update_time
-            @show state_update_time
             write_result!(em_store, model_name, key, ix, state_update_time, state_values)
         else
             continue
         end
     end
-    return
-end
-
-function _set_system_state_from_decision_state!(
-    sim_state::SimulationState,
-    model::DecisionModel,
-)
-    system_state = get_system_states(sim_state)
-    decision_state = get_decision_states(sim_state)
-    simulation_time = get_current_time(sim_state)
-    @error("Updating state from $(get_name(model))")
-    for key in get_dataset_keys(decision_state)
-        state_data = get_dataset(decision_state, key)
-        last_update = get_update_timestamp(decision_state, key)
-        simulation_time > get_end_of_step_timestamp(state_data) && continue
-        if last_update <= simulation_time
-            @show "sys from decision", key
-            update_system_state!(system_state, key, decision_state, simulation_time)
-        else
-            error("Something went really wrong. Please report this error. \\
-                  last_update: $(last_update) \\
-                  simulation_time: $(simulation_time) \\
-                  key: $(encode_key_as_string(key))")
-        end
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            get_name(model),
-            "SystemState",
-        )
-    end
-
     return
 end
 

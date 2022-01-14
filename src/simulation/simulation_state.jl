@@ -343,17 +343,22 @@ function update_system_state!(
     decision_data_set = get_dataset(decision_state, key)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
-    @show "update system state from decision state" key, simulation_time
-    @show ts = get_value_timestamp(decision_data_set, simulation_time)
+
+    ts = get_value_timestamp(decision_data_set, simulation_time)
     system_data_set = get_dataset(state, key)
+
+    if get_update_timestamp(system_data_set) == ts
+        return
+    end
+
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_data_set, ts)
+    # Keep coordination between fields. System state is an array of size 1
+    get_timestamps(system_data_set)[1] = ts
     get_dataset_values(state, key)[1, :] =
         get_dataset_value(decision_data_set, simulation_time)
+    # This value shouldn't be other than one and after one execution is no-op.
     set_last_recorded_row!(system_data_set, 1)
-    if simulation_time > Dates.DateTime("2020-01-01T00:10:00")
-        error()
-    end
     return
 end
 

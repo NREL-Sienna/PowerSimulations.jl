@@ -101,10 +101,6 @@ function write_next_result!(
     container = getfield(store.data_container, get_store_container_type(key))
     set_next_rows!(container[key], df)
     set_update_timestamp!(container[key], update_timestamp)
-    @show "write_next_result"
-    @show key
-    @show get_last_recorded_row(container[key])
-    @show update_timestamp
     return
 end
 
@@ -155,11 +151,12 @@ function read_results(
     index::Union{Int, Nothing} = nothing,
 )
     container = getfield(store.data_container, get_store_container_type(key))
+    df = get_values(container[key])
     # Return a copy because callers may mutate it.
     if isnothing(index)
-        return copy(container[key], copycols = true)
+        return copy(df, copycols = true)
     else
-        return copy(container[key], copycols = true)[index, :]
+        return copy(df, copycols = true)[index, :]
     end
 end
 
