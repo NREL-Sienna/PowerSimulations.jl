@@ -114,11 +114,7 @@ end
     end
 
     df6 = PSI.ExtendedDataFrame(:a => ones(10), :b => ones(10), :c => ones(10))
-    df7 = PSI.ExtendedDataFrame(
-        :a => 5 * ones(10),
-        :b => 7 * ones(10),
-        :c => 9 * ones(10),
-    )
+    df7 = PSI.ExtendedDataFrame(:a => 5 * ones(10), :b => 7 * ones(10), :c => 9 * ones(10))
 
     PSI.set_next_rows!(df6, df7[3, :])
     @test PSI.get_last_recorded_row(df6) == 1
