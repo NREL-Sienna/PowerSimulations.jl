@@ -156,7 +156,6 @@ end
 
 function get_last_updated_timestamp(
     store::EmulationModelStore,
-    ::Symbol,
     key::OptimizationContainerKey,
 )
     container = getfield(store, get_store_container_type(key))

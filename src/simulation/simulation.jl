@@ -642,7 +642,7 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     for key in get_state_keys(system_state)
         state_data = get_state_data(system_state, key)
         em_store = get_em_data(store)
-        store_update_time = get_last_updated_timestamp(em_store, model_name, key)
+        store_update_time = get_last_updated_timestamp(em_store, key)
         state_update_time = get_last_updated_timestamp(system_state, key)
         state_values = get_last_recorded_value(state_data)
         if store_update_time < state_update_time
