@@ -1,4 +1,3 @@
-
 struct ExtendedDataFrame <: DataFrames.AbstractDataFrame
     data::DataFrames.DataFrame
     last_recorded_row::Base.RefValue{Int}
@@ -29,11 +28,6 @@ function get_last_recorded_value(df::ExtendedDataFrame)
         error("The DataFrame hasn't been written yet")
     end
     return getfield(df, :data)[get_last_recorded_row(df), :]
-end
-
-function reset_last_recorded_row!(df::ExtendedDataFrame)
-    set_last_recorded_row!(df, 0)
-    return
 end
 
 function set_next_rows!(
