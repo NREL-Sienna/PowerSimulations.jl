@@ -86,26 +86,13 @@ function initialize_storage!(
     return
 end
 
-function write_next_result!(
+function write_next_value!(
     store::EmulationModelStore,
     key::OptimizationContainerKey,
     update_timestamp::Dates.DateTime,
-    array::AbstractArray,
+    value,
 )
-    df = axis_array_to_dataframe(array, key)
-    write_result!(store, key, update_timestamp, df)
-    return
-end
-
-function write_next_result!(
-    store::EmulationModelStore,
-    key::OptimizationContainerKey,
-    update_timestamp::Dates.DateTime,
-    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
-)
-    container = get_data_field(store, get_store_container_type(key))
-    set_next_rows!(container[key], df)
-    set_update_timestamp!(container[key], update_timestamp)
+    write_next_value!(store.data_container, key, update_timestamp, value)
     return
 end
 
