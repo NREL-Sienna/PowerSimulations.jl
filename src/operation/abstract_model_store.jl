@@ -73,7 +73,7 @@ function get_variable_value(
     ::T,
     ::Type{U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return store.variables[VariableKey(T, U)]
+    return get_data_field(store, :variables)[VariableKey(T, U)]
 end
 
 function get_aux_variable_value(
@@ -81,7 +81,7 @@ function get_aux_variable_value(
     ::T,
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return store.aux_variables[AuxVarKey(T, U)]
+    return get_data_field(store, :aux_variables)[AuxVarKey(T, U)]
 end
 
 function get_dual_value(
@@ -89,7 +89,7 @@ function get_dual_value(
     ::T,
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return store.duals[ConstraintKey(T, U)]
+    return get_data_field(store, :duals)[ConstraintKey(T, U)]
 end
 
 function get_parameter_value(
@@ -97,5 +97,5 @@ function get_parameter_value(
     ::T,
     ::Type{U},
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return store.parameters[ParameterKey(T, U)]
+    return get_data_field(store, :parameters)[ParameterKey(T, U)]
 end
