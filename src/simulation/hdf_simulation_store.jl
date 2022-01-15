@@ -243,7 +243,7 @@ function initialize_problem_storage!(
                 HDF5.write_dataset(group, col, string.(reqs["columns"]))
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                datasets[key] = Dataset(dataset, column_dataset)
+                datasets[key] = HDF5Dataset(dataset, column_dataset)
                 add_output_cache!(
                     store.cache,
                     problem,
@@ -280,7 +280,7 @@ function initialize_problem_storage!(
             HDF5.write_dataset(group, col, string.(reqs["columns"]))
             column_dataset = group[col]
             datasets = getfield(get_em_data(store), type)
-            datasets[key] = Dataset(dataset, column_dataset)
+            datasets[key] = HDF5Dataset(dataset, column_dataset)
         end
     end
     # This has to run after problem groups are created.
@@ -509,7 +509,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                 if !endswith(name, "columns")
                     dataset = group[name]
                     column_dataset = group[_make_column_name(name)]
-                    item = Dataset(dataset, column_dataset)
+                    item = HDF5Dataset(dataset, column_dataset)
                     container_key = deserialize_key(container_metadata, name)
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(
