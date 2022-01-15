@@ -219,11 +219,11 @@ end
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
     @test isa(get_variable_values(res), Dict{PSI.VariableKey, DataFrames.DataFrame})
-    @test isa(get_total_cost(res), Float64)
+    @test isa(PSI.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(get_dual_values(res), Dict{PSI.ConstraintKey, DataFrames.DataFrame})
     @test isa(get_parameter_values(res), Dict{PSI.ParameterKey, DataFrames.DataFrame})
-    @test isa(get_resolution(res), Dates.TimePeriod)
+    @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(get_system(res), PSY.System)
     @test length(get_timestamps(res)) == 24
 end

@@ -98,8 +98,8 @@ function read_results(
     container = getfield(store, get_store_container_type(key))
     data = container[key]
     if isnothing(index)
-        @assert length(store) == 1
-        index = first(keys(store))
+        @assert length(data) == 1
+        index = first(keys(data))
     end
 
     # Return a copy because callers may mutate it.

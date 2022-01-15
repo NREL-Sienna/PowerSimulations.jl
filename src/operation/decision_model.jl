@@ -379,11 +379,12 @@ function solve!(
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)
                     solve_impl!(model)
-                    write_results!(get_store(model), model, get_initial_time(model))
+                    current_time = get_initial_time(model)
+                    write_results!(get_store(model), model, current_time, current_time)
                     write_optimizer_stats!(
                         get_store(model),
                         get_optimizer_stats(model),
-                        get_initial_time(model),
+                        current_time,
                     )
                 end
                 if serialize
