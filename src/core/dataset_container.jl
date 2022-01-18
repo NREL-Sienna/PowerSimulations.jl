@@ -179,29 +179,6 @@ function get_last_update_value(container::DatasetContainer, key::OptimizationCon
     return get_last_recorded_value(get_dataset(container, key))
 end
 
-function write_next_value!(
-    container::DatasetContainer,
-    key::OptimizationContainerKey,
-    update_timestamp::Dates.DateTime,
-    array::AbstractArray,
-)
-    df = axis_array_to_dataframe(array, key)
-    write_next_value!(store, key, update_timestamp, df)
-    return
-end
-
-function write_next_value!(
-    container::DatasetContainer,
-    key::OptimizationContainerKey,
-    update_timestamp::Dates.DateTime,
-    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
-)
-    dataset = getfield(container, get_store_container_type(key))
-    set_next_rows!(dataset[key], df)
-    set_update_timestamp!(dataset[key], update_timestamp)
-    return
-end
-
 function set_dataset_values!(
     container::DatasetContainer,
     key::OptimizationContainerKey,

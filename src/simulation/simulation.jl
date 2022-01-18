@@ -671,7 +671,6 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
-    simulation_time = get_current_time(sim_state)
     for key in get_dataset_keys(system_state)
         state_data = get_dataset(system_state, key)
         em_store = get_em_data(store)
@@ -680,7 +679,8 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         state_update_time = get_update_timestamp(system_state, key)
         if store_update_time < state_update_time
             state_values = get_last_recorded_value(state_data)
-            write_next_value!(em_store, key, state_update_time, state_values)
+            ix = get_last_recorded_row(em_store, key) + 1
+            write_result!(em_store, model_name, key, ix, state_update_time, state_values)
         elseif store_update_time == state_update_time
             state_values = get_last_recorded_value(state_data)
             ix = get_last_recorded_row(em_store, key)

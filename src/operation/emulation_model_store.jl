@@ -86,16 +86,6 @@ function initialize_storage!(
     return
 end
 
-function write_next_value!(
-    store::EmulationModelStore,
-    key::OptimizationContainerKey,
-    update_timestamp::Dates.DateTime,
-    value,
-)
-    write_next_value!(store.data_container, key, update_timestamp, value)
-    return
-end
-
 function write_result!(
     store::EmulationModelStore,
     name::Symbol,

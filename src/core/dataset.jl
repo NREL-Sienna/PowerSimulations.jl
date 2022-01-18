@@ -85,28 +85,6 @@ function get_value_timestamp(s::DataFrameDataset, date::Dates.DateTime)
     return get_timestamps(s)[s_index]
 end
 
-function set_next_rows!(
-    s::DataFrameDataset,
-    vals::Union{AbstractVector, DataFrames.DataFrameRow},
-)
-    last_recorded_row = get_last_recorded_row(s)
-    setindex!(s.values, vals, last_recorded_row + 1, :)
-    set_last_recorded_row!(s, last_recorded_row + 1)
-    return
-end
-
-function set_next_rows!(
-    s::DataFrameDataset,
-    vals::Union{AbstractMatrix, DataFrames.AbstractDataFrame},
-)
-    row_count = size(vals)[1]
-    last_recorded_row = get_last_recorded_row(s)
-    range = (last_recorded_row + 1):(last_recorded_row + row_count)
-    setindex!(s.values, vals, range, :)
-    set_last_recorded_row!(df, range[end])
-    return
-end
-
 function set_value!(s::DataFrameDataset, index::Int, vals)
     setindex!(s.values, vals, index, :)
     return
