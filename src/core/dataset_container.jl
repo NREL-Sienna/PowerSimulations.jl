@@ -113,8 +113,9 @@ function get_dataset(
     return get_dataset(container, ExpressionKey(T, U))
 end
 
+# Get dataset values is currently type unstable
 function get_dataset_values(container::DatasetContainer, key::OptimizationContainerKey)
-    return get_values(get_dataset(container, key))
+    return (get_dataset(container, key))
 end
 
 function get_dataset_values(
@@ -198,5 +199,15 @@ function write_next_value!(
     dataset = getfield(container, get_store_container_type(key))
     set_next_rows!(dataset[key], df)
     set_update_timestamp!(dataset[key], update_timestamp)
+    return
+end
+
+function set_dataset_values!(
+    container::DatasetContainer,
+    key::OptimizationContainerKey,
+    index::Int,
+    vals,
+)
+    set_value!(get_dataset_values(container, key), index, vals)
     return
 end

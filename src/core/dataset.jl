@@ -1,9 +1,14 @@
 abstract type AbstractDataset end
 
+Base.length(s::AbstractDataset) = size(s.values)[1]
+get_last_recorded_row(s::AbstractDataset) = s.last_recorded_row
+
+# Values field is accessed with dot syntax to avoid type inestability
+
 mutable struct DataFrameDataset <: AbstractDataset
     values::DataFrames.DataFrame
     timestamps::Vector{Dates.DateTime}
-    # Resolution is needed because AbstractDataset might have just one entry
+    # Resolution is needed because AbstractDataset might have just one row
     resolution::Dates.Period
     end_of_step_index::Int
     last_recorded_row::Int
@@ -50,11 +55,11 @@ function get_dataset_value(s::DataFrameDataset, date::Dates.DateTime)
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
     end
-    return get_values(s)[s_index, :]
+    return s.values[s_index, :]
 end
 
 function get_column_names(::OptimizationContainerKey, s::DataFrameDataset)
-    return DataFrames.names(get_values(s))
+    return DataFrames.names(s.values)
 end
 
 function get_last_recorded_value(s::DataFrameDataset)
@@ -102,6 +107,11 @@ function set_next_rows!(
     return
 end
 
+function set_value!(s::DataFrameDataset, index::Int, vals)
+    setindex!(s.values, vals, index, :)
+    return
+end
+
 mutable struct HDF5Dataset <: AbstractDataset
     values::HDF5.Dataset
     column_dataset::HDF5.Dataset
@@ -113,10 +123,6 @@ end
 function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
     return s.column_dataset[:]
 end
-
-Base.length(s::AbstractDataset) = size(s.values)[1]
-get_values(s::AbstractDataset) = s.values
-get_last_recorded_row(s::AbstractDataset) = s.last_recorded_row
 
 HDF5Dataset(values, column_dataset) =
     HDF5Dataset(values, column_dataset, 1, 0, UNSET_INI_TIME)

@@ -131,7 +131,7 @@ function write_result!(
     df_row::DataFrames.DataFrameRow,
 )
     container = get_data_field(store, get_store_container_type(key))
-    get_values(container[key])[index, :] = df_row
+    set_dataset_values!(container, key, index, df_row)
     set_last_recorded_row!(container[key], index)
     set_update_timestamp!(container[key], update_timestamp)
     return
@@ -144,7 +144,7 @@ function read_results(
     index::Union{Int, Nothing} = nothing,
 )
     container = get_data_field(store, get_store_container_type(key))
-    df = get_values(container[key])
+    df = container[key].values
     # Return a copy because callers may mutate it.
     if isnothing(index)
         return copy(df, copycols = true)
