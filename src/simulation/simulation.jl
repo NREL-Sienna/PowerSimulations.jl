@@ -100,7 +100,7 @@ function get_simulation_time(sim::Simulation, problem_number::Int)
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-IS.get_name(sim::Simulation) = sim.name
+get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
 get_current_execution_index(sim::Simulation) = get_sequence(sim).current_execution_index
@@ -324,33 +324,38 @@ function _get_emulation_store_requirements(sim::Simulation)
     system_state = get_system_states(sim_state)
     sim_time = get_steps(sim) * get_step_resolution(get_sequence(sim))
     reqs = SimulationModelStoreRequirements()
-    dims = sim_time ÷ get_system_states_resolution(sim_state)
 
     for (key, state_values) in get_duals_values(system_state)
         !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_parameters_values(system_state)
+        !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_variables_values(system_state)
         !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
         !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.aux_variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
 
     for (key, state_values) in get_expression_values(system_state)
         !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
     end
@@ -410,6 +415,7 @@ function _initialize_problem_storage!(
     )
     @debug "initialized problem requirements" simulation_store_params
     store = get_simulation_store(sim)
+
     initialize_problem_storage!(
         store,
         simulation_store_params,
@@ -578,13 +584,14 @@ function _update_simulation_state!(sim::Simulation, model::EmulationModel)
     system_state = get_system_states(sim_state)
     store = get_simulation_store(sim)
     em_data = get_em_data(store)
-    ix = get_last_recorded_row(em_data)
     em_model_name = get_name(model)
-    for key in PSI.list_all_keys(model)
-        res = PSI.read_result(DataFrames.DataFrame, store, em_model_name, key, ix)
+    for key in list_all_keys(model)
+        ix = get_last_recorded_row(em_data, key)
+        res = read_result(DataFrames.DataFrame, store, em_model_name, key, ix)
         # TODO: Implement setter functions for this operation to avoid hardcoding index 1
         # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
         # in-place value update
+        set_update_timestamp!(get_state_values(system_state, key), simulation_time)
         get_state_values(system_state, key)[1, :] .= DataFrames.values(res)
         IS.@record :execution StateUpdateEvent(
             key,
@@ -624,22 +631,29 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         end
     end
     _set_system_state_from_decision_state!(state, model)
-    if get_name(model) == get_last_decision_model(state)
-        _write_state_to_store(store, state)
-    end
     return
 end
 
-function _write_state_to_store(store, sim_state::SimulationState)
+function _write_state_to_store!(store::SimulationStore, sim::Simulation)
+    sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
     index = get_last_recorded_row(get_em_data(store))
     for key in get_state_keys(system_state)
         state_data = get_state_data(system_state, key)
-        values = get_last_recorded_value(state_data)
-        write_result!(store, model_name, key, index + 1, values)
+        em_store = get_em_data(store)
+        store_update_time = get_last_updated_timestamp(em_store, key)
+        state_update_time = get_last_updated_timestamp(system_state, key)
+        state_values = get_last_recorded_value(state_data)
+        if store_update_time < state_update_time
+            write_next_result!(em_store, key, state_update_time, state_values)
+        elseif store_update_time == state_update_time
+            ix = get_last_recorded_row(em_store, key)
+            write_result!(em_store, model_name, key, ix, state_update_time, state_values)
+        else
+            continue
+        end
     end
-    set_last_recorded_row!(get_em_data(store), index + 1)
     return
 end
 
@@ -659,6 +673,8 @@ function _set_system_state_from_decision_state!(
             # TODO: Implement setter functions for this operation to avoid hardcoding index 1
             # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
             # in-place value update
+            ts = get_value_timestamp(state_data, simulation_time)
+            set_update_timestamp!(get_state_values(system_state, key), ts)
             get_state_values(system_state, key)[1, :] .=
                 DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
         else
@@ -756,9 +772,11 @@ function _execute!(
                         solve!(step, model, get_current_time(sim), store; exports = exports)
                 end # Run problem Timer
 
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Decision State" begin
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
                     if status == RunStatus.SUCCESSFUL
+                        # TODO: _update_simulation_state! needs performance improvements
                         _update_simulation_state!(sim, model)
+                        _write_state_to_store!(store, sim)
                     end
                 end
 

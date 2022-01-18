@@ -80,7 +80,7 @@ function _initialize_model_states!(
             column_names = get_column_names(key, value)
             if !haskey(field_states, key) || length(field_states[key]) < value_counts
                 field_states[key] = ValueState(
-                    DataFrames.DataFrame(
+                    ExtendedDataFrame(
                         fill(NaN, value_counts, length(column_names)),
                         column_names,
                     ),
@@ -114,7 +114,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             SystemValueState(
-                DataFrames.DataFrame(cols .=> NaN),
+                ExtendedDataFrame(cols .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -142,7 +142,7 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 SystemValueState(
-                    DataFrames.DataFrame(column_names .=> NaN),
+                    ExtendedDataFrame(column_names .=> NaN),
                     simulation_initial_time,
                     get_resolution(emulation_model),
                 ),
@@ -159,7 +159,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             SystemValueState(
-                DataFrames.DataFrame(cols .=> NaN),
+                ExtendedDataFrame(cols .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -214,14 +214,14 @@ function update_state_data!(
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
-    set_last_recorded_row!(state_data, state_data_index)
-
+    set_update_timestamp!(state_data.values, simulation_time)
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
         for name in DataFrames.names(store_data), i in state_range
             # TODO: We could also interpolate here
             state_data.values[i, name] = store_data[t, name]
         end
+        set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
     end
 
@@ -251,7 +251,7 @@ function update_state_data!(
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[1]
-    set_last_recorded_row!(state_data, state_data_index)
+    set_update_timestamp!(state_data.values, simulation_time)
 
     if resolution_ratio == 1.0
         increment_per_period = 1.0
@@ -281,6 +281,7 @@ function update_state_data!(
                     state_data.values[i - 1, name] + increment_per_period : 0
             end
         end
+        set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
     end
 

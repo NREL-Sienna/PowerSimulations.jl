@@ -54,7 +54,7 @@ include("test_utils/operations_problem_templates.jl")
 
 const LOG_FILE = "power-simulations-test.log"
 
-ENV["RUNNING_PSID_TESTS"] = "true"
+ENV["RUNNING_PSI_TESTS"] = "true"
 
 const DISABLED_TEST_FILES = [
     # "test_basic_model_structs.jl",

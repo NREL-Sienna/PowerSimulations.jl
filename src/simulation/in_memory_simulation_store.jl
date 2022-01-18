@@ -81,9 +81,17 @@ function write_result!(
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
     array,
 )
-    write_result!(get_dm_data(store)[model_name], model_name, key, index, array)
+    write_result!(
+        get_dm_data(store)[model_name],
+        model_name,
+        key,
+        index,
+        update_timestamp,
+        array,
+    )
     return
 end
 
@@ -92,9 +100,10 @@ function write_result!(
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
     array,
 )
-    write_result!(get_em_data(store), model_name, key, index, array)
+    write_result!(get_em_data(store), model_name, key, index, update_timestamp, array)
     return
 end
 
@@ -125,7 +134,7 @@ function initialize_problem_storage!(
     for type in STORE_CONTAINERS
         for (name, reqs) in getfield(em_problem_reqs, type)
             container = getfield(get_em_data(store), type)
-            container[name] = DataFrames.DataFrame(
+            container[name] = ExtendedDataFrame(
                 OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
             )
             @debug "Added $type $name in emulation store" _group =

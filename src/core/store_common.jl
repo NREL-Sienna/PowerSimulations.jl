@@ -13,7 +13,8 @@ const EmulationModelIndexType = Int
 function write_results!(
     store,
     model::OperationModel,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType};
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime;
     exports = nothing,
 )
     if exports !== nothing
@@ -28,11 +29,11 @@ function write_results!(
         export_params = nothing
     end
 
-    write_model_dual_results!(store, model, index, export_params)
-    write_model_parameter_results!(store, model, index, export_params)
-    write_model_variable_results!(store, model, index, export_params)
-    write_model_aux_variable_results!(store, model, index, export_params)
-    write_model_expression_results!(store, model, index, export_params)
+    write_model_dual_results!(store, model, index, update_timestamp, export_params)
+    write_model_parameter_results!(store, model, index, update_timestamp, export_params)
+    write_model_variable_results!(store, model, index, update_timestamp, export_params)
+    write_model_aux_variable_results!(store, model, index, update_timestamp, export_params)
+    write_model_expression_results!(store, model, index, update_timestamp, export_params)
     return
 end
 
@@ -40,6 +41,7 @@ function write_model_dual_results!(
     store,
     model::T,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime,
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -51,7 +53,7 @@ function write_model_dual_results!(
 
     for (key, constraint) in get_duals(container)
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, constraint)
+        write_result!(store, model_name, key, index, update_timestamp, constraint)
 
         if export_params !== nothing &&
            should_export_dual(export_params[:exports], index, model_name, key)
@@ -71,6 +73,7 @@ function write_model_parameter_results!(
     store,
     model::T,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime,
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -89,7 +92,7 @@ function write_model_parameter_results!(
         multiplier_array = get_multiplier_array(container)
         @assert_op length(axes(param_array)) == 2
         data = jump_value.(param_array) .* multiplier_array
-        write_result!(store, model_name, key, index, data)
+        write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
            should_export_parameter(export_params[:exports], index, model_name, key)
@@ -108,6 +111,7 @@ function write_model_variable_results!(
     store,
     model::T,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime,
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -125,7 +129,7 @@ function write_model_variable_results!(
 
     for (key, variable) in variables
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, variable)
+        write_result!(store, model_name, key, index, update_timestamp, variable)
 
         if export_params !== nothing &&
            should_export_variable(export_params[:exports], index, model_name, key)
@@ -145,6 +149,7 @@ function write_model_aux_variable_results!(
     store,
     model::T,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime,
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -156,7 +161,7 @@ function write_model_aux_variable_results!(
 
     for (key, variable) in get_aux_variables(container)
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, variable)
+        write_result!(store, model_name, key, index, update_timestamp, variable)
 
         if export_params !== nothing &&
            should_export_aux_variable(export_params[:exports], index, model_name, key)
@@ -176,6 +181,7 @@ function write_model_expression_results!(
     store,
     model::T,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime,
     export_params::Union{Dict{Symbol, Any}, Nothing},
 ) where {T <: OperationModel}
     container = get_optimization_container(model)
@@ -193,7 +199,7 @@ function write_model_expression_results!(
 
     for (key, expression) in expressions
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, expression)
+        write_result!(store, model_name, key, index, update_timestamp, expression)
 
         if export_params !== nothing &&
            should_export_expression(export_params[:exports], index, model_name, key)
