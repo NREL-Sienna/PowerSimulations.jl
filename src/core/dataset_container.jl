@@ -158,10 +158,7 @@ function get_dataset_values(
     return get_dataset_value(get_dataset(container, key), date)
 end
 
-function get_last_recorded_row(
-    container::DatasetContainer,
-    key::OptimizationContainerKey,
-)
+function get_last_recorded_row(container::DatasetContainer, key::OptimizationContainerKey)
     return get_last_recorded_row(get_dataset(container, key))
 end
 
