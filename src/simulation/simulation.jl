@@ -680,11 +680,11 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         if store_update_time < state_update_time
             state_values = get_last_recorded_value(state_data)
             ix = get_last_recorded_row(em_store, key) + 1
-            write_result!(em_store, model_name, key, ix, state_update_time, state_values)
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
         elseif store_update_time == state_update_time
             state_values = get_last_recorded_value(state_data)
             ix = get_last_recorded_row(em_store, key)
-            write_result!(em_store, model_name, key, ix, state_update_time, state_values)
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
         else
             continue
         end

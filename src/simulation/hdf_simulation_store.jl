@@ -340,10 +340,10 @@ function read_result(
     index::DecisionModelIndexType,
 )
     simulation_step, execution_index = _get_indices(store, model_name, index)
-    return read_result(store, model_name, key, simulation_step, execution_index)
+    return _read_result(store, model_name, key, simulation_step, execution_index)
 end
 
-function read_result(
+function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,

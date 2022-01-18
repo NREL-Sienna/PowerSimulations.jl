@@ -165,5 +165,5 @@ function read_optimizer_stats(store::EmulationModelStore)
 end
 
 function get_last_recorded_row(x::EmulationModelStore, key::OptimizationContainerKey)
-    return get_last_recorded_row(get_data_field(x, get_store_container_type(key))[key])
+    return get_last_recorded_row(x.data_container, key)
 end
