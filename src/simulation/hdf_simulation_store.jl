@@ -2,19 +2,6 @@ const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
 const OPTIMIZER_STATS_PATH = "optimizer_stats"
 
-mutable struct Dataset
-    dataset::HDF5.Dataset
-    column_dataset::HDF5.Dataset
-    write_index::Int
-    last_recorded_row::Int
-    update_timestamp::Dates.DateTime
-end
-
-Dataset(dataset, column_dataset) = Dataset(dataset, column_dataset, 1, 0, UNSET_INI_TIME)
-
-get_last_recorded_row(ds::Dataset) = ds.last_recorded_row
-get_update_timestamp(ds::Dataset) = ds.update_timestamp
-
 # This only applies if chunks are enabled, and that will only likely happen if we enable
 # compression.
 # The optimal number of chunks to store in memory will vary widely.
@@ -27,35 +14,14 @@ get_update_timestamp(ds::Dataset) = ds.update_timestamp
 DEFAULT_MAX_CHUNK_BYTES = 128 * KiB
 
 """
-Stores HDF5 datasets for one problem.
-"""
-mutable struct ModelDatasets
-    duals::Dict{ConstraintKey, Dataset}
-    parameters::Dict{ParameterKey, Dataset}
-    variables::Dict{VariableKey, Dataset}
-    aux_variables::Dict{AuxVarKey, Dataset}
-    expressions::Dict{ExpressionKey, Dataset}
-end
-
-function ModelDatasets()
-    return ModelDatasets(
-        Dict{ConstraintKey, Dataset}(),
-        Dict{ParameterKey, Dataset}(),
-        Dict{VariableKey, Dataset}(),
-        Dict{AuxVarKey, Dataset}(),
-        Dict{ExpressionKey, Dataset}(),
-    )
-end
-
-"""
 Stores simulation data in an HDF file.
 """
 mutable struct HdfSimulationStore <: SimulationStore
     file::HDF5.File
     params::SimulationStoreParams
     # The key order is the problem execution order.
-    dm_data::OrderedDict{Symbol, ModelDatasets}
-    em_data::ModelDatasets
+    dm_data::OrderedDict{Symbol, DatasetContainer{HDF5Dataset}}
+    em_data::DatasetContainer{HDF5Dataset}
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
@@ -81,13 +47,13 @@ function HdfSimulationStore(
         @debug "Created store" file_path
     end
 
-    datasets = OrderedDict{Symbol, ModelDatasets}()
+    datasets = OrderedDict{Symbol, DatasetContainer{HDF5Dataset}}()
     cache = OptimizationResultCache()
     store = HdfSimulationStore(
         file,
         SimulationStoreParams(),
         datasets,
-        ModelDatasets(),
+        DatasetContainer{HDF5Dataset}(),
         Dict{Symbol, HDF5.Dataset}(),
         Dict{Symbol, Int}(),
         cache,
@@ -264,7 +230,7 @@ function initialize_problem_storage!(
     @debug "initialize_problem_storage" store.cache
 
     for problem in keys(store.params.decision_models_params)
-        get_dm_data(store)[problem] = ModelDatasets()
+        get_dm_data(store)[problem] = DatasetContainer{HDF5Dataset}()
         problem_group = _get_group_or_create(problems_group, string(problem))
         for type in STORE_CONTAINERS
             group = _get_group_or_create(problem_group, string(type))
@@ -277,7 +243,7 @@ function initialize_problem_storage!(
                 HDF5.write_dataset(group, col, string.(reqs["columns"]))
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                datasets[key] = Dataset(dataset, column_dataset)
+                datasets[key] = HDF5Dataset(dataset, column_dataset)
                 add_output_cache!(
                     store.cache,
                     problem,
@@ -314,7 +280,7 @@ function initialize_problem_storage!(
             HDF5.write_dataset(group, col, string.(reqs["columns"]))
             column_dataset = group[col]
             datasets = getfield(get_em_data(store), type)
-            datasets[key] = Dataset(dataset, column_dataset)
+            datasets[key] = HDF5Dataset(dataset, column_dataset)
         end
     end
     # This has to run after problem groups are created.
@@ -374,10 +340,10 @@ function read_result(
     index::DecisionModelIndexType,
 )
     simulation_step, execution_index = _get_indices(store, model_name, index)
-    return read_result(store, model_name, key, simulation_step, execution_index)
+    return _read_result(store, model_name, key, simulation_step, execution_index)
 end
 
-function read_result(
+function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
@@ -399,7 +365,7 @@ function read_result(
     dataset = _get_dataset(store, model_name, key)
     dset = dataset.dataset
     row_index = (simulation_step - 1) * num_executions + execution_index
-    columns = dataset.column_dataset[:]
+    columns = get_column_names(key, dataset)
 
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
         num_dims = ndims(dset)
@@ -423,6 +389,7 @@ function write_result!(
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
+    ::Dates.DateTime,
     data,
 )
     output_cache = get_output_cache(store.cache, model_name, key)
@@ -457,6 +424,7 @@ function write_result!(
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
     data,
 )
     return
@@ -534,14 +502,14 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
             container_metadata,
         )
-        get_dm_data(store)[model_name] = ModelDatasets()
+        get_dm_data(store)[model_name] = DatasetContainer{HDF5Dataset}()
         for type in STORE_CONTAINERS
             group = problem_group[string(type)]
             for name in keys(group)
                 if !endswith(name, "columns")
                     dataset = group[name]
                     column_dataset = group[_make_column_name(name)]
-                    item = Dataset(dataset, column_dataset)
+                    item = HDF5Dataset(dataset, column_dataset)
                     container_key = deserialize_key(container_metadata, name)
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(

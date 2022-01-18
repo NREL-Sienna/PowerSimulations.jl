@@ -373,5 +373,7 @@ list_expression_keys(x::OperationModel) =
 list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
 
 function list_all_keys(x::OperationModel)
-    return Iterators.flatten(keys(getfield(get_store(x), f)) for f in STORE_CONTAINERS)
+    return Iterators.flatten(
+        keys(get_data_field(get_store(x), f)) for f in STORE_CONTAINERS
+    )
 end

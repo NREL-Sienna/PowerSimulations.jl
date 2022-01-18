@@ -125,7 +125,8 @@ function initialize_problem_storage!(
         for type in STORE_CONTAINERS
             for (name, reqs) in getfield(dm_problem_reqs[problem], type)
                 container = getfield(get_dm_data(store)[problem], type)
-                container[name] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
+                container[name] =
+                    OrderedDict{Dates.DateTime, DatasetContainer{DataFrameDataset}}()
                 @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
             end
         end
@@ -133,9 +134,11 @@ function initialize_problem_storage!(
 
     for type in STORE_CONTAINERS
         for (name, reqs) in getfield(em_problem_reqs, type)
-            container = getfield(get_em_data(store), type)
-            container[name] = ExtendedDataFrame(
-                OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
+            container = get_data_field(get_em_data(store), type)
+            container[name] = DataFrameDataset(
+                DataFrames.DataFrame(
+                    OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
+                ),
             )
             @debug "Added $type $name in emulation store" _group =
                 LOG_GROUP_SIMULATION_STORE

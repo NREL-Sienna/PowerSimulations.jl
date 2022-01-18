@@ -321,12 +321,14 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     return
 end
 
-function update_parameters!(
-    model::EmulationModel,
-    store::Union{ValueStates, EmulationModelStore},
-)
+function update_parameters!(model::EmulationModel, store::EmulationModelStore)
+    update_parameters!(model, store.data_container)
+    return
+end
+
+function update_parameters!(model::EmulationModel, data::DatasetContainer{DataFrameDataset})
     for key in keys(get_parameters(model))
-        update_parameter_values!(model, key, store)
+        update_parameter_values!(model, key, data)
     end
     if !is_synchronized(model)
         update_cost_function!(get_optimization_container(model))
@@ -364,7 +366,7 @@ function update_model!(model::EmulationModel)
     return
 end
 
-function run_impl(
+function run_impl!(
     model::EmulationModel;
     optimizer = nothing,
     enable_progress_bar = progress_meter_enabled(),
@@ -377,10 +379,12 @@ function run_impl(
         error("Call build! again")
     end
     prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+    initial_time = get_initial_time(model)
     for execution in 1:(internal.executions)
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
             solve_impl!(model)
-            write_results!(get_store(model), model, execution)
+            current_time = initial_time + (execution - 1) * PSI.get_resolution(model)
+            write_results!(get_store(model), model, execution, current_time)
             write_optimizer_stats!(get_store(model), get_optimizer_stats(model), execution)
             advance_execution_count!(model)
             update_model!(model)
@@ -448,7 +452,7 @@ function run!(
                     model.internal.store_parameters,
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
-                    run_impl(model; kwargs...)
+                    run_impl!(model; kwargs...)
                     set_run_status!(model, RunStatus.SUCCESSFUL)
                 end
                 if serialize
