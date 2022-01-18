@@ -113,9 +113,9 @@ function get_dataset(
     return get_dataset(container, ExpressionKey(T, U))
 end
 
-# Get dataset values is currently type unstable
+# Get dataset values is currently type unstable since the values field could be a DF
 function get_dataset_values(container::DatasetContainer, key::OptimizationContainerKey)
-    return (get_dataset(container, key))
+    return get_dataset(container, key).values
 end
 
 function get_dataset_values(
@@ -208,6 +208,6 @@ function set_dataset_values!(
     index::Int,
     vals,
 )
-    set_value!(get_dataset_values(container, key), index, vals)
+    set_value!(get_dataset(container, key), index, vals)
     return
 end

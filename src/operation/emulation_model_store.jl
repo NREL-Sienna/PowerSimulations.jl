@@ -131,7 +131,7 @@ function write_result!(
     df_row::DataFrames.DataFrameRow,
 )
     container = get_data_field(store, get_store_container_type(key))
-    set_dataset_values!(container, key, index, df_row)
+    set_value!(container[key], index, df_row)
     set_last_recorded_row!(container[key], index)
     set_update_timestamp!(container[key], update_timestamp)
     return

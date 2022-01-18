@@ -159,7 +159,7 @@ function _initialize_system_states!(
         if has_dataset(emulator_states, key)
             continue
         end
-        cols = DataFrames.names(get_dataset_values(decision_states, key))
+        cols = get_column_names(key, get_dataset(decision_states, key))
         set_dataset!(
             emulator_states,
             key,
@@ -329,7 +329,7 @@ function update_system_state!(
     res = read_result(DataFrames.DataFrame, store, model_name, key, ix)
     data_set = get_dataset(state, key)
     set_update_timestamp!(data_set, simulation_time)
-    get_dataset_values(state, key)[1, :] .= DataFrames.values(res)
+    set_dataset_values!(state, key, 1, res)
     set_last_recorded_row!(data_set, 1)
     return
 end
@@ -355,8 +355,7 @@ function update_system_state!(
     set_update_timestamp!(system_data_set, ts)
     # Keep coordination between fields. System state is an array of size 1
     get_timestamps(system_data_set)[1] = ts
-    get_dataset_values(state, key)[1, :] =
-        get_dataset_value(decision_data_set, simulation_time)
+    set_dataset_values!(state, key, 1, get_dataset_value(decision_data_set, simulation_time))
     # This value shouldn't be other than one and after one execution is no-op.
     set_last_recorded_row!(system_data_set, 1)
     return
