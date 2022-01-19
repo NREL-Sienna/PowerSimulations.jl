@@ -28,6 +28,8 @@ mutable struct HdfSimulationStore <: SimulationStore
     cache::OptimizationResultCache
 end
 
+get_initial_time(store::HdfSimulationStore) = get_initial_time(store.params)
+
 function HdfSimulationStore(
     file_path::AbstractString,
     mode::AbstractString;
@@ -142,6 +144,7 @@ function Base.flush(store::HdfSimulationStore)
 
     flush(store.file)
     @debug "Flush store"
+    return
 end
 
 get_params(store::HdfSimulationStore) = store.params
@@ -232,8 +235,8 @@ function initialize_problem_storage!(
     set_max_size!(store.cache, flush_rules.max_size)
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
     @debug "initialize_problem_storage" store.cache
-
-    for problem in keys(store.params.decision_models_params)
+    initial_time = get_initial_time(store)
+    for (problem, problem_params) in store.params.decision_models_params
         get_dm_data(store)[problem] = DatasetContainer{HDF5Dataset}()
         problem_group = _get_group_or_create(problems_group, string(problem))
         for type in STORE_CONTAINERS
@@ -247,7 +250,12 @@ function initialize_problem_storage!(
                 HDF5.write_dataset(group, col, string.(reqs["columns"]))
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                datasets[key] = HDF5Dataset(dataset, column_dataset)
+                datasets[key] = HDF5Dataset(
+                    dataset,
+                    column_dataset,
+                    get_resolution(problem_params),
+                    initial_time,
+                )
                 add_output_cache!(
                     store.cache,
                     problem,
@@ -273,6 +281,7 @@ function initialize_problem_storage!(
     end
 
     emulator_group = _get_group_or_create(root, "emulation_model")
+    emulation_params = first(values(store.params.decision_models_params))
     for type in STORE_CONTAINERS
         group = _get_group_or_create(emulator_group, string(type))
         for (key, reqs) in getfield(em_problem_reqs, type)
@@ -284,7 +293,12 @@ function initialize_problem_storage!(
             HDF5.write_dataset(group, col, string.(reqs["columns"]))
             column_dataset = group[col]
             datasets = getfield(get_em_data(store), type)
-            datasets[key] = HDF5Dataset(dataset, column_dataset)
+            datasets[key] = HDF5Dataset(
+                dataset,
+                column_dataset,
+                get_resolution(emulation_params),
+                initial_time,
+            )
         end
     end
     # This has to run after problem groups are created.
@@ -305,7 +319,8 @@ function read_result(
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     data, columns = _read_data_columns(store, model_name, key, index)
-    if ndims(data) < 2 || size(data)[1] == 1
+
+    if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
         data = reshape(data, length(data), 1)
     end
     return DataFrames.DataFrame(data, columns)
@@ -360,8 +375,10 @@ function _read_result(
         @assert_op ndims(dset) == 2
         data = dset[index, :]
     end
-    @show key, index
     columns = get_column_names(key, dataset)
+    data = permutedims(data)
+    @assert_op size(data)[2] == length(columns)
+    @assert_op size(data)[1] == 1
     return data, columns
 end
 
@@ -453,12 +470,28 @@ Write an emulation model result for a timestamp to the store.
 """
 function write_result!(
     store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    data::Matrix{Float64},
+)
+    dataset = _get_em_dataset(store, key)
+    write_dataset!(dataset.values, data, index:index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
     data,
 )
+    write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
     return
 end
 
@@ -631,7 +664,7 @@ function _flush_data!(
     write_range = (dataset.write_index):end_index
     # Enable only for development and benchmarking
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write $(key.key) array to HDF" begin
-    _write_dataset!(dataset.dataset, data, write_range)
+    write_dataset!(dataset.values, data, write_range)
     #end
 
     discard && discard_results!(cache, timestamps)
@@ -721,7 +754,7 @@ function _read_data_columns(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::DecisionModelIndexType,
 )
     if is_cached(store.cache, model_name, key, index)
         data = read_result(store.cache, model_name, key, index)
@@ -734,18 +767,55 @@ function _read_data_columns(
     return data, columns
 end
 
+function _read_data_columns(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+)
+    if is_cached(store.cache, model_name, key, index)
+        # data = read_result(store.cache, model_name, key, index)
+        #columns = _get_em_dataset(store, model_name, key).column_dataset[:]
+    else
+        data, columns = _read_result(store, model_name, key, index)
+    end
+
+    return data, columns
+end
+
 function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
     dataset = _get_dataset(OptimizerStats, store)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _write_dataset!(dataset, array::Array{Float64, 2}, row_range::UnitRange{Int64})
+function write_dataset!(
+    dataset,
+    array::Matrix{Float64},
+    row_range::UnitRange{Int64},
+    ::Val{3},
+)
     dataset[:, 1, row_range] = array
     @debug "wrote dataset" dataset row_range
     return
 end
 
-function _write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
+function write_dataset!(
+    dataset,
+    array::Matrix{Float64},
+    row_range::UnitRange{Int64},
+    ::Val{2},
+)
+    dataset[row_range, :] = array
+    @debug "wrote dataset" dataset row_range
+    return
+end
+
+function write_dataset!(dataset, array::Matrix{Float64}, row_range::UnitRange{Int64})
+    write_dataset!(dataset, array, row_range, Val{ndims(dataset)}())
+    return
+end
+
+function write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
     dataset[:, :, row_range] = array
     @debug "wrote dataset" dataset row_range
     return
