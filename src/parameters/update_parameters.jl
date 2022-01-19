@@ -121,7 +121,7 @@ function update_parameter_values!(
     resolution = get_resolution(model)
 
     state_data = get_dataset(state, get_attribute_key(attributes))
-    state_timestamps = get_timestamps(state_data)
+    state_timestamps = state_data.timestamps
     max_state_index = length(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
@@ -152,7 +152,7 @@ function update_parameter_values!(
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(param_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
-    state_timestamps = get_timestamps(state_data)
+    state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()

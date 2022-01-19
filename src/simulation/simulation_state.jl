@@ -206,7 +206,7 @@ function update_decision_state!(
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
-    state_timestamps = get_timestamps(state_data)
+    state_timestamps = state_data.timestamps
     @assert_op resolution_ratio >= 1
 
     if simulation_time > get_end_of_step_timestamp(state_data)
@@ -251,7 +251,7 @@ function update_decision_state!(
         state_data.timestamps[:] .=
             range(simulation_time, step = state_resolution, length = length(state_data))
     else
-        state_data_index = find_timestamp_index(get_timestamps(state_data), simulation_time)
+        state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
     end
 
     offset = resolution_ratio - 1
@@ -354,7 +354,7 @@ function update_system_state!(
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_data_set, ts)
     # Keep coordination between fields. System state is an array of size 1
-    get_timestamps(system_data_set)[1] = ts
+    system_data_set.timestamps[1] = ts
     set_dataset_values!(
         state,
         key,
