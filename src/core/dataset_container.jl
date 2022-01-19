@@ -189,6 +189,6 @@ function set_dataset_values!(
     index::Int,
     vals,
 )
-    set_value!(get_dataset(container, key), index, vals)
+    set_value!(get_dataset(container, key), vals, index)
     return
 end
