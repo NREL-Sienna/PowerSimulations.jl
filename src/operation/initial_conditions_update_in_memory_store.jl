@@ -6,8 +6,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Period,
 ) where {
-    T <:
-    InitialCondition{InitialTimeDurationOn, S},
+    T <: InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_aux_variable_value(store, TimeDurationOn(), get_component_type(ic))
@@ -21,10 +20,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Period,
 ) where {
-    T <: InitialCondition{
-        InitialTimeDurationOff,
-        S,
-    },
+    T <: InitialCondition{InitialTimeDurationOff, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_aux_variable_value(store, TimeDurationOff(), get_component_type(ic))
@@ -64,8 +60,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Period,
 ) where {
-    T <:
-    InitialCondition{DeviceAboveMinPower, S},
+    T <: InitialCondition{DeviceAboveMinPower, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val =
@@ -80,8 +75,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Period,
 ) where {
-    T <:
-    InitialCondition{InitialEnergyLevel, S},
+    T <: InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_variable_value(store, EnergyVariable(), get_component_type(ic))
@@ -95,8 +89,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Period,
 ) where {
-    T <:
-    InitialCondition{InitialEnergyLevelUp, S},
+    T <: InitialCondition{InitialEnergyLevelUp, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_variable_value(store, EnergyVariableUp(), get_component_type(ic))
@@ -110,10 +103,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Period,
 ) where {
-    T <: InitialCondition{
-        InitialEnergyLevelDown,
-        S,
-    },
+    T <: InitialCondition{InitialEnergyLevelDown, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_variable_value(store, EnergyVariableDown(), get_component_type(ic))
