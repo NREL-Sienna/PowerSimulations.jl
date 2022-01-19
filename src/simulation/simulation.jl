@@ -595,13 +595,9 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
                   simulation_time: $(simulation_time) \\
                   key: $(encode_key_as_string(key))")
         end
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            model_name,
-            "SystemState",
-        )
     end
+
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "SystemState")
 
     return
 end
@@ -620,13 +616,8 @@ function _update_system_state!(sim::Simulation, model::EmulationModel)
     for key in get_container_keys(get_optimization_container(model))
         !should_write_resulting_value(key) && continue
         update_system_state!(system_state, key, store, em_model_name, simulation_time)
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            get_name(model),
-            "SystemState",
-        )
     end
+    IS.@record :execution StateUpdateEvent(simulation_time, get_name(model), "SystemState")
     return
 end
 
@@ -655,14 +646,9 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
                 simulation_time,
                 model_params,
             )
-            IS.@record :execution StateUpdateEvent(
-                key,
-                simulation_time,
-                model_name,
-                "DecisionState",
-            )
         end
     end
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
     _update_system_state!(sim, model)
     return
 end
