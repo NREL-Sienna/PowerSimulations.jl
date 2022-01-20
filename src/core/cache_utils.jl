@@ -37,7 +37,7 @@ function add_rule!(
     rules::CacheFlushRules,
     model_name,
     op_container_key,
-    keep_in_cache,
+    keep_in_cache::Bool,
     priority,
 )
     key = OptimizationResultCacheKey(model_name, op_container_key)

@@ -292,7 +292,7 @@ function _get_model_store_requirements!(
 
     for (key, array) in get_duals(container)
         reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+        add_rule!(rules, model_name, key, true, CachePriority.LOW)
     end
 
     for (key, param_container) in get_parameters(container)
@@ -303,12 +303,12 @@ function _get_model_store_requirements!(
 
     for (key, array) in get_variables(container)
         reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, false, CachePriority.HIGH)
+        add_rule!(rules, model_name, key, true, CachePriority.HIGH)
     end
 
     for (key, array) in get_aux_variables(container)
         reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, false, CachePriority.HIGH)
+        add_rule!(rules, model_name, key, true, CachePriority.HIGH)
     end
 
     for (key, array) in get_expressions(container)
