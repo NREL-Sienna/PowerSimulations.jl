@@ -432,9 +432,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 end
 
 @testset "Test simulation results" begin
-    # TODO: hdf5 store is not currently working
-    #for in_memory in (true, false)
-    for in_memory in (true,)
+    for in_memory in (true,) #false)
         file_path = mkpath(joinpath(pwd(), "test_simulation_results"))
         export_path = mkpath(joinpath(pwd(), "test_export_path"))
         try

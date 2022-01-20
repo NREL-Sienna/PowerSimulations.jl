@@ -574,7 +574,8 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                 if !endswith(name, "columns")
                     dataset = group[name]
                     column_dataset = group[_make_column_name(name)]
-                    item = HDF5Dataset(dataset, column_dataset)
+                    resolution = get_resolution(get_decision_model_params(store, model_name))
+                    item = HDF5Dataset(dataset, column_dataset, resolution, initial_time)
                     container_key = deserialize_key(container_metadata, name)
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(
