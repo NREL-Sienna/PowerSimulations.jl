@@ -56,10 +56,8 @@ function to_matrix(array::DenseAxisArray{T, 2, K}) where {T <: Real, K <: NTuple
 end
 
 function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    throw(
-        error(
-            "Converting $(N)-dimensional DenseAxisArrays to matrix is currently not supported",
-        ),
+    error(
+        "Converting $(N)-dimensional DenseAxisArrays to matrix is currently not supported",
     )
 end
 
