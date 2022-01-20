@@ -30,7 +30,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    ::ValueStates,
+    ::DatasetContainer{DataFrameDataset},
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -61,7 +61,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
-    ::ValueStates,
+    ::DatasetContainer{DataFrameDataset},
 ) where {
     T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -89,7 +89,7 @@ function update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::Union{ValueStates, EmulationModelStore},
+    ::DatasetContainer{DataFrameDataset},
 ) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
@@ -113,15 +113,15 @@ function update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::DecisionModel,
-    state::ValueStates,
+    state::DatasetContainer{DataFrameDataset},
 ) where {T <: Union{PJ.ParameterRef, Float64}}
     current_time = get_current_time(model)
-    state_values = get_state_values(state, get_attribute_key(attributes))
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
     resolution = get_resolution(model)
 
-    state_data = get_state_data(state, get_attribute_key(attributes))
-    state_timestamps = get_timestamps(state_data)
+    state_data = get_dataset(state, get_attribute_key(attributes))
+    state_timestamps = state_data.timestamps
     max_state_index = length(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
@@ -141,13 +141,44 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    param_array::AbstractArray{T},
+    attributes::VariableValueAttributes,
+    ::Type{<:PSY.Component},
+    model::EmulationModel,
+    state::DatasetContainer{DataFrameDataset},
+) where {T <: Union{PJ.ParameterRef, Float64}}
+    current_time = get_current_time(model)
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
+    component_names, _ = axes(param_array)
+    state_data = get_dataset(state, get_attribute_key(attributes))
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    for name in component_names
+        # Pass indices in this way since JuMP DenseAxisArray don't support view()
+        _set_param_value!(param_array, state_values[state_data_index, name], name, 1)
+    end
+    return
+end
+
+function update_parameter_values!(
+    ::AbstractArray{T},
+    ::VariableValueAttributes,
+    ::Type{<:PSY.Component},
+    ::EmulationModel,
+    ::EmulationModelStore,
+) where {T <: Union{PJ.ParameterRef, Float64}}
+    error("The emulation model has parameters that can't be updated from its results")
+    return
+end
+
 """
 Update parameter function an OperationModel
 """
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input,#::ValueStates,
+    input::DatasetContainer{DataFrameDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -174,7 +205,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input,#::ValueStates,
+    input::DatasetContainer{DataFrameDataset},
 ) where {T <: ParameterType, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -195,3 +226,58 @@ function update_parameter_values!(
     #end
     return
 end
+
+function _set_param_value!(
+    param::AbstractArray{Vector{NTuple{2, Float64}}},
+    value::Vector{NTuple{2, Float64}},
+    name::String,
+    t::Int,
+)
+    param[name, t] = value
+    return
+end
+
+function update_parameter_values!(
+    param_array::AbstractArray{Vector{NTuple{2, Float64}}},
+    attributes::CostFunctionAttributes,
+    ::Type{V},
+    model::DecisionModel,
+    ::DatasetContainer{DataFrameDataset},
+) where {V <: PSY.Component}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    time_steps = get_time_steps(get_optimization_container(model))
+    horizon = time_steps[end]
+    container = get_optimization_container(model)
+    if is_synchronized(container)
+        obj_func = get_cost_function(container)
+        set_synchronized_status(obj_func, false)
+        reset_variant_terms(obj_func)
+    end
+    components = get_available_components(V, get_system(model))
+
+    for component in components
+        if _has_variable_cost_parameter(component)
+            name = PSY.get_name(component)
+            ts_vector = PSY.get_variable_cost(
+                component,
+                PSY.get_operation_cost(component);
+                start_time = initial_forecast_time,
+                len = horizon,
+            )
+            variable_cost_forecast_values = TimeSeries.values(ts_vector)
+            for (t, value) in enumerate(variable_cost_forecast_values)
+                if attributes.uses_compact_power
+                    value, _ = _convert_variable_cost(value)
+                end
+                _set_param_value!(param_array, PSY.get_cost(value), name, t)
+                update_variable_cost!(container, param_array, attributes, component, t)
+            end
+        end
+    end
+    return
+end
+
+_has_variable_cost_parameter(component::PSY.Component) =
+    _has_variable_cost_parameter(PSY.get_operation_cost(component))
+_has_variable_cost_parameter(::PSY.MarketBidCost) = true
+_has_variable_cost_parameter(::T) where {T <: PSY.OperationalCost} = false

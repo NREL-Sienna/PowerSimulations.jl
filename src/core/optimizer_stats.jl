@@ -53,7 +53,24 @@ end
 Construct OptimizerStats from a vector that was serialized to HDF5.
 """
 function OptimizerStats(data::Vector{Float64})
-    return OptimizerStats(data...)
+    vals = Vector(undef, length(data))
+    to_missing = Set((
+        :objective_bound,
+        :dual_objective_value,
+        :barrier_iterations,
+        :simplex_iterations,
+        :node_count,
+        :solve_bytes_alloc,
+        :sec_in_gc,
+    ))
+    for (i, name) in enumerate(fieldnames(OptimizerStats))
+        if name in to_missing && isnan(data[i])
+            vals[i] = missing
+        else
+            vals[i] = data[i]
+        end
+    end
+    return OptimizerStats(vals...)
 end
 
 """
@@ -70,10 +87,6 @@ end
 
 function to_dataframe(stats::OptimizerStats)
     df = DataFrames.DataFrame([to_namedtuple(stats)])
-    #if !_part_of_simulation(stats)
-    #    DataFrames.select!(df, _BASE_FIELDS)
-    #end
-
     return df
 end
 

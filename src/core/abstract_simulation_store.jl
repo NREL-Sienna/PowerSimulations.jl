@@ -16,4 +16,9 @@ abstract type SimulationStore end
 # - write_result!
 # - read_result!
 # - write_optimizer_stats!
-# - read_problem_optimizer_stats
+# - read_optimizer_stats
+# - get_dm_data
+# - get_em_data
+
+get_dm_data(store::SimulationStore) = store.dm_data
+get_em_data(store::SimulationStore) = store.em_data

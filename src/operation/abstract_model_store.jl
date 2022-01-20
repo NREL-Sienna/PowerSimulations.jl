@@ -12,7 +12,7 @@ abstract type AbstractModelStore end
 function Base.empty!(store::AbstractModelStore)
     stype = typeof(store)
     for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
-        val = getfield(store, name)
+        val = get_data_field(store, name)
         try
             empty!(val)
         catch
@@ -22,10 +22,12 @@ function Base.empty!(store::AbstractModelStore)
     end
 end
 
+get_data_field(store::AbstractModelStore, type) = getfield(store, type)
+
 function Base.isempty(store::AbstractModelStore)
     stype = typeof(store)
     for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
-        val = getfield(store, name)
+        val = get_data_field(store, name)
         try
             !isempty(val) && return false
         catch
@@ -38,12 +40,12 @@ function Base.isempty(store::AbstractModelStore)
 end
 
 function list_fields(store::AbstractModelStore, container_type::Symbol)
-    return keys(getfield(store, container_type))
+    return keys(get_data_field(store, container_type))
 end
 
-function write_result!(store::AbstractModelStore, key, index, array, columns)
+function write_result!(store::AbstractModelStore, key, index, array)
     field = get_store_container_type(key)
-    return write_result!(store, field, key, index, array, columns)
+    return write_result!(store, field, key, index, array)
 end
 
 function read_results(store::AbstractModelStore, key, index = nothing)
@@ -62,7 +64,7 @@ function read_results(
 end
 
 function list_keys(store::AbstractModelStore, container_type)
-    container = getfield(store, container_type)
+    container = get_data_field(store, container_type)
     return collect(keys(container))
 end
 
@@ -71,7 +73,7 @@ function get_variable_value(
     ::T,
     ::Type{U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return store.variables[VariableKey(T, U)]
+    return get_data_field(store, :variables)[VariableKey(T, U)]
 end
 
 function get_aux_variable_value(
@@ -79,7 +81,7 @@ function get_aux_variable_value(
     ::T,
     ::Type{U},
 ) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return store.aux_variables[AuxVarKey(T, U)]
+    return get_data_field(store, :aux_variables)[AuxVarKey(T, U)]
 end
 
 function get_dual_value(
@@ -87,7 +89,7 @@ function get_dual_value(
     ::T,
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return store.duals[ConstraintKey(T, U)]
+    return get_data_field(store, :duals)[ConstraintKey(T, U)]
 end
 
 function get_parameter_value(
@@ -95,5 +97,5 @@ function get_parameter_value(
     ::T,
     ::Type{U},
 ) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return store.parameters[ParameterKey(T, U)]
+    return get_data_field(store, :parameters)[ParameterKey(T, U)]
 end

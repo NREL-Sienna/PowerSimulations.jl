@@ -13,6 +13,7 @@ get_internal(model::OperationModel) = model.internal
 get_jump_model(model::OperationModel) = get_internal(model).container.JuMPmodel
 get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
+is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
 
 function get_requires_rebuild(model::OperationModel)
     sim_info = get_internal(model).simulation_info
@@ -113,10 +114,6 @@ set_output_dir!(model::OperationModel, path::AbstractString) =
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
     internal.execution_count += 1
-    # Reset execution count at the end of step
-    #if get_execution_count(model) == get_executions(model)
-    #    internal.execution_count = 0
-    #end
     return
 end
 
@@ -354,10 +351,10 @@ end
 
 function update_model!(model::OperationModel, source, ini_cond_chronology)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        update_parameters(model, get_decision_states(source))
+        update_parameters!(model, get_decision_states(source))
     end
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        update_initial_conditions(model, source, ini_cond_chronology)
+        update_initial_conditions!(model, source, ini_cond_chronology)
     end
     return
 end
@@ -374,3 +371,9 @@ list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
 list_expression_keys(x::OperationModel) =
     list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
 list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
+
+function list_all_keys(x::OperationModel)
+    return Iterators.flatten(
+        keys(get_data_field(get_store(x), f)) for f in STORE_CONTAINERS
+    )
+end

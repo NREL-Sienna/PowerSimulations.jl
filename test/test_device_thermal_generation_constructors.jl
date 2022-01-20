@@ -572,7 +572,6 @@ end
     )
     @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(ED, false, 10, 0, 20, 10, 5, false)
-    res = solve!(ED)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
 end
 

@@ -136,7 +136,7 @@ function mock_construct_device!(
     JuMP.@objective(
         PSI.get_jump_model(problem),
         MOI.MIN_SENSE,
-        PSI.get_optimization_container(problem).cost_function
+        PSI.get_objective_fuction(PSI.get_optimization_container(problem).cost_function)
     )
     return
 end

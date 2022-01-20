@@ -157,11 +157,10 @@ export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
-# TBD if these are going to be developed
-#export read_realized_duals
-#export read_realized_variables
-#export read_realized_parameters
-#export get_realized_timestamps
+export read_realized_duals
+export read_realized_variables
+export read_realized_parameters
+export get_realized_timestamps
 export read_variable
 export read_parameter
 export get_problem_base_power
@@ -177,7 +176,6 @@ export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
-export write_results
 export write_to_CSV
 
 ## Enums
@@ -329,25 +327,12 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
-# so that users have access to IS.Results interfaces
-import InfrastructureSystems:
-    get_variables,
-    get_parameters,
-    get_total_cost,
-    write_results,
-    get_timestamp,
-    get_resolution,
-    get_name,
-    @assert_op,
-    list_recorder_events
+import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
-export get_total_cost
 export get_optimizer_stats
-export get_timestamp
 export get_timestamps
 export get_resolution
-export write_results
 import PowerModels
 import TimerOutputs
 import ProgressMeter
@@ -399,7 +384,7 @@ const TS = TimeSeries
 function progress_meter_enabled()
     return isa(stderr, Base.TTY) &&
            (get(ENV, "CI", nothing) != "true") &&
-           (get(ENV, "RUNNING_PSID_TESTS", nothing) != "true")
+           (get(ENV, "RUNNING_PSI_TESTS", nothing) != "true")
 end
 
 using DocStringExtensions
@@ -433,9 +418,11 @@ include("core/initial_conditions.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("core/optimizer_stats.jl")
-include("core/value_states.jl")
+include("core/dataset.jl")
+include("core/dataset_container.jl")
 
 include("core/optimization_container.jl")
+include("core/store_common.jl")
 
 # Order Required
 include("initial_conditions/initial_condition_chronologies.jl")
@@ -474,7 +461,6 @@ include("simulation/simulation_models.jl")
 include("simulation/simulation_state.jl")
 include("simulation/initial_condition_update_simulation.jl")
 include("simulation/simulation_store_params.jl")
-include("simulation/simulation_store_common.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")
@@ -489,15 +475,14 @@ include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
 include("devices_models/devices/common/add_constraint_dual.jl")
-include("devices_models/devices/common/rating_constraints.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
-include("devices_models/devices/common/commitment_constraint.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")
 include("devices_models/devices/common/add_to_expression.jl")
+include("devices_models/devices/common/set_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")

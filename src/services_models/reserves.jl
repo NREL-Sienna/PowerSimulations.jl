@@ -102,8 +102,6 @@ function add_constraints!(
         container =
             get_parameter(container, RequirementTimeSeriesParameter(), SR, service_name)
         param = get_parameter_array(container)
-        # TODO: Check multiplier, this container isn't being set here
-        multiplier = get_multiplier_array(container)
         for t in time_steps
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
@@ -181,7 +179,11 @@ function cost_function!(
     reserve =
         get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
     for r in reserve
-        JuMP.add_to_expression!(container.cost_function, r, DEFAULT_RESERVE_COST)
+        JuMP.add_to_expression!(
+            container.cost_function.invariant_terms,
+            r,
+            DEFAULT_RESERVE_COST,
+        )
     end
     return
 end

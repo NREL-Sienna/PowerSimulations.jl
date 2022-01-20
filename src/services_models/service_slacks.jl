@@ -17,7 +17,10 @@ function reserve_slacks(
             base_name = "slacks_{$(jx)}",
             lower_bound = 0.0
         )
-        JuMP.add_to_expression!(container.cost_function, variable[jx] * SERVICES_SLACK_COST)
+        JuMP.add_to_expression!(
+            container.cost_function.invariant_terms,
+            variable[jx] * SERVICES_SLACK_COST,
+        )
     end
     return variable
 end

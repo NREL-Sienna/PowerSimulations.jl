@@ -320,22 +320,8 @@ function reset!(model::DecisionModel)
     model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
-    empty!(model.store)
+    empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
-    return
-end
-
-function calculate_aux_variables!(model::DecisionModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_aux_variables!(container, system)
-    return
-end
-
-function calculate_dual_variables!(model::DecisionModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_dual_variables!(container, system)
     return
 end
 
@@ -386,14 +372,20 @@ function solve!(
         Logging.with_logger(logger) do
             try
                 initialize_storage!(
-                    model.store,
+                    get_store(model),
                     get_optimization_container(model),
                     model.internal.store_parameters,
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)
                     solve_impl!(model)
-                    write_results!(model.store, model, get_initial_time(model))
+                    current_time = get_initial_time(model)
+                    write_results!(get_store(model), model, current_time, current_time)
+                    write_optimizer_stats!(
+                        get_store(model),
+                        get_optimizer_stats(model),
+                        current_time,
+                    )
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -422,30 +414,8 @@ function solve!(
     return get_run_status(model)
 end
 
-function update_parameters(model::DecisionModel, decision_states::ValueStates)
-    for key in keys(get_parameters(model))
-        update_parameter_values!(model, key, decision_states)
-    end
-    return
-end
-
-function update_initial_conditions(model::DecisionModel, state, ::InterProblemChronology)
-    for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key, state)
-    end
-    return
-end
-
-function update_initial_conditions(model::DecisionModel, state, ::IntraProblemChronology)
-    #for key in keys(get_initial_conditions(model))
-    #    update_initial_conditions!(model, key, state)
-    #end
-    error("Not Implemented yet")
-    return
-end
-
 """
-Default solve method for an operational model used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
+Default solve method for a DecisionModel used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
@@ -464,142 +434,26 @@ function solve!(
     exports = nothing,
 )
     # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
-    # other logic used when solving
+    # other logic used when solving the models separate from a simulation
     solve_impl!(model)
+    @assert get_current_time(model) == start_time
     if get_run_status(model) == RunStatus.SUCCESSFUL
-        stats = get_optimizer_stats(model)
-        write_optimizer_stats!(store, get_name(model), stats, start_time)
-        write_results!(store, model, start_time; exports = exports)
+        write_results!(store, model, start_time, start_time; exports = exports)
+        write_optimizer_stats!(store, model, start_time)
         advance_execution_count!(model)
     end
-
     return get_run_status(model)
 end
 
-function write_results!(
-    store,
+function update_parameters!(
     model::DecisionModel,
-    timestamp::Dates.DateTime;
-    exports = nothing,
+    decision_states::DatasetContainer{DataFrameDataset},
 )
-    if exports !== nothing
-        export_params = Dict{Symbol, Any}(
-            :exports => exports,
-            :exports_path => joinpath(exports.path, string(get_name(model))),
-            :file_type => get_export_file_type(exports),
-            :resolution => get_resolution(model),
-            :horizon => get_horizon(get_settings(model)),
-        )
-    else
-        export_params = nothing
+    for key in keys(get_parameters(model))
+        update_parameter_values!(model, key, decision_states)
     end
-
-    write_model_dual_results!(store, model, timestamp, export_params)
-    write_model_parameter_results!(store, model, timestamp, export_params)
-    write_model_variable_results!(store, model, timestamp, export_params)
-    write_model_aux_variable_results!(store, model, timestamp, export_params)
-    write_model_expression_results!(store, model, timestamp, export_params)
-    return
-end
-
-function write_model_dual_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, dual) in get_duals(container)
-        cols = axes(dual)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, timestamp, dual, cols)
-    end
-    return
-end
-
-function write_model_parameter_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    parameters = get_parameters(container)
-    (parameters === nothing || isempty(parameters)) && return
-    horizon = get_horizon(model)
-
-    for (key, parameter) in parameters
-        name = encode_key(key)
-        param_array = get_parameter_array(parameter)
-        multiplier_array = get_multiplier_array(parameter)
-        @assert_op length(axes(param_array)) == 2
-        num_columns = size(param_array)[1]
-        data = Array{Float64}(undef, horizon, num_columns)
-        for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
-            val1 = jump_value(param_array[name, r_ix])
-            val2 = multiplier_array[name, r_ix]
-            data[r_ix, c_ix] = val1 * val2
-        end
-
-        cols = axes(param_array)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-
-        write_result!(store, key, timestamp, data, cols)
-    end
-    return
-end
-
-function write_model_variable_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_variables(container)
-        cols = axes(variable)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, timestamp, variable, cols)
-    end
-    return
-end
-
-function write_model_aux_variable_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_aux_variables(container)
-        cols = axes(variable)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, timestamp, variable, cols)
-    end
-    return
-end
-
-function write_model_expression_results!(
-    store::DecisionModelStore,
-    model::DecisionModel,
-    timestamp::Dates.DateTime,
-    export_params,
-)
-    container = get_optimization_container(model)
-    for (key, expression) in get_expressions(container)
-        cols = axes(expression)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, timestamp, expression, cols)
+    if !is_synchronized(model)
+        update_cost_function!(get_optimization_container(model))
     end
     return
 end

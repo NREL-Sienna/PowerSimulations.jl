@@ -48,6 +48,27 @@ function Base.isempty(pvc::PrimalValuesCache)
     return isempty(pvc.variables_cache) && isempty(pvc.expressions_cache)
 end
 
+mutable struct ObjectiveFunction
+    invariant_terms::JuMP.AbstractJuMPScalar
+    variant_terms::GAE
+    synchronized::Bool
+end
+
+get_invariant_terms(v::ObjectiveFunction) = v.invariant_terms
+get_variant_terms(v::ObjectiveFunction) = v.variant_terms
+get_objective_fuction(v::ObjectiveFunction) = v.variant_terms + v.invariant_terms
+is_synchronized(v::ObjectiveFunction) = v.synchronized
+set_synchronized_status(v::ObjectiveFunction, value) = v.synchronized = value
+reset_variant_terms(v::ObjectiveFunction) = v.variant_terms = zero(JuMP.AffExpr)
+
+function ObjectiveFunction()
+    return ObjectiveFunction(
+        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+        zero(JuMP.AffExpr),
+        true,
+    )
+end
+
 mutable struct OptimizationContainer <: AbstractModelContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
@@ -58,7 +79,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
-    cost_function::JuMP.AbstractJuMPScalar
+    cost_function::ObjectiveFunction
     expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
@@ -103,7 +124,7 @@ function OptimizationContainer(
         Dict{AuxVarKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
         Dict{ConstraintKey, AbstractArray}(),
-        zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
+        ObjectiveFunction(),
         Dict{ExpressionKey, AbstractArray}(),
         Dict{ParameterKey, ParameterContainer}(),
         PrimalValuesCache(),
@@ -119,58 +140,90 @@ function OptimizationContainer(
     )
 end
 
-# TODO: This constructor need to be re-enabled for the deserialization of OptimizationContainer from JSON
-# function OptimizationContainer(filename::AbstractString)
-#     return OptimizationContainer(
-#         jump_model === nothing ? _make_jump_model(settings) :
-#         _finalize_jump_model!(jump_model, settings),
-#         1:1,
-#         IS.time_period_conversion(resolution),
-#         settings,
-#         copy_for_serialization(settings),
-#         Dict{VariableKey, AbstractArray}(),
-#         Dict{AuxVarKey, AbstractArray}(),
-#         Dict{ConstraintKey, AbstractArray}(),
-#         Dict{ConstraintKey, AbstractArray}(),
-#         Dict{String, OptimizationContainerKey}(),
-#         zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
-#         Dict{ExpressionKey, AbstractArray}(),
-#         Dict{ParameterKey, ParameterContainer}(),
-#         Dict{ICKey, Vector{InitialCondition}}(),
-#         nothing,
-#         PSY.get_base_power(sys),
-#         OptimizerStats(),
-#         false,
-#         PSY.Deterministic,
-#     )
-# end
-
 built_for_recurrent_solves(container::OptimizationContainer) =
     container.built_for_recurrent_solves
 
 get_aux_variables(container::OptimizationContainer) = container.aux_variables
 get_base_power(container::OptimizationContainer) = container.base_power
 get_constraints(container::OptimizationContainer) = container.constraints
+
+function get_container_keys(container::OptimizationContainer)
+    return Iterators.flatten(keys(getfield(container, f)) for f in STORE_CONTAINERS)
+end
+
 get_default_time_series_type(container::OptimizationContainer) =
     container.default_time_series_type
 get_duals(container::OptimizationContainer) = container.duals
 get_expressions(container::OptimizationContainer) = container.expressions
-get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
-get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 get_infeasibility_conflict(container::OptimizationContainer) =
     container.infeasibility_conflict
+get_initial_conditions(container::OptimizationContainer) = container.initial_conditions
+get_initial_conditions_data(container::OptimizationContainer) =
+    container.initial_conditions_data
+get_initial_time(container::OptimizationContainer) = get_initial_time(container.settings)
 get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
+get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_parameters(container::OptimizationContainer) = container.parameters
 get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
-get_initial_conditions_data(container::OptimizationContainer) =
-    container.initial_conditions_data
+
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
-get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
+get_cost_function(container::OptimizationContainer) = container.cost_function
+is_synchronized(container::OptimizationContainer) = container.cost_function.synchronized
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    key = ExpressionKey(T, U, meta)
+    return haskey(container.expressions, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    key = VariableKey(T, U, meta)
+    return haskey(container.variables, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    key = AuxVarKey(T, U, meta)
+    return haskey(container.aux_variables, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    key = ConstraintKey(T, U, meta)
+    return haskey(container.constraints, key)
+end
+
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    key = ParameterKey(T, U, meta)
+    return haskey(container.parameters, key)
+end
 
 function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
@@ -496,13 +549,26 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
         @debug "Building Objective" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-        JuMP.@objective(container.JuMPmodel, MOI.MIN_SENSE, container.cost_function)
+        JuMP.@objective(
+            container.JuMPmodel,
+            MOI.MIN_SENSE,
+            get_objective_fuction(container.cost_function)
+        )
     end
     @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
     check_optimization_container(container)
 
+    return
+end
+
+function update_cost_function!(container::OptimizationContainer)
+    JuMP.@objective(
+        container.JuMPmodel,
+        MOI.MIN_SENSE,
+        get_objective_fuction(container.cost_function)
+    )
     return
 end
 
@@ -673,6 +739,21 @@ function add_variable_container!(
     return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
+function _get_pwl_variables_container()
+    contents = Dict{Tuple{String, Int, Int}, Any}()
+    return SparseAxisArray(contents)
+end
+
+function add_variable_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+) where {T <: PieceWiseLinearCostVariable, U <: Union{PSY.Component, PSY.System}}
+    var_key = VariableKey(T, U)
+    _assign_container!(container.variables, var_key, _get_pwl_variables_container())
+    return container.variables[var_key]
+end
+
 function get_variable_keys(container::OptimizationContainer)
     return collect(keys(container.variables))
 end
@@ -682,7 +763,7 @@ function get_variable(container::OptimizationContainer, key::VariableKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        throw(IS.InvalidValue("variable $name is not stored"))
+        throw(IS.InvalidValue("variable $name is not stored. $keys"))
     end
     return var
 end
@@ -697,7 +778,7 @@ function get_variable(
 end
 
 function read_variables(container::OptimizationContainer)
-    return Dict(k => axis_array_to_dataframe(v) for (k, v) in get_variables(container))
+    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_variables(container))
 end
 
 ##################################### AuxVariable Container ################################
@@ -750,8 +831,8 @@ function add_dual_container!(
     sparse = false,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
-        @warn("The model has resulted in a MILP, \n
-              dual value retrieval requires solving an additional Linear Program \n
+        @warn("The model has resulted in a MILP, \\
+              dual value retrieval requires solving an additional Linear Program \\
               which increases simulation time and the results could be innacurate.")
     end
     const_key = ConstraintKey(T, U)
@@ -829,9 +910,7 @@ function get_constraint(
 end
 
 function read_duals(container::OptimizationContainer)
-    return Dict(
-        k => axis_array_to_dataframe(v, [encode_key(k)]) for (k, v) in get_duals(container)
-    )
+    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_duals(container))
 end
 
 ##################################### Parameter Container ##################################
@@ -869,6 +948,23 @@ function _add_param_container!(
     return param_container
 end
 
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::CostFunctionAttributes,
+    axs...,
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    # Temporary solution uses Float64 paramters and re-builds the cost function each time.
+    param_type = Float64
+    param_container = ParameterContainer(
+        attribute,
+        DenseAxisArray{Vector{NTuple{2, Float64}}}(undef, axs...),
+        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
+    )
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
 function add_param_container!(
     container::OptimizationContainer,
     ::T,
@@ -883,6 +979,21 @@ function add_param_container!(
         error("$V can't be abstract: $param_key")
     end
     attributes = TimeSeriesAttributes(V, name)
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    sos_variable::SOSStatusVariable,
+    variable_type::Type{W},
+    uses_compact_power::Bool,
+    axs...;
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
+    param_key = ParameterKey(T, U, meta)
+    attributes = CostFunctionAttributes(variable_type, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...)
 end
 
@@ -988,8 +1099,8 @@ function read_parameters(container::OptimizationContainer)
     parameters = get_parameters(container)
     (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
-        param_array = axis_array_to_dataframe(get_parameter_array(v))
-        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
+        param_array = axis_array_to_dataframe(get_parameter_array(v), k)
+        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = param_array .* multiplier_array
     end
     return params_dict
@@ -1073,20 +1184,6 @@ function get_expression(
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 
-function has_expression(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    key = ExpressionKey(T, U, meta)
-    var = get(container.expressions, key, nothing)
-    if var === nothing
-        return false
-    end
-    return true
-end
-
 # Special getter functions to handle system balance expressions
 function get_expression(
     container::OptimizationContainer,
@@ -1108,7 +1205,7 @@ end
 
 function read_expressions(container::OptimizationContainer)
     return Dict(
-        k => axis_array_to_dataframe(v) for (k, v) in get_expressions(container) if
+        k => axis_array_to_dataframe(v, k) for (k, v) in get_expressions(container) if
         !(get_entry_type(k) <: SystemBalanceExpressions)
     )
 end
@@ -1168,7 +1265,6 @@ function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
 end
 
-# TODO: This code is very similar to the in_memory_model_store function in line 100. Maybe we can do some consolidation
 function write_initial_conditions_data(
     container::OptimizationContainer,
     ic_container::OptimizationContainer,
@@ -1189,7 +1285,7 @@ function write_initial_conditions_data(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, ["System"])
+                ic_data_dict[key] = axis_array_to_dataframe(field_container, key)
             end
         end
     end
@@ -1234,7 +1330,7 @@ function get_initial_conditions_parameter(
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
-    JuMP.add_to_expression!(container.cost_function, expr)
+    JuMP.add_to_expression!(container.cost_function.invariant_terms, expr)
 end
 
 function deserialize_key(container::OptimizationContainer, name::AbstractString)

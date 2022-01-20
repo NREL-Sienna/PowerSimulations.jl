@@ -19,8 +19,8 @@ end
 struct ModelStoreParams
     num_executions::Int
     horizon::Int
-    interval::Dates.Period
-    resolution::Dates.Period
+    interval::Dates.Millisecond
+    resolution::Dates.Millisecond
     base_power::Float64
     system_uuid::Base.UUID
     container_metadata::OptimizationContainerMetadata

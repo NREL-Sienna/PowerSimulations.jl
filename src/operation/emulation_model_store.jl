@@ -2,59 +2,64 @@
 Stores results data for one EmulationModel
 """
 mutable struct EmulationModelStore <: AbstractModelStore
-    last_recorded_row::Int
-    duals::Dict{ConstraintKey, DataFrames.DataFrame}
-    parameters::Dict{ParameterKey, DataFrames.DataFrame}
-    variables::Dict{VariableKey, DataFrames.DataFrame}
-    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
-    expressions::Dict{ExpressionKey, DataFrames.DataFrame}
+    data_container::DatasetContainer{DataFrameDataset}
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
+get_data_field(store::EmulationModelStore, type::Symbol) =
+    getfield(store.data_container, type)
+
 function EmulationModelStore()
     return EmulationModelStore(
-        0,
-        Dict{ConstraintKey, DataFrames.DataFrame}(),
-        Dict{ParameterKey, DataFrames.DataFrame}(),
-        Dict{VariableKey, DataFrames.DataFrame}(),
-        Dict{AuxVarKey, DataFrames.DataFrame}(),
-        Dict{ExpressionKey, DataFrames.DataFrame}(),
+        DatasetContainer{DataFrameDataset}(),
         OrderedDict{Int, OptimizerStats}(),
     )
 end
 
 function Base.empty!(store::EmulationModelStore)
-    stype = typeof(store)
-    for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
-        if name == :last_recorded_row
-            store.last_recorded_row = 0
-        else
-            val = getfield(store, name)
+    stype = DatasetContainer
+    for (name, _) in zip(fieldnames(stype), fieldtypes(stype))
+        if name ∉ [:values, :timestamps]
+            val = get_data_field(store, name)
             try
                 empty!(val)
             catch
                 @error "Base.empty! must be customized for type $stype or skipped"
                 rethrow()
             end
+        elseif name == :update_timestamp
+            store.update_timestamp = UNSET_INI_TIME
+        else
+            setfield!(
+                store.data_container,
+                name,
+                zero(fieldtype(store.data_container, name)),
+            )
         end
     end
+    empty!(store.optimizer_stats)
+    return
 end
 
 function Base.isempty(store::EmulationModelStore)
-    stype = typeof(store)
+    stype = DatasetContainer
     for (name, type) in zip(fieldnames(stype), fieldtypes(stype))
-        name == :last_recorded_row && continue
-        val = getfield(store, name)
-        try
-            !isempty(val) && return false
-        catch
-            @error "Base.isempty must be customized for type $stype or skipped"
-            rethrow()
+        if name ∉ [:values, :timestamps]
+            val = get_data_field(store, name)
+            try
+                !isempty(val) && return false
+            catch
+                @error "Base.isempty must be customized for type $stype or skipped"
+                rethrow()
+            end
+        elseif name == :update_timestamp
+            store.update_timestamp != UNSET_INI_TIME && return false
+        else
+            val = get_data_fieldd(store, name)
+            iszero(val) && return false
         end
     end
-
-    @assert_op store.last_recorded_row == 0
-    return true
+    return isempty(store.optimizer_stats)
 end
 
 function initialize_storage!(
@@ -65,73 +70,99 @@ function initialize_storage!(
     num_of_executions = get_num_executions(params)
     for type in STORE_CONTAINERS
         field_containers = getfield(container, type)
-        results_container = getfield(store, type)
+        results_container = get_data_field(store, type)
         for (key, field_container) in field_containers
-            container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
                 LOG_GROUP_MODEL_STORE
-            if length(container_axes) == 2
-                if type == STORE_CONTAINER_PARAMETERS
-                    column_names = string.(get_parameter_array(field_container).axes[1])
-                else
-                    column_names = string.(axes(field_container)[1])
-                end
-                results_container[key] = DataFrames.DataFrame(
+            column_names = get_column_names(key, field_container)
+            results_container[key] = DataFrameDataset(
+                DataFrames.DataFrame(
                     OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
-                )
-            elseif length(container_axes) == 1
-                @assert_op container_axes[1] == get_time_steps(container)
-                results_container[key] =
-                    DataFrames.DataFrame("System" => fill(NaN, num_of_executions))
-            else
-                error("Container structure for $(encode_key_as_string(key)) not supported")
-            end
+                ),
+            )
         end
     end
+    return
 end
 
 function write_result!(
-    data::EmulationModelStore,
-    field::Symbol,
+    store::EmulationModelStore,
+    name::Symbol,
     key::OptimizationContainerKey,
-    execution::Int,
-    array,
-    columns,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::AbstractArray,
 )
-    container = getfield(data, field)
-    df = axis_array_to_dataframe(array, columns)
-    container[key][execution, :] = df[1, :]
+    df = axis_array_to_dataframe(array, key)
+    write_result!(store, name, key, index, update_timestamp, df)
+    return
+end
+
+function write_result!(
+    store::EmulationModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
+    df::DataFrames.DataFrame,
+)
+    @assert_op size(df)[1] == 1
+    write_result!(store, name, key, index, update_timestamp, df[1, :])
+    return
+end
+
+function write_result!(
+    store::EmulationModelStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
+    df_row::DataFrames.DataFrameRow,
+)
+    container = get_data_field(store, get_store_container_type(key))
+    set_value!(container[key], df_row, index)
+    set_last_recorded_row!(container[key], index)
+    set_update_timestamp!(container[key], update_timestamp)
     return
 end
 
 function read_results(
-    data::EmulationModelStore,
-    container_type::Symbol,
+    store::EmulationModelStore,
+    ::Symbol,
     key::OptimizationContainerKey,
-    index = nothing,
+    index::Union{Int, Nothing} = nothing,
 )
-    container = getfield(data, container_type)
+    container = get_data_field(store, get_store_container_type(key))
+    df = container[key].values
     # Return a copy because callers may mutate it.
-    return copy(container[key], copycols = true)
+    if isnothing(index)
+        return copy(df, copycols = true)
+    else
+        return copy(df, copycols = true)[index, :]
+    end
 end
 
+function get_last_updated_timestamp(
+    store::EmulationModelStore,
+    key::OptimizationContainerKey,
+)
+    container = get_data_field(store, get_store_container_type(key))
+    return get_update_timestamp(container[key])
+end
 function write_optimizer_stats!(
     store::EmulationModelStore,
     stats::OptimizerStats,
-    execution::Int,
+    index::EmulationModelIndexType,
 )
-    @assert !(execution in keys(store.optimizer_stats))
-    store.optimizer_stats[execution] = stats
+    @assert !(index in keys(store.optimizer_stats))
+    store.optimizer_stats[index] = stats
+    return
 end
 
 function read_optimizer_stats(store::EmulationModelStore)
     return DataFrames.DataFrame([to_namedtuple(x) for x in values(store.optimizer_stats)])
 end
 
-get_last_recorded_row(x::EmulationModelStore) = x.last_recorded_row
-
-function set_last_recorded_row!(store::EmulationModelStore, execution)
-    @debug "set_last_recorded_row!" _group = LOG_GROUP_MODEL_STORE execution
-    store.last_recorded_row = execution
-    return
+function get_last_recorded_row(x::EmulationModelStore, key::OptimizationContainerKey)
+    return get_last_recorded_row(x.data_container, key)
 end

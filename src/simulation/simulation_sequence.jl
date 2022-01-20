@@ -1,7 +1,7 @@
 function check_simulation_chronology(
     horizons::OrderedDict{Symbol, Int},
-    intervals::OrderedDict{Symbol, Dates.Period},
-    resolutions::OrderedDict{Symbol, Dates.Period},
+    intervals::OrderedDict{Symbol, Dates.Millisecond},
+    resolutions::OrderedDict{Symbol, Dates.Millisecond},
 )
     models = collect(keys(resolutions))
 
@@ -41,7 +41,7 @@ _calculate_interval_inner_counts(intervals::OrderedDict{String,<:Dates.TimePerio
 
 Calculates how many times a problem is executed for every interval of the previous problem
 """
-function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.Period})
+function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.Millisecond})
     order = collect(keys(intervals))
     reverse_order = length(intervals):-1:1
     interval_run_counts = Vector{Int}(undef, length(intervals))
@@ -100,7 +100,7 @@ function _fill_execution_order(
     return
 end
 
-function _get_execution_order_vector(intervals::OrderedDict{Symbol, Dates.Period})
+function _get_execution_order_vector(intervals::OrderedDict{Symbol, Dates.Millisecond})
     length(intervals) == 1 && return [1]
     interval_run_counts = _calculate_interval_inner_counts(intervals)
     execution_order_vector = _allocate_execution_order(interval_run_counts)
@@ -141,7 +141,7 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
                 attach_feedforward!(device_model, ff)
             end
         else
-            error("Model $k not present in the SimulationModels")
+            error("Model $model_name not present in the SimulationModels")
         end
     end
     return ff_dict
@@ -156,7 +156,7 @@ end
 """
 mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Int}
-    intervals::OrderedDict{Symbol, Dates.Period}
+    intervals::OrderedDict{Symbol, Dates.Millisecond}
     feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}

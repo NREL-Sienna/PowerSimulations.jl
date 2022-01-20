@@ -100,7 +100,7 @@ function get_simulation_time(sim::Simulation, problem_number::Int)
 end
 
 get_ini_cond_chronology(sim::Simulation) = get_sequence(sim).ini_cond_chronology
-IS.get_name(sim::Simulation) = sim.name
+get_name(sim::Simulation) = sim.name
 get_simulation_folder(sim::Simulation) = sim.simulation_folder
 get_execution_order(sim::Simulation) = get_sequence(sim).execution_order
 get_current_execution_index(sim::Simulation) = get_sequence(sim).current_execution_index
@@ -160,9 +160,9 @@ Manually provided initial times have to be compatible with the specified interva
     end
     if get_models(sim).emulation_model !== nothing
         em = get_models(sim).emulation_model
-        emulator_model_no = last(keys(model_initial_times))
         system = get_system(get_models(sim).emulation_model)
-        ini_time, ts_length = PSY.check_time_series_consistency(sys, PSY.SingleTimeSeries)
+        ini_time, ts_length =
+            PSY.check_time_series_consistency(system, PSY.SingleTimeSeries)
         resolution = PSY.get_time_series_resolution(system)
         em_available_times = range(ini_time, step = resolution, length = ts_length)
         if get_initial_time(sim) ∉ em_available_times
@@ -173,7 +173,7 @@ Manually provided initial times have to be compatible with the specified interva
                 ),
             )
         else
-            model_initial_times[emulator_model_no + 1] = sim.initial_time
+            model_initial_times[length(model_initial_times) + 1] = [sim.initial_time]
         end
     end
     set_current_time!(sim, sim.initial_time)
@@ -251,11 +251,15 @@ function _build_emulation_model!(sim::Simulation)
     end
 
     try
-        get_execution_count(model)
+        initial_time = get_initial_time(sim)
+        set_initial_time!(model, initial_time)
+        output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
+        mkpath(output_dir)
+        set_output_dir!(model, output_dir)
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
             build_impl!(model)
         end
-        sim.internal.date_ref[model_number] = initial_time
+        sim.internal.date_ref[length(sim.internal.date_ref) + 1] = initial_time
         set_status!(model, BuildStatus.BUILT)
     catch
         set_status!(model, BuildStatus.FAILED)
@@ -276,6 +280,88 @@ function _initialize_simulation_state!(sim::Simulation)
     return
 end
 
+function _get_model_store_requirements!(
+    rules::CacheFlushRules,
+    model::OperationModel,
+    num_rows::Int,
+)
+    model_name = get_name(model)
+    horizon = get_horizon(model)
+    reqs = SimulationModelStoreRequirements()
+    container = get_optimization_container(model)
+
+    for (key, array) in get_duals(container)
+        reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, true, CachePriority.LOW)
+    end
+
+    for (key, param_container) in get_parameters(container)
+        array = get_parameter_array(param_container)
+        reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+    end
+
+    for (key, array) in get_variables(container)
+        reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, true, CachePriority.HIGH)
+    end
+
+    for (key, array) in get_aux_variables(container)
+        reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, true, CachePriority.HIGH)
+    end
+
+    for (key, array) in get_expressions(container)
+        reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon)
+        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+    end
+
+    return reqs
+end
+
+function _get_emulation_store_requirements(sim::Simulation)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    sim_time = get_steps(sim) * get_step_resolution(get_sequence(sim))
+    reqs = SimulationModelStoreRequirements()
+
+    for (key, state_values) in get_duals_values(system_state)
+        !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_parameters_values(system_state)
+        !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_variables_values(system_state)
+        !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_aux_variables_values(system_state)
+        !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.aux_variables[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+
+    for (key, state_values) in get_expression_values(system_state)
+        !should_write_resulting_value(key) && continue
+        dims = sim_time ÷ get_data_resolution(state_values)
+        cols = get_column_names(key, state_values)
+        reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length(cols)))
+    end
+    return reqs
+end
+
 function _initialize_problem_storage!(
     sim::Simulation,
     cache_size_mib,
@@ -284,73 +370,59 @@ function _initialize_problem_storage!(
     sequence = get_sequence(sim)
     executions_by_model = sequence.executions_by_model
     models = get_models(sim)
-    model_store_params = OrderedDict{Symbol, ModelStoreParams}()
-    model_req = Dict{Symbol, SimulationModelStoreRequirements}()
-    num_param_containers = 0
+    decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
+    dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     rules = CacheFlushRules(
         max_size = cache_size_mib * MiB,
         min_flush_size = min_cache_flush_size_mib,
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
-        model_store_params[model_name] = model.internal.store_parameters
-        horizon = get_horizon(model)
+        decision_model_store_params[model_name] = model.internal.store_parameters
         num_executions = executions_by_model[model_name]
-        reqs = SimulationModelStoreRequirements()
-        container = get_optimization_container(model)
         num_rows = num_executions * get_steps(sim)
-
-        # TODO: configuration of keep_in_cache and priority are not correct
-
-        for (key, array) in get_duals(container)
-            reqs.duals[key] = _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        for (key, param_container) in get_parameters(container)
-            array = get_parameter_array(param_container)
-            reqs.parameters[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        for (key, array) in get_variables(container)
-            reqs.variables[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
-        end
-
-        for (key, array) in get_aux_variables(container)
-            reqs.aux_variables[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.HIGH)
-        end
-
-        for (key, array) in get_expressions(container)
-            reqs.expressions[key] =
-                _calc_dimensions(array, encode_key(key), num_rows, horizon)
-            add_rule!(rules, model_name, key, false, CachePriority.LOW)
-        end
-
-        model_req[model_name] = reqs
-
-        num_param_containers +=
-            length(reqs.duals) +
-            length(reqs.parameters) +
-            length(reqs.variables) +
-            length(reqs.aux_variables) +
-            length(reqs.expressions)
+        dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)
     end
+
+    em = get_emulation_model(models)
+    if em === nothing
+        base_params = first(values(decision_model_store_params))
+        sim_time = get_step_resolution(sequence) * get_steps(sim)
+        resolution = minimum([v.resolution for v in values(decision_model_store_params)])
+        emulation_model_store_params = OrderedDict(
+            :Emulator => ModelStoreParams(
+                sim_time ÷ resolution, # Num Executions
+                1,
+                resolution, # Interval
+                resolution, # Resolution
+                get_base_power(base_params),
+                get_system_uuid(base_params),
+            ),
+        )
+    else
+        emulation_model_store_params =
+            OrderedDict(Symbol(get_name(em)) => em.internal.store_parameters)
+    end
+
+    em_model_req = _get_emulation_store_requirements(sim)
 
     simulation_store_params = SimulationStoreParams(
         get_initial_time(sim),
         get_step_resolution(sequence),
         get_steps(sim),
-        model_store_params,
+        decision_model_store_params,
+        emulation_model_store_params,
     )
     @debug "initialized problem requirements" simulation_store_params
     store = get_simulation_store(sim)
-    initialize_problem_storage!(store, simulation_store_params, model_req, rules)
+
+    initialize_problem_storage!(
+        store,
+        simulation_store_params,
+        dm_model_req,
+        em_model_req,
+        rules,
+    )
     return simulation_store_params
 end
 
@@ -381,7 +453,7 @@ function _build!(sim::Simulation, serialize::Bool)
     if em !== nothing
         system = get_system(em)
         em_resolution = PSY.get_time_series_resolution(system)
-        set_executions!(em, Int(step_resolution / em_resolution))
+        set_executions!(em, get_steps(sim) * Int(step_resolution / em_resolution))
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Check Steps" begin
@@ -400,6 +472,12 @@ function _build!(sim::Simulation, serialize::Bool)
     if serialize
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
             serialize_simulation(sim)
+        end
+        for model in get_decision_models(simulation_models)
+            serialize_problem(model)
+        end
+        if em !== nothing
+            serialize_problem(em)
         end
     end
     return
@@ -482,9 +560,10 @@ function build!(
     return get_simulation_build_status(sim)
 end
 
-function _apply_warm_start!(model::DecisionModel)
+function _apply_warm_start!(model::OperationModel)
     container = get_optimization_container(model)
-    # If the model was used to retrieve duals from an MILP the logic has to be different
+    # If the model was used to retrieve duals from an MILP the logic has to be different and
+    # the results need to be read from the primal cache
     if isempty(container.primal_values_cache)
         jump_model = get_jump_model(container)
         all_vars = JuMP.all_variables(jump_model)
@@ -499,76 +578,108 @@ function _apply_warm_start!(model::DecisionModel)
     return
 end
 
+function _update_system_state!(sim::Simulation, model_name::Symbol)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    decision_state = get_decision_states(sim_state)
+    simulation_time = get_current_time(sim_state)
+    for key in get_dataset_keys(decision_state)
+        state_data = get_dataset(decision_state, key)
+        last_update = get_update_timestamp(decision_state, key)
+        simulation_time > get_end_of_step_timestamp(state_data) && continue
+        if last_update <= simulation_time
+            update_system_state!(system_state, key, decision_state, simulation_time)
+        else
+            error("Something went really wrong. Please report this error. \\
+                  last_update: $(last_update) \\
+                  simulation_time: $(simulation_time) \\
+                  key: $(encode_key_as_string(key))")
+        end
+    end
+
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "SystemState")
+
+    return
+end
+
+function _update_system_state!(sim::Simulation, model::DecisionModel)
+    _update_system_state!(sim, get_name(model))
+    return
+end
+
+function _update_system_state!(sim::Simulation, model::EmulationModel)
+    sim_state = get_simulation_state(sim)
+    simulation_time = get_current_time(sim)
+    system_state = get_system_states(sim_state)
+    store = get_simulation_store(sim)
+    em_model_name = get_name(model)
+    for key in get_container_keys(get_optimization_container(model))
+        !should_write_resulting_value(key) && continue
+        update_system_state!(system_state, key, store, em_model_name, simulation_time)
+    end
+    IS.@record :execution StateUpdateEvent(simulation_time, get_name(model), "SystemState")
+    return
+end
+
+function _update_simulation_state!(sim::Simulation, model::EmulationModel)
+    _update_system_state!(sim, get_name(model))
+    _update_system_state!(sim, model)
+    return
+end
+
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
     store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
-    for field in fieldnames(ValueStates)
-        model_params = get_model_params(store, model_name)
+    model_params = get_decision_model_params(store, model_name)
+    for field in fieldnames(DatasetContainer)
         for key in list_fields(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
+            !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
-            update_state_data!(
-                key,
+            update_decision_state!(
                 state,
+                key,
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
                 model_params,
             )
-            IS.@record :execution StateUpdateEvent(
-                key,
-                simulation_time,
-                model_name,
-                "DecisionState",
-            )
         end
     end
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
+    _update_system_state!(sim, model)
     return
 end
 
-function _set_system_state!(sim::Simulation, model_name::String)
-    # TODO: Update after solution of emulation
-    # em = get_emulation_model(get_models(sim))
+function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
-    decision_state = get_decision_states(sim_state)
-    simulation_time = get_current_time(sim)
-
-    for key in get_state_keys(decision_state)
-        state_data = get_state_data(decision_state, key)
-        last_update = get_last_updated_timestamp(decision_state, key)
-        simulation_time > get_end_of_step_timestamp(state_data) && continue
-        if last_update <= simulation_time
-            # TODO: Implement setter functions for this operation to avoid hardcoding index 1
-            # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
-            # in-place value update
-            get_state_values(system_state, key)[1, :] .=
-                DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
-            # and write to store ()
+    model_name = get_last_decision_model(sim_state)
+    for key in get_dataset_keys(system_state)
+        state_data = get_dataset(system_state, key)
+        em_store = get_em_data(store)
+        # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
+        store_update_time = get_last_updated_timestamp(em_store, key)
+        state_update_time = get_update_timestamp(system_state, key)
+        if store_update_time < state_update_time
+            state_values = get_last_recorded_value(state_data)
+            ix = get_last_recorded_row(em_store, key) + 1
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
+        elseif store_update_time == state_update_time
+            state_values = get_last_recorded_value(state_data)
+            ix = get_last_recorded_row(em_store, key)
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
         else
-            error("Something went really wrong. Please report this error. \n
-                  last_update: $(last_update) \n
-                  simulation_time: $(simulation_time) \n
-                  key: $(encode_key_as_string(key))")
+            continue
         end
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            model_name,
-            "SystemState",
-        )
     end
-
     return
 end
 
 """ Default problem update function for most problems with no customization"""
-function update_model!(
-    model::DecisionModel{M},
-    sim::Simulation,
-) where {M <: DecisionProblem}
+function update_model!(model::OperationModel, sim::Simulation)
     if get_requires_rebuild(model)
         # TODO: Implement this case where the model is re-built
         # build_impl!(model)
@@ -585,6 +696,7 @@ function _execute!(
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
+    serialize = true,
 )
     @assert sim.internal !== nothing
 
@@ -617,7 +729,7 @@ function _execute!(
             "start",
         )
         for (ix, model_number) in enumerate(execution_order)
-            model = get_decision_models(models)[model_number]
+            model = get_simulation_model(models, model_number)
             model_name = get_name(model)
             IS.@record :simulation_status ProblemExecutionEvent(
                 get_current_time(sim),
@@ -644,15 +756,11 @@ function _execute!(
                         solve!(step, model, get_current_time(sim), store; exports = exports)
                 end # Run problem Timer
 
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Decision State" begin
+                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
                     if status == RunStatus.SUCCESSFUL
+                        # TODO: _update_simulation_state! needs performance improvements
                         _update_simulation_state!(sim, model)
-                    end
-                end
-
-                TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update System State" begin
-                    if status == RunStatus.SUCCESSFUL
-                        _set_system_state!(sim, string(model_name))
+                        _write_state_to_store!(store, sim)
                     end
                 end
 

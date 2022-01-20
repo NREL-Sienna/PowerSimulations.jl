@@ -49,74 +49,70 @@ function initialize_storage!(
         field_containers = getfield(container, type)
         results_container = getfield(store, type)
         for (key, field_container) in field_containers
-            container_axes = axes(field_container)
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             results_container[key] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
+            column_names = get_column_names(key, field_container)
             for timestamp in
                 range(initial_time, step = model_interval, length = num_of_executions)
-                if length(container_axes) == 2
-                    if type == STORE_CONTAINER_PARAMETERS
-                        column_names = string.(get_parameter_array(field_container).axes[1])
-                    else
-                        column_names = string.(axes(field_container)[1])
-                    end
-
-                    results_container[key][timestamp] = DataFrames.DataFrame(
-                        OrderedDict(c => fill(NaN, time_steps_count) for c in column_names),
-                    )
-                elseif length(container_axes) == 1
-                    results_container[key][timestamp] = DataFrames.DataFrame(
-                        encode_key_as_string(key) => fill(NaN, time_steps_count),
-                    )
-                else
-                    error(
-                        "Container structure for $(encode_key_as_string(key)) not supported",
-                    )
-                end
+                results_container[key][timestamp] = DataFrames.DataFrame(
+                    OrderedDict(c => fill(NaN, time_steps_count) for c in column_names),
+                )
             end
         end
     end
 end
 
 function write_result!(
-    data::DecisionModelStore,
-    field::Symbol,
+    store::DecisionModelStore,
+    name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
-    array,
-    columns,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::AbstractArray,
 )
-    container = getfield(data, field)
-    df = axis_array_to_dataframe(array, columns)
-    container[key][timestamp] = df
+    df = axis_array_to_dataframe(array, key)
+    write_result!(store, name, key, index, update_timestamp, df)
+    return
+end
+
+function write_result!(
+    store::DecisionModelStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    df::Union{DataFrames.DataFrame, DataFrames.DataFrameRow},
+)
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] = df
     return
 end
 
 function read_results(
-    data::DecisionModelStore,
-    container_type::Symbol,
+    store::DecisionModelStore,
+    ::Symbol,
     key::OptimizationContainerKey,
-    timestamp = nothing,
+    index::Union{DecisionModelIndexType, Nothing} = nothing,
 )
-    container = getfield(data, container_type)
+    container = getfield(store, get_store_container_type(key))
     data = container[key]
-    if isnothing(timestamp)
+    if isnothing(index)
         @assert length(data) == 1
-        timestamp = first(keys(data))
+        index = first(keys(data))
     end
 
     # Return a copy because callers may mutate it.
-    return copy(data[timestamp], copycols = true)
+    return copy(data[index], copycols = true)
 end
 
 function write_optimizer_stats!(
     store::DecisionModelStore,
     stats::OptimizerStats,
-    timestamp::Dates.DateTime,
+    index::DecisionModelIndexType,
 )
-    @assert !(timestamp in keys(store.optimizer_stats))
-    store.optimizer_stats[timestamp] = stats
+    @assert !(index in keys(store.optimizer_stats))
+    store.optimizer_stats[index] = stats
 end
 
 function read_optimizer_stats(store::DecisionModelStore)

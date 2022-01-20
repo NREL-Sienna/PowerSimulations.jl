@@ -225,7 +225,7 @@ end
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         if !is_empty(model)
-            @warn "EmulationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         # TODO-PJ: Temporary while are able to switch from PJ to POI
@@ -316,48 +316,33 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     )
     model.internal.ic_model_container = nothing
     empty_time_series_cache!(model)
-    empty!(model.store)
+    empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
     return
 end
 
-function calculate_aux_variables!(model::EmulationModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_aux_variables!(container, system)
+function update_parameters!(model::EmulationModel, store::EmulationModelStore)
+    update_parameters!(model, store.data_container)
     return
 end
 
-function calculate_dual_variables!(model::EmulationModel)
-    container = get_optimization_container(model)
-    system = get_system(model)
-    calculate_dual_variables!(container, system)
-    return
-end
-
-"""
-The one step solution method for the emulation model. Any Custom EmulationModel
-needs to reimplement this method. This method is called by run! and execute!.
-"""
-function one_step_solve!(model::EmulationModel)
-    solve_impl!(model)
-    return
-end
-
-function update_parameters(model::EmulationModel, store::EmulationModelStore)
+function update_parameters!(model::EmulationModel, data::DatasetContainer{DataFrameDataset})
     for key in keys(get_parameters(model))
-        update_parameter_values!(model, key, store)
+        update_parameter_values!(model, key, data)
+    end
+    if !is_synchronized(model)
+        update_cost_function!(get_optimization_container(model))
     end
     return
 end
 
-function update_initial_conditions(
+function update_initial_conditions!(
     model::EmulationModel,
-    store::EmulationModelStore,
+    source::EmulationModelStore,
     ::InterProblemChronology,
 )
     for key in keys(get_initial_conditions(model))
-        update_initial_conditions!(model, key, store)
+        update_initial_conditions!(model, key, source)
     end
     return
 end
@@ -368,20 +353,20 @@ function update_model!(
     ini_cond_chronology,
 )
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        update_parameters(model, source)
+        update_parameters!(model, source)
     end
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        update_initial_conditions(model, source, ini_cond_chronology)
+        update_initial_conditions!(model, source, ini_cond_chronology)
     end
     return
 end
 
 function update_model!(model::EmulationModel)
-    update_model!(model, model.store, InterProblemChronology())
+    update_model!(model, get_store(model), InterProblemChronology())
     return
 end
 
-function run_impl(
+function run_impl!(
     model::EmulationModel;
     optimizer = nothing,
     enable_progress_bar = progress_meter_enabled(),
@@ -394,10 +379,13 @@ function run_impl(
         error("Call build! again")
     end
     prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+    initial_time = get_initial_time(model)
     for execution in 1:(internal.executions)
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
-            one_step_solve!(model)
-            write_results!(model, execution)
+            solve_impl!(model)
+            current_time = initial_time + (execution - 1) * PSI.get_resolution(model)
+            write_results!(get_store(model), model, execution, current_time)
+            write_optimizer_stats!(get_store(model), get_optimizer_stats(model), execution)
             advance_execution_count!(model)
             update_model!(model)
             ProgressMeter.update!(
@@ -459,12 +447,12 @@ function run!(
         Logging.with_logger(logger) do
             try
                 initialize_storage!(
-                    model.store,
+                    get_store(model),
                     get_optimization_container(model),
                     model.internal.store_parameters,
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
-                    run_impl(model; kwargs...)
+                    run_impl!(model; kwargs...)
                     set_run_status!(model, RunStatus.SUCCESSFUL)
                 end
                 if serialize
@@ -493,135 +481,38 @@ function run!(
 end
 
 """
-Default solve method for an Emulation model used inside of a Simulation. Solves problems that conform to the requirements of EmulationModel{<: EmulationProblem}
+Default solve method for an EmulationModel used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
 
 # Arguments
 - `step::Int`: Simulation Step
-- `model::EmulationModel`: Emulation model
+- `model::OperationModel`: operation model
 - `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
 - `store::SimulationStore`: Simulation output store
+
+# Accepted Key Words
+- `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
 """
-function run!(
+function solve!(
     step::Int,
     model::EmulationModel{<:EmulationProblem},
     start_time::Dates.DateTime,
-    store::SimulationStore,
+    store::SimulationStore;
+    exports = nothing,
 )
-    # Initialize the InMemorySimulationStore
-    solve_status = run!(model)
-    if solve_status == RunStatus.SUCCESSFUL
-        write_results!(model, start_time, store)
+    # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
+    # other logic used when solving the models separate from a simulation
+    solve_impl!(model)
+    @assert get_current_time(model) == start_time
+    if get_run_status(model) == RunStatus.SUCCESSFUL
         advance_execution_count!(model)
+        write_results!(
+            store,
+            model,
+            get_execution_count(model),
+            start_time;
+            exports = exports,
+        )
+        write_optimizer_stats!(store, model, get_execution_count(model))
     end
-
-    return solve_status
-end
-
-function write_results!(model::EmulationModel, execution::Int)
-    store = get_store(model)
-    write_model_dual_results!(store, model, execution)
-    write_model_parameter_results!(store, model, execution)
-    write_model_variable_results!(store, model, execution)
-    write_model_aux_variable_results!(store, model, execution)
-    write_model_expression_results!(store, model, execution)
-    write_optimizer_stats!(store, get_optimizer_stats(model), execution)
-    set_last_recorded_row!(store, execution)
-    return
-end
-
-function write_model_dual_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, dual) in get_duals(container)
-        cols = axes(dual)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, dual, cols)
-    end
-    return
-end
-
-function write_model_parameter_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    parameters = get_parameters(container)
-    (parameters === nothing || isempty(parameters)) && return
-    horizon = 1
-
-    for (key, parameter) in parameters
-        name = encode_key(key)
-        param_array = get_parameter_array(parameter)
-        multiplier_array = get_multiplier_array(parameter)
-        @assert_op length(axes(param_array)) == 2
-        num_columns = size(param_array)[1]
-        data = Array{Float64}(undef, horizon, num_columns)
-        for r_ix in param_array.axes[2], (c_ix, name) in enumerate(param_array.axes[1])
-            val1 = jump_value(param_array[name, r_ix])
-            val2 = multiplier_array[name, r_ix]
-            data[r_ix, c_ix] = val1 * val2
-        end
-
-        cols = axes(param_array)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-
-        write_result!(store, key, execution, data, cols)
-    end
-    return
-end
-
-function write_model_variable_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_variables(container)
-        cols = axes(variable)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, variable, cols)
-    end
-    return
-end
-
-function write_model_aux_variable_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, variable) in get_aux_variables(container)
-        cols = axes(variable)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, variable, cols)
-    end
-    return
-end
-
-function write_model_expression_results!(
-    store::EmulationModelStore,
-    model::EmulationModel,
-    execution::Int,
-)
-    container = get_optimization_container(model)
-    for (key, expression) in get_expressions(container)
-        cols = axes(expression)[1]
-        if cols == get_time_steps(container)
-            cols = ["System"]
-        end
-        write_result!(store, key, execution, expression, cols)
-    end
-    return
+    return get_run_status(model)
 end

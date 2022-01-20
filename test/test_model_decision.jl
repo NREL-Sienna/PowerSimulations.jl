@@ -219,11 +219,11 @@ end
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
     @test isa(get_variable_values(res), Dict{PSI.VariableKey, DataFrames.DataFrame})
-    @test isa(get_total_cost(res), Float64)
+    @test isa(PSI.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(get_dual_values(res), Dict{PSI.ConstraintKey, DataFrames.DataFrame})
     @test isa(get_parameter_values(res), Dict{PSI.ParameterKey, DataFrames.DataFrame})
-    @test isa(get_resolution(res), Dates.TimePeriod)
+    @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(get_system(res), PSY.System)
     @test length(get_timestamps(res)) == 24
 end
@@ -257,8 +257,7 @@ end
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
     ED2 = DecisionModel(fpath, OSQP_optimizer)
-    build!(ED2, output_dir = fpath)
-    solve!(ED2)
+    @test build!(ED2, output_dir = fpath) == PSI.BuildStatus.BUILT
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
     path2 = mktempdir(cleanup = true)
@@ -272,7 +271,6 @@ end
     @test .!all(occursin.(r".h5", file_list))
     ED3 = DecisionModel(path2, OSQP_optimizer; system = sys)
     build!(ED3, output_dir = path2)
-    solve!(ED3)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end
 

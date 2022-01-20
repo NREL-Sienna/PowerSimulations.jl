@@ -52,6 +52,25 @@ end
 
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
+struct CostFunctionAttributes <: ParameterAttributes
+    variable_type::Type
+    sos_status::SOSStatusVariable
+    uses_compact_power::Bool
+end
+
+function CostFunctionAttributes(
+    variable_type::Type,
+    sos_status::SOSStatusVariable,
+    segments::Int,
+    uses_compact_power::Bool,
+)
+    return CostFunctionAttributes(variable_type, sos_status, uses_compact_power)
+end
+
+get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
+get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
+get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
+
 struct ParameterContainer
     attributes::ParameterAttributes
     parameter_array::DenseAxisArray
@@ -68,10 +87,24 @@ get_attributes(c::ParameterContainer) = c.attributes
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
+function get_column_names(key::ParameterKey, c::ParameterContainer)
+    return get_column_names(key, get_parameter_array(c))
+end
+
 function _set_parameter!(
     array::AbstractArray{Float64},
     ::JuMP.Model,
     value::Float64,
+    ixs::Tuple,
+)
+    array[ixs...] = value
+    return
+end
+
+function _set_parameter!(
+    array::AbstractArray{Vector{NTuple{2, Float64}}},
+    ::JuMP.Model,
+    value::Vector{NTuple{2, Float64}},
     ixs::Tuple,
 )
     array[ixs...] = value
@@ -92,6 +125,18 @@ function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
     parameter::Float64,
+    multiplier::Float64,
+    ixs...,
+)
+    get_multiplier_array(container)[ixs...] = multiplier
+    param_array = get_parameter_array(container)
+    _set_parameter!(param_array, jump_model, parameter, ixs)
+end
+
+function set_parameter!(
+    container::ParameterContainer,
+    jump_model::JuMP.Model,
+    parameter::Vector{NTuple{2, Float64}},
     multiplier::Float64,
     ixs...,
 )
@@ -131,4 +176,9 @@ struct IntegralLimitParameter <: VariableValueParameter end
 struct FixValueParameter <: VariableValueParameter end
 struct EnergyTargetParameter <: VariableValueParameter end
 
+struct CostFunctionParameter <: ObjectiveFunctionParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
+
+should_write_resulting_value(::Type{<:ParameterType}) = false
+should_write_resulting_value(::Type{<:RightHandSideParameter}) = true

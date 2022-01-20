@@ -29,50 +29,54 @@ function jump_value(input::Float64)::Float64
     return input
 end
 
-function to_matrix(array::DenseAxisArray)
-    ax = axes(array)
-    len_axes = length(ax)
-    if len_axes == 1
-        data = jump_value.((array[x] for x in ax[1]))
-    elseif len_axes == 2
-        data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
-        for t in ax[2], (ix, name) in enumerate(ax[1])
-            data[t, ix] = jump_value(array[name, t])
-        end
-        # TODO: this needs a better plan
-        #elseif len_axes == 3
-        #    extra_dims = sum(length(axes(array)[2:(end - 1)]))
-        #    arrays = Vector{Matrix}()
-
-        #    for i in ax[2]
-        #        third_dim = collect(fill(i, size(array)[end]))
-        #        data = Matrix{Float64}(undef, length(last(ax)), length(first(ax)))
-        #        for t in last(ax), (ix, name) in enumerate(first(ax))
-        #            data[t, ix] = jump_value(array[name, i, t])
-        #        end
-        #        push!(arrays, data)
-        #    end
-        #    data = vcat(arrays)
-    else
-        error("array axes not supported: $(axes(array))")
-    end
-
+function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}}
+    data = jump_value.(array.data)
+    data = reshape(data, length(data), 1)
     return data
 end
 
-# TODO: These functions could be use in other places for the store etc
+function to_matrix(array::DenseAxisArray{T, 1, K}) where {T <: Real, K <: NTuple{1, Any}}
+    data = reshape(deepcopy(array.data), length(array.data), 1)
+    return data
+end
+
+function to_matrix(array::DenseAxisArray{T, 2, K}) where {T, K <: NTuple{2, Any}}
+    ax = axes(array)
+    data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
+    for t in ax[2], (ix, name) in enumerate(ax[1])
+        data[t, ix] = jump_value(array[name, t])
+    end
+    return data
+end
+
+# to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
+# HDF5 Store.
+function to_matrix(array::DenseAxisArray{T, 2, K}) where {T <: Real, K <: NTuple{2, Any}}
+    return deepcopy(permutedims(array.data))
+end
+
+function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    error(
+        "Converting $(N)-dimensional DenseAxisArrays to matrix is currently not supported",
+    )
+end
+
+function get_column_names(key::OptimizationContainerKey)
+    return [encode_key_as_string(key)]
+end
+
 function get_column_names(
     key::OptimizationContainerKey,
     ::DenseAxisArray{T, 1, K},
 ) where {T, K <: NTuple{1, Any}}
-    return [encode_key_as_string(key)]
+    return get_column_names(key)
 end
 
 function get_column_names(
     ::OptimizationContainerKey,
     array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
-    return axes(array)[1]
+    return string.(axes(array)[1])
 end
 
 function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
@@ -83,18 +87,19 @@ function get_column_names(
     ::OptimizationContainerKey,
     array::SparseAxisArray{T, N, K},
 ) where {T, N, K <: NTuple{N, Any}}
-    return _get_column_names(array)
+    return get_column_names(array)
 end
 
-# to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
-# HDF5 Store.
-function to_matrix(array::DenseAxisArray{<:Number})
-    length(axes(array)) > 2 && error("array axes not supported: $(size(array))")
-    return permutedims(array.data)
+function get_column_names(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    return _get_column_names(array)
 end
 
 function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
     return join(val, PSI_NAME_DELIMITER)
+end
+
+function encode_tuple_to_column(val::Tuple{String, Int})
+    return join(string.(val), PSI_NAME_DELIMITER)
 end
 
 function _to_matrix(
@@ -161,17 +166,21 @@ end
 
 remove_undef!(expression_array::SparseAxisArray) = expression_array
 
-function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::Int)
+function _calc_dimensions(
+    array::DenseAxisArray,
+    key::OptimizationContainerKey,
+    num_rows::Int,
+    horizon::Int,
+)
     ax = axes(array)
+    columns = get_column_names(key, array)
     # Two use cases for read:
     # 1. Read data for one execution for one device.
     # 2. Read data for one execution for all devices.
     # This will ensure that data on disk is contiguous in both cases.
     if length(ax) == 1
-        columns = [name]
         dims = (horizon, 1, num_rows)
     elseif length(ax) == 2
-        columns = collect(axes(array)[1])
         dims = (horizon, length(columns), num_rows)
         # elseif length(ax) == 3
         #     # TODO: untested
@@ -183,8 +192,13 @@ function _calc_dimensions(array::DenseAxisArray, name, num_rows::Int, horizon::I
     return Dict("columns" => columns, "dims" => dims)
 end
 
-function _calc_dimensions(array::SparseAxisArray, name, num_rows::Int, horizon::Int)
-    columns = unique([(k[1], k[3]) for k in keys(array.data)])
+function _calc_dimensions(
+    array::SparseAxisArray,
+    key::OptimizationContainerKey,
+    num_rows::Int,
+    horizon::Int,
+)
+    columns = get_column_names(key, array)
     dims = (horizon, length(columns), num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end

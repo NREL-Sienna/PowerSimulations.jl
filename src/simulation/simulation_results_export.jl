@@ -61,7 +61,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
             throw(IS.InvalidValue("model data does not define 'name'"))
         end
 
-        problem_params = params.problems[Symbol(model["name"])]
+        problem_params = params.decision_models_params[Symbol(model["name"])]
         duals = Set(
             deserialize_key(problem_params, x) for
             x in get(model, "duals", Set{ConstraintKey}())
@@ -113,12 +113,12 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
 end
 
 function get_problem_exports(x::SimulationResultsExport, model_name)
-    if !haskey(x.models, model_name)
-        @error keys(x.models) model_name typeof(model_name)
-        throw(IS.InvalidValue("model $model_name is not stored"))
+    name = Symbol(model_name)
+    if !haskey(x.models, name)
+        throw(IS.InvalidValue("model $name is not stored. keys = $(keys(x.models))"))
     end
 
-    return x.models[model_name]
+    return x.models[name]
 end
 
 function get_export_file_type(exports::SimulationResultsExport)
