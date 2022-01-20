@@ -477,7 +477,7 @@ function write_result!(
     data::Matrix{Float64},
 )
     dataset = _get_em_dataset(store, key)
-    write_dataset!(dataset.values, data, index:index)
+    _write_dataset!(dataset.values, data, index:index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
@@ -664,7 +664,7 @@ function _flush_data!(
     write_range = (dataset.write_index):end_index
     # Enable only for development and benchmarking
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write $(key.key) array to HDF" begin
-    write_dataset!(dataset.values, data, write_range)
+    _write_dataset!(dataset.values, data, write_range)
     #end
 
     discard && discard_results!(cache, timestamps)
@@ -789,7 +789,7 @@ function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function write_dataset!(
+function _write_dataset!(
     dataset,
     array::Matrix{Float64},
     row_range::UnitRange{Int64},
@@ -800,7 +800,7 @@ function write_dataset!(
     return
 end
 
-function write_dataset!(
+function _write_dataset!(
     dataset,
     array::Matrix{Float64},
     row_range::UnitRange{Int64},
@@ -811,12 +811,12 @@ function write_dataset!(
     return
 end
 
-function write_dataset!(dataset, array::Matrix{Float64}, row_range::UnitRange{Int64})
-    write_dataset!(dataset, array, row_range, Val{ndims(dataset)}())
+function _write_dataset!(dataset, array::Matrix{Float64}, row_range::UnitRange{Int64})
+    _write_dataset!(dataset, array, row_range, Val{ndims(dataset)}())
     return
 end
 
-function write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
+function _write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
     dataset[:, :, row_range] = array
     @debug "wrote dataset" dataset row_range
     return

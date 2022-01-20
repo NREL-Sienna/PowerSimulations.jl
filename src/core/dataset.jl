@@ -158,6 +158,7 @@ function get_value_timestamp(s::HDF5Dataset, date::Dates.DateTime)
 end
 
 function set_value!(s::HDF5Dataset, vals, index::Int)
-    write_dataset!(s.values, vals, index:index)
+    # Temporary while there is no implementation of caching of em_data
+    _write_dataset!(s.values, vals, index:index)
     return
 end
