@@ -19,3 +19,5 @@ scs_solver = JuMP.optimizer_with_attributes(
     "eps" => 1e-4,
     "verbose" => 0,
 )
+
+HiGHS_optimizer = JuMP.optimizer_with_attributes(HiGHS.Optimizer, "time_limit" => 100.0)
