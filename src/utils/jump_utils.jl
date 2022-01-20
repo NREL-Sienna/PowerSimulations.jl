@@ -36,7 +36,7 @@ function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}
 end
 
 function to_matrix(array::DenseAxisArray{T, 1, K}) where {T <: Real, K <: NTuple{1, Any}}
-    data = reshape(array.data, length(array.data), 1)
+    data = reshape(deepcopy(array.data), length(array.data), 1)
     return data
 end
 
