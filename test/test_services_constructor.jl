@@ -215,8 +215,7 @@ end
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 504, 0, 120, 192, 24, false)
 end
-#=
-TODO: Regulation devices are breaking this test
+
 @testset "Test AGC" begin
     c_sys5_reg = PSB.build_system(PSITestSystems, "c_sys5_reg")
     @test_throws ArgumentError template_agc_reserve_deployment(; dummy_arg = 0.0)
@@ -229,7 +228,6 @@ TODO: Regulation devices are breaking this test
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
 end
-=#
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
