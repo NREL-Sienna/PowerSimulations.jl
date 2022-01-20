@@ -59,8 +59,7 @@ function Base.isempty(store::EmulationModelStore)
             iszero(val) && return false
         end
     end
-    !isempty(store.optimizer_stats) && return false
-    return true
+    return isempty(store.optimizer_stats)
 end
 
 function initialize_storage!(
