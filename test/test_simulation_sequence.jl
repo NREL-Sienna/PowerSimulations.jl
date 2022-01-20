@@ -63,7 +63,7 @@
     test_sequence = SimulationSequence(
         models = SimulationModels(
         # TODO: support passing one model without making a vector
-        [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
+            [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
         ini_cond_chronology = InterProblemChronology(),
     )
 

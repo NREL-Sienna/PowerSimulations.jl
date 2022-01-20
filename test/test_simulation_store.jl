@@ -85,7 +85,7 @@ function _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)
                 for i in 1:model_defs[model]["execution_count"]
                     for key in keys(variables)
                         data = rand(rng, size(model_defs[model]["variables"][key])...)
-                        write_result!(store, model, key, model_time, data)
+                        write_result!(store, model, key, model_time, model_time, data)
                         columns = model_defs[model]["names"]
                         _verify_data(data, store, model, key, model_time, columns)
                     end

@@ -1,6 +1,6 @@
 struct SimulationStoreParams
     initial_time::Dates.DateTime
-    step_resolution::Dates.Period
+    step_resolution::Dates.Millisecond
     num_steps::Int
     # The key order is the problem execution order.
     decision_models_params::OrderedDict{Symbol, ModelStoreParams}
@@ -44,4 +44,12 @@ function SimulationStoreParams()
 end
 
 get_initial_time(store_params::SimulationStoreParams) = store_params.initial_time
-get_models_params(store_params::SimulationStoreParams) = store_params.models_params
+function get_decision_model_params(store_params::SimulationStoreParams, model_name::Symbol)
+    return store_params.decision_models_params[model_name]
+end
+
+function get_emulation_model_params(store_params::SimulationStoreParams, ::Symbol)
+    # We currently only store one em_model dataset in the store
+    @assert length(store_params.emulation_model_params) == 1
+    return first(values(store_params.emulation_model_params))
+end

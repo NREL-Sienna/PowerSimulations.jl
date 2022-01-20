@@ -578,28 +578,52 @@ function _apply_warm_start!(model::OperationModel)
     return
 end
 
-function _update_simulation_state!(sim::Simulation, model::EmulationModel)
+function _update_system_state!(sim::Simulation, model_name::Symbol)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    decision_state = get_decision_states(sim_state)
+    simulation_time = get_current_time(sim_state)
+    for key in get_dataset_keys(decision_state)
+        state_data = get_dataset(decision_state, key)
+        last_update = get_update_timestamp(decision_state, key)
+        simulation_time > get_end_of_step_timestamp(state_data) && continue
+        if last_update <= simulation_time
+            update_system_state!(system_state, key, decision_state, simulation_time)
+        else
+            error("Something went really wrong. Please report this error. \\
+                  last_update: $(last_update) \\
+                  simulation_time: $(simulation_time) \\
+                  key: $(encode_key_as_string(key))")
+        end
+    end
+
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "SystemState")
+
+    return
+end
+
+function _update_system_state!(sim::Simulation, model::DecisionModel)
+    _update_system_state!(sim, get_name(model))
+    return
+end
+
+function _update_system_state!(sim::Simulation, model::EmulationModel)
     sim_state = get_simulation_state(sim)
     simulation_time = get_current_time(sim)
     system_state = get_system_states(sim_state)
     store = get_simulation_store(sim)
-    em_data = get_em_data(store)
     em_model_name = get_name(model)
-    for key in list_all_keys(model)
-        ix = get_last_recorded_row(em_data, key)
-        res = read_result(DataFrames.DataFrame, store, em_model_name, key, ix)
-        # TODO: Implement setter functions for this operation to avoid hardcoding index 1
-        # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
-        # in-place value update
-        set_update_timestamp!(get_state_values(system_state, key), simulation_time)
-        get_state_values(system_state, key)[1, :] .= DataFrames.values(res)
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            get_name(model),
-            "SystemState",
-        )
+    for key in get_container_keys(get_optimization_container(model))
+        !should_write_resulting_value(key) && continue
+        update_system_state!(system_state, key, store, em_model_name, simulation_time)
     end
+    IS.@record :execution StateUpdateEvent(simulation_time, get_name(model), "SystemState")
+    return
+end
+
+function _update_simulation_state!(sim::Simulation, model::EmulationModel)
+    _update_system_state!(sim, get_name(model))
+    _update_system_state!(sim, model)
     return
 end
 
@@ -609,28 +633,23 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
     model_params = get_decision_model_params(store, model_name)
-    for field in fieldnames(ValueStates)
+    for field in fieldnames(DatasetContainer)
         for key in list_fields(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
-            !has_state_data(get_decision_states(state), key) && continue
+            !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
-            update_state_data!(
-                key,
+            update_decision_state!(
                 state,
+                key,
                 # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
                 model_params,
             )
-            IS.@record :execution StateUpdateEvent(
-                key,
-                simulation_time,
-                model_name,
-                "DecisionState",
-            )
         end
     end
-    _set_system_state_from_decision_state!(state, model)
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
+    _update_system_state!(sim, model)
     return
 end
 
@@ -638,59 +657,24 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
-    simulation_time = get_current_time(sim_state)
-    for key in get_state_keys(system_state)
-        state_data = get_state_data(system_state, key)
+    for key in get_dataset_keys(system_state)
+        state_data = get_dataset(system_state, key)
         em_store = get_em_data(store)
+        # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
         store_update_time = get_last_updated_timestamp(em_store, key)
-        state_update_time = get_last_updated_timestamp(system_state, key)
-        state_values = get_last_recorded_value(state_data)
+        state_update_time = get_update_timestamp(system_state, key)
         if store_update_time < state_update_time
-            write_next_result!(em_store, key, state_update_time, state_values)
+            state_values = get_last_recorded_value(state_data)
+            ix = get_last_recorded_row(em_store, key) + 1
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
         elseif store_update_time == state_update_time
+            state_values = get_last_recorded_value(state_data)
             ix = get_last_recorded_row(em_store, key)
-            write_result!(em_store, model_name, key, ix, state_update_time, state_values)
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
         else
             continue
         end
     end
-    return
-end
-
-function _set_system_state_from_decision_state!(
-    sim_state::SimulationState,
-    model::DecisionModel,
-)
-    system_state = get_system_states(sim_state)
-    decision_state = get_decision_states(sim_state)
-    simulation_time = get_current_time(sim_state)
-
-    for key in get_state_keys(decision_state)
-        state_data = get_state_data(decision_state, key)
-        last_update = get_last_updated_timestamp(decision_state, key)
-        simulation_time > get_end_of_step_timestamp(state_data) && continue
-        if last_update <= simulation_time
-            # TODO: Implement setter functions for this operation to avoid hardcoding index 1
-            # Every DataFrame in the system state is 1 row so the 1 index is necessary for the
-            # in-place value update
-            ts = get_value_timestamp(state_data, simulation_time)
-            set_update_timestamp!(get_state_values(system_state, key), ts)
-            get_state_values(system_state, key)[1, :] .=
-                DataFrames.values(get_decision_state_value(sim_state, key, simulation_time))
-        else
-            error("Something went really wrong. Please report this error. \\
-                  last_update: $(last_update) \\
-                  simulation_time: $(simulation_time) \\
-                  key: $(encode_key_as_string(key))")
-        end
-        IS.@record :execution StateUpdateEvent(
-            key,
-            simulation_time,
-            get_name(model),
-            "SystemState",
-        )
-    end
-
     return
 end
 

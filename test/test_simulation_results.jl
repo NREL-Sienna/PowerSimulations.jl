@@ -252,12 +252,11 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             end
         end
 
-        # TODO: is read_realized_variables still supported?
-        #realized_variable_uc = read_realized_variables(results_uc)
-        #@test length(keys(realized_variable_uc)) == 12
-        #for var in values(realized_variable_uc)
-        #    @test size(var)[1] == 48
-        #end
+        realized_variable_uc = read_realized_variables(results_uc)
+        @test length(keys(realized_variable_uc)) == length(uc_expected_vars)
+        for var in values(realized_variable_uc)
+            @test size(var)[1] == 48
+        end
 
         #realized_param_uc = read_realized_parameters(
         #    results_uc,

@@ -154,40 +154,15 @@ end
 struct StateUpdateEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
-    entry_type::String
-    component_type::String
     model_name::String
     state_type::String
 end
 
-function StateUpdateEvent(
-    entry_type::DataType,
-    component_type::DataType,
-    simulation_time::Dates.DateTime,
-    model_name,
-    state_type::String,
-)
+function StateUpdateEvent(simulation_time::Dates.DateTime, model_name, state_type::String)
     return StateUpdateEvent(
         IS.RecorderEventCommon("StateUpdateEvent"),
         simulation_time,
-        string(entry_type),
-        string(component_type),
         string(model_name),
-        state_type,
-    )
-end
-
-function StateUpdateEvent(
-    key::OptimizationContainerKey,
-    simulation_time::Dates.DateTime,
-    model_name,
-    state_type::String,
-)
-    return StateUpdateEvent(
-        get_entry_type(key),
-        get_component_type(key),
-        simulation_time,
-        model_name,
         state_type,
     )
 end

@@ -1,7 +1,10 @@
 """
 calculates the index in the time series corresponding to the data. Assumes that the dates vector is sorted.
 """
-function find_timestamp_index(dates::Vector{Dates.DateTime}, date::Dates.DateTime)::Int
+function find_timestamp_index(
+    dates::Union{Vector{Dates.DateTime}, StepRange{Dates.DateTime, Dates.Millisecond}},
+    date::Dates.DateTime,
+)
     if date == first(dates)
         index = 1
     elseif date == last(dates)

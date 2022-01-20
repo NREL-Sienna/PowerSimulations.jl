@@ -157,11 +157,10 @@ export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
-# TBD if these are going to be developed
-#export read_realized_duals
-#export read_realized_variables
-#export read_realized_parameters
-#export get_realized_timestamps
+export read_realized_duals
+export read_realized_variables
+export read_realized_parameters
+export get_realized_timestamps
 export read_variable
 export read_parameter
 export get_problem_base_power
@@ -419,8 +418,8 @@ include("core/initial_conditions.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
 include("core/optimizer_stats.jl")
-include("core/extended_dataframe.jl")
-include("core/value_states.jl")
+include("core/dataset.jl")
+include("core/dataset_container.jl")
 
 include("core/optimization_container.jl")
 include("core/store_common.jl")

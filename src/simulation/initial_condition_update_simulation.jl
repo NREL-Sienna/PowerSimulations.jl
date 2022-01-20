@@ -24,10 +24,9 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    model_resolution::Dates.Period,
+    model_resolution::Dates.Millisecond,
 ) where {
-    T <:
-    InitialCondition{InitialTimeDurationOn, S},
+    T <: InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOn(), get_component_type(ic))
@@ -45,12 +44,9 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    model_resolution::Dates.Period,
+    model_resolution::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{
-        InitialTimeDurationOff,
-        S,
-    },
+    T <: InitialCondition{InitialTimeDurationOff, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOff(), get_component_type(ic))
@@ -68,7 +64,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         comp_name = get_component_name(ic)
@@ -102,7 +98,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{DeviceStatus, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -116,10 +112,9 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
-    T <:
-    InitialCondition{DeviceAboveMinPower, S},
+    T <: InitialCondition{DeviceAboveMinPower, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(
@@ -135,10 +130,9 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
-    T <:
-    InitialCondition{InitialEnergyLevel, S},
+    T <: InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, EnergyVariable(), get_component_type(ic))
@@ -150,10 +144,9 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
-    T <:
-    InitialCondition{InitialEnergyLevelUp, S},
+    T <: InitialCondition{InitialEnergyLevelUp, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, EnergyVariableUp(), get_component_type(ic))
@@ -165,12 +158,9 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{
-        InitialEnergyLevelDown,
-        S,
-    },
+    T <: InitialCondition{InitialEnergyLevelDown, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val =

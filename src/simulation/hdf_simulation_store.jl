@@ -2,19 +2,6 @@ const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
 const OPTIMIZER_STATS_PATH = "optimizer_stats"
 
-mutable struct Dataset
-    dataset::HDF5.Dataset
-    column_dataset::HDF5.Dataset
-    write_index::Int
-    last_recorded_row::Int
-    update_timestamp::Dates.DateTime
-end
-
-Dataset(dataset, column_dataset) = Dataset(dataset, column_dataset, 1, 0, UNSET_INI_TIME)
-
-get_last_recorded_row(ds::Dataset) = ds.last_recorded_row
-get_update_timestamp(ds::Dataset) = ds.update_timestamp
-
 # This only applies if chunks are enabled, and that will only likely happen if we enable
 # compression.
 # The optimal number of chunks to store in memory will vary widely.
@@ -27,40 +14,21 @@ get_update_timestamp(ds::Dataset) = ds.update_timestamp
 DEFAULT_MAX_CHUNK_BYTES = 128 * KiB
 
 """
-Stores HDF5 datasets for one problem.
-"""
-mutable struct ModelDatasets
-    duals::Dict{ConstraintKey, Dataset}
-    parameters::Dict{ParameterKey, Dataset}
-    variables::Dict{VariableKey, Dataset}
-    aux_variables::Dict{AuxVarKey, Dataset}
-    expressions::Dict{ExpressionKey, Dataset}
-end
-
-function ModelDatasets()
-    return ModelDatasets(
-        Dict{ConstraintKey, Dataset}(),
-        Dict{ParameterKey, Dataset}(),
-        Dict{VariableKey, Dataset}(),
-        Dict{AuxVarKey, Dataset}(),
-        Dict{ExpressionKey, Dataset}(),
-    )
-end
-
-"""
 Stores simulation data in an HDF file.
 """
 mutable struct HdfSimulationStore <: SimulationStore
     file::HDF5.File
     params::SimulationStoreParams
     # The key order is the problem execution order.
-    dm_data::OrderedDict{Symbol, ModelDatasets}
-    em_data::ModelDatasets
+    dm_data::OrderedDict{Symbol, DatasetContainer{HDF5Dataset}}
+    em_data::DatasetContainer{HDF5Dataset}
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
     cache::OptimizationResultCache
 end
+
+get_initial_time(store::HdfSimulationStore) = get_initial_time(store.params)
 
 function HdfSimulationStore(
     file_path::AbstractString,
@@ -81,13 +49,13 @@ function HdfSimulationStore(
         @debug "Created store" file_path
     end
 
-    datasets = OrderedDict{Symbol, ModelDatasets}()
+    datasets = OrderedDict{Symbol, DatasetContainer{HDF5Dataset}}()
     cache = OptimizationResultCache()
     store = HdfSimulationStore(
         file,
         SimulationStoreParams(),
         datasets,
-        ModelDatasets(),
+        DatasetContainer{HDF5Dataset}(),
         Dict{Symbol, HDF5.Dataset}(),
         Dict{Symbol, Int}(),
         cache,
@@ -176,12 +144,17 @@ function Base.flush(store::HdfSimulationStore)
 
     flush(store.file)
     @debug "Flush store"
+    return
 end
 
 get_params(store::HdfSimulationStore) = store.params
 
 function get_decision_model_params(store::HdfSimulationStore, model_name::Symbol)
-    return get_params(store).decision_models_params[model_name]
+    return get_decision_model_params(get_params(store), model_name)
+end
+
+function get_emulation_model_params(store::HdfSimulationStore, model_name::Symbol)
+    return get_emulation_model_params(get_params(store), model_name)
 end
 
 """
@@ -262,9 +235,9 @@ function initialize_problem_storage!(
     set_max_size!(store.cache, flush_rules.max_size)
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
     @debug "initialize_problem_storage" store.cache
-
-    for problem in keys(store.params.decision_models_params)
-        get_dm_data(store)[problem] = ModelDatasets()
+    initial_time = get_initial_time(store)
+    for (problem, problem_params) in store.params.decision_models_params
+        get_dm_data(store)[problem] = DatasetContainer{HDF5Dataset}()
         problem_group = _get_group_or_create(problems_group, string(problem))
         for type in STORE_CONTAINERS
             group = _get_group_or_create(problem_group, string(type))
@@ -277,7 +250,12 @@ function initialize_problem_storage!(
                 HDF5.write_dataset(group, col, string.(reqs["columns"]))
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                datasets[key] = Dataset(dataset, column_dataset)
+                datasets[key] = HDF5Dataset(
+                    dataset,
+                    column_dataset,
+                    get_resolution(problem_params),
+                    initial_time,
+                )
                 add_output_cache!(
                     store.cache,
                     problem,
@@ -303,6 +281,7 @@ function initialize_problem_storage!(
     end
 
     emulator_group = _get_group_or_create(root, "emulation_model")
+    emulation_params = first(values(store.params.decision_models_params))
     for type in STORE_CONTAINERS
         group = _get_group_or_create(emulator_group, string(type))
         for (key, reqs) in getfield(em_problem_reqs, type)
@@ -314,7 +293,12 @@ function initialize_problem_storage!(
             HDF5.write_dataset(group, col, string.(reqs["columns"]))
             column_dataset = group[col]
             datasets = getfield(get_em_data(store), type)
-            datasets[key] = Dataset(dataset, column_dataset)
+            datasets[key] = HDF5Dataset(
+                dataset,
+                column_dataset,
+                get_resolution(emulation_params),
+                initial_time,
+            )
         end
     end
     # This has to run after problem groups are created.
@@ -332,10 +316,11 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DecisionModelIndexType,
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     data, columns = _read_data_columns(store, model_name, key, index)
-    if ndims(data) < 2 || size(data)[1] == 1
+
+    if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
         data = reshape(data, length(data), 1)
     end
     return DataFrames.DataFrame(data, columns)
@@ -346,7 +331,7 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DecisionModelIndexType,
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     data, columns = _read_data_columns(store, model_name, key, index)
     return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
@@ -357,27 +342,57 @@ function read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    index::DecisionModelIndexType,
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     if is_cached(store.cache, model_name, key, index)
-        data = read_result(store.cache, model_name, key, index)
+        data = _read_result(store.cache, model_name, key, index)
     else
         # PERF: If this will be commonly used then we need to remove reading of columns.
-        data, _ = read_result(store, model_name, key, index)
+        data, _ = _read_result(store, model_name, key, index)
     end
 end
 
-function read_result(
+function _read_result(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+)
+    !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
+    model_params = get_emulation_model_params(store, model_name)
+
+    if index > model_params.num_executions
+        throw(
+            ArgumentError(
+                "index = $index cannot be larger than $(model_params.num_executions)",
+            ),
+        )
+    end
+
+    dataset = _get_em_dataset(store, key)
+    dset = dataset.values
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
+        @assert_op ndims(dset) == 2
+        data = dset[index, :]
+    end
+    columns = get_column_names(key, dataset)
+    data = permutedims(data)
+    @assert_op size(data)[2] == length(columns)
+    @assert_op size(data)[1] == 1
+    return data, columns
+end
+
+function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
     simulation_step, execution_index = _get_indices(store, model_name, index)
-    return read_result(store, model_name, key, simulation_step, execution_index)
+    return _read_result(store, model_name, key, simulation_step, execution_index)
 end
 
-function read_result(
+function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
@@ -396,10 +411,10 @@ function read_result(
         )
     end
 
-    dataset = _get_dataset(store, model_name, key)
-    dset = dataset.dataset
+    dataset = _get_dm_dataset(store, model_name, key)
+    dset = dataset.values
     row_index = (simulation_step - 1) * num_executions + execution_index
-    columns = dataset.column_dataset[:]
+    columns = get_column_names(key, dataset)
 
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
         num_dims = ndims(dset)
@@ -423,6 +438,7 @@ function write_result!(
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
+    ::Dates.DateTime,
     data,
 )
     output_cache = get_output_cache(store.cache, model_name, key)
@@ -450,15 +466,32 @@ function write_result!(
 end
 
 """
-Write an emulation model result for a timestamp to the store.
+Write an emulation model result for an execution index value and the timestamp of the update
 """
+function write_result!(
+    store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    data::Matrix{Float64},
+)
+    dataset = _get_em_dataset(store, key)
+    _write_dataset!(dataset.values, data, index:index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
+
 function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
     data,
 )
+    write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
     return
 end
 
@@ -534,14 +567,16 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
             container_metadata,
         )
-        get_dm_data(store)[model_name] = ModelDatasets()
+        get_dm_data(store)[model_name] = DatasetContainer{HDF5Dataset}()
         for type in STORE_CONTAINERS
             group = problem_group[string(type)]
             for name in keys(group)
                 if !endswith(name, "columns")
                     dataset = group[name]
                     column_dataset = group[_make_column_name(name)]
-                    item = Dataset(dataset, column_dataset)
+                    resolution =
+                        get_resolution(get_decision_model_params(store, model_name))
+                    item = HDF5Dataset(dataset, column_dataset, resolution, initial_time)
                     container_key = deserialize_key(container_metadata, name)
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(
@@ -623,7 +658,7 @@ function _flush_data!(
     discard::Bool,
 )
     !has_dirty(cache) && return 0
-    dataset = _get_dataset(store, cache_key)
+    dataset = _get_dm_dataset(store, cache_key)
     timestamps, data = get_data_to_flush!(cache, get_min_flush_size(store.cache))
     num_results = length(timestamps)
     @assert_op num_results == size(data)[end]
@@ -631,7 +666,7 @@ function _flush_data!(
     write_range = (dataset.write_index):end_index
     # Enable only for development and benchmarking
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write $(key.key) array to HDF" begin
-    _write_dataset!(dataset.dataset, data, write_range)
+    _write_dataset!(dataset.values, data, write_range)
     #end
 
     discard && discard_results!(cache, timestamps)
@@ -651,60 +686,32 @@ function _flush_data!(cache::OptimzationResultCache, store::HdfSimulationStore)
     return
 end
 
-function _get_columns_dataset(store::HdfSimulationStore, key)
-    return getfield(get_dm_data(store)[key.model], key.type)[key.name].columns
-end
-
 function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_name)
     return store.optimizer_stats_datasets[model_name]
 end
 
-function _get_dataset(store::HdfSimulationStore, model_name::Symbol)
+function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
+    return store.optimizer_stats_datasets
+end
+
+function _get_em_dataset(store::HdfSimulationStore, key::OptimizationContainerKey)
+    return getfield(get_em_data(store), get_store_container_type(key))[key]
+end
+
+function _get_dm_dataset(store::HdfSimulationStore, model_name::Symbol)
     return get_dm_data(store)[model_name]
 end
 
-function _get_dataset(
+function _get_dm_dataset(
     store::HdfSimulationStore,
     model_name::Symbol,
-    opt_container_key::VariableKey,
+    key::OptimizationContainerKey,
 )
-    return getfield(get_dm_data(store)[model_name], STORE_CONTAINER_VARIABLES)[opt_container_key]
+    return getfield(get_dm_data(store)[model_name], get_store_container_type(key))[key]
 end
 
-function _get_dataset(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    opt_container_key::ConstraintKey,
-)
-    return getfield(get_dm_data(store)[model_name], STORE_CONTAINER_DUALS)[opt_container_key]
-end
-
-function _get_dataset(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    opt_container_key::AuxVarKey,
-)
-    return getfield(get_dm_data(store)[model_name], STORE_CONTAINER_AUX_VARIABLES)[opt_container_key]
-end
-
-function _get_dataset(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    opt_container_key::ParameterKey,
-)
-    return getfield(get_dm_data(store)[model_name], STORE_CONTAINER_PARAMETERS)[opt_container_key]
-end
-
-function _get_dataset(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    opt_container_key::ExpressionKey,
-)
-    return getfield(get_dm_data(store)[model_name], STORE_CONTAINER_EXPRESSIONS)[opt_container_key]
-end
-
-function _get_dataset(store::HdfSimulationStore, key::OptimizationResultCacheKey)
-    return _get_dataset(store, key.model, key.key)
+function _get_dm_dataset(store::HdfSimulationStore, key::OptimizationResultCacheKey)
+    return _get_dm_dataset(store, key.model, key.key)
 end
 
 function _get_group_or_create(parent, group_name)
@@ -749,17 +756,34 @@ function _read_data_columns(
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
+    index::DecisionModelIndexType,
 )
-    if is_cached(store.cache, model_name, key, timestamp)
-        data = read_result(store.cache, model_name, key, timestamp)
-        column_dataset = _get_dataset(store, model_name, key).column_dataset
+    if is_cached(store.cache, model_name, key, index)
+        data = read_result(store.cache, model_name, key, index)
+        column_dataset = _get_dm_dataset(store, model_name, key).column_dataset
         columns = column_dataset[:]
     else
-        data, columns = read_result(store, model_name, key, timestamp)
+        data, columns = _read_result(store, model_name, key, index)
     end
 
     return data, columns
+end
+
+function _read_data_columns(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+)
+    # TODO: Enable once the cache is in use for em_data
+    #if is_cached(store.cache, model_name, key, index)
+    # data = read_result(store.cache, model_name, key, index)
+    #columns = _get_em_dataset(store, model_name, key).column_dataset[:]
+    #else
+    #    data, columns = _read_result(store, model_name, key, index)
+    #end
+
+    return _read_result(store, model_name, key, index)
 end
 
 function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
@@ -767,9 +791,30 @@ function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _write_dataset!(dataset, array::Array{Float64, 2}, row_range::UnitRange{Int64})
+function _write_dataset!(
+    dataset,
+    array::Matrix{Float64},
+    row_range::UnitRange{Int64},
+    ::Val{3},
+)
     dataset[:, 1, row_range] = array
     @debug "wrote dataset" dataset row_range
+    return
+end
+
+function _write_dataset!(
+    dataset,
+    array::Matrix{Float64},
+    row_range::UnitRange{Int64},
+    ::Val{2},
+)
+    dataset[row_range, :] = array
+    @debug "wrote dataset" dataset row_range
+    return
+end
+
+function _write_dataset!(dataset, array::Matrix{Float64}, row_range::UnitRange{Int64})
+    _write_dataset!(dataset, array, row_range, Val{ndims(dataset)}())
     return
 end
 
