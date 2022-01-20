@@ -27,24 +27,44 @@ function Base.empty!(container::DatasetContainer)
     return
 end
 
-function get_duals_values(container::DatasetContainer)
+function get_duals_values(container::DatasetContainer{DataFrameDataset})
     return container.duals
 end
 
-function get_aux_variables_values(container::DatasetContainer)
+function get_aux_variables_values(container::DatasetContainer{DataFrameDataset})
     return container.aux_variables
 end
 
-function get_variables_values(container::DatasetContainer)
+function get_variables_values(container::DatasetContainer{DataFrameDataset})
     return container.variables
 end
 
-function get_parameters_values(container::DatasetContainer)
+function get_parameters_values(container::DatasetContainer{DataFrameDataset})
     return container.parameters
 end
 
-function get_expression_values(container::DatasetContainer)
+function get_expression_values(container::DatasetContainer{DataFrameDataset})
     return container.expressions
+end
+
+function get_duals_values(::DatasetContainer{HDF5Dataset})
+    error("Operation not allowed on a HDF5Dataset.")
+end
+
+function get_aux_variables_values(::DatasetContainer{HDF5Dataset})
+    error("Operation not allowed on a HDF5Dataset.")
+end
+
+function get_variables_values(::DatasetContainer{HDF5Dataset})
+    error("Operation not allowed on a HDF5Dataset.")
+end
+
+function get_parameters_values(::DatasetContainer{HDF5Dataset})
+    error("Operation not allowed on a HDF5Dataset.")
+end
+
+function get_expression_values(::DatasetContainer{HDF5Dataset})
+    error("Operation not allowed on a HDF5Dataset.")
 end
 
 function get_dataset_keys(container::DatasetContainer)
