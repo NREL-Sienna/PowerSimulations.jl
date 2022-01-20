@@ -466,7 +466,7 @@ function write_result!(
 end
 
 """
-Write an emulation model result for a timestamp to the store.
+Write an emulation model result for an execution index value and the timestamp of the update
 """
 function write_result!(
     store::HdfSimulationStore,
