@@ -775,8 +775,8 @@ function _read_data_columns(
 )
     # TODO: Enable once the cache is in use for em_data
     #if is_cached(store.cache, model_name, key, index)
-        # data = read_result(store.cache, model_name, key, index)
-        #columns = _get_em_dataset(store, model_name, key).column_dataset[:]
+    # data = read_result(store.cache, model_name, key, index)
+    #columns = _get_em_dataset(store, model_name, key).column_dataset[:]
     #else
     #    data, columns = _read_result(store, model_name, key, index)
     #end
