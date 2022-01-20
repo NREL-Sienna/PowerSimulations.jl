@@ -24,7 +24,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    model_resolution::Dates.Period,
+    model_resolution::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -44,7 +44,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    model_resolution::Dates.Period,
+    model_resolution::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialTimeDurationOff, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -64,7 +64,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         comp_name = get_component_name(ic)
@@ -98,7 +98,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{DeviceStatus, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -112,7 +112,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{DeviceAboveMinPower, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -130,7 +130,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -144,7 +144,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialEnergyLevelUp, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -158,7 +158,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialEnergyLevelDown, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}

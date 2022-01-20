@@ -1,6 +1,6 @@
 struct SimulationStoreParams
     initial_time::Dates.DateTime
-    step_resolution::Dates.Period
+    step_resolution::Dates.Millisecond
     num_steps::Int
     # The key order is the problem execution order.
     decision_models_params::OrderedDict{Symbol, ModelStoreParams}

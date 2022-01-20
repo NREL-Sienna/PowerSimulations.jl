@@ -4,7 +4,7 @@
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -18,7 +18,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialTimeDurationOff, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -32,7 +32,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_variable_value(store, ActivePowerVariable(), get_component_type(ic))
@@ -44,7 +44,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{DeviceStatus, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -58,7 +58,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{DeviceAboveMinPower, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -73,7 +73,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -87,7 +87,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialEnergyLevelUp, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
@@ -101,7 +101,7 @@ end
 function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
-    ::Dates.Period,
+    ::Dates.Millisecond,
 ) where {
     T <: InitialCondition{InitialEnergyLevelDown, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}

@@ -37,7 +37,7 @@ end
 
 const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
 
-function _get_state_params(models::SimulationModels, simulation_step::Dates.Period)
+function _get_state_params(models::SimulationModels, simulation_step::Dates.Millisecond)
     params = OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS}()
     for model in get_decision_models(models)
         container = get_optimization_container(model)
@@ -71,7 +71,7 @@ function _initialize_model_states!(
     sim_state::SimulationState,
     model::OperationModel,
     simulation_initial_time::Dates.DateTime,
-    simulation_step::Dates.Period,
+    simulation_step::Dates.Millisecond,
     params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     states = get_decision_states(sim_state)
@@ -176,7 +176,7 @@ end
 function initialize_simulation_state!(
     sim_state::SimulationState,
     models::SimulationModels,
-    simulation_step::Dates.Period,
+    simulation_step::Dates.Millisecond,
     simulation_initial_time::Dates.DateTime,
 )
     params = _get_state_params(models, simulation_step)

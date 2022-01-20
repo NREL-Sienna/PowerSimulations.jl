@@ -1,6 +1,7 @@
 abstract type AbstractDataset end
 
 Base.length(s::AbstractDataset) = size(s.values)[1]
+get_data_resolution(s::AbstractDataset)::Dates.Millisecond = s.resolution
 get_last_recorded_row(s::AbstractDataset) = s.last_recorded_row
 
 """
@@ -25,7 +26,7 @@ mutable struct DataFrameDataset <: AbstractDataset
     # We use Array here to allow for overwrites when updating the state
     timestamps::Vector{Dates.DateTime}
     # Resolution is needed because AbstractDataset might have just one row
-    resolution::Dates.Period
+    resolution::Dates.Millisecond
     end_of_step_index::Int
     last_recorded_row::Int
     update_timestamp::Dates.DateTime
@@ -34,7 +35,7 @@ end
 function DataFrameDataset(
     values::DataFrames.DataFrame,
     timestamps::Vector{Dates.DateTime},
-    resolution::Dates.Period,
+    resolution::Dates.Millisecond,
     end_of_step_index::Int,
 )
     return DataFrameDataset(
@@ -61,7 +62,7 @@ end
 function make_system_state(
     values::DataFrames.DataFrame,
     timestamp::Dates.DateTime,
-    resolution::Dates.Period,
+    resolution::Dates.Millisecond,
 )
     return DataFrameDataset(values, [timestamp], resolution, 0, 1, UNSET_INI_TIME)
 end
@@ -84,8 +85,6 @@ function get_last_recorded_value(s::DataFrameDataset)
     end
     return s.values[get_last_recorded_row(s), :]
 end
-
-get_data_resolution(s::DataFrameDataset) = s.resolution
 
 function get_end_of_step_timestamp(s::DataFrameDataset)
     return s.timestamps[s.end_of_step_index]
@@ -127,7 +126,7 @@ mutable struct HDF5Dataset <: AbstractDataset
     column_dataset::HDF5.Dataset
     write_index::Int
     last_recorded_row::Int
-    resolution::Dates.Period
+    resolution::Dates.Millisecond
     initial_timestamp::Dates.DateTime
     update_timestamp::Dates.DateTime
 end

@@ -89,7 +89,7 @@ function determine_horizons!(models::SimulationModels)
 end
 
 function determine_intervals(models::SimulationModels)
-    intervals = OrderedDict{Symbol, Dates.Period}()
+    intervals = OrderedDict{Symbol, Dates.Millisecond}()
     for model in models.decision_models
         system = get_system(model)
         interval = PSY.get_forecast_interval(system)
@@ -108,7 +108,7 @@ function determine_intervals(models::SimulationModels)
 end
 
 function determine_resolutions(models::SimulationModels)
-    resolutions = OrderedDict{Symbol, Dates.Period}()
+    resolutions = OrderedDict{Symbol, Dates.Millisecond}()
     for model in models.decision_models
         system = get_system(model)
         resolution = PSY.get_time_series_resolution(system)
