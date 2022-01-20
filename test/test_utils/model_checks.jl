@@ -488,7 +488,7 @@ function check_constraint_count(
     ::Type{T},
 ) where {T <: PSY.Component}
     container = PSI.get_optimization_container(model)
-    resolution = get_resolution(container)
+    resolution = PSI.get_resolution(container)
     steps_per_hour = 60 / Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1 / steps_per_hour
     duration_devices = filter!(
