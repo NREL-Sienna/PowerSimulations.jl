@@ -4,7 +4,7 @@ calculates the index in the time series corresponding to the data. Assumes that 
 function find_timestamp_index(
     dates::Union{Vector{Dates.DateTime}, StepRange{Dates.DateTime, Dates.Millisecond}},
     date::Dates.DateTime,
-)::Int
+)
     if date == first(dates)
         index = 1
     elseif date == last(dates)
