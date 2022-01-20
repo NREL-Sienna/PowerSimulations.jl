@@ -18,17 +18,11 @@ function axis_array_to_dataframe(array::Matrix{Float64}, key::OptimizationContai
 end
 
 function to_matrix(df::DataFrames.DataFrame)
-    vals = Matrix{Float64}(undef, size(df))
-    vals .= df
-    return vals
+    return Matrix{Float64}(vals)
 end
 
 function to_matrix(df_row::DataFrames.DataFrameRow{DataFrames.DataFrame, DataFrames.Index})
-    vals = Matrix{Float64}(undef, 1, size(df_row)[1])
-    for (i, val) in enumerate(df_row)
-        vals[i] = val
-    end
-    return vals
+    return reshape(Vector(df_row), 1, size(df_row)[1])
 end
 
 function write_data(
