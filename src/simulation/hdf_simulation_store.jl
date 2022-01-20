@@ -773,14 +773,15 @@ function _read_data_columns(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
-    if is_cached(store.cache, model_name, key, index)
+    # TODO: Enable once the cache is in use for em_data
+    #if is_cached(store.cache, model_name, key, index)
         # data = read_result(store.cache, model_name, key, index)
         #columns = _get_em_dataset(store, model_name, key).column_dataset[:]
-    else
-        data, columns = _read_result(store, model_name, key, index)
-    end
+    #else
+    #    data, columns = _read_result(store, model_name, key, index)
+    #end
 
-    return data, columns
+    return _read_result(store, model_name, key, index)
 end
 
 function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
