@@ -49,6 +49,7 @@ function initialize_storage!(
         field_containers = getfield(container, type)
         results_container = getfield(store, type)
         for (key, field_container) in field_containers
+            !should_write_resulting_value(key) && continue
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             results_container[key] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()

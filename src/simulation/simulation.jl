@@ -291,27 +291,32 @@ function _get_model_store_requirements!(
     container = get_optimization_container(model)
 
     for (key, array) in get_duals(container)
+        !should_write_resulting_value(key) && continue
         reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, true, CachePriority.LOW)
     end
 
     for (key, param_container) in get_parameters(container)
+        !should_write_resulting_value(key) && continue
         array = get_parameter_array(param_container)
         reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, false, CachePriority.LOW)
     end
 
     for (key, array) in get_variables(container)
+        !should_write_resulting_value(key) && continue
         reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, true, CachePriority.HIGH)
     end
 
     for (key, array) in get_aux_variables(container)
+        !should_write_resulting_value(key) && continue
         reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, true, CachePriority.HIGH)
     end
 
     for (key, array) in get_expressions(container)
+        !should_write_resulting_value(key) && continue
         reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, false, CachePriority.LOW)
     end

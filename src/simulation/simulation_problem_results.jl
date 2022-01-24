@@ -213,7 +213,6 @@ function _get_store_value(
     results =
         Dict{OptimizationContainerKey, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     model_name = Symbol(get_model_name(res))
-    problem_interval = get_interval(res)
     resolution = get_resolution(res)
     horizon = get_forecast_horizon(res)
     for key in container_keys

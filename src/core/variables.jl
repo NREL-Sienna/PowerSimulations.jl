@@ -131,3 +131,5 @@ const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{<:VariableType}) = true
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
+
+convert_to_system_per_unit(::Type{<:VariableType}) = false

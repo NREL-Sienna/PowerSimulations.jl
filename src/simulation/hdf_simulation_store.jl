@@ -242,6 +242,7 @@ function initialize_problem_storage!(
         for type in STORE_CONTAINERS
             group = _get_group_or_create(problem_group, string(type))
             for (key, reqs) in getfield(dm_problem_reqs[problem], type)
+                !should_write_resulting_value(key) && continue
                 name = encode_key_as_string(key)
                 dataset = _create_dataset(group, name, reqs)
                 # Columns can't be stored in attributes because they might be larger than
