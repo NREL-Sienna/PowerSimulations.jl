@@ -47,6 +47,7 @@ struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
 struct PowerOutputRangeConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
+struct PieceWiseLinearCostConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end

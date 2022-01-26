@@ -278,6 +278,7 @@ export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
+export PieceWiseLinearCostConstraint
 export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
 export RampConstraint
