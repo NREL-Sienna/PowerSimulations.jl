@@ -26,8 +26,7 @@ function update_initial_conditions!(
     state::SimulationState,
     model_resolution::Dates.Millisecond,
 ) where {
-    T <:
-    InitialCondition{InitialTimeDurationOn, S},
+    T <: InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOn(), get_component_type(ic))
