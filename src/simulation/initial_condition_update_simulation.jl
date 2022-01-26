@@ -46,7 +46,10 @@ function update_initial_conditions!(
     state::SimulationState,
     model_resolution::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialTimeDurationOff, S},
+    T <: InitialCondition{
+        InitialTimeDurationOff,
+        S,
+    },
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOff(), get_component_type(ic))
@@ -132,7 +135,8 @@ function update_initial_conditions!(
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialEnergyLevel, S},
+    T <:
+    InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, EnergyVariable(), get_component_type(ic))
@@ -146,7 +150,8 @@ function update_initial_conditions!(
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialEnergyLevelUp, S},
+    T <:
+    InitialCondition{InitialEnergyLevelUp, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_system_state_value(state, EnergyVariableUp(), get_component_type(ic))
@@ -160,7 +165,10 @@ function update_initial_conditions!(
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialEnergyLevelDown, S},
+    T <: InitialCondition{
+        InitialEnergyLevelDown,
+        S,
+    },
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val =

@@ -182,3 +182,19 @@ abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 should_write_resulting_value(::Type{<:ParameterType}) = false
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
+
+convert_result_to_natural_units(::Type{<:ParameterType}) = false
+
+convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{EnergyTargetTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{EnergyBudgetTimeSeriesParameter}) = true
+#convert_result_to_natural_units(::Type{InflowTimeSeriesParameter}) = true # TODO: is this pu?
+#convert_result_to_natural_units(::Type{OutflowTimeSeriesParameter}) = true # TODO: is this pu?
+convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
+convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
+convert_result_to_natural_units(::Type{IntegralLimitParameter}) = true
+convert_result_to_natural_units(::Type{FixValueParameter}) = true
+convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true
+#convert_result_to_natural_units(::Type{CostFunctionParameter}) = true # TODO: is this pu?
