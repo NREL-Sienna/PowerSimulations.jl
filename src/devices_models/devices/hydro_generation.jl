@@ -634,7 +634,7 @@ function add_constraints!(
         name = PSY.get_name(d)
         cost_data = PSY.get_operation_cost(d)
         if isa(cost_data, PSY.StorageManagementCost)
-            shortage_cost = PSY.get_energy_shortage_cost()
+            shortage_cost = PSY.get_energy_shortage_cost(cost_data)
         else
             @debug "Data for device $name doesn't contain shortage costs"
             shortage_cost = 0.0
