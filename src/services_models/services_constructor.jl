@@ -18,7 +18,10 @@ function map_contributing_devices_by_type!(
 )
     types = unique(typeof.(contributing_devices))
     for S in types
-        _devices = filter(x -> typeof(x) == S, contributing_devices)
+        if isabstracttype(S)
+            error("The device type $S can't be abstract")
+        end
+        _devices = [d for d in contributing_devices if isa(d, S)]
         add_contributing_devices_map!(service_model, S, _devices)
     end
     return
@@ -92,6 +95,7 @@ function construct_services!(
             continue
         end
         isempty(get_contributing_devices(service_model)) && continue
+        @show get_contributing_devices(service_model)
         construct_service!(
             container,
             sys,
