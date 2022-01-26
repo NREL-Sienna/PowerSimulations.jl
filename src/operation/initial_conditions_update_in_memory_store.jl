@@ -20,10 +20,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{
-        InitialTimeDurationOff,
-        S,
-    },
+    T <: InitialCondition{InitialTimeDurationOff, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_aux_variable_value(store, TimeDurationOff(), get_component_type(ic))
