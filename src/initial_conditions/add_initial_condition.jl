@@ -6,10 +6,7 @@ function _get_initial_conditions_value(
     container::OptimizationContainer,
 ) where {
     T <: InitialCondition{U, Float64},
-    V <: Union{
-        AbstractDeviceFormulation,
-        AbstractServiceFormulation,
-    },
+    V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialConditionType}
     ic_data = get_initial_conditions_data(container)
