@@ -258,88 +258,64 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(var)[1] == 48
         end
 
-        realized_variable_uc = read_realized_variables(
-            results_uc,
-            [PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
-        )
-        @test length(keys(realized_variable_uc)) == 1
-        for var in values(realized_variable_uc)
-            @test size(var)[1] == 48
-        end
+        #realized_param_uc = read_realized_parameters(
+        #    results_uc,
+        #    names = [:P__max_active_power__RenewableDispatch_max_active_power],
+        #)
+        #@test length(keys(realized_param_uc)) == 1
+        #for param in values(realized_param_uc)
+        #    @test size(param)[1] == 48
+        #end
 
-        realized_param_uc = read_realized_parameters(results_uc)
-        @test length(keys(realized_param_uc)) == 3
-        for param in values(realized_param_uc)
-            @test size(param)[1] == 48
-        end
+        #realized_duals_ed = read_realized_duals(results_ed)
+        #@test length(keys(realized_duals_ed)) == 1
+        #for param in values(realized_duals_ed)
+        #    @test size(param)[1] == 576
+        #end
 
-        realized_param_uc = read_realized_parameters(
-            results_uc,
-            [PSI.ParameterKey(ActivePowerTimeSeriesParameter, RenewableDispatch)],
-        )
-        @test length(keys(realized_param_uc)) == 1
-        for param in values(realized_param_uc)
-            @test size(param)[1] == 48
-        end
+        # request non sync data
+        #@test_logs(
+        #    (:error, r"Requested time does not match available results"),
+        #    match_mode = :any,
+        #    @test_throws IS.InvalidValue read_realized_variables(
+        #        results_ed,
+        #        names = [:P__ThermalStandard],
+        #        initial_time = DateTime("2024-01-01T02:12:00"),
+        #        len = 3,
+        #    )
+        #)
 
-        realized_duals_ed = read_realized_duals(results_ed)
-        @test length(keys(realized_duals_ed)) == 1
-        for param in values(realized_duals_ed)
-            @test size(param)[1] == 576
-        end
+        ## request good window
+        #@test size(
+        #    read_realized_variables(
+        #        results_ed,
+        #        names = [:P__ThermalStandard],
+        #        initial_time = DateTime("2024-01-02T23:10:00"),
+        #        len = 10,
+        #    )[:P__ThermalStandard],
+        #)[1] == 10
 
-        realized_duals_ed = read_realized_duals(
-            results_ed,
-            [PSI.ConstraintKey(CopperPlateBalanceConstraint, System)],
-        )
-        @test length(keys(realized_duals_ed)) == 1
-        for param in values(realized_duals_ed)
-            @test size(param)[1] == 576
-        end
+        ## request bad window
+        #@test_logs(
+        #    (:error, r"Requested time does not match available results"),
+        #    (@test_throws IS.InvalidValue read_realized_variables(
+        #        results_ed,
+        #        names = [:P__ThermalStandard],
+        #        initial_time = DateTime("2024-01-02T23:10:00"),
+        #        len = 11,
+        #    ))
+        #)
 
-        #request non sync data
-        @test_logs(
-            (:error, r"Requested time does not match available results"),
-            match_mode = :any,
-            @test_throws IS.InvalidValue read_realized_variables(
-                results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
-                initial_time = DateTime("2024-01-01T02:12:00"),
-                len = 3,
-            )
-        )
-
-        # request good window
-        @test size(
-            read_realized_variables(
-                results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
-                initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 10,
-            )[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
-        )[1] == 10
-
-        # request bad window
-        @test_logs(
-            (:error, r"Requested time does not match available results"),
-            (@test_throws IS.InvalidValue read_realized_variables(
-                results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
-                initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 11,
-            ))
-        )
-
-        # request bad window
-        @test_logs(
-            (:error, r"Requested time does not match available results"),
-            (@test_throws IS.InvalidValue read_realized_variables(
-                results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
-                initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 12,
-            ))
-        )
+        ## request bad window
+        #@test_logs(
+        #    (:error, r"Requested time does not match available results"),
+        #    (@test_throws IS.InvalidValue read_realized_variables(
+        #        results_ed,
+        #        names = [:P__ThermalStandard],
+        #        initial_time = DateTime("2024-01-02T23:10:00"),
+        #        len = 12,
+        #    ))
+        #)
 
         load_results!(
             results_ed,

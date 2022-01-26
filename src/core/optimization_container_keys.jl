@@ -34,7 +34,3 @@ function should_write_resulting_value(key_val::OptimizationContainerKey)
     value_type = get_entry_type(key_val)
     return should_write_resulting_value(value_type)
 end
-
-function convert_result_to_natural_units(key::OptimizationContainerKey)
-    return convert_result_to_natural_units(get_entry_type(key))
-end

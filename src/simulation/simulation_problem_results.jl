@@ -1,7 +1,7 @@
 # TODO:
-# - [?] Allow passing the system path if the simulation wasn't serialized: CB - this currently works with `set_system!`
-# - [ ] Handle PER-UNIT conversion of variables according to type: TODO
-# - [x] encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
+# - Allow passing the system path if the simulation wasn't serialized
+# - Handle PER-UNIT conversion of variables according to type
+# - encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
 
 const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
 const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
@@ -152,10 +152,6 @@ Set the system in the results instance.
 
 Throws InvalidValue if the system UUID is incorrect.
 """
-function set_system!(results::SimulationProblemResults, system::AbstractString)
-    set_system!(results, System(system))
-end
-
 function set_system!(results::SimulationProblemResults, system::PSY.System)
     sys_uuid = IS.get_uuid(system)
     if sys_uuid != results.system_uuid
@@ -465,6 +461,8 @@ function read_parameter(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
+    # TODO: parameters are not handled correctly
+    #parameter_key = ParameterKey(param_type(time_series_name), device_type)
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_parameters(res, [key], timestamps, store)[key]
@@ -529,7 +527,6 @@ struct RealizedMeta
     start_offset::Int
     end_offset::Int
     interval_len::Int
-    realized_timestamps::AbstractVector{Dates.DateTime}
 end
 
 function RealizedMeta(
@@ -567,7 +564,6 @@ function RealizedMeta(
         start_offset,
         end_offset,
         interval_len,
-        realized_timestamps,
     )
 end
 
@@ -577,6 +573,7 @@ function get_realization(
         SortedDict{Dates.DateTime, DataFrames.DataFrame},
     },
     meta::RealizedMeta,
+    timestamps,
 )
     realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for (key, result_value) in result_values
@@ -588,6 +585,7 @@ function get_realization(
             result_length = length(first_id:last_id)
             for colname in propertynames(df)
                 colname == :DateTime && continue
+                # TODO DT: may not be correct
                 col = df[!, colname][first_id:last_id]
                 if !haskey(results_concat, colname)
                     results_concat[colname] = col
@@ -597,11 +595,7 @@ function get_realization(
             end
         end
         realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
-        DataFrames.insertcols!(
-            realized_values[key],
-            1,
-            :DateTime => meta.realized_timestamps,
-        )
+        DataFrames.insertcols!(realized_values[key], 1, :DateTime => timestamps)
     end
     return realized_values
 end
@@ -633,7 +627,12 @@ function read_realized_variables(
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
     timestamps = _process_timestamps(res, meta.initial_time, meta.count)
     result_values = _read_variables(res, variables, timestamps, nothing)
-    return get_realization(result_values, meta)
+    timestamps = get_realized_timestamps(
+        res,
+        initial_time = initial_time,
+        len = meta.count * meta.interval_len,
+    )
+    return get_realization(result_values, meta, timestamps)
 end
 
 """
@@ -646,28 +645,22 @@ it will read from memory.
 - `initial_time::Dates.DateTime` : initial time of the requested results
 - `len::Int`: length of results
 """
-function read_realized_parameters(res::SimulationProblemResults; kwargs...)
-    return read_realized_parameters(res, collect(keys(res.parameter_values)); kwargs...)
-end
-
-function read_realized_parameters(res::SimulationProblemResults, parameters; kwargs...)
-    return read_realized_parameters(
-        res,
-        [ParameterKey(x...) for x in parameters];
-        kwargs...,
-    )
-end
-
 function read_realized_parameters(
-    res::SimulationProblemResults,
-    parameters::Vector{<:OptimizationContainerKey};
+    res::SimulationProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
+    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
-    result_values = _read_parameters(res, parameters, timestamps, nothing)
-    return get_realization(result_values, meta)
+    result_values = read_parameters(
+        res,
+        names = names,
+        initial_time = meta.initial_time,
+        count = meta.count,
+    )
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
 end
 
 """
@@ -680,24 +673,18 @@ loaded using the [load_results!](@ref) function it will read from memory.
 - `initial_time::Dates.DateTime` : initial time of the requested results
 - `len::Int`: length of results
 """
-function read_realized_duals(res::SimulationProblemResults; kwargs...)
-    return read_realized_duals(res, collect(keys(res.dual_values)); kwargs...)
-end
-
-function read_realized_duals(res::SimulationProblemResults, duals; kwargs...)
-    return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
-end
-
-function read_realized_duals(
-    res::SimulationProblemResults,
-    duals::Vector{<:OptimizationContainerKey};
+function read_realized_duals( # TODO: Should this be get_realized_duals_values?
+    res::SimulationProblemResults;
+    names::Union{Vector{Symbol}, Nothing} = nothing,
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
+    names = isnothing(names) ? collect(keys(res.dual_values)) : names
     meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
-    result_values = _read_duals(res, duals, timestamps, nothing)
-    return get_realization(result_values, meta)
+    result_values =
+        read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
+    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
+    return get_realization(result_values, meta, timestamps)
 end
 
 """

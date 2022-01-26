@@ -106,8 +106,3 @@ end
 Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
 
 should_write_resulting_value(::Type{<:ConstraintType}) = true
-
-convert_result_to_natural_units(::Type{<:ConstraintType}) = false
-convert_result_to_natural_units(::Type{CopperPlateBalanceConstraint}) = true
-convert_result_to_natural_units(::Type{NodalBalanceActiveConstraint}) = true
-convert_result_to_natural_units(::Type{NodalBalanceReactiveConstraint}) = true

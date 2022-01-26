@@ -205,12 +205,7 @@ end
 
 function read_aux_variable(res::ProblemResults, key::AuxVarKey)
     !haskey(res.aux_variable_values, key) && error("$key is not stored")
-    if convert_result_to_natural_units(key)
-        value = res.variable_values[key] .* get_model_base_power(res)
-    else
-        value = res.variable_values[key]
-    end
-    return value
+    return res.variable_values[key]
 end
 
 function read_aux_variable(res::ProblemResults, args...)
@@ -220,12 +215,7 @@ end
 
 function read_variable(res::ProblemResults, key::VariableKey)
     !haskey(res.variable_values, key) && error("$key is not stored")
-    if convert_result_to_natural_units(key)
-        value = res.variable_values[key] .* get_model_base_power(res)
-    else
-        value = res.variable_values[key]
-    end
-    return value
+    return res.variable_values[key]
 end
 
 function read_variable(res::ProblemResults, args...)
@@ -235,12 +225,7 @@ end
 
 function read_parameter(res::ProblemResults, key::ParameterKey)
     !haskey(res.parameter_values, key) && error("$key is not stored")
-    if convert_result_to_natural_units(key)
-        value = res.parameter_values[key] .* get_model_base_power(res)
-    else
-        value = res.parameter_values[key]
-    end
-    return value
+    return res.parameter_values[key]
 end
 
 function read_parameter(res::ProblemResults, args...)
@@ -260,12 +245,7 @@ end
 
 function read_expression(res::ProblemResults, key::ExpressionKey)
     !haskey(res.expression_values, key) && error("$key is not stored")
-    if convert_result_to_natural_units(key)
-        value = res.expression_values[key] .* get_model_base_power(res)
-    else
-        value = res.expression_values[key]
-    end
-    return value
+    return res.expression_values[key]
 end
 
 function read_expression(res::ProblemResults, args...)
