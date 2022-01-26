@@ -75,8 +75,7 @@ function update_initial_conditions!(
     store::EmulationModelStore,
     ::Dates.Millisecond,
 ) where {
-    T <:
-    InitialCondition{InitialEnergyLevel, S},
+    T <: InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, PJ.ParameterRef}}
     for ic in ics
         var_val = get_variable_value(store, EnergyVariable(), get_component_type(ic))
