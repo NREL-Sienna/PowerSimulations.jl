@@ -625,7 +625,7 @@ end
 function initial_conditions!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    formulation::Union{ThermalBasicUnitCommitment, ThermalBasicCompactUnitCommitment}
+    formulation::Union{ThermalBasicUnitCommitment, ThermalBasicCompactUnitCommitment},
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
     return

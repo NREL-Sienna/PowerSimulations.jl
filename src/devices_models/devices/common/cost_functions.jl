@@ -327,10 +327,15 @@ function _pwl_gencost_sos!(
     ::Type{S},
     ::Type{T},
 ) where {S <: VariableType, T <: PSY.Component}
-    const_container =
-        lazy_container_addition!(container, PieceWiseLinearCostConstraint(), T)
     base_power = get_base_power(container)
-    variable = get_variable(container, S(), T)[component_name, time_period]
+    variables = get_variable(container, S(), T)
+    const_container = lazy_container_addition!(
+        container,
+        PieceWiseLinearCostConstraint(),
+        T,
+        axes(variables)...,
+    )
+    variable = variables[component_name, time_period]
     jump_model = get_jump_model(container)
     if sos_status == SOSStatusVariable.NO_VARIABLE
         bin = 1.0
