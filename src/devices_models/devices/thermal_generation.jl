@@ -625,7 +625,7 @@ end
 function initial_conditions!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    formulation::ThermalBasicUnitCommitment,
+    formulation::Union{ThermalBasicUnitCommitment, ThermalBasicCompactUnitCommitment}
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
     return
@@ -651,7 +651,7 @@ end
 ############################ Auxiliary Variables Calculation ################################
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    key::AuxVarKey{TimeDurationOn, T},
+    ::AuxVarKey{TimeDurationOn, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_variable_results = get_variable(container, OnVariable(), T)
