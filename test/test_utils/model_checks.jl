@@ -492,11 +492,10 @@ function check_constraint_count(
     steps_per_hour = 60 / Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1 / steps_per_hour
     duration_devices = filter!(
-        x ->
-            !(
-                PSY.get_time_limits(x).up <= fraction_of_hour &&
-                PSY.get_time_limits(x).down <= fraction_of_hour
-            ),
+        x -> !(
+            PSY.get_time_limits(x).up <= fraction_of_hour &&
+            PSY.get_time_limits(x).down <= fraction_of_hour
+        ),
         collect(get_components(T, model.sys, x -> x.available)),
     )
     set_name = PSY.get_name.(duration_devices)
