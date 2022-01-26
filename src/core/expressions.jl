@@ -8,6 +8,9 @@ function ExpressionKey(
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    if isabstracttype(U)
+        error("Type $U can't be abstract")
+    end
     check_meta_chars(meta)
     return ExpressionKey{T, U}(meta)
 end

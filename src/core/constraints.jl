@@ -1,3 +1,30 @@
+struct ConstraintKey{T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} <:
+       OptimizationContainerKey
+    meta::String
+end
+
+function ConstraintKey(
+    ::Type{T},
+    ::Type{U},
+    meta = CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    check_meta_chars(meta)
+    return ConstraintKey{T, U}(meta)
+end
+
+get_entry_type(
+    ::ConstraintKey{T, U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = T
+get_component_type(
+    ::ConstraintKey{T, U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = U
+
+function encode_key(key::ConstraintKey)
+    return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
+end
+
+Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
+
 struct AbsoluteValueConstraint <: ConstraintType end
 struct ActiveConstraint <: ConstraintType end
 struct ActiveRangeConstraint <: ConstraintType end
@@ -78,31 +105,5 @@ struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint en
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ComponentActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ComponentReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
-struct ConstraintKey{T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} <:
-       OptimizationContainerKey
-    meta::String
-end
-
-function ConstraintKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    check_meta_chars(meta)
-    return ConstraintKey{T, U}(meta)
-end
-
-get_entry_type(
-    ::ConstraintKey{T, U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = T
-get_component_type(
-    ::ConstraintKey{T, U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}} = U
-
-function encode_key(key::ConstraintKey)
-    return encode_symbol(get_component_type(key), get_entry_type(key), key.meta)
-end
-
-Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
 
 should_write_resulting_value(::Type{<:ConstraintType}) = true
