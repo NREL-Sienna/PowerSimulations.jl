@@ -632,7 +632,14 @@ function add_constraints!(
 
     for d in devices
         name = PSY.get_name(d)
-        shortage_cost = PSY.get_energy_shortage_cost(PSY.get_operation_cost(d))
+        cost_data = PSY.get_operation_cost(d)
+        if isa(cost_data, PSY.StorageManagementCost)
+            shortage_cost = PSY.get_energy_shortage_cost()
+        else
+            @debug "Data for device $name doesn't contain shortage costs"
+            shortage_cost = 0.0
+        end
+
         if shortage_cost == 0.0
             @warn(
                 "Device $name has energy shortage cost set to 0.0, as a result the model will turnoff the EnergyShortageVariable to avoid infeasible/unbounded problem."
