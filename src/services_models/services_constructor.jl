@@ -95,7 +95,7 @@ function construct_services!(
             continue
         end
         isempty(get_contributing_devices(service_model)) && continue
-        @show get_contributing_devices(service_model)
+        get_contributing_devices(service_model)
         construct_service!(
             container,
             sys,
