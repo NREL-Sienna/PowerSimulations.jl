@@ -20,8 +20,10 @@ function add_expressions!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <:
-    Union{ComponentActivePowerRangeExpressionUB, ComponentActivePowerRangeExpressionLB},
+    T <: Union{
+        ComponentActivePowerRangeExpressionUB,
+        ComponentActivePowerRangeExpressionLB,
+    },
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.HybridSystem}
