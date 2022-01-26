@@ -378,12 +378,18 @@ function add_feedforward_constraints!(
     parameter_type = get_default_parameter_type(ff, T)
     param = get_parameter_array(container, parameter_type, T)
     multiplier = get_parameter_multiplier_array(container, parameter_type, T)
-    affected_periods = ff.number_of_periods
+    affected_periods = get_number_of_periods(ff)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
         IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
         IS.@assert_op set_time == time_steps
+
+        if affected_periods > set_time[end]
+            error(
+                "The number of affected periods $affected_periods is larger than the periods available $(set_time[end])",
+            )
+        end
 
         var_type = get_entry_type(var)
         con_ub = add_constraints_container!(

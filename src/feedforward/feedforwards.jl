@@ -166,6 +166,7 @@ end
 
 get_default_parameter_type(::IntegralLimitFeedforward, _) = IntegralLimitParameter()
 get_optimization_container_key(ff) = ff.optimization_container_key
+get_number_of_periods(ff) = ff.number_of_periods
 
 """
 Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that can be used
