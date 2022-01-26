@@ -334,13 +334,6 @@ function init_optimization_container!(
     return
 end
 
-function add_to_setting_ext!(container::OptimizationContainer, key::String, value)
-    settings = get_settings(container)
-    push!(get_ext(settings), key => value)
-    @debug "Add to settings ext" key value _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    return
-end
-
 function check_optimization_container(container::OptimizationContainer)
     for (k, param_container) in container.parameters
         valid = !all(isnan.(param_container.multiplier_array.data))
