@@ -36,7 +36,7 @@ end
 function get_constraint_index(model::OperationModel, index::Int)
     container = get_optimization_container(model)
     constraints = get_constraints(container)
-    for i in get_all_constraint_index(model::OperationModel)
+    for i in get_all_constraint_index(model)
         if i[3] == index
             return constraints[i[1]].data[i[2]]
         end

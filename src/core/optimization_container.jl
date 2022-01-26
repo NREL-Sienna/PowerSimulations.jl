@@ -613,6 +613,7 @@ function compute_conflict!(container::OptimizationContainer)
     try
         JuMP.compute_conflict!(jump_model)
     catch e
+        jump_model.is_model_dirty = true
         if isa(e, MethodError)
             @info "Can't compute conflict, check that your optimizer supports conflict refining/IIS"
         else
@@ -1519,4 +1520,32 @@ function get_optimization_container_key(
     meta::String,
 ) where {T <: ConstraintType, U <: PSY.Component}
     return ConstraintKey(T, U, meta)
+end
+
+function lazy_container_addition!(
+    container::OptimizationContainer,
+    var::T,
+    ::Type{U},
+    axs...,
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    if !has_container_key(container, T, U)
+        var_container = add_variable_container!(container, var, U, axs...)
+    else
+        var_container = get_variable(container, var, U)
+    end
+    return var_container
+end
+
+function lazy_container_addition!(
+    container::OptimizationContainer,
+    constraint::T,
+    ::Type{U},
+    axs...,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    if !has_container_key(container, T, U)
+        cons_container = add_constraints_container!(container, constraint, U, axs...)
+    else
+        cons_container = get_constraint(container, constraint, U)
+    end
+    return cons_container
 end
