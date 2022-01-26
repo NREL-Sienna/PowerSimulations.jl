@@ -189,18 +189,9 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <:
-    InitialCondition{
-        U,
-        Float64,
-    },
-    V <:
-    Union{
-        AbstractDeviceFormulation,
-        AbstractServiceFormulation,
-    },
-    W <:
-    PSY.Component,
+    T <: InitialCondition{U, Float64},
+    V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+    W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
     ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
