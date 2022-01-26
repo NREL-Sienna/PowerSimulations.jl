@@ -65,6 +65,7 @@ export EnergyTarget
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
+export ThermalBasicCompactUnitCommitment
 export ThermalBasicDispatch
 export ThermalStandardDispatch
 export ThermalDispatchNoMin
