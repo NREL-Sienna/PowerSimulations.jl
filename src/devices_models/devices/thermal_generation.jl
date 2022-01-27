@@ -1427,6 +1427,7 @@ function cost_function!(
                     component_name,
                     cost_function_data,
                     t,
+                    T,
                 )
                 add_to_cost_expression!(
                     container,
