@@ -252,3 +252,28 @@ function cost_function!(
     end
     return
 end
+
+# Defined here so we can dispatch on PIDSmoothACE
+function add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::ServiceModel{PSY.AGC, PIDSmoothACE},
+    areas::IS.FlattenIteratorWrapper{PSY.AGC},
+)
+    for ff in get_feedforwards(model)
+        @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
+        add_feedforward_arguments!(container, model, areas, ff)
+    end
+    return
+end
+
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    model::ServiceModel{PSY.AGC, PIDSmoothACE},
+    areas::IS.FlattenIteratorWrapper{PSY.AGC},
+)
+    for ff in get_feedforwards(model)
+        @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
+        add_feedforward_constraints!(container, model, areas, ff)
+    end
+    return
+end

@@ -297,7 +297,7 @@ function construct_service!(
     services = PSY.get_components(S, sys)
     agc_areas = PSY.get_area.(services)
     areas = PSY.get_components(PSY.Area, sys)
-    if !isemtpy(setdiff(areas, agc_areas))
+    if !isempty(setdiff(areas, agc_areas))
         throw(
             IS.ConflictingInputsError(
                 "All area most have an AGC service assigned in order to model the System's Frequency regulation",
@@ -335,7 +335,7 @@ function construct_service!(
 
     add_to_expression!(container, RawACE, SteadyStateFrequencyDeviation, services, model)
 
-    # add_feedforward_arguments!(container, model, service)
+    add_feedforward_arguments!(container, model, services)
     return
 end
 
@@ -348,6 +348,7 @@ function construct_service!(
     ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     areas = PSY.get_components(PSY.Area, sys)
+    services = PSY.get_components(S, sys)
 
     add_constraints!(container, AbsoluteValueConstraint, LiftVariable, areas, model)
     add_constraints!(
@@ -368,7 +369,7 @@ function construct_service!(
     )
     add_constraints!(container, BalanceAuxConstraint, SmoothACE, areas, model, sys)
 
-    #add_feedforward_constraints!(container, model, service)
+    add_feedforward_constraints!(container, model, services)
 
     cost_function!(container, areas, model)
     return
