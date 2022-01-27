@@ -227,7 +227,6 @@ function _add_pwl_variables!(
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
                 base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
-                start = 0.0,
                 lower_bound = 0.0,
                 upper_bound = 1.0
             )
