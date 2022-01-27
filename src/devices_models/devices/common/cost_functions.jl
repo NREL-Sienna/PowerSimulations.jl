@@ -182,7 +182,7 @@ function proportional_objective!(
     component::U,
     linear_term::Float64,
     time_period::Int,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: ActivePowerVariable, U <: PSY.Component}
     component_name = PSY.get_name(component)
     variable = get_variable(container, T(), U)[component_name, time_period]
     gen_cost = sum(variable) * linear_term
