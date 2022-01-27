@@ -368,18 +368,11 @@ function construct_service!(
         model,
         sys,
     )
-    add_constraints!(container, BalanceAuxConstraint, SmoothACE, areas, model)
+    add_constraints!(container, BalanceAuxConstraint, SmoothACE, areas, model, sys)
 
-    #absolute_value_lift(container, areas)
-    #frequency_response_constraint!(container, sys)
-    #smooth_ace_pid!(container, [service])
-    #aux_constraints!(container, sys)
-    # add_feedforward_constraints!(container, model, service)
+    #add_feedforward_constraints!(container, model, service)
 
-    JuMP.add_to_expression!(
-        container.cost_function,
-        sum(z[a, t] for t in time_steps, a in area_names) * SERVICES_SLACK_COST,
-    )
+    cost_function!(container, areas, model)
     return
 end
 

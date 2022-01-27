@@ -45,7 +45,7 @@ get_variable_lower_bound(::LiftVariable, ::PSY.Area, ::AbstractAGCFormulation) =
 initial_condition_default(::AreaControlError, d::PSY.AGC, ::AbstractAGCFormulation) = PSY.get_initial_ace(d)
 initial_condition_variable(::AreaControlError, d::PSY.AGC, ::AbstractAGCFormulation) = AreaMismatchVariable()
 
-get_variable_multiplier(::SteadyStateFrequencyDeviation, d::PSY.AGC, ::AbstractAGCFormulation) = -10 * PSY.get_bias(service)
+get_variable_multiplier(::SteadyStateFrequencyDeviation, d::PSY.AGC, ::AbstractAGCFormulation) = -10 * PSY.get_bias(d)
 
 #! format: on
 
@@ -162,7 +162,7 @@ function add_constraints!(
     ::ServiceModel{PSY.AGC, V},
     sys::PSY.System,
 ) where {T <: SACEPIDAreaConstraint, U <: PSY.Area, V <: PIDSmoothACE}
-    services = get_components(PSY.AGC, sys)
+    services = PSY.get_components(PSY.AGC, sys)
     time_steps = get_time_steps(container)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     RAW_ACE = get_expression(container, RawACE(), U)
@@ -203,9 +203,16 @@ function add_constraints!(
     return
 end
 
-function aux_constraints!(container::OptimizationContainer, sys::PSY.System)
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{SmoothACE},
+    areas::IS.FlattenIteratorWrapper{U},
+    ::ServiceModel{PSY.AGC, V},
+    sys::PSY.System,
+) where {T <: BalanceAuxConstraint, U <: PSY.Area, V <: PIDSmoothACE}
     time_steps = get_time_steps(container)
-    area_names = [PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys)]
+    area_names = PSY.get_name.(areas)
     aux_equation = add_constraints_container!(
         container,
         BalanceAuxConstraint(),
@@ -230,6 +237,18 @@ function aux_constraints!(container::OptimizationContainer, sys::PSY.System)
             (R_up_emergency[a, t] - R_dn_emergency[a, t]) +
             area_mismatch[a, t]
         )
+    end
+    return
+end
+
+function cost_function!(
+    container::OptimizationContainer,
+    areas::IS.FlattenIteratorWrapper{T},
+    ::ServiceModel{<:PSY.AGC, U},
+) where {T <: PSY.Area, U <: PIDSmoothACE}
+    time_steps = get_time_steps(container)
+    for a in areas, t in time_steps
+        proportional_objective!(container, LiftVariable(), a, SERVICES_SLACK_COST, t)
     end
     return
 end
