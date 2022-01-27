@@ -176,7 +176,7 @@ function pwlparamcheck(cost)
     return slope_convexity_check(slopes[2:end])
 end
 
-function linear_gen_cost!(
+function proportional_objective!(
     container::OptimizationContainer,
     ::T,
     component::U,
@@ -190,13 +190,13 @@ function linear_gen_cost!(
     return
 end
 
-function linear_gen_cost!(
+function proportional_objective!(
     container::OptimizationContainer,
     ::T,
     component::U,
     linear_term::Float64,
     time_period::Int,
-) where {T <: ActivePowerVariable, U <: PSY.Component}
+) where {T <: VariableType, U <: PSY.Component}
     # Do not multiply by dt here since this function is used also for linear costs not
     # subject to time_scaling
     component_name = PSY.get_name(component)
@@ -484,7 +484,7 @@ function add_to_cost!(
     if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(container, OnVariable(), component, spec.fixed_cost, t)
+            proportional_objective!(container, OnVariable(), component, spec.fixed_cost, t)
         end
     end
     return
@@ -510,7 +510,7 @@ function add_to_cost!(
     if spec.start_up_cost !== nothing
         @debug "Start up cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StartVariable(),
                 component,
@@ -523,7 +523,7 @@ function add_to_cost!(
     if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StopVariable(),
                 component,
@@ -536,7 +536,7 @@ function add_to_cost!(
     if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 OnVariable(),
                 component,
@@ -564,7 +564,7 @@ function add_to_cost!(
     if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 OnVariable(),
                 component,
@@ -577,7 +577,7 @@ function add_to_cost!(
     if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StopVariable(),
                 component,
@@ -598,7 +598,7 @@ function add_to_cost!(
         start_cost_data = PSY.get_start_up(cost_data)
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES), t in time_steps
-                linear_gen_cost!(
+                proportional_objective!(
                     container,
                     var_type(),
                     component,
@@ -608,7 +608,7 @@ function add_to_cost!(
             end
         else
             for t in time_steps
-                linear_gen_cost!(
+                proportional_objective!(
                     container,
                     StartVariable(),
                     component,
@@ -692,7 +692,7 @@ function add_to_cost!(
         if spec.has_multistart_variables
             for (st, var_type) in enumerate(START_VARIABLES)
                 for t in time_steps
-                    linear_gen_cost!(
+                    proportional_objective!(
                         container,
                         var_type(),
                         component,
@@ -703,7 +703,7 @@ function add_to_cost!(
             end
         else
             for t in time_steps
-                linear_gen_cost!(
+                proportional_objective!(
                     container,
                     StartVariable(),
                     component,
@@ -717,7 +717,7 @@ function add_to_cost!(
     if spec.has_status_variable
         @debug "no_load cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 OnVariable(),
                 component,
@@ -730,7 +730,7 @@ function add_to_cost!(
     if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StopVariable(),
                 component,
@@ -783,7 +783,7 @@ function add_to_cost!(
     if spec.start_up_cost !== nothing
         start_cost_data = spec.start_up_cost(cost_data)
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StartVariable(),
                 component,
@@ -796,7 +796,7 @@ function add_to_cost!(
     if spec.has_status_variable
         @debug "no_load cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 OnVariable(),
                 component,
@@ -809,7 +809,7 @@ function add_to_cost!(
     if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StopVariable(),
                 component,
@@ -855,7 +855,7 @@ function add_service_bid_cost!(
     forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
     if eltype(forecast_data_values) == Float64
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 spec.addtional_linear_terms[PSY.get_name(service)],
                 component,
@@ -901,7 +901,7 @@ function add_to_cost!(
     if spec.fixed_cost !== nothing && spec.has_status_variable
         @debug "Fixed cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 OnVariable(),
                 component,
@@ -914,7 +914,7 @@ function add_to_cost!(
     if spec.start_up_cost !== nothing
         @debug "Start up cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StartVariable(),
                 component,
@@ -927,7 +927,7 @@ function add_to_cost!(
     if spec.shut_down_cost !== nothing
         @debug "Shut down cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
         for t in time_steps
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 StopVariable(),
                 component,
@@ -940,14 +940,14 @@ function add_to_cost!(
     @debug "Energy Surplus/Shortage cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     base_power = get_base_power(container)
     for t in time_steps
-        linear_gen_cost!(
+        proportional_objective!(
             container,
             EnergySurplusVariable(),
             component,
             cost_data.energy_surplus_cost * OBJECTIVE_FUNCTION_NEGATIVE * base_power,
             t,
         )
-        linear_gen_cost!(
+        proportional_objective!(
             container,
             EnergyShortageVariable(),
             component,
@@ -1002,7 +1002,7 @@ function variable_cost!(
     cost_data = PSY.get_cost(cost_component)
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    linear_gen_cost!(
+    proportional_objective!(
         container,
         spec.variable_type(),
         component,
@@ -1069,7 +1069,7 @@ function variable_cost!(
     else
         @debug "$component_name Quadratic Variable Cost with only linear term" _group =
             LOG_GROUP_COST_FUNCTIONS component_name
-        linear_gen_cost!(
+        proportional_objective!(
             container,
             spec.variable_type(),
             component,
