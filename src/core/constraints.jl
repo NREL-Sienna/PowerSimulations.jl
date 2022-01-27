@@ -90,7 +90,7 @@ struct ReserveEnergyConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
 struct ComponentReserveUpBalance <: ConstraintType end
 struct ComponentReserveDownBalance <: ConstraintType end
-struct SACEPidAreaConstraint <: ConstraintType end
+struct SACEPIDAreaConstraint <: ConstraintType end
 struct StartTypeConstraint <: ConstraintType end
 struct StartupInitialConditionConstraint <: ConstraintType end
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end

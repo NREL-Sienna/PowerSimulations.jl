@@ -646,3 +646,59 @@ function add_to_expression!(
     end
     return
 end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    areas::IS.FlattenIteratorWrapper{V},
+    model::ServiceModel{PSY.AGC, W},
+) where {
+    T <: Union{EmergencyUp, EmergencyDown},
+    U <:
+    Union{AdditionalDeltaActivePowerUpVariable, AdditionalDeltaActivePowerDownVariable},
+    V <: PSY.Area,
+    W <: AbstractAGCFormulation,
+}
+    names = PSY.get_name.(areas)
+    time_steps = get_time_steps(container)
+    if !has_container_key(container, T, V)
+        expression = add_expression_container!(container, T(), V, names, time_steps)
+    end
+    expression = get_expression(container, T(), V)
+    variable = get_variable(container, U(), V)
+    for n in names, t in time_steps
+        _add_to_jump_expression!(expression[n, t], variable[n, t], 1.0)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    services::IS.FlattenIteratorWrapper{V},
+    model::ServiceModel{V, W},
+) where {
+    T <: RawACE,
+    U <: SteadyStateFrequencyDeviation,
+    V <: PSY.AGC,
+    W <: AbstractAGCFormulation,
+}
+    names = [PSY.get_name(PSY.get_area(s)) for s in services]
+    time_steps = get_time_steps(container)
+    if !has_container_key(container, T, V)
+        expression = add_expression_container!(container, T(), PSY.Area, names, time_steps)
+    end
+    expression = get_expression(container, T(), PSY.Area)
+    variable = get_variable(container, U(), PSY.Area)
+    for s in services, t in time_steps
+        name = PSY.get_name(PSY.get_area(s))
+        _add_to_jump_expression!(
+            expression[name, t],
+            variable[name, t],
+            get_variable_multiplier(U(), s, W()),
+        )
+    end
+    return
+end
