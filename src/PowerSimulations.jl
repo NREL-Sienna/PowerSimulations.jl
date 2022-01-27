@@ -295,7 +295,7 @@ export RegulationLimitsUpConstraint
 export RequirementConstraint
 export ReserveEnergyConstraint
 export ReservePowerConstraint
-export SACEPidAreaConstraint
+export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
