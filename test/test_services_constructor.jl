@@ -226,7 +226,7 @@ end
     @test build!(agc_problem; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
     # These values might change as the AGC model is refined
-    moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
+    moi_tests(agc_problem, false, 696, 0, 480, 0, 384, false)
 end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
