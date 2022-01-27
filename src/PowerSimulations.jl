@@ -240,7 +240,6 @@ export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
 export CopperPlateBalanceConstraint
-export DeltaActivePoweVariableLimitsConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EnergyBudgetConstraint
