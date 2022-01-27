@@ -240,8 +240,6 @@ export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
 export CopperPlateBalanceConstraint
-export DeltaActivePowerDownVariableLimitsConstraint
-export DeltaActivePowerUpVariableLimitsConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EnergyBudgetConstraint
@@ -290,12 +288,11 @@ export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
 export ReactivePowerVariableLimitsConstraint
 export ReactiveRangeConstraint
-export RegulationLimitsDownConstraint
-export RegulationLimitsUpConstraint
+export RegulationLimitsConstraint
 export RequirementConstraint
 export ReserveEnergyConstraint
 export ReservePowerConstraint
-export SACEPidAreaConstraint
+export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint

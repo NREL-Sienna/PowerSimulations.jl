@@ -515,7 +515,7 @@ function add_feedforward_constraints!(
                 variable[name, target_period] + slack_var[name, target_period] >=
                 param[name, target_period] * multiplier[name, target_period]
             )
-            linear_gen_cost!(
+            proportional_objective!(
                 container,
                 EnergyShortageVariable(),
                 d,
