@@ -48,7 +48,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
         time_residual = horizon_length - model_interval
         @assert_op time_residual >= zero(Dates.Millisecond)
         num_runs = simulation_step / model_interval
-        total_time = (num_runs - 1) * interval + horizon_length
+        total_time = (num_runs - 1) * model_interval + horizon_length
         for type in fieldnames(DatasetContainer)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
