@@ -658,7 +658,7 @@ function add_to_expression!(
     U <:
     Union{AdditionalDeltaActivePowerUpVariable, AdditionalDeltaActivePowerDownVariable},
     V <: PSY.Area,
-    W <: AbstractAGCFormulation,
+    W <: AbstractServiceFormulation,
 }
     names = PSY.get_name.(areas)
     time_steps = get_time_steps(container)
@@ -683,7 +683,7 @@ function add_to_expression!(
     T <: RawACE,
     U <: SteadyStateFrequencyDeviation,
     V <: PSY.AGC,
-    W <: AbstractAGCFormulation,
+    W <: AbstractServiceFormulation,
 }
     names = [PSY.get_name(PSY.get_area(s)) for s in services]
     time_steps = get_time_steps(container)
