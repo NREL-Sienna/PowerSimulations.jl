@@ -294,13 +294,16 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-    name = get_service_name(model)
-    service = PSY.get_component(S, sys, name)
-    agc_area = PSY.get_area(service)
+    services = PSY.get_components(S, sys)
+    agc_areas = PSY.get_area.(services)
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
-        if area != agc_area
-            #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
+        if area ∉ agc_areas
+            throw(
+                IS.ConflictingInputsError(
+                    "All area most have an AGC service assigned in order to model the System's Frequency regulation",
+                ),
+            )
         end
     end
 
@@ -311,11 +314,30 @@ function construct_service!(
     add_variables!(container, ActivePowerVariable, areas, T())
     add_variables!(container, DeltaActivePowerUpVariable, areas, T())
     add_variables!(container, DeltaActivePowerDownVariable, areas, T())
-    # TODO: Re-enable full support for AGC models
-    # add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas)
-    # add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas)
-    balancing_auxiliary_variables!(container, sys)
-    add_feedforward_arguments!(container, model, service)
+    add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas, T())
+    add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas, T())
+
+    add_initial_condition!(container, services, T(), AreaControlError())
+
+    add_to_expression!(
+        container,
+        EmergencyUp,
+        AdditionalDeltaActivePowerUpVariable,
+        areas,
+        model,
+    )
+
+    add_to_expression!(
+        container,
+        EmergencyDown,
+        AdditionalDeltaActivePowerDownVariable,
+        areas,
+        model,
+    )
+
+    add_to_expression!(container, RawACE, SteadyStateFrequencyDeviation, services, model)
+
+    # add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -327,19 +349,37 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-    name = get_service_name(model)
-    service = PSY.get_component(S, sys, name)
-    agc_area = PSY.get_area(service)
     areas = PSY.get_components(PSY.Area, sys)
 
-    absolute_value_lift(container, areas)
-    frequency_response_constraint!(container, sys)
-    add_initial_condition!(container, [service], T(), AreaControlError())
-    smooth_ace_pid!(container, [service])
-    aux_constraints!(container, sys)
+    add_constraints!(container, AbsoluteValueConstraint, LiftVariable, areas, model)
+    add_constraints!(
+        container,
+        FrequencyResponseConstraint,
+        SteadyStateFrequencyDeviation,
+        areas,
+        model,
+        sys,
+    )
+    add_constraints!(
+        container,
+        SACEPIDAreaConstraint,
+        SteadyStateFrequencyDeviation,
+        areas,
+        model,
+        sys,
+    )
+    add_constraints!(container, BalanceAuxConstraint, SmoothACE, areas, model)
 
-    add_feedforward_constraints!(container, model, service)
+    #absolute_value_lift(container, areas)
+    #frequency_response_constraint!(container, sys)
+    #smooth_ace_pid!(container, [service])
+    #aux_constraints!(container, sys)
+    # add_feedforward_constraints!(container, model, service)
 
+    JuMP.add_to_expression!(
+        container.cost_function,
+        sum(z[a, t] for t in time_steps, a in area_names) * SERVICES_SLACK_COST,
+    )
     return
 end
 
