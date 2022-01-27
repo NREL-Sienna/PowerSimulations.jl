@@ -696,7 +696,7 @@ function add_to_expression!(
         name = PSY.get_name(PSY.get_area(s))
         _add_to_jump_expression!(
             expression[name, t],
-            variable[name, t],
+            variable[t],
             get_variable_multiplier(U(), s, W()),
         )
     end
