@@ -372,10 +372,11 @@ function _read_result(
 
     dataset = _get_em_dataset(store, key)
     dset = dataset.values
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
-        @assert_op ndims(dset) == 2
-        data = dset[index, :]
-    end
+    # Uncomment for performance checking
+    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
+    @assert_op ndims(dset) == 2
+    data = dset[index, :]
+    #end
     columns = get_column_names(key, dataset)
     data = permutedims(data)
     @assert_op size(data)[2] == length(columns)
@@ -417,16 +418,17 @@ function _read_result(
     row_index = (simulation_step - 1) * num_executions + execution_index
     columns = get_column_names(key, dataset)
 
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
-        num_dims = ndims(dset)
-        if num_dims == 3
-            data = dset[:, :, row_index]
-            #elseif num_dims == 4
-            #    data = dset[:, :, :, row_index]
-        else
-            error("unsupported dims: $num_dims")
-        end
+    # Uncomment for performance checking
+    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
+    num_dims = ndims(dset)
+    if num_dims == 3
+        data = dset[:, :, row_index]
+        #elseif num_dims == 4
+        #    data = dset[:, :, :, row_index]
+    else
+        error("unsupported dims: $num_dims")
     end
+    #end
 
     return data, columns
 end
