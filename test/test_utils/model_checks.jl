@@ -409,10 +409,9 @@ function check_initialization_variable_count(
     container = PSI.get_optimization_container(model)
     initial_conditions_data = PSI.get_initial_conditions_data(container)
     no_component = length(PSY.get_components(T, model.sys, x -> x.available))
-    time_steps = PSI.get_time_steps(container)[end]
     variable = PSI.get_initial_condition_value(initial_conditions_data, S(), T)
     rows, cols = size(variable)
-    @test rows * cols == no_component * time_steps
+    @test rows * cols == no_component * PSI.INITIALIZATION_PROBLEM_HORIZON
 end
 
 function check_variable_count(

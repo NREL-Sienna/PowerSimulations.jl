@@ -7,6 +7,9 @@ function ParameterKey(
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: PSY.Component}
+    if isabstracttype(U)
+        error("Type $U can't be abstract")
+    end
     check_meta_chars(meta)
     return ParameterKey{T, U}(meta)
 end

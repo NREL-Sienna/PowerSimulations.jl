@@ -28,10 +28,13 @@ end
 
 function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     model.internal.ic_model_container = deepcopy(get_optimization_container(model))
-    ic_settings = model.internal.ic_model_container.settings
+    ic_settings = deepcopy(model.internal.ic_model_container.settings)
+    main_problem_horizon = get_horizon(ic_settings)
     # TODO: add an interface to allow user to configure initial_conditions problem
     model.internal.ic_model_container.JuMPmodel = _make_jump_model(ic_settings)
     template = get_initial_conditions_template(model)
+    model.internal.ic_model_container.settings = ic_settings
+    set_horizon!(ic_settings, min(INITIALIZATION_PROBLEM_HORIZON, main_problem_horizon))
     init_optimization_container!(
         model.internal.ic_model_container,
         get_network_formulation(get_template(model)),

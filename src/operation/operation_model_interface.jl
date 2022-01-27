@@ -195,10 +195,8 @@ function initialize!(model::OperationModel)
         return
     end
     @info "Solving Initialization Model for $(get_name(model))"
-    try
-        solve_impl!(model.internal.ic_model_container, get_system(model))
-    catch e
-        @error exception = (e, catch_backtrace())
+    status = solve_impl!(model.internal.ic_model_container, get_system(model))
+    if status == RunStatus.FAILED
         error("Model failed to initialize")
     end
 

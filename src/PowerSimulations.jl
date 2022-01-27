@@ -65,6 +65,7 @@ export EnergyTarget
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
+export ThermalBasicCompactUnitCommitment
 export ThermalBasicDispatch
 export ThermalStandardDispatch
 export ThermalDispatchNoMin
@@ -278,6 +279,7 @@ export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
+export PieceWiseLinearCostConstraint
 export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
 export RampConstraint

@@ -43,24 +43,28 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
         model_interval = get_interval(model)
-        horizon_step = get_horizon(model) * model_resolution
+        horizon_length = get_horizon(model) * model_resolution
         # This is the portion of the Horizon that "overflows" into the next step
-        time_residual = horizon_step - model_interval
+        time_residual = horizon_length - model_interval
+        @assert_op time_residual >= zero(Dates.Millisecond)
+        num_runs = simulation_step / model_interval
+        total_time = (num_runs - 1) * model_interval + horizon_length
         for type in fieldnames(DatasetContainer)
             field_containers = getfield(container, type)
             for key in keys(field_containers)
                 !should_write_resulting_value(key) && continue
                 if !haskey(params, key)
                     params[key] = (
-                        horizon = max(simulation_step + time_residual, horizon_step),
+                        horizon = max(simulation_step + time_residual, total_time),
                         resolution = model_resolution,
                     )
                 else
                     params[key] = (
-                        horizon = max(params[key].horizon, horizon_step),
+                        horizon = max(params[key].horizon, total_time),
                         resolution = min(params[key].resolution, model_resolution),
                     )
                 end
+                @debug get_name(model) key params[key]
             end
         end
     end
