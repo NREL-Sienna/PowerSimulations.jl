@@ -34,8 +34,6 @@ struct AreaParticipationAssignmentConstraint <: ConstraintType end
 struct BalanceAuxConstraint <: ConstraintType end
 struct CommitmentConstraint <: ConstraintType end
 struct CopperPlateBalanceConstraint <: ConstraintType end
-struct DeltaActivePowerDownVariableLimitsConstraint <: ConstraintType end
-struct DeltaActivePowerUpVariableLimitsConstraint <: ConstraintType end
 struct DurationConstraint <: ConstraintType end
 struct EnergyBalanceConstraint <: ConstraintType end
 struct EnergyBudgetConstraint <: ConstraintType end
@@ -83,8 +81,7 @@ struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct ReactivePowerConstraint <: ConstraintType end
 struct ReactiveRangeConstraint <: ConstraintType end
-struct RegulationLimitsDownConstraint <: ConstraintType end
-struct RegulationLimitsUpConstraint <: ConstraintType end
+struct RegulationLimitsConstraint <: ConstraintType end
 struct RequirementConstraint <: ConstraintType end
 struct ReserveEnergyConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
