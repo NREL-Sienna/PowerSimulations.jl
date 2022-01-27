@@ -297,14 +297,12 @@ function construct_service!(
     services = PSY.get_components(S, sys)
     agc_areas = PSY.get_area.(services)
     areas = PSY.get_components(PSY.Area, sys)
-    for area in areas
-        if area ∉ agc_areas
-            throw(
-                IS.ConflictingInputsError(
-                    "All area most have an AGC service assigned in order to model the System's Frequency regulation",
-                ),
-            )
-        end
+    if !isemtpy(setdiff(areas, agc_areas))
+        throw(
+            IS.ConflictingInputsError(
+                "All area most have an AGC service assigned in order to model the System's Frequency regulation",
+            ),
+        )
     end
 
     add_variables!(container, SteadyStateFrequencyDeviation)
