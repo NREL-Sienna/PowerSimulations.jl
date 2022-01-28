@@ -194,6 +194,7 @@ function set_system!(results::SimulationProblemResults, system::PSY.System)
     end
 
     results.system = system
+    return
 end
 
 function _deserialize_key(
@@ -268,6 +269,7 @@ function _validate_keys(existing_keys, container_keys)
             throw(IS.InvalidValue("$key is not stored"))
         end
     end
+    return
 end
 
 function _process_timestamps(
