@@ -90,10 +90,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         template_ed = get_template_nomin_ed_simulation()
         set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
         set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
-        set_network_model!(template_uc, NetworkModel(
-            CopperPlatePowerModel,
-            duals = [CopperPlateBalanceConstraint],
-        ))
+        set_network_model!(
+            template_uc,
+            NetworkModel(CopperPlatePowerModel, duals = [CopperPlateBalanceConstraint]),
+        )
         set_network_model!(
             template_ed,
             NetworkModel(
@@ -257,10 +257,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(var)[1] == 48
         end
 
-        realized_variable_uc = read_realized_variables(
-            results_uc,
-            [(ActivePowerVariable, ThermalStandard)],
-        )
+        realized_variable_uc =
+            read_realized_variables(results_uc, [(ActivePowerVariable, ThermalStandard)])
         @test length(keys(realized_variable_uc)) == 1
         for var in values(realized_variable_uc)
             @test size(var)[1] == 48
@@ -287,19 +285,15 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(param)[1] == 576
         end
 
-        realized_duals_ed = read_realized_duals(
-            results_ed,
-            [(CopperPlateBalanceConstraint,System)],
-        )
+        realized_duals_ed =
+            read_realized_duals(results_ed, [(CopperPlateBalanceConstraint, System)])
         @test length(keys(realized_duals_ed)) == 1
         for param in values(realized_duals_ed)
             @test size(param)[1] == 576
         end
 
-        realized_duals_uc = read_realized_duals(
-            results_uc,
-            [(CopperPlateBalanceConstraint,System)],
-        )
+        realized_duals_uc =
+            read_realized_duals(results_uc, [(CopperPlateBalanceConstraint, System)])
         @test length(keys(realized_duals_uc)) == 1
         for param in values(realized_duals_uc)
             @test size(param)[1] == 48
