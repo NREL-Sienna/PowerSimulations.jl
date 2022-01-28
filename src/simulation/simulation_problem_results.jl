@@ -2,6 +2,7 @@
 # - [?] Allow passing the system path if the simulation wasn't serialized: CB - this currently works with `set_system!`
 # - [ ] Handle PER-UNIT conversion of variables according to type: TODO
 # - [x] encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
+# - [ ] add interfaces to grab expressions and auxiliary variables
 
 const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
 const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
@@ -20,6 +21,8 @@ mutable struct SimulationProblemResults <: IS.Results
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
+    # Missing field for Auxiliary Variables
+    # Missing field for Expressions
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -543,7 +546,7 @@ struct RealizedMeta
     count::Int
     start_offset::Int
     end_offset::Int
-    interval_len::Int
+    interval_count::Int
     realized_timestamps::AbstractVector{Dates.DateTime}
 end
 
@@ -622,14 +625,14 @@ function get_realization(
 end
 
 """
-Return the final values for the requested variable keys for each time step for a problem.
-Accepts a vector of keys for the return of the values. If the time stamps and keys are
+Return the final values for the requested variables for each time step for a problem.
+Accepts a vector of tuples for the return of the values. If the time stamps and variables types are
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `variables::Vector{<:OptimizationContainerKey}` : keys of desired results
+- `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+- `count::Int`: length of results
 """
 function read_realized_variables(res::SimulationProblemResults; kwargs...)
     return read_realized_variables(res, collect(keys(res.variable_values)); kwargs...)
@@ -667,14 +670,14 @@ function read_realized_variables_with_keys(
 end
 
 """
-Return the final values for the requested parameter keys for each time step for a problem.
-If the time stamps and keys are loaded using the [load_results!](@ref) function
+Return the final values for the requested parameters for each time step for a problem.
+If the time stamps and parameters are loaded using the [load_results!](@ref) function
 it will read from memory.
 
 # Arguments
-- `parameters::Vector{<:OptimizationContainerKey}` : keys of desired results
+- `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+- `count::Int`: length of results
 """
 function read_realized_parameters(res::SimulationProblemResults; kwargs...)
     return read_realized_parameters(res, collect(keys(res.parameter_values)); kwargs...)
@@ -717,13 +720,13 @@ end
 
 """
 Return the final values for the requested dual keys for each time step for a problem.
-Accepts a vector of keys for the return of the values. If the time stamps and keys are
-loaded using the [load_results!](@ref) function it will read from memory.
+Accepts a vector of constraints and component types for the return of the values. If the
+time stamps and keys are loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `duals::Vector{<:OptimizationContainerKey}` : keys of desired results
+- `duals::::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+- `count::Int`: length of results
 """
 function read_realized_duals(res::SimulationProblemResults; kwargs...)
     return read_realized_duals(res, collect(keys(res.dual_values)); kwargs...)
@@ -769,9 +772,9 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
     # Accepted Key Words
-    - `variables::Vector{<:OptimizationContainerKey}`: Variables keys to load into results
-    - `duals::Vector{<:OptimizationContainerKey}`: Dual keys to load into results
-    - `parameters::Vector{<:OptimizationContainerKey}`: Parameter keys to load into results
+    - `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
+    - `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
+    - `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
 """
 function load_results!(
     res::SimulationProblemResults,
