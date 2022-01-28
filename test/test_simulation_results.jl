@@ -92,8 +92,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
         set_network_model!(template_uc, NetworkModel(
             CopperPlatePowerModel,
-            # MILP "duals" not supported with free solvers
-            # duals = [CopperPlateBalanceConstraint],
+            duals = [CopperPlateBalanceConstraint],
         ))
         set_network_model!(
             template_ed,
@@ -260,7 +259,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_variable_uc = read_realized_variables(
             results_uc,
-            [PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+            [(ActivePowerVariable, ThermalStandard)],
         )
         @test length(keys(realized_variable_uc)) == 1
         for var in values(realized_variable_uc)
@@ -275,7 +274,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_param_uc = read_realized_parameters(
             results_uc,
-            [PSI.ParameterKey(ActivePowerTimeSeriesParameter, RenewableDispatch)],
+            [(ActivePowerTimeSeriesParameter, RenewableDispatch)],
         )
         @test length(keys(realized_param_uc)) == 1
         for param in values(realized_param_uc)
@@ -290,11 +289,20 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_duals_ed = read_realized_duals(
             results_ed,
-            [PSI.ConstraintKey(CopperPlateBalanceConstraint, System)],
+            [(CopperPlateBalanceConstraint,System)],
         )
         @test length(keys(realized_duals_ed)) == 1
         for param in values(realized_duals_ed)
             @test size(param)[1] == 576
+        end
+
+        realized_duals_uc = read_realized_duals(
+            results_uc,
+            [(CopperPlateBalanceConstraint,System)],
+        )
+        @test length(keys(realized_duals_uc)) == 1
+        for param in values(realized_duals_uc)
+            @test size(param)[1] == 48
         end
 
         #request non sync data
@@ -303,9 +311,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             match_mode = :any,
             @test_throws IS.InvalidValue read_realized_variables(
                 results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
+                [(ActivePowerVariable, ThermalStandard)];
                 initial_time = DateTime("2024-01-01T02:12:00"),
-                len = 3,
+                count = 3,
             )
         )
 
@@ -313,10 +321,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         @test size(
             read_realized_variables(
                 results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
+                [(ActivePowerVariable, ThermalStandard)];
                 initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 10,
-            )[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+                count = 10,
+            )["ActivePowerVariable__ThermalStandard"],
         )[1] == 10
 
         # request bad window
@@ -324,9 +332,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             (:error, r"Requested time does not match available results"),
             (@test_throws IS.InvalidValue read_realized_variables(
                 results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
+                [(ActivePowerVariable, ThermalStandard)];
                 initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 11,
+                count = 11,
             ))
         )
 
@@ -335,9 +343,9 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             (:error, r"Requested time does not match available results"),
             (@test_throws IS.InvalidValue read_realized_variables(
                 results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)];
+                [(ActivePowerVariable, ThermalStandard)];
                 initial_time = DateTime("2024-01-02T23:10:00"),
-                len = 12,
+                count = 12,
             ))
         )
 
