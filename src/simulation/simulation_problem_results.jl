@@ -555,7 +555,7 @@ struct RealizedMeta
     count::Int
     start_offset::Int
     end_offset::Int
-    interval_count::Int
+    interval_len::Int
     realized_timestamps::AbstractVector{Dates.DateTime}
 end
 
