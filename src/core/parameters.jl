@@ -198,6 +198,4 @@ convert_result_to_natural_units(::Type{EnergyBudgetTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{IntegralLimitParameter}) = true
-convert_result_to_natural_units(::Type{FixValueParameter}) = true
 convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true
-#convert_result_to_natural_units(::Type{CostFunctionParameter}) = true # TODO: is this pu?
