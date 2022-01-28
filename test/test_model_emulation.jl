@@ -440,7 +440,7 @@ end
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
     var4 = PSI.read_dataframe(exp_file)
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
-    @test var1_a == var4.*100.0
+    @test var1_a == var4 .* 100.0
 end
 
 @testset "Test deserialization and re-run of EmulationModel" begin
