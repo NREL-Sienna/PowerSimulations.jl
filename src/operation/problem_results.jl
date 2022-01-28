@@ -292,6 +292,7 @@ function set_system!(res::ProblemResults, system::PSY.System)
     end
 
     res.system = system
+    return
 end
 
 # TODO:
