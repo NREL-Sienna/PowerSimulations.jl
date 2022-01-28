@@ -429,20 +429,6 @@ function _process_timestamps(
     return requested_range[1:count]
 end
 
-# TODO: This is not used. Can it be deleted?
-#function _read_results(
-#    result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
-#    container_keys,
-#    initial_time::Dates.DateTime,
-#)
-#    realized_results = _read_realized_results(result_values, container_keys)
-#    results = FieldResultsByTime()
-#    for (key, df) in realized_results
-#        results[encode_key_as_string(key)] = ResultsByTime(initial_time => df)
-#    end
-#    return results
-#end
-
 function read_realized_aux_variables(res::ProblemResults, aux_variable_keys)
     return _read_realized_results(
         res.aux_variable_values,
@@ -460,7 +446,7 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `variables::Vector{<:OptimizationContainerKey}` : keys of desired results
+- `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
 - `len::Int`: length of results
 """
@@ -503,7 +489,7 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `parameters::Vector{<:OptimizationContainerKey}` : keys of desired results
+- `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
 - `len::Int`: length of results
 """
@@ -550,7 +536,7 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `duals::Vector{<:OptimizationContainerKey}` : keys of desired results
+- `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
 - `len::Int`: length of results
 """
