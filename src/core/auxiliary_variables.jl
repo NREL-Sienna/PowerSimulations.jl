@@ -24,4 +24,5 @@ struct PowerOutput <: AuxVariableType end
 
 should_write_resulting_value(::Type{<:AuxVariableType}) = true
 
-convert_result_to_natural_units(::Type{<:VariableType}) = false
+convert_result_to_natural_units(::Type{<:AuxVariableType}) = false
+convert_result_to_natural_units(::Type{PowerOutput}) = true
