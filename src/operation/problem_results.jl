@@ -1,5 +1,5 @@
 # This needs renaming to avoid collision with the DecionModelResults/EmulationModelResults
-mutable struct ProblemResults
+mutable struct ProblemResults <: IS.Results
     base_power::Float64
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}
@@ -31,13 +31,14 @@ list_expression_names(res::ProblemResults) =
 get_timestamps(res::ProblemResults) = res.timestamps
 get_model_base_power(res::ProblemResults) = res.base_power
 get_dual_values(res::ProblemResults) = res.dual_values
-get_expressionl_values(res::ProblemResults) = res.expression_values
+get_expression_values(res::ProblemResults) = res.expression_values
 get_variable_values(res::ProblemResults) = res.variable_values
 get_total_cost(res::ProblemResults) = get_objective_value(res)
 get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 get_parameter_values(res::ProblemResults) = res.parameter_values
 get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
+get_forecast_horizon(res::ProblemResults) = length(get_timestamps(res))
 
 function get_objective_value(res::ProblemResults, execution = 1)
     res.optimizer_stats[execution, :objective_value]
@@ -205,7 +206,12 @@ end
 
 function read_aux_variable(res::ProblemResults, key::AuxVarKey)
     !haskey(res.aux_variable_values, key) && error("$key is not stored")
-    return res.variable_values[key]
+    if convert_result_to_natural_units(key)
+        value = res.variable_values[key] .* get_model_base_power(res)
+    else
+        value = res.variable_values[key]
+    end
+    return value
 end
 
 function read_aux_variable(res::ProblemResults, args...)
@@ -215,7 +221,12 @@ end
 
 function read_variable(res::ProblemResults, key::VariableKey)
     !haskey(res.variable_values, key) && error("$key is not stored")
-    return res.variable_values[key]
+    if convert_result_to_natural_units(key)
+        value = res.variable_values[key] .* get_model_base_power(res)
+    else
+        value = res.variable_values[key]
+    end
+    return value
 end
 
 function read_variable(res::ProblemResults, args...)
@@ -225,7 +236,12 @@ end
 
 function read_parameter(res::ProblemResults, key::ParameterKey)
     !haskey(res.parameter_values, key) && error("$key is not stored")
-    return res.parameter_values[key]
+    if convert_result_to_natural_units(key)
+        value = res.parameter_values[key] .* get_model_base_power(res)
+    else
+        value = res.parameter_values[key]
+    end
+    return value
 end
 
 function read_parameter(res::ProblemResults, args...)
@@ -245,7 +261,12 @@ end
 
 function read_expression(res::ProblemResults, key::ExpressionKey)
     !haskey(res.expression_values, key) && error("$key is not stored")
-    return res.expression_values[key]
+    if convert_result_to_natural_units(key)
+        value = res.expression_values[key] .* get_model_base_power(res)
+    else
+        value = res.expression_values[key]
+    end
+    return value
 end
 
 function read_expression(res::ProblemResults, args...)
@@ -271,6 +292,7 @@ function set_system!(res::ProblemResults, system::PSY.System)
     end
 
     res.system = system
+    return
 end
 
 # TODO:
@@ -377,28 +399,36 @@ _get_keys(::Type{VariableKey}, res, ::Nothing) = collect(keys(res.variable_value
 function _read_realized_results(
     result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
     container_keys,
+    time_ids,
 )
     existing_keys = keys(result_values)
     container_keys = container_keys === nothing ? existing_keys : container_keys
     _validate_keys(existing_keys, container_keys)
-    return Dict(
-        encode_key_as_string(k) => v for (k, v) in result_values if k in container_keys
+    return Dict{OptimizationContainerKey, DataFrames.DataFrame}(
+        k => v[time_ids, :] for (k, v) in result_values if k in container_keys
     )
 end
 
-# TODO: This is not used. Can it be deleted?
-#function _read_results(
-#    result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
-#    container_keys,
-#    initial_time::Dates.DateTime,
-#)
-#    realized_results = _read_realized_results(result_values, container_keys)
-#    results = FieldResultsByTime()
-#    for (key, df) in realized_results
-#        results[encode_key_as_string(key)] = ResultsByTime(initial_time => df)
-#    end
-#    return results
-#end
+function _process_timestamps(
+    res::ProblemResults,
+    initial_time::Union{Nothing, Dates.DateTime},
+    count::Union{Int, Nothing},
+)
+    invalid_timestamps = []
+    if initial_time === nothing
+        initial_time = first(get_timestamps(res))
+    elseif initial_time ∉ get_timestamps(res)
+        throw(IS.InvalidValue("initial_time not in result timestamps"))
+    end
+
+    requested_range = findall(x -> x >= initial_time, get_timestamps(res))
+    count = count === nothing ? length(requested_range) : count
+    if count > length(requested_range)
+        throw(IS.InvalidValue("requested results have less than $count values"))
+    end
+
+    return requested_range[1:count]
+end
 
 function read_realized_aux_variables(res::ProblemResults, aux_variable_keys)
     return _read_realized_results(
@@ -411,32 +441,135 @@ function read_realized_aux_variables(res::ProblemResults)
     return _read_realized_results(res.aux_variable_values, nothing)
 end
 
-function read_realized_variables(res::ProblemResults, variable_keys)
-    return _read_realized_results(
-        res.variable_values,
-        [VariableKey(x...) for x in variable_keys],
+"""
+Return the values for the requested variable keys for a problem.
+Accepts a vector of keys for the return of the values. If the time stamps and keys are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_variables(res::ProblemResults; kwargs...)
+    return read_realized_variables(res, collect(keys(res.variable_values)); kwargs...)
+end
+
+function read_realized_variables(res::ProblemResults, variables; kwargs...)
+    return read_realized_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
+end
+
+function read_realized_variables(
+    res::ProblemResults,
+    variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_variables_with_keys(
+        res,
+        variables;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_variables_with_keys(
+    res::ProblemResults,
+    variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_realized_results(res.variable_values, variables, timestamps)
+end
+
+"""
+Return the values for the requested parameter keys for a problem.
+Accepts a vector of keys for the return of the values. If the time stamps and keys are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_parameters(res::ProblemResults; kwargs...)
+    return read_realized_parameters(res, collect(keys(res.parameter_values)); kwargs...)
+end
+
+function read_realized_parameters(res::ProblemResults, parameters; kwargs...)
+    return read_realized_parameters(
+        res,
+        [ParameterKey(x...) for x in parameters];
+        kwargs...,
     )
 end
 
-function read_realized_variables(res::ProblemResults)
-    return _read_realized_results(res.variable_values, nothing)
-end
-
-function read_realized_parameters(res::ProblemResults, parameter_keys)
-    return _read_realized_results(
-        res.parameter_values,
-        [ParameterKey(x...) for x in parameter_keys],
+function read_realized_parameters(
+    res::ProblemResults,
+    parameters::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_parameters_with_keys(
+        res,
+        parameters;
+        initial_time = initial_time,
+        count = count,
     )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
-function read_realized_parameters(res::ProblemResults)
-    return _read_realized_results(res.parameter_values, nothing)
+function read_realized_parameters_with_keys(
+    res::ProblemResults,
+    parameters::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_realized_results(res.parameter_values, parameters, timestamps)
 end
 
-function read_realized_duals(res::ProblemResults, dual_keys)
-    return _read_realized_results(res.dual_values, [ConstraintKey(x...) for x in dual_keys])
+"""
+Return the dual values for the requested constraint keys for a problem.
+Accepts a vector of keys for the return of the values. If the time stamps and keys are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_duals(res::ProblemResults; kwargs...)
+    return read_realized_duals(res, collect(keys(res.dual_values)); kwargs...)
 end
 
-function read_realized_duals(res::ProblemResults)
-    return _read_realized_results(res.dual_values, nothing)
+function read_realized_duals(res::ProblemResults, duals; kwargs...)
+    return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
+end
+
+function read_realized_duals(
+    res::ProblemResults,
+    duals::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_duals_with_keys(
+        res,
+        duals;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_duals_with_keys(
+    res::ProblemResults,
+    duals::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_realized_results(res.dual_values, duals, timestamps)
 end

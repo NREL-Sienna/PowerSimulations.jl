@@ -1,7 +1,8 @@
 # TODO:
-# - Allow passing the system path if the simulation wasn't serialized
-# - Handle PER-UNIT conversion of variables according to type
-# - encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
+# - [?] Allow passing the system path if the simulation wasn't serialized: CB - this currently works with `set_system!`
+# - [ ] Handle PER-UNIT conversion of variables according to type: TODO
+# - [x] encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
+# - [ ] add interfaces to grab expressions and auxiliary variables
 
 const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
 const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
@@ -9,7 +10,7 @@ const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
 """
 Holds the results of a simulation problem for plotting or exporting.
 """
-mutable struct SimulationProblemResults
+mutable struct SimulationProblemResults <: IS.Results
     problem::String
     base_power::Float64
     execution_path::String
@@ -20,6 +21,8 @@ mutable struct SimulationProblemResults
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
+    # Missing field for Auxiliary Variables
+    # Missing field for Expressions
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
@@ -101,16 +104,31 @@ list_dual_names(res::SimulationProblemResults) =
     encode_keys_as_strings(keys(res.dual_values))
 
 """
+Return an array of ConstraintKeys that are available for reads.
+"""
+list_dual_keys(res::SimulationProblemResults) = collect(keys(res.dual_values))
+
+"""
 Return an array of parmater names (strings) that are available for reads.
 """
 list_parameter_names(res::SimulationProblemResults) =
     encode_keys_as_strings(keys(res.parameter_values))
 
 """
+Return an array of ParameterKeys that are available for reads.
+"""
+list_parameter_keys(res::SimulationProblemResults) = collect(keys(res.parameter_values))
+
+"""
 Return an array of variable names (strings) that are available for reads.
 """
 list_variable_names(res::SimulationProblemResults) =
     encode_keys_as_strings(keys(res.variable_values))
+
+"""
+Return an array of VariableKeys that are available for reads.
+"""
+list_variable_keys(res::SimulationProblemResults) = collect(keys(res.variable_values))
 
 """
 Return a reference to all dual values that have been loaded into memory.
@@ -151,7 +169,20 @@ end
 Set the system in the results instance.
 
 Throws InvalidValue if the system UUID is incorrect.
+
+# Arguments
+- `results::SimulationProblemResults`: Results object
+- `system::AbstractString`: Path to the system json file
+
+# Examples
+```julia
+julia> set_system!(res, "my_path/system_data.json")
+```
 """
+function set_system!(results::SimulationProblemResults, system::AbstractString)
+    set_system!(results, System(system))
+end
+
 function set_system!(results::SimulationProblemResults, system::PSY.System)
     sys_uuid = IS.get_uuid(system)
     if sys_uuid != results.system_uuid
@@ -163,6 +194,7 @@ function set_system!(results::SimulationProblemResults, system::PSY.System)
     end
 
     results.system = system
+    return
 end
 
 function _deserialize_key(
@@ -237,6 +269,7 @@ function _validate_keys(existing_keys, container_keys)
             throw(IS.InvalidValue("$key is not stored"))
         end
     end
+    return
 end
 
 function _process_timestamps(
@@ -461,8 +494,6 @@ function read_parameter(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    # TODO: parameters are not handled correctly
-    #parameter_key = ParameterKey(param_type(time_series_name), device_type)
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_parameters(res, [key], timestamps, store)[key]
@@ -493,7 +524,7 @@ function _read_optimizer_stats(res::SimulationProblemResults, store::SimulationS
 end
 
 function get_realized_timestamps(
-    res::SimulationProblemResults;
+    res::IS.Results;
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -527,19 +558,20 @@ struct RealizedMeta
     start_offset::Int
     end_offset::Int
     interval_len::Int
+    realized_timestamps::AbstractVector{Dates.DateTime}
 end
 
 function RealizedMeta(
     res::SimulationProblemResults;
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
+    count::Union{Int, Nothing} = nothing,
 )
     existing_timestamps = get_timestamps(res)
     interval = existing_timestamps.step
     resolution = get_resolution(res)
     interval_len = Int(interval / resolution)
     realized_timestamps =
-        get_realized_timestamps(res, initial_time = initial_time, len = len)
+        get_realized_timestamps(res, initial_time = initial_time, len = count)
 
     result_initial_time = existing_timestamps[findlast(
         x -> x .<= first(realized_timestamps),
@@ -564,6 +596,7 @@ function RealizedMeta(
         start_offset,
         end_offset,
         interval_len,
+        realized_timestamps,
     )
 end
 
@@ -573,7 +606,6 @@ function get_realization(
         SortedDict{Dates.DateTime, DataFrames.DataFrame},
     },
     meta::RealizedMeta,
-    timestamps,
 )
     realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for (key, result_value) in result_values
@@ -585,7 +617,6 @@ function get_realization(
             result_length = length(first_id:last_id)
             for colname in propertynames(df)
                 colname == :DateTime && continue
-                # TODO DT: may not be correct
                 col = df[!, colname][first_id:last_id]
                 if !haskey(results_concat, colname)
                     results_concat[colname] = col
@@ -595,20 +626,24 @@ function get_realization(
             end
         end
         realized_values[key] = DataFrames.DataFrame(results_concat, copycols = false)
-        DataFrames.insertcols!(realized_values[key], 1, :DateTime => timestamps)
+        DataFrames.insertcols!(
+            realized_values[key],
+            1,
+            :DateTime => meta.realized_timestamps,
+        )
     end
     return realized_values
 end
 
 """
-Return the final values for the requested variable names for each time step for a problem.
-Accepts a vector of names for the return of the values. If the time stamps and names are
+Return the final values for the requested variables for each time step for a problem.
+Accepts a vector of tuples for the return of the values. If the time stamps and variables types are
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `names::Vector{Symbol}` : names of desired results
+- `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+- `count::Int`: length of results
 """
 function read_realized_variables(res::SimulationProblemResults; kwargs...)
     return read_realized_variables(res, collect(keys(res.variable_values)); kwargs...)
@@ -622,69 +657,121 @@ function read_realized_variables(
     res::SimulationProblemResults,
     variables::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
+    count::Union{Int, Nothing} = nothing,
 )
-    meta = RealizedMeta(res, initial_time = initial_time, len = len)
+    result_values = read_realized_variables_with_keys(
+        res,
+        variables;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_variables_with_keys(
+    res::SimulationProblemResults,
+    variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    meta = RealizedMeta(res, initial_time = initial_time, count = count)
     timestamps = _process_timestamps(res, meta.initial_time, meta.count)
     result_values = _read_variables(res, variables, timestamps, nothing)
-    timestamps = get_realized_timestamps(
-        res,
-        initial_time = initial_time,
-        len = meta.count * meta.interval_len,
-    )
-    return get_realization(result_values, meta, timestamps)
+    return get_realization(result_values, meta)
 end
 
 """
-Return the final values for the requested parameter names for each time step for a problem.
-If the time stamps and names are loaded using the [load_results!](@ref) function
+Return the final values for the requested parameters for each time step for a problem.
+If the time stamps and parameters are loaded using the [load_results!](@ref) function
 it will read from memory.
 
 # Arguments
-- `names::Vector{Symbol}` : names of desired results
+- `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+- `count::Int`: length of results
 """
-function read_realized_parameters(
-    res::SimulationProblemResults;
-    names::Union{Vector{Symbol}, Nothing} = nothing,
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
-)
-    names = isnothing(names) ? collect(keys(res.parameter_values)) : names
-    meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    result_values = read_parameters(
+function read_realized_parameters(res::SimulationProblemResults; kwargs...)
+    return read_realized_parameters(res, collect(keys(res.parameter_values)); kwargs...)
+end
+
+function read_realized_parameters(res::SimulationProblemResults, parameters; kwargs...)
+    return read_realized_parameters(
         res,
-        names = names,
-        initial_time = meta.initial_time,
-        count = meta.count,
+        [ParameterKey(x...) for x in parameters];
+        kwargs...,
     )
-    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
-    return get_realization(result_values, meta, timestamps)
+end
+
+function read_realized_parameters(
+    res::SimulationProblemResults,
+    parameters::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_parameters_with_keys(
+        res,
+        parameters;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_parameters_with_keys(
+    res::SimulationProblemResults,
+    parameters::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    meta = RealizedMeta(res, initial_time = initial_time, count = count)
+    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
+    result_values = _read_parameters(res, parameters, timestamps, nothing)
+    return get_realization(result_values, meta)
 end
 
 """
-Return the final values for the requested dual names for each time step for a problem.
-Accepts a vector of names for the return of the values. If the time stamps and names are
-loaded using the [load_results!](@ref) function it will read from memory.
+Return the final values for the requested dual keys for each time step for a problem.
+Accepts a vector of constraints and component types for the return of the values. If the
+time stamps and keys are loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `names::Vector{Tuple}` : names of desired results
+- `duals::::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
 - `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+- `count::Int`: length of results
 """
-function read_realized_duals( # TODO: Should this be get_realized_duals_values?
-    res::SimulationProblemResults;
-    names::Union{Vector{Symbol}, Nothing} = nothing,
+function read_realized_duals(res::SimulationProblemResults; kwargs...)
+    return read_realized_duals(res, collect(keys(res.dual_values)); kwargs...)
+end
+
+function read_realized_duals(res::SimulationProblemResults, duals; kwargs...)
+    return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
+end
+
+function read_realized_duals(
+    res::SimulationProblemResults,
+    duals::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
+    count::Union{Int, Nothing} = nothing,
 )
-    names = isnothing(names) ? collect(keys(res.dual_values)) : names
-    meta = RealizedMeta(res, initial_time = initial_time, len = len)
-    result_values =
-        read_duals(res, names = names, initial_time = meta.initial_time, count = meta.count)
-    timestamps = get_realized_timestamps(res, initial_time = initial_time, len = len)
-    return get_realization(result_values, meta, timestamps)
+    result_values = read_realized_duals_with_keys(
+        res,
+        duals;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_duals_with_keys(
+    res::SimulationProblemResults,
+    duals::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    meta = RealizedMeta(res, initial_time = initial_time, count = count)
+    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
+    result_values = _read_duals(res, duals, timestamps, nothing)
+    return get_realization(result_values, meta)
 end
 
 """
@@ -696,9 +783,9 @@ end
     - `initial_time::Dates.DateTime` : initial of the requested results
     - `count::Int`: Number of results
     # Accepted Key Words
-    - `variables::Vector{Symbol}`: Variables names to load into results
-    - `duals::Vector{Symbol}`: Dual names to load into results
-    - `parameters::Vector{Symbol}`: Parameter names to load into results
+    - `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
+    - `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
+    - `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
 """
 function load_results!(
     res::SimulationProblemResults,

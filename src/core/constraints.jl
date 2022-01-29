@@ -103,4 +103,6 @@ struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConst
 struct ComponentActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ComponentReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 
+# These apply to the processing of constraint duals
 should_write_resulting_value(::Type{<:ConstraintType}) = true
+convert_result_to_natural_units(::Type{<:ConstraintType}) = false
