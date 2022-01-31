@@ -160,6 +160,22 @@ function construct_network!(
             model,
             T,
         )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
         cost_function!(container, PSY.Bus, model, T)
     end
 
@@ -207,6 +223,22 @@ function construct_network!(
             model,
             T,
         )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
         cost_function!(container, PSY.Bus, model, T)
     end
 
@@ -248,6 +280,22 @@ function construct_network!(
         add_to_expression!(
             container,
             ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,

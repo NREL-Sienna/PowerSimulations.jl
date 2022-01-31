@@ -613,7 +613,7 @@ function add_to_expression!(
     ::NetworkModel{W},
     ::Type{W},
 ) where {
-    T <: SystemBalanceExpressions,
+    T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: Union{CopperPlatePowerModel, StandardPTDFModel},
 }
@@ -637,11 +637,61 @@ function add_to_expression!(
     ::NetworkModel{W},
     ::Type{W},
 ) where {
-    T <: SystemBalanceExpressions,
+    T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractActivePowerModel,
 }
     variable = get_variable(container, U(), PSY.Bus)
+    expression = get_expression(container, T(), PSY.Bus)
+    bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
+    for t in get_time_steps(container), n in bus_numbers
+        _add_to_jump_expression!(
+            expression[n, t],
+            variable[n, t],
+            get_variable_multiplier(U(), PSY.Bus, W),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    sys::PSY.System,
+    ::NetworkModel{W},
+    ::Type{W},
+) where {
+    T <: ActivePowerBalance,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    W <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), PSY.Bus, "P")
+    expression = get_expression(container, T(), PSY.Bus)
+    bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
+    for t in get_time_steps(container), n in bus_numbers
+        _add_to_jump_expression!(
+            expression[n, t],
+            variable[n, t],
+            get_variable_multiplier(U(), PSY.Bus, W),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    sys::PSY.System,
+    ::NetworkModel{W},
+    ::Type{W},
+) where {
+    T <: ReactivePowerBalance,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    W <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), PSY.Bus, "Q")
     expression = get_expression(container, T(), PSY.Bus)
     bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
     for t in get_time_steps(container), n in bus_numbers
