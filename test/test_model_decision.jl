@@ -117,7 +117,6 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
-        @show network
         template = get_thermal_dispatch_template_network(
             NetworkModel(network; use_slacks = true, PTDF = PTDF(c_sys5_re)),
         )
