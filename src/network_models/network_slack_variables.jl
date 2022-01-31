@@ -1,5 +1,7 @@
+#! format: off
 get_variable_multiplier(::SystemBalanceSlackUp, ::Type{T}, _) where {T <: Union{PSY.Bus, PSY.System}} = 1.0
 get_variable_multiplier(::SystemBalanceSlackDown, ::Type{T}, _) where {T <: Union{PSY.Bus, PSY.System}} = -1.0
+#! format: on
 
 function add_variables!(
     container::OptimizationContainer,
