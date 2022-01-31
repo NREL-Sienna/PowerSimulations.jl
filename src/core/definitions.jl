@@ -7,18 +7,18 @@ const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
 const BUILD_PROBLEMS_TIMER = TimerOutputs.TimerOutput()
+const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP and PJ containers
-const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
-const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
-const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
-const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
-const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
+const JuMPConstraintArray = DenseAxisArray{JuMP.ConstraintRef}
+const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
+const JuMPParamArray = DenseAxisArray{PJ.ParameterRef}
+const JuMPFloatArray = DenseAxisArray{Float64}
 
 # Settings constants
 const UNSET_HORIZON = 0
@@ -37,6 +37,7 @@ const SECONDS_IN_HOUR = 3600.0
 const MAX_START_STAGES = 3
 const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
+const INITIALIZATION_PROBLEM_HORIZON = 3
 # The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reseve cost isn't provided.
 const DEFAULT_RESERVE_COST = 1.0
 const KiB = 1024
@@ -51,14 +52,17 @@ const PSI_NAME_DELIMITER = "__"
 const M_VALUE = 1e6
 
 const NO_SERVICE_NAME_PROVIDED = ""
+const CONTAINER_KEY_EMPTY_META = ""
+const UPPER_BOUND = "ub"
+const LOWER_BOUND = "lb"
 
 # File Names definitions
-const PROBLEM_SERIALIZATION_FILENAME = "operations_problem.bin"
-const PROBLEM_BUILD_LOG_FILENAME = "operations_problem_build.log"
+const PROBLEM_SERIALIZATION_FILENAME = "operation_problem.bin"
+const PROBLEM_LOG_FILENAME = "operation_problem.log"
 const HASH_FILENAME = "check.sha256"
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
-const REQUIRED_RECORDERS = (:simulation_status, :simulation)
+const REQUIRED_RECORDERS = (:simulation_status, :execution)
 const KNOWN_SIMULATION_PATHS = [
     "data_store",
     "logs",
@@ -68,10 +72,18 @@ const KNOWN_SIMULATION_PATHS = [
     "results",
     "simulation_files",
 ]
+const RESULTS_DIR = "results"
 
 # Enums
 IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)
-IS.@scoped_enum(RunStatus, READY = -1, SUCCESSFUL = 0, RUNNING = 1, FAILED = 2,)
+IS.@scoped_enum(
+    RunStatus,
+    NOT_READY = -2,
+    READY = -1,
+    SUCCESSFUL = 0,
+    RUNNING = 1,
+    FAILED = 2,
+)
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 const ENUMS = (BuildStatus, RunStatus, SOSStatusVariable)
@@ -102,3 +114,18 @@ end
 Base.convert(::Type{BuildStatus}, val::String) = get_enum_value(BuildStatus, val)
 Base.convert(::Type{RunStatus}, val::String) = get_enum_value(RunStatus, val)
 Base.convert(::Type{SOSStatusVariable}, x::String) = get_enum_value(SOSStatusVariable, x)
+
+# Store const definitions
+# Update src/simulation/simulation_store_common.jl with any changes.
+const STORE_CONTAINER_DUALS = :duals
+const STORE_CONTAINER_PARAMETERS = :parameters
+const STORE_CONTAINER_VARIABLES = :variables
+const STORE_CONTAINER_AUX_VARIABLES = :aux_variables
+const STORE_CONTAINER_EXPRESSIONS = :expressions
+const STORE_CONTAINERS = (
+    STORE_CONTAINER_DUALS,
+    STORE_CONTAINER_PARAMETERS,
+    STORE_CONTAINER_VARIABLES,
+    STORE_CONTAINER_AUX_VARIABLES,
+    STORE_CONTAINER_EXPRESSIONS,
+)

@@ -1,70 +1,140 @@
-function _add_system_balance_slacks!(
-    optimization_container::OptimizationContainer,
-    slack_name::String,
-    expression::Symbol,
-    single_first_axes::Bool = false,
-)
-    time_steps = model_time_steps(optimization_container)
-    expression_array = get_expression(optimization_container, expression)
-    var_name_up = make_variable_name(slack_name, SLACK_UP)
-    var_name_dn = make_variable_name(slack_name, SLACK_DN)
-    single_first_axes && (first_index = [axes(expression_array)[1][1]])
-    !single_first_axes && (first_index = axes(expression_array)[1])
-    variable_up =
-        add_var_container!(optimization_container, var_name_up, first_index, time_steps)
-    variable_dn =
-        add_var_container!(optimization_container, var_name_dn, first_index, time_steps)
-    for ix in first_index, jx in time_steps
-        variable_up[ix, jx] = JuMP.@variable(
-            optimization_container.JuMPmodel,
-            base_name = "$(var_name_up)_{$(ix), $(jx)}",
+#! format: off
+get_variable_multiplier(::SystemBalanceSlackUp, ::Type{<: Union{PSY.Bus, PSY.System}}, _) = 1.0
+get_variable_multiplier(::SystemBalanceSlackDown, ::Type{<: Union{PSY.Bus, PSY.System}}, _) = -1.0
+#! format: on
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::PSY.System,
+    ::Type{U},
+) where {
+    T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    U <: Union{CopperPlatePowerModel, StandardPTDFModel},
+}
+    time_steps = get_time_steps(container)
+    variable = add_variable_container!(container, T(), PSY.System, time_steps)
+
+    for t in time_steps
+        variable[t] =
+            JuMP.@variable(container.JuMPmodel, base_name = "$(T)_{$t}", lower_bound = 0.0)
+    end
+    return
+end
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    sys::PSY.System,
+    ::Type{U},
+) where {
+    T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    U <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
+    variable = add_variable_container!(container, T(), PSY.Bus, bus_numbers, time_steps)
+
+    for t in time_steps, n in bus_numbers
+        variable[n, t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "$(T)_{$n, $t}",
             lower_bound = 0.0
-        )
-        variable_dn[ix, jx] = JuMP.@variable(
-            optimization_container.JuMPmodel,
-            base_name = "$(var_name_dn)_{$(ix), $(jx)}",
-            lower_bound = 0.0
-        )
-        add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
-        add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
-        JuMP.add_to_expression!(
-            optimization_container.cost_function,
-            (variable_dn[ix, jx] + variable_up[ix, jx]) * BALANCE_SLACK_COST,
         )
     end
     return
 end
 
-function add_slacks!(
-    optimization_container::OptimizationContainer,
-    ::Type{CopperPlatePowerModel},
-)
-    _add_system_balance_slacks!(
-        optimization_container,
-        ACTIVE_POWER,
-        :nodal_balance_active,
-        true,
-    )
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    sys::PSY.System,
+    ::Type{U},
+) where {
+    T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    U <: PM.AbstractPowerModel,
+}
+    time_steps = get_time_steps(container)
+    bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
+    variable_active =
+        add_variable_container!(container, T(), PSY.Bus, "P", bus_numbers, time_steps)
+    variable_reactive =
+        add_variable_container!(container, T(), PSY.Bus, "Q", bus_numbers, time_steps)
+
+    for t in time_steps, n in bus_numbers
+        variable_active[n, t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "$(T)_{p, $n, $t}",
+            lower_bound = 0.0
+        )
+        variable_reactive[n, t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "$(T)_{q, $n, $t}",
+            lower_bound = 0.0
+        )
+    end
     return
 end
 
-function add_slacks!(
-    optimization_container::OptimizationContainer,
-    ::Type{T},
+function cost_function!(
+    container,
+    ::Type{PSY.System},
+    model::NetworkModel{T},
+    S::Type{T},
+) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
+    variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.System)
+    variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
+
+    for t in get_time_steps(container)
+        add_to_objective_function!(
+            container,
+            (variable_dn[t] + variable_up[t]) * BALANCE_SLACK_COST,
+        )
+    end
+    return
+end
+
+function cost_function!(
+    container,
+    ::Type{PSY.Bus},
+    model::NetworkModel{T},
+    S::Type{T},
 ) where {T <: PM.AbstractActivePowerModel}
-    _add_system_balance_slacks!(optimization_container, ACTIVE_POWER, :nodal_balance_active)
+    variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus)
+    variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus)
+    bus_numbers = axes(variable_up)[1]
+    @assert_op bus_numbers == axes(variable_dn)[1]
+    for t in get_time_steps(container), n in bus_numbers
+        add_to_objective_function!(
+            container,
+            (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
+        )
+    end
     return
 end
 
-function add_slacks!(
-    optimization_container::OptimizationContainer,
-    ::Type{T},
+function cost_function!(
+    container,
+    ::Type{PSY.Bus},
+    model::NetworkModel{T},
+    S::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-    _add_system_balance_slacks!(optimization_container, ACTIVE_POWER, :nodal_balance_active)
-    _add_system_balance_slacks!(
-        optimization_container,
-        REACTIVE_POWER,
-        :nodal_balance_reactive,
-    )
+    variable_p_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus, "P")
+    variable_p_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus, "P")
+    variable_q_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus, "Q")
+    variable_q_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus, "Q")
+    bus_numbers = axes(variable_p_up)[1]
+    @assert_op bus_numbers == axes(variable_q_dn)[1]
+    for t in get_time_steps(container), n in bus_numbers
+        add_to_objective_function!(
+            container,
+            (
+                variable_p_dn[n, t] +
+                variable_p_up[n, t] +
+                variable_q_dn[n, t] +
+                variable_q_up[n, t]
+            ) * BALANCE_SLACK_COST,
+        )
+    end
     return
 end

@@ -1,5 +1,5 @@
 # Power Grid Lib - Unit Commitment / Multi-Start Unit Commitment
-This formulation is from the benchmark library maintained by the IEEE PES Task Force on Benchmarks for Validation of Emerging Power System Algorithms and is designed to evaluate a well established version of the the Unit Commitment problem.
+This formulation is from the benchmark library maintained by the IEEE PES Task Force on Benchmarks for Validation of Emerging Power System Algorithms and is designed to evaluate a well established version of the Unit Commitment problem.
 
 # Formulation Overview
  The features of this model are:
@@ -20,7 +20,8 @@ This formulation is from the benchmark library maintained by the IEEE PES Task F
 
 
 # Formulations
-A detailed description of this mathematical model is available here. This model does have some aaugmentation to constraints but is mathematically equivalent to the formulation found [here](https://github.com/power-grid-lib/pglib-uc/blob/master/MODEL.pdf).
+A detailed description of this mathematical model is available here. This model does have some augmentation to constraints but is mathematically equivalent to the formulation found [here](https://github.com/power-grid-lib/pglib-uc/blob/master/MODEL.pdf).
+
 ### Indices and Sets
 ```math
 \begin{itemize}
@@ -125,7 +126,7 @@ subject to:\
 \end{align}
 ```
 
-*Must run constriant*
+*Must run constraint*
 ```math
 \begin{align}
 		& u_g(t) \geq U_g & \hspace{1cm} \forall t \in \cT, \, \forall g \in \cG \label{eq:MustRun}
@@ -138,7 +139,7 @@ subject to:\
 \end{align}
 ```
 
-*Start-up type selection constriant*
+*Start-up type selection constraint*
 ```math
 \begin{align}
 		& v_g(t) = \sum_{s = 1}^{S_g} \delta^s_g(t) & \forall t \in \cT,\, \forall g \in \cG \label{eq:STILink}

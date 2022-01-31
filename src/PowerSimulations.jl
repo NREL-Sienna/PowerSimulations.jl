@@ -6,15 +6,17 @@ module PowerSimulations
 
 # Base Models
 export Simulation
-export OperationsProblem
+export DecisionModel
+export EmulationModel
 export ProblemResults
-export OperationsProblemTemplate
+export ProblemTemplate
 export InitialCondition
-export SimulationProblems
+export SimulationModels
 export SimulationSequence
 export SimulationResults
 
 # Network Relevant Exports
+export NetworkModel
 export StandardPTDFModel
 export PTDFPowerModel
 export CopperPlatePowerModel
@@ -28,6 +30,7 @@ export ServiceModel
 export RangeReserve
 export RampReserve
 export StepwiseCostReserve
+export NonSpinningReserve
 export PIDSmoothACE
 export GroupReserve
 ######## Branch Models ########
@@ -53,39 +56,38 @@ export HydroCommitmentRunOfRiver
 export HydroCommitmentReservoirBudget
 export HydroCommitmentReservoirStorage
 export HydroDispatchPumpedStorage
-export HydroDispatchPumpedStoragewReservation
+
 ######## Renewable Formulations ########
 export BookKeeping
-export BookKeepingwReservation
 export BatteryAncillaryServices
 export EnergyTarget
 
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
-export ThermalDispatch
-export ThermalRampLimited
+export ThermalBasicCompactUnitCommitment
+export ThermalBasicDispatch
+export ThermalStandardDispatch
 export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
+export ThermalCompactDispatch
 
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
-# feedforward chrons
-export RecedingHorizon
-export Synchronize
-export Consecutive
-export FullHorizon
-export Range
+######## Hybrid Formulations ########
+export BasicHybridDispatch
+export StandardHybridDispatch
 
 # feedforward models
-export UpperBoundFF
-export SemiContinuousFF
-export RangeFF
-export IntegralLimitFF
-export ParameterFF
+export UpperBoundFeedforward
+export LowerBoundFeedforward
+export SemiContinuousFeedforward
+export IntegralLimitFeedforward
+export FixValueFeedforward
+export EnergyTargetFeedforward
 
 # InitialConditions chrons
 export InterProblemChronology
@@ -98,10 +100,6 @@ export InitialTimeDurationOn
 export InitialTimeDurationOff
 export InitialEnergyLevel
 
-# cache_models
-export TimeStatusChange
-export StoredEnergy
-
 # operation_models
 export GenericOpProblem
 export UnitCommitmentProblem
@@ -109,14 +107,19 @@ export EconomicDispatchProblem
 # export OptimalPowerFlow
 
 # Functions
+export build!
 ## Op Model Exports
-export solve!
 export get_initial_conditions
 export serialize_problem
+export serialize_results
 export serialize_optimization_model
+## Decision Model Export
+export solve!
+## Emulation Model Exports
+export run!
 ## Sim Model Exports
-export build!
 export execute!
+export get_simulation_model
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
@@ -128,109 +131,183 @@ export run_economic_dispatch
 export run_unit_commitment
 export set_device_model!
 export set_service_model!
-export set_transmission_model!
-export get_transmission_model
+export set_network_model!
+export get_network_formulation
 ## Results interfaces
 export SimulationResultsExport
 export ProblemResultsExport
 export export_results
-export get_existing_duals
-export get_existing_parameters
-export get_existing_timestamps
-export get_existing_variables
-export get_problem_name
+export get_dual_values
+export get_parameter_values
+export get_variable_values
+export get_timestamps
+export get_model_name
 export get_problem_results
 export get_system
 export get_system!
 export set_system!
+export list_dual_keys
+export list_dual_names
+export list_parameter_keys
+export list_parameter_names
+export list_aux_variable_keys
+export list_aux_variable_names
+export list_variable_keys
+export list_variable_names
 export list_problems
 export list_supported_formats
 export load_results!
 export read_dual
-export read_duals
 export read_realized_duals
 export read_realized_variables
 export read_realized_parameters
 export get_realized_timestamps
 export read_variable
-export read_variables
 export read_parameter
-export read_parameters
 export get_problem_base_power
 export get_objective_value
 export read_optimizer_stats
 
 ## Utils Exports
 export get_all_constraint_index
-export get_all_var_index
-export get_con_index
-export get_var_index
+export get_all_variable_index
+export get_constraint_index
+export get_variable_index
+export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
-export write_results
 export write_to_CSV
 
 ## Enums
 export BuildStatus
 export RunStatus
 
-# Variables / Parameters
-export ACTIVE_POWER
-export ENERGY
-export ENERGY_BUDGET
-export FLOW_ACTIVE_POWER
-export ON
-export REACTIVE_POWER
-export ACTIVE_POWER_IN
-export ACTIVE_POWER_OUT
-export RESERVE
-export SERVICE_REQUIREMENT
-export START
-export STOP
-export THETA
-export VM
-export INFLOW
-export SPILLAGE
-export SLACK_UP
-export SLACK_DN
+# Variables
+export ActivePowerVariable
+export ActivePowerInVariable
+export ActivePowerOutVariable
+export HotStartVariable
+export WarmStartVariable
+export ColdStartVariable
+export EnergyVariable
+export EnergyVariableUp
+export EnergyVariableDown
+export EnergyShortageVariable
+export EnergySurplusVariable
+export LiftVariable
+export OnVariable
+export ReactivePowerVariable
+export ReservationVariable
+export ActivePowerReserveVariable
+export ServiceRequirementVariable
+export WaterSpillageVariable
+export StartVariable
+export StopVariable
+export SteadyStateFrequencyDeviation
+export AreaMismatchVariable
+export DeltaActivePowerUpVariable
+export DeltaActivePowerDownVariable
+export AdditionalDeltaActivePowerUpVariable
+export AdditionalDeltaActivePowerDownVariable
+export SmoothACE
+export SystemBalanceSlackUp
+export SystemBalanceSlackDown
+export ReserveRequirementSlack
+export VoltageMagnitude
+export VoltageAngle
+export FlowActivePowerVariable
+export FlowActivePowerFromToVariable
+export FlowActivePowerToFromVariable
+export FlowReactivePowerFromToVariable
+export FlowReactivePowerToFromVariable
+export PowerAboveMinimumVariable
+
+# Auxiliary variables
+export TimeDurationOn
+export TimeDurationOff
+export PowerOutput
 
 # Constraints
-export ACTIVE
-export ACTIVE_RANGE
-export ACTIVE_RANGE_LB
-export ACTIVE_RANGE_UB
-export COMMITMENT
-export DURATION
-export DURATION_DOWN
-export DURATION_UP
-export ENERGY_CAPACITY
-export ENERGY_LIMIT
-export FEEDFORWARD
-export FEEDFORWARD_UB
-export FEEDFORWARD_BIN
-export FEEDFORWARD_INTEGRAL_LIMIT
-export FLOW_LIMIT
-export FLOW_LIMIT_FROM_TO
-export FLOW_LIMIT_TO_FROM
-export FLOW_REACTIVE_POWER_FROM_TO
-export FLOW_REACTIVE_POWER_TO_FROM
-export FLOW_ACTIVE_POWER_FROM_TO
-export FLOW_ACTIVE_POWER_TO_FROM
-export FLOW_ACTIVE_POWER
-export FLOW_REACTIVE_POWER
-export INPUT_POWER_RANGE
-export OUTPUT_POWER_RANGE
-export RAMP
-export RAMP_DOWN
-export RAMP_UP
-export RATE_LIMIT
-export RATE_LIMIT_FT
-export RATE_LIMIT_TF
-export REACTIVE
-export REACTIVE_RANGE
-export REQUIREMENT
-export INFLOW_RANGE
+export AbsoluteValueConstraint
+export ActiveConstraint
+export ActivePowerVariableLimitsConstraint
+export ActivePowerVariableTimeSeriesLimitsConstraint
+export ActiveRangeConstraint
+export ActiveRangeICConstraint
+export AreaDispatchBalanceConstraint
+export AreaParticipationAssignmentConstraint
+export BalanceAuxConstraint
+export CommitmentConstraint
+export CopperPlateBalanceConstraint
+export DurationConstraint
+export EnergyBalanceConstraint
+export EnergyBudgetConstraint
+export EnergyCapacityConstraint
+export EnergyCapacityDownConstraint
+export EnergyCapacityUpConstraint
+export EnergyLimitConstraint
+export EnergyShortageVariableLimitsConstraint
+export EnergyTargetConstraint
+export EqualityConstraint
+export FeedforwardSemiContinousConstraint
+export FeedforwardUpperBoundConstraint
+export FeedforwardLowerBoundConstraint
+export FeedforwardIntegralLimitConstraint
+export FlowActivePowerConstraint
+export FlowActivePowerFromToConstraint
+export FlowActivePowerToFromConstraint
+export FlowLimitConstraint
+export FlowLimitFromToConstraint
+export FlowLimitToFromConstraint
+export FlowRateConstraint
+export FlowRateConstraintFromTo
+export FlowRateConstraintToFrom
+export FlowReactivePowerConstraint
+export FlowReactivePowerFromToConstraint
+export FlowReactivePowerToFromConstraint
+export FrequencyResponseConstraint
+export HVDCPowerBalance
+export HVDCTotalPowerDeliveredVariable
+export InflowRangeConstraint
+export InputActivePowerVariableLimitsConstraint
+export InputPowerRangeConstraint
+export MustRunConstraint
+export NetworkFlowConstraint
+export NodalBalanceActiveConstraint
+export NodalBalanceReactiveConstraint
+export OutputActivePowerVariableLimitsConstraint
+export PieceWiseLinearCostConstraint
+export PowerOutputRangeConstraint
+export ParticipationAssignmentConstraint
+export RampConstraint
+export RampLimitConstraint
+export RangeLimitConstraint
+export RateLimitConstraint
+export RateLimitConstraintFromTo
+export RateLimitConstraintToFrom
+export ReactivePowerVariableLimitsConstraint
+export ReactiveRangeConstraint
+export RegulationLimitsConstraint
+export RequirementConstraint
+export ReserveEnergyConstraint
+export ReservePowerConstraint
+export SACEPIDAreaConstraint
+export StartTypeConstraint
+export StartupInitialConditionConstraint
+export StartupTimeLimitTemperatureConstraint
+
+# Parameters
+# Time Series Parameters
+export ActivePowerTimeSeriesParameter
+export ReactivePowerTimeSeriesParameter
+export RequirementTimeSeriesParameter
+export EnergyTargetTimeSeriesParameter
+export EnergyBudgetTimeSeriesParameter
+
+# Feedforward Parameters
+export OnStatusParameter
+export UpperBoundValueParameter
 
 #################################################################################
 # Imports
@@ -241,6 +318,7 @@ import Serialization
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
 import JuMP: optimizer_with_attributes
+import JuMP.Containers: DenseAxisArray, SparseAxisArray
 export optimizer_with_attributes
 import MathOptInterface
 import ParameterJuMP
@@ -248,28 +326,12 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
-# so that users have access to IS.Results interfaces
-import InfrastructureSystems:
-    get_variables,
-    get_parameters,
-    get_total_cost,
-    get_optimizer_stats,
-    write_results,
-    get_timestamp,
-    get_resolution,
-    get_name,
-    @assert_op
+import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
-export get_variables
-export get_duals
-export get_parameters
-export get_total_cost
 export get_optimizer_stats
-export get_timestamp
 export get_timestamps
 export get_resolution
-export write_results
 import PowerModels
 import TimerOutputs
 import ProgressMeter
@@ -317,74 +379,109 @@ const MOPFM = MOI.FileFormats.Model
 const TS = TimeSeries
 
 ################################################################################
-# Includes
 
-include("utils.jl")
+function progress_meter_enabled()
+    return isa(stderr, Base.TTY) &&
+           (get(ENV, "CI", nothing) != "true") &&
+           (get(ENV, "RUNNING_PSI_TESTS", nothing) != "true")
+end
+
+using DocStringExtensions
+
+@template DEFAULT = """
+                    $(TYPEDSIGNATURES)
+                    $(DOCSTRING)
+                    $(METHODLIST)
+                    """
+# Includes
 
 include("core/definitions.jl")
 
-# Models and constructors
-include("core/results.jl")
-include("core/abstract_types.jl")
-include("core/aux_structs.jl")
-
-include("core/powermodels_formulations.jl")
-include("core/service_models.jl")
-include("core/device_models.jl")
-
+# Core components
+include("core/abstract_formulations.jl")
+include("core/abstract_simulation_store.jl")
+include("core/operation_model_abstract_types.jl")
+include("core/optimization_container_types.jl")
+include("core/abstract_feedforward.jl")
+include("core/optimization_container_keys.jl")
+include("network_models/powermodels_formulations.jl")
+include("core/network_model.jl")
 include("core/parameters.jl")
+include("core/service_model.jl")
+include("core/device_model.jl")
 include("core/variables.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
-include("core/cache.jl")
-include("core/feedforward_chronologies.jl")
-include("core/optimizer_stats.jl")
-include("core/initial_condition_types.jl")
-include("core/initial_condition.jl")
+include("core/expressions.jl")
 include("core/initial_conditions.jl")
-include("core/operations_problem_template.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
-include("core/param_result_cache.jl")
-include("core/result_cache.jl")
-include("core/simulation_store.jl")
-include("core/hdf_simulation_store.jl")
-include("core/in_memory_simulation_store.jl")
-include("core/problem_results_export.jl")
-include("core/simulation_results_export.jl")
-include("core/optimization_container.jl")
-include("core/update_initial_conditions.jl")
-include("core/operations_problem.jl")
-include("core/operations_problem_results.jl")
-include("core/simulation_problems.jl")
-include("core/simulation_sequence.jl")
-include("core/simulation.jl")
+include("core/optimizer_stats.jl")
+include("core/dataset.jl")
+include("core/dataset_container.jl")
 
-include("devices_models/devices/common/constraints_structs.jl")
+include("core/optimization_container.jl")
+include("core/store_common.jl")
+
+# Order Required
+include("initial_conditions/initial_condition_chronologies.jl")
+
+include("operation/problem_template.jl")
+include("operation/operation_model_interface.jl")
+include("operation/model_store_params.jl")
+include("operation/abstract_model_store.jl")
+include("operation/decision_model_store.jl")
+include("operation/emulation_model_store.jl")
+include("operation/initial_conditions_update_in_memory_store.jl")
+include("operation/model_internal.jl")
+include("operation/decision_model.jl")
+include("operation/emulation_model.jl")
+include("operation/problem_results_export.jl")
+include("operation/problem_results.jl")
+include("operation/operation_model_serialization.jl")
+include("operation/time_series_interface.jl")
+include("operation/optimization_debugging.jl")
+include("operation/model_numerical_analysis_utils.jl")
+
+include("initial_conditions/add_initial_condition.jl")
+include("initial_conditions/update_initial_conditions.jl")
+include("initial_conditions/calculate_initial_condition.jl")
+
+include("parameters/add_parameters.jl")
+include("parameters/update_parameters.jl")
+
+include("feedforward/feedforwards.jl")
+include("feedforward/feedforward_arguments.jl")
+include("feedforward/feedforward_constraints.jl")
+
+include("simulation/model_output_cache.jl")
+include("simulation/optimization_output_cache.jl")
+include("simulation/simulation_models.jl")
+include("simulation/simulation_state.jl")
+include("simulation/initial_condition_update_simulation.jl")
+include("simulation/simulation_store_params.jl")
+include("simulation/hdf_simulation_store.jl")
+include("simulation/in_memory_simulation_store.jl")
+include("simulation/simulation_problem_results.jl")
+include("simulation/simulation_sequence.jl")
+include("simulation/simulation_internal.jl")
+include("simulation/simulation.jl")
+include("simulation/simulation_results_export.jl")
+include("simulation/simulation_results.jl")
+
 include("devices_models/devices/common/cost_functions.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
-include("devices_models/devices/common/add_parameters.jl")
-include("devices_models/devices/common/rating_constraints.jl")
+include("devices_models/devices/common/add_constraint_dual.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
-include("devices_models/devices/common/commitment_constraint.jl")
-include("devices_models/devices/common/timeseries_constraint.jl")
-include("devices_models/devices/common/expressionarray_algebra.jl")
-include("devices_models/devices/common/energy_balance_constraint.jl")
-include("devices_models/devices/common/energy_management_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
-
-include("core/feedforward.jl")
-include("core/problem_results.jl")
-include("core/simulation_results.jl")
-include("core/recorder_events.jl")
 
 # Device Modeling components
 include("devices_models/devices/interfaces.jl")
-include("devices_models/devices/common/device_range_constraints.jl")
-include("devices_models/devices/common/nodal_expression.jl")
+include("devices_models/devices/common/add_to_expression.jl")
+include("devices_models/devices/common/set_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
@@ -393,6 +490,7 @@ include("devices_models/devices/DC_branches.jl")
 include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
+include("devices_models/devices/hybrid_generation.jl")
 
 # Services Models
 include("services_models/agc.jl")
@@ -404,9 +502,11 @@ include("services_models/services_constructor.jl")
 # Network models
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
-include("devices_models/devices/common/pm_translator.jl")
+include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
+
+include("initial_conditions/initialization.jl")
 
 # Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
@@ -417,20 +517,24 @@ include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
 include("devices_models/device_constructors/storage_constructor.jl")
 include("devices_models/device_constructors/regulationdevice_constructor.jl")
-
+include("devices_models/device_constructors/hybridgeneration_constructor.jl")
 # Network constructors
 include("network_models/network_constructor.jl")
 
-# Templates
-include("operations_problem_templates.jl")
+# Templates for Operation Problems
+include("operation/operation_problem_templates.jl")
 
-# Operations Problems
-include("operations_problems.jl")
+# Operations Decision Problems
+include("operation/decision_problems.jl")
 
-# JuMP Model Utils
-include("jump_model_utils.jl")
-
-# Printing
-include("printing.jl")
+# Utils
+include("utils/printing.jl")
+include("utils/file_utils.jl")
+include("utils/logging.jl")
+include("utils/dataframes_utils.jl")
+include("utils/jump_utils.jl")
+include("utils/powersystems_utils.jl")
+include("utils/recorder_events.jl")
+include("utils/datetime_utils.jl")
 
 end

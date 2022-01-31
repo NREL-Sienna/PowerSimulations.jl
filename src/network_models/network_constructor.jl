@@ -1,28 +1,52 @@
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{CopperPlatePowerModel},
-    template::OperationsProblemTemplate,
+    model::NetworkModel{CopperPlatePowerModel},
+    ::ProblemTemplate,
 )
-    buses = PSY.get_components(PSY.Bus, sys)
-    bus_count = length(buses)
-
-    if get_balance_slack_variables(optimization_container.settings)
-        add_slacks!(optimization_container, CopperPlatePowerModel)
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
+        add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            CopperPlatePowerModel,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            CopperPlatePowerModel,
+        )
+        cost_function!(container, PSY.System, model, CopperPlatePowerModel)
     end
-    copper_plate(optimization_container, :nodal_balance_active, bus_count)
+
+    add_constraints!(
+        container,
+        CopperPlateBalanceConstraint,
+        sys,
+        model,
+        CopperPlatePowerModel,
+    )
+
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{AreaBalancePowerModel},
-    template::OperationsProblemTemplate,
+    model::NetworkModel{AreaBalancePowerModel},
+    ::ProblemTemplate,
 )
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     branches = get_available_components(PSY.Branch, sys)
-    if get_balance_slack_variables(optimization_container.settings)
+    if get_use_slacks(model)
         throw(
             IS.ConflictingInputsError(
                 "Slack Variables are not compatible with AreaBalancePowerModel",
@@ -30,60 +54,130 @@ function construct_network!(
         )
     end
 
-    area_balance(optimization_container, :nodal_balance_active, area_mapping, branches)
+    area_balance(
+        container,
+        ExpressionKey(ActivePowerBalance, PSY.Bus),
+        area_mapping,
+        branches,
+    )
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{StandardPTDFModel},
-    template::OperationsProblemTemplate,
+    model::NetworkModel{StandardPTDFModel},
+    ::ProblemTemplate,
 )
-    buses = PSY.get_components(PSY.Bus, sys)
-    ptdf = get_PTDF(optimization_container)
+    ptdf = get_PTDF(model)
 
     if ptdf === nothing
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    if get_balance_slack_variables(optimization_container.settings)
-        add_slacks!(optimization_container, StandardPTDFModel)
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
+        add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            StandardPTDFModel,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            StandardPTDFModel,
+        )
+        cost_function!(container, PSY.System, model, StandardPTDFModel)
     end
 
-    copper_plate(optimization_container, :nodal_balance_active, length(buses))
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model, StandardPTDFModel)
+
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T},
-    template::OperationsProblemTemplate,
+    model::NetworkModel{T},
+    template::ProblemTemplate,
 ) where {T <: PTDFPowerModel}
     construct_network!(
-        optimization_container,
+        container,
         sys,
-        T,
+        model,
         template;
         instantiate_model = instantiate_nip_ptdf_expr_model,
     )
 
-    add_pm_expr_refs!(optimization_container, T, sys)
-    copper_plate(
-        optimization_container,
-        :nodal_balance_active,
-        length(PSY.get_components(PSY.Bus, sys)),
-    )
+    add_pm_expr_refs!(container, T, sys)
+
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model, PTDFPowerModel)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
 
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T},
-    template::OperationsProblemTemplate;
+    model::NetworkModel{T},
+    template::ProblemTemplate;
+    instantiate_model = instantiate_nip_expr_model,
+) where {T <: PM.AbstractActivePowerModel}
+    if T in UNSUPPORTED_POWERMODELS
+        throw(
+            ArgumentError(
+                "$(T) formulation is not currently supported in PowerSimulations",
+            ),
+        )
+    end
+
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, T)
+        add_variables!(container, SystemBalanceSlackDown, sys, T)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        cost_function!(container, PSY.Bus, model, T)
+    end
+
+    @debug "Building the $T network with $instantiate_model method" _group =
+        LOG_GROUP_NETWORK_CONSTRUCTION
+    powermodels_network!(container, T, sys, template, instantiate_model)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
+
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_network!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    model::NetworkModel{T},
+    template::ProblemTemplate;
     instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
     if T in UNSUPPORTED_POWERMODELS
@@ -94,23 +188,59 @@ function construct_network!(
         )
     end
 
-    if get_balance_slack_variables(optimization_container.settings)
-        add_slacks!(optimization_container, T)
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, T)
+        add_variables!(container, SystemBalanceSlackDown, sys, T)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        cost_function!(container, PSY.Bus, model, T)
     end
 
-    @debug "Building the $T network with $instantiate_model method"
-    powermodels_network!(optimization_container, T, sys, template, instantiate_model)
-    add_pm_var_refs!(optimization_container, T, sys)
-    add_pm_con_refs!(optimization_container, T, sys)
+    @debug "Building the $T network with $instantiate_model method" _group =
+        LOG_GROUP_NETWORK_CONSTRUCTION
+    powermodels_network!(container, T, sys, template, instantiate_model)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T},
-    template::OperationsProblemTemplate;
+    model::NetworkModel{T},
+    template::ProblemTemplate;
     instantiate_model = instantiate_bfp_expr_model,
 ) where {T <: PM.AbstractBFModel}
     if T in UNSUPPORTED_POWERMODELS
@@ -121,21 +251,58 @@ function construct_network!(
         )
     end
 
-    get_balance_slack_variables(optimization_container.settings) &&
-        add_slacks!(optimization_container, T)
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, T)
+        add_variables!(container, SystemBalanceSlackDown, sys, T)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        cost_function!(container, PSY.Bus, model, T)
+    end
 
-    @debug "Building the $T network with $instantiate_model method"
-    powermodels_network!(optimization_container, T, sys, template, instantiate_model)
-    add_pm_var_refs!(optimization_container, T, sys)
-    add_pm_con_refs!(optimization_container, T, sys)
+    @debug "Building the $T network with $instantiate_model method" _group =
+        LOG_GROUP_NETWORK_CONSTRUCTION
+    powermodels_network!(container, T, sys, template, instantiate_model)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_network!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
-    ::Type{T},
-    template::OperationsProblemTemplate;
+    model::NetworkModel{T},
+    template::ProblemTemplate;
     instantiate_model = instantiate_vip_expr_model,
 ) where {T <: PM.AbstractIVRModel}
     if T in UNSUPPORTED_POWERMODELS
@@ -146,13 +313,49 @@ function construct_network!(
         )
     end
 
-    if get_balance_slack_variables(optimization_container.settings)
-        add_slacks!(optimization_container, T)
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, T)
+        add_variables!(container, SystemBalanceSlackDown, sys, T)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackUp,
+            sys,
+            model,
+            T,
+        )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+            T,
+        )
+        cost_function!(container, PSY.Bus, model, T)
     end
 
-    @debug "Building the $T network with $instantiate_model method"
-    powermodels_network!(optimization_container, T, sys, template, instantiate_model)
-    add_pm_var_refs!(optimization_container, T, sys)
-    add_pm_con_refs!(optimization_container, T, sys)
+    @debug "Building the $T network with $instantiate_model method" _group =
+        LOG_GROUP_NETWORK_CONSTRUCTION
+    powermodels_network!(container, T, sys, template, instantiate_model)
+    add_pm_variable_refs!(container, T, sys)
+    add_pm_constraint_refs!(container, T, sys)
+    add_constraint_dual!(container, sys, model)
     return
 end

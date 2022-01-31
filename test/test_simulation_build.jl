@@ -1,24 +1,22 @@
 @testset "Simulation Build Tests" begin
-    problems = create_simulation_build_test_problems(get_template_basic_uc_simulation())
+    models = create_simulation_build_test_problems(get_template_basic_uc_simulation())
     sequence = SimulationSequence(
-        problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
-            ),
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
         ),
         ini_cond_chronology = InterProblemChronology(),
     )
     sim = Simulation(
         name = "test",
         steps = 1,
-        problems = problems,
+        models = models,
         sequence = sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
@@ -26,32 +24,42 @@
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
 
-    @test isempty(values(sim.internal.simulation_cache))
     for field in fieldnames(SimulationSequence)
         if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
-            @test !isnothing(getfield(sim.sequence, field))
+            @test getfield(sim.sequence, field) !== nothing
         end
     end
-    @test isa(sim.sequence, SimulationSequence)
 
     @test length(findall(x -> x == 2, sequence.execution_order)) == 24
     @test length(findall(x -> x == 1, sequence.execution_order)) == 1
+
+    state = PSI.get_simulation_state(sim)
+
+    uc_vars = [OnVariable, StartVariable, StopVariable]
+    ed_vars = [ActivePowerVariable]
+    for (key, data) in state.decision_states.variables
+        if PSI.get_entry_type(key) ∈ uc_vars
+            count, _ = size(data.values)
+            @test count == 24
+        elseif PSI.get_entry_type(key) ∈ ed_vars
+            count, _ = size(data.values)
+            @test count == 288
+        end
+    end
 end
 
 @testset "Simulation with provided initial time" begin
-    problems = create_simulation_build_test_problems(get_template_basic_uc_simulation())
+    models = create_simulation_build_test_problems(get_template_basic_uc_simulation())
     sequence = SimulationSequence(
-        problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
-            ),
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
         ),
         ini_cond_chronology = InterProblemChronology(),
     )
@@ -59,7 +67,7 @@ end
     sim = Simulation(
         name = "test",
         steps = 1,
-        problems = problems,
+        models = models,
         sequence = sequence,
         simulation_folder = mktempdir(cleanup = true),
         initial_time = second_day,
@@ -67,25 +75,32 @@ end
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
 
-    for (_, problem) in PSI.get_problems(sim)
-        @test PSI.get_initial_time(problem) == second_day
+    for model in PSI.get_decision_models(PSI.get_models(sim))
+        @test PSI.get_initial_time(model) == second_day
     end
+
+    for field in fieldnames(SimulationSequence)
+        if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
+            @test getfield(sim.sequence, field) !== nothing
+        end
+    end
+
+    @test length(findall(x -> x == 2, sequence.execution_order)) == 24
+    @test length(findall(x -> x == 1, sequence.execution_order)) == 1
 end
 
 @testset "Negative Tests (Bad Parametrization)" begin
-    problems = create_simulation_build_test_problems(get_template_basic_uc_simulation())
+    models = create_simulation_build_test_problems(get_template_basic_uc_simulation())
     sequence = SimulationSequence(
-        problems = problems,
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :ThermalStandard) => SemiContinuousFF(
-                binary_source_problem = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
-            ),
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
         ),
         ini_cond_chronology = InterProblemChronology(),
     )
@@ -95,7 +110,7 @@ end
     sim = Simulation(
         name = "test",
         steps = 1,
-        problems = problems,
+        models = models,
         sequence = sequence,
         simulation_folder = mktempdir(cleanup = true),
         initial_time = Dates.now(),
@@ -106,53 +121,15 @@ end
     sim = Simulation(
         name = "fake_path",
         steps = 1,
-        problems = problems,
+        models = models,
         sequence = sequence,
         simulation_folder = "fake_path",
     )
 
     @test_throws IS.ConflictingInputsError PSI._check_folder(sim)
-
-    sequence.feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30))
-    sim = Simulation(
-        name = "look_ahead",
-        steps = 1,
-        problems = problems,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
-    @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)
-
-    sequence.feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24))
-    sim = Simulation(
-        name = "look_ahead",
-        steps = 5,
-        problems = problems,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
-    @test_throws IS.ConflictingInputsError build!(sim)
-
-    sequence.feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30))
-    sim = Simulation(
-        name = "look_ahead",
-        steps = 1,
-        problems = problems,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
-    @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)
-
-    @test_throws IS.ConflictingInputsError sim = Simulation(
-        name = "disconnected problems",
-        steps = 5,
-        problems = create_simulation_build_test_problems(),
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
-    )
 end
 
-@testset "multi-stage simulation build" begin
+@testset "Multi-Stage Hydro Simulation Build" begin
     sys_md = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_wk_sys")
 
     sys_uc = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_uc_sys")
@@ -160,148 +137,160 @@ end
 
     sys_ed = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_ed_sys")
 
-    template = OperationsProblemTemplate(CopperPlatePowerModel)
+    template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
 
-    problems = SimulationProblems(
-        MD = OperationsProblem(template, sys_md, system_to_file = false),
-        UC = OperationsProblem(template, sys_uc, system_to_file = false),
-        ED = OperationsProblem(template, sys_ed, system_to_file = false),
+    template_uc = ProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
+    set_device_model!(template_uc, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+
+    template_ed = ProblemTemplate(CopperPlatePowerModel)
+    set_device_model!(template_ed, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_ed, PowerLoad, StaticPowerLoad)
+    set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+
+    models = SimulationModels([
+        DecisionModel(
+            template,
+            name = "MD",
+            sys_md,
+            initialize_model = false,
+            system_to_file = false,
+            optimizer = Cbc_optimizer,
+        ),
+        DecisionModel(
+            template_uc,
+            name = "UC",
+            sys_uc,
+            initialize_model = false,
+            system_to_file = false,
+            optimizer = Cbc_optimizer,
+        ),
+        DecisionModel(
+            template_ed,
+            name = "ED",
+            sys_ed,
+            initialize_model = false,
+            system_to_file = false,
+            optimizer = Cbc_optimizer,
+        ),
+    ])
+
+    feedforwards = Dict(
+        "UC" => [
+            IntegralLimitFeedforward(
+                source = ActivePowerVariable,
+                affected_values = [ActivePowerVariable],
+                component_type = HydroEnergyReservoir,
+                number_of_periods = 24,
+            ),
+        ],
+        "ED" => [
+            IntegralLimitFeedforward(
+                source = ActivePowerVariable,
+                affected_values = [ActivePowerVariable],
+                component_type = HydroEnergyReservoir,
+                number_of_periods = 12,
+            ),
+        ],
     )
 
-    feedforward_chronologies = Dict(
-        ("MD" => "UC") => Synchronize(periods = 2),
-        ("UC" => "ED") => Synchronize(periods = 24),
-    )
-    ini_cond_chronology = InterProblemChronology()
-    intervals = Dict(
-        "MD" => (Hour(48), Consecutive()),
-        "UC" => (Hour(24), Consecutive()),
-        "ED" => (Hour(1), Consecutive()),
-    )
-    feedforward = Dict(
-        ("UC", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-            variable_source_problem = PSI.ACTIVE_POWER,
-            affected_variables = [PSI.ACTIVE_POWER],
-        ),
-        ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-            variable_source_problem = PSI.ACTIVE_POWER,
-            affected_variables = [PSI.ACTIVE_POWER],
-        ),
-    )
     test_sequence = SimulationSequence(
-        problems = problems,
-        feedforward_chronologies = feedforward_chronologies,
-        intervals = intervals,
-        ini_cond_chronology = ini_cond_chronology,
-        feedforward = feedforward,
+        models = models,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforwards = feedforwards,
     )
 
     sim = Simulation(
         name = "test_md",
         steps = 2,
-        problems = problems,
+        models = models,
         sequence = test_sequence,
         simulation_folder = mktempdir(cleanup = true),
     )
-    build_status = build!(sim, serialize = false)
-    @test build_status == PSI.BuildStatus.BUILT
+    @test build!(sim, serialize = false) == PSI.BuildStatus.BUILT
 end
 
-# Pending tests to update
+@testset "Test SemiContinuous Feedforward with Active and Reactive Power variables" begin
+    template_uc = get_template_basic_uc_simulation()
+    set_network_model!(template_uc, NetworkModel(DCPPowerModel, use_slacks = true))
+    # network slacks added because of data issues
+    template_ed =
+        get_template_nomin_ed_simulation(NetworkModel(ACPPowerModel, use_slacks = true))
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    models = SimulationModels(
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = Cbc_optimizer,
+                initialize_model = false,
+            ),
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = ipopt_optimizer,
+                initialize_model = false,
+            ),
+        ],
+    )
 
-# @testset "Test Creation of Simulations with Cache" begin
-#     stages_definition = create_stages(template_standard_uc, c_sys5_uc, c_sys5_ed)
-#
-#     # Cache is not defined all together
-#     sequence_no_cache = SimulationSequence(
-#         step_resolution = Hour(24),
-#         order = Dict(1 => "UC", 2 => "ED"),
-#         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-#         horizons = Dict("UC" => 24, "ED" => 12),
-#         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
-#         ),
-#         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
-#             ),
-#         ),
-#         ini_cond_chronology = InterProblemChronology(),
-#     )
-#     sim = Simulation(
-#         name = "cache",
-#         steps = 1,
-#         stages = stages_definition,
-#         stages_sequence = sequence_no_cache,
-#         simulation_folder = file_path,
-#     )
-#     build!(sim)
-#
-#     @test !isempty(sim.internal.simulation_cache)
-#
-#     stages_definition = create_stages(template_standard_uc, c_sys5_uc, c_sys5_ed)
-#     sequence = SimulationSequence(
-#         step_resolution = Hour(24),
-#         order = Dict(1 => "UC", 2 => "ED"),
-#         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-#         horizons = Dict("UC" => 24, "ED" => 12),
-#         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
-#         ),
-#         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
-#             ),
-#         ),
-#         cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
-#         ini_cond_chronology = InterProblemChronology(),
-#     )
-#     sim = Simulation(
-#         name = "caches",
-#         steps = 2,
-#         stages = stages_definition,
-#         stages_sequence = sequence,
-#         simulation_folder = file_path,
-#     )
-#
-#     build!(sim)
-#
-#     @test !isempty(sim.internal.simulation_cache)
-#
-#     stages_definition = create_stages(template_standard_uc, c_sys5_uc, c_sys5_ed)
-#     # Uses IntraProblem but the cache is defined in the wrong stage
-#     sequence_bad_cache = SimulationSequence(
-#         step_resolution = Hour(24),
-#         order = Dict(1 => "UC", 2 => "ED"),
-#         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-#         horizons = Dict("UC" => 24, "ED" => 12),
-#         intervals = Dict(
-#             "UC" => (Hour(24), Consecutive()),
-#             "ED" => (Hour(1), Consecutive()),
-#         ),
-#         feedforward = Dict(
-#             ("ED", :devices, :Generators) => SemiContinuousFF(
-#                 binary_source_stage = PSI.ON,
-#                 affected_variables = [PSI.ACTIVE_POWER],
-#             ),
-#         ),
-#         cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
-#         ini_cond_chronology = IntraProblemChronology(),
-#     )
-#
-#     sim = Simulation(
-#         name = "test",
-#         steps = 1,
-#         stages = stages_definition,
-#         stages_sequence = sequence_bad_cache,
-#         simulation_folder = file_path,
-#     )
-#     @test_throws IS.InvalidValue build!(sim)
-# end
+    sequence = SimulationSequence(
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable, ReactivePowerVariable],
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(
+        name = "reactive_feedforward",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(cleanup = true),
+    )
+    build_out = build!(sim)
+    @test build_out == PSI.BuildStatus.BUILT
+    ac_power_model = PSI.get_simulation_model(PSI.get_models(sim), :ED)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ActivePowerVariableub",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ActivePowerVariablelb",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ReactivePowerVariableub",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ac_power_model),
+        FeedforwardSemiContinousConstraint(),
+        ThermalStandard,
+        "ReactivePowerVariablelb",
+    )
+    @test !isempty(c)
+end

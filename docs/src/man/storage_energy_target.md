@@ -1,5 +1,5 @@
 # Energy Target Storage Formulation
-This formulation provide a way for user to tackle the end of horizon effect in battery opertaion by adding a constraint on stored energy at the end of period. The target constraint includes a slack variable which is associated with a penalty for any violation of the constraints, this ensure feasibility of the model for scenarios where it not optimal to excatly meet the target.
+This formulation provides a way for user to tackle the end of horizon effect in battery operation by adding a constraint on stored energy at the end of period. The target constraint includes a slack variable which is associated with a penalty for any violation of the constraints, this ensure feasibility of the model for scenarios where it is not optimal to excatly meet the target.
 
 # Formulation Overview
  The features of this model are:
@@ -164,7 +164,7 @@ subject to:\
 ```
 
 ### Impact of different cost configurations
-In the table we describe all possible configuration of the StorageManagementCost with the target constraint in hydro or storage device models. Cases 1(a) & 2(a) will have no impact of the models operations and the target constraint will be rendered useless. In most cases that have no energy target and a non-zero value for $C^{value}$, if this cost is too high ($C^{value} >> 0$) or too low ($C^{value} <<0$) can will result in either the model holding on to stored energy till the end or the model not storing any energy in the device. This is caused by the fact when energy target is zero, we have $e(t) = - e^{-}_{shortage}(t)$, and  $- e^{-}_{shortage} * C^{value}$ in the objective function is replaced by $e(t) * C^{value}$, thus resulting in $C^{value}$ to be seen as the cost of stored energy.
+In the table we describe all possible configuration of the StorageManagementCost with the target constraint in hydro or storage device models. Cases 1(a) & 2(a) will have no impact of the models operations and the target constraint will be rendered useless. In most cases that have no energy target and a non-zero value for $C^{value}$, if this cost is too high ($C^{value} >> 0$) or too low ($C^{value} <<0$) can result in either the model holding on to stored energy till the end or the model not storing any energy in the device. This is caused by the fact that when energy target is zero, we have $e(t) = - e^{-}_{shortage}(t)$, and  $- e^{-}_{shortage} * C^{value}$ in the objective function is replaced by $e(t) * C^{value}$, thus resulting in $C^{value}$ to be seen as the cost of stored energy.
 
 ```math
 \begin{table}

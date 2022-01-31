@@ -5,12 +5,12 @@ abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulati
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
-get_variable_sign(_, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = 1.0
+get_variable_multiplier(_, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = 1.0
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.RenewableGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.RenewableGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
 ########################### ActivePowerVariable, RenewableGen #################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
-
-get_variable_expression_name(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_active
 
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
@@ -19,138 +19,100 @@ get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractR
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
 
-get_variable_expression_name(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}) = :nodal_balance_reactive
-
+get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) = PSY.get_max_active_power(d)
+get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 #! format: on
 
+get_initial_conditions_device_model(
+    ::OperationModel,
+    ::DeviceModel{T, <:AbstractRenewableFormulation},
+) where {T <: PSY.RenewableGen} = DeviceModel(T, RenewableFullDispatch)
+
+get_initial_conditions_device_model(
+    ::OperationModel,
+    ::DeviceModel{T, FixedOutput},
+) where {T <: PSY.RenewableGen} = DeviceModel(T, FixedOutput)
+
+function get_min_max_limits(
+    device,
+    ::Type{ReactivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractRenewableFormulation},
+)
+    PSY.get_reactive_power_limits(device)
+end
+
+function get_default_time_series_names(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerTimeSeriesParameter => "max_active_power",
+        ReactivePowerTimeSeriesParameter => "max_active_power",
+    )
+end
+
+function get_default_attributes(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
+)
+    return Dict{String, Any}()
+end
+
 ####################################### Reactive Power constraint_infos #########################
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractDeviceFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.RenewableGen}
-    return DeviceRangeConstraintSpec(;
-        range_constraint_spec = RangeConstraintSpec(;
-            constraint_name = make_constraint_name(
-                RangeConstraint,
-                ReactivePowerVariable,
-                T,
-            ),
-            variable_name = make_variable_name(ReactivePowerVariable, T),
-            limits_func = x -> PSY.get_reactive_power_limits(x),
-            constraint_func = device_range!,
-            constraint_struct = DeviceRangeConstraintInfo,
-        ),
-    )
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ReactivePowerVariableLimitsConstraint},
+    U::Type{<:ReactivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation}
+    add_range_constraints!(container, T, U, devices, model, X)
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ReactivePowerVariable},
-    ::Type{T},
-    ::Type{<:RenewableConstantPowerFactor},
+"""
+Reactive Power Constraints on Renewable Gen Constant power_factor
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{<:ReactivePowerVariableLimitsConstraint},
+    ::Type{<:ReactivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.RenewableGen}
-    return DeviceRangeConstraintSpec(;
-        custom_optimization_container_func = custom_reactive_power_constraints!,
-    )
-end
-
-function custom_reactive_power_constraints!(
-    optimization_container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::Type{RenewableConstantPowerFactor},
-) where {T <: PSY.RenewableGen}
+) where {V <: PSY.RenewableGen, W <: RenewableConstantPowerFactor}
     names = [PSY.get_name(d) for d in devices]
-    time_steps = model_time_steps(optimization_container)
-    p_var = get_variable(optimization_container, ACTIVE_POWER, T)
-    q_var = get_variable(optimization_container, REACTIVE_POWER, T)
-    constraint_val = JuMPConstraintArray(undef, names, time_steps)
-    assign_constraint!(optimization_container, REACTIVE_RANGE, T, constraint_val)
+    time_steps = get_time_steps(container)
+    p_var = get_variable(container, ActivePowerVariable(), V)
+    q_var = get_variable(container, ReactivePowerVariable(), V)
+    jump_model = get_jump_model(container)
+    constraint =
+        add_constraints_container!(container, EqualityConstraint(), V, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_power_factor(d)))
-        constraint_val[name, t] = JuMP.@constraint(
-            optimization_container.JuMPmodel,
-            q_var[name, t] == p_var[name, t] * pf
-        )
+        constraint[name, t] =
+            JuMP.@constraint(jump_model, q_var[name, t] == p_var[name, t] * pf)
     end
-    return
 end
 
-function DeviceRangeConstraintSpec(
-    ::Type{<:RangeConstraint},
-    ::Type{ActivePowerVariable},
-    ::Type{T},
-    ::Type{<:AbstractRenewableDispatchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.RenewableGen}
-    if !use_parameters && !use_forecasts
-        return DeviceRangeConstraintSpec(;
-            range_constraint_spec = RangeConstraintSpec(;
-                constraint_name = make_constraint_name(
-                    RangeConstraint,
-                    ActivePowerVariable,
-                    T,
-                ),
-                variable_name = make_variable_name(ActivePowerVariable, T),
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
-                constraint_func = device_range!,
-                constraint_struct = DeviceRangeConstraintInfo,
-            ),
-        )
-    end
-
-    return DeviceRangeConstraintSpec(;
-        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
-            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
-            variable_name = make_variable_name(ActivePowerVariable, T),
-            parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "max_active_power",
-            multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub! :
-                              device_timeseries_ub!,
-        ),
-    )
-end
-
-########################## Addition to the nodal balances ##################################
-function NodalExpressionSpec(
-    ::Type{T},
-    ::Type{<:PM.AbstractPowerModel},
-    use_forecasts::Bool,
-) where {T <: PSY.RenewableGen}
-    return NodalExpressionSpec(
-        "max_active_power",
-        REACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
-        1.0,
-        T,
-    )
-end
-
-function NodalExpressionSpec(
-    ::Type{T},
-    ::Type{<:PM.AbstractActivePowerModel},
-    use_forecasts::Bool,
-) where {T <: PSY.RenewableGen}
-    return NodalExpressionSpec(
-        "max_active_power",
-        ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
-        1.0,
-        T,
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:Union{VariableType, ExpressionType}},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.RenewableGen, W <: AbstractRenewableDispatchFormulation}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
     )
 end
 

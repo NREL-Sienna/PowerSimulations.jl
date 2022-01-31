@@ -29,71 +29,78 @@ for i in the set of time steps.
 
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_retrospective!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-)
-    time_steps = model_time_steps(optimization_container)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
 
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(container, var_types[1], T)
+    varstart = get_variable(container, var_types[2], T)
+    varstop = get_variable(container, var_types[3], T)
 
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-
-    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
+    con_up = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varstart[name, i])
                 end
             end
-            if t <= max(0, duration_data[ix].up - ic.value) && ic.value > 0
+            if t <= max(0, duration_data[ix].up - get_value(ic)) && get_value(ic) > 0
                 JuMP.add_to_expression!(lhs_on, 1)
             end
-            con_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                lhs_on - varon[name, t] <= 0.0
-            )
+            con_up[name, t] =
+                JuMP.@constraint(container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
                 end
             end
-            if t <= max(0, duration_data[ix].down - ic.value) && ic.value > 0
+            if t <= max(0, duration_data[ix].down - get_value(ic)) && get_value(ic) > 0
                 JuMP.add_to_expression!(lhs_off, 1)
             end
-            con_down[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                lhs_off + varon[name, t] <= 1.0
-            )
+            con_down[name, t] =
+                JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
         end
     end
     return
@@ -129,68 +136,66 @@ for i in the set of time steps.
 
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_look_ahead!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-)
-    time_steps = model_time_steps(optimization_container)
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    cons_type_up::ConstraintType,
+    cons_type_down::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
+    varon = get_variable(container, var_types[1], T)
+    varstart = get_variable(container, var_types[2], T)
+    varstop = get_variable(container, var_types[3], T)
 
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-
-    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
+    con_up = add_constraints_container!(container, cons_type_up, set_names, time_steps)
+    con_down = add_constraints_container!(container, cons_type_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varon[name, i])
                 end
             end
             if t <= duration_data[ix].up
-                lhs_on += ic.value
+                lhs_on += get_value(ic)
             end
             con_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 varstop[name, t] * duration_data[ix].up - lhs_on <= 0.0
             )
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
                 end
             end
             if t <= duration_data[ix].down
-                lhs_off += ic.value
+                lhs_off += get_value(ic)
             end
             con_down[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
+                container.JuMPmodel,
                 varstart[name, t] * duration_data[ix].down - lhs_off <= 0.0
             )
         end
@@ -229,42 +234,54 @@ for i in the set of time steps. Otherwise:
 for i in the set of time steps.
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
 * initial_duration_off::Vector{InitialCondition} : gives initial number of time steps variable is down
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_parameters!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-)
-    time_steps = model_time_steps(optimization_container)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
 
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(container, var_types[1], T)
+    varstart = get_variable(container, var_types[2], T)
+    varstop = get_variable(container, var_types[3], T)
 
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-
-    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
+    con_up = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+    )
+    con_down = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+    )
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = get_device_name(ic)
-            @assert typeof(ic.value) == PJ.ParameterRef
+            name = get_component_name(ic)
+            IS.@assert_op typeof(get_value(ic)) == PJ.ParameterRef
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
                 if t <= duration_data[ix].up
                     if in(i, time_steps)
@@ -275,25 +292,22 @@ function device_duration_parameters!(
                 end
             end
             if t <= duration_data[ix].up
-                lhs_on += ic.value
+                lhs_on += get_value(ic)
                 con_up[name, t] = JuMP.@constraint(
-                    optimization_container.JuMPmodel,
+                    container.JuMPmodel,
                     varstop[name, t] * duration_data[ix].up - lhs_on <= 0.0
                 )
             else
-                con_up[name, t] = JuMP.@constraint(
-                    optimization_container.JuMPmodel,
-                    lhs_on - varon[name, t] <= 0.0
-                )
+                con_up[name, t] =
+                    JuMP.@constraint(container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
             end
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            @assert typeof(ic.value) == PJ.ParameterRef
-            name = get_device_name(ic)
+            IS.@assert_op typeof(get_value(ic)) == PJ.ParameterRef
+            name = get_component_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
@@ -304,16 +318,14 @@ function device_duration_parameters!(
                 end
             end
             if t <= duration_data[ix].down
-                lhs_off += ic.value
+                lhs_off += get_value(ic)
                 con_down[name, t] = JuMP.@constraint(
-                    optimization_container.JuMPmodel,
+                    container.JuMPmodel,
                     varstart[name, t] * duration_data[ix].down - lhs_off <= 0.0
                 )
             else
-                con_down[name, t] = JuMP.@constraint(
-                    optimization_container.JuMPmodel,
-                    lhs_off + varon[name, t] <= 1.0
-                )
+                con_down[name, t] =
+                    JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
             end
         end
     end
@@ -339,40 +351,54 @@ for i in the set of time steps.
 
 
 # Arguments
-* optimization_container::OptimizationContainer : the optimization_container model built in PowerSimulations
+* container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
-- : var_names[1] : varon
-- : var_names[2] : varstart
-- : var_names[3] : varstop
+* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+- : var_keys[1] : varon
+- : var_keys[2] : varstart
+- : var_keys[3] : varstop
 """
 function device_duration_compact_retrospective!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
-)
-    time_steps = model_time_steps(optimization_container)
+    cons_type::ConstraintType,
+    var_types::Tuple{VariableType, VariableType, VariableType},
+    ::Type{T},
+) where {T <: PSY.Component}
+    time_steps = get_time_steps(container)
 
-    varon = get_variable(optimization_container, var_names[1])
-    varstart = get_variable(optimization_container, var_names[2])
-    varstop = get_variable(optimization_container, var_names[3])
+    varon = get_variable(container, var_types[1], T)
+    varstart = get_variable(container, var_types[2], T)
+    varstop = get_variable(container, var_types[3], T)
 
-    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
-
-    set_names = [get_device_name(ic) for ic in initial_duration[:, 1]]
-    con_up = add_cons_container!(optimization_container, name_up, set_names, time_steps)
-    con_down = add_cons_container!(optimization_container, name_down, set_names, time_steps)
+    set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
+    con_up = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "up",
+        sparse = true,
+    )
+    con_down = add_constraints_container!(
+        container,
+        cons_type,
+        T,
+        set_names,
+        time_steps,
+        meta = "dn",
+        sparse = true,
+    )
     total_time_steps = length(time_steps)
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             if t in UnitRange{Int}(
                 Int(min(duration_data[ix].up, total_time_steps)),
                 total_time_steps,
@@ -382,22 +408,19 @@ function device_duration_compact_retrospective!(
                         JuMP.add_to_expression!(lhs_on, varstart[name, i])
                     end
                 end
-            elseif t <= max(0, duration_data[ix].up - ic.value) && ic.value > 0
+            elseif t <= max(0, duration_data[ix].up - get_value(ic)) && get_value(ic) > 0
                 JuMP.add_to_expression!(lhs_on, 1)
             else
                 continue
             end
-            con_up[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                lhs_on - varon[name, t] <= 0.0
-            )
+            con_up[name, t] =
+                JuMP.@constraint(container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
-            name = get_device_name(ic)
+            name = get_component_name(ic)
             # Minimum Down-time Constraint
-            lhs_off =
-                JuMP.GenericAffExpr{Float64, _variable_type(optimization_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             if t in UnitRange{Int}(
                 Int(min(duration_data[ix].down, total_time_steps)),
                 total_time_steps,
@@ -407,15 +430,13 @@ function device_duration_compact_retrospective!(
                         JuMP.add_to_expression!(lhs_off, varstop[name, i])
                     end
                 end
-            elseif t <= max(0, duration_data[ix].down - ic.value) && ic.value > 0
+            elseif t <= max(0, duration_data[ix].down - get_value(ic)) && get_value(ic) > 0
                 JuMP.add_to_expression!(lhs_off, 1)
             else
                 continue
             end
-            con_down[name, t] = JuMP.@constraint(
-                optimization_container.JuMPmodel,
-                lhs_off + varon[name, t] <= 1.0
-            )
+            con_down[name, t] =
+                JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
         end
     end
     return

@@ -1,161 +1,136 @@
-"""
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
-"""
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.RegulationDevice{T}, U},
+    ::Type{AreaBalancePowerModel},
+) where {T <: PSY.StaticInjection, U <: DeviceLimitedRegulation}
+    devices = get_available_components(get_component_type(model), sys)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        AreaBalancePowerModel,
+    )
+
+    add_variables!(container, DeltaActivePowerUpVariable, devices, U())
+    add_variables!(container, DeltaActivePowerDownVariable, devices, U())
+    add_variables!(container, AdditionalDeltaActivePowerUpVariable, devices, U())
+    add_variables!(container, AdditionalDeltaActivePowerDownVariable, devices, U())
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
-    ::Type{S},
-) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
-    if S != AreaBalancePowerModel
-        throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
-    end
-
+    ::Type{AreaBalancePowerModel},
+) where {T <: PSY.StaticInjection}
     devices = get_available_components(get_component_type(model), sys)
 
-    if !validate_available_devices(T, devices)
-        return
-    end
-
-    # Variables
-    add_variables!(
-        optimization_container,
-        DeltaActivePowerUpVariable,
-        devices,
-        DeviceLimitedRegulation(),
-    )
-    add_variables!(
-        optimization_container,
-        DeltaActivePowerDownVariable,
-        devices,
-        DeviceLimitedRegulation(),
-    )
-    add_variables!(
-        optimization_container,
-        AdditionalDeltaActivePowerUpVariable,
-        devices,
-        DeviceLimitedRegulation(),
-    )
-    add_variables!(
-        optimization_container,
-        AdditionalDeltaActivePowerDownVariable,
-        devices,
-        DeviceLimitedRegulation(),
-    )
-
-    # Constraints
-    nodal_expression!(optimization_container, devices, S)
     add_constraints!(
-        optimization_container,
-        RangeConstraint,
+        container,
+        RegulationLimitsConstraint,
         DeltaActivePowerUpVariable,
         devices,
         model,
-        S,
-        get_feedforward(model),
+        AreaBalancePowerModel,
     )
+
+    add_constraints!(container, RampLimitConstraint, devices, model, AreaBalancePowerModel)
     add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        DeltaActivePowerDownVariable,
+        container,
+        ParticipationAssignmentConstraint,
         devices,
         model,
-        S,
-        get_feedforward(model),
+        AreaBalancePowerModel,
     )
-    ramp_constraints!(optimization_container, devices, model, S, get_feedforward(model))
-    participation_assignment!(optimization_container, devices, model, S, nothing)
-    regulation_cost!(optimization_container, devices, model)
+    cost_function!(container, devices, model)
     return
 end
 
-"""
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
-"""
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.RegulationDevice{T}, U},
+    ::Type{AreaBalancePowerModel},
+) where {T <: PSY.StaticInjection, U <: ReserveLimitedRegulation}
+    devices = get_available_components(get_component_type(model), sys)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        AreaBalancePowerModel,
+    )
+
+    add_variables!(container, DeltaActivePowerUpVariable, devices, U())
+    add_variables!(container, DeltaActivePowerDownVariable, devices, U())
+    add_variables!(container, AdditionalDeltaActivePowerUpVariable, devices, U())
+    add_variables!(container, AdditionalDeltaActivePowerDownVariable, devices, U())
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
-    ::Type{S},
-) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
-    if S != AreaBalancePowerModel
-        throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
-    end
-
+    ::Type{AreaBalancePowerModel},
+) where {T <: PSY.StaticInjection}
     devices = get_available_components(get_component_type(model), sys)
 
-    if !validate_available_devices(T, devices)
-        return
-    end
-
-    # Variables
-    add_variables!(
-        optimization_container,
-        DeltaActivePowerUpVariable,
-        devices,
-        ReserveLimitedRegulation(),
-    )
-    add_variables!(
-        optimization_container,
-        DeltaActivePowerDownVariable,
-        devices,
-        ReserveLimitedRegulation(),
-    )
-    add_variables!(
-        optimization_container,
-        AdditionalDeltaActivePowerUpVariable,
-        devices,
-        ReserveLimitedRegulation(),
-    )
-    add_variables!(
-        optimization_container,
-        AdditionalDeltaActivePowerDownVariable,
-        devices,
-        ReserveLimitedRegulation(),
-    )
-
-    # Constraints
-    nodal_expression!(optimization_container, devices, S)
     add_constraints!(
-        optimization_container,
-        RangeConstraint,
+        container,
+        RegulationLimitsConstraint,
         DeltaActivePowerUpVariable,
         devices,
         model,
-        S,
-        get_feedforward(model),
+        AreaBalancePowerModel,
     )
-    add_constraints!(
-        optimization_container,
-        RangeConstraint,
-        DeltaActivePowerDownVariable,
-        devices,
-        model,
-        S,
-        get_feedforward(model),
-    )
-    participation_assignment!(optimization_container, devices, model, S, nothing)
-    regulation_cost!(optimization_container, devices, model)
+
+    add_constraints!(container, ParticipationAssignmentConstraint, devices, model, S)
+    cost_function!(container, devices, model)
     return
 end
 
-"""
-This function creates the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
-"""
 function construct_device!(
-    optimization_container::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
-    ::Type{S},
-) where {T <: PSY.StaticInjection, S <: PM.AbstractPowerModel}
-    if S != AreaBalancePowerModel
-        throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
-    end
-
+    ::Type{AreaBalancePowerModel},
+) where {T <: PSY.StaticInjection}
     devices = get_available_components(get_component_type(model), sys)
-    if !validate_available_devices(T, devices)
-        return
-    end
-    nodal_expression!(optimization_container, devices, S)
+    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        S,
+    )
+    return
+end
+
+function construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ModelConstructStage,
+    ::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
+    ::Type{AreaBalancePowerModel},
+) where {T <: PSY.StaticInjection}
+    # There is no-op under FixedOutput formulation
     return
 end

@@ -38,7 +38,7 @@
 
 
 **intervals:** The increment of time per stage in each simulation solve, and how results get fed forward into initial conditions between intervals.
-- Example: `intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive()))`
+- Example: `intervals = Dict("UC" => (Hour(24), 0), "ED" => (Hour(1), 0))`
 
 **Operations Problem** A single-step optimization problem.
 
@@ -48,7 +48,7 @@
 
 **Stage:** Each stage represents a formulation of a problem to be solved, such as unit commitment or economic dispatch. Each stage has its own system with a specified time-scale.
 - Example:
-`"UC" => OperationsProblem(GenericOpProblem, template, system, optimizer)`
+`"UC" => DecisionModel(GenericOpProblem, template, system, optimizer)`
 
 **problem:** The optimization problem populated with the specific system to be solved.
 

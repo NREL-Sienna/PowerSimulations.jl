@@ -19,18 +19,20 @@
         (PM.BFAPowerModel, fast_ipopt_optimizer),
         #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
         (PM.SDPWRMPowerModel, scs_solver),
-        #(PM.SparseSDPWRMPowerModel, scs_solver), # bug in PM: https://github.com/lanl-ansi/PowerModels.jl/issues/769, uncomment when v0.18.1 is tagged
+        (PM.SparseSDPWRMPowerModel, scs_solver),
         (PTDFPowerModel, fast_ipopt_optimizer),
     ]
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
-        template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(template, c_sys5; optimizer = solver)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(network; PTDF = PSY.PTDF(c_sys5)),
+        )
+        ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test !isnothing(ps_model.internal.optimization_container.pm)
-        @test :nodal_balance_active in
-              keys(ps_model.internal.optimization_container.expressions)
+        @test ps_model.internal.container.pm !== nothing
+        # TODO: Change test
+        # @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
     end
 end
 
@@ -40,13 +42,12 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [120, 0, 120, 120, 24],
         c_sys14 => [120, 0, 120, 120, 24],
         c_sys14_dc => [120, 0, 120, 120, 24],
     )
-    constraint_names = [:CopperPlateBalance]
+    constraint_keys = [PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 240000.0,
@@ -54,16 +55,15 @@ end
         c_sys14_dc => 142000.0,
     )
 
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -74,12 +74,13 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
     end
-    ps_model_re = OperationsProblem(
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+    )
+    ps_model_re = DecisionModel(
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
         optimizer = GLPK_optimizer,
-        use_parameters = true,
-        balance_slack_variables = true,
     )
     @test build!(ps_model_re; output_dir = mktempdir(cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -93,9 +94,12 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow__Line]
-    parameters = [true, false]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+    ]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
         c_sys14 => PTDF(c_sys14),
@@ -111,21 +115,18 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = OSQP_optimizer,
-            use_parameters = p,
-            PTDF = PTDF_ref[sys],
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(StandardPTDFModel; PTDF = PTDF_ref[sys]),
         )
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -142,7 +143,7 @@ end
         )
     end
     # PTDF input Error testing
-    ps_model = OperationsProblem(template, c_sys5; optimizer = GLPK_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
@@ -157,9 +158,12 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :CopperPlateBalance, :network_flow__Line]
-    parameters = [true, false]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+    ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 168],
         c_sys14 => [600, 0, 600, 600, 504],
@@ -170,16 +174,15 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -204,31 +207,29 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [
-        :RateLimit_ub__Line,
-        :RateLimit_lb__Line,
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
+    constraint_keys = [
+        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
     ]
-    parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
         c_sys14 => [936, 0, 1080, 1080, 840],
-        c_sys14_dc => [984, 48, 984, 984, 840],
+        c_sys14_dc => [984, 96, 984, 984, 840],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -254,13 +255,12 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     # Check for voltage and angle constraints
-    constraint_names = [
-        :RateLimitFT__Line,
-        :RateLimitTF__Line,
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_REACTIVE, PSY.Bus),
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
     ]
-    parameters = [true, false]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
         c_sys14 => [2832, 0, 720, 720, 696],
@@ -271,19 +271,14 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = ipopt_optimizer,
-            use_parameters = p,
-        )
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -309,27 +304,25 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
-    parameters = [true, false]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
-        c_sys14_dc => [648, 48, 552, 552, 384],
+        c_sys14_dc => [648, 96, 552, 552, 384],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 300000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems), p in parameters
-        ps_model =
-            OperationsProblem(template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+    for (ix, sys) in enumerate(systems)
+        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -357,11 +350,10 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    parameters = [true, false]
     # TODO: add model specific constraints to this list. Voltages, etc.
-    constraint_names = [
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
-        PSI.make_constraint_name(PSI.NODAL_BALANCE_REACTIVE, PSY.Bus),
+    constraint_keys = [
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
     ]
     ACR_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 240, 240, 264],
@@ -374,20 +366,15 @@ end
         c_sys14_dc => [3696, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
-    for network in networks, sys in systems, p in parameters
+    for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = fast_ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[network][sys][1],
             test_results[network][sys][2],
             test_results[network][sys][3],
@@ -395,7 +382,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test ps_model.internal.container.pm !== nothing
     end
 end
 
@@ -406,9 +393,8 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    parameters = [true, false]
-    # TODO: add model specific constraints to this list. Bi-direccional flows etc
-    constraint_names = [PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
+    # TODO: add model specific constraints to this list. Bi-directional flows etc
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
         c_sys14 => 142000.0,
@@ -417,7 +403,7 @@ end
     DCPLL_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [528, 0, 408, 408, 288],
         c_sys14 => [1416, 0, 1080, 1080, 840],
-        c_sys14_dc => [1416, 48, 984, 984, 840],
+        c_sys14_dc => [1416, 96, 984, 984, 840],
     )
     LPACC_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1200, 0, 384, 384, 840],
@@ -425,20 +411,15 @@ end
         c_sys14_dc => [3264, 96, 672, 672, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
-    for network in networks, sys in systems, p in parameters
+    for network in networks, (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(
-            template,
-            sys;
-            optimizer = ipopt_optimizer,
-            use_parameters = p,
-        )
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_names)
+        psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            p,
+            false,
             test_results[network][sys][1],
             test_results[network][sys][2],
             test_results[network][sys][3],
@@ -446,7 +427,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test !isnothing(ps_model.internal.optimization_container.pm)
+        @test ps_model.internal.container.pm !== nothing
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -459,7 +440,7 @@ end
 @testset "Network Unsupported Power Model Formulations" begin
     for network in PSI.UNSUPPORTED_POWERMODELS
         template = get_thermal_dispatch_template_network(network)
-        ps_model = OperationsProblem(
+        ps_model = DecisionModel(
             template,
             PSB.build_system(PSITestSystems, "c_sys5");
             optimizer = ipopt_optimizer,
