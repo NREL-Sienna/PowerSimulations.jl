@@ -16,7 +16,7 @@ function calculate_ic_quantity(
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     @debug last_status, var_status, abs(last_status - var_status)
-    # Commenting out this as when going from UC -> 1st ED solve, 
+    # Commenting out this as when going from UC -> 1st ED solve,
     # its comparing the last_status(t=24) to the 1st variable value (t=1)
     # @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
@@ -38,7 +38,7 @@ function calculate_ic_quantity(
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
     @debug last_status, var_status, abs(last_status - var_status)
-    # Commenting out this as when going from UC -> 1st ED solve, 
+    # Commenting out this as when going from UC -> 1st ED solve,
     # its comparing the last_status(t=24) to the 1st variable value (t=1)
     # @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
@@ -87,8 +87,8 @@ function calculate_ic_quantity(
         name = get_device_name(ic)
         time_cache = cache_value(cache, name)
         series = time_cache[:series]
-        elapsed_time = time_cache[:elapsed]
-        current_offset = Int64(elapsed_period/cache.units)
+        denom = elapsed_period >= cache.units ? cache.units : elapsed_period
+        current_offset = Int64(elapsed_period/denom) # this is super hacky, and I'm not sure what it will break
         if min_power > 0.0
             #off set by one since the first is the original initial conditions. Series is size
             # horizon + 1

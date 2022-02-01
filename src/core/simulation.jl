@@ -127,22 +127,23 @@ function _add_initial_condition_caches(
 )
     initial_conditions = problem.internal.optimization_container.initial_conditions
     for (ic_key, init_conds) in initial_conditions.data
-        _create_cache(ic_key, caches)
+        _create_cache(ic_key, caches, get_resolution(problem))
     end
     return
 end
 
-function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCache}})
+function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCache}}, res)
     return
 end
 
 function _create_cache(
     ic_key::ICKey{InitialTimeDurationOn, T},
     caches::Union{Nothing, Vector{<:AbstractCache}},
+    res
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, ON)
+        cache = TimeStatusChange(T, ON, res)
         push!(caches, cache)
     end
     return
@@ -151,10 +152,11 @@ end
 function _create_cache(
     ic_key::ICKey{InitialTimeDurationOff, T},
     caches::Vector{<:AbstractCache},
+    res
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
-        cache = TimeStatusChange(T, ON)
+        cache = TimeStatusChange(T, ON, res)
         push!(caches, cache)
     end
     return
@@ -163,6 +165,7 @@ end
 function _create_cache(
     ic_key::ICKey{InitialEnergyLevel, T},
     caches::Vector{<:AbstractCache},
+    res
 ) where {T <: PSY.Device}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
@@ -175,6 +178,7 @@ end
 function _create_cache(
     ic_key::ICKey{InitialEnergyLevel, T},
     caches::Vector{<:AbstractCache},
+    res
 ) where {T <: PSY.HybridSystem}
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)

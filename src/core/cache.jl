@@ -20,16 +20,16 @@ mutable struct TimeStatusChange <: AbstractCache
         device_type::Type{<:PSY.Device},
         value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}},
         ref::UpdateRef,
-        units::Dates.TimePeriod = Dates.Hour(1),
+        units::Dates.TimePeriod,
     )
         units = IS.time_period_conversion(units)
         new(device_type, value, units, ref)
     end
 end
 
-function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+function TimeStatusChange(::Type{T}, name::AbstractString, units::Dates.TimePeriod) where {T <: PSY.Device}
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Any}}(undef, 1)
-    return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
+    return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, name), units)
 end
 
 mutable struct StoredEnergy <: AbstractCache
