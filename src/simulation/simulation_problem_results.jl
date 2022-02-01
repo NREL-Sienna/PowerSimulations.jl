@@ -1,9 +1,3 @@
-# TODO:
-# - [?] Allow passing the system path if the simulation wasn't serialized: CB - this currently works with `set_system!`
-# - [ ] Handle PER-UNIT conversion of variables according to type: TODO
-# - [x] encode Variable/Parameter/Dual from other inputs to avoid passing Symbol
-# - [ ] add interfaces to grab expressions and auxiliary variables
-
 const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
 const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
 
@@ -21,11 +15,11 @@ mutable struct SimulationProblemResults <: IS.Results
     system_uuid::Base.UUID
     resolution::Dates.TimePeriod
     forecast_horizon::Int
-    # Missing field for Auxiliary Variables
-    # Missing field for Expressions
     variable_values::FieldResultsByTime
     dual_values::FieldResultsByTime
     parameter_values::FieldResultsByTime
+    aux_variable_values::FieldResultsByTime
+    expression_values::FieldResultsByTime
     optimization_container_metadata::OptimizationContainerMetadata
     store::Union{Nothing, SimulationStore}
 end
@@ -52,6 +46,8 @@ function SimulationProblemResults(
     variables = list_fields(store, name, STORE_CONTAINER_VARIABLES)
     parameters = list_fields(store, name, STORE_CONTAINER_PARAMETERS)
     duals = list_fields(store, name, STORE_CONTAINER_DUALS)
+    aux_variables = list_fields(store, name, STORE_CONTAINER_AUX_VARIABLES)
+    expressions = list_fields(store, name, STORE_CONTAINER_EXPRESSIONS)
 
     return SimulationProblemResults(
         model_name,
@@ -67,6 +63,8 @@ function SimulationProblemResults(
         _fill_result_value_container(variables),
         _fill_result_value_container(duals),
         _fill_result_value_container(parameters),
+        _fill_result_value_container(aux_variables),
+        _fill_result_value_container(expressions),
         deserialize_metadata(
             OptimizationContainerMetadata,
             joinpath(path, "problems"),
@@ -98,15 +96,16 @@ get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
 
 """
+Return an array of variable names (strings) that are available for reads.
+"""
+list_variable_names(res::SimulationProblemResults) =
+    encode_keys_as_strings(keys(res.variable_values))
+
+"""
 Return an array of dual names (strings) that are available for reads.
 """
 list_dual_names(res::SimulationProblemResults) =
     encode_keys_as_strings(keys(res.dual_values))
-
-"""
-Return an array of ConstraintKeys that are available for reads.
-"""
-list_dual_keys(res::SimulationProblemResults) = collect(keys(res.dual_values))
 
 """
 Return an array of parmater names (strings) that are available for reads.
@@ -115,20 +114,47 @@ list_parameter_names(res::SimulationProblemResults) =
     encode_keys_as_strings(keys(res.parameter_values))
 
 """
-Return an array of ParameterKeys that are available for reads.
+Return an array of auxillary variable names (strings) that are available for reads.
 """
-list_parameter_keys(res::SimulationProblemResults) = collect(keys(res.parameter_values))
+list_aux_variable_names(res::SimulationProblemResults) =
+    encode_keys_as_strings(keys(res.aux_variable_values))
 
 """
-Return an array of variable names (strings) that are available for reads.
+Return an array of expression names (strings) that are available for reads.
 """
-list_variable_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(res.variable_values))
+list_expression_names(res::SimulationProblemResults) =
+    encode_keys_as_strings(keys(res.expressions))
 
 """
 Return an array of VariableKeys that are available for reads.
 """
 list_variable_keys(res::SimulationProblemResults) = collect(keys(res.variable_values))
+
+"""
+Return an array of ConstraintKeys that are available for reading duals.
+"""
+list_dual_keys(res::SimulationProblemResults) = collect(keys(res.dual_values))
+
+"""
+Return an array of ParameterKeys that are available for reads.
+"""
+list_parameter_keys(res::SimulationProblemResults) = collect(keys(res.parameter_values))
+
+"""
+Return an array of AuxVarKeys that are available for reads.
+"""
+list_aux_variable_keys(res::SimulationProblemResults) =
+    collect(keys(res.aux_variable_values))
+
+"""
+Return an array of ExpressionKeys that are available for reads.
+"""
+list_expression_keys(res::SimulationProblemResults) = collect(keys(res.expression_values))
+
+"""
+Return a reference to all variable values that have been loaded into memory.
+"""
+get_variable_values(result::SimulationProblemResults) = result.variable_values
 
 """
 Return a reference to all dual values that have been loaded into memory.
@@ -141,14 +167,19 @@ Return a reference to all parameter values that have been loaded into memory.
 get_parameter_values(result::SimulationProblemResults) = result.parameter_values
 
 """
+Return a reference to all auxillary variable values that have been loaded into memory.
+"""
+get_aux_variable_values(result::SimulationProblemResults) = result.aux_variable_values
+
+"""
+Return a reference to all expression values that have been loaded into memory.
+"""
+get_expression_values(result::SimulationProblemResults) = result.expression_values
+
+"""
 Return a reference to a StepRange of available timestamps.
 """
 get_timestamps(result::SimulationProblemResults) = result.timestamps
-
-"""
-Return a reference to all variable values that have been loaded into memory.
-"""
-get_variable_values(result::SimulationProblemResults) = result.variable_values
 
 """
 Return the system used for the problem. If the system hasn't already been deserialized or
@@ -319,114 +350,6 @@ function _read_variables(res::SimulationProblemResults, variable_keys, timestamp
     return vals
 end
 
-function _read_duals(res::SimulationProblemResults, dual_keys, timestamps, store)
-    isempty(dual_keys) && return FieldResultsByTime()
-    if store === nothing && res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
-    end
-    _validate_keys(keys(res.dual_values), dual_keys)
-    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
-    keys_with_values = [k for (k, v) in res.dual_values if !isempty(v)]
-    same_keys = isempty([n for n in dual_keys if n ∉ keys_with_values])
-    if same_timestamps && same_keys
-        @debug "reading duals from SimulationsResults"
-        vals = filter(p -> (p.first ∈ dual_keys), res.dual_values)
-    else
-        @debug "reading duals from data store"
-        vals = _get_store_value(res, dual_keys, timestamps, store)
-    end
-    return vals
-end
-
-"""
-Return the values for the requested duals in DataFrames in a two-level Dict keyed by
-dual names and then timestamps.
-
-If the timestamps and duals were loaded with [load_results!](@ref) or previously
-returned by this function it will return from memory. Otherwise, it will read from the file.
-
-# Arguments
-- `duals::Union{Nothing, Vector{Union{String, Tuple}}}`: If nothing, return all
-   duals. If strings then it must be values returned from [`list_dual_names`](@ref).
-   If tuples then each tuple's contents must be able to be splatted into a ConstraintKey.
-- `initial_time::Dates.DateTime` : initial of the requested results
-- `count::Int`: Number of results
-- `store::SimulationStore`: a store that has been opened for reading
-
-# Examples
-```julia
-julia> read_duals(res, [(CopperPlateBalanceConstraint, PSY.System)])
-julia> read_duals(res, ["CopperPlateBalanceConstraint_System"])
-```
-"""
-function read_duals_internal(
-    res::SimulationProblemResults;
-    duals::Union{Nothing, Vector{Union{String, Tuple}}} = nothing,
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
-    store = nothing,
-)
-    dual_keys = _get_keys(ConstraintKey, res, duals)
-    timestamps = _process_timestamps(res, initial_time, count)
-    var_values = _read_duals(res, dual_keys, timestamps, store)
-    return var_values
-end
-
-function _read_parameters(res::SimulationProblemResults, parameter_keys, timestamps, store)
-    isempty(parameter_keys) && return FieldResultsByTime()
-    if store === nothing && res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
-    end
-    _validate_keys(keys(res.parameter_values), parameter_keys)
-    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
-    parameters_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
-    same_parameters = isempty([n for n in parameter_keys if n ∉ parameters_with_values])
-    if same_timestamps && same_parameters
-        @debug "reading parameters from SimulationsResults"
-        vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
-    else
-        @debug "reading parameters from data store"
-        vals = _get_store_value(res, parameter_keys, timestamps, store)
-    end
-    return vals
-end
-
-"""
-Return the values for the requested parameters in DataFrames in a two-level Dict keyed by
-parameter names and then timestamps.
-
-If the timestamps and parameters were loaded with [load_results!](@ref) or previously
-returned by this function it will return from memory. Otherwise, it will read from the file.
-
-# Arguments
-- `parameters::Union{Nothing, Vector{Union{String, Tuple}}}`: If nothing, return all
-   variables. If strings then it must be values returned from [`list_parameter_names`](@ref).
-   If tuples then each tuple's contents must be able to be splatted into a ParameterKey.
-- `initial_time::Dates.DateTime` : initial time of the requested results
-- `count::Int`: Number of results
-- `store::SimulationStore`: a store that has been opened for reading
-
-# Examples
-```julia
-julia> read_parameters(res, [(ActivePowerTimeSeriesParameter, ThermalStandard)])
-julia> read_parameters(res, ["ActivePowerTimeSeriesParameter_ThermalStandard"])
-```
-"""
-function read_parameters_internal(
-    res::SimulationProblemResults;
-    parameters::Union{Nothing, Vector{Union{String, Tuple}}} = nothing,
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
-    store = nothing,
-)
-    parameter_keys = _get_keys(ParameterKey, res, parameters)
-    timestamps = _process_timestamps(res, initial_time, count)
-    values = _read_parameters(res, parameter_keys, timestamps, store)
-    return values
-end
-
 """
 Return the values for the requested variable. It keeps requests when performing multiple retrievals.
 
@@ -455,6 +378,26 @@ function read_variable(
     return _read_variables(res, [key], timestamps, store)[key]
 end
 
+function _read_duals(res::SimulationProblemResults, dual_keys, timestamps, store)
+    isempty(dual_keys) && return FieldResultsByTime()
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
+    _validate_keys(keys(res.dual_values), dual_keys)
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
+    keys_with_values = [k for (k, v) in res.dual_values if !isempty(v)]
+    same_keys = isempty([n for n in dual_keys if n ∉ keys_with_values])
+    if same_timestamps && same_keys
+        @debug "reading duals from SimulationsResults"
+        vals = filter(p -> (p.first ∈ dual_keys), res.dual_values)
+    else
+        @debug "reading duals from data store"
+        vals = _get_store_value(res, dual_keys, timestamps, store)
+    end
+    return vals
+end
+
 """
 Return the values for the requested dual. It keeps requests when performing multiple retrievals.
 
@@ -477,6 +420,26 @@ function read_dual(
     return _read_duals(res, [key], timestamps, store)[key]
 end
 
+function _read_parameters(res::SimulationProblemResults, parameter_keys, timestamps, store)
+    isempty(parameter_keys) && return FieldResultsByTime()
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
+    _validate_keys(keys(res.parameter_values), parameter_keys)
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
+    parameters_with_values = [k for (k, v) in res.parameter_values if !isempty(v)]
+    same_parameters = isempty([n for n in parameter_keys if n ∉ parameters_with_values])
+    if same_timestamps && same_parameters
+        @debug "reading parameters from SimulationsResults"
+        vals = filter(p -> (p.first ∈ parameter_keys), res.parameter_values)
+    else
+        @debug "reading parameters from data store"
+        vals = _get_store_value(res, parameter_keys, timestamps, store)
+    end
+    return vals
+end
+
 """
 Return the values for the requested parameter. It keeps requests when performing multiple retrievals.
 
@@ -497,6 +460,100 @@ function read_parameter(
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_parameters(res, [key], timestamps, store)[key]
+end
+
+function _read_aux_variables(
+    res::SimulationProblemResults,
+    aux_variable_keys,
+    timestamps,
+    store,
+)
+    isempty(aux_variable_keys) && return FieldResultsByTime()
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
+    _validate_keys(keys(res.aux_variable_values), aux_variable_keys)
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
+    keys_with_values = [k for (k, v) in res.aux_variable_values if !isempty(v)]
+    same_keys = isempty([n for n in aux_variable_keys if n ∉ keys_with_values])
+    if same_timestamps && same_keys
+        @debug "reading aux variables from SimulationsResults"
+        vals = filter(p -> (p.first ∈ aux_variable_keys), res.aux_variable_values)
+    else
+        @debug "reading aux variables from data store"
+        vals = _get_store_value(res, aux_variable_keys, timestamps, store)
+    end
+    return vals
+end
+
+"""
+Return the values for the requested auxillary variables. It keeps requests when performing multiple retrievals.
+
+# Arguments
+- `args`: Can be a string returned from [`list_aux_variable_names`](@ref) or args that can be
+   splatted into a AuxVarKey.
+- `initial_time::Dates.DateTime` : initial of the requested results
+- `count::Int`: Number of results
+"""
+function read_aux_variable(
+    res::SimulationProblemResults,
+    args...;
+    time_series_name = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
+)
+    key = _deserialize_key(AuxVarKey, res, args...)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_aux_variables(res, [key], timestamps, store)[key]
+end
+
+function _read_expressions(
+    res::SimulationProblemResults,
+    expression_keys,
+    timestamps,
+    store,
+)
+    isempty(expression_keys) && return FieldResultsByTime()
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
+    _validate_keys(keys(res.expression_values), expression_keys)
+    same_timestamps = isempty(setdiff(res.results_timestamps, timestamps))
+    keys_with_values = [k for (k, v) in res.expression_values if !isempty(v)]
+    same_keys = isempty([n for n in expression_keys if n ∉ keys_with_values])
+    if same_timestamps && same_keys
+        @debug "reading expressions from SimulationsResults"
+        vals = filter(p -> (p.first ∈ expression_keys), res.expression_values)
+    else
+        @debug "reading expressions from data store"
+        vals = _get_store_value(res, expression_keys, timestamps, store)
+    end
+    return vals
+end
+
+"""
+Return the values for the requested auxillary variables. It keeps requests when performing multiple retrievals.
+
+# Arguments
+- `args`: Can be a string returned from [`list_expression_names`](@ref) or args that can be
+   splatted into a ExpressionKey.
+- `initial_time::Dates.DateTime` : initial of the requested results
+- `count::Int`: Number of results
+"""
+function read_expression(
+    res::SimulationProblemResults,
+    args...;
+    time_series_name = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
+)
+    key = _deserialize_key(ExpressionKey, res, args...)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_expressions(res, [key], timestamps, store)[key]
 end
 
 """
@@ -775,6 +832,112 @@ function read_realized_duals_with_keys(
 end
 
 """
+Return the final values for the requested auxiliary variable keys for each time step for a problem.
+Accepts a vector of tuples for the return of the values. If the
+time stamps and keys are loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `aux_variables::::Vector{Tuple{Type{<:AuxVariableType}, Type{<:PSY.Component}}` : Tuple with auxiliary variable type and device type for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `count::Int`: length of results
+"""
+function read_realized_aux_variables(res::SimulationProblemResults; kwargs...)
+    return read_realized_aux_variables(
+        res,
+        collect(keys(res.aux_variable_values));
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(
+    res::SimulationProblemResults,
+    aux_variables;
+    kwargs...,
+)
+    return read_realized_aux_variables(
+        res,
+        [AuxVarKey(x...) for x in aux_variables];
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(
+    res::SimulationProblemResults,
+    aux_variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_aux_variables_with_keys(
+        res,
+        aux_variables;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_aux_variables_with_keys(
+    res::SimulationProblemResults,
+    aux_variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    meta = RealizedMeta(res, initial_time = initial_time, count = count)
+    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
+    result_values = _read_aux_variables(res, aux_variables, timestamps, nothing)
+    return get_realization(result_values, meta)
+end
+
+"""
+Return the final values for the requested expression keys for each time step for a problem.
+Accepts a vector of tuples for the return of the values. If the
+time stamps and keys are loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `expressions::::Vector{Tuple{Type{<:ExpressionType}, U <: Union{PSY.Component, PSY.System}}` : Tuple with expression type and device type or system for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `count::Int`: length of results
+"""
+function read_realized_expressions(res::SimulationProblemResults; kwargs...)
+    return read_realized_expressions(res, collect(keys(res.expression_values)); kwargs...)
+end
+
+function read_realized_expressions(res::SimulationProblemResults, expressions; kwargs...)
+    return read_realized_expressions(
+        res,
+        [ExpressionKey(x...) for x in expressions];
+        kwargs...,
+    )
+end
+
+function read_realized_expressions(
+    res::SimulationProblemResults,
+    expressions::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_expressions_with_keys(
+        res,
+        expressions;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_expressions_with_keys(
+    res::SimulationProblemResults,
+    expressions::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    meta = RealizedMeta(res, initial_time = initial_time, count = count)
+    timestamps = _process_timestamps(res, meta.initial_time, meta.count)
+    result_values = _read_expressions(res, expressions, timestamps, nothing)
+    return get_realization(result_values, meta)
+end
+
+"""
     Loads the simulation results into memory for repeated reads. Running this function twice
     overwrites the previously loaded results. This is useful when loading results from remote
     locations over network connections
@@ -786,6 +949,8 @@ end
     - `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
     - `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
     - `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
+    - `aux_variables::Vector{Tuple{Type{<:AuxVariableType}, Type{<:PSY.Component}}` : Tuple with auxilary variable type and device type for the desired results
+    - `expressions::Vector{Tuple{Type{<:ExpressionType}, U <: Union{PSY.Component, PSY.System}}` : Tuple with expression type and device type or system for the desired results
 """
 function load_results!(
     res::SimulationProblemResults,
@@ -794,6 +959,8 @@ function load_results!(
     variables = Vector{Tuple}(),
     duals = Vector{Tuple}(),
     parameters = Vector{Tuple}(),
+    aux_variables = Vector{Tuple}(),
+    expressions = Vector{Tuple}(),
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
 
@@ -802,6 +969,8 @@ function load_results!(
     dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
     parameter_keys = [_deserialize_key(ParameterKey, res, x...) for x in parameters]
     variable_keys = [_deserialize_key(VariableKey, res, x...) for x in variables]
+    aux_variable_keys = [_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
+    expression_keys = [_deserialize_key(ExpressionKey, res, x...) for x in expressions]
     function merge_results(store)
         merge!(
             res.variable_values,
@@ -811,6 +980,14 @@ function load_results!(
         merge!(
             res.parameter_values,
             _read_parameters(res, parameter_keys, res.results_timestamps, store),
+        )
+        merge!(
+            res.aux_variable_values,
+            _read_aux_variables(res, aux_variable_keys, res.results_timestamps, store),
+        )
+        merge!(
+            res.expression_values,
+            _read_expressions(res, expression_keys, res.results_timestamps, store),
         )
     end
 
