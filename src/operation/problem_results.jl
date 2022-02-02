@@ -151,35 +151,35 @@ function export_results(
 )
     file_type != CSV.File && error("only CSV.File is currently supported")
     export_path = mkpath(joinpath(results.output_dir, "variables"))
-    for (key, df) in read_realized_variables(results)
+    for (key, df) in results.variable_values
         if should_export_variable(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "aux_variables"))
-    for (key, df) in read_realized_aux_variables(results)
+    for (key, df) in results.aux_variable_values
         if should_export_aux_variable(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "duals"))
-    for (key, df) in read_realized_duals(results)
+    for (key, df) in results.dual_values
         if should_export_dual(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "parameters"))
-    for (key, df) in read_realized_parameters(results)
+    for (key, df) in results.parameter_values
         if should_export_parameter(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "expressions"))
-    for (key, df) in read_realized_expressions(results)
+    for (key, df) in results.expression_values
         if should_export_expression(exports, key)
             export_result(file_type, export_path, key, df)
         end
@@ -308,11 +308,6 @@ function set_system!(res::ProblemResults, system::PSY.System)
     return
 end
 
-# TODO:
-# - ensure proper PER-UNIT conversion of variables according to type (i.e. use `read_XXX` functions)
-# - add aux vars
-# - add expressions
-
 function write_to_CSV(res::ProblemResults, save_path::String)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid."))
@@ -320,21 +315,15 @@ function write_to_CSV(res::ProblemResults, save_path::String)
     folder_path = mkdir(
         joinpath(save_path, replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")),
     )
-    export_variables = Dict()
-    for (k, v) in IS.get_variables(res)
-        export_variables[k] = v
-    end
-    write_data(export_variables, folder_path)
-    if !isempty(get_duals(res))
-        write_data(get_duals(res), folder_path; duals = true)
-    end
-    export_parameters = Dict()
-    if !isempty(IS.get_parameters(res))
-        for (p, v) in IS.get_parameters(res)
-            export_parameters[p] = get_model_base_power(res) .* v
-        end
-        write_data(export_parameters, folder_path; params = true)
-    end
+    write_data(read_realized_variables(res), folder_path)
+    !isempty(list_dual_keys(res)) &&
+        write_data(read_realized_duals(res), folder_path; name = "dual")
+    !isempty(list_parameter_keys(res)) &&
+        write_data(read_realized_parameters(res), folder_path; name = "parameter")
+    !isempty(list_aux_variable_keys(res)) &&
+        write_data(read_realized_aux_variables(res), folder_path; name = "aux_variable")
+    !isempty(list_expression_keys(res)) &&
+        write_data(read_realized_expressions(res), folder_path; name = "expression")
     write_optimizer_stats(res, folder_path)
     files = readdir(folder_path)
     compute_file_hash(folder_path, files)
