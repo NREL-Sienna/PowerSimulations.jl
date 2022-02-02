@@ -56,6 +56,22 @@ end
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
+    @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 5)
+    @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 3)
+    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 3) # TODO fix the pu conversion
+    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 3) # TODO: fix the key encoding
+
+    @test length(read_realized_variables(res)) == 4
+    @test length(read_realized_parameters(res)) == 1
+    @test length(read_realized_duals(res)) == 0
+    @test length(read_realized_expressions(res)) == 1
+    @test first(
+        keys(read_realized_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"])),
+    ) == "ActivePowerTimeSeriesParameter__PowerLoad" # TODO fix key encoding
+    @test length(read_realized_aux_variables(res)) == 2
+    @test first(
+        keys(read_realized_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)])),
+    ) == "TimeDurationOff__ThermalStandard"
     export_results(res)
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
