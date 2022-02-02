@@ -712,6 +712,14 @@ end
 
 function read_realized_variables(
     res::SimulationProblemResults,
+    variables::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_variables(res, _deserialize_key.(variables); kwargs...)
+end
+
+function read_realized_variables(
+    res::SimulationProblemResults,
     variables::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -761,6 +769,18 @@ end
 
 function read_realized_parameters(
     res::SimulationProblemResults,
+    parameters::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_parameters(
+        res,
+        [_deserialize_key(ParameterKey, res, x) for x in parameters];
+        kwargs...,
+    )
+end
+
+function read_realized_parameters(
+    res::SimulationProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -802,6 +822,18 @@ end
 
 function read_realized_duals(res::SimulationProblemResults, duals; kwargs...)
     return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
+end
+
+function read_realized_duals(
+    res::SimulationProblemResults,
+    duals::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_duals(
+        res,
+        [_deserialize_key(ConstraintKey, res, x) for x in duals];
+        kwargs...,
+    )
 end
 
 function read_realized_duals(
@@ -863,6 +895,18 @@ end
 
 function read_realized_aux_variables(
     res::SimulationProblemResults,
+    aux_variables::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_aux_variables(
+        res,
+        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(
+    res::SimulationProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -906,6 +950,18 @@ function read_realized_expressions(res::SimulationProblemResults, expressions; k
     return read_realized_expressions(
         res,
         [ExpressionKey(x...) for x in expressions];
+        kwargs...,
+    )
+end
+
+function read_realized_expressions(
+    res::SimulationProblemResults,
+    expressions::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_expressions(
+        res,
+        [_deserialize_key(ExpressionKey, res, x) for x in expressions];
         kwargs...,
     )
 end

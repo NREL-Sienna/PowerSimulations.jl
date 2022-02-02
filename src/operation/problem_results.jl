@@ -453,6 +453,18 @@ end
 
 function read_realized_variables(
     res::ProblemResults,
+    variables::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_variables(
+        res,
+        [_deserialize_key(PSI.VariableKey, res, x) for x in variables];
+        kwargs...,
+    )
+end
+
+function read_realized_variables(
+    res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -500,6 +512,18 @@ end
 
 function read_realized_parameters(
     res::ProblemResults,
+    parameters::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_parameters(
+        res,
+        [_deserialize_key(ParameterKey, res, x) for x in parameters];
+        kwargs...,
+    )
+end
+
+function read_realized_parameters(
+    res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -539,6 +563,18 @@ end
 
 function read_realized_duals(res::ProblemResults, duals; kwargs...)
     return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
+end
+
+function read_realized_duals(
+    res::ProblemResults,
+    duals::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_duals(
+        res,
+        [_deserialize_key(ConstraintKey, res, x) for x in duals];
+        kwargs...,
+    )
 end
 
 function read_realized_duals(
@@ -594,6 +630,18 @@ end
 
 function read_realized_aux_variables(
     res::ProblemResults,
+    aux_variables::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_aux_variables(
+        res,
+        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(
+    res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -629,6 +677,18 @@ loaded using the [load_results!](@ref) function it will read from memory.
 """
 function read_realized_expressions(res::ProblemResults; kwargs...)
     return read_realized_expressions(res, collect(keys(res.expression_values)); kwargs...)
+end
+
+function read_realized_expressions(
+    res::ProblemResults,
+    expressions::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_expressions(
+        res,
+        [_deserialize_key(ExpressionKey, res, x) for x in expressions];
+        kwargs...,
+    )
 end
 
 function read_realized_expressions(res::ProblemResults, expressions; kwargs...)
