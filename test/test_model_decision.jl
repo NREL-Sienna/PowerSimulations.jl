@@ -64,9 +64,34 @@ end
     @test length(read_realized_parameters(res)) == 1
     @test length(read_realized_duals(res)) == 0
     @test length(read_realized_expressions(res)) == 1
+    @test first(keys(read_realized_variables(res, ["StartVariable__ThermalStandard"]))) ==
+          "StartVariable__ThermalStandard"
+    @test first(keys(read_realized_variables(res, [(StartVariable, ThermalStandard)]))) ==
+          "StartVariable__ThermalStandard"
     @test first(
         keys(read_realized_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"])),
-    ) == "ActivePowerTimeSeriesParameter__PowerLoad" # TODO fix key encoding
+    ) == "ActivePowerTimeSeriesParameter__PowerLoad"
+    @test first(
+        keys(read_realized_parameters(res, [(ActivePowerTimeSeriesParameter, PowerLoad)])),
+    ) == "ActivePowerTimeSeriesParameter__PowerLoad"
+    @test first(
+        keys(read_realized_aux_variables(res, ["TimeDurationOff__ThermalStandard"])),
+    ) == "TimeDurationOff__ThermalStandard"
+    @test first(
+        keys(read_realized_aux_variables(res, [(TimeDurationOff, ThermalStandard)])),
+    ) == "TimeDurationOff__ThermalStandard"
+    @test first(
+        keys(read_realized_expressions(res, ["ProductionCostExpression__ThermalStandard"])),
+    ) == "ProductionCostExpression__ThermalStandard"
+    @test first(
+        keys(
+            read_realized_expressions(
+                res,
+                [(PSI.ProductionCostExpression, ThermalStandard)],
+            ),
+        ),
+    ) == "ProductionCostExpression__ThermalStandard"
+
     @test length(read_realized_aux_variables(res)) == 2
     @test first(
         keys(read_realized_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)])),
@@ -217,7 +242,14 @@ end
     dual_results_read = read_dual(res, constraint_key)
     realized_dual_results =
         read_realized_duals(res, [constraint_key])[PSI.encode_key_as_string(constraint_key)]
-    @test dual_results == dual_results_read == realized_dual_results
+    realized_dual_results_string =
+        read_realized_duals(res, [PSI.encode_key_as_string(constraint_key)])[PSI.encode_key_as_string(
+            constraint_key,
+        )]
+    @test dual_results ==
+          dual_results_read ==
+          realized_dual_results ==
+          realized_dual_results_string
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])

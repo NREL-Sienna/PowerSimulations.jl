@@ -273,6 +273,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_variable_uc =
             read_realized_variables(results_uc, [(ActivePowerVariable, ThermalStandard)])
+        @test realized_variable_uc ==
+              read_realized_variables(results_uc, ["ActivePowerVariable__ThermalStandard"])
         @test length(keys(realized_variable_uc)) == 1
         for var in values(realized_variable_uc)
             @test size(var)[1] == 48
@@ -288,6 +290,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             results_uc,
             [(ActivePowerTimeSeriesParameter, RenewableDispatch)],
         )
+        @test realized_param_uc == read_realized_parameters(
+            results_uc,
+            ["ActivePowerTimeSeriesParameter__RenewableDispatch"],
+        )
         @test length(keys(realized_param_uc)) == 1
         for param in values(realized_param_uc)
             @test size(param)[1] == 48
@@ -301,6 +307,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_duals_ed =
             read_realized_duals(results_ed, [(CopperPlateBalanceConstraint, System)])
+        @test realized_duals_ed ==
+              read_realized_duals(results_ed, ["CopperPlateBalanceConstraint__System"])
         @test length(keys(realized_duals_ed)) == 1
         for param in values(realized_duals_ed)
             @test size(param)[1] == 576
@@ -316,6 +324,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         realized_expressions = read_realized_expressions(
             results_uc,
             [(PSI.ProductionCostExpression, RenewableDispatch)],
+        )
+        @test realized_expressions == read_realized_expressions(
+            results_uc,
+            ["ProductionCostExpression__RenewableDispatch"],
         )
         @test length(keys(realized_expressions)) == 1
         for exp in values(realized_expressions)

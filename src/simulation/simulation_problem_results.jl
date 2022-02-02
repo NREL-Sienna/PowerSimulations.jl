@@ -715,7 +715,11 @@ function read_realized_variables(
     variables::Vector{<:AbstractString};
     kwargs...,
 )
-    return read_realized_variables(res, _deserialize_key.(variables); kwargs...)
+    return read_realized_variables(
+        res,
+        [_deserialize_key(VariableKey, res, x) for x in variables];
+        kwargs...,
+    )
 end
 
 function read_realized_variables(
