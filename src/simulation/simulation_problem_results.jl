@@ -563,6 +563,10 @@ Return the optimizer stats for the problem as a DataFrame.
 - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_optimizer_stats(res::SimulationProblemResults; store = nothing)
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
     return _read_optimizer_stats(res, store)
 end
 
@@ -1068,35 +1072,3 @@ function load_results!(
 
     return nothing
 end
-
-#= NEEDS RE-IMPLEMENTATION
-""" Exports the results in the SimulationProblemResults object to  CSV files"""
-function write_to_CSV(res::SimulationProblemResults; kwargs...)
-    folder_path = res.results_output_folder
-    if !isdir(folder_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
-    end
-    variables_export = Dict()
-    for (k, v) in IS.get_variables(res)
-        start = decode_symbol(k)[1]
-        if start !== "ON" || start !== "START" || start !== "STOP"
-            variables_export[k] = get_model_base_power(res) .* v
-        else
-            variables_export[k] = v
-        end
-    end
-    parameters_export = Dict()
-    for (p, v) in IS.get_parameters(res)
-        parameters_export[p] = get_model_base_power(res) .* v
-    end
-    write_data(variables_export, res.timestamp, folder_path; file_type = CSV, kwargs...)
-    write_optimizer_stats(IS.get_total_cost(res), folder_path)
-    write_data(IS.get_timestamp(res), folder_path, "timestamp"; file_type = CSV, kwargs...)
-    write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
-    write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
-    files = readdir(folder_path)
-    compute_file_hash(folder_path, files)
-    @info("Files written to $folder_path folder.")
-    return
-end
-=#

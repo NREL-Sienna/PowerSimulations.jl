@@ -388,6 +388,10 @@ end
     var4 = PSI.read_dataframe(exp_file)
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
     @test var1_a == var4 .* 100.0
+
+    csv_path = mkpath(joinpath(results_path, "csv"))
+    @test write_to_CSV(results1, csv_path) === nothing
+    @test length(readdir(joinpath(csv_path, last(readdir(csv_path))))) === 5
 end
 
 @testset "Test Numerical Stability of Constraints" begin

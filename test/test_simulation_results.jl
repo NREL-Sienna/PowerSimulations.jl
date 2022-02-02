@@ -466,6 +466,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         verify_export_results(results, export_path)
 
+        csv_dir = mkpath(joinpath(export_path, "CSV"))
+        @test write_to_CSV(results_ed, csv_dir) === nothing
+        @test length(readdir(joinpath(csv_dir, last(readdir(csv_dir))))) === 16
+
         # Test that you can't read a failed simulation.
         PSI.set_simulation_status!(sim, RunStatus.FAILED)
         PSI.serialize_status(sim)

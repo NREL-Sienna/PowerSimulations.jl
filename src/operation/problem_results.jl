@@ -308,12 +308,12 @@ function set_system!(res::ProblemResults, system::PSY.System)
     return
 end
 
-function write_to_CSV(res::ProblemResults, save_path::String)
+function write_to_CSV(res::IS.Results, save_path::String)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid."))
     end
     folder_path = mkdir(
-        joinpath(save_path, replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")),
+        joinpath(save_path, replace("$(round(Dates.now(), Dates.Minute))", ":" => "-")),
     )
     write_data(read_realized_variables(res), folder_path)
     !isempty(list_dual_keys(res)) &&
@@ -331,9 +331,15 @@ function write_to_CSV(res::ProblemResults, save_path::String)
     return
 end
 
-function write_optimizer_stats(res::ProblemResults, directory::AbstractString)
-    data = to_dict(res.optimizer_stats)
-    JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
+function write_optimizer_stats(res::IS.Results, directory::AbstractString; format = "csv")
+    data = read_optimizer_stats(res)
+    if uppercase(format) == "CSV"
+        CSV.write(joinpath(directory, "optimizer_stats.csv"), data)
+    elseif uppercase(format) == "JSON"
+        JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(to_dict(data)))
+    else
+        throw(error("writing optimizer stats only supports csv or json formats"))
+    end
 end
 
 const _PROBLEM_RESULTS_FILENAME = "problem_results.bin"
