@@ -58,9 +58,8 @@ end
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
     @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 5)
     @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 3)
-    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 3) # TODO fix the pu conversion
-    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 3) # TODO: fix the key encoding
-
+    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 5)
+    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 5)
     @test length(read_realized_variables(res)) == 4
     @test length(read_realized_parameters(res)) == 1
     @test length(read_realized_duals(res)) == 0
@@ -210,10 +209,15 @@ end
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
+    res = ProblemResults(model)
     container = PSI.get_optimization_container(model)
     constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
     dual_results = PSI.read_duals(container)[constraint_key]
+    dual_results_read = read_dual(res, constraint_key)
+    realized_dual_results =
+        read_realized_duals(res, [constraint_key])[PSI.encode_key_as_string(constraint_key)]
+    @test dual_results == dual_results_read == realized_dual_results
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])

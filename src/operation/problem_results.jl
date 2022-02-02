@@ -237,7 +237,12 @@ end
 
 function read_dual(res::ProblemResults, key::ConstraintKey)
     !haskey(res.dual_values, key) && error("$key is not stored")
-    return res.dual_values[key]
+    if convert_result_to_natural_units(key)
+        value = res.dual_values[key] .* get_model_base_power(res)
+    else
+        value = res.dual_values[key]
+    end
+    return value
 end
 
 function read_dual(res::ProblemResults, args...)
@@ -248,9 +253,9 @@ end
 function read_aux_variable(res::ProblemResults, key::AuxVarKey)
     !haskey(res.aux_variable_values, key) && error("$key is not stored")
     if convert_result_to_natural_units(key)
-        value = res.variable_values[key] .* get_model_base_power(res)
+        value = res.aux_variable_values[key] .* get_model_base_power(res)
     else
-        value = res.variable_values[key]
+        value = res.aux_variable_values[key]
     end
     return value
 end
