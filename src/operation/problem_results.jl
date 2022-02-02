@@ -151,29 +151,36 @@ function export_results(
 )
     file_type != CSV.File && error("only CSV.File is currently supported")
     export_path = mkpath(joinpath(results.output_dir, "variables"))
-    for (key, df) in results.variable_values
+    for (key, df) in read_realized_variables(results)
         if should_export_variable(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "aux_variables"))
-    for (key, df) in results.aux_variable_values
+    for (key, df) in read_realized_aux_variables(results)
         if should_export_aux_variable(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "duals"))
-    for (key, df) in results.dual_values
+    for (key, df) in read_realized_duals(results)
         if should_export_dual(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end
 
     export_path = mkpath(joinpath(results.output_dir, "parameters"))
-    for (key, df) in results.parameter_values
+    for (key, df) in read_realized_parameters(results)
         if should_export_parameter(exports, key)
+            export_result(file_type, export_path, key, df)
+        end
+    end
+
+    export_path = mkpath(joinpath(results.output_dir, "expressions"))
+    for (key, df) in read_realized_expressions(results)
+        if should_export_expression(exports, key)
             export_result(file_type, export_path, key, df)
         end
     end

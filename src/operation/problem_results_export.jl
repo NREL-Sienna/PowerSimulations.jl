@@ -78,7 +78,7 @@ function _check_fields(fields)
 end
 
 should_export_dual(x::ProblemResultsExport, key) = _should_export(x, :duals, key)
-should_export_expressions(x::ProblemResultsExport, key) =
+should_export_expression(x::ProblemResultsExport, key) =
     _should_export(x, :expressions, key)
 should_export_parameter(x::ProblemResultsExport, key) = _should_export(x, :parameters, key)
 should_export_variable(x::ProblemResultsExport, key) = _should_export(x, :variables, key)
