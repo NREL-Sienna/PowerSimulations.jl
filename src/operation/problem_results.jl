@@ -308,40 +308,6 @@ function set_system!(res::ProblemResults, system::PSY.System)
     return
 end
 
-function write_to_CSV(res::IS.Results, save_path::String)
-    if !isdir(save_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid."))
-    end
-    folder_path = mkdir(
-        joinpath(save_path, replace("$(round(Dates.now(), Dates.Minute))", ":" => "-")),
-    )
-    write_data(read_realized_variables(res), folder_path)
-    !isempty(list_dual_keys(res)) &&
-        write_data(read_realized_duals(res), folder_path; name = "dual")
-    !isempty(list_parameter_keys(res)) &&
-        write_data(read_realized_parameters(res), folder_path; name = "parameter")
-    !isempty(list_aux_variable_keys(res)) &&
-        write_data(read_realized_aux_variables(res), folder_path; name = "aux_variable")
-    !isempty(list_expression_keys(res)) &&
-        write_data(read_realized_expressions(res), folder_path; name = "expression")
-    write_optimizer_stats(res, folder_path)
-    files = readdir(folder_path)
-    compute_file_hash(folder_path, files)
-    @info("Files written to $folder_path folder.")
-    return
-end
-
-function write_optimizer_stats(res::IS.Results, directory::AbstractString; format = "csv")
-    data = read_optimizer_stats(res)
-    if uppercase(format) == "CSV"
-        CSV.write(joinpath(directory, "optimizer_stats.csv"), data)
-    elseif uppercase(format) == "JSON"
-        JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(to_dict(data)))
-    else
-        throw(error("writing optimizer stats only supports csv or json formats"))
-    end
-end
-
 const _PROBLEM_RESULTS_FILENAME = "problem_results.bin"
 
 """

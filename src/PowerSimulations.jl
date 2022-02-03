@@ -137,6 +137,8 @@ export get_network_formulation
 export SimulationResultsExport
 export ProblemResultsExport
 export export_results
+export export_realized_results
+export export_optimizer_stats
 export get_variable_values
 export get_dual_values
 export get_parameter_values
@@ -185,7 +187,7 @@ export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
-export write_to_CSV
+export export_realized_results
 
 ## Enums
 export BuildStatus
