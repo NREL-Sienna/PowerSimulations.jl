@@ -32,10 +32,17 @@ function verify_export_results(results, export_path)
                     timestamp,
                 )
             end
-            # TODO: These aren't stored yet.
-            #for name in list_aux_variable_names(problem_results)
-            #    @test compare_results(rpath, export_path, problem, "aux_variables", name, timestamp)
-            #end
+
+            for name in list_aux_variable_names(problem_results)
+                @test compare_results(
+                    rpath,
+                    export_path,
+                    problem,
+                    "aux_variables",
+                    name,
+                    timestamp,
+                )
+            end
         end
 
         # This file is not currently exported during the simulation.
@@ -241,6 +248,13 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             @test size(v) == (12, 2)
         end
 
+        expression =
+            read_expression(results_ed, PSI.ProductionCostExpression, ThermalStandard)
+        @test length(keys(expression)) == 48
+        for v in values(expression)
+            @test size(v) == (12, 6)
+        end
+
         for var_key in (
             (ActivePowerVariable, RenewableDispatch),
             (ActivePowerVariable, ThermalStandard),
@@ -259,6 +273,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_variable_uc =
             read_realized_variables(results_uc, [(ActivePowerVariable, ThermalStandard)])
+        @test realized_variable_uc ==
+              read_realized_variables(results_uc, ["ActivePowerVariable__ThermalStandard"])
         @test length(keys(realized_variable_uc)) == 1
         for var in values(realized_variable_uc)
             @test size(var)[1] == 48
@@ -274,6 +290,10 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
             results_uc,
             [(ActivePowerTimeSeriesParameter, RenewableDispatch)],
         )
+        @test realized_param_uc == read_realized_parameters(
+            results_uc,
+            ["ActivePowerTimeSeriesParameter__RenewableDispatch"],
+        )
         @test length(keys(realized_param_uc)) == 1
         for param in values(realized_param_uc)
             @test size(param)[1] == 48
@@ -287,6 +307,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         realized_duals_ed =
             read_realized_duals(results_ed, [(CopperPlateBalanceConstraint, System)])
+        @test realized_duals_ed ==
+              read_realized_duals(results_ed, ["CopperPlateBalanceConstraint__System"])
         @test length(keys(realized_duals_ed)) == 1
         for param in values(realized_duals_ed)
             @test size(param)[1] == 576
@@ -297,6 +319,19 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         @test length(keys(realized_duals_uc)) == 1
         for param in values(realized_duals_uc)
             @test size(param)[1] == 48
+        end
+
+        realized_expressions = read_realized_expressions(
+            results_uc,
+            [(PSI.ProductionCostExpression, RenewableDispatch)],
+        )
+        @test realized_expressions == read_realized_expressions(
+            results_uc,
+            ["ProductionCostExpression__RenewableDispatch"],
+        )
+        @test length(keys(realized_expressions)) == 1
+        for exp in values(realized_expressions)
+            @test size(exp)[1] == 48
         end
 
         #request non sync data
@@ -430,6 +465,8 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         @test isempty(results)
 
         verify_export_results(results, export_path)
+
+        @test length(readdir(export_realized_results(results_ed))) === 17
 
         # Test that you can't read a failed simulation.
         PSI.set_simulation_status!(sim, RunStatus.FAILED)

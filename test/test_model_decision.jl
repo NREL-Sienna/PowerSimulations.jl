@@ -56,6 +56,46 @@ end
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
+    @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 5)
+    @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 3)
+    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 5)
+    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 5)
+    @test length(read_realized_variables(res)) == 4
+    @test length(read_realized_parameters(res)) == 1
+    @test length(read_realized_duals(res)) == 0
+    @test length(read_realized_expressions(res)) == 1
+    @test first(keys(read_realized_variables(res, ["StartVariable__ThermalStandard"]))) ==
+          "StartVariable__ThermalStandard"
+    @test first(keys(read_realized_variables(res, [(StartVariable, ThermalStandard)]))) ==
+          "StartVariable__ThermalStandard"
+    @test first(
+        keys(read_realized_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"])),
+    ) == "ActivePowerTimeSeriesParameter__PowerLoad"
+    @test first(
+        keys(read_realized_parameters(res, [(ActivePowerTimeSeriesParameter, PowerLoad)])),
+    ) == "ActivePowerTimeSeriesParameter__PowerLoad"
+    @test first(
+        keys(read_realized_aux_variables(res, ["TimeDurationOff__ThermalStandard"])),
+    ) == "TimeDurationOff__ThermalStandard"
+    @test first(
+        keys(read_realized_aux_variables(res, [(TimeDurationOff, ThermalStandard)])),
+    ) == "TimeDurationOff__ThermalStandard"
+    @test first(
+        keys(read_realized_expressions(res, ["ProductionCostExpression__ThermalStandard"])),
+    ) == "ProductionCostExpression__ThermalStandard"
+    @test first(
+        keys(
+            read_realized_expressions(
+                res,
+                [(PSI.ProductionCostExpression, ThermalStandard)],
+            ),
+        ),
+    ) == "ProductionCostExpression__ThermalStandard"
+
+    @test length(read_realized_aux_variables(res)) == 2
+    @test first(
+        keys(read_realized_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)])),
+    ) == "TimeDurationOff__ThermalStandard"
     export_results(res)
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
@@ -194,10 +234,22 @@ end
     @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
+    res = ProblemResults(model)
     container = PSI.get_optimization_container(model)
     constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
     dual_results = PSI.read_duals(container)[constraint_key]
+    dual_results_read = read_dual(res, constraint_key)
+    realized_dual_results =
+        read_realized_duals(res, [constraint_key])[PSI.encode_key_as_string(constraint_key)]
+    realized_dual_results_string =
+        read_realized_duals(res, [PSI.encode_key_as_string(constraint_key)])[PSI.encode_key_as_string(
+            constraint_key,
+        )]
+    @test dual_results ==
+          dual_results_read ==
+          realized_dual_results ==
+          realized_dual_results_string
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])
@@ -336,6 +388,8 @@ end
     var4 = PSI.read_dataframe(exp_file)
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
     @test var1_a == var4 .* 100.0
+
+    @test length(readdir(export_realized_results(results1))) === 6
 end
 
 @testset "Test Numerical Stability of Constraints" begin

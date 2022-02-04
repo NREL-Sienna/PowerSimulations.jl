@@ -1488,7 +1488,7 @@ function get_optimization_container_key(
     ::Type{U},
     meta::String,
 ) where {T <: AuxVariableType, U <: PSY.Component}
-    return AuxVariableKey(T, U, meta)
+    return AuxVarKey(T, U, meta)
 end
 
 function get_optimization_container_key(

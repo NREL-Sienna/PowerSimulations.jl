@@ -57,13 +57,7 @@ end
 
 # writing a dictionary of dataframes to files
 function write_data(vars_results::Dict, save_path::String; kwargs...)
-    if :duals in keys(kwargs)
-        name = "dual_"
-    elseif :params in keys(kwargs)
-        name = "parameter_"
-    else
-        name = ""
-    end
+    name = get(kwargs, :name, "")
     for (k, v) in vars_results
         file_path = joinpath(save_path, "$name$k.csv")
         if isempty(vars_results[k])

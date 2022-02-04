@@ -33,6 +33,7 @@ get_model_base_power(res::ProblemResults) = res.base_power
 get_dual_values(res::ProblemResults) = res.dual_values
 get_expression_values(res::ProblemResults) = res.expression_values
 get_variable_values(res::ProblemResults) = res.variable_values
+get_aux_variable_values(res::ProblemResults) = res.aux_variable_values
 get_total_cost(res::ProblemResults) = get_objective_value(res)
 get_optimizer_stats(res::ProblemResults) = res.optimizer_stats
 get_parameter_values(res::ProblemResults) = res.parameter_values
@@ -177,6 +178,13 @@ function export_results(
         end
     end
 
+    export_path = mkpath(joinpath(results.output_dir, "expressions"))
+    for (key, df) in results.expression_values
+        if should_export_expression(exports, key)
+            export_result(file_type, export_path, key, df)
+        end
+    end
+
     if exports.optimizer_stats
         export_result(
             file_type,
@@ -202,21 +210,6 @@ function _deserialize_key(
     args...,
 ) where {T <: OptimizationContainerKey}
     return make_key(T, args...)
-end
-
-function read_aux_variable(res::ProblemResults, key::AuxVarKey)
-    !haskey(res.aux_variable_values, key) && error("$key is not stored")
-    if convert_result_to_natural_units(key)
-        value = res.variable_values[key] .* get_model_base_power(res)
-    else
-        value = res.variable_values[key]
-    end
-    return value
-end
-
-function read_aux_variable(res::ProblemResults, args...)
-    key = _deserialize_key(AuxVarKey, res, args...)
-    return read_aux_variable(res, key)
 end
 
 function read_variable(res::ProblemResults, key::VariableKey)
@@ -251,12 +244,32 @@ end
 
 function read_dual(res::ProblemResults, key::ConstraintKey)
     !haskey(res.dual_values, key) && error("$key is not stored")
-    return res.dual_values[key]
+    if convert_result_to_natural_units(key)
+        value = res.dual_values[key] .* get_model_base_power(res)
+    else
+        value = res.dual_values[key]
+    end
+    return value
 end
 
 function read_dual(res::ProblemResults, args...)
     key = _deserialize_key(ConstraintKey, res, args...)
     return read_dual(res, key)
+end
+
+function read_aux_variable(res::ProblemResults, key::AuxVarKey)
+    !haskey(res.aux_variable_values, key) && error("$key is not stored")
+    if convert_result_to_natural_units(key)
+        value = res.aux_variable_values[key] .* get_model_base_power(res)
+    else
+        value = res.aux_variable_values[key]
+    end
+    return value
+end
+
+function read_aux_variable(res::ProblemResults, args...)
+    key = _deserialize_key(AuxVarKey, res, args...)
+    return read_aux_variable(res, key)
 end
 
 function read_expression(res::ProblemResults, key::ExpressionKey)
@@ -293,43 +306,6 @@ function set_system!(res::ProblemResults, system::PSY.System)
 
     res.system = system
     return
-end
-
-# TODO:
-# - Handle PER-UNIT conversion of variables according to type
-
-function write_to_CSV(res::ProblemResults, save_path::String)
-    if !isdir(save_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid."))
-    end
-    folder_path = mkdir(
-        joinpath(save_path, replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")),
-    )
-    export_variables = Dict()
-    for (k, v) in IS.get_variables(res)
-        export_variables[k] = v
-    end
-    write_data(export_variables, folder_path)
-    if !isempty(get_duals(res))
-        write_data(get_duals(res), folder_path; duals = true)
-    end
-    export_parameters = Dict()
-    if !isempty(IS.get_parameters(res))
-        for (p, v) in IS.get_parameters(res)
-            export_parameters[p] = get_model_base_power(res) .* v
-        end
-        write_data(export_parameters, folder_path; params = true)
-    end
-    write_optimizer_stats(res, folder_path)
-    files = readdir(folder_path)
-    compute_file_hash(folder_path, files)
-    @info("Files written to $folder_path folder.")
-    return
-end
-
-function write_optimizer_stats(res::ProblemResults, directory::AbstractString)
-    data = to_dict(res.optimizer_stats)
-    JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(data))
 end
 
 const _PROBLEM_RESULTS_FILENAME = "problem_results.bin"
@@ -391,11 +367,6 @@ function _copy_for_serialization(res::ProblemResults)
     )
 end
 
-# TODO: These are not likely needed for v015.
-_get_keys(::Type{ConstraintKey}, res, ::Nothing) = collect(keys(res.dual_values))
-_get_keys(::Type{ParameterKey}, res, ::Nothing) = collect(keys(res.parameter_values))
-_get_keys(::Type{VariableKey}, res, ::Nothing) = collect(keys(res.variable_values))
-
 function _read_realized_results(
     result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
     container_keys,
@@ -430,17 +401,6 @@ function _process_timestamps(
     return requested_range[1:count]
 end
 
-function read_realized_aux_variables(res::ProblemResults, aux_variable_keys)
-    return _read_realized_results(
-        res.aux_variable_values,
-        [AuxVarKey(x...) for x in aux_variable_keys],
-    )
-end
-
-function read_realized_aux_variables(res::ProblemResults)
-    return _read_realized_results(res.aux_variable_values, nothing)
-end
-
 """
 Return the values for the requested variable keys for a problem.
 Accepts a vector of keys for the return of the values. If the time stamps and keys are
@@ -457,6 +417,18 @@ end
 
 function read_realized_variables(res::ProblemResults, variables; kwargs...)
     return read_realized_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
+end
+
+function read_realized_variables(
+    res::ProblemResults,
+    variables::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_variables(
+        res,
+        [_deserialize_key(PSI.VariableKey, res, x) for x in variables];
+        kwargs...,
+    )
 end
 
 function read_realized_variables(
@@ -508,6 +480,18 @@ end
 
 function read_realized_parameters(
     res::ProblemResults,
+    parameters::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_parameters(
+        res,
+        [_deserialize_key(ParameterKey, res, x) for x in parameters];
+        kwargs...,
+    )
+end
+
+function read_realized_parameters(
+    res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -551,6 +535,18 @@ end
 
 function read_realized_duals(
     res::ProblemResults,
+    duals::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_duals(
+        res,
+        [_deserialize_key(ConstraintKey, res, x) for x in duals];
+        kwargs...,
+    )
+end
+
+function read_realized_duals(
+    res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
@@ -572,4 +568,126 @@ function read_realized_duals_with_keys(
 )
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_realized_results(res.dual_values, duals, timestamps)
+end
+
+"""
+Return the values for the requested auxilary variable keys for a problem.
+Accepts a vector of keys for the return of the values. If the time stamps and keys are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `aux_variables::Vector{Tuple{Type{<:AuxVarType}, Type{<:PSY.Component}}` : Tuple with auxilary variable type and device type for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_aux_variables(res::ProblemResults; kwargs...)
+    return read_realized_aux_variables(
+        res,
+        collect(keys(res.aux_variable_values));
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(res::ProblemResults, aux_variables; kwargs...)
+    return read_realized_aux_variables(
+        res,
+        [AuxVarKey(x...) for x in aux_variables];
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(
+    res::ProblemResults,
+    aux_variables::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_aux_variables(
+        res,
+        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
+        kwargs...,
+    )
+end
+
+function read_realized_aux_variables(
+    res::ProblemResults,
+    aux_variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_aux_variables_with_keys(
+        res,
+        aux_variables;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_aux_variables_with_keys(
+    res::ProblemResults,
+    aux_variables::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_realized_results(res.aux_variable_values, aux_variables, timestamps)
+end
+
+"""
+Return the values for the requested expression keys for a problem.
+Accepts a vector of keys for the return of the values. If the time stamps and keys are
+loaded using the [load_results!](@ref) function it will read from memory.
+
+# Arguments
+- `expressions::Vector{Tuple{Type{<:Expression}, U <: Union{PSY.Component, PSY.System}}` : Tuple with expression type and device type or system for the desired results
+- `initial_time::Dates.DateTime` : initial time of the requested results
+- `len::Int`: length of results
+"""
+function read_realized_expressions(res::ProblemResults; kwargs...)
+    return read_realized_expressions(res, collect(keys(res.expression_values)); kwargs...)
+end
+
+function read_realized_expressions(
+    res::ProblemResults,
+    expressions::Vector{<:AbstractString};
+    kwargs...,
+)
+    return read_realized_expressions(
+        res,
+        [_deserialize_key(ExpressionKey, res, x) for x in expressions];
+        kwargs...,
+    )
+end
+
+function read_realized_expressions(res::ProblemResults, expressions; kwargs...)
+    return read_realized_expressions(
+        res,
+        [ExpressionKey(x...) for x in expressions];
+        kwargs...,
+    )
+end
+
+function read_realized_expressions(
+    res::ProblemResults,
+    expressions::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    result_values = read_realized_expressions_with_keys(
+        res,
+        expressions;
+        initial_time = initial_time,
+        count = count,
+    )
+    return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+function read_realized_expressions_with_keys(
+    res::ProblemResults,
+    expressions::Vector{<:OptimizationContainerKey};
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+)
+    timestamps = _process_timestamps(res, initial_time, count)
+    return _read_realized_results(res.expression_values, expressions, timestamps)
 end
