@@ -285,7 +285,10 @@ function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
 
     optimizer_name = JuMP.solver_name(jump_model)
     @info "Solving $(get_name(model)) with optimizer = $optimizer_name"
-    _check_numerical_bounds(model)
+    settings = get_settings(model)
+    if get_check_numerical_bounds(settings)
+        _check_numerical_bounds(model)
+    end
 
     return
 end

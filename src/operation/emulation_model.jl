@@ -93,6 +93,7 @@ function EmulationModel{M}(
     optimizer_solve_log_print = false,
     detailed_optimizer_stats = false,
     direct_mode_optimizer = false,
+    check_numerical_bounds = true,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: EmulationProblem}
@@ -112,6 +113,7 @@ function EmulationModel{M}(
         optimizer_solve_log_print = optimizer_solve_log_print,
         detailed_optimizer_stats = detailed_optimizer_stats,
         direct_mode_optimizer = direct_mode_optimizer,
+        check_numerical_bounds = true,
         horizon = 1,
     )
     return EmulationModel{M}(template, sys, settings, jump_model; name = name)

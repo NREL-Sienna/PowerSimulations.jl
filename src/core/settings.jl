@@ -14,6 +14,7 @@ struct Settings
     deserialize_initial_conditions::Bool
     export_pwl_vars::Bool
     allow_fails::Bool
+    check_numerical_bounds::Bool
     ext::Dict{String, Any}
 end
 
@@ -34,6 +35,7 @@ function Settings(
     deserialize_initial_conditions::Bool = false,
     export_pwl_vars::Bool = false,
     allow_fails::Bool = false,
+    check_numerical_bounds = true,
     ext = Dict{String, Any}(),
 )
     if time_series_cache_size > 0 &&
@@ -68,6 +70,7 @@ function Settings(
         deserialize_initial_conditions,
         export_pwl_vars,
         allow_fails,
+        check_numerical_bounds,
         ext,
     )
 end
@@ -131,6 +134,7 @@ get_initialization_file(settings::Settings) = settings.initialization_file
 get_deserialize_initial_conditions(settings::Settings) =
     settings.deserialize_initial_conditions
 get_export_pwl_vars(settings::Settings) = settings.export_pwl_vars
+get_check_numerical_bounds(settings::Settings) = settings.check_numerical_bounds
 get_allow_fails(settings::Settings) = settings.allow_fails
 get_optimizer_solve_log_print(settings::Settings) = settings.optimizer_solve_log_print
 get_calculate_conflict(settings::Settings) = settings.calculate_conflict
