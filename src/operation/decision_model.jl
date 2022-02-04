@@ -95,6 +95,7 @@ function DecisionModel{M}(
     detailed_optimizer_stats = false,
     calculate_conflict = false,
     direct_mode_optimizer = false,
+    check_numerical_bounds = true,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: DecisionProblem}
@@ -115,6 +116,7 @@ function DecisionModel{M}(
         optimizer_solve_log_print = optimizer_solve_log_print,
         detailed_optimizer_stats = detailed_optimizer_stats,
         direct_mode_optimizer = direct_mode_optimizer,
+        check_numerical_bounds = check_numerical_bounds,
     )
     return DecisionModel{M}(template, sys, settings, jump_model, name = name)
 end
