@@ -39,7 +39,8 @@ function compute_file_hash(path::String, files::Vector{String})
     data = Dict("files" => [])
     for file in files
         file_path = joinpath(path, file)
-        file_info = Dict("filename" => file_path, "hash" => compute_sha256(file_path))
+        # Don't put the path in the file so that we can move results directories.
+        file_info = Dict("filename" => file, "hash" => compute_sha256(file_path))
         push!(data["files"], file_info)
     end
 
