@@ -11,7 +11,7 @@ struct SimulationStoreParams
         step_resolution::Dates.Period,
         num_steps::Int,
         decision_models_params::OrderedDict{Symbol, ModelStoreParams},
-        emulation_model_params::OrderedDict{Symbol, ModelStoreParams},
+        emulation_model_params::OrderedDict,
     )
         new(
             initial_time,
@@ -48,8 +48,8 @@ function get_decision_model_params(store_params::SimulationStoreParams, model_na
     return store_params.decision_models_params[model_name]
 end
 
-function get_emulation_model_params(store_params::SimulationStoreParams, ::Symbol)
+function get_emulation_model_params(store_params::SimulationStoreParams)
     # We currently only store one em_model dataset in the store
-    @assert length(store_params.emulation_model_params) == 1
+    @assert_op length(store_params.emulation_model_params) == 1
     return first(values(store_params.emulation_model_params))
 end

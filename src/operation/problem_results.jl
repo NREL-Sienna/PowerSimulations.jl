@@ -314,21 +314,21 @@ end
 
 function _process_timestamps(
     res::ProblemResults,
-    initial_time::Union{Nothing, Dates.DateTime},
+    start_time::Union{Nothing, Dates.DateTime},
     len::Union{Int, Nothing},
 )
-    if initial_time === nothing
-        initial_time = first(get_timestamps(res))
-    elseif initial_time ∉ get_timestamps(res)
-        throw(IS.InvalidValue("initial_time not in result timestamps"))
+    if start_time === nothing
+        start_time = first(get_timestamps(res))
+    elseif start_time ∉ get_timestamps(res)
+        throw(IS.InvalidValue("start_time not in result timestamps"))
     end
 
     if startswith(res.model_type, "EmulationModel{")
         def_len = DataFrames.nrow(get_optimizer_stats(res))
         requested_range =
-            collect(findfirst(x -> x >= initial_time, get_timestamps(res)):def_len)
+            collect(findfirst(x -> x >= start_time, get_timestamps(res)):def_len)
     else
-        requested_range = findall(x -> x >= initial_time, get_timestamps(res))
+        requested_range = findall(x -> x >= start_time, get_timestamps(res))
         def_len = length(requested_range)
     end
     len = len === nothing ? def_len : len
@@ -347,7 +347,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `variable::Tuple{Type{<:VariableType}, Type{<:PSY.Component}` : Tuple with variable type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : start time of the requested results
   - `len::Int`: length of results
 """
 function read_variable(res::ProblemResults, args...; kwargs...)
@@ -362,10 +362,10 @@ end
 function read_variable(
     res::ProblemResults,
     key::VariableKey;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    return read_variables_with_keys(res, [key]; initial_time=initial_time, len=len)[key]
+    return read_variables_with_keys(res, [key]; start_time=start_time, len=len)[key]
 end
 
 """
@@ -376,7 +376,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_variables(res::ProblemResults; kwargs...)
@@ -398,21 +398,20 @@ end
 function read_variables(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    result_values =
-        read_variables_with_keys(res, variables; initial_time=initial_time, len=len)
+    result_values = read_variables_with_keys(res, variables; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
 function read_variables_with_keys(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    timestamps = _process_timestamps(res, initial_time, len)
+    timestamps = _process_timestamps(res, start_time, len)
     return _read_results(
         res.variable_values,
         variables,
@@ -429,7 +428,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `dual::Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}` : Tuple with dual type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_dual(res::ProblemResults, args...; kwargs...)
@@ -444,10 +443,10 @@ end
 function read_dual(
     res::ProblemResults,
     key::ConstraintKey;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    return read_duals_with_keys(res, [key]; initial_time=initial_time, len=len)[key]
+    return read_duals_with_keys(res, [key]; start_time=start_time, len=len)[key]
 end
 
 """
@@ -458,7 +457,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with dual type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_duals(res::ProblemResults; kwargs...)
@@ -480,20 +479,20 @@ end
 function read_duals(
     res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    result_values = read_duals_with_keys(res, duals; initial_time=initial_time, len=len)
+    result_values = read_duals_with_keys(res, duals; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
 function read_duals_with_keys(
     res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    timestamps = _process_timestamps(res, initial_time, len)
+    timestamps = _process_timestamps(res, start_time, len)
     return _read_results(res.dual_values, duals, timestamps, get_model_base_power(res))
 end
 
@@ -505,7 +504,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `parameter::Tuple{Type{<:ParameterType}, Type{<:PSY.Component}` : Tuple with parameter type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_parameter(res::ProblemResults, args...; kwargs...)
@@ -520,10 +519,10 @@ end
 function read_parameter(
     res::ProblemResults,
     key::ParameterKey;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    return read_parameters_with_keys(res, [key]; initial_time=initial_time, len=len)[key]
+    return read_parameters_with_keys(res, [key]; start_time=start_time, len=len)[key]
 end
 
 """
@@ -534,7 +533,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_parameters(res::ProblemResults; kwargs...)
@@ -560,21 +559,21 @@ end
 function read_parameters(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
     result_values =
-        read_parameters_with_keys(res, parameters; initial_time=initial_time, len=len)
+        read_parameters_with_keys(res, parameters; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
 function read_parameters_with_keys(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    timestamps = _process_timestamps(res, initial_time, len)
+    timestamps = _process_timestamps(res, start_time, len)
     return _read_results(
         res.parameter_values,
         parameters,
@@ -591,7 +590,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `aux_variable::Tuple{Type{<:AuxVariableType}, Type{<:PSY.Component}` : Tuple with aux_variable type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_aux_variable(res::ProblemResults, args...; kwargs...)
@@ -606,10 +605,10 @@ end
 function read_aux_variable(
     res::ProblemResults,
     key::AuxVarKey;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    return read_aux_variables_with_keys(res, [key]; initial_time=initial_time, len=len)[key]
+    return read_aux_variables_with_keys(res, [key]; start_time=start_time, len=len)[key]
 end
 
 """
@@ -620,7 +619,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `aux_variables::Vector{Tuple{Type{<:AuxVariableType}, Type{<:PSY.Component}}` : Tuple with aux_variable type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_aux_variables(res::ProblemResults; kwargs...)
@@ -646,21 +645,21 @@ end
 function read_aux_variables(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
     result_values =
-        read_aux_variables_with_keys(res, aux_variables; initial_time=initial_time, len=len)
+        read_aux_variables_with_keys(res, aux_variables; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
 function read_aux_variables_with_keys(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    timestamps = _process_timestamps(res, initial_time, len)
+    timestamps = _process_timestamps(res, start_time, len)
     return _read_results(
         res.aux_variable_values,
         aux_variables,
@@ -677,7 +676,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `expression::Tuple{Type{<:ExpressionType}, Type{<:PSY.Component}` : Tuple with expression type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_expression(res::ProblemResults, args...; kwargs...)
@@ -692,10 +691,10 @@ end
 function read_expression(
     res::ProblemResults,
     key::ExpressionKey;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    return read_expressions_with_keys(res, [key]; initial_time=initial_time, len=len)[key]
+    return read_expressions_with_keys(res, [key]; start_time=start_time, len=len)[key]
 end
 
 """
@@ -706,7 +705,7 @@ loaded using the [load_results!](@ref) function it will read from memory.
 # Arguments
 
   - `expressions::Vector{Tuple{Type{<:ExpressionType}, Type{<:PSY.Component}}` : Tuple with expression type and device type for the desired results
-  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
 function read_expressions(res::ProblemResults; kwargs...)
@@ -732,25 +731,30 @@ end
 function read_expressions(
     res::ProblemResults,
     expressions::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
     result_values =
-        read_expressions_with_keys(res, expressions; initial_time=initial_time, len=len)
+        read_expressions_with_keys(res, expressions; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
 function read_expressions_with_keys(
     res::ProblemResults,
     expressions::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    timestamps = _process_timestamps(res, initial_time, len)
+    timestamps = _process_timestamps(res, start_time, len)
     return _read_results(
         res.expression_values,
         expressions,
         timestamps,
         get_model_base_power(res),
     )
+end
+
+function export_realized_results(res::ProblemResults)
+    save_path = mkpath(joinpath(res.output_dir, "export"))
+    return export_realized_results(res, save_path)
 end

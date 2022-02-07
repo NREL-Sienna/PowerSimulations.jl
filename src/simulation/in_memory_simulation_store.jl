@@ -5,6 +5,7 @@ mutable struct InMemorySimulationStore <: SimulationStore
     params::SimulationStoreParams
     dm_data::OrderedDict{Symbol, DecisionModelStore}
     em_data::EmulationModelStore
+    container_key_lookup::Dict{String, OptimizationContainerKey}
 end
 
 function InMemorySimulationStore()
@@ -12,6 +13,7 @@ function InMemorySimulationStore()
         SimulationStoreParams(),
         OrderedDict{Symbol, DecisionModelStore}(),
         EmulationModelStore(),
+        Dict{String, OptimizationContainerKey}(),
     )
 end
 
@@ -44,17 +46,21 @@ function get_decision_model_params(store::InMemorySimulationStore, model_name::S
     return get_params(store).decision_models_params[model_name]
 end
 
-list_models(x::InMemorySimulationStore) = collect(keys(x.dm_data))
-# TODO EmulationModel: this interface is TBD
-#list_models(x::InMemorySimulationStore) = vcat(collect(keys(x.dm_data)), [x.em_data])
+get_container_key_lookup(store::InMemorySimulationStore) = store.container_key_lookup
+
+list_decision_models(x::InMemorySimulationStore) = collect(keys(x.dm_data))
 log_cache_hit_percentages(::InMemorySimulationStore) = nothing
 
-function list_fields(
+function list_decision_model_keys(
     store::InMemorySimulationStore,
     model_name::Symbol,
     container_type::Symbol,
 )
     return list_fields(_get_model_results(store, model_name), container_type)
+end
+
+function list_emulation_model_keys(store::InMemorySimulationStore, container_type::Symbol)
+    return list_fields(store.em_data, container_type)
 end
 
 function write_optimizer_stats!(
@@ -123,25 +129,26 @@ function initialize_problem_storage!(
     for problem in keys(store.params.decision_models_params)
         get_dm_data(store)[problem] = DecisionModelStore()
         for type in STORE_CONTAINERS
-            for (name, reqs) in getfield(dm_problem_reqs[problem], type)
+            for (key, reqs) in getfield(dm_problem_reqs[problem], type)
                 container = getfield(get_dm_data(store)[problem], type)
-                container[name] =
+                container[key] =
                     OrderedDict{Dates.DateTime, DatasetContainer{DataFrameDataset}}()
-                @debug "Added $type $name in $problem" _group = LOG_GROUP_SIMULATION_STORE
+                store.container_key_lookup[encode_key_as_string(key)] = key
+                @debug "Added $type $key in $problem" _group = LOG_GROUP_SIMULATION_STORE
             end
         end
     end
 
     for type in STORE_CONTAINERS
-        for (name, reqs) in getfield(em_problem_reqs, type)
+        for (key, reqs) in getfield(em_problem_reqs, type)
             container = get_data_field(get_em_data(store), type)
-            container[name] = DataFrameDataset(
+            container[key] = DataFrameDataset(
                 DataFrames.DataFrame(
                     OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
                 ),
             )
-            @debug "Added $type $name in emulation store" _group =
-                LOG_GROUP_SIMULATION_STORE
+            store.container_key_lookup[encode_key_as_string(key)] = key
+            @debug "Added $type $key in emulation store" _group = LOG_GROUP_SIMULATION_STORE
         end
     end
 
@@ -155,7 +162,7 @@ function read_result(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
-    return read_results(get_dm_data(store)[model_name], key, index)
+    return read_results(get_dm_data(store)[model_name], key, index=index)
 end
 
 function read_result(
@@ -168,13 +175,20 @@ function read_result(
     return read_results(get_em_data(store), key, index)
 end
 
-function read_result(
-    ::Type{DataFrames.DataFrame},
+function read_results(
+    store::InMemorySimulationStore,
+    key::OptimizationContainerKey;
+    index::EmulationModelIndexType=nothing,
+    len::Int=nothing,
+)
+    return read_results(get_em_data(store), key, index=index, len=len)
+end
+
+function get_emulation_model_dataset_size(
     store::InMemorySimulationStore,
     key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
 )
-    return read_results(get_em_data(store), key, index)
+    return get_dataset_size(get_em_data(store), key)
 end
 
 # Note that this function is not type-stable.
