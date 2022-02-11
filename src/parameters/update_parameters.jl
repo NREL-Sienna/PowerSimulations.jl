@@ -59,6 +59,37 @@ end
 function update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
+    ::Type{V},
+    model::DecisionModel,
+    ::DatasetContainer{DataFrameDataset},
+) where {
+    T <: Union{PJ.ParameterRef, Float64},
+    U <: PSY.AbstractDeterministic,
+    V <: PSY.HybridSystem,
+}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    horizon = get_time_steps(get_optimization_container(model))[end]
+    components = get_available_components(V, get_system(model))
+    for component in components
+        name = PSY.get_name(component)
+        ts_vector = get_time_series_values!(
+            U,
+            model,
+            component,
+            make_subsystem_time_series_name(PSY.get_renewable_unit(component), get_time_series_name(attributes)),
+            get_time_series_multiplier_id(attributes),
+            initial_forecast_time,
+            horizon,
+        )
+        for (t, value) in enumerate(ts_vector)
+            _set_param_value!(param_array, value, name, t)
+        end
+    end
+end
+
+function update_parameter_values!(
+    param_array::AbstractArray{T},
+    attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
