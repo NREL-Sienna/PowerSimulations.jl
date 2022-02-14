@@ -3,8 +3,8 @@ function get_initial_conditions_template(model::OperationModel)
     # exists
     network_model = NetworkModel(
         get_network_formulation(model.template);
-        use_slacks = get_use_slacks(get_network_model(model.template)),
-        PTDF = get_PTDF(get_network_model(model.template)),
+        use_slacks=get_use_slacks(get_network_model(model.template)),
+        PTDF=get_PTDF(get_network_model(model.template)),
     )
 
     ic_template = ProblemTemplate(network_model)

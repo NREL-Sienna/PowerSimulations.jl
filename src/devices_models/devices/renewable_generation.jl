@@ -125,9 +125,9 @@ function AddCostSpec(
     # TODO: remove once cost_function is required
     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
-        component_type = T,
-        variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_NEGATIVE,
+        variable_type=ActivePowerVariable,
+        component_type=T,
+        variable_cost=cost_function,
+        multiplier=OBJECTIVE_FUNCTION_NEGATIVE,
     )
 end

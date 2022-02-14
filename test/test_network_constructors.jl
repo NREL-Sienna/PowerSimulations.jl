@@ -25,11 +25,10 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
         template = get_thermal_dispatch_template_network(
-            NetworkModel(network; PTDF = PSY.PTDF(c_sys5)),
+            NetworkModel(network; PTDF=PSY.PTDF(c_sys5)),
         )
-        ps_model = DecisionModel(template, c_sys5; optimizer = solver)
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, c_sys5; optimizer=solver)
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         @test ps_model.internal.container.pm !== nothing
         # TODO: Change test
         # @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
@@ -56,10 +55,9 @@ end
     )
 
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
 
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -75,15 +73,14 @@ end
         psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
     end
     template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+        NetworkModel(CopperPlatePowerModel; use_slacks=true),
     )
     ps_model_re = DecisionModel(
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
-        optimizer = GLPK_optimizer,
+        optimizer=GLPK_optimizer,
     )
-    @test build!(ps_model_re; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(ps_model_re; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
@@ -117,12 +114,11 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF = PTDF_ref[sys]),
+            NetworkModel(StandardPTDFModel; PTDF=PTDF_ref[sys]),
         )
-        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
 
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -143,11 +139,11 @@ end
         )
     end
     # PTDF input Error testing
-    ps_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
     @test build!(
         ps_model;
-        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
-        output_dir = mktempdir(cleanup = true),
+        console_level=Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir=mktempdir(cleanup=true),
     ) == PSI.BuildStatus.FAILED
 end
 
@@ -175,10 +171,9 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
 
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -223,9 +218,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -272,9 +266,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -316,9 +309,8 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer = OSQP_optimizer)
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -368,9 +360,8 @@ end
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
-        ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer=fast_ipopt_optimizer)
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -413,9 +404,8 @@ end
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(network)
-        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
-        @test build!(ps_model; output_dir = mktempdir(cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
+        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -443,12 +433,12 @@ end
         ps_model = DecisionModel(
             template,
             PSB.build_system(PSITestSystems, "c_sys5");
-            optimizer = ipopt_optimizer,
+            optimizer=ipopt_optimizer,
         )
         @test build!(
             ps_model;
-            console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
-            output_dir = mktempdir(cleanup = true),
+            console_level=Logging.AboveMaxLevel,  # Ignore expected errors.
+            output_dir=mktempdir(cleanup=true),
         ) == PSI.BuildStatus.FAILED
     end
 end

@@ -97,7 +97,9 @@ for enum in ENUMS
     end
 end
 
-"""Get the enum value for the string. Case insensitive."""
+"""
+Get the enum value for the string. Case insensitive.
+"""
 function get_enum_value(enum, value::String)
     if !haskey(ENUM_MAPPINGS, enum)
         throw(ArgumentError("enum=$enum is not valid"))

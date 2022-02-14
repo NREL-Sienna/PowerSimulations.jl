@@ -191,7 +191,7 @@ function add_variable!(
         [PSY.get_name(d) for d in devices],
         subcomp_keys,
         time_steps;
-        sparse = true,
+        sparse=true,
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types

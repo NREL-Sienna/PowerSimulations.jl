@@ -97,7 +97,7 @@ function get_data_to_flush!(cache::OptimzationResultCache, flush_size)
     # Uncomment for performance testing of CacheFlush
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Concatenate arrays for flush" begin
     arrays = (cache.data[x] for x in timestamps)
-    arrays = cat(arrays..., dims = ndims(first(arrays)) + 1)
+    arrays = cat(arrays..., dims=ndims(first(arrays)) + 1)
     #end
 
     return timestamps, arrays

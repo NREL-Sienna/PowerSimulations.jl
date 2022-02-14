@@ -193,7 +193,7 @@ function add_parameters!(
         ts_name,
         [name],
         time_steps;
-        meta = name,
+        meta=name,
     )
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)

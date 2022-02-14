@@ -36,7 +36,7 @@ function area_balance(
         PSY.Area,
         keys(area_mapping),
         time_steps,
-        meta = "up",
+        meta="up",
     )
     participation_assignment_dn = add_constraints_container!(
         container,
@@ -44,7 +44,7 @@ function area_balance(
         PSY.Area,
         keys(area_mapping),
         time_steps,
-        meta = "dn",
+        meta="dn",
     )
 
     for area in keys(area_mapping), t in time_steps

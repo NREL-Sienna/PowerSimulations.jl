@@ -9,15 +9,15 @@ function _get_time_series(
         T,
         component,
         get_time_series_name(attributes);
-        start_time = initial_time,
-        count = 1,
+        start_time=initial_time,
+        count=1,
     )
     ts_vector = IS.get_time_series_values(
         component,
         forecast,
         initial_time;
-        len = length(time_steps),
-        ignore_scaling_factors = true,
+        len=length(time_steps),
+        ignore_scaling_factors=true,
     )
     return ts_vector
 end
@@ -26,7 +26,7 @@ function get_time_series(
     container::OptimizationContainer,
     component::T,
     parameter::TimeSeriesParameter,
-    meta = CONTAINER_KEY_EMPTY_META,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: PSY.Component}
     parameter_container = get_parameter(container, parameter, T, meta)
     parameter_container.attributes
@@ -37,7 +37,7 @@ function get_time_series(
     container::OptimizationContainer,
     component::T,
     parameter::ActivePowerTimeSeriesParameter,
-    meta = CONTAINER_KEY_EMPTY_META,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: PSY.HybridSystem}
     parameter_container = get_parameter(container, parameter, T, meta)
     parameter_container.attributes

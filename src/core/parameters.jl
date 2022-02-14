@@ -5,7 +5,7 @@ end
 function ParameterKey(
     ::Type{T},
     ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType, U <: PSY.Component}
     if isabstracttype(U)
         error("Type $U can't be abstract")
@@ -16,7 +16,7 @@ end
 
 function ParameterKey(
     ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
+    meta::String=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ParameterType}
     return ParameterKey(T, PSY.Component, meta)
 end
@@ -36,7 +36,7 @@ end
 function TimeSeriesAttributes(
     ::Type{T},
     name::String,
-    multiplier_id::Int = 1,
+    multiplier_id::Int=1,
 ) where {T <: PSY.TimeSeriesData}
     return TimeSeriesAttributes{T}(name, Base.RefValue{Int}(multiplier_id))
 end

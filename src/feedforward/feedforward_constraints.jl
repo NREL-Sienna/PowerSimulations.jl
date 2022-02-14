@@ -34,9 +34,9 @@ function _add_feedforward_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     constraint_lb =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)lb")
+        add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)lb")
     constraint_ub =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)ub")
+        add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)ub")
     array = get_variable(container, U(), V)
     parameter = get_parameter_array(container, P(), V)
     multiplier = get_parameter_multiplier_array(container, P(), V)
@@ -77,9 +77,9 @@ function _add_sc_feedforward_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     constraint_lb =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)lb")
+        add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)lb")
     constraint_ub =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)ub")
+        add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)ub")
     array_lb = get_expression(container, ActivePowerRangeExpressionLB(), V)
     array_ub = get_expression(container, ActivePowerRangeExpressionUB(), V)
     parameter = get_parameter_array(container, P(), V)
@@ -127,9 +127,9 @@ function _add_sc_feedforward_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     constraint_lb =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)lb")
+        add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)lb")
     constraint_ub =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "$(U)ub")
+        add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)ub")
     variable = get_variable(container, U(), V)
     parameter = get_parameter_array(container, P(), V)
     upper_bounds = [get_variable_upper_bound(U(), d, W()) for d in devices]
@@ -238,7 +238,7 @@ function add_feedforward_constraints!(
             T,
             set_name,
             time_steps,
-            meta = "$(var_type)ub",
+            meta="$(var_type)ub",
         )
 
         for t in time_steps, name in set_name
@@ -297,7 +297,7 @@ function add_feedforward_constraints!(
             T,
             set_name,
             time_steps,
-            meta = "$(var_type)lb",
+            meta="$(var_type)lb",
         )
 
         for t in time_steps, name in set_name
@@ -333,7 +333,7 @@ function add_feedforward_constraints!(
             T,
             set_name,
             time_steps,
-            meta = "$(var_type)lb",
+            meta="$(var_type)lb",
         )
 
         for t in time_steps, name in set_name
@@ -397,7 +397,7 @@ function add_feedforward_constraints!(
             FeedforwardIntegralLimitConstraint(),
             T,
             set_name,
-            meta = "$(var_type)integral",
+            meta="$(var_type)integral",
         )
 
         for name in set_name
@@ -451,7 +451,7 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         for t in time_steps, name in set_name
-            JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
+            JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force=true)
         end
     end
     return
@@ -505,7 +505,7 @@ function add_feedforward_constraints!(
             FeedforwardEnergyTargetConstraint(),
             T,
             set_name,
-            meta = "$(var_type)target",
+            meta="$(var_type)target",
         )
 
         for d in devices

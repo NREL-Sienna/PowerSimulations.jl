@@ -26,7 +26,7 @@ end
     @test !isempty(uc_template.devices)
     @test PSI.get_formulation(uc_template.devices[:ThermalStandard]) ==
           ThermalBasicUnitCommitment
-    uc_template = template_unit_commitment(network = DCPPowerModel)
+    uc_template = template_unit_commitment(network=DCPPowerModel)
     @test get_network_formulation(uc_template) == DCPPowerModel
     @test !isempty(uc_template.branches)
     @test !isempty(uc_template.services)
@@ -34,7 +34,7 @@ end
     ed_template = template_economic_dispatch()
     @test !isempty(ed_template.devices)
     @test PSI.get_formulation(ed_template.devices[:ThermalStandard]) == ThermalBasicDispatch
-    ed_template = template_economic_dispatch(network = ACPPowerModel)
+    ed_template = template_economic_dispatch(network=ACPPowerModel)
     @test get_network_formulation(ed_template) == ACPPowerModel
     @test !isempty(ed_template.branches)
     @test !isempty(ed_template.services)

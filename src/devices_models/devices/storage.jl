@@ -249,7 +249,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "up",
+        meta="up",
     )
     con_dn = add_constraints_container!(
         container,
@@ -257,7 +257,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "dn",
+        meta="dn",
     )
 
     for d in devices, t in time_steps
@@ -295,7 +295,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "up",
+        meta="up",
     )
     con_dn = add_constraints_container!(
         container,
@@ -303,7 +303,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "dn",
+        meta="dn",
     )
 
     for d in devices, t in time_steps
@@ -377,9 +377,9 @@ function AddCostSpec(
     container::OptimizationContainer,
 )
     return AddCostSpec(;
-        variable_type = ActivePowerOutVariable,
-        component_type = PSY.BatteryEMS,
-        variable_cost = PSY.get_variable,
-        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+        variable_type=ActivePowerOutVariable,
+        component_type=PSY.BatteryEMS,
+        variable_cost=PSY.get_variable,
+        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
     )
 end

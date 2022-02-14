@@ -399,9 +399,9 @@ function construct_device!(
     new_model = DeviceModel(
         L,
         StaticPowerLoad,
-        feedforwards = model.feedforwards,
-        time_series_names = model.time_series_names,
-        attributes = model.attributes,
+        feedforwards=model.feedforwards,
+        time_series_names=model.time_series_names,
+        attributes=model.attributes,
     )
     construct_device!(container, sys, ccs, new_model, S)
     return

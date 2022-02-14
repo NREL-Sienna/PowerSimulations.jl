@@ -65,9 +65,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
 
     container_up =
-        add_constraints_container!(container, S(), U, names, time_steps, meta = "up")
+        add_constraints_container!(container, S(), U, names, time_steps, meta="up")
     container_dn =
-        add_constraints_container!(container, S(), U, names, time_steps, meta = "dn")
+        add_constraints_container!(container, S(), U, names, time_steps, meta="dn")
 
     for d in devices
         name = PSY.get_name(d)
@@ -104,9 +104,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
 
     container_up =
-        add_constraints_container!(container, S(), U, names, time_steps, meta = "up")
+        add_constraints_container!(container, S(), U, names, time_steps, meta="up")
     container_dn =
-        add_constraints_container!(container, S(), U, names, time_steps, meta = "dn")
+        add_constraints_container!(container, S(), U, names, time_steps, meta="dn")
 
     for d in devices
         name = PSY.get_name(d)
@@ -140,9 +140,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
 
     container_up =
-        add_constraints_container!(container, S(), U, names, time_steps, meta = "up")
+        add_constraints_container!(container, S(), U, names, time_steps, meta="up")
     container_dn =
-        add_constraints_container!(container, S(), U, names, time_steps, meta = "dn")
+        add_constraints_container!(container, S(), U, names, time_steps, meta="dn")
 
     for d in devices
         ramp_limits = PSY.get_ramp_limits(d)
@@ -188,7 +188,7 @@ function add_constraints!(
         T,
         component_names,
         time_steps,
-        meta = "up",
+        meta="up",
     )
     participation_assignment_dn = add_constraints_container!(
         container,
@@ -196,7 +196,7 @@ function add_constraints!(
         T,
         component_names,
         time_steps,
-        meta = "dn",
+        meta="dn",
     )
 
     expr_up = get_expression(container, EmergencyUp(), PSY.Area)
@@ -240,9 +240,9 @@ function cost_function!(
     for d in devices, t in time_steps
         p_factor = PSY.get_participation_factor(d)
         up_cost =
-            isapprox(p_factor.up, 0.0; atol = 1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.up
+            isapprox(p_factor.up, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.up
         dn_cost =
-            isapprox(p_factor.dn, 0.0; atol = 1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.dn
+            isapprox(p_factor.dn, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.dn
         proportional_objective!(
             container,
             AdditionalDeltaActivePowerUpVariable(),

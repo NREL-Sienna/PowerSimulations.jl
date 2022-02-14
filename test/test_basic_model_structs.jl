@@ -20,25 +20,25 @@ end
 @testset "Feedforward Struct Tests" begin
     ffs = [
         UpperBoundFeedforward(
-            component_type = RenewableDispatch,
-            source = ActivePowerVariable,
-            affected_values = [ActivePowerVariable],
+            component_type=RenewableDispatch,
+            source=ActivePowerVariable,
+            affected_values=[ActivePowerVariable],
         ),
         LowerBoundFeedforward(
-            component_type = RenewableDispatch,
-            source = ActivePowerVariable,
-            affected_values = [ActivePowerVariable],
+            component_type=RenewableDispatch,
+            source=ActivePowerVariable,
+            affected_values=[ActivePowerVariable],
         ),
         SemiContinuousFeedforward(
-            component_type = ThermalMultiStart,
-            source = OnVariable,
-            affected_values = [ActivePowerVariable, ReactivePowerVariable],
+            component_type=ThermalMultiStart,
+            source=OnVariable,
+            affected_values=[ActivePowerVariable, ReactivePowerVariable],
         ),
         IntegralLimitFeedforward(
-            component_type = GenericBattery,
-            source = EnergyVariable,
-            affected_values = [EnergyVariable],
-            number_of_periods = 10,
+            component_type=GenericBattery,
+            source=EnergyVariable,
+            affected_values=[EnergyVariable],
+            number_of_periods=10,
         ),
     ]
 
@@ -49,9 +49,9 @@ end
     end
 
     ff = FixValueFeedforward(
-        component_type = HydroDispatch,
-        source = OnVariable,
-        affected_values = [OnStatusParameter],
+        component_type=HydroDispatch,
+        source=OnVariable,
+        affected_values=[OnStatusParameter],
     )
 
     for av in PSI.get_affected_values(ff)
@@ -59,27 +59,27 @@ end
     end
 
     @test_throws ErrorException IntegralLimitFeedforward(
-        component_type = GenericBattery,
-        source = EnergyVariable,
-        affected_values = [OnStatusParameter],
-        number_of_periods = 10,
+        component_type=GenericBattery,
+        source=EnergyVariable,
+        affected_values=[OnStatusParameter],
+        number_of_periods=10,
     )
 
     @test_throws ErrorException UpperBoundFeedforward(
-        component_type = RenewableDispatch,
-        source = ActivePowerVariable,
-        affected_values = [OnStatusParameter],
+        component_type=RenewableDispatch,
+        source=ActivePowerVariable,
+        affected_values=[OnStatusParameter],
     )
 
     @test_throws ErrorException LowerBoundFeedforward(
-        component_type = RenewableDispatch,
-        source = ActivePowerVariable,
-        affected_values = [OnStatusParameter],
+        component_type=RenewableDispatch,
+        source=ActivePowerVariable,
+        affected_values=[OnStatusParameter],
     )
 
     @test_throws ErrorException SemiContinuousFeedforward(
-        component_type = ThermalMultiStart,
-        source = OnVariable,
-        affected_values = [ActivePowerVariable, OnStatusParameter],
+        component_type=ThermalMultiStart,
+        source=OnVariable,
+        affected_values=[ActivePowerVariable, OnStatusParameter],
     )
 end

@@ -16,17 +16,17 @@ struct AddCostSpec
     function AddCostSpec(;
         variable_type,
         component_type,
-        has_status_variable = false,
-        has_status_parameter = false,
-        sos_status = SOSStatusVariable.NO_VARIABLE,
-        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
-        variable_cost = nothing,
-        start_up_cost = nothing,
-        shut_down_cost = nothing,
-        fixed_cost = nothing,
-        has_multistart_variables = false,
-        addtional_linear_terms = Dict{String, VariableKey}(),
-        uses_compact_power = false,
+        has_status_variable=false,
+        has_status_parameter=false,
+        sos_status=SOSStatusVariable.NO_VARIABLE,
+        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
+        variable_cost=nothing,
+        start_up_cost=nothing,
+        shut_down_cost=nothing,
+        fixed_cost=nothing,
+        has_multistart_variables=false,
+        addtional_linear_terms=Dict{String, VariableKey}(),
+        uses_compact_power=false,
     )
         new(
             variable_type,
@@ -126,7 +126,7 @@ end
 function has_on_variable(
     container::OptimizationContainer,
     ::Type{T};
-    variable_type = OnVariable,
+    variable_type=OnVariable,
 ) where {T <: PSY.Component}
     # get_variable can't be used because the default behavior is to error if variables is not present
     return haskey(container.variables, VariableKey(variable_type, T))
@@ -660,8 +660,8 @@ function add_to_cost!(
     variable_cost_forecast = PSY.get_variable_cost(
         component,
         PSY.get_operation_cost(component);
-        start_time = initial_time,
-        len = length(time_steps),
+        start_time=initial_time,
+        len=length(time_steps),
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     jump_model = get_jump_model(container)
@@ -767,8 +767,8 @@ function add_to_cost!(
     variable_cost_forecast = PSY.get_variable_cost(
         component,
         PSY.get_operation_cost(component);
-        start_time = initial_time,
-        len = length(time_steps),
+        start_time=initial_time,
+        len=length(time_steps),
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     for t in time_steps
@@ -849,8 +849,8 @@ function add_service_bid_cost!(
         component,
         PSY.get_operation_cost(component),
         service;
-        start_time = initial_time,
-        len = length(time_steps),
+        start_time=initial_time,
+        len=length(time_steps),
     )
     forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
     if eltype(forecast_data_values) == Float64

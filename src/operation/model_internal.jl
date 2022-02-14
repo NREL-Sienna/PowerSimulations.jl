@@ -33,8 +33,8 @@ end
 
 function ModelInternal(
     container::OptimizationContainer;
-    ext = Dict{String, Any}(),
-    recorders = [],
+    ext=Dict{String, Any}(),
+    recorders=[],
 )
     return ModelInternal(
         container,
@@ -63,14 +63,14 @@ get_recorders(internal::ModelInternal) = internal.recorders
 
 function configure_logging(internal::ModelInternal, file_mode)
     return IS.configure_logging(
-        console = true,
-        console_stream = stderr,
-        console_level = internal.console_level,
-        file = true,
-        filename = joinpath(internal.output_dir, PROBLEM_LOG_FILENAME),
-        file_level = internal.file_level,
-        file_mode = file_mode,
-        tracker = nothing,
-        set_global = false,
+        console=true,
+        console_stream=stderr,
+        console_level=internal.console_level,
+        file=true,
+        filename=joinpath(internal.output_dir, PROBLEM_LOG_FILENAME),
+        file_level=internal.file_level,
+        file_mode=file_mode,
+        tracker=nothing,
+        set_global=false,
     )
 end

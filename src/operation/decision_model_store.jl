@@ -55,7 +55,7 @@ function initialize_storage!(
             results_container[key] = OrderedDict{Dates.DateTime, DataFrames.DataFrame}()
             column_names = get_column_names(key, field_container)
             for timestamp in
-                range(initial_time, step = model_interval, length = num_of_executions)
+                range(initial_time, step=model_interval, length=num_of_executions)
                 results_container[key][timestamp] = DataFrames.DataFrame(
                     OrderedDict(c => fill(NaN, time_steps_count) for c in column_names),
                 )
@@ -94,7 +94,7 @@ function read_results(
     store::DecisionModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::Union{DecisionModelIndexType, Nothing} = nothing,
+    index::Union{DecisionModelIndexType, Nothing}=nothing,
 )
     container = getfield(store, get_store_container_type(key))
     data = container[key]
@@ -104,7 +104,7 @@ function read_results(
     end
 
     # Return a copy because callers may mutate it.
-    return copy(data[index], copycols = true)
+    return copy(data[index], copycols=true)
 end
 
 function write_optimizer_stats!(

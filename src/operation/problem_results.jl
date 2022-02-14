@@ -41,7 +41,7 @@ get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
 get_forecast_horizon(res::ProblemResults) = length(get_timestamps(res))
 
-function get_objective_value(res::ProblemResults, execution = 1)
+function get_objective_value(res::ProblemResults, execution=1)
     res.optimizer_stats[execution, :objective_value]
 end
 
@@ -136,10 +136,10 @@ Exports all results from the operations problem.
 function export_results(results::ProblemResults; kwargs...)
     exports = ProblemResultsExport(
         "Problem",
-        store_all_duals = true,
-        store_all_parameters = true,
-        store_all_variables = true,
-        store_all_aux_variables = true,
+        store_all_duals=true,
+        store_all_parameters=true,
+        store_all_variables=true,
+        store_all_aux_variables=true,
     )
     export_results(results, exports; kwargs...)
 end
@@ -147,7 +147,7 @@ end
 function export_results(
     results::ProblemResults,
     exports::ProblemResultsExport;
-    file_type = CSV.File,
+    file_type=CSV.File,
 )
     file_type != CSV.File && error("only CSV.File is currently supported")
     export_path = mkpath(joinpath(results.output_dir, "variables"))
@@ -407,9 +407,10 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
-- `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+
+  - `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
+  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `len::Int`: length of results
 """
 function read_realized_variables(res::ProblemResults; kwargs...)
     return read_realized_variables(res, collect(keys(res.variable_values)); kwargs...)
@@ -434,14 +435,14 @@ end
 function read_realized_variables(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     result_values = read_realized_variables_with_keys(
         res,
         variables;
-        initial_time = initial_time,
-        count = count,
+        initial_time=initial_time,
+        count=count,
     )
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
@@ -449,8 +450,8 @@ end
 function read_realized_variables_with_keys(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_realized_results(res.variable_values, variables, timestamps)
@@ -462,9 +463,10 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
-- `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+
+  - `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
+  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `len::Int`: length of results
 """
 function read_realized_parameters(res::ProblemResults; kwargs...)
     return read_realized_parameters(res, collect(keys(res.parameter_values)); kwargs...)
@@ -493,14 +495,14 @@ end
 function read_realized_parameters(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     result_values = read_realized_parameters_with_keys(
         res,
         parameters;
-        initial_time = initial_time,
-        count = count,
+        initial_time=initial_time,
+        count=count,
     )
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
@@ -508,8 +510,8 @@ end
 function read_realized_parameters_with_keys(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_realized_results(res.parameter_values, parameters, timestamps)
@@ -521,9 +523,10 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
-- `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+
+  - `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
+  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `len::Int`: length of results
 """
 function read_realized_duals(res::ProblemResults; kwargs...)
     return read_realized_duals(res, collect(keys(res.dual_values)); kwargs...)
@@ -548,23 +551,19 @@ end
 function read_realized_duals(
     res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
-    result_values = read_realized_duals_with_keys(
-        res,
-        duals;
-        initial_time = initial_time,
-        count = count,
-    )
+    result_values =
+        read_realized_duals_with_keys(res, duals; initial_time=initial_time, count=count)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
 function read_realized_duals_with_keys(
     res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_realized_results(res.dual_values, duals, timestamps)
@@ -576,9 +575,10 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `aux_variables::Vector{Tuple{Type{<:AuxVarType}, Type{<:PSY.Component}}` : Tuple with auxilary variable type and device type for the desired results
-- `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+
+  - `aux_variables::Vector{Tuple{Type{<:AuxVarType}, Type{<:PSY.Component}}` : Tuple with auxilary variable type and device type for the desired results
+  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `len::Int`: length of results
 """
 function read_realized_aux_variables(res::ProblemResults; kwargs...)
     return read_realized_aux_variables(
@@ -611,14 +611,14 @@ end
 function read_realized_aux_variables(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     result_values = read_realized_aux_variables_with_keys(
         res,
         aux_variables;
-        initial_time = initial_time,
-        count = count,
+        initial_time=initial_time,
+        count=count,
     )
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
@@ -626,8 +626,8 @@ end
 function read_realized_aux_variables_with_keys(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_realized_results(res.aux_variable_values, aux_variables, timestamps)
@@ -639,9 +639,10 @@ Accepts a vector of keys for the return of the values. If the time stamps and ke
 loaded using the [load_results!](@ref) function it will read from memory.
 
 # Arguments
-- `expressions::Vector{Tuple{Type{<:Expression}, U <: Union{PSY.Component, PSY.System}}` : Tuple with expression type and device type or system for the desired results
-- `initial_time::Dates.DateTime` : initial time of the requested results
-- `len::Int`: length of results
+
+  - `expressions::Vector{Tuple{Type{<:Expression}, U <: Union{PSY.Component, PSY.System}}` : Tuple with expression type and device type or system for the desired results
+  - `initial_time::Dates.DateTime` : initial time of the requested results
+  - `len::Int`: length of results
 """
 function read_realized_expressions(res::ProblemResults; kwargs...)
     return read_realized_expressions(res, collect(keys(res.expression_values)); kwargs...)
@@ -670,14 +671,14 @@ end
 function read_realized_expressions(
     res::ProblemResults,
     expressions::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     result_values = read_realized_expressions_with_keys(
         res,
         expressions;
-        initial_time = initial_time,
-        count = count,
+        initial_time=initial_time,
+        count=count,
     )
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
@@ -685,8 +686,8 @@ end
 function read_realized_expressions_with_keys(
     res::ProblemResults,
     expressions::Vector{<:OptimizationContainerKey};
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
-    count::Union{Int, Nothing} = nothing,
+    initial_time::Union{Nothing, Dates.DateTime}=nothing,
+    count::Union{Int, Nothing}=nothing,
 )
     timestamps = _process_timestamps(res, initial_time, count)
     return _read_realized_results(res.expression_values, expressions, timestamps)

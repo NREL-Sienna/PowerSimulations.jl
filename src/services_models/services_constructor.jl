@@ -62,7 +62,7 @@ function populate_contributing_devices!(template, sys::PSY.System)
             continue
         end
         contributing_devices_ =
-            services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
+            services_mapping[(type=S, name=PSY.get_name(service))].contributing_devices
         contributing_devices = [
             d for d in contributing_devices_ if
             typeof(d) ∉ incompatible_device_types && PSY.get_available(d)
