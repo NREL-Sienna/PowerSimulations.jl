@@ -42,7 +42,7 @@ get_system(res::ProblemResults) = res.system
 get_forecast_horizon(res::ProblemResults) = length(get_timestamps(res))
 
 function get_objective_value(res::ProblemResults, execution=1)
-    res.optimizer_stats[execution, :objective_value]
+    return res.optimizer_stats[execution, :objective_value]
 end
 
 """
@@ -141,7 +141,7 @@ function export_results(results::ProblemResults; kwargs...)
         store_all_variables=true,
         store_all_aux_variables=true,
     )
-    export_results(results, exports; kwargs...)
+    return export_results(results, exports; kwargs...)
 end
 
 function export_results(

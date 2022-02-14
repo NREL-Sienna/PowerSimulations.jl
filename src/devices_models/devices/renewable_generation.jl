@@ -38,7 +38,7 @@ function get_min_max_limits(
     ::Type{ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractRenewableFormulation},
 )
-    PSY.get_reactive_power_limits(device)
+    return PSY.get_reactive_power_limits(device)
 end
 
 function get_default_time_series_names(
@@ -69,6 +69,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation}
     add_range_constraints!(container, T, U, devices, model, X)
+    return
 end
 
 """
@@ -114,6 +115,7 @@ function add_constraints!(
         model,
         X,
     )
+    return
 end
 
 ##################################### renewable generation cost ############################

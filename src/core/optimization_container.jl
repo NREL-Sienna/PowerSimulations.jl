@@ -1317,6 +1317,7 @@ end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
     JuMP.add_to_expression!(container.cost_function.invariant_terms, expr)
+    return
 end
 
 function deserialize_key(container::OptimizationContainer, name::AbstractString)

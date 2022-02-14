@@ -134,6 +134,7 @@ function set_parameter!(
     get_multiplier_array(container)[ixs...] = multiplier
     param_array = get_parameter_array(container)
     _set_parameter!(param_array, jump_model, parameter, ixs)
+    return
 end
 
 function set_parameter!(
@@ -146,6 +147,7 @@ function set_parameter!(
     get_multiplier_array(container)[ixs...] = multiplier
     param_array = get_parameter_array(container)
     _set_parameter!(param_array, jump_model, parameter, ixs)
+    return
 end
 
 """

@@ -148,7 +148,7 @@ function get_min_max_limits(
     ::Type{EnergyCapacityConstraint},
     ::Type{<:AbstractStorageFormulation},
 )
-    PSY.get_state_of_charge_limits(d)
+    return PSY.get_state_of_charge_limits(d)
 end
 
 """
@@ -170,6 +170,7 @@ function add_constraints!(
         model,
         X,
     )
+    return
 end
 
 ############################ book keeping constraints ######################################

@@ -280,6 +280,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     add_range_constraints!(container, T, U, devices, model, X)
+    return
 end
 
 function add_constraints!(
@@ -301,6 +302,7 @@ function add_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_constraints!(
@@ -313,6 +315,7 @@ function add_constraints!(
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     array = get_expression(container, U(), V)
     add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_constraints!(
@@ -333,6 +336,7 @@ function add_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_constraints!(
@@ -348,6 +352,7 @@ function add_constraints!(
     else
         add_range_constraints!(container, T, U, devices, model, X)
     end
+    return
 end
 
 function add_constraints!(
@@ -363,6 +368,7 @@ function add_constraints!(
     else
         add_range_constraints!(container, T, U, devices, model, X)
     end
+    return
 end
 
 function add_constraints!(
@@ -409,6 +415,7 @@ function add_constraints!(
         constraint_lb[name, subcomp, t] =
             JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] >= limits.min)
     end
+    return
 end
 ######################## Energy balance constraints ############################
 

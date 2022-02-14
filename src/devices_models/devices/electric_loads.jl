@@ -102,6 +102,7 @@ function add_constraints!(
         model,
         X,
     )
+    return
 end
 
 function add_constraints!(
@@ -121,6 +122,7 @@ function add_constraints!(
         model,
         X,
     )
+    return
 end
 
 ############################## FormulationControllable Load Cost ###########################

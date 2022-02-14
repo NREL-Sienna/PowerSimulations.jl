@@ -28,6 +28,7 @@ function add_parameters!(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     add_parameters!(container, T(), devices, model)
+    return
 end
 
 function add_parameters!(
@@ -42,6 +43,7 @@ function add_parameters!(
 } where {D <: PSY.HybridSystem}
     _devices = [d for d in devices if PSY.get_renewable_unit(d) !== nothing]
     add_parameters!(container, T(), _devices, model)
+    return
 end
 
 function add_parameters!(
@@ -51,6 +53,7 @@ function add_parameters!(
     model::ServiceModel{U, V},
 ) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
     add_parameters!(container, T(), service, model)
+    return
 end
 
 function add_parameters!(
@@ -66,6 +69,7 @@ function add_parameters!(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     add_parameters!(container, T(), key, model, devices)
+    return
 end
 
 function add_parameters!(
@@ -168,6 +172,7 @@ function add_parameters!(
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     add_parameters!(container, T(), key, model, devices)
+    return
 end
 
 function add_parameters!(

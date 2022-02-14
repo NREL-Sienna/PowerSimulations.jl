@@ -7,6 +7,7 @@ end
 
 function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
+    return
 end
 
 function jump_value(input::JuMP.VariableRef)::Float64

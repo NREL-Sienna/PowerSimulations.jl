@@ -265,6 +265,7 @@ function construct_service!(
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     add_expressions!(container, ProductionCostExpression, [service], model)
+    return
 end
 
 function construct_service!(
@@ -284,6 +285,7 @@ function construct_service!(
     cost_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
+    return
 end
 
 function construct_service!(

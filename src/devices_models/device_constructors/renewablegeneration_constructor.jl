@@ -221,6 +221,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -241,6 +242,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(

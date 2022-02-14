@@ -488,6 +488,7 @@ function add_pm_variable_refs!(
         pm_variable_types,
         time_steps,
     )
+    return
 end
 
 function add_pm_variable_refs!(
@@ -574,6 +575,7 @@ function add_pm_expr_refs!(
         pm_variable_types,
         time_steps,
     )
+    return
 end
 
 function add_pm_expr_refs!(

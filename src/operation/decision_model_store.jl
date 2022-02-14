@@ -114,6 +114,7 @@ function write_optimizer_stats!(
 )
     @assert !(index in keys(store.optimizer_stats))
     store.optimizer_stats[index] = stats
+    return
 end
 
 function read_optimizer_stats(store::DecisionModelStore)

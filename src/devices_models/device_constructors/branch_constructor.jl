@@ -131,6 +131,7 @@ function construct_device!(
     devices = get_available_components(B, sys)
 
     add_variables!(container, S, devices, StaticBranch())
+    return
 end
 
 function construct_device!(
@@ -158,6 +159,7 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
     add_variables!(container, S, devices, StaticBranchBounds())
+    return
 end
 
 function construct_device!(
@@ -185,6 +187,7 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
     add_variables!(container, S, devices, StaticBranchUnbounded())
+    return
 end
 
 function construct_device!(
@@ -280,6 +283,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -322,6 +326,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 # Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
@@ -347,6 +352,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 # Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
@@ -422,6 +428,7 @@ function construct_device!(
     add_variables!(container, FlowActivePowerVariable, devices, U())
     # Note: Don't add the flow variables to the expressions for PTDF Models in this constructor
     # otherwise the flow calculation will include the flow variables as part of the nodal balances
+    return
 end
 
 function construct_device!(

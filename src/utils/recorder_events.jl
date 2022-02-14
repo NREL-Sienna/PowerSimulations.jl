@@ -214,7 +214,7 @@ function get_simulation_model_range(filename::AbstractString, step::Int, model::
 end
 
 function _filter_by_type_range!(events::Vector{<:IS.AbstractRecorderEvent}, time_range)
-    filter!(
+    return filter!(
         x -> x.simulation_time >= time_range.start && x.simulation_time <= time_range.done,
         events,
     )

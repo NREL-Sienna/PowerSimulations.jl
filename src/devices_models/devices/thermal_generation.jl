@@ -153,7 +153,7 @@ function get_min_max_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalDispatchFormulation},
 )
-    PSY.get_active_power_limits(device)
+    return PSY.get_active_power_limits(device)
 end
 
 # active power limits of generators when there are CommitmentVariables
@@ -165,7 +165,7 @@ function get_min_max_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalUnitCommitment},
 )
-    PSY.get_active_power_limits(device)
+    return PSY.get_active_power_limits(device)
 end
 
 """
@@ -182,6 +182,7 @@ function add_constraints!(
     if !has_semicontinuous_feedforward(model, PowerAboveMinimumVariable)
         add_range_constraints!(container, T, U, devices, model, X)
     end
+    return
 end
 
 """
@@ -192,7 +193,7 @@ function get_min_max_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{ThermalCompactDispatch},
 )
-    (
+    return (
         min=0.0,
         max=PSY.get_active_power_limits(device).max -
             PSY.get_active_power_limits(device).min,
@@ -254,6 +255,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: AbstractThermalUnitCommitment}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
+    return
 end
 
 """
@@ -264,7 +266,7 @@ function get_startup_shutdown_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:ThermalMultiStartUnitCommitment},
 )
-    PSY.get_power_trajectory(device)
+    return PSY.get_power_trajectory(device)
 end
 
 """
@@ -275,7 +277,7 @@ function get_min_max_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractCompactUnitCommitment},
 ) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
-    (
+    return (
         min=0,
         max=PSY.get_active_power_limits(device).max -
             PSY.get_active_power_limits(device).min,
@@ -290,7 +292,7 @@ function get_startup_shutdown_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractCompactUnitCommitment},
 )
-    (
+    return (
         startup=PSY.get_active_power_limits(device).max,
         shutdown=PSY.get_active_power_limits(device).max,
     )
@@ -390,6 +392,7 @@ function add_constraints!(
             )
         end
     end
+    return
 end
 
 function add_constraints!(
@@ -425,6 +428,7 @@ function add_constraints!(
         con_lb[name, t] =
             JuMP.@constraint(container.JuMPmodel, expression_products[name, t] >= 0)
     end
+    return
 end
 
 function add_constraints!(
@@ -487,6 +491,7 @@ function add_constraints!(
             )
         end
     end
+    return
 end
 
 function add_constraints!(
@@ -531,7 +536,7 @@ function get_min_max_limits(
     ::Type{ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalDispatchFormulation},
 )
-    PSY.get_reactive_power_limits(device)
+    return PSY.get_reactive_power_limits(device)
 end
 
 """
@@ -542,7 +547,7 @@ function get_min_max_limits(
     ::Type{ReactivePowerVariableLimitsConstraint},
     ::Type{<:AbstractThermalUnitCommitment},
 )
-    PSY.get_reactive_power_limits(device)
+    return PSY.get_reactive_power_limits(device)
 end
 
 function add_constraints!(
@@ -695,7 +700,7 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    key::AuxVarKey{TimeDurationOff, T},
+    ::AuxVarKey{TimeDurationOff, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_variable_results = get_variable(container, OnVariable(), T)
@@ -739,7 +744,7 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    key::AuxVarKey{PowerOutput, T},
+    ::AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
     devices = PSY.get_components(T, system)
@@ -1144,10 +1149,10 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{DurationConstraint},
-    devices::IS.FlattenIteratorWrapper{U},
-    model::DeviceModel{U, V},
-    W::Type{<:PM.AbstractPowerModel},
+    ::Type{DurationConstraint},
+    ::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
@@ -1184,7 +1189,7 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{DurationConstraint},
+    ::Type{DurationConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, ThermalMultiStartUnitCommitment},
     W::Type{<:PM.AbstractPowerModel},

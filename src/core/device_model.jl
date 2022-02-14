@@ -84,6 +84,7 @@ function _set_model!(
         @warn "Overwriting $(D) existing model"
     end
     dict[key] = model
+    return
 end
 
 has_service_model(model::DeviceModel) = !isempty(get_services(model))

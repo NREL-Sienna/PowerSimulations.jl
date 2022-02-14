@@ -479,6 +479,7 @@ function check_constraint_count(
         meta="dn",
         filter_func=x -> x.name in set_name,
     )
+    return
 end
 
 function check_constraint_count(
@@ -505,7 +506,7 @@ function check_constraint_count(
         meta="up",
         filter_func=x -> x.name in set_name,
     )
-    check_constraint_count(
+    return check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
@@ -523,7 +524,7 @@ function check_constraint_count(
     _devices =
         filter!(x -> x.must_run, collect(get_components(T, model.sys, x -> x.available)))
     set_name = PSY.get_name.(_devices)
-    check_constraint_count(
+    return check_constraint_count(
         model,
         PSI.MustRunConstraint(),
         T,

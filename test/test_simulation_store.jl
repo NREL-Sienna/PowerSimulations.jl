@@ -71,6 +71,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
     )
     em_reqs = SimulationModelStoreRequirements()
     initialize_problem_storage!(store, params, model_reqs, em_reqs, cache_rules)
+    return
 end
 
 function _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)

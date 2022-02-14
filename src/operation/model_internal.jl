@@ -57,6 +57,7 @@ end
 
 function add_recorder!(internal::ModelInternal, recorder::Symbol)
     push!(internal.recorders, recorder)
+    return
 end
 
 get_recorders(internal::ModelInternal) = internal.recorders

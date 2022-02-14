@@ -42,6 +42,7 @@ function add_rule!(
 )
     key = OptimizationResultCacheKey(model_name, op_container_key)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
+    return
 end
 
 function get_rule(x::CacheFlushRules, model, op_container_key)

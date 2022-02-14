@@ -75,7 +75,14 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
-        new{M}(name, template, sys, internal, DecisionModelStore(), Dict{String, Any}())
+        return new{M}(
+            name,
+            template,
+            sys,
+            internal,
+            DecisionModelStore(),
+            Dict{String, Any}(),
+        )
     end
 end
 
@@ -318,6 +325,7 @@ DecisionProblem specification. Overload this function to implement a custom buil
 """
 function build_model!(model::DecisionModel)
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
+    return
 end
 
 function reset!(model::DecisionModel)
