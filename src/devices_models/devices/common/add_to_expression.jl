@@ -35,7 +35,7 @@ function add_expressions!(
         names,
         subcomp_keys,
         time_steps;
-        sparse = true,
+        sparse=true,
     )
     return
 end

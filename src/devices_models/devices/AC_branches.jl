@@ -1,9 +1,15 @@
 # Abstract Line Models
-""" Branch type to add unbounded flow variables and use flow constraints"""
+"""
+Branch type to add unbounded flow variables and use flow constraints
+"""
 struct StaticBranch <: AbstractBranchFormulation end
-""" Branch type to add bounded flow variables and use flow constraints"""
+"""
+Branch type to add bounded flow variables and use flow constraints
+"""
 struct StaticBranchBounds <: AbstractBranchFormulation end
-""" Branch type to avoid flow constraints"""
+"""
+Branch type to avoid flow constraints
+"""
 struct StaticBranchUnbounded <: AbstractBranchFormulation end
 
 # Note: Any future concrete formulation requires the definition of
@@ -73,7 +79,7 @@ function branch_rate_bounds!(
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
     for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
+        limit_values = (min=-1 * PSY.get_rate(d), max=PSY.get_rate(d))
         name = PSY.get_name(d)
         for t in get_time_steps(container)
             _var = var[name, t]
@@ -95,7 +101,7 @@ function branch_rate_bounds!(
         get_variable(container, FlowActivePowerToFromVariable(), B),
     ]
     for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
+        limit_values = (min=-1 * PSY.get_rate(d), max=PSY.get_rate(d))
         name = PSY.get_name(d)
         for t in get_time_steps(container), var in vars
             _var = var[name, t]
@@ -116,7 +122,7 @@ function get_min_max_limits(
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    (min = -1 * PSY.get_rate(device), max = PSY.get_rate(device))
+    return (min=-1 * PSY.get_rate(device), max=PSY.get_rate(device))
 end
 
 """
@@ -130,6 +136,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
     add_range_constraints!(container, cons_type, FlowActivePowerVariable, devices, model, X)
+    return
 end
 
 """
@@ -257,7 +264,7 @@ function get_min_max_limits(
         PSY.get_flow_limits(device).to_from,
         PSY.get_flow_limits(device).from_to,
     )
-    minmax = (min = -1 * limit, max = limit)
+    minmax = (min=-1 * limit, max=limit)
     return minmax
 end
 
@@ -280,6 +287,7 @@ function branch_flow_constraints!(
         model,
         X,
     )
+    return
 end
 
 """
@@ -291,7 +299,7 @@ function branch_flow_constraints!(
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractDCPModel},
 ) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
-    nothing
+    return
 end
 
 """
@@ -307,9 +315,9 @@ function get_min_max_limits(
             "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
         )
     end
-    (
-        min = -1 * PSY.get_flow_limits(device).from_to,
-        max = PSY.get_flow_limits(device).from_to,
+    return (
+        min=-1 * PSY.get_flow_limits(device).from_to,
+        max=PSY.get_flow_limits(device).from_to,
     )
 end
 
@@ -327,8 +335,8 @@ function get_min_max_limits(
         )
     end
     return (
-        min = -1 * PSY.get_flow_limits(device).to_from,
-        max = PSY.get_flow_limits(device).to_from,
+        min=-1 * PSY.get_flow_limits(device).to_from,
+        max=PSY.get_flow_limits(device).to_from,
     )
 end
 
@@ -357,6 +365,7 @@ function branch_flow_constraints!(
         model,
         X,
     )
+    return
 end
 
 """
@@ -368,5 +377,5 @@ function branch_flow_constraints!(
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
-    nothing
+    return
 end

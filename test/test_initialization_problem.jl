@@ -14,11 +14,11 @@ sys_rts = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
         model = DecisionModel(
             template,
             sys_rts;
-            optimizer = HiGHS_optimizer,
-            initial_time = init_time,
-            horizon = 48,
+            optimizer=HiGHS_optimizer,
+            initial_time=init_time,
+            horizon=48,
         )
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(model, ActivePowerVariable(), ThermalStandard)
@@ -44,29 +44,29 @@ sys_rts = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "lb",
+            meta="lb",
         )
         check_constraint_count(
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(model, DurationConstraint(), ThermalStandard)
         check_constraint_count(model, RampConstraint(), ThermalStandard)
         check_constraint_count(model, CommitmentConstraint(), ThermalStandard)
-        check_constraint_count(model, CommitmentConstraint(), ThermalStandard; meta = "aux")
+        check_constraint_count(model, CommitmentConstraint(), ThermalStandard; meta="aux")
         check_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             RenewableDispatch;
-            meta = "ub",
+            meta="ub",
         )
 
         # @test solve!(model) == RunStatus.SUCCESSFUL
@@ -87,11 +87,11 @@ end
         model = DecisionModel(
             template,
             sys_rts;
-            optimizer = HiGHS_optimizer,
-            initial_time = init_time,
-            horizon = 48,
+            optimizer=HiGHS_optimizer,
+            initial_time=init_time,
+            horizon=48,
         )
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(model, ActivePowerVariable(), ThermalStandard)
@@ -114,40 +114,40 @@ end
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "lb",
+            meta="lb",
         )
         check_constraint_count(
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(model, CommitmentConstraint(), ThermalStandard)
-        check_constraint_count(model, CommitmentConstraint(), ThermalStandard; meta = "aux")
+        check_constraint_count(model, CommitmentConstraint(), ThermalStandard; meta="aux")
 
         check_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             RenewableDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableLimitsConstraint(),
             HydroDispatch;
-            meta = "lb",
+            meta="lb",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
 
         # @test solve!(model) == RunStatus.SUCCESSFUL
@@ -168,9 +168,9 @@ end
         model = DecisionModel(
             template,
             sys_rts;
-            optimizer = HiGHS_optimizer,
-            initial_time = init_time,
-            horizon = 48,
+            optimizer=HiGHS_optimizer,
+            initial_time=init_time,
+            horizon=48,
         )
         setup_ic_model_container!(model)
         ####### Check initialization problem constraints #####
@@ -178,13 +178,13 @@ end
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "lb",
+            meta="lb",
         )
         check_initialization_constraint_count(
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "ub",
+            meta="ub",
         )
         check_initialization_constraint_count(
             model,
@@ -195,34 +195,34 @@ end
             model,
             CommitmentConstraint(),
             ThermalStandard;
-            meta = "aux",
+            meta="aux",
         )
         check_initialization_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             RenewableDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_initialization_constraint_count(
             model,
             ActivePowerVariableLimitsConstraint(),
             HydroDispatch;
-            meta = "lb",
+            meta="lb",
         )
         check_initialization_constraint_count(
             model,
             ActivePowerVariableLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_initialization_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
         PSI.reset!(model)
-        @test build!(model; output_dir = mktempdir(cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(
@@ -255,41 +255,41 @@ end
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "lb",
+            meta="lb",
         )
         check_constraint_count(
             model,
             ActivePowerVariableLimitsConstraint(),
             ThermalStandard;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(model, RampConstraint(), ThermalStandard)
         check_constraint_count(model, DurationConstraint(), ThermalStandard)
         check_constraint_count(model, CommitmentConstraint(), ThermalStandard)
-        check_constraint_count(model, CommitmentConstraint(), ThermalStandard; meta = "aux")
+        check_constraint_count(model, CommitmentConstraint(), ThermalStandard; meta="aux")
         check_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             RenewableDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableTimeSeriesLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableLimitsConstraint(),
             HydroDispatch;
-            meta = "lb",
+            meta="lb",
         )
         check_constraint_count(
             model,
             PSI.ActivePowerVariableLimitsConstraint(),
             HydroDispatch;
-            meta = "ub",
+            meta="ub",
         )
 
         # @test solve!(model) == RunStatus.SUCCESSFUL

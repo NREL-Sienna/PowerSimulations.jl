@@ -7,7 +7,8 @@ function add_variables!(
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     formulation::Union{AbstractServiceFormulation, AbstractDeviceFormulation},
 ) where {T <: VariableType, U <: PSY.Component}
-    add_variable!(container, T(), devices, formulation)
+    return add_variable!(container, T(), devices, formulation)
+    return
 end
 
 """
@@ -21,6 +22,7 @@ function add_variables!(
     formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component}
     add_service_variable!(container, T(), service, contributing_devices, formulation)
+    return
 end
 
 """
@@ -33,6 +35,7 @@ function add_variables!(
     formulation::AbstractDeviceFormulation,
 ) where {T <: SubComponentVariableType, U <: PSY.Component}
     add_variable!(container, T(), devices, formulation)
+    return
 end
 
 get_subcomponent_types(::Type{ComponentActivePowerVariable}) =
@@ -191,7 +194,7 @@ function add_variable!(
         [PSY.get_name(d) for d in devices],
         subcomp_keys,
         time_steps;
-        sparse = true,
+        sparse=true,
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types

@@ -24,14 +24,14 @@ if isfile("docs/src/howto/.DS_Store.md")
 end
 
 makedocs(
-    sitename = "PowerSimulations.jl",
-    format = Documenter.HTML(
-        mathengine = Documenter.MathJax(),
-        prettyurls = get(ENV, "CI", nothing) == "true",
+    sitename="PowerSimulations.jl",
+    format=Documenter.HTML(
+        mathengine=Documenter.MathJax(),
+        prettyurls=get(ENV, "CI", nothing) == "true",
     ),
-    modules = [PowerSimulations],
-    authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
-    pages = Any[
+    modules=[PowerSimulations],
+    authors="Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
+    pages=Any[
         "Introduction" => "index.md",
         #"Quick Start Guide" => "qs_guide.md",
         #"Logging" => "man/logging.md",
@@ -52,10 +52,10 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/NREL-SIIP/PowerSimulations.jl.git",
-    target = "build",
-    branch = "gh-pages",
-    devbranch = "master",
-    devurl = "dev",
-    versions = ["stable" => "v^", "v#.#"],
+    repo="github.com/NREL-SIIP/PowerSimulations.jl.git",
+    target="build",
+    branch="gh-pages",
+    devbranch="master",
+    devurl="dev",
+    versions=["stable" => "v^", "v#.#"],
 )

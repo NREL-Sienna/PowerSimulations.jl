@@ -129,8 +129,8 @@ get_min_max_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractHybridFormulation},
 ) = (
-    min = -1 * PSY.get_input_active_power_limits(device).max,
-    max = PSY.get_output_active_power_limits(device).max,
+    min=-1 * PSY.get_input_active_power_limits(device).max,
+    max=PSY.get_output_active_power_limits(device).max,
 )
 
 get_min_max_limits(
@@ -186,7 +186,7 @@ function add_lower_bound_range_constraints_impl!(
         component_type,
         device_names,
         time_steps,
-        meta = "lb",
+        meta="lb",
     )
 
     for device in devices, t in time_steps
@@ -220,7 +220,7 @@ function add_upper_bound_range_constraints_impl!(
         component_type,
         device_names,
         time_steps,
-        meta = "ub",
+        meta="ub",
     )
 
     for device in devices, t in time_steps
@@ -255,7 +255,7 @@ function add_parameterized_upper_bound_range_constraints_impl!(
         component_type,
         names,
         time_steps,
-        meta = "re ub",
+        meta="re ub",
     )
 
     parameter = get_parameter_array(container, P(), V)
@@ -280,6 +280,7 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     add_range_constraints!(container, T, U, devices, model, X)
+    return
 end
 
 function add_constraints!(
@@ -301,6 +302,7 @@ function add_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_constraints!(
@@ -313,6 +315,7 @@ function add_constraints!(
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     array = get_expression(container, U(), V)
     add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    return
 end
 
 function add_constraints!(
@@ -333,6 +336,7 @@ function add_constraints!(
         devices,
         model,
     )
+    return
 end
 
 function add_constraints!(
@@ -348,6 +352,7 @@ function add_constraints!(
     else
         add_range_constraints!(container, T, U, devices, model, X)
     end
+    return
 end
 
 function add_constraints!(
@@ -363,6 +368,7 @@ function add_constraints!(
     else
         add_range_constraints!(container, T, U, devices, model, X)
     end
+    return
 end
 
 function add_constraints!(
@@ -385,8 +391,8 @@ function add_constraints!(
         device_names,
         subcomp_types,
         time_steps;
-        meta = "ub",
-        sparse = true,
+        meta="ub",
+        sparse=true,
     )
     constraint_lb = add_constraints_container!(
         container,
@@ -395,8 +401,8 @@ function add_constraints!(
         device_names,
         subcomp_types,
         time_steps;
-        meta = "lb",
-        sparse = true,
+        meta="lb",
+        sparse=true,
     )
 
     for t in time_steps, d in devices, subcomp in subcomp_types
@@ -409,6 +415,7 @@ function add_constraints!(
         constraint_lb[name, subcomp, t] =
             JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] >= limits.min)
     end
+    return
 end
 ######################## Energy balance constraints ############################
 
@@ -590,7 +597,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "up",
+        meta="up",
     )
     con_dn = add_constraints_container!(
         container,
@@ -598,7 +605,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "dn",
+        meta="dn",
     )
 
     for d in devices, t in time_steps
@@ -637,7 +644,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "up",
+        meta="up",
     )
     con_dn = add_constraints_container!(
         container,
@@ -645,7 +652,7 @@ function add_constraints!(
         T,
         names,
         time_steps,
-        meta = "dn",
+        meta="dn",
     )
 
     for d in devices, t in time_steps
@@ -746,9 +753,9 @@ function AddCostSpec(
     psi_container::OptimizationContainer,
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
-        component_type = T,
-        variable_cost = PSY.get_variable,
-        fixed_cost = PSY.get_fixed,
+        variable_type=ActivePowerVariable,
+        component_type=T,
+        variable_cost=PSY.get_variable,
+        fixed_cost=PSY.get_fixed,
     )
 end

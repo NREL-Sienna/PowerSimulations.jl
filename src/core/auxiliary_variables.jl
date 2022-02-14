@@ -5,7 +5,7 @@ end
 function AuxVarKey(
     ::Type{T},
     ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: AuxVariableType, U <: PSY.Component}
     if isabstracttype(U)
         error("Type $U can't be abstract")
@@ -19,7 +19,9 @@ get_component_type(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Comp
 struct TimeDurationOn <: AuxVariableType end
 struct TimeDurationOff <: AuxVariableType end
 
-""" Auxiliary Variable for Thermal Generation Models that solve for power above min"""
+"""
+Auxiliary Variable for Thermal Generation Models that solve for power above min
+"""
 struct PowerOutput <: AuxVariableType end
 
 should_write_resulting_value(::Type{<:AuxVariableType}) = true

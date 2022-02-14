@@ -36,6 +36,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    return
 end
 
 function construct_device!(
@@ -103,6 +104,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    return
 end
 
 function construct_device!(
@@ -169,6 +171,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    return
 end
 
 function construct_device!(
@@ -229,6 +232,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    return
 end
 
 function construct_device!(
@@ -284,6 +288,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -305,6 +310,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -351,6 +357,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -375,6 +382,7 @@ function construct_device!(
         model,
         S,
     )
+    return
 end
 
 function construct_device!(
@@ -399,9 +407,9 @@ function construct_device!(
     new_model = DeviceModel(
         L,
         StaticPowerLoad,
-        feedforwards = model.feedforwards,
-        time_series_names = model.time_series_names,
-        attributes = model.attributes,
+        feedforwards=model.feedforwards,
+        time_series_names=model.time_series_names,
+        attributes=model.attributes,
     )
     construct_device!(container, sys, ccs, new_model, S)
     return

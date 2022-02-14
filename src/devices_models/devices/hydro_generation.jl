@@ -313,7 +313,7 @@ function get_min_max_limits(
     ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchRunOfRiver},
 )
-    return (min = 0.0, max = PSY.get_max_active_power(x))
+    return (min=0.0, max=PSY.get_max_active_power(x))
 end
 
 """
@@ -703,11 +703,11 @@ function AddCostSpec(
     # Hydro Generators currently have no OperationalCost
     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
-        variable_type = ActivePowerVariable,
-        component_type = T,
-        fixed_cost = PSY.get_fixed,
-        variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+        variable_type=ActivePowerVariable,
+        component_type=T,
+        fixed_cost=PSY.get_fixed,
+        variable_cost=cost_function,
+        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
 
@@ -720,10 +720,10 @@ function AddCostSpec(
     # Hydro Generators currently have no OperationalCost
     cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
     return AddCostSpec(;
-        variable_type = ActivePowerOutVariable,
-        component_type = T,
-        fixed_cost = PSY.get_fixed,
-        variable_cost = cost_function,
-        multiplier = OBJECTIVE_FUNCTION_POSITIVE,
+        variable_type=ActivePowerOutVariable,
+        component_type=T,
+        fixed_cost=PSY.get_fixed,
+        variable_cost=cost_function,
+        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
     )
 end

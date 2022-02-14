@@ -39,14 +39,16 @@ Creates a `ProblemTemplate` with default DeviceModels for a Unit Commitment
 problem.
 
 # Example
-```julia
+
 template = template_unit_commitment()
+
 ```
 
 # Accepted Key Words
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
 - `services::Vector{ServiceModel}` : override default `ServiceModel` settings
+```
 """
 function template_unit_commitment(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -68,14 +70,16 @@ Creates a `ProblemTemplate` with default DeviceModels for an Economic Dispatch
 problem.
 
 # Example
-```julia
+
 template = template_economic_dispatch()
+
 ```
 
 # Accepted Key Words
 - `network::Type{<:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
 - `services::Vector{ServiceModel}` : override default `ServiceModel` settings
+```
 """
 function template_economic_dispatch(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -97,9 +101,8 @@ end
 Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
 
 # Example
-```julia
+
 template = agc_reserve_deployment()
-```
 """
 function template_agc_reserve_deployment(; kwargs...)
     if !isempty(kwargs)

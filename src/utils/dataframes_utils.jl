@@ -3,8 +3,9 @@
 Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 
 # Arguments
-- `array`: JuMP DenseAxisArray or SparseAxisArray to convert
-- `key::OptimizationContainerKey`:
+
+  - `array`: JuMP DenseAxisArray or SparseAxisArray to convert
+  - `key::OptimizationContainerKey`:
 """
 function axis_array_to_dataframe(
     array::Union{DenseAxisArray, SparseAxisArray},

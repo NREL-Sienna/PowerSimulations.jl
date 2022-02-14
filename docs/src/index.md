@@ -1,9 +1,5 @@
 # PowerSimulations.jl
 
-```@meta
-CurrentModule = PowerSimulations
-```
-
 ### Overview
 
 PowerSimulations.jl is a Julia/JuMP package designed to develop and study power system operation models in steady-state. It uses the data model implemented in [`PowerSystems.jl`](https://github.com/NREL/PowerSystems.jl) to construct optimization models.

@@ -72,7 +72,8 @@ end
 Checks the hash value for each file made with the file is written with the new hash_value to verify the file hasn't been tampered with since written
 
 # Arguments
-- `path::String`: this is the folder path that contains the results and the check.sha256 file
+
+  - `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
 function check_file_integrity(path::String)
     matched = true

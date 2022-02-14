@@ -7,6 +7,7 @@ end
 
 function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
+    return
 end
 
 function jump_value(input::JuMP.VariableRef)::Float64
@@ -127,19 +128,25 @@ end
 
 to_matrix(array::Array) = array
 
-""" Returns the correct container spec for the selected type of JuMP Model"""
+"""
+Returns the correct container spec for the selected type of JuMP Model
+"""
 function container_spec(::Type{T}, axs...) where {T <: Any}
     return DenseAxisArray{T}(undef, axs...)
 end
 
-""" Returns the correct container spec for the selected type of JuMP Model"""
+"""
+Returns the correct container spec for the selected type of JuMP Model
+"""
 function container_spec(::Type{Float64}, axs...)
     cont = DenseAxisArray{Float64}(undef, axs...)
     cont.data .= fill(NaN, size(cont.data))
     return cont
 end
 
-""" Returns the correct container spec for the selected type of JuMP Model"""
+"""
+Returns the correct container spec for the selected type of JuMP Model
+"""
 function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
@@ -208,7 +215,7 @@ Run this function only when getting detailed solver stats
 """
 function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
     # JuMP.solution_summary uses a lot of try-catch so it has a performance hit and should be opt-in
-    jump_summary = JuMP.solution_summary(jump_model, verbose = false)
+    jump_summary = JuMP.solution_summary(jump_model, verbose=false)
     # Note we don't grab all the fields from the summary because not all can be encoded as Float for HDF store
     fields = [
         :has_values, # Bool
@@ -241,15 +248,14 @@ end
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
 
-    try_s =
-        get!(jump_model.ext, :try_supports_solvetime, (trycatch = true, supports = true))
+    try_s = get!(jump_model.ext, :try_supports_solvetime, (trycatch=true, supports=true))
     if try_s.trycatch
         try
             solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
-            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = true)
+            jump_model.ext[:try_supports_solvetime] = (trycatch=false, supports=true)
         catch
             @debug "SolveTimeSec() property not supported by the Solver"
-            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = false)
+            jump_model.ext[:try_supports_solvetime] = (trycatch=false, supports=false)
         end
     else
         if try_s.supports
@@ -278,9 +284,11 @@ function write_optimizer_stats!(optimizer_stats::OptimizerStats, jump_model::JuM
     return
 end
 
-""" Exports the JuMP object in MathOptFormat"""
+"""
+Exports the JuMP object in MathOptFormat
+"""
 function serialize_optimization_model(jump_model::JuMP.Model, save_path::String)
-    MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
+    MOF_model = MOPFM(format=MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(jump_model))
     MOI.write_to_file(MOF_model, save_path)
     return

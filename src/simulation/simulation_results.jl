@@ -25,11 +25,12 @@ end
 Construct SimulationResults from a simulation output directory.
 
 # Arguments
-- `path::AbstractString`: Simulation output directory
-- `execution::AbstractString`: Execution number. Default is the most recent.
-- `ignore_status::Bool`: If true, return results even if the simulation failed.
+
+  - `path::AbstractString`: Simulation output directory
+  - `execution::AbstractString`: Execution number. Default is the most recent.
+  - `ignore_status::Bool`: If true, return results even if the simulation failed.
 """
-function SimulationResults(path::AbstractString, execution = nothing; ignore_status = false)
+function SimulationResults(path::AbstractString, execution=nothing; ignore_status=false)
     # path will be either the execution_path or the directory containing all executions.
     contents = readdir(path)
     if "data_store" in contents
@@ -64,7 +65,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
         HdfSimulationStore,
         simulation_store_path,
         "r",
-        problem_path = problem_path,
+        problem_path=problem_path,
     ) do store
         problem_results = Dict{String, SimulationProblemResults}()
         sim_params = get_params(store)
@@ -87,7 +88,7 @@ end
 """
 Construct SimulationResults from a simulation.
 """
-function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
+function SimulationResults(sim::Simulation; ignore_status=false, kwargs...)
     if get_simulation_store(sim) isa InMemorySimulationStore
         _check_status(get_simulation_status(sim), ignore_status)
         store = get_simulation_store(sim)
@@ -103,7 +104,7 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
                 problem_params,
                 sim_params,
                 execution_path,
-                system = get_system(model),
+                system=get_system(model),
             )
             problem_results[name] = problem_result
         end
@@ -112,7 +113,7 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
     else
         return SimulationResults(
             get_simulation_dir(sim);
-            ignore_status = ignore_status,
+            ignore_status=ignore_status,
             kwargs...,
         )
     end
@@ -140,9 +141,10 @@ list_problems(results::SimulationResults) = collect(keys(results.problem_results
 Export results to files in the results directory.
 
 # Arguments
-- `results::SimulationResults`: simulation results
-- `exports`: SimulationResultsExport or anything that can be passed to its constructor.
-  (such as Dict or path to JSON file)
+
+  - `results::SimulationResults`: simulation results
+  - `exports`: SimulationResultsExport or anything that can be passed to its constructor.
+    (such as Dict or path to JSON file)
 
 An example JSON file demonstrating possible options is below. Note that `start_time`,
 `end_time`, `path`, and `format` are optional.
@@ -178,6 +180,7 @@ An example JSON file demonstrating possible options is below. Note that `start_t
   "path": null,
   "format": "csv"
 }
+
 ```
 """
 function export_results(results::SimulationResults, exports)
@@ -190,7 +193,7 @@ function export_results(results::SimulationResults, exports)
             HdfSimulationStore,
             simulation_store_path,
             "r",
-            problem_path = problem_path,
+            problem_path=problem_path,
         ) do store
             export_results(results, exports, store)
         end
@@ -218,9 +221,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_variable(
                         problem_results,
                         name;
-                        initial_time = timestamp,
-                        count = 1,
-                        store = store,
+                        initial_time=timestamp,
+                        count=1,
+                        store=store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -232,9 +235,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_parameter(
                         problem_results,
                         name;
-                        initial_time = timestamp,
-                        count = 1,
-                        store = store,
+                        initial_time=timestamp,
+                        count=1,
+                        store=store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -246,9 +249,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_dual(
                         problem_results,
                         name;
-                        initial_time = timestamp,
-                        count = 1,
-                        store = store,
+                        initial_time=timestamp,
+                        count=1,
+                        store=store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -257,7 +260,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
 
         if problem_exports.optimizer_stats
             export_path = joinpath(path, problem_results.problem, "optimizer_stats.csv")
-            df = read_optimizer_stats(problem_results, store = store)
+            df = read_optimizer_stats(problem_results, store=store)
             export_result(file_type, export_path, df)
         end
     end

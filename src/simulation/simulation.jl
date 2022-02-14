@@ -23,7 +23,7 @@ mutable struct Simulation
         steps::Int,
         models::SimulationModels,
         simulation_folder::String,
-        initial_time = nothing,
+        initial_time=nothing,
     )
         for model in get_decision_models(models)
             if model.internal.simulation_info.sequence_uuid != sequence.uuid
@@ -57,11 +57,12 @@ Constructs Simulation from a serialized directory. Callers should pass any kwarg
 they passed to the original Simulation.
 
 # Arguments
-- `directory::AbstractString`: the directory returned from the call to serialize
-- `model_info::Dict`: Two-level dictionary containing model parameters that cannot be
-  serialized. The outer dict should be keyed by the problem name. The inner dict must contain
-  'optimizer' and may contain 'jump_model'. These should be the same values used for the
-  original simulation.
+
+  - `directory::AbstractString`: the directory returned from the call to serialize
+  - `model_info::Dict`: Two-level dictionary containing model parameters that cannot be
+    serialized. The outer dict should be keyed by the problem name. The inner dict must contain
+    'optimizer' and may contain 'jump_model'. These should be the same values used for the
+    original simulation.
 """
 function Simulation(directory::AbstractString, model_info::Dict)
     return deserialize_model(Simulation, directory, model_info)
@@ -164,7 +165,7 @@ Manually provided initial times have to be compatible with the specified interva
         ini_time, ts_length =
             PSY.check_time_series_consistency(system, PSY.SingleTimeSeries)
         resolution = PSY.get_time_series_resolution(system)
-        em_available_times = range(ini_time, step = resolution, length = ts_length)
+        em_available_times = range(ini_time, step=resolution, length=ts_length)
         if get_initial_time(sim) ∉ em_available_times
             throw(
                 IS.ConflictingInputsError(
@@ -378,8 +379,8 @@ function _initialize_problem_storage!(
     decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
     dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     rules = CacheFlushRules(
-        max_size = cache_size_mib * MiB,
-        min_flush_size = min_cache_flush_size_mib,
+        max_size=cache_size_mib * MiB,
+        min_flush_size=min_cache_flush_size_mib,
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
@@ -514,24 +515,25 @@ end
 Build the Simulation, problems and the related folder structure
 
 # Arguments
-- `sim::Simulation`: simulation object
-- `output_dir` = nothing: Name of the output directory for the simulation. If nothing, the
-   folder will have the same name as the simulation
-- `serialize::Bool = true`: serializes the simulation objects in the simulation
-- `recorders::Vector{Symbol} = []`: recorder names to register
-- `console_level = Logging.Error`:
-- `file_level = Logging.Info`:
+
+  - `sim::Simulation`: simulation object
+  - `output_dir` = nothing: Name of the output directory for the simulation. If nothing, the
+    folder will have the same name as the simulation
+  - `serialize::Bool = true`: serializes the simulation objects in the simulation
+  - `recorders::Vector{Symbol} = []`: recorder names to register
+  - `console_level = Logging.Error`:
+  - `file_level = Logging.Info`:
 
 Throws an exception if name is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
-    output_dir = nothing,
-    recorders = [],
-    console_level = Logging.Error,
-    file_level = Logging.Info,
-    serialize = true,
-    initialize_problem = false,
+    output_dir=nothing,
+    recorders=[],
+    console_level=Logging.Error,
+    file_level=Logging.Info,
+    serialize=true,
+    initialize_problem=false,
 )
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
@@ -683,7 +685,9 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     return
 end
 
-""" Default problem update function for most problems with no customization"""
+"""
+Default problem update function for most problems with no customization
+"""
 function update_model!(model::OperationModel, sim::Simulation)
     if get_requires_rebuild(model)
         # TODO: Implement this case where the model is re-built
@@ -696,12 +700,12 @@ end
 
 function _execute!(
     sim::Simulation;
-    cache_size_mib = 1024,
-    min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
-    exports = nothing,
-    enable_progress_bar = progress_meter_enabled(),
-    disable_timer_outputs = false,
-    serialize = true,
+    cache_size_mib=1024,
+    min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
+    exports=nothing,
+    enable_progress_bar=progress_meter_enabled(),
+    disable_timer_outputs=false,
+    serialize=true,
 )
     @assert sim.internal !== nothing
 
@@ -724,7 +728,7 @@ function _execute!(
     sequence = get_sequence(sim)
     models = get_models(sim)
 
-    prog_bar = ProgressMeter.Progress(num_executions; enabled = enable_progress_bar)
+    prog_bar = ProgressMeter.Progress(num_executions; enabled=enable_progress_bar)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
     store = get_simulation_store(sim)
     for step in 1:steps
@@ -758,7 +762,7 @@ function _execute!(
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
                     status =
-                        solve!(step, model, get_current_time(sim), store; exports = exports)
+                        solve!(step, model, get_current_time(sim), store; exports=exports)
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
@@ -791,7 +795,7 @@ function _execute!(
                 ProgressMeter.update!(
                     prog_bar,
                     global_problem_execution_count;
-                    showvalues = [
+                    showvalues=[
                         (:Step, step),
                         (:model, model_name),
                         (:("Simulation Timestamp"), get_current_time(sim)),
@@ -815,16 +819,16 @@ end
 Solves the simulation model for sequential Simulations.
 
 # Arguments
-- `sim::Simulation=sim`: simulation object created by Simulation()
+
+  - `sim::Simulation=sim`: simulation object created by Simulation()
 
 The optional keyword argument `exports` controls exporting of results to CSV files as
 the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
 
 # Example
-```julia
+
 sim = Simulation("Test", 7, problems, "/Users/folder")
 execute!(sim::Simulation; kwargs...)
-```
 """
 function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
@@ -896,12 +900,13 @@ Serialize the simulation to a directory in path.
 Return the serialized simulation directory name that is created.
 
 # Arguments
-- `sim::Simulation`: simulation to serialize
-- `path = "."`: path in which to create the serialzed directory
-- `force = false`: If true, delete the directory if it already exists. Otherwise, it will
-   throw an exception.
+
+  - `sim::Simulation`: simulation to serialize
+  - `path = "."`: path in which to create the serialzed directory
+  - `force = false`: If true, delete the directory if it already exists. Otherwise, it will
+    throw an exception.
 """
-function serialize_simulation(sim::Simulation; path = nothing, force = false)
+function serialize_simulation(sim::Simulation; path=nothing, force=false)
     if path === nothing
         directory = get_simulation_files_dir(sim)
     else
@@ -916,7 +921,7 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
             ),
         )
     end
-    rm(directory, recursive = true, force = true)
+    rm(directory, recursive=true, force=true)
     mkdir(directory)
 
     filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
@@ -970,7 +975,7 @@ function deserialize_model(
                     sys,
                     restore_from_copy(
                         wrapper.settings;
-                        optimizer = problem_info[key]["optimizer"],
+                        optimizer=problem_info[key]["optimizer"],
                     ),
                     get(problem_info[key], "jump_model", nothing),
                 ),
@@ -978,11 +983,11 @@ function deserialize_model(
         end
 
         sim = Simulation(;
-            name = obj.name,
-            steps = obj.steps,
-            models = SimulationModels(problems...),
-            problems_sequence = obj.sequence,
-            simulation_folder = obj.simulation_folder,
+            name=obj.name,
+            steps=obj.steps,
+            models=SimulationModels(problems...),
+            problems_sequence=obj.sequence,
+            simulation_folder=obj.simulation_folder,
         )
         return sim
     finally

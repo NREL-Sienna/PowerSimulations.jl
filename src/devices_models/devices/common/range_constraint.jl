@@ -14,7 +14,7 @@ function get_min_max_limits(
     ::Type{<:VariableType},
     ::Type{<:AbstractDeviceFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    return (min = 0.0, max = 0.0)
+    return (min=0.0, max=0.0)
 end
 
 @doc raw"""
@@ -134,7 +134,7 @@ function _add_lower_bound_range_constraints_impl!(
     device_names = [PSY.get_name(d) for d in devices]
 
     con_lb =
-        add_constraints_container!(container, T(), V, device_names, time_steps, meta = "lb")
+        add_constraints_container!(container, T(), V, device_names, time_steps, meta="lb")
 
     for device in devices, t in time_steps
         ci_name = PSY.get_name(device)
@@ -156,7 +156,7 @@ function _add_upper_bound_range_constraints_impl!(
     device_names = [PSY.get_name(d) for d in devices]
 
     con_ub =
-        add_constraints_container!(container, T(), V, device_names, time_steps, meta = "ub")
+        add_constraints_container!(container, T(), V, device_names, time_steps, meta="ub")
 
     for device in devices, t in time_steps
         ci_name = PSY.get_name(device)
@@ -284,7 +284,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [OnVariable()]
 
-    con_lb = add_constraints_container!(container, T(), V, names, time_steps, meta = "lb")
+    con_lb = add_constraints_container!(container, T(), V, names, time_steps, meta="lb")
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
     varbin = get_variable(container, only(binary_variables), V)
@@ -311,7 +311,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [OnVariable()]
 
-    con_ub = add_constraints_container!(container, T(), V, names, time_steps, meta = "ub")
+    con_ub = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
     varbin = get_variable(container, only(binary_variables), V)
@@ -405,7 +405,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     names = [PSY.get_name(x) for x in devices]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_lb = add_constraints_container!(container, T(), V, names, time_steps, meta = "lb")
+    con_lb = add_constraints_container!(container, T(), V, names, time_steps, meta="lb")
 
     for device in devices, t in time_steps
         ci_name = PSY.get_name(device)
@@ -439,7 +439,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     names = [PSY.get_name(x) for x in devices]
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
-    con_ub = add_constraints_container!(container, T(), V, names, time_steps, meta = "ub")
+    con_ub = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
 
     for device in devices, t in time_steps
         ci_name = PSY.get_name(device)
@@ -540,7 +540,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [ReservationVariable()]
 
-    con_lb = add_constraints_container!(container, T(), W, names, time_steps, meta = "lb")
+    con_lb = add_constraints_container!(container, T(), W, names, time_steps, meta="lb")
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
     varbin = get_variable(container, only(binary_variables), W)
@@ -572,7 +572,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [ReservationVariable()]
 
-    con_ub = add_constraints_container!(container, T(), W, names, time_steps, meta = "ub")
+    con_ub = add_constraints_container!(container, T(), W, names, time_steps, meta="ub")
 
     @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
     varbin = get_variable(container, only(binary_variables), W)
@@ -680,8 +680,7 @@ function _add_parameterized_lower_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
 
-    constraint =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "lb")
+    constraint = add_constraints_container!(container, T(), V, names, time_steps, meta="lb")
 
     parameter = get_parameter_array(container, U(), V)
     multiplier = get_parameter_multiplier_array(container, U(), V)
@@ -789,8 +788,7 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
 
-    constraint =
-        add_constraints_container!(container, T(), V, names, time_steps, meta = "ub")
+    constraint = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
 
     parameter = get_parameter_array(container, P(), V)
     multiplier = get_parameter_multiplier_array(container, P(), V)

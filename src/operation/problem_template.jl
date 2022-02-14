@@ -4,13 +4,16 @@ const ServicesModelContainer = Dict{Tuple{String, Symbol}, ServiceModel}
 
 """
     ProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
+
 Creates a model reference of the PowerSimulations Optimization Problem.
+
 # Arguments
-- `model::Type{T<:PM.AbstractPowerFormulation}`:
+
+  - `model::Type{T<:PM.AbstractPowerFormulation}`:
+
 # Example
-```julia
+
 template = ProblemTemplate(CopperPlatePowerModel)
-```
 """
 mutable struct ProblemTemplate
     network_model::NetworkModel{<:PM.AbstractPowerModel}
@@ -108,7 +111,7 @@ function set_service_model!(
     set_service_model!(
         template,
         service_name,
-        ServiceModel(service_type, formulation, use_service_name = true),
+        ServiceModel(service_type, formulation, use_service_name=true),
     )
     return
 end

@@ -2,20 +2,20 @@ function test_single_stage_sequential(in_memory)
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
     models = SimulationModels([
-        DecisionModel(template_ed, c_sys, name = "ED", optimizer = ipopt_optimizer),
+        DecisionModel(template_ed, c_sys, name="ED", optimizer=ipopt_optimizer),
     ])
     test_sequence =
-        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
+        SimulationSequence(models=models, ini_cond_chronology=InterProblemChronology())
     sim_single = Simulation(
-        name = "consecutive",
-        steps = 2,
-        models = models,
-        sequence = test_sequence,
-        simulation_folder = mktempdir(cleanup = true),
+        name="consecutive",
+        steps=2,
+        models=models,
+        sequence=test_sequence,
+        simulation_folder=mktempdir(cleanup=true),
     )
     build_out = build!(sim_single)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_single, in_memory = in_memory)
+    execute_out = execute!(sim_single, in_memory=in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
@@ -39,59 +39,49 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
         template_ed,
         NetworkModel(
             CopperPlatePowerModel,
-            duals = [CopperPlateBalanceConstraint],
-            use_slacks = true,
+            duals=[CopperPlateBalanceConstraint],
+            use_slacks=true,
         ),
     )
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     models = SimulationModels(
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = GLPK_optimizer,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = ipopt_optimizer,
-            ),
+        decision_models=[
+            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
+            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=ipopt_optimizer),
         ],
     )
 
     sequence = SimulationSequence(
-        models = models,
-        feedforwards = Dict(
+        models=models,
+        feedforwards=Dict(
             "ED" => [
                 SemiContinuousFeedforward(
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
+                    component_type=ThermalStandard,
+                    source=OnVariable,
+                    affected_values=[ActivePowerVariable],
                 ),
                 IntegralLimitFeedforward(
-                    component_type = HydroEnergyReservoir,
-                    source = ActivePowerVariable,
-                    affected_values = [ActivePowerVariable],
-                    number_of_periods = 12,
+                    component_type=HydroEnergyReservoir,
+                    source=ActivePowerVariable,
+                    affected_values=[ActivePowerVariable],
+                    number_of_periods=12,
                 ),
             ],
         ),
-        ini_cond_chronology = InterProblemChronology(),
+        ini_cond_chronology=InterProblemChronology(),
     )
     sim = Simulation(
-        name = "no_cache",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
+        name="no_cache",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
     )
 
-    build_out = build!(sim; console_level = Logging.Error)
+    build_out = build!(sim; console_level=Logging.Error)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim, in_memory = in_memory)
+    execute_out = execute!(sim, in_memory=in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
@@ -103,58 +93,48 @@ end
 
 function test_2_stages_with_storage_ems(in_memory)
     template_uc =
-        get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel, use_slacks = true))
+        get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel, use_slacks=true))
     template_ed =
-        get_template_hydro_st_ed(NetworkModel(CopperPlatePowerModel, use_slacks = true))
+        get_template_hydro_st_ed(NetworkModel(CopperPlatePowerModel, use_slacks=true))
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
     models = SimulationModels(
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = GLPK_optimizer,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = GLPK_optimizer,
-            ),
+        decision_models=[
+            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
+            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=GLPK_optimizer),
         ],
     )
 
     sequence_cache = SimulationSequence(
-        models = models,
-        feedforwards = Dict(
+        models=models,
+        feedforwards=Dict(
             "ED" => [
                 SemiContinuousFeedforward(
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
+                    component_type=ThermalStandard,
+                    source=OnVariable,
+                    affected_values=[ActivePowerVariable],
                 ),
                 IntegralLimitFeedforward(
-                    component_type = HydroEnergyReservoir,
-                    source = ActivePowerVariable,
-                    affected_values = [ActivePowerVariable],
-                    number_of_periods = 12,
+                    component_type=HydroEnergyReservoir,
+                    source=ActivePowerVariable,
+                    affected_values=[ActivePowerVariable],
+                    number_of_periods=12,
                 ),
             ],
         ),
-        ini_cond_chronology = InterProblemChronology(),
+        ini_cond_chronology=InterProblemChronology(),
     )
     sim_cache = Simulation(
-        name = "cache",
-        steps = 2,
-        models = models,
-        sequence = sequence_cache,
-        simulation_folder = mktempdir(cleanup = true),
+        name="cache",
+        steps=2,
+        models=models,
+        sequence=sequence_cache,
+        simulation_folder=mktempdir(cleanup=true),
     )
     build_out = build!(sim_cache)
     @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_cache, in_memory = in_memory)
+    execute_out = execute!(sim_cache, in_memory=in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
 
@@ -177,8 +157,8 @@ end
         NetworkModel(
             CopperPlatePowerModel;
             # Added because of data issues
-            use_slacks = true,
-            duals = [CopperPlateBalanceConstraint],
+            use_slacks=true,
+            duals=[CopperPlateBalanceConstraint],
         ),
     )
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
@@ -186,50 +166,40 @@ end
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     models = SimulationModels(
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = GLPK_optimizer,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = ipopt_optimizer,
-            ),
+        decision_models=[
+            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
+            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=ipopt_optimizer),
         ],
     )
 
     sequence = SimulationSequence(
-        models = models,
-        feedforwards = Dict(
+        models=models,
+        feedforwards=Dict(
             "ED" => [
                 SemiContinuousFeedforward(
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
+                    component_type=ThermalStandard,
+                    source=OnVariable,
+                    affected_values=[ActivePowerVariable],
                 ),
                 IntegralLimitFeedforward(
-                    component_type = HydroEnergyReservoir,
-                    source = ActivePowerVariable,
-                    affected_values = [ActivePowerVariable],
-                    number_of_periods = 12,
+                    component_type=HydroEnergyReservoir,
+                    source=ActivePowerVariable,
+                    affected_values=[ActivePowerVariable],
+                    number_of_periods=12,
                 ),
             ],
         ),
-        ini_cond_chronology = InterProblemChronology(),
+        ini_cond_chronology=InterProblemChronology(),
     )
     sim = Simulation(
-        name = "aggregation",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = false),
+        name="aggregation",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=false),
     )
 
-    build_out = build!(sim; console_level = Logging.Error)
+    build_out = build!(sim; console_level=Logging.Error)
     @test build_out == PSI.BuildStatus.BUILT
     execute_out = execute!(sim)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
@@ -240,13 +210,13 @@ end
         events = PSI.list_simulation_events(
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim);
-            step = 1,
+            step=1,
         )
         @test length(events) == 0
         events = PSI.list_simulation_events(
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim);
-            step = 2,
+            step=2,
         )
         # This value needs to be checked
         @test length(events) == 20
@@ -256,21 +226,21 @@ end
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim),
             ;
-            step = 2,
+            step=2,
         )
         events = PSI.list_simulation_events(
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim);
-            step = 1,
-            model_name = "UC",
+            step=1,
+            model_name="UC",
         )
         @test length(events) == 0
         events = PSI.list_simulation_events(
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim),
             ;
-            step = 2,
-            model_name = "UC",
+            step=2,
+            model_name="UC",
         )
         @test length(events) == 20
         PSI.show_simulation_events(
@@ -278,8 +248,8 @@ end
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim),
             ;
-            step = 2,
-            model_name = "UC",
+            step=2,
+            model_name="UC",
         )
     end
 
@@ -315,55 +285,55 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
     template_ha = deepcopy(template_uc)
     # network slacks added because of data issues
     template_ed = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel, use_slacks = true),
+        NetworkModel(CopperPlatePowerModel, use_slacks=true),
     )
 
     models = SimulationModels(
-        decision_models = [
+        decision_models=[
             DecisionModel(
                 template_uc,
                 sys_rts_da;
-                name = "UC",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                name="UC",
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
             DecisionModel(
                 template_ha,
                 sys_rts_ha;
-                name = "HA",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                name="HA",
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
             DecisionModel(
                 template_ed,
                 sys_rts_rt;
-                name = "ED",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                name="ED",
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
         ],
     )
 
     sequence = SimulationSequence(
-        models = models,
-        feedforwards = Dict(
+        models=models,
+        feedforwards=Dict(
             "ED" => [
                 SemiContinuousFeedforward(
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
+                    component_type=ThermalStandard,
+                    source=OnVariable,
+                    affected_values=[ActivePowerVariable],
                 ),
             ],
         ),
-        ini_cond_chronology = InterProblemChronology(),
+        ini_cond_chronology=InterProblemChronology(),
     )
 
     sim = Simulation(
-        name = "3stage_feedforward",
-        steps = 1,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
+        name="3stage_feedforward",
+        steps=1,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
     )
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
@@ -382,29 +352,29 @@ end
 
     template_uc = get_template_standard_uc_simulation()
     set_device_model!(template_uc, HybridSystem, BasicHybridDispatch)
-    set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel, use_slacks = true))
+    set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel, use_slacks=true))
 
     models = SimulationModels(
-        decision_models = [
+        decision_models=[
             DecisionModel(
                 template_uc,
                 sys_uc;
-                name = "UC",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                name="UC",
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
         ],
     )
 
     sequence =
-        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
+        SimulationSequence(models=models, ini_cond_chronology=InterProblemChronology())
 
     sim = Simulation(
-        name = "hybrid_test",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
+        name="hybrid_test",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
     )
     # TODO: this simulation build will faila as simulation state doesn't support sparse arrays
     # and hybrid formulation uses sparse arrays for variables
@@ -469,32 +439,32 @@ end
 
 @testset "UC with MarketBid Cost in ThermalGenerators simulations" begin
     template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel, use_slacks = true),
+        NetworkModel(CopperPlatePowerModel, use_slacks=true),
     )
     set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
     set_device_model!(template, DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment))
 
     models = SimulationModels(
-        decision_models = [
+        decision_models=[
             DecisionModel(
                 UnitCommitmentProblem,
                 template,
                 PSB.build_system(PSITestSystems, "c_market_bid_cost");
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
         ],
     )
 
     sequence =
-        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
+        SimulationSequence(models=models, ini_cond_chronology=InterProblemChronology())
 
     sim = Simulation(
-        name = "pwl_cost_test",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
+        name="pwl_cost_test",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
     )
 
     @test build!(sim) == PSI.BuildStatus.BUILT

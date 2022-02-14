@@ -15,7 +15,7 @@ function write_results!(
     model::OperationModel,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
     update_timestamp::Dates.DateTime;
-    exports = nothing,
+    exports=nothing,
 )
     if exports !== nothing
         export_params = Dict{Symbol, Any}(
@@ -61,7 +61,7 @@ function write_model_dual_results!(
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
             df = axis_array_to_dataframe(constraint, key)
-            time_col = range(index, length = horizon, step = resolution)
+            time_col = range(index, length=horizon, step=resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
         end
@@ -99,7 +99,7 @@ function write_model_parameter_results!(
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
             df = axis_array_to_dataframe(data, key)
-            time_col = range(index, length = horizon, step = resolution)
+            time_col = range(index, length=horizon, step=resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
         end
@@ -137,7 +137,7 @@ function write_model_variable_results!(
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
             df = axis_array_to_dataframe(variable, key)
-            time_col = range(index, length = horizon, step = resolution)
+            time_col = range(index, length=horizon, step=resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
         end
@@ -169,7 +169,7 @@ function write_model_aux_variable_results!(
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
             df = axis_array_to_dataframe(variable, key)
-            time_col = range(index, length = horizon, step = resolution)
+            time_col = range(index, length=horizon, step=resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
         end
@@ -207,7 +207,7 @@ function write_model_expression_results!(
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
             df = axis_array_to_dataframe(expression, key)
-            time_col = range(index, length = horizon, step = resolution)
+            time_col = range(index, length=horizon, step=resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
         end

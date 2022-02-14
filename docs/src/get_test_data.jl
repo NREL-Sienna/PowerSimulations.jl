@@ -12,7 +12,7 @@ include("../../../test/test_utils/get_test_data.jl")
 
 abstract type TestOpProblem <: PSI.DecisionProblem end
 
-system = build_c_sys5_re(; add_reserves = true)
+system = build_c_sys5_re(; add_reserves=true)
 solver = optimizer_with_attributes(Cbc.Optimizer)
 
 devices = Dict{Symbol, DeviceModel}(
@@ -28,7 +28,7 @@ services = Dict{Symbol, ServiceModel}();
 
 template = PSI.ProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
-operation_problem = PSI.DecisionModel(TestOpProblem, template, system; optimizer = solver);
+operation_problem = PSI.DecisionModel(TestOpProblem, template, system; optimizer=solver);
 
 set_services_template!(
     operation_problem,
@@ -39,4 +39,4 @@ set_services_template!(
 )
 
 op_results = solve!(operation_problem)
-re_results = PSI.run_economic_dispatch(system; optimizer = solver, use_parameters = true)
+re_results = PSI.run_economic_dispatch(system; optimizer=solver, use_parameters=true)
