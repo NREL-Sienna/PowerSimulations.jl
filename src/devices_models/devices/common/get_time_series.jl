@@ -29,11 +29,13 @@ function _get_time_series(
 ) where {T <: PSY.TimeSeriesData}
     initial_time = get_initial_time(container)
     time_steps = get_time_steps(container)
-    @show component.name, component.time_series_container
     forecast = PSY.get_time_series(
         T,
         component,
-        make_subsystem_time_series_name(PSY.get_renewable_unit(component), get_time_series_name(attributes));
+        make_subsystem_time_series_name(
+            PSY.get_renewable_unit(component),
+            get_time_series_name(attributes),
+        );
         start_time = initial_time,
         count = 1,
     )
@@ -57,7 +59,6 @@ function get_time_series(
     parameter_container.attributes
     return _get_time_series(container, component, parameter_container.attributes)
 end
-
 
 # This is just for temporary compatibility with current code. Needs to be eliminated once the time series
 # refactor is done.

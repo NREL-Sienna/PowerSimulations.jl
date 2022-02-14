@@ -84,7 +84,7 @@ does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) =
 function make_subsystem_time_series_name(subcomponent::PSY.Component, label::String)
     return IS.strip_module_name(typeof(subcomponent)) * "__" * label
 end
-    
+
 function get_default_time_series_names(
     ::Type{<:PSY.HybridSystem},
     ::Type{<:Union{FixedOutput, AbstractHybridFormulation}},

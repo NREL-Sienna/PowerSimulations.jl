@@ -76,7 +76,10 @@ function update_parameter_values!(
             U,
             model,
             component,
-            make_subsystem_time_series_name(PSY.get_renewable_unit(component), get_time_series_name(attributes)),
+            make_subsystem_time_series_name(
+                PSY.get_renewable_unit(component),
+                get_time_series_name(attributes),
+            ),
             get_time_series_multiplier_id(attributes),
             initial_forecast_time,
             horizon,
