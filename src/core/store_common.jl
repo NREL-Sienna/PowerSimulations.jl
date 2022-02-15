@@ -69,6 +69,22 @@ function write_model_dual_results!(
     return
 end
 
+function calaculate_parameter_values(
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
+    return jump_value.(param_array) .* multiplier_array
+end
+
+function calaculate_parameter_values(
+    param_array::SparseAxisArray,
+    multiplier_array::SparseAxisArray,
+)
+    p_array = jump_value.(to_matrix(param_array))
+    m_array = to_matrix(multiplier_array)
+    return p_array .* m_array
+end
+
 function write_model_parameter_results!(
     store,
     model::T,
@@ -90,8 +106,8 @@ function write_model_parameter_results!(
         !should_write_resulting_value(key) && continue
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
-        @assert_op length(axes(param_array)) == 2
-        data = jump_value.(param_array) .* multiplier_array
+        # @assert_op length(axes(param_array)) == 2
+        data = calaculate_parameter_values(param_array, multiplier_array)
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&

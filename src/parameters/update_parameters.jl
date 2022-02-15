@@ -25,6 +25,27 @@ function _set_param_value!(
     return
 end
 
+function _set_param_value!(
+    param::SparseAxisArray,
+    value::Float64,
+    name::String,
+    subcomp::String,
+    t::Int,
+)
+    _set_parameter_value_sparse_array!(param[name, subcomp, t], value)
+    return
+end
+
+function _set_parameter_value_sparse_array!(parameter::Float64, value::Float64)
+    parameter = value
+    return
+end
+
+function _set_parameter_value_sparse_array!(parameter::PJ.ParameterRef, value::Float64)
+    JuMP.set_value(parameter, value)
+    return
+end
+
 function update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
@@ -57,35 +78,33 @@ function update_parameter_values!(
 end
 
 function update_parameter_values!(
-    param_array::AbstractArray{T},
+    param_array::SparseAxisArray,
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
 ) where {
-    T <: Union{PJ.ParameterRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.HybridSystem,
 }
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     components = get_available_components(V, get_system(model))
-    for component in components
+    for component in components, subcomp_type in [PSY.RenewableGen, PSY.ElectricLoad]
         name = PSY.get_name(component)
+        !does_subcomponent_exist(component, subcomp_type) && continue
+        subcomponent = get_subcomponent(component, subcomp_type)
         ts_vector = get_time_series_values!(
             U,
             model,
             component,
-            make_subsystem_time_series_name(
-                PSY.get_renewable_unit(component),
-                get_time_series_name(attributes),
-            ),
+            make_subsystem_time_series_name(subcomponent, get_time_series_name(attributes)),
             get_time_series_multiplier_id(attributes),
             initial_forecast_time,
             horizon,
         )
         for (t, value) in enumerate(ts_vector)
-            _set_param_value!(param_array, value, name, t)
+            _set_param_value!(param_array, value, name, string(subcomp_type), t)
         end
     end
 end
