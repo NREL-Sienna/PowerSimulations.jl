@@ -336,9 +336,17 @@ function init_optimization_container!(
     return
 end
 
+function check_parameter_multiplier_values(multiplier_array::DenseAxisArray)
+    return !all(isnan.(multiplier_array.data))
+end
+
+function check_parameter_multiplier_values(multiplier_array::SparseAxisArray)
+    return !all(isnan.(values(multiplier_array.data)))
+end
+
 function check_optimization_container(container::OptimizationContainer)
     for (k, param_container) in container.parameters
-        valid = !all(isnan.(param_container.multiplier_array.data))
+        valid = check_parameter_multiplier_values(param_container.multiplier_array)
         if !valid
             error("The model container has invalid values in $(encode_key_as_string(k))")
         end
@@ -916,15 +924,19 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::VariableValueAttributes{<:OptimizationContainerKey},
-    axs...,
+    axs...;
+    sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
     # Temporary while we change to POI vs PJ
     param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
-    param_container = ParameterContainer(
-        attribute,
-        DenseAxisArray{param_type}(undef, axs...),
-        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
-    )
+    if sparse
+        param_array = sparse_container_spec(param_type, axs...)
+        multiplier_array = sparse_container_spec(Float64, axs...)
+    else
+        param_array = DenseAxisArray{param_type}(undef, axs...)
+        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
 end
@@ -933,15 +945,19 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::TimeSeriesAttributes{V},
-    axs...,
+    axs...;
+    sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     # Temporary while we change to POI vs PJ
     param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
-    param_container = ParameterContainer(
-        attribute,
-        DenseAxisArray{param_type}(undef, axs...),
-        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
-    )
+    if sparse
+        param_array = sparse_container_spec(param_type, axs...)
+        multiplier_array = sparse_container_spec(Float64, axs...)
+    else
+        param_array = DenseAxisArray{param_type}(undef, axs...)
+        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
 end
@@ -950,15 +966,19 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::CostFunctionAttributes,
-    axs...,
+    axs...;
+    sparse=false,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     # Temporary solution uses Float64 paramters and re-builds the cost function each time.
     param_type = Float64
-    param_container = ParameterContainer(
-        attribute,
-        DenseAxisArray{Vector{NTuple{2, Float64}}}(undef, axs...),
-        fill!(DenseAxisArray{Float64}(undef, axs...), NaN),
-    )
+    if sparse
+        param_array = sparse_container_spec(param_type, axs...)
+        multiplier_array = sparse_container_spec(Float64, axs...)
+    else
+        param_array = DenseAxisArray{Vector{NTuple{2, Float64}}}(undef, axs...)
+        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
 end
@@ -970,6 +990,7 @@ function add_param_container!(
     ::Type{V},
     name::String,
     axs...;
+    sparse=false,
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     param_key = ParameterKey(T, U, meta)
@@ -977,7 +998,7 @@ function add_param_container!(
         error("$V can't be abstract: $param_key")
     end
     attributes = TimeSeriesAttributes(V, name)
-    return _add_param_container!(container, param_key, attributes, axs...)
+    return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
 end
 
 function add_param_container!(
@@ -988,11 +1009,12 @@ function add_param_container!(
     variable_type::Type{W},
     uses_compact_power::Bool,
     axs...;
+    sparse=false,
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
     param_key = ParameterKey(T, U, meta)
     attributes = CostFunctionAttributes(variable_type, sos_variable, uses_compact_power)
-    return _add_param_container!(container, param_key, attributes, axs...)
+    return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
 end
 
 function add_param_container!(
@@ -1001,11 +1023,12 @@ function add_param_container!(
     ::Type{U},
     source_key::V,
     axs...;
+    sparse=false,
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
     param_key = ParameterKey(T, U, meta)
     attributes = VariableValueAttributes(source_key)
-    return _add_param_container!(container, param_key, attributes, axs...)
+    return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
 end
 
 function get_parameter_keys(container::OptimizationContainer)
