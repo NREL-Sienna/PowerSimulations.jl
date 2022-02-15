@@ -1,4 +1,6 @@
-"""Default PowerSimulations Emulation Problem Type"""
+"""
+Default PowerSimulations Emulation Problem Type
+"""
 struct GenericEmulationProblem <: EmulationProblem end
 
 """
@@ -13,35 +15,33 @@ This builds the optimization problem of type M with the specific system and temp
 
 # Arguments
 
-- `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
-- `template::ProblemTemplate`: The model reference made up of transmission, devices,
-                                          branches, and services.
-- `sys::PSY.System`: the system created using Power Systems
-- `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
+  - `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
+  - `template::ProblemTemplate`: The model reference made up of transmission, devices,
+    branches, and services.
+  - `sys::PSY.System`: the system created using Power Systems
+  - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
 
 # Output
 
-- `model::EmulationModel`: The Emulation model containing the model type, built JuMP model, Power
-Systems system.
+  - `model::EmulationModel`: The Emulation model containing the model type, built JuMP model, Power
+    Systems system.
 
 # Example
 
-```julia
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = EmulationModel(MockEmulationProblem, template, system)
-```
 
 # Accepted Key Words
 
-- `optimizer`: The optimizer that will be used in the optimization model.
-- `warm_start::Bool`: True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
-- `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
-- `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
-- `optimizer_solve_log_print::Bool`: True to print the optimizer solve log. Default is false.
-- `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
-- `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
+  - `optimizer`: The optimizer that will be used in the optimization model.
+  - `warm_start::Bool`: True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+  - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
+  - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
+  - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
+  - `optimizer_solve_log_print::Bool`: True to print the optimizer solve log. Default is false.
+  - `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
+  - `initial_time::Dates.DateTime`: Initial Time for the model solve
+  - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
 mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
@@ -55,8 +55,8 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         template::ProblemTemplate,
         sys::PSY.System,
         settings::Settings,
-        jump_model::Union{Nothing, JuMP.Model} = nothing;
-        name = nothing,
+        jump_model::Union{Nothing, JuMP.Model}=nothing;
+        name=nothing,
     ) where {M <: EmulationProblem}
         if name === nothing
             name = Symbol(typeof(template))
@@ -79,44 +79,44 @@ end
 function EmulationModel{M}(
     template::ProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model} = nothing;
-    name = nothing,
-    optimizer = nothing,
-    warm_start = true,
-    system_to_file = true,
-    initialize_model = true,
-    initialization_file = "",
-    deserialize_initial_conditions = false,
-    export_pwl_vars = false,
-    allow_fails = false,
-    calculate_conflict = false,
-    optimizer_solve_log_print = false,
-    detailed_optimizer_stats = false,
-    direct_mode_optimizer = false,
-    check_numerical_bounds = true,
-    initial_time = UNSET_INI_TIME,
-    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
+    jump_model::Union{Nothing, JuMP.Model}=nothing;
+    name=nothing,
+    optimizer=nothing,
+    warm_start=true,
+    system_to_file=true,
+    initialize_model=true,
+    initialization_file="",
+    deserialize_initial_conditions=false,
+    export_pwl_vars=false,
+    allow_fails=false,
+    calculate_conflict=false,
+    optimizer_solve_log_print=false,
+    detailed_optimizer_stats=false,
+    direct_mode_optimizer=false,
+    check_numerical_bounds=true,
+    initial_time=UNSET_INI_TIME,
+    time_series_cache_size::Int=IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: EmulationProblem}
     settings = Settings(
         sys;
-        initial_time = initial_time,
-        optimizer = optimizer,
-        time_series_cache_size = time_series_cache_size,
-        warm_start = warm_start,
-        system_to_file = system_to_file,
-        initialize_model = initialize_model,
-        initialization_file = initialization_file,
-        deserialize_initial_conditions = deserialize_initial_conditions,
-        export_pwl_vars = export_pwl_vars,
-        allow_fails = allow_fails,
-        calculate_conflict = calculate_conflict,
-        optimizer_solve_log_print = optimizer_solve_log_print,
-        detailed_optimizer_stats = detailed_optimizer_stats,
-        direct_mode_optimizer = direct_mode_optimizer,
-        check_numerical_bounds = true,
-        horizon = 1,
+        initial_time=initial_time,
+        optimizer=optimizer,
+        time_series_cache_size=time_series_cache_size,
+        warm_start=warm_start,
+        system_to_file=system_to_file,
+        initialize_model=initialize_model,
+        initialization_file=initialization_file,
+        deserialize_initial_conditions=deserialize_initial_conditions,
+        export_pwl_vars=export_pwl_vars,
+        allow_fails=allow_fails,
+        calculate_conflict=calculate_conflict,
+        optimizer_solve_log_print=optimizer_solve_log_print,
+        detailed_optimizer_stats=detailed_optimizer_stats,
+        direct_mode_optimizer=direct_mode_optimizer,
+        check_numerical_bounds=true,
+        horizon=1,
     )
-    return EmulationModel{M}(template, sys, settings, jump_model; name = name)
+    return EmulationModel{M}(template, sys, settings, jump_model; name=name)
 end
 
 """
@@ -126,34 +126,41 @@ end
     optimizer::MOI.OptimizerWithAttributes,
     jump_model::Union{Nothing, JuMP.Model}=nothing;
     kwargs...) where {M <: EmulationProblem}
+
 This builds the optimization problem of type M with the specific system and template
+
 # Arguments
-- `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
-- `template::ProblemTemplate`: The model reference made up of transmission, devices,
-                                          branches, and services.
-- `sys::PSY.System`: the system created using Power Systems
-- `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
+
+  - `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
+  - `template::ProblemTemplate`: The model reference made up of transmission, devices,
+    branches, and services.
+  - `sys::PSY.System`: the system created using Power Systems
+  - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
+
 # Output
-- `Stage::EmulationProblem`: The Emulation model containing the model type, unbuilt JuMP model, Power
-Systems system.
+
+  - `Stage::EmulationProblem`: The Emulation model containing the model type, unbuilt JuMP model, Power
+    Systems system.
+
 # Example
-```julia
+
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 problem = EmulationModel(MyOpProblemType template, system, optimizer)
-```
+
 # Accepted Key Words
-- `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `warm_start::Bool` True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
-- `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
-- `optimizer_solve_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
-- `name`: name of model, string or symbol; defaults to the type of template converted to a symbol
+
+  - `initial_time::Dates.DateTime`: Initial Time for the model solve
+  - `warm_start::Bool` True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+  - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
+  - `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
+  - `optimizer_solve_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
+  - `name`: name of model, string or symbol; defaults to the type of template converted to a symbol
 """
 function EmulationModel(
     ::Type{M},
     template::ProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    jump_model::Union{Nothing, JuMP.Model}=nothing;
     kwargs...,
 ) where {M <: EmulationProblem}
     return EmulationModel{M}(template, sys, jump_model; kwargs...)
@@ -162,7 +169,7 @@ end
 function EmulationModel(
     template::ProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    jump_model::Union{Nothing, JuMP.Model}=nothing;
     kwargs...,
 )
     return EmulationModel{GenericEmulationProblem}(template, sys, jump_model; kwargs...)
@@ -174,28 +181,29 @@ EmulationModel(directory::AbstractString)
 Construct an EmulationProblem from a serialized file.
 
 # Arguments
-- `directory::AbstractString`: Directory containing a serialized model.
-- `optimizer::MOI.OptimizerWithAttributes`: The optimizer does not get serialized.
-   Callers should pass whatever they passed to the original problem.
-- `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
-   serialized. Callers should pass whatever they passed to the original problem.
-- `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
-   If nothing and sys_to_file was set to true when the model was created, the system will
-   be deserialized from a file.
+
+  - `directory::AbstractString`: Directory containing a serialized model.
+  - `optimizer::MOI.OptimizerWithAttributes`: The optimizer does not get serialized.
+    Callers should pass whatever they passed to the original problem.
+  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
+    serialized. Callers should pass whatever they passed to the original problem.
+  - `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
+    If nothing and sys_to_file was set to true when the model was created, the system will
+    be deserialized from a file.
 """
 function EmulationModel(
     directory::AbstractString,
     optimizer::MOI.OptimizerWithAttributes;
-    jump_model::Union{Nothing, JuMP.Model} = nothing,
-    system::Union{Nothing, PSY.System} = nothing,
+    jump_model::Union{Nothing, JuMP.Model}=nothing,
+    system::Union{Nothing, PSY.System}=nothing,
     kwargs...,
 )
     return deserialize_problem(
         EmulationModel,
         directory;
-        jump_model = jump_model,
-        optimizer = optimizer,
-        system = system,
+        jump_model=jump_model,
+        optimizer=optimizer,
+        system=system,
     )
 end
 
@@ -254,15 +262,17 @@ function build_pre_step!(model::EmulationModel)
     return
 end
 
-"""Implementation of build for any EmulationProblem"""
+"""
+Implementation of build for any EmulationProblem
+"""
 function build!(
     model::EmulationModel{<:EmulationProblem};
-    executions = 1,
+    executions=1,
     output_dir::String,
-    recorders = [],
-    console_level = Logging.Error,
-    file_level = Logging.Info,
-    disable_timer_outputs = false,
+    recorders=[],
+    console_level=Logging.Error,
+    file_level=Logging.Info,
+    disable_timer_outputs=false,
 )
     mkpath(output_dir)
     set_output_dir!(model, output_dir)
@@ -370,8 +380,8 @@ end
 
 function run_impl!(
     model::EmulationModel;
-    optimizer = nothing,
-    enable_progress_bar = progress_meter_enabled(),
+    optimizer=nothing,
+    enable_progress_bar=progress_meter_enabled(),
     kwargs...,
 )
     _pre_solve_model_checks(model, optimizer)
@@ -380,7 +390,7 @@ function run_impl!(
     if internal.execution_count > 0
         error("Call build! again")
     end
-    prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+    prog_bar = ProgressMeter.Progress(internal.executions; enabled=enable_progress_bar)
     initial_time = get_initial_time(model)
     for execution in 1:(internal.executions)
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
@@ -393,7 +403,7 @@ function run_impl!(
             ProgressMeter.update!(
                 prog_bar,
                 get_execution_count(model);
-                showvalues = [(:Execution, execution)],
+                showvalues=[(:Execution, execution)],
             )
         end
     end
@@ -408,34 +418,34 @@ This will call [`build!`](@ref) on the model if it is not already built. It will
 keyword arguments to that function.
 
 # Arguments
-- `model::EmulationModel = model`: Emulation model
-- `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
-- `executions::Int`: Number of executions for the emulator run
-- `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
-- `output_dir::String`: Required if the model is not already built, otherwise ignored
-- `enable_progress_bar::Bool`: Enables/Disable progress bar printing
-- `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
+
+  - `model::EmulationModel = model`: Emulation model
+  - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
+  - `executions::Int`: Number of executions for the emulator run
+  - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
+  - `output_dir::String`: Required if the model is not already built, otherwise ignored
+  - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
+  - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
-```julia
+
 status = run!(model; optimizer = GLPK.Optimizer, executions = 10)
 status = run!(model; output_dir = ./model_output, optimizer = GLPK.Optimizer, executions = 10)
-```
 """
 function run!(
     model::EmulationModel{<:EmulationProblem};
-    export_problem_results = false,
-    console_level = Logging.Error,
-    file_level = Logging.Info,
-    disable_timer_outputs = false,
-    serialize = true,
+    export_problem_results=false,
+    console_level=Logging.Error,
+    file_level=Logging.Info,
+    disable_timer_outputs=false,
+    serialize=true,
     kwargs...,
 )
     build_if_not_already_built!(
         model;
-        console_level = console_level,
-        file_level = file_level,
-        disable_timer_outputs = disable_timer_outputs,
+        console_level=console_level,
+        file_level=file_level,
+        disable_timer_outputs=disable_timer_outputs,
         kwargs...,
     )
     set_console_level!(model, console_level)
@@ -460,7 +470,7 @@ function run!(
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
                         optimizer = get(kwargs, :optimizer, nothing)
-                        serialize_problem(model, optimizer = optimizer)
+                        serialize_problem(model, optimizer=optimizer)
                         serialize_optimization_model(model)
                     end
                 end
@@ -486,20 +496,22 @@ end
 Default solve method for an EmulationModel used inside of a Simulation. Solves problems that conform to the requirements of DecisionModel{<: DecisionProblem}
 
 # Arguments
-- `step::Int`: Simulation Step
-- `model::OperationModel`: operation model
-- `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
-- `store::SimulationStore`: Simulation output store
+
+  - `step::Int`: Simulation Step
+  - `model::OperationModel`: operation model
+  - `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
+  - `store::SimulationStore`: Simulation output store
 
 # Accepted Key Words
-- `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
+
+  - `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
 """
 function solve!(
     step::Int,
     model::EmulationModel{<:EmulationProblem},
     start_time::Dates.DateTime,
     store::SimulationStore;
-    exports = nothing,
+    exports=nothing,
 )
     # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
     # other logic used when solving the models separate from a simulation
@@ -512,7 +524,7 @@ function solve!(
             model,
             get_execution_count(model),
             start_time;
-            exports = exports,
+            exports=exports,
         )
         write_optimizer_stats!(store, model, get_execution_count(model))
     end

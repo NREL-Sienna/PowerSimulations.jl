@@ -130,15 +130,15 @@ function read_results(
     store::EmulationModelStore,
     ::Symbol,
     key::OptimizationContainerKey,
-    index::Union{Int, Nothing} = nothing,
+    index::Union{Int, Nothing}=nothing,
 )
     container = get_data_field(store, get_store_container_type(key))
     df = container[key].values
     # Return a copy because callers may mutate it.
     if isnothing(index)
-        return copy(df, copycols = true)
+        return copy(df, copycols=true)
     else
-        return copy(df, copycols = true)[index, :]
+        return copy(df, copycols=true)[index, :]
     end
 end
 

@@ -87,7 +87,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta = service_name,
+        meta=service_name,
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
@@ -149,7 +149,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta = service_name,
+        meta=service_name,
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
@@ -206,7 +206,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta = service_name,
+        meta=service_name,
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
@@ -273,7 +273,7 @@ function add_constraints!(
             SR,
             set_name,
             time_steps;
-            meta = service_name,
+            meta=service_name,
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -314,7 +314,7 @@ function add_constraints!(
             SR,
             set_name,
             time_steps;
-            meta = service_name,
+            meta=service_name,
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -356,7 +356,7 @@ function add_constraints!(
         SR,
         [PSY.get_name(d) for d in contributing_devices],
         time_steps;
-        meta = service_name,
+        meta=service_name,
     )
     var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     reserve_response_time = PSY.get_time_frame(service)
@@ -390,15 +390,15 @@ function AddCostSpec(
     container::OptimizationContainer,
 ) where {T <: PSY.Reserve}
     return AddCostSpec(;
-        variable_type = ServiceRequirementVariable,
-        component_type = T,
-        has_status_variable = false,
-        has_status_parameter = false,
-        variable_cost = PSY.get_variable,
-        start_up_cost = nothing,
-        shut_down_cost = nothing,
-        fixed_cost = nothing,
-        sos_status = SOSStatusVariable.NO_VARIABLE,
+        variable_type=ServiceRequirementVariable,
+        component_type=T,
+        has_status_variable=false,
+        has_status_parameter=false,
+        variable_cost=PSY.get_variable,
+        start_up_cost=nothing,
+        shut_down_cost=nothing,
+        fixed_cost=nothing,
+        sos_status=SOSStatusVariable.NO_VARIABLE,
     )
 end
 

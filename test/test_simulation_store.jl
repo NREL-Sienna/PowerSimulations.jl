@@ -71,6 +71,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
     )
     em_reqs = SimulationModelStoreRequirements()
     initialize_problem_storage!(store, params, model_reqs, em_reqs, cache_rules)
+    return
 end
 
 function _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)
@@ -176,7 +177,7 @@ end
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
-    cache_rules = CacheFlushRules(max_size = 1 * MiB, min_flush_size = 4 * KiB)
+    cache_rules = CacheFlushRules(max_size=1 * MiB, min_flush_size=4 * KiB)
 
     path = mktempdir()
     # Use this seed to produce the same randomly generated arrays for write and verify.

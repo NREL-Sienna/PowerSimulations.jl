@@ -9,15 +9,15 @@ function _get_time_series(
         T,
         component,
         get_time_series_name(attributes);
-        start_time = initial_time,
-        count = 1,
+        start_time=initial_time,
+        count=1,
     )
     ts_vector = IS.get_time_series_values(
         component,
         forecast,
         initial_time;
-        len = length(time_steps),
-        ignore_scaling_factors = true,
+        len=length(time_steps),
+        ignore_scaling_factors=true,
     )
     return ts_vector
 end

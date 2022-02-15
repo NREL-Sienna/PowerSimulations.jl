@@ -686,6 +686,7 @@ function construct_device!(
     )
 
     add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 function construct_device!(
@@ -1000,6 +1001,7 @@ function construct_device!(
     )
 
     add_feedforward_arguments!(container, model, devices)
+    return
 end
 
 function construct_device!(
@@ -1043,6 +1045,7 @@ function construct_device!(
 
     cost_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    return
 end
 
 function construct_device!(

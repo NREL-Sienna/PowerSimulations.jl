@@ -79,12 +79,12 @@ function psi_checksolve_test(model::DecisionModel, status)
     @test termination_status(model) in status
 end
 
-function psi_checksolve_test(model::DecisionModel, status, expected_result, tol = 0.0)
+function psi_checksolve_test(model::DecisionModel, status, expected_result, tol=0.0)
     res = solve!(model)
     model = PSI.get_jump_model(model)
     @test termination_status(model) in status
     obj_value = JuMP.objective_value(model)
-    @test isapprox(obj_value, expected_result, atol = tol)
+    @test isapprox(obj_value, expected_result, atol=tol)
 end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
@@ -429,8 +429,8 @@ function check_initialization_constraint_count(
     model,
     ::S,
     ::Type{T};
-    filter_func = x -> x.available,
-    meta = PSI.CONTAINER_KEY_EMPTY_META,
+    filter_func=x -> x.available,
+    meta=PSI.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     container = model.internal.ic_model_container
     no_component = length(PSY.get_components(T, model.sys, filter_func))
@@ -443,8 +443,8 @@ function check_constraint_count(
     model,
     ::S,
     ::Type{T};
-    filter_func = x -> x.available,
-    meta = PSI.CONTAINER_KEY_EMPTY_META,
+    filter_func=x -> x.available,
+    meta=PSI.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     no_component = length(PSY.get_components(T, model.sys, filter_func))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
@@ -469,16 +469,17 @@ function check_constraint_count(
         model,
         PSI.RampConstraint(),
         T;
-        meta = "up",
-        filter_func = x -> x.name in set_name,
+        meta="up",
+        filter_func=x -> x.name in set_name,
     )
     check_constraint_count(
         model,
         PSI.RampConstraint(),
         T;
-        meta = "dn",
-        filter_func = x -> x.name in set_name,
+        meta="dn",
+        filter_func=x -> x.name in set_name,
     )
+    return
 end
 
 function check_constraint_count(
@@ -502,15 +503,15 @@ function check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
-        meta = "up",
-        filter_func = x -> x.name in set_name,
+        meta="up",
+        filter_func=x -> x.name in set_name,
     )
-    check_constraint_count(
+    return check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
-        meta = "dn",
-        filter_func = x -> x.name in set_name,
+        meta="dn",
+        filter_func=x -> x.name in set_name,
     )
 end
 
@@ -523,10 +524,10 @@ function check_constraint_count(
     _devices =
         filter!(x -> x.must_run, collect(get_components(T, model.sys, x -> x.available)))
     set_name = PSY.get_name.(_devices)
-    check_constraint_count(
+    return check_constraint_count(
         model,
         PSI.MustRunConstraint(),
         T,
-        filter_func = x -> x.name in set_name,
+        filter_func=x -> x.name in set_name,
     )
 end

@@ -8,6 +8,7 @@ function add_variables!(
     formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
 ) where {T <: AuxVariableType, U <: PSY.Component}
     add_variable!(container, T(), devices, formulation)
+    return
 end
 
 @doc raw"""

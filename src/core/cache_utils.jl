@@ -25,7 +25,7 @@ end
 
 const MIN_CACHE_FLUSH_SIZE_MiB = MiB
 
-function CacheFlushRules(; max_size = GiB, min_flush_size = MIN_CACHE_FLUSH_SIZE_MiB)
+function CacheFlushRules(; max_size=GiB, min_flush_size=MIN_CACHE_FLUSH_SIZE_MiB)
     return CacheFlushRules(
         Dict{OptimizationResultCacheKey, CacheFlushRule}(),
         min_flush_size,
@@ -42,6 +42,7 @@ function add_rule!(
 )
     key = OptimizationResultCacheKey(model_name, op_container_key)
     rules.data[key] = CacheFlushRule(keep_in_cache, priority)
+    return
 end
 
 function get_rule(x::CacheFlushRules, model, op_container_key)

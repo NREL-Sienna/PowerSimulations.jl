@@ -2,11 +2,10 @@
 Abstract type for Service Formulations (a.k.a Models)
 
 # Example
-```julia
+
 import PowerSimulations
 const PSI = PowerSimulations
 struct MyServiceFormulation <: PSI.AbstractServiceFormulation
-```
 """
 abstract type AbstractServiceFormulation end
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
@@ -30,17 +29,18 @@ template. Uses the keyword argument feedforward to enable passing values between
 model at simulation time
 
 # Arguments
+
 -`::Type{D}`: Power System Service Type
 -`::Type{B}`: Abstract Service Formulation
 
 # Accepted Key Words
-- `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
-- `use_service_name::Bool` : use the name as the name for the service
+
+  - `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
+  - `use_service_name::Bool` : use the name as the name for the service
 
 # Example
-```julia
+
 reserves = ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve)
-```
 """
 mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     feedforwards::Vector{<:AbstractAffectFeedforward}
@@ -54,12 +54,12 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         ::Type{D},
         ::Type{B},
         service_name::String;
-        use_slacks = false,
-        feedforwards = Vector{AbstractAffectFeedforward}(),
-        duals = Vector{DataType}(),
-        time_series_names = get_default_time_series_names(D, B),
-        attributes = get_default_attributes(D, B),
-        contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
+        use_slacks=false,
+        feedforwards=Vector{AbstractAffectFeedforward}(),
+        duals=Vector{DataType}(),
+        time_series_names=get_default_time_series_names(D, B),
+        attributes=get_default_attributes(D, B),
+        contributing_devices_map=Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
@@ -99,11 +99,11 @@ add_contributing_devices_map!(m::ServiceModel, key, value) =
 function ServiceModel(
     service_type::Type{D},
     formulation_type::Type{B};
-    use_slacks = false,
-    feedforwards = Vector{AbstractAffectFeedforward}(),
-    duals = Vector{DataType}(),
-    time_series_names = get_default_time_series_names(D, B),
-    attributes = get_default_attributes(D, B),
+    use_slacks=false,
+    feedforwards=Vector{AbstractAffectFeedforward}(),
+    duals=Vector{DataType}(),
+    time_series_names=get_default_time_series_names(D, B),
+    attributes=get_default_attributes(D, B),
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     # If more attributes are used later, move free form string to const and organize
     # attributes

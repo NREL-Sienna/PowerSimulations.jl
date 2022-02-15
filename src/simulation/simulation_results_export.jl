@@ -12,10 +12,10 @@ end
 function SimulationResultsExport(
     models::Vector{ProblemResultsExport},
     params::SimulationStoreParams;
-    start_time = nothing,
-    end_time = nothing,
-    path = nothing,
-    format = "csv",
+    start_time=nothing,
+    end_time=nothing,
+    path=nothing,
+    format="csv",
 )
     # This end time is outside the bounds of the simulation.
     sim_end_time = params.initial_time + params.step_resolution * params.num_steps
@@ -80,14 +80,14 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
         )
         problem_export = ProblemResultsExport(
             model["name"],
-            duals = duals,
-            parameters = parameters,
-            variables = variables,
-            optimizer_stats = get(model, "optimizer_stats", false),
-            store_all_duals = get(model, "store_all_duals", false),
-            store_all_parameters = get(model, "store_all_parameters", false),
-            store_all_variables = get(model, "store_all_variables", false),
-            store_all_aux_variables = get(model, "store_all_aux_variables", false),
+            duals=duals,
+            parameters=parameters,
+            variables=variables,
+            optimizer_stats=get(model, "optimizer_stats", false),
+            store_all_duals=get(model, "store_all_duals", false),
+            store_all_parameters=get(model, "store_all_parameters", false),
+            store_all_variables=get(model, "store_all_variables", false),
+            store_all_aux_variables=get(model, "store_all_aux_variables", false),
         )
         push!(models, problem_export)
     end
@@ -105,10 +105,10 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
     return SimulationResultsExport(
         models,
         params;
-        start_time = start_time,
-        end_time = end_time,
-        path = get(data, "path", nothing),
-        format = get(data, "format", "csv"),
+        start_time=start_time,
+        end_time=end_time,
+        path=get(data, "path", nothing),
+        format=get(data, "format", "csv"),
     )
 end
 

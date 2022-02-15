@@ -8,11 +8,10 @@ abstract type OperationModel end
 Abstract type for Decision Problems
 
 # Example
-```julia
+
 import PowerSimulations
 const PSI = PowerSimulations
 struct MyCustomProblem <: PSI.DecisionProblem
-```
 """
 abstract type DecisionProblem end
 
@@ -20,10 +19,9 @@ abstract type DecisionProblem end
 Abstract type for Emulation Problems
 
 # Example
-```julia
+
 import PowerSimulations
 const PSI = PowerSimulations
 struct MyCustomEmulator <: PSI.EmulationProblem
-```
 """
 abstract type EmulationProblem end

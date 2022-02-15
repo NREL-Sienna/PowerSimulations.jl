@@ -8,7 +8,7 @@ end
 function VariableKey(
     ::Type{T},
     ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if isabstracttype(U)
         error("Type $U can't be abstract")
@@ -19,7 +19,7 @@ end
 
 function VariableKey(
     ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
+    meta::String=CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType}
     return VariableKey(T, PSY.Component, meta)
 end
@@ -31,16 +31,24 @@ get_component_type(
     ::VariableKey{T, U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = U
 
-"""Struct to dispatch the creation of Active Power Variables"""
+"""
+Struct to dispatch the creation of Active Power Variables
+"""
 struct ActivePowerVariable <: VariableType end
 
-"""Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations"""
+"""
+Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
+"""
 struct PowerAboveMinimumVariable <: VariableType end
 
-"""Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro"""
+"""
+Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
+"""
 struct ActivePowerInVariable <: VariableType end
 
-"""Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro"""
+"""
+Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro
+"""
 struct ActivePowerOutVariable <: VariableType end
 
 struct HotStartVariable <: VariableType end
@@ -101,7 +109,9 @@ struct VoltageMagnitude <: VariableType end
 
 struct VoltageAngle <: VariableType end
 
-"""Struct to dispatch the creation of Flow Active Power Variables"""
+"""
+Struct to dispatch the creation of Flow Active Power Variables
+"""
 struct FlowActivePowerVariable <: VariableType end
 
 # This Variable Type doesn't make sense since there are no lossless NetworkModels with ReactivePower.

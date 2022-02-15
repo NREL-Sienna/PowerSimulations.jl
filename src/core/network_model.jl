@@ -10,19 +10,21 @@ end
 
 """
 Establishes the model for a particular device specified by type.
+
 # Arguments
+
 -`::Type{T}`: PowerModels AbstractPowerModel
 
 # Accepted Key Words
-- `use_slacks::Bool`: Adds slacks to the network modelings
-- `PTDF::PSY.PTDF`: PTDF Array calculated using PowerSystems
-- `duals::Vector{DataType}`: Constraint types to calculate the duals
+
+  - `use_slacks::Bool`: Adds slacks to the network modelings
+  - `PTDF::PSY.PTDF`: PTDF Array calculated using PowerSystems
+  - `duals::Vector{DataType}`: Constraint types to calculate the duals
 
 # Example
-```julia
+
 ptdf_array = PSY.PTDF(system)
 thermal_gens = NetworkModel(StandardPTDFModel, ptdf = ptdf_array),
-```
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
@@ -31,9 +33,9 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
 
     function NetworkModel(
         ::Type{T};
-        use_slacks = false,
-        PTDF = nothing,
-        duals = Vector{DataType}(),
+        use_slacks=false,
+        PTDF=nothing,
+        duals=Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(use_slacks, PTDF, duals)

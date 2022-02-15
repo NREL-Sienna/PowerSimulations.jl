@@ -265,7 +265,7 @@ function get_branches_to_pm(
     system_formulation::Type{S},
     branch_type::Type{T},
     branch_template::BranchModelContainer,
-    start_idx = 0,
+    start_idx=0,
 ) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{
@@ -284,7 +284,7 @@ function get_branches_to_pm(
             if PM_branches["$(ix)"]["br_status"] == true
                 f = PM_branches["$(ix)"]["f_bus"]
                 t = PM_branches["$(ix)"]["t_bus"]
-                PMmap_br[(from_to = (ix, f, t), to_from = (ix, t, f))] = branch
+                PMmap_br[(from_to=(ix, f, t), to_from=(ix, t, f))] = branch
             end
         end
     end
@@ -296,7 +296,7 @@ function get_branches_to_pm(
     system_formulation::Type{PTDFPowerModel},
     ::Type{T},
     branch_template::BranchModelContainer,
-    start_idx = 0,
+    start_idx=0,
 ) where {T <: PSY.DCBranch}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{

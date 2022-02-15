@@ -525,7 +525,7 @@ end
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 120, 0, 168, 120, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -534,7 +534,7 @@ end
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 240, 0, 144, 48, 48, false)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -543,7 +543,7 @@ end
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 240, 0, 288, 240, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -552,7 +552,7 @@ end
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 288, 0, 192, 96, 48, false)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -567,10 +567,10 @@ end
         EconomicDispatchProblem,
         template,
         ramp_test_sys;
-        optimizer = Cbc_optimizer,
-        initialize_model = false,
+        optimizer=Cbc_optimizer,
+        initialize_model=false,
     )
-    @test build!(ED; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(ED; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(ED, false, 10, 0, 20, 10, 5, false)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
 end
@@ -582,10 +582,10 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_duration_test");
-        optimizer = Cbc_optimizer,
-        initialize_model = false,
+        optimizer=Cbc_optimizer,
+        initialize_model=false,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 56, 0, 56, 14, 21, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
@@ -597,10 +597,10 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-        optimizer = Cbc_optimizer,
-        initialize_model = false,
+        optimizer=Cbc_optimizer,
+        initialize_model=false,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 10, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
 end
@@ -611,10 +611,10 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer = Cbc_optimizer,
-        initialize_model = false,
+        optimizer=Cbc_optimizer,
+        initialize_model=false,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 14, true)
     # Disables due to https://github.com/jump-dev/Cbc.jl/issues/183
     # psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89, 10.0)
@@ -630,10 +630,10 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_market_bid_cost");
-        optimizer = Cbc_optimizer,
-        initialize_model = false,
+        optimizer=Cbc_optimizer,
+        initialize_model=false,
     )
-    @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     # changed from 18 to 16 as built_for_recurrent_solves/use_parameters is set to false, different duration constraint is used
     moi_tests(UC, false, 38, 0, 16, 8, 13, true)
 end
@@ -646,8 +646,8 @@ end
         MockOperationProblem,
         CopperPlatePowerModel,
         c_sys5_pwl_ed_nonconvex;
-        export_pwl_vars = true,
-        initialize_model = false,
+        export_pwl_vars=true,
+        initialize_model=false,
     )
     @test_throws IS.InvalidValue mock_construct_device!(
         model,
@@ -665,10 +665,10 @@ end
 
     for net in networks, sys in systems
         template =
-            get_thermal_dispatch_template_network(NetworkModel(net, PTDF = PTDF_ref[sys]))
+            get_thermal_dispatch_template_network(NetworkModel(net, PTDF=PTDF_ref[sys]))
         set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-        UC = DecisionModel(template, sys; optimizer = GLPK_optimizer)
-        @test build!(UC; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+        UC = DecisionModel(template, sys; optimizer=GLPK_optimizer)
+        @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end
@@ -676,131 +676,131 @@ end
 @testset "Test Feedforwards to ThermalStandard with ThermalStandardDispatch" begin
     device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     ff_sc = SemiContinuousFeedforward(
-        component_type = ThermalStandard,
-        source = OnVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalStandard,
+        source=OnVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
-        component_type = ThermalStandard,
-        source = ActivePowerVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalStandard,
+        source=ActivePowerVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     PSI.attach_feedforward!(device_model, ff_sc)
     PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 120, 0, 288, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalBasicDispatch" begin
     device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     ff_sc = SemiContinuousFeedforward(
-        component_type = ThermalStandard,
-        source = OnVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalStandard,
+        source=OnVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
-        component_type = ThermalStandard,
-        source = ActivePowerVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalStandard,
+        source=ActivePowerVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     PSI.attach_feedforward!(device_model, ff_sc)
     PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 120, 0, 240, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalCompactDispatch" begin
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     ff_sc = SemiContinuousFeedforward(
-        component_type = ThermalStandard,
-        source = OnVariable,
-        affected_values = [PowerAboveMinimumVariable],
+        component_type=ThermalStandard,
+        source=OnVariable,
+        affected_values=[PowerAboveMinimumVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
-        component_type = ThermalStandard,
-        source = PSI.PowerAboveMinimumVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
+        component_type=ThermalStandard,
+        source=PSI.PowerAboveMinimumVariable,
+        affected_values=[PSI.PowerAboveMinimumVariable],
     )
 
     PSI.attach_feedforward!(device_model, ff_sc)
     PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 120, 0, 288, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalStandardDispatch" begin
     device_model = DeviceModel(ThermalMultiStart, ThermalStandardDispatch)
     ff_sc = SemiContinuousFeedforward(
-        component_type = ThermalMultiStart,
-        source = OnVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalMultiStart,
+        source=OnVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
-        component_type = ThermalMultiStart,
-        source = ActivePowerVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalMultiStart,
+        source=ActivePowerVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     PSI.attach_feedforward!(device_model, ff_sc)
     PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 240, 0, 192, 48, 48, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalBasicDispatch" begin
     device_model = DeviceModel(ThermalMultiStart, ThermalBasicDispatch)
     ff_sc = SemiContinuousFeedforward(
-        component_type = ThermalMultiStart,
-        source = OnVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalMultiStart,
+        source=OnVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
-        component_type = ThermalMultiStart,
-        source = ActivePowerVariable,
-        affected_values = [ActivePowerVariable],
+        component_type=ThermalMultiStart,
+        source=ActivePowerVariable,
+        affected_values=[ActivePowerVariable],
     )
 
     PSI.attach_feedforward!(device_model, ff_sc)
     PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 240, 0, 96, 48, 48, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalCompactDispatch" begin
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalCompactDispatch)
     ff_sc = SemiContinuousFeedforward(
-        component_type = ThermalMultiStart,
-        source = OnVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
+        component_type=ThermalMultiStart,
+        source=OnVariable,
+        affected_values=[PSI.PowerAboveMinimumVariable],
     )
 
     ff_ub = UpperBoundFeedforward(
-        component_type = ThermalMultiStart,
-        source = PSI.PowerAboveMinimumVariable,
-        affected_values = [PSI.PowerAboveMinimumVariable],
+        component_type=ThermalMultiStart,
+        source=PSI.PowerAboveMinimumVariable,
+        affected_values=[PSI.PowerAboveMinimumVariable],
     )
 
     PSI.attach_feedforward!(device_model, ff_sc)
     PSI.attach_feedforward!(device_model, ff_ub)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
+    mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, true, 240, 0, 192, 48, 48, false)
 end

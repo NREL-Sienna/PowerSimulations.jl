@@ -27,7 +27,7 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = CONTAINER_KEY_EMPTY_META,
+        meta=CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -57,7 +57,7 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = CONTAINER_KEY_EMPTY_META,
+        meta=CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -87,7 +87,7 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = CONTAINER_KEY_EMPTY_META,
+        meta=CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -143,7 +143,7 @@ struct IntegralLimitFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         number_of_periods::Int,
-        meta = CONTAINER_KEY_EMPTY_META,
+        meta=CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -179,7 +179,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = CONTAINER_KEY_EMPTY_META,
+        meta=CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -213,7 +213,7 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
         affected_values::Vector{DataType},
         target_period::Int,
         penalty_cost::Float64,
-        meta = CONTAINER_KEY_EMPTY_META,
+        meta=CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)

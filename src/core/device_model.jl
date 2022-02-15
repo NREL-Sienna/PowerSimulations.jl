@@ -1,4 +1,3 @@
-"""Formulation that fixes the injection values of devices"""
 struct FixedOutput <: AbstractDeviceFormulation end
 
 function _check_device_formulation(
@@ -18,16 +17,17 @@ Establishes the model for a particular device specified by type. Uses the keywor
 feedforward to enable passing values between operation model at simulation time
 
 # Arguments
+
 -`::Type{D}`: Power System Device Type
 -`::Type{B}`: Abstract Device Formulation
 
 # Accepted Key Words
-- `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
+
+  - `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
 
 # Example
-```julia
+
 thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
-```
 """
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     feedforwards::Vector{<:AbstractAffectFeedforward}
@@ -40,11 +40,11 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     function DeviceModel(
         ::Type{D},
         ::Type{B};
-        feedforwards = Vector{AbstractAffectFeedforward}(),
-        use_slacks = false,
-        duals = Vector{DataType}(),
-        time_series_names = get_default_time_series_names(D, B),
-        attributes = get_default_attributes(D, B),
+        feedforwards=Vector{AbstractAffectFeedforward}(),
+        use_slacks=false,
+        duals=Vector{DataType}(),
+        time_series_names=get_default_time_series_names(D, B),
+        attributes=get_default_attributes(D, B),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(D)
         _check_device_formulation(B)
@@ -84,6 +84,7 @@ function _set_model!(
         @warn "Overwriting $(D) existing model"
     end
     dict[key] = model
+    return
 end
 
 has_service_model(model::DeviceModel) = !isempty(get_services(model))

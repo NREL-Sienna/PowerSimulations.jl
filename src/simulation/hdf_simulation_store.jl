@@ -33,7 +33,7 @@ get_initial_time(store::HdfSimulationStore) = get_initial_time(store.params)
 function HdfSimulationStore(
     file_path::AbstractString,
     mode::AbstractString;
-    problem_path = nothing,
+    problem_path=nothing,
 )
     if !(mode == "w" || mode == "r")
         throw(IS.ConflictingInputsError("mode can only be 'w' or 'r'"))
@@ -73,11 +73,12 @@ When reading or writing results in a program you should use the method that acce
 function in order to guarantee that the file handle gets closed.
 
 # Arguments
-- `directory::AbstractString`: Directory containing the store file
-- `mode::AbstractString`: Mode to use to open the store file
-- `filename::AbstractString`: Base name of the store file
-- `problem_path::AbstractString`: Path to the directory containing serialized problem
-   information. Required when reading an existing simulation.
+
+  - `directory::AbstractString`: Directory containing the store file
+  - `mode::AbstractString`: Mode to use to open the store file
+  - `filename::AbstractString`: Base name of the store file
+  - `problem_path::AbstractString`: Path to the directory containing serialized problem
+    information. Required when reading an existing simulation.
 
 # Examples
 
@@ -94,14 +95,14 @@ df = PowerSimulations.read_result(DataFrame, store, model, :variables, var_name,
 function open_store(
     ::Type{HdfSimulationStore},
     directory::AbstractString,
-    mode = "r";
-    filename = HDF_FILENAME,
-    problem_path = nothing,
+    mode="r";
+    filename=HDF_FILENAME,
+    problem_path=nothing,
 )
     return HdfSimulationStore(
         joinpath(directory, filename),
         mode,
-        problem_path = problem_path,
+        problem_path=problem_path,
     )
 end
 
@@ -109,16 +110,16 @@ function open_store(
     func::Function,
     ::Type{HdfSimulationStore},
     directory::AbstractString,
-    mode = "r";
-    filename = HDF_FILENAME,
-    problem_path = nothing,
+    mode="r";
+    filename=HDF_FILENAME,
+    problem_path=nothing,
 )
     store = nothing
     try
         store = HdfSimulationStore(
             joinpath(directory, filename),
             mode,
-            problem_path = problem_path,
+            problem_path=problem_path,
         )
         return func(store)
     finally
@@ -504,7 +505,7 @@ function _check_state(store::HdfSimulationStore)
     end
 end
 
-function _compute_chunk_count(dims, dtype; max_chunk_bytes = DEFAULT_MAX_CHUNK_BYTES)
+function _compute_chunk_count(dims, dtype; max_chunk_bytes=DEFAULT_MAX_CHUNK_BYTES)
     bytes_per_element = sizeof(dtype)
 
     if length(dims) == 2

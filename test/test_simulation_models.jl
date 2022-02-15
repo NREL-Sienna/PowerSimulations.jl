@@ -3,27 +3,27 @@
         [
             DecisionModel(
                 MockOperationProblem;
-                horizon = 48,
-                interval = Hour(24),
-                steps = 2,
-                name = "DAUC",
+                horizon=48,
+                interval=Hour(24),
+                steps=2,
+                name="DAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 24,
-                interval = Hour(1),
-                steps = 2 * 24,
-                name = "HAUC",
+                horizon=24,
+                interval=Hour(1),
+                steps=2 * 24,
+                name="HAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 12,
-                interval = Minute(5),
-                steps = 2 * 24 * 12,
-                name = "ED",
+                horizon=12,
+                interval=Minute(5),
+                steps=2 * 24 * 12,
+                name="ED",
             ),
         ],
-        EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
+        EmulationModel(MockEmulationProblem; resolution=Minute(1), name="AGC"),
     )
 
     @test length(PSI.get_decision_models(models)) == 3
@@ -33,26 +33,26 @@
         [
             DecisionModel(
                 MockOperationProblem;
-                horizon = 48,
-                interval = Hour(24),
-                steps = 2,
-                name = "DAUC",
+                horizon=48,
+                interval=Hour(24),
+                steps=2,
+                name="DAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 24,
-                interval = Hour(1),
-                steps = 2 * 24,
-                name = "DAUC",
+                horizon=24,
+                interval=Hour(1),
+                steps=2 * 24,
+                name="DAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 12,
-                interval = Minute(5),
-                steps = 2 * 24 * 12,
-                name = "ED",
+                horizon=12,
+                interval=Minute(5),
+                steps=2 * 24 * 12,
+                name="ED",
             ),
         ],
-        EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
+        EmulationModel(MockEmulationProblem; resolution=Minute(1), name="AGC"),
     )
 end

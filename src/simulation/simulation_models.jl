@@ -9,7 +9,7 @@ mutable struct SimulationModels
 
     function SimulationModels(
         decision_models::Vector,
-        emulation_model::Union{Nothing, EmulationModel} = nothing,
+        emulation_model::Union{Nothing, EmulationModel}=nothing,
     )
         all_names = [get_name(x) for x in decision_models]
         emulation_model !== nothing && push!(all_names, get_name(emulation_model))
@@ -26,14 +26,14 @@ end
 
 function SimulationModels(
     decision_models::DecisionModel,
-    emulation_model::Union{Nothing, EmulationModel} = nothing,
+    emulation_model::Union{Nothing, EmulationModel}=nothing,
 )
     return SimulationModels([decision_models], emulation_model)
 end
 
 function SimulationModels(;
     decision_models,
-    emulation_model::Union{Nothing, EmulationModel} = nothing,
+    emulation_model::Union{Nothing, EmulationModel}=nothing,
 )
     return SimulationModels(decision_models, emulation_model)
 end

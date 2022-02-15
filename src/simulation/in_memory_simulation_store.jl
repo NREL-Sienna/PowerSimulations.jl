@@ -19,8 +19,8 @@ function open_store(
     func::Function,
     ::Type{InMemorySimulationStore},
     directory::AbstractString,  # Unused. Need to match the interface.
-    mode = nothing,
-    filename = nothing,
+    mode=nothing,
+    filename=nothing,
 )
     store = InMemorySimulationStore()
     return func(store)

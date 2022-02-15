@@ -65,7 +65,9 @@ function _calculate_interval_inner_counts(intervals::OrderedDict{Symbol, Dates.M
     return interval_run_counts
 end
 
-""" Function calculates the total number of problem executions in the simulation and allocates the appropiate vector"""
+"""
+Function calculates the total number of problem executions in the simulation and allocates the appropiate vector
+"""
 function _allocate_execution_order(interval_run_counts::Vector{Int})
     total_size_of_vector = 0
     for k in eachindex(interval_run_counts)
@@ -166,8 +168,8 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         models::SimulationModels,
-        feedforwards = Dict{String, Vector{<:AbstractAffectFeedforward}}(),
-        ini_cond_chronology = InterProblemChronology(),
+        feedforwards=Dict{String, Vector{<:AbstractAffectFeedforward}}(),
+        ini_cond_chronology=InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
         intervals = determine_intervals(models)

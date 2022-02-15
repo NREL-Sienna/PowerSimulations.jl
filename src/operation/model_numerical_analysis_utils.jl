@@ -36,6 +36,7 @@ end
 
 function update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx)
     update_numerical_bounds(v.rhs, constraint.set, idx)
+    return
 end
 
 mutable struct VariableBounds

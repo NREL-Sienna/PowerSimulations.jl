@@ -17,9 +17,9 @@
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
     )
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 648, 0, 120, 216, 72, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1
@@ -52,9 +52,9 @@ end
         ServiceModel(VariableReserve{ReserveDown}, RampReserve, "Reserve2"),
     )
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 384, 0, 336, 192, 24, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve_ReserveDown_Reserve2,
@@ -89,10 +89,10 @@ end
         template,
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
     )
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
 
-    model = DecisionModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 1008, 0, 480, 216, 192, true)
 end
 
@@ -107,9 +107,9 @@ end
         ServiceModel(VariableReserveNonSpinning, NonSpinningReserve, "NonSpinningReserve"),
     )
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves = true)
-    model = DecisionModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves=true)
+    model = DecisionModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 1032, 0, 888, 192, 240, true)
 end
 
@@ -126,9 +126,9 @@ end
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
     )
 
-    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
+    c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves=true)
     model = DecisionModel(template, c_sys5_re)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 360, 0, 72, 48, 72, false)
 end
 
@@ -149,9 +149,9 @@ end
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
     )
 
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves=true)
     model = DecisionModel(template, c_sys5_bat)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 432, 0, 288, 264, 96, true)
 end
 
@@ -172,24 +172,19 @@ end
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
     )
 
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves=true)
     model = DecisionModel(template, c_sys5_hyd)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 240, 0, 48, 96, 72, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
     template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+        NetworkModel(CopperPlatePowerModel; use_slacks=true),
     )
     set_service_model!(
         template,
-        ServiceModel(
-            VariableReserve{ReserveUp},
-            RangeReserve,
-            "Reserve1";
-            use_slacks = true,
-        ),
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"; use_slacks=true),
     )
     set_service_model!(
         template,
@@ -197,7 +192,7 @@ end
             VariableReserve{ReserveUp},
             RangeReserve,
             "Reserve11";
-            use_slacks = true,
+            use_slacks=true,
         ),
     )
     set_service_model!(
@@ -206,25 +201,24 @@ end
             VariableReserve{ReserveDown},
             RangeReserve,
             "Reserve2";
-            use_slacks = true,
+            use_slacks=true,
         ),
     )
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc;)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 504, 0, 120, 192, 24, false)
 end
 
 @testset "Test AGC" begin
     c_sys5_reg = PSB.build_system(PSITestSystems, "c_sys5_reg")
-    @test_throws ArgumentError template_agc_reserve_deployment(; dummy_arg = 0.0)
+    @test_throws ArgumentError template_agc_reserve_deployment(; dummy_arg=0.0)
 
     template_agc = template_agc_reserve_deployment()
     set_service_model!(template_agc, ServiceModel(PSY.AGC, PIDSmoothACE, "AGC_Area1"))
     agc_problem = DecisionModel(AGCReserveDeployment, template_agc, c_sys5_reg)
-    @test build!(agc_problem; output_dir = mktempdir(cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+    @test build!(agc_problem; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, false, 696, 0, 480, 0, 384, false)
 end
@@ -252,7 +246,7 @@ end
         ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve, "init"),
     )
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     services = get_components(Service, c_sys5_uc)
     contributing_services = Vector{Service}()
     for service in services
@@ -261,15 +255,15 @@ end
         end
     end
     groupservice = StaticReserveGroup{ReserveDown}(;
-        name = "init",
-        available = true,
-        requirement = 0.0,
-        ext = Dict{String, Any}(),
+        name="init",
+        available=true,
+        requirement=0.0,
+        ext=Dict{String, Any}(),
     )
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 648, 0, 120, 240, 72, false)
 end
 
@@ -286,7 +280,7 @@ end
         ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
     )
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     services = get_components(Service, c_sys5_uc)
     contributing_services = Vector{Service}()
     for service in services
@@ -295,10 +289,10 @@ end
         end
     end
     groupservice = StaticReserveGroup{ReserveDown}(;
-        name = "init",
-        available = true,
-        requirement = 0.0,
-        ext = Dict{String, Any}(),
+        name="init",
+        available=true,
+        requirement=0.0,
+        ext=Dict{String, Any}(),
     )
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
@@ -308,8 +302,8 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(
         model;
-        output_dir = mktempdir(cleanup = true),
-        console_level = Logging.AboveMaxLevel,
+        output_dir=mktempdir(cleanup=true),
+        console_level=Logging.AboveMaxLevel,
     ) == BuildStatus.FAILED
 end
 
@@ -324,7 +318,7 @@ end
     static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end
 
@@ -332,17 +326,17 @@ end
     template = get_thermal_dispatch_template_network()
     service_model = ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1")
     ff_lb = LowerBoundFeedforward(
-        component_type = VariableReserve{ReserveUp},
-        source = ActivePowerReserveVariable,
-        affected_values = [ActivePowerReserveVariable],
-        meta = "Reserve1",
+        component_type=VariableReserve{ReserveUp},
+        source=ActivePowerReserveVariable,
+        affected_values=[ActivePowerReserveVariable],
+        meta="Reserve1",
     )
     PSI.attach_feedforward!(service_model, ff_lb)
 
     set_service_model!(template, service_model)
 
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-    model = DecisionModel(template, c_sys5_uc; optimizer = Cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(cleanup = true)) == PSI.BuildStatus.BUILT
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
+    model = DecisionModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 240, 0, 120, 264, 24, false)
 end
