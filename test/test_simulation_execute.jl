@@ -376,66 +376,57 @@ end
         sequence=sequence,
         simulation_folder=mktempdir(cleanup=true),
     )
-    # TODO: this simulation build will faila as simulation state doesn't support sparse arrays
-    # and hybrid formulation uses sparse arrays for variables
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
-    # Uncomment when the issue with Time Series is fixed
-    # @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
+    @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
 end
 
-#=
-# TODO: re-enable this test after new version of PSB is tagged and released that has
-# the "c_sys5_hybrid_ed" system.
 @testset "Test HybridSystem simulations" begin
     sys_uc = PSB.build_system(PSITestSystems, "c_sys5_hybrid_uc")
     sys_ed = PSB.build_system(PSITestSystems, "c_sys5_hybrid_ed")
 
     template_uc = get_template_standard_uc_simulation()
     set_device_model!(template_uc, HybridSystem, BasicHybridDispatch)
-    set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel, use_slacks = true))
+    set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel, use_slacks=true))
     template_ed = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel, use_slacks = true),
+        NetworkModel(CopperPlatePowerModel, use_slacks=true),
     )
     set_device_model!(template_ed, HybridSystem, BasicHybridDispatch)
 
     models = SimulationModels(
-        decision_models = [
+        decision_models=[
             DecisionModel(
                 template_uc,
                 sys_uc;
-                name = "UC",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                name="UC",
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
             DecisionModel(
                 template_ed,
                 sys_ed;
-                name = "ED",
-                optimizer = Cbc_optimizer,
-                initialize_model = false,
+                name="ED",
+                optimizer=Cbc_optimizer,
+                initialize_model=false,
             ),
         ],
     )
 
     sequence =
-        SimulationSequence(models = models, ini_cond_chronology = InterProblemChronology())
+        SimulationSequence(models=models, ini_cond_chronology=InterProblemChronology())
 
     sim = Simulation(
-        name = "hybrid_test",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(cleanup = true),
+        name="hybrid_test",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
     )
-    # TODO: this simulation build will fails as simulation state doesn't support sparse arrays
-    # and hybrid formulation uses sparse arrays for variables
     build_out = build!(sim)
     @test build_out == PSI.BuildStatus.BUILT
     execute_out = execute!(sim)
     @test execute_out == PSI.RunStatus.SUCCESSFUL
 end
-=#
 
 @testset "UC with MarketBid Cost in ThermalGenerators simulations" begin
     template = get_thermal_dispatch_template_network(

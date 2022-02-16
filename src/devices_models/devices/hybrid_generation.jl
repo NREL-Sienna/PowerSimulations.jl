@@ -64,8 +64,8 @@ get_variable_binary(::ReservationVariable, ::Type{<:PSY.HybridSystem}, ::Abstrac
 initial_condition_default(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
 initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = EnergyVariable()
 
-get_multiplier_value( ::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
-
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_electric_load(d))
 #! format: on
 get_initial_conditions_device_model(
     ::OperationModel,
@@ -80,6 +80,19 @@ does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) =
     !isnothing(PSY.get_electric_load(v))
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.Storage}) =
     !isnothing(PSY.get_storage(v))
+
+get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) = PSY.get_thermal_unit(v)
+get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) = PSY.get_renewable_unit(v)
+get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) = PSY.get_electric_load(v)
+get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.Storage}) = PSY.get_storage(v)
+
+function make_subsystem_time_series_name(subcomponent::PSY.Component, label::String)
+    return make_subsystem_time_series_name(typeof(subcomponent), label)
+end
+
+function make_subsystem_time_series_name(subcomponent::Type{<:PSY.Component}, label::String)
+    return IS.strip_module_name(subcomponent) * "__" * label
+end
 
 function get_default_time_series_names(
     ::Type{<:PSY.HybridSystem},
@@ -266,7 +279,8 @@ function add_parameterized_upper_bound_range_constraints_impl!(
         name = PSY.get_name(device)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            array[name, subcomp_key, t] <= multiplier[name, t] * parameter[name, t]
+            array[name, subcomp_key, t] <=
+            multiplier[name, subcomp_key, t] * parameter[name, subcomp_key, t]
         )
     end
 end

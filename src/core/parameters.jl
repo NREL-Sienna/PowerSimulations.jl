@@ -76,8 +76,8 @@ get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
 
 struct ParameterContainer
     attributes::ParameterAttributes
-    parameter_array::DenseAxisArray
-    multiplier_array::DenseAxisArray
+    parameter_array::AbstractArray
+    multiplier_array::AbstractArray
 end
 
 function ParameterContainer(parameter_array, multiplier_array)
@@ -100,6 +100,11 @@ function _set_parameter!(
     value::Float64,
     ixs::Tuple,
 )
+    array[ixs...] = value
+    return
+end
+
+function _set_parameter!(array::AbstractArray, ::JuMP.Model, value::Float64, ixs::Tuple)
     array[ixs...] = value
     return
 end
