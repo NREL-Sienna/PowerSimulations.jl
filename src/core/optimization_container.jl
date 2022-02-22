@@ -783,10 +783,6 @@ function get_variable(
     return get_variable(container, VariableKey(T, U, meta))
 end
 
-function read_variables(container::OptimizationContainer)
-    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_variables(container))
-end
-
 ##################################### AuxVariable Container ################################
 function add_aux_variable_container!(
     container::OptimizationContainer,
