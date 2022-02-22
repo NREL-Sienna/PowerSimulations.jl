@@ -168,11 +168,11 @@ export read_duals
 export read_parameters
 export read_aux_variables
 export read_expressions
-export read_realized_variable
-export read_realized_dual
-export read_realized_parameter
-export read_realized_aux_variable
-export read_realized_expression
+# export read_realized_variable TODO: uncomment these when they are implemented in simulation_problem_results.jl
+# export read_realized_dual
+# export read_realized_parameter
+# export read_realized_aux_variable
+# export read_realized_expression
 export read_realized_variables
 export read_realized_duals
 export read_realized_parameters

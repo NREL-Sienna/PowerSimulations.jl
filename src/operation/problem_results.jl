@@ -304,11 +304,7 @@ function _read_results(
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for (k, v) in result_values
         if k in container_keys
-            if convert_result_to_natural_units(key)
-                value = result_values[key] .* base_power
-            else
-                value = result_values[key]
-            end
+            value = convert_result_to_natural_units(k) ? result_values[k] .* base_power : result_values[k]
             results[k] = value[time_ids, :]
         end
     end
@@ -348,12 +344,12 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_variable(res::ProblemResults, args...; kwargs...)
-    key = _deserialize_key(VariableKey, res, args...; kwargs...)
+    key = VariableKey(args...)
     return read_variable(res, key; kwargs...)
 end
 
-function read_variable(res::ProblemResults, key <: AbstractString; kwargs...)
-    return read_variable(_deserialize_key(VariableKey, res, key); kwargs...)
+function read_variable(res::ProblemResults, key::AbstractString; kwargs...)
+    return read_variable(res,_deserialize_key(VariableKey, res, key); kwargs...)
 end
 
 function read_variable(
@@ -430,12 +426,12 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_dual(res::ProblemResults, args...; kwargs...)
-    key = _deserialize_key(ConstraintKey, res, args...; kwargs...)
+    key = ConstraintKey(args...)
     return read_dual(res, key; kwargs...)
 end
 
-function read_dual(res::ProblemResults, key <: AbstractString; kwargs...)
-    return read_dual(_deserialize_key(ConstraintKey, res, key); kwargs...)
+function read_dual(res::ProblemResults, key::AbstractString; kwargs...)
+    return read_dual(res, _deserialize_key(ConstraintKey, res, key); kwargs...)
 end
 
 function read_dual(
@@ -506,12 +502,12 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_parameter(res::ProblemResults, args...; kwargs...)
-    key = _deserialize_key(ParameterKey, res, args...; kwargs...)
+    key = ParameterKey(args...)
     return read_parameter(res, key; kwargs...)
 end
 
-function read_parameter(res::ProblemResults, key <: AbstractString; kwargs...)
-    return read_parameter(_deserialize_key(ParameterKey, res, key); kwargs...)
+function read_parameter(res::ProblemResults, key::AbstractString; kwargs...)
+    return read_parameter(res, _deserialize_key(ParameterKey, res, key); kwargs...)
 end
 
 function read_parameter(
@@ -592,17 +588,17 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_aux_variable(res::ProblemResults, args...; kwargs...)
-    key = _deserialize_key(AuxVariableKey, res, args...; kwargs...)
+    key = AuxVarKey(args...)
     return read_aux_variable(res, key; kwargs...)
 end
 
-function read_aux_variable(res::ProblemResults, key <: AbstractString; kwargs...)
-    return read_aux_variable(_deserialize_key(AuxVariableKey, res, key); kwargs...)
+function read_aux_variable(res::ProblemResults, key::AbstractString; kwargs...)
+    return read_aux_variable(res, _deserialize_key(AuxVarKey, res, key); kwargs...)
 end
 
 function read_aux_variable(
     res::ProblemResults,
-    key::AuxVariableKey;
+    key::AuxVarKey;
     initial_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
@@ -625,7 +621,7 @@ function read_aux_variables(res::ProblemResults; kwargs...)
 end
 
 function read_aux_variables(res::ProblemResults, aux_variables; kwargs...)
-    return read_aux_variables(res, [AuxVariableKey(x...) for x in aux_variables]; kwargs...)
+    return read_aux_variables(res, [AuxVarKey(x...) for x in aux_variables]; kwargs...)
 end
 
 function read_aux_variables(
@@ -635,7 +631,7 @@ function read_aux_variables(
 )
     return read_aux_variables(
         res,
-        [_deserialize_key(AuxVariableKey, res, x) for x in aux_variables];
+        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
         kwargs...,
     )
 end
@@ -678,12 +674,12 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_expression(res::ProblemResults, args...; kwargs...)
-    key = _deserialize_key(ExpressionKey, res, args...; kwargs...)
+    key = ExpressionKey(args...)
     return read_expression(res, key; kwargs...)
 end
 
-function read_expression(res::ProblemResults, key <: AbstractString; kwargs...)
-    return read_expression(_deserialize_key(ExpressionKey, res, key); kwargs...)
+function read_expression(res::ProblemResults, key::AbstractString; kwargs...)
+    return read_expression(res, _deserialize_key(ExpressionKey, res, key); kwargs...)
 end
 
 function read_expression(
