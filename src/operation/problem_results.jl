@@ -304,7 +304,9 @@ function _read_results(
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for (k, v) in result_values
         if k in container_keys
-            value = convert_result_to_natural_units(k) ? result_values[k] .* base_power : result_values[k]
+            value =
+                convert_result_to_natural_units(k) ? result_values[k] .* base_power :
+                result_values[k]
             results[k] = value[time_ids, :]
         end
     end
@@ -349,7 +351,7 @@ function read_variable(res::ProblemResults, args...; kwargs...)
 end
 
 function read_variable(res::ProblemResults, key::AbstractString; kwargs...)
-    return read_variable(res,_deserialize_key(VariableKey, res, key); kwargs...)
+    return read_variable(res, _deserialize_key(VariableKey, res, key); kwargs...)
 end
 
 function read_variable(

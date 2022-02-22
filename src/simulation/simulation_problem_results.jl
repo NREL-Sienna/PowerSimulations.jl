@@ -743,12 +743,8 @@ function read_realized_variables(
     initial_time::Union{Nothing, Dates.DateTime}=nothing,
     count::Union{Int, Nothing}=nothing,
 )
-    result_values = read_variables_with_keys(
-        res,
-        variables;
-        initial_time=initial_time,
-        count=count,
-    )
+    result_values =
+        read_variables_with_keys(res, variables; initial_time=initial_time, count=count)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -805,12 +801,8 @@ function read_realized_parameters(
     initial_time::Union{Nothing, Dates.DateTime}=nothing,
     count::Union{Int, Nothing}=nothing,
 )
-    result_values = read_parameters_with_keys(
-        res,
-        parameters;
-        initial_time=initial_time,
-        count=count,
-    )
+    result_values =
+        read_parameters_with_keys(res, parameters; initial_time=initial_time, count=count)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -863,8 +855,7 @@ function read_realized_duals(
     initial_time::Union{Nothing, Dates.DateTime}=nothing,
     count::Union{Int, Nothing}=nothing,
 )
-    result_values =
-        read_duals_with_keys(res, duals; initial_time=initial_time, count=count)
+    result_values = read_duals_with_keys(res, duals; initial_time=initial_time, count=count)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -991,12 +982,8 @@ function read_realized_expressions(
     initial_time::Union{Nothing, Dates.DateTime}=nothing,
     count::Union{Int, Nothing}=nothing,
 )
-    result_values = read_expressions_with_keys(
-        res,
-        expressions;
-        initial_time=initial_time,
-        count=count,
-    )
+    result_values =
+        read_expressions_with_keys(res, expressions; initial_time=initial_time, count=count)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -1113,12 +1100,21 @@ function export_realized_results(
     write_data(read_variables_with_keys(res, list_variable_keys(res)), save_path)
     !isempty(list_dual_keys(res)) &&
         write_data(read_duals_with_keys(res, list_dual_keys(res)), save_path; name="dual")
-    !isempty(list_parameter_keys(res)) &&
-        write_data(read_parameters_with_keys(res, list_parameter_keys(res)), save_path; name="parameter")
-    !isempty(list_aux_variable_keys(res)) &&
-        write_data(read_aux_variables_with_keys(res, list_aux_variable_keys(res)), save_path; name="aux_variable")
-    !isempty(list_expression_keys(res)) &&
-        write_data(read_expressions_with_keys(res, list_expression_keys(res)), save_path; name="expression")
+    !isempty(list_parameter_keys(res)) && write_data(
+        read_parameters_with_keys(res, list_parameter_keys(res)),
+        save_path;
+        name="parameter",
+    )
+    !isempty(list_aux_variable_keys(res)) && write_data(
+        read_aux_variables_with_keys(res, list_aux_variable_keys(res)),
+        save_path;
+        name="aux_variable",
+    )
+    !isempty(list_expression_keys(res)) && write_data(
+        read_expressions_with_keys(res, list_expression_keys(res)),
+        save_path;
+        name="expression",
+    )
     export_optimizer_stats(res, save_path)
     files = readdir(save_path)
     compute_file_hash(save_path, files)
