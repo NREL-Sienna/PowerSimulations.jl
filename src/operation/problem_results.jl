@@ -304,10 +304,9 @@ function _read_results(
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for (k, v) in result_values
         if k in container_keys
-            value =
-                convert_result_to_natural_units(k) ? result_values[k] .* base_power :
-                result_values[k]
-            results[k] = value[time_ids, :]
+            results[k] =
+                convert_result_to_natural_units(k) ? v[time_ids, :] .* base_power :
+                v[time_ids, :]
         end
     end
     return results
