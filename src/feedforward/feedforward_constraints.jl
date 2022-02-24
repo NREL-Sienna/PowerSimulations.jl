@@ -390,21 +390,27 @@ function add_feedforward_constraints!(
                 "The number of affected periods $affected_periods is larger than the periods available $(set_time[end])",
             )
         end
-
+        no_trenches = set_time[end] ÷ affected_periods
         var_type = get_entry_type(var)
         con_ub = add_constraints_container!(
             container,
             FeedforwardIntegralLimitConstraint(),
             T,
             set_name,
+            1:no_trenches,
             meta="$(var_type)integral",
         )
 
-        for name in set_name
+        for name in set_name, i in 1:no_trenches
             con_ub[name] = JuMP.@constraint(
                 container.JuMPmodel,
-                sum(variable[name, t] for t in 1:affected_periods) / affected_periods <=
-                sum(param[name, t] * multiplier[name, t] for t in 1:affected_periods)
+                sum(
+                    variable[name, t] for
+                    t in (1 + (i - 1) * affected_periods):(i * affected_periods)
+                ) / affected_periods <= sum(
+                    param[name, t] * multiplier[name, t] for
+                    t in (1 + (i - 1) * affected_periods):(i * affected_periods)
+                )
             )
         end
     end

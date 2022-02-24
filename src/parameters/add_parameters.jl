@@ -306,6 +306,40 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::T,
+    key::AuxVarKey{U, D},
+    model::DeviceModel{D, W},
+    devices::V,
+) where {
+    T <: VariableValueParameter,
+    U <: AuxVariableType,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    names = [PSY.get_name(device) for device in devices]
+    time_steps = get_time_steps(container)
+    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
+    jump_model = get_jump_model(container)
+
+    for d in devices
+        name = PSY.get_name(d)
+        for t in time_steps
+            set_parameter!(
+                parameter_container,
+                jump_model,
+                get_initial_parameter_value(T(), d, W()),
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
+        end
+    end
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::T,
     devices::V,
     model::DeviceModel{D, W},
 ) where {

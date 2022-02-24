@@ -237,6 +237,7 @@ export PowerAboveMinimumVariable
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export EnergyOutput
 
 # Constraints
 export AbsoluteValueConstraint
