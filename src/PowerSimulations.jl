@@ -139,11 +139,6 @@ export ProblemResultsExport
 export export_results
 export export_realized_results
 export export_optimizer_stats
-export get_variable_values
-export get_dual_values
-export get_parameter_values
-export get_aux_variable_values
-export get_expression_values
 export get_timestamps
 export get_model_name
 export get_problem_results
@@ -168,6 +163,16 @@ export read_dual
 export read_parameter
 export read_aux_variable
 export read_expression
+export read_variables
+export read_duals
+export read_parameters
+export read_aux_variables
+export read_expressions
+# export read_realized_variable TODO: uncomment these when they are implemented in simulation_problem_results.jl
+# export read_realized_dual
+# export read_realized_parameter
+# export read_realized_aux_variable
+# export read_realized_expression
 export read_realized_variables
 export read_realized_duals
 export read_realized_parameters

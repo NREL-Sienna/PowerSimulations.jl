@@ -60,42 +60,29 @@ end
     @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 3)
     @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 5)
     @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 5)
-    @test length(read_realized_variables(res)) == 4
-    @test length(read_realized_parameters(res)) == 1
-    @test length(read_realized_duals(res)) == 0
-    @test length(read_realized_expressions(res)) == 1
-    @test first(keys(read_realized_variables(res, ["StartVariable__ThermalStandard"]))) ==
-          "StartVariable__ThermalStandard"
-    @test first(keys(read_realized_variables(res, [(StartVariable, ThermalStandard)]))) ==
-          "StartVariable__ThermalStandard"
-    @test first(
-        keys(read_realized_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"])),
-    ) == "ActivePowerTimeSeriesParameter__PowerLoad"
-    @test first(
-        keys(read_realized_parameters(res, [(ActivePowerTimeSeriesParameter, PowerLoad)])),
-    ) == "ActivePowerTimeSeriesParameter__PowerLoad"
-    @test first(
-        keys(read_realized_aux_variables(res, ["TimeDurationOff__ThermalStandard"])),
-    ) == "TimeDurationOff__ThermalStandard"
-    @test first(
-        keys(read_realized_aux_variables(res, [(TimeDurationOff, ThermalStandard)])),
-    ) == "TimeDurationOff__ThermalStandard"
-    @test first(
-        keys(read_realized_expressions(res, ["ProductionCostExpression__ThermalStandard"])),
-    ) == "ProductionCostExpression__ThermalStandard"
-    @test first(
-        keys(
-            read_realized_expressions(
-                res,
-                [(PSI.ProductionCostExpression, ThermalStandard)],
-            ),
-        ),
-    ) == "ProductionCostExpression__ThermalStandard"
-
-    @test length(read_realized_aux_variables(res)) == 2
-    @test first(
-        keys(read_realized_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)])),
-    ) == "TimeDurationOff__ThermalStandard"
+    @test length(read_variables(res)) == 4
+    @test length(read_parameters(res)) == 1
+    @test length(read_duals(res)) == 0
+    @test length(read_expressions(res)) == 1
+    @test read_variables(res, ["StartVariable__ThermalStandard"])["StartVariable__ThermalStandard"] ==
+          read_variable(res, "StartVariable__ThermalStandard")
+    @test read_variables(res, [(StartVariable, ThermalStandard)])["StartVariable__ThermalStandard"] ==
+          read_variable(res, StartVariable, ThermalStandard)
+    @test read_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"])["ActivePowerTimeSeriesParameter__PowerLoad"] ==
+          read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")
+    @test read_parameters(res, [(ActivePowerTimeSeriesParameter, PowerLoad)])["ActivePowerTimeSeriesParameter__PowerLoad"] ==
+          read_parameter(res, ActivePowerTimeSeriesParameter, PowerLoad)
+    @test read_aux_variables(res, ["TimeDurationOff__ThermalStandard"])["TimeDurationOff__ThermalStandard"] ==
+          read_aux_variable(res, "TimeDurationOff__ThermalStandard")
+    @test read_aux_variables(res, [(TimeDurationOff, ThermalStandard)])["TimeDurationOff__ThermalStandard"] ==
+          read_aux_variable(res, TimeDurationOff, ThermalStandard)
+    @test read_expressions(res, ["ProductionCostExpression__ThermalStandard"])["ProductionCostExpression__ThermalStandard"] ==
+          read_expression(res, "ProductionCostExpression__ThermalStandard")
+    @test read_expressions(res, [(PSI.ProductionCostExpression, ThermalStandard)])["ProductionCostExpression__ThermalStandard"] ==
+          read_expression(res, PSI.ProductionCostExpression, ThermalStandard)
+    @test length(read_aux_variables(res)) == 2
+    @test first(keys(read_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)]))) ==
+          "TimeDurationOff__ThermalStandard"
     export_results(res)
     results_dir = joinpath(output_dir, "results")
     @test isfile(joinpath(results_dir, "optimizer_stats.csv"))
@@ -232,9 +219,9 @@ end
     dual_results = PSI.read_duals(container)[constraint_key]
     dual_results_read = read_dual(res, constraint_key)
     realized_dual_results =
-        read_realized_duals(res, [constraint_key])[PSI.encode_key_as_string(constraint_key)]
+        read_duals(res, [constraint_key])[PSI.encode_key_as_string(constraint_key)]
     realized_dual_results_string =
-        read_realized_duals(res, [PSI.encode_key_as_string(constraint_key)])[PSI.encode_key_as_string(
+        read_duals(res, [PSI.encode_key_as_string(constraint_key)])[PSI.encode_key_as_string(
             constraint_key,
         )]
     @test dual_results ==
@@ -261,11 +248,14 @@ end
     @test length(list_dual_names(res)) == 1
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
-    @test isa(get_variable_values(res), Dict{PSI.VariableKey, DataFrames.DataFrame})
+    @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
+    @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
     @test isa(PSI.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
-    @test isa(get_dual_values(res), Dict{PSI.ConstraintKey, DataFrames.DataFrame})
-    @test isa(get_parameter_values(res), Dict{PSI.ParameterKey, DataFrames.DataFrame})
+    @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
+    @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
+    @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
+    @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
     @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(get_system(res), PSY.System)
     @test length(get_timestamps(res)) == 24
