@@ -317,16 +317,22 @@ function _process_timestamps(
     initial_time::Union{Nothing, Dates.DateTime},
     len::Union{Int, Nothing},
 )
-    invalid_timestamps = []
     if initial_time === nothing
         initial_time = first(get_timestamps(res))
     elseif initial_time ∉ get_timestamps(res)
         throw(IS.InvalidValue("initial_time not in result timestamps"))
     end
 
-    requested_range = findall(x -> x >= initial_time, get_timestamps(res))
-    len = len === nothing ? length(requested_range) : len
-    if len > length(requested_range)
+    if startswith(res.model_type, "EmulationModel{")
+        def_len = DataFrames.nrow(get_optimizer_stats(res))
+        requested_range =
+            collect(findfirst(x -> x >= initial_time, get_timestamps(res)):def_len)
+    else
+        requested_range = findall(x -> x >= initial_time, get_timestamps(res))
+        def_len = length(requested_range)
+    end
+    len = len === nothing ? def_len : len
+    if len > def_len
         throw(IS.InvalidValue("requested results have less than $len values"))
     end
 
