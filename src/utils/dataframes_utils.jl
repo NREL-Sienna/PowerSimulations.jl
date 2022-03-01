@@ -60,7 +60,9 @@ end
 function write_data(vars_results::Dict, save_path::String; kwargs...)
     name = get(kwargs, :name, "")
     for (k, v) in vars_results
-        file_path = joinpath(save_path, "$name$k.csv")
+        keyname = encode_key_as_string(k)
+        file_path = joinpath(save_path, "$name$keyname.csv")
+        @debug "writing" file_path
         if isempty(vars_results[k])
             @debug "$name$k is empty, not writing $file_path"
         else
