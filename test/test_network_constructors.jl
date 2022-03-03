@@ -234,7 +234,7 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(
             ps_model,
-            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
             test_obj_values[sys],
             1000,
         )
@@ -325,7 +325,7 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(
             ps_model,
-            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
             test_obj_values[sys],
             10000,
         )
