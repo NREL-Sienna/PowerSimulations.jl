@@ -156,15 +156,15 @@ end
 @testset "Default Decisions Constructors" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model_ed =
-        EconomicDispatchProblem(c_sys5; output_dir=mktempdir(), optimizer=fast_lp_optimizer)
+        EconomicDispatchProblem(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
     moi_tests(model_ed, false, 120, 0, 120, 120, 24, false)
     model_uc =
-        UnitCommitmentProblem(c_sys5; output_dir=mktempdir(), optimizer=fast_lp_optimizer)
+        UnitCommitmentProblem(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
     moi_tests(model_uc, false, 480, 0, 240, 120, 144, true)
     ED_output =
-        run_economic_dispatch(c_sys5; output_dir=mktempdir(), optimizer=fast_lp_optimizer)
+        run_economic_dispatch(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
     UC_output =
-        run_unit_commitment(c_sys5; output_dir=mktempdir(), optimizer=fast_lp_optimizer)
+        run_unit_commitment(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
     @test ED_output == RunStatus.SUCCESSFUL
     @test UC_output == RunStatus.SUCCESSFUL
 end

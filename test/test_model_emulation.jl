@@ -473,11 +473,7 @@ end
     @test var1 == var2
 
     # Deserialize with different optimizer attributes.
-    optimizer = JuMP.optimizer_with_attributes(
-        OSQP.Optimizer,
-        "verbose" => true,
-        "max_iter" => 60000,
-    )
+    optimizer = JuMP.optimizer_with_attributes(HiGHS.Optimizer, "time_limit" => 110.0)
     @test_logs (:warn, r"Original solver used") match_mode = :any EmulationModel(
         path,
         optimizer,
