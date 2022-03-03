@@ -61,15 +61,6 @@ struct CostFunctionAttributes <: ParameterAttributes
     uses_compact_power::Bool
 end
 
-function CostFunctionAttributes(
-    variable_type::Type,
-    sos_status::SOSStatusVariable,
-    segments::Int,
-    uses_compact_power::Bool,
-)
-    return CostFunctionAttributes(variable_type, sos_status, uses_compact_power)
-end
-
 get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
 get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
