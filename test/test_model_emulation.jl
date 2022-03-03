@@ -38,7 +38,7 @@ end
         force_build=true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
@@ -54,7 +54,7 @@ end
         force_build=true,
     )
     set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    model = EmulationModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; executions=1, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
 
@@ -73,7 +73,7 @@ end
         force_build=true,
     )
     set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
-    model = EmulationModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; executions=1, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
@@ -92,7 +92,7 @@ end
     )
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     set_device_model!(template, device_model)
-    model = EmulationModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
 end
@@ -107,7 +107,7 @@ end
         force_build=true,
     )
     set_device_model!(template, GenericBattery, BookKeeping)
-    model = EmulationModel(template, c_sys5_bat; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     ic_data = PSI.get_initial_condition(
@@ -131,7 +131,7 @@ end
         force_build=true,
     )
     set_device_model!(template, GenericBattery, BatteryAncillaryServices)
-    model = EmulationModel(template, c_sys5_bat; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     ic_data = PSI.get_initial_condition(
@@ -155,7 +155,7 @@ end
         force_build=true,
     )
     set_device_model!(template, BatteryEMS, EnergyTarget)
-    model = EmulationModel(template, c_sys5_bat; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     ic_data = PSI.get_initial_condition(
@@ -182,7 +182,7 @@ end
     )
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
@@ -204,7 +204,7 @@ end
     )
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
 
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
@@ -226,7 +226,7 @@ end
         force_build=true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
@@ -247,7 +247,7 @@ end
         force_build=true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirBudget)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
@@ -268,7 +268,7 @@ end
         force_build=true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
@@ -299,7 +299,7 @@ end
         force_build=true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
     @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
@@ -331,7 +331,7 @@ end
         force_build=true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
     executions = 10
     @test build!(model; executions=executions, output_dir=mktempdir(cleanup=true)) ==
           BuildStatus.BUILT
@@ -388,7 +388,7 @@ end
             force_build=true,
         )
 
-        model = EmulationModel(template, c_sys5; optimizer=Cbc_optimizer)
+        model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
         @test_throws ErrorException run!(model, executions=10)
         @test run!(
             model,
@@ -409,7 +409,7 @@ end
         force_build=true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
     executions = 10
     @test build!(model; executions=executions, output_dir=path) == BuildStatus.BUILT
     @test run!(model, export_problem_results=true) == RunStatus.SUCCESSFUL
@@ -464,7 +464,7 @@ end
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
     path2 = joinpath(path, "tmp")
-    model2 = EmulationModel(path, Cbc_optimizer)
+    model2 = EmulationModel(path, HiGHS_optimizer)
     build!(model2, output_dir=path2)
     @test run!(model2) == RunStatus.SUCCESSFUL
     results2 = ProblemResults(model2)
@@ -498,9 +498,9 @@ end
         add_single_time_series=true,
         force_build=true,
     )
-    optimizer = Cbc_optimizer
+    optimizer = HiGHS_optimizer
     set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    model = EmulationModel(template, sys; optimizer=Cbc_optimizer)
+    model = EmulationModel(template, sys; optimizer=HiGHS_optimizer)
     output_dir = mktempdir(cleanup=true)
 
     @test build!(model; executions=1, output_dir=output_dir) == BuildStatus.BUILT

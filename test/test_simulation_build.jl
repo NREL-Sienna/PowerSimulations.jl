@@ -159,7 +159,7 @@ end
             sys_md,
             initialize_model=false,
             system_to_file=false,
-            optimizer=Cbc_optimizer,
+            optimizer=HiGHS_optimizer,
         ),
         DecisionModel(
             template_uc,
@@ -167,7 +167,7 @@ end
             sys_uc,
             initialize_model=false,
             system_to_file=false,
-            optimizer=Cbc_optimizer,
+            optimizer=HiGHS_optimizer,
         ),
         DecisionModel(
             template_ed,
@@ -175,7 +175,7 @@ end
             sys_ed,
             initialize_model=false,
             system_to_file=false,
-            optimizer=Cbc_optimizer,
+            optimizer=HiGHS_optimizer,
         ),
     ])
 
@@ -228,7 +228,7 @@ end
                 template_uc,
                 c_sys5_hy_uc;
                 name="UC",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
             DecisionModel(

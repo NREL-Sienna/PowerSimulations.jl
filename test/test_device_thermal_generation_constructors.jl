@@ -567,7 +567,7 @@ end
         EconomicDispatchProblem,
         template,
         ramp_test_sys;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(ED; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -582,7 +582,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_duration_test");
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -597,7 +597,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -611,7 +611,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -630,7 +630,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_market_bid_cost");
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
