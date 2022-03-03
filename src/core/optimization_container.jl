@@ -810,7 +810,7 @@ function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     if aux === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        throw(IS.InvalidValue("Auxiliary variable $name is not stored"))
+        throw(IS.InvalidValue("Auxiliary variable $name is not stored. $keys"))
     end
     return aux
 end
@@ -965,7 +965,7 @@ function _add_param_container!(
     axs...;
     sparse=false,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    # Temporary solution uses Float64 paramters and re-builds the cost function each time.
+    # Temporary solution uses Float64 parameters and re-builds the cost function each time.
     param_type = Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
