@@ -453,7 +453,7 @@ end
         force_build=true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=OSQP_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
     executions = 10
     @test build!(model; executions=executions, output_dir=path) == BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL

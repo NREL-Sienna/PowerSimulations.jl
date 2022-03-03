@@ -26,7 +26,6 @@ import Serialization
 # Solvers
 using Ipopt
 using GLPK
-using OSQP
 using SCS
 using HiGHS
 

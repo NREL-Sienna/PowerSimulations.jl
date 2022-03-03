@@ -5,7 +5,7 @@
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF=PSY.PTDF(system)),
         )
-        model_m = DecisionModel(template, system; optimizer=OSQP_optimizer)
+        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
@@ -30,7 +30,7 @@ end
         )
         set_device_model!(template, DeviceModel(Line, StaticBranch))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
-        model_m = DecisionModel(template, system; optimizer=OSQP_optimizer)
+        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
@@ -91,7 +91,7 @@ end
         template =
             get_template_dispatch_with_network(NetworkModel(model; PTDF=PSY.PTDF(system)))
         set_device_model!(template, HVDCLine, hvdc_model)
-        model_m = DecisionModel(template, system; optimizer=OSQP_optimizer)
+        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
         @test check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
@@ -149,7 +149,7 @@ end
         set_device_model!(template, DeviceModel(HVDCLine, HVDCUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
-        model_m = DecisionModel(template, system; optimizer=OSQP_optimizer)
+        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
         if model == DCPPowerModel
