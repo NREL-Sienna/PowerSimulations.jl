@@ -441,7 +441,7 @@ end
                 UnitCommitmentProblem,
                 template,
                 PSB.build_system(PSITestSystems, "c_market_bid_cost");
-                optimizer=HiGHS_optimizer,
+                optimizer=cbc_optimizer,
                 initialize_model=false,
             ),
         ],
