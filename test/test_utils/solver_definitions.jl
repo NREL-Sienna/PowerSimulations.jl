@@ -28,6 +28,4 @@ HiGHS_optimizer = JuMP.optimizer_with_attributes(
     "log_to_console" => false,
 )
 
-cbc_optimizer = JuMP.optimizer_with_attributes(
-    Cbc.Optimizer,
-)
+cbc_optimizer = JuMP.optimizer_with_attributes(Cbc.Optimizer)
