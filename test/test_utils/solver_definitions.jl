@@ -1,3 +1,10 @@
+# Solvers
+using Ipopt
+using GLPK
+using SCS
+using HiGHS
+using Cbc
+
 ipopt_optimizer =
     JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
 fast_ipopt_optimizer = JuMP.optimizer_with_attributes(
@@ -19,4 +26,8 @@ HiGHS_optimizer = JuMP.optimizer_with_attributes(
     HiGHS.Optimizer,
     "time_limit" => 100.0,
     "log_to_console" => false,
+)
+
+cbc_optimizer = JuMP.optimizer_with_attributes(
+    Cbc.Optimizer,
 )
