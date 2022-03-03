@@ -309,7 +309,7 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=glpk_optimizer)
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
