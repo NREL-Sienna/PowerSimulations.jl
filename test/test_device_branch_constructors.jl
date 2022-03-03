@@ -91,7 +91,7 @@ end
         template =
             get_template_dispatch_with_network(NetworkModel(model; PTDF=PSY.PTDF(system)))
         set_device_model!(template, HVDCLine, hvdc_model)
-        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
+        model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
         @test check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
@@ -149,13 +149,11 @@ end
         set_device_model!(template, DeviceModel(HVDCLine, HVDCUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
-        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
+        model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
         if model == DCPPowerModel
-            # TODO: Currently Broken, remove variable bounds in HVDCUnbounded
-            # @test check_variable_unbounded(model_m, FlowActivePowerVariable, HVDCLine)
-
+            @test check_variable_unbounded(model_m, FlowActivePowerVariable, HVDCLine)
             @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
             @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
         end
