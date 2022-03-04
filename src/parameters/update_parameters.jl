@@ -249,6 +249,69 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{IntegralLimitParameter, U},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: ParameterType, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    internal = get_internal(model)
+    execution_count = internal.execution_count
+    current_time = get_current_time(model)
+    state_values = get_dataset_values(input, get_attribute_key(parameter_attributes))
+    component_names, time = axes(parameter_array)
+    resolution = get_resolution(model)
+    interval_time_steps = Int(get_interval(model.internal.store_parameters) / resolution)
+    state_data = get_dataset(input, get_attribute_key(parameter_attributes))
+    state_timestamps = state_data.timestamps
+    max_state_index = length(state_data)
+
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    old_parameter_values = JuMP.value.(parameter_array)
+
+    for t in time
+        timestamp_ix = min(max_state_index, state_data_index + 1)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[timestamp_ix] <= sim_timestamps[t]
+            state_data_index = timestamp_ix
+        end
+        for name in component_names
+            if execution_count == 0 || t > time[end] - interval_time_steps
+                # Pass indices in this way since JuMP DenseAxisArray don't support view()
+                _set_param_value!(
+                    parameter_array,
+                    state_values[state_data_index, name],
+                    name,
+                    t,
+                )
+            else
+                _set_param_value!(
+                    parameter_array,
+                    old_parameter_values[name, t + interval_time_steps],
+                    name,
+                    t,
+                )
+            end
+        end
+    end
+
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    return
+end
+
 """
 Update parameter function an OperationModel
 """
