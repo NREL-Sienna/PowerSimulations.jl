@@ -1,4 +1,4 @@
-struct AddCostSpec
+mutable struct AddCostSpec
     variable_type::Type
     component_type::Type
     has_status_variable::Bool
@@ -11,7 +11,8 @@ struct AddCostSpec
     fixed_cost::Union{Nothing, Function}
     has_multistart_variables::Bool
     addtional_linear_terms::Dict{String, <:VariableKey}
-    uses_compact_power::Bool
+    model_uses_compact_power::Bool
+    data_in_compact_power::Bool
 
     function AddCostSpec(;
         variable_type,
@@ -42,9 +43,11 @@ struct AddCostSpec
             has_multistart_variables,
             addtional_linear_terms,
             uses_compact_power,
+            false
         )
     end
 end
+
 function AddCostSpec(
     ::Type{<:T},
     ::Type{<:U},
@@ -54,7 +57,8 @@ function AddCostSpec(
 end
 
 set_addtional_linear_terms!(spec::AddCostSpec, key, value) =
-    spec.addtional_linear_terms[key] = value
+spec.addtional_linear_terms[key] = value
+set_data_in_compact_power(spec::AddCostSpec, value::Bool) = spec.data_in_compact_power = value
 
 function add_service_variables!(spec::AddCostSpec, service_models)
     for service_model in service_models
@@ -91,11 +95,42 @@ function cost_function!(
     return
 end
 
+function _check_pwl_compact_data(::MinMax, ::PSY.VariableCost, ::Float64)
+    return false
+end
+
+function _check_pwl_compact_data(limits::MinMax, data::PSY.VariableCost{Vector{Tuple{Float64, Float64}}}, base_power::Float64)
+    return isapprox(limits.max - limits.min, data.cost[end][2]/base_power) && iszero(data.cost[1][2])
+end
+
+function cost_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: AbstractDeviceFormulation}
+    base_power = get_base_power(container)
+    for d in devices
+        limits = PSY.get_active_power_limits(d)
+        cost_data = PSY.get_variable(PSY.get_operation_cost(d))
+        spec = AddCostSpec(T, U, container)
+        if _check_pwl_compact_data(limits, cost_data, base_power)
+            set_data_in_compact_power(spec, true)
+        end
+        @debug T, spec _group = LOG_GROUP_COST_FUNCTIONS
+        service_models = get_services(model)
+        add_service_variables!(spec, service_models)
+        add_to_cost!(container, spec, PSY.get_operation_cost(d), d)
+    end
+    return
+end
+
+
 function add_to_cost_expression!(
     container::OptimizationContainer,
     cost_expression::JuMP.AbstractJuMPScalar,
-    component::T,
-    time_period::Int,
+    ::T,
+    ::Int,
 ) where {T <: PSY.Component}
     T_ce = typeof(cost_expression)
     T_cf = typeof(container.cost_function.invariant_terms)
@@ -123,26 +158,6 @@ function add_to_variant_cost_expression!(
     return
 end
 
-function has_on_variable(
-    container::OptimizationContainer,
-    ::Type{T};
-    variable_type=OnVariable,
-) where {T <: PSY.Component}
-    # get_variable can't be used because the default behavior is to error if variables is not present
-    return haskey(container.variables, VariableKey(variable_type, T))
-end
-
-function has_on_parameter(
-    container::OptimizationContainer,
-    ::Type{T},
-) where {T <: PSY.Component}
-    if !built_for_recurrent_solves(container)
-        return false
-    end
-    # get_parameter can't be used because the default behavior is to error if variables is not present
-    return haskey(container.parameters, ParameterKey(OnStatusParameter, T))
-end
-
 function slope_convexity_check(slopes::Vector{Float64})
     flag = true
     for ix in 1:(length(slopes) - 1)
@@ -152,6 +167,35 @@ function slope_convexity_check(slopes::Vector{Float64})
         end
     end
     return flag
+end
+
+function PSY.get_no_load(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
+    _, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
+    return no_load_cost
+end
+
+function _get_compact_varcost(cost)
+    return PSY.get_variable(cost)
+end
+
+function _get_compact_varcost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
+    var_cost, _ = _convert_variable_cost(PSY.get_variable(cost))
+    return var_cost
+end
+
+function _convert_variable_cost(var_cost::PSY.VariableCost)
+    return var_cost, 0.0
+end
+
+function _convert_variable_cost(var_cost::PSY.VariableCost{Float64})
+    return var_cost, var_cost
+end
+
+function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
+    var_cost = PSY.get_cost(variable_cost)
+    no_load_cost, p_min = var_cost[1]
+    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
+    return var_cost, no_load_cost
 end
 
 function _convert_variable_cost(var_cost::Vector{NTuple{2, Float64}})
