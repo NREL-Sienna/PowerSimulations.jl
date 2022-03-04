@@ -749,9 +749,9 @@ function calculate_aux_variable_value!(
 ) where {T <: PSY.ThermalGen}
     devices = PSY.get_components(T, system)
     time_steps = get_time_steps(container)
-    if has_on_variable(container, T)
+    if has_container_key(container, OnVariable, T)
         on_variable_results = get_variable(container, OnVariable(), T)
-    elseif has_on_parameter(container, T)
+    elseif has_container_key(container, OnStatusParameter, T)
         on_variable_results = get_parameter_array(container, OnStatusParameter(), T)
     else
         error(
@@ -1237,8 +1237,8 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type=ActivePowerVariable,
         component_type=T,
-        has_status_variable=has_on_variable(container, T),
-        has_status_parameter=has_on_parameter(container, T),
+        has_status_variable=has_container_key(container, OnVariable, T),
+        has_status_parameter=has_container_key(container, OnStatusParameter, T),
         variable_cost=PSY.get_variable,
         start_up_cost=PSY.get_start_up,
         shut_down_cost=PSY.get_shut_down,
@@ -1255,8 +1255,8 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type=ActivePowerVariable,
         component_type=PSY.ThermalMultiStart,
-        has_status_variable=has_on_variable(container, PSY.ThermalMultiStart),
-        has_status_parameter=has_on_parameter(container, PSY.ThermalMultiStart),
+        has_status_variable=has_container_key(container, OnVariable, PSY.ThermalMultiStart),
+        has_status_parameter=has_container_key(container, OnStatusParameter, PSY.ThermalMultiStart),
         variable_cost=PSY.get_variable,
         start_up_cost=x -> getfield(PSY.get_start_up(x), :cold),
         shut_down_cost=PSY.get_shut_down,
@@ -1279,8 +1279,8 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type=ActivePowerVariable,
         component_type=T,
-        has_status_variable=has_on_variable(container, T),
-        has_status_parameter=has_on_parameter(container, T),
+        has_status_variable=has_container_key(container, OnVariable, T),
+        has_status_parameter=has_container_key(container, OnStatusParameter, T),
         variable_cost=PSY.get_variable,
         fixed_cost=PSY.get_fixed,
         sos_status=sos_status,
@@ -1296,8 +1296,8 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type=PowerAboveMinimumVariable,
         component_type=T,
-        has_status_variable=has_on_variable(container, T),
-        has_status_parameter=has_on_parameter(container, T),
+        has_status_variable=has_container_key(container, OnVariable, T),
+        has_status_parameter=has_container_key(container, OnStatusParameter, T),
         variable_cost=_get_compact_varcost,
         shut_down_cost=PSY.get_shut_down,
         start_up_cost=PSY.get_start_up,
@@ -1321,8 +1321,8 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type=PowerAboveMinimumVariable,
         component_type=T,
-        has_status_variable=has_on_variable(container, T),
-        has_status_parameter=has_on_parameter(container, T),
+        has_status_variable=has_container_key(container, OnVariable, T),
+        has_status_parameter=has_container_key(container, OnStatusParameter, T),
         variable_cost=_get_compact_varcost,
         fixed_cost=fixed_cost_func,
         sos_status=sos_status,
@@ -1339,8 +1339,8 @@ function AddCostSpec(
     return AddCostSpec(;
         variable_type=PowerAboveMinimumVariable,
         component_type=T,
-        has_status_variable=has_on_variable(container, T),
-        has_status_parameter=has_on_parameter(container, T),
+        has_status_variable=has_container_key(container, OnVariable, T),
+        has_status_parameter=has_container_key(container, OnStatusParameter, T),
         variable_cost=_get_compact_varcost,
         start_up_cost=PSY.get_start_up,
         shut_down_cost=PSY.get_shut_down,
@@ -1363,8 +1363,8 @@ function cost_function!(
     no_min_spec = AddCostSpec(;
         variable_type=ActivePowerVariable,
         component_type=T,
-        has_status_variable=has_on_variable(container, T),
-        has_status_parameter=has_on_parameter(container, T),
+        has_status_variable=has_container_key(container, OnVariable, T),
+        has_status_parameter=has_container_key(container, OnStatusParameter, T),
         variable_cost=PSY.get_variable,
         fixed_cost=PSY.get_fixed,
     )
