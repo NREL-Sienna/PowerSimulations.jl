@@ -1351,35 +1351,6 @@ function AddCostSpec(
     )
 end
 
-function PSY.get_no_load(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
-    _, no_load_cost = _convert_variable_cost(PSY.get_variable(cost))
-    return no_load_cost
-end
-
-function _get_compact_varcost(cost)
-    return PSY.get_variable(cost)
-end
-
-function _get_compact_varcost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost})
-    var_cost, _ = _convert_variable_cost(PSY.get_variable(cost))
-    return var_cost
-end
-
-function _convert_variable_cost(var_cost::PSY.VariableCost)
-    return var_cost, 0.0
-end
-
-function _convert_variable_cost(var_cost::PSY.VariableCost{Float64})
-    return var_cost, var_cost
-end
-
-function _convert_variable_cost(variable_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}})
-    var_cost = PSY.get_cost(variable_cost)
-    no_load_cost, p_min = var_cost[1]
-    var_cost = PSY.VariableCost([(c - no_load_cost, pp - p_min) for (c, pp) in var_cost])
-    return var_cost, no_load_cost
-end
-
 """
 Cost function for generators formulated as No-Min
 """
