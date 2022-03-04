@@ -402,12 +402,12 @@ function add_feedforward_constraints!(
         )
 
         for name in set_name, i in 1:no_trenches
-            con_ub[name] = JuMP.@constraint(
+            con_ub[name, i] = JuMP.@constraint(
                 container.JuMPmodel,
                 sum(
                     variable[name, t] for
                     t in (1 + (i - 1) * affected_periods):(i * affected_periods)
-                ) / affected_periods <= sum(
+                ) <= sum(
                     param[name, t] * multiplier[name, t] for
                     t in (1 + (i - 1) * affected_periods):(i * affected_periods)
                 )
