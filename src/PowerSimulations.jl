@@ -85,7 +85,7 @@ export StandardHybridDispatch
 export UpperBoundFeedforward
 export LowerBoundFeedforward
 export SemiContinuousFeedforward
-export IntegralLimitFeedforward
+export EnergyLimitFeedforward
 export FixValueFeedforward
 export EnergyTargetFeedforward
 

@@ -137,7 +137,7 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
                         source=OnVariable,
                         affected_values=[ActivePowerVariable],
                     ),
-                    IntegralLimitFeedforward(
+                    EnergyLimitFeedforward(
                         component_type=HydroEnergyReservoir,
                         source=ActivePowerVariable,
                         affected_values=[ActivePowerVariable],

@@ -184,10 +184,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to GenericBattery with BookKeeping model" begin
+@testset "Test EnergyLimitFeedforward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(GenericBattery, BookKeeping)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=GenericBattery,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -219,10 +219,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to GenericBattery with BatteryAncillaryServices model" begin
+@testset "Test EnergyLimitFeedforward to GenericBattery with BatteryAncillaryServices model" begin
     device_model = DeviceModel(GenericBattery, BatteryAncillaryServices)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=GenericBattery,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -254,10 +254,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to BatteryEMS with BookKeeping model" begin
+@testset "Test EnergyLimitFeedforward to BatteryEMS with BookKeeping model" begin
     device_model = DeviceModel(BatteryEMS, BookKeeping)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=BatteryEMS,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -289,10 +289,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to BatteryEMS with BatteryAncillaryServices model" begin
+@testset "Test EnergyLimitFeedforward to BatteryEMS with BatteryAncillaryServices model" begin
     device_model = DeviceModel(BatteryEMS, BatteryAncillaryServices)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=BatteryEMS,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],

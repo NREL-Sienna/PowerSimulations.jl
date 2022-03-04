@@ -545,9 +545,9 @@ end
     moi_tests(model, true, 24, 0, 48, 48, 0, false)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroEnergyReservoir,
         source=ActivePowerVariable,
         affected_values=[ActivePowerVariable],
@@ -561,9 +561,9 @@ end
     moi_tests(model, true, 24, 0, 26, 24, 0, false)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroEnergyReservoir,
         source=ActivePowerVariable,
         affected_values=[ActivePowerVariable],
@@ -592,9 +592,9 @@ end
     moi_tests(model, true, 120, 0, 24, 48, 48, false)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroEnergyReservoir,
         source=ActivePowerVariable,
         affected_values=[ActivePowerVariable],
@@ -621,10 +621,10 @@ end
     moi_tests(model, true, 144, 0, 48, 48, 48, true)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir models" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir models" begin
     device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroPumpedStorage,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
