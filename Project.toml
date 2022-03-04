@@ -28,7 +28,7 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
-CSV = "~0.9"
+CSV = "~0.10"
 DataFrames = "1"
 DataStructures = "~0.18"
 DocStringExtensions = "~v0.8"
