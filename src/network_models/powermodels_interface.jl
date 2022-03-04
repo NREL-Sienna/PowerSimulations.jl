@@ -16,7 +16,7 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_bus_voltage(pm, nw=n)
         PM.variable_branch_power(pm, nw=n; bounded=false)
-        PM.variable_dcline_power(pm, nw=n)
+        PM.variable_dcline_power(pm, nw=n; bounded=false)
 
         PM.constraint_model_voltage(pm, nw=n)
 
@@ -107,7 +107,7 @@ function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_bus_voltage(pm, nw=n)
         PM.variable_branch_power(pm, nw=n; bounded=false)
-        PM.variable_dcline_power(pm, nw=n)
+        PM.variable_dcline_power(pm, nw=n; bounded=false)
 
         PM.constraint_model_current(pm, nw=n)
 

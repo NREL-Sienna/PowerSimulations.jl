@@ -109,7 +109,6 @@ function add_variable!(
             base_name = "$(T)_$(D)_{$(name), $(t)}",
             binary = binary
         )
-
         ub = get_variable_upper_bound(variable_type, d, formulation)
         ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 

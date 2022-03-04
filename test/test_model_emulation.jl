@@ -474,7 +474,7 @@ end
 
     # Deserialize with different optimizer attributes.
     optimizer = JuMP.optimizer_with_attributes(HiGHS.Optimizer, "time_limit" => 110.0)
-    @test_logs (:warn, r"Original solver used") match_mode = :any EmulationModel(
+    @test_logs (:warn, r"Different optimizer attributes are set") match_mode = :any EmulationModel(
         path,
         optimizer,
     )
