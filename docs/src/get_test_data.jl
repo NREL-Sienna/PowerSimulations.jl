@@ -6,7 +6,6 @@ using InfrastructureSystems
 const IS = InfrastructureSystems
 const PSI = PowerSimulations
 const PSY = PowerSystems
-Cbc_optimizer = optimizer_with_attributes(Cbc.Optimizer)
 
 include("../../../test/test_utils/get_test_data.jl")
 

@@ -55,7 +55,7 @@ end
     )
 
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
 
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -116,7 +116,7 @@ end
         template = get_thermal_dispatch_template_network(
             NetworkModel(StandardPTDFModel; PTDF=PTDF_ref[sys]),
         )
-        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
 
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -171,7 +171,7 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
 
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
@@ -218,7 +218,7 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
@@ -234,7 +234,7 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(
             ps_model,
-            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
             test_obj_values[sys],
             1000,
         )
@@ -309,7 +309,7 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer=OSQP_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
@@ -325,7 +325,7 @@ end
         psi_checkobjfun_test(ps_model, objfuncs[ix])
         psi_checksolve_test(
             ps_model,
-            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
             test_obj_values[sys],
             10000,
         )

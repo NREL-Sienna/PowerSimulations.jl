@@ -393,7 +393,7 @@ end
         EconomicDispatchProblem,
         template,
         c_sys5_hyd;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
     )
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 15, 0, 3, 3, 9, false)
@@ -410,7 +410,7 @@ end
         EconomicDispatchProblem,
         template,
         c_sys5_hyd;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
     )
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 15, 0, 3, 3, 9, false)
@@ -427,7 +427,7 @@ end
         EconomicDispatchProblem,
         template,
         c_sys5_hyd;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
     )
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 15, 0, 3, 3, 9, false)
@@ -444,7 +444,7 @@ end
         EconomicDispatchProblem,
         template,
         c_sys5_hyd;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
     )
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 15, 0, 3, 3, 9, false)
@@ -461,7 +461,7 @@ end
         EconomicDispatchProblem,
         template,
         c_sys5_hyd;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
     )
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 15, 0, 3, 3, 9, false)

@@ -294,7 +294,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {B <: PSY.DCBranch, F <: HVDCDispatch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
-
+    branch_rate_bounds!(container, devices, model, S)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
     add_constraints!(container, HVDCPowerBalance, devices, model, S)
@@ -387,7 +387,7 @@ function construct_device!(
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
-
+    branch_rate_bounds!(container, devices, model, S)
     add_constraints!(container, FlowRateConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -399,13 +399,23 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
-) where {
-    B <: PSY.DCBranch,
-    U <: Union{HVDCLossless, HVDCUnbounded},
-    S <: PM.AbstractPowerModel,
-}
+) where {B <: PSY.DCBranch, U <: HVDCLossless, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
+    branch_rate_bounds!(container, devices, model, S)
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, U},
+    ::NetworkModel{S},
+) where {B <: PSY.DCBranch, U <: HVDCUnbounded, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
     add_constraint_dual!(container, sys, model)
