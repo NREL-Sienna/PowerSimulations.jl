@@ -43,7 +43,7 @@ mutable struct AddCostSpec
             has_multistart_variables,
             addtional_linear_terms,
             uses_compact_power,
-            false
+            false,
         )
     end
 end
@@ -57,8 +57,9 @@ function AddCostSpec(
 end
 
 set_addtional_linear_terms!(spec::AddCostSpec, key, value) =
-spec.addtional_linear_terms[key] = value
-set_data_in_compact_power(spec::AddCostSpec, value::Bool) = spec.data_in_compact_power = value
+    spec.addtional_linear_terms[key] = value
+set_data_in_compact_power(spec::AddCostSpec, value::Bool) =
+    spec.data_in_compact_power = value
 
 function add_service_variables!(spec::AddCostSpec, service_models)
     for service_model in service_models
@@ -99,8 +100,13 @@ function _check_pwl_compact_data(::MinMax, ::PSY.VariableCost, ::Float64)
     return false
 end
 
-function _check_pwl_compact_data(limits::MinMax, data::PSY.VariableCost{Vector{Tuple{Float64, Float64}}}, base_power::Float64)
-    return isapprox(limits.max - limits.min, data.cost[end][2]/base_power) && iszero(data.cost[1][2])
+function _check_pwl_compact_data(
+    limits::MinMax,
+    data::PSY.VariableCost{Vector{Tuple{Float64, Float64}}},
+    base_power::Float64,
+)
+    return isapprox(limits.max - limits.min, data.cost[end][2] / base_power) &&
+           iszero(data.cost[1][2])
 end
 
 function cost_function!(
