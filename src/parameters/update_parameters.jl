@@ -83,10 +83,7 @@ function update_parameter_values!(
     ::Type{V},
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
-) where {
-    U <: PSY.AbstractDeterministic,
-    V <: PSY.HybridSystem,
-}
+) where {U <: PSY.AbstractDeterministic, V <: PSY.HybridSystem}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     components = get_available_components(V, get_system(model))
