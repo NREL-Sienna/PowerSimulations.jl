@@ -79,12 +79,10 @@ function branch_rate_bounds!(
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
     for d in devices
-        limit_values = (min=-1 * PSY.get_rate(d), max=PSY.get_rate(d))
         name = PSY.get_name(d)
         for t in get_time_steps(container)
-            _var = var[name, t]
-            JuMP.set_upper_bound(_var, limit_values.max)
-            JuMP.set_lower_bound(_var, limit_values.min)
+            JuMP.set_upper_bound(var[name, t], PSY.get_rate(d))
+            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rate(d))
         end
     end
     return
@@ -101,12 +99,10 @@ function branch_rate_bounds!(
         get_variable(container, FlowActivePowerToFromVariable(), B),
     ]
     for d in devices
-        limit_values = (min=-1 * PSY.get_rate(d), max=PSY.get_rate(d))
         name = PSY.get_name(d)
         for t in get_time_steps(container), var in vars
-            _var = var[name, t]
-            JuMP.set_upper_bound(_var, limit_values.max)
-            JuMP.set_lower_bound(_var, limit_values.min)
+            JuMP.set_upper_bound(var[name, t], PSY.get_rate(d))
+            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rate(d))
         end
     end
     return

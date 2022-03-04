@@ -91,7 +91,7 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
 
-    model = DecisionModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    model = DecisionModel(template, c_sys5_uc; optimizer=cbc_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 1008, 0, 480, 216, 192, true)
 end
@@ -108,7 +108,7 @@ end
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves=true)
-    model = DecisionModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 1032, 0, 888, 192, 240, true)
 end
@@ -336,7 +336,7 @@ end
     set_service_model!(template, service_model)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
-    model = DecisionModel(template, c_sys5_uc; optimizer=Cbc_optimizer)
+    model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(model, false, 240, 0, 120, 264, 24, false)
 end

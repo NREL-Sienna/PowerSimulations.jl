@@ -567,7 +567,7 @@ end
         EconomicDispatchProblem,
         template,
         ramp_test_sys;
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(ED; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -582,7 +582,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_duration_test");
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -597,7 +597,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-        optimizer=Cbc_optimizer,
+        optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -611,13 +611,14 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer=Cbc_optimizer,
+        optimizer=cbc_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     moi_tests(UC, false, 32, 0, 8, 4, 14, true)
-    # Disables due to https://github.com/jump-dev/Cbc.jl/issues/183
-    # psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89, 10.0)
+    # Cbc can have reliability issues with SoS. The objective function target in the this
+    # test was calculated with CPLEX do not change if Cbc gets a bad result
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 1286.0, 10.0)
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
@@ -630,7 +631,7 @@ end
         UnitCommitmentProblem,
         template,
         PSB.build_system(PSITestSystems, "c_market_bid_cost");
-        optimizer=Cbc_optimizer,
+        optimizer=cbc_optimizer,
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT

@@ -23,14 +23,6 @@ import UUIDs
 using Random
 import Serialization
 
-# Solvers
-using Ipopt
-using GLPK
-using Cbc
-using OSQP
-using SCS
-using HiGHS
-
 # Code Quality Tests
 import Aqua
 Aqua.test_unbound_args(PowerSimulations)

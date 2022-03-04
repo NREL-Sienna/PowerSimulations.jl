@@ -294,21 +294,21 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
                 template_uc,
                 sys_rts_da;
                 name="UC",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
             DecisionModel(
                 template_ha,
                 sys_rts_ha;
                 name="HA",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
             DecisionModel(
                 template_ed,
                 sys_rts_rt;
                 name="ED",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
         ],
@@ -360,7 +360,7 @@ end
                 template_uc,
                 sys_uc;
                 name="UC",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
         ],
@@ -399,14 +399,14 @@ end
                 template_uc,
                 sys_uc;
                 name="UC",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
             DecisionModel(
                 template_ed,
                 sys_ed;
                 name="ED",
-                optimizer=Cbc_optimizer,
+                optimizer=HiGHS_optimizer,
                 initialize_model=false,
             ),
         ],
@@ -441,7 +441,7 @@ end
                 UnitCommitmentProblem,
                 template,
                 PSB.build_system(PSITestSystems, "c_market_bid_cost");
-                optimizer=Cbc_optimizer,
+                optimizer=cbc_optimizer,
                 initialize_model=false,
             ),
         ],
