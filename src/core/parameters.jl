@@ -182,7 +182,7 @@ abstract type VariableValueParameter <: RightHandSideParameter end
 struct UpperBoundValueParameter <: VariableValueParameter end
 struct LowerBoundValueParameter <: VariableValueParameter end
 struct OnStatusParameter <: VariableValueParameter end
-struct IntegralLimitParameter <: VariableValueParameter end
+struct EnergyLimitParameter <: VariableValueParameter end
 struct FixValueParameter <: VariableValueParameter end
 struct EnergyTargetParameter <: VariableValueParameter end
 
@@ -204,5 +204,5 @@ convert_result_to_natural_units(::Type{EnergyBudgetTimeSeriesParameter}) = true
 #convert_result_to_natural_units(::Type{OutflowTimeSeriesParameter}) = true # TODO: is this pu?
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
-convert_result_to_natural_units(::Type{IntegralLimitParameter}) = true
+convert_result_to_natural_units(::Type{EnergyLimitParameter}) = true
 convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true

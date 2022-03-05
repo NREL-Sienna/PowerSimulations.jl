@@ -164,7 +164,7 @@ struct EnergyLimitFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::EnergyLimitFeedforward, _) = IntegralLimitParameter()
+get_default_parameter_type(::EnergyLimitFeedforward, _) = EnergyLimitParameter()
 get_optimization_container_key(ff) = ff.optimization_container_key
 get_number_of_periods(ff) = ff.number_of_periods
 
