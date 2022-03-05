@@ -558,7 +558,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 24, 0, 26, 24, 0, false)
+    moi_tests(model, true, 24, 0, 27, 24, 0, false)
 end
 
 @testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
@@ -574,7 +574,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 120, 0, 25, 24, 48, false)
+    moi_tests(model, true, 120, 0, 26, 24, 48, false)
 end
 
 @testset "Test LowerBoundFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
@@ -604,7 +604,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 144, 0, 25, 24, 48, true)
+    moi_tests(model, true, 144, 0, 26, 24, 48, true)
 end
 
 @testset "Test SemiContinuousFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin

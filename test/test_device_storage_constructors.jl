@@ -198,7 +198,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
@@ -233,7 +233,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
@@ -268,7 +268,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BatteryAncillaryServices model" begin
@@ -303,5 +303,5 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
