@@ -299,7 +299,7 @@ function update_parameter_values!(
     horizon = time_steps[end]
     container = get_optimization_container(model)
     if is_synchronized(container)
-        obj_func = get_cost_function(container)
+        obj_func = get_objective_function(container)
         set_synchronized_status(obj_func, false)
         reset_variant_terms(obj_func)
     end

@@ -343,7 +343,7 @@ function update_parameters!(model::EmulationModel, data::DatasetContainer{DataFr
         update_parameter_values!(model, key, data)
     end
     if !is_synchronized(model)
-        update_cost_function!(get_optimization_container(model))
+        update_objective_function!(get_optimization_container(model))
     end
     return
 end

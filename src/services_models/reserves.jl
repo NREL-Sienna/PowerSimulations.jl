@@ -171,7 +171,7 @@ function add_constraints!(
     return
 end
 
-function cost_function!(
+function objective_function!(
     container::OptimizationContainer,
     service::SR,
     ::ServiceModel{SR, T},
@@ -180,7 +180,7 @@ function cost_function!(
         get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
     for r in reserve
         JuMP.add_to_expression!(
-            container.cost_function.invariant_terms,
+            container.objective_function.invariant_terms,
             r,
             DEFAULT_RESERVE_COST,
         )
@@ -384,12 +384,12 @@ function add_constraints!(
     return
 end
 
-function AddCostSpec(
+function CostSpec(
     ::Type{T},
     ::Type{StepwiseCostReserve},
     container::OptimizationContainer,
 ) where {T <: PSY.Reserve}
-    return AddCostSpec(;
+    return CostSpec(;
         variable_type=ServiceRequirementVariable,
         component_type=T,
         has_status_variable=false,
@@ -402,9 +402,9 @@ function AddCostSpec(
     )
 end
 
-function add_to_cost!(
+function _add_to_cost!(
     container::OptimizationContainer,
-    spec::AddCostSpec,
+    spec::CostSpec,
     service::SR,
 ) where {SR <: PSY.Reserve}
     time_steps = get_time_steps(container)
@@ -416,14 +416,14 @@ function add_to_cost!(
     return
 end
 
-function cost_function!(
+function objective_function!(
     container::OptimizationContainer,
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    spec = AddCostSpec(SR, get_formulation(model), container)
+    spec = CostSpec(SR, get_formulation(model), container)
     @debug SR, spec
-    add_to_cost!(container, spec, service)
+    _add_to_cost!(container, spec, service)
     return
 end
 

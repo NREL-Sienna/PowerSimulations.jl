@@ -76,7 +76,7 @@ function add_variables!(
     return
 end
 
-function cost_function!(
+function objective_function!(
     container,
     ::Type{PSY.System},
     model::NetworkModel{T},
@@ -94,7 +94,7 @@ function cost_function!(
     return
 end
 
-function cost_function!(
+function objective_function!(
     container,
     ::Type{PSY.Bus},
     model::NetworkModel{T},
@@ -113,7 +113,7 @@ function cost_function!(
     return
 end
 
-function cost_function!(
+function objective_function!(
     container,
     ::Type{PSY.Bus},
     model::NetworkModel{T},
