@@ -372,12 +372,12 @@ function add_constraints!(
     return
 end
 
-function AddCostSpec(
+function CostSpec(
     ::Type{PSY.BatteryEMS},
     ::Type{EnergyTarget},
     container::OptimizationContainer,
 )
-    return AddCostSpec(;
+    return CostSpec(;
         variable_type=ActivePowerOutVariable,
         component_type=PSY.BatteryEMS,
         variable_cost=PSY.get_variable,

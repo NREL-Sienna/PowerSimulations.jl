@@ -119,17 +119,17 @@ function add_constraints!(
 end
 
 ##################################### renewable generation cost ############################
-function AddCostSpec(
+function CostSpec(
     ::Type{T},
     ::Type{U},
     ::OptimizationContainer,
 ) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
-    # TODO: remove once cost_function is required
-    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return AddCostSpec(;
+    # TODO: remove once objective_function is required
+    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
+    return CostSpec(;
         variable_type=ActivePowerVariable,
         component_type=T,
-        variable_cost=cost_function,
+        variable_cost=objective_function,
         multiplier=OBJECTIVE_FUNCTION_NEGATIVE,
     )
 end
