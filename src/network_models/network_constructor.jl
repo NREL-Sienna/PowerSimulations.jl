@@ -23,7 +23,7 @@ function construct_network!(
             model,
             CopperPlatePowerModel,
         )
-        cost_function!(container, PSY.System, model, CopperPlatePowerModel)
+        objective_function!(container, PSY.System, model, CopperPlatePowerModel)
     end
 
     add_constraints!(
@@ -95,7 +95,7 @@ function construct_network!(
             model,
             StandardPTDFModel,
         )
-        cost_function!(container, PSY.System, model, StandardPTDFModel)
+        objective_function!(container, PSY.System, model, StandardPTDFModel)
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model, StandardPTDFModel)
@@ -160,7 +160,7 @@ function construct_network!(
             model,
             T,
         )
-        cost_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -223,7 +223,7 @@ function construct_network!(
             model,
             T,
         )
-        cost_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -286,7 +286,7 @@ function construct_network!(
             model,
             T,
         )
-        cost_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -348,7 +348,7 @@ function construct_network!(
             model,
             T,
         )
-        cost_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
