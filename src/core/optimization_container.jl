@@ -81,7 +81,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
-    cost_function::ObjectiveFunction
+    objective_function::ObjectiveFunction
     expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
@@ -174,8 +174,8 @@ get_variables(container::OptimizationContainer) = container.variables
 
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
-get_cost_function(container::OptimizationContainer) = container.cost_function
-is_synchronized(container::OptimizationContainer) = container.cost_function.synchronized
+get_objective_function(container::OptimizationContainer) = container.objective_function
+is_synchronized(container::OptimizationContainer) = container.objective_function.synchronized
 
 function has_container_key(
     container::OptimizationContainer,
@@ -555,7 +555,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         JuMP.@objective(
             container.JuMPmodel,
             MOI.MIN_SENSE,
-            get_objective_fuction(container.cost_function)
+            get_objective_fuction(container.objective_function)
         )
     end
     @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
@@ -566,11 +566,11 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     return
 end
 
-function update_cost_function!(container::OptimizationContainer)
+function update_objective_function!(container::OptimizationContainer)
     JuMP.@objective(
         container.JuMPmodel,
         MOI.MIN_SENSE,
-        get_objective_fuction(container.cost_function)
+        get_objective_fuction(container.objective_function)
     )
     return
 end
@@ -1335,7 +1335,7 @@ function get_initial_conditions_parameter(
 end
 
 function add_to_objective_function!(container::OptimizationContainer, expr)
-    JuMP.add_to_expression!(container.cost_function.invariant_terms, expr)
+    JuMP.add_to_expression!(container.objective_function.invariant_terms, expr)
     return
 end
 

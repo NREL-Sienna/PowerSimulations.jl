@@ -695,35 +695,35 @@ function add_constraints!(
 end
 
 ##################################### Hydro generation cost ############################
-function AddCostSpec(
+function CostSpec(
     ::Type{T},
     ::Type{U},
     ::OptimizationContainer,
 ) where {T <: PSY.HydroGen, U <: AbstractHydroFormulation}
     # Hydro Generators currently have no OperationalCost
-    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return AddCostSpec(;
+    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
+    return CostSpec(;
         variable_type=ActivePowerVariable,
         component_type=T,
         fixed_cost=PSY.get_fixed,
-        variable_cost=cost_function,
+        variable_cost=objective_function,
         multiplier=OBJECTIVE_FUNCTION_POSITIVE,
     )
 end
 
 ############################
-function AddCostSpec(
+function CostSpec(
     ::Type{T},
     ::Type{U},
     ::OptimizationContainer,
 ) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroFormulation}
     # Hydro Generators currently have no OperationalCost
-    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return AddCostSpec(;
+    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
+    return CostSpec(;
         variable_type=ActivePowerOutVariable,
         component_type=T,
         fixed_cost=PSY.get_fixed,
-        variable_cost=cost_function,
+        variable_cost=objective_function,
         multiplier=OBJECTIVE_FUNCTION_POSITIVE,
     )
 end

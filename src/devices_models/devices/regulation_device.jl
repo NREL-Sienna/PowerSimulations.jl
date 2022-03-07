@@ -231,7 +231,7 @@ function add_constraints!(
     return
 end
 
-function cost_function!(
+function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractRegulationFormulation},
@@ -243,14 +243,14 @@ function cost_function!(
             isapprox(p_factor.up, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.up
         dn_cost =
             isapprox(p_factor.dn, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.dn
-        proportional_objective!(
+        _proportional_objective!(
             container,
             AdditionalDeltaActivePowerUpVariable(),
             d,
             up_cost,
             t,
         )
-        proportional_objective!(
+        _proportional_objective!(
             container,
             AdditionalDeltaActivePowerDownVariable(),
             d,

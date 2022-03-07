@@ -761,12 +761,12 @@ end
 
 ########################### Cost Function Calls#############################################
 
-function AddCostSpec(
+function CostSpec(
     ::Type{T},
     ::Type{U},
     psi_container::OptimizationContainer,
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
-    return AddCostSpec(;
+    return CostSpec(;
         variable_type=ActivePowerVariable,
         component_type=T,
         variable_cost=PSY.get_variable,
