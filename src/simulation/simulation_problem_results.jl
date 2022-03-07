@@ -123,7 +123,7 @@ list_aux_variable_names(res::SimulationProblemResults) =
 Return an array of expression names (strings) that are available for reads.
 """
 list_expression_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(res.expressions))
+    encode_keys_as_strings(keys(res.expression_values))
 
 """
 Return an array of VariableKeys that are available for reads.
