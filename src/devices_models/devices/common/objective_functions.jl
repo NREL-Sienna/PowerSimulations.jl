@@ -253,8 +253,8 @@ function _check_pwl_compact_data(
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
-function _get_no_load_cost(component, V()) ) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
-    return no_load_cost(op_cost_data = PSY.get_operation_cost(d))
+function _get_no_load_cost(component::T, ::V) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
+    return no_load_cost(PSY.get_operation_cost(component), component, V())
 end
 
 function _add_pwl_term!(
