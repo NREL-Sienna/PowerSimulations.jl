@@ -455,19 +455,23 @@ function read_expressions_with_keys(
 end
 
 """
-    Loads the simulation results into memory for repeated reads. Running this function twice
-    overwrites the previously loaded results. This is useful when loading results from remote
-    locations over network connections
+Load the simulation results into memory for repeated reads. Running this function twice
+overwrites the previously loaded results. This is useful when loading results from remote
+locations over network connections.
 
-    # Required Key Words
-    - `initial_time::Dates.DateTime` : initial of the requested results
-    - `count::Int`: Number of results
-    # Accepted Key Words
-    - `variables::Vector{Tuple{Type{<:VariableType}, Type{<:PSY.Component}}` : Tuple with variable type and device type for the desired results
-    - `duals::Vector{Tuple{Type{<:ConstraintType}, Type{<:PSY.Component}}` : Tuple with constraint type and device type for the desired results
-    - `parameters::Vector{Tuple{Type{<:ParameterType}, Type{<:PSY.Component}}` : Tuple with parameter type and device type for the desired results
-    - `aux_variables::Vector{Tuple{Type{<:AuxVariableType}, Type{<:PSY.Component}}` : Tuple with auxilary variable type and device type for the desired results
-    - `expressions::Vector{Tuple{Type{<:ExpressionType}, U <: Union{PSY.Component, PSY.System}}` : Tuple with expression type and device type or system for the desired results
+For each variable/parameter/dual, etc., each element must be the name encoded as a string,
+like `"ActivePowerVariable__ThermalStandard"` or a Tuple with its constituent types, like
+`(ActivePowerVariable, ThermalStandard)`.
+
+# Arguments
+
+  - `count::Int`: Number of windows to load.
+  - `initial_time::Dates.DateTime` : Initial time of first window to load. Defaults to first.
+  - `aux_variables::Vector{Union{String, Tuple}}`: Optional list of aux variables to load.
+  - `duals::Vector{Union{String, Tuple}}`: Optional list of duals to load.
+  - `expressions::Vector{Union{String, Tuple}}`: Optional list of expressions to load.
+  - `parameters::Vector{Union{String, Tuple}}`: Optional list of parameters to load.
+  - `variables::Vector{Union{String, Tuple}}`: Optional list of variables to load.
 """
 function load_results!(
     res::SimulationProblemResults{DecisionModelSimulationResults},
