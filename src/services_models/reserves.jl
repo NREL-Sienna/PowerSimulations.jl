@@ -384,27 +384,8 @@ function add_constraints!(
     return
 end
 
-function CostSpec(
-    ::Type{T},
-    ::Type{StepwiseCostReserve},
-    container::OptimizationContainer,
-) where {T <: PSY.Reserve}
-    return CostSpec(;
-        variable_type=ServiceRequirementVariable,
-        component_type=T,
-        has_status_variable=false,
-        has_status_parameter=false,
-        variable_cost=PSY.get_variable,
-        start_up_cost=nothing,
-        shut_down_cost=nothing,
-        fixed_cost=nothing,
-        sos_status=SOSStatusVariable.NO_VARIABLE,
-    )
-end
-
 function _add_to_cost!(
     container::OptimizationContainer,
-    spec::CostSpec,
     service::SR,
 ) where {SR <: PSY.Reserve}
     time_steps = get_time_steps(container)
@@ -421,8 +402,7 @@ function objective_function!(
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    spec = CostSpec(SR, get_formulation(model), container)
-    @debug SR, spec
+    # spec = CostSpec(SR, get_formulation(model), container)
     _add_to_cost!(container, spec, service)
     return
 end

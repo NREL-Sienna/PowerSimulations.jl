@@ -91,6 +91,29 @@ initial_condition_variable(::InitialTimeDurationOn, d::PSY.ThermalGen, ::Abstrac
 initial_condition_default(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = !PSY.get_status(d) ? PSY.get_time_at_status(d) : 0.0
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 
+########################Objective Function##################################################
+fixed_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
+
+has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
+has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
+
+objective_function_multiplier(::PSY.ThermalGen, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+
+shut_down_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
+
+sos_status(::PSY.ThermalGen, ::AbstractThermalDispatchFormulation)=SOSStatusVariable.NO_VARIABLE
+sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.VARIABLE
+sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusVariable.VARIABLE
+sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
+
+start_up_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_start_up(cost)
+
+uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
+uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
+uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
+
+variable_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
+
 #! format: on
 function get_initial_conditions_device_model(
     model::OperationModel,
@@ -1226,148 +1249,28 @@ function add_constraints!(
     return
 end
 
-########################### Cost Function Calls#############################################
-# These functions are custom implementations of the cost data. In the file cost_functions.jl there are default implementations. Define these only if needed.
+########################### Objective Function Calls#############################################
+# These functions are custom implementations of the cost data. In the file objective_functions.jl there are default implementations. Define these only if needed.
 
-function AddCostSpec(
-    ::Type{T},
-    ::Type{U},
+function objective_function!(
     container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
-    return AddCostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        has_status_variable=has_container_key(container, OnVariable, T),
-        has_status_parameter=has_container_key(container, OnStatusParameter, T),
-        variable_cost=PSY.get_variable,
-        start_up_cost=PSY.get_start_up,
-        shut_down_cost=PSY.get_shut_down,
-        fixed_cost=PSY.get_fixed,
-        sos_status=SOSStatusVariable.VARIABLE,
-    )
-end
-
-function AddCostSpec(
-    ::Type{PSY.ThermalMultiStart},
-    ::Type{U},
-    container::OptimizationContainer,
-) where {U <: AbstractStandardUnitCommitment}
-    return AddCostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=PSY.ThermalMultiStart,
-        has_status_variable=has_container_key(container, OnVariable, PSY.ThermalMultiStart),
-        has_status_parameter=has_container_key(container, OnStatusParameter, PSY.ThermalMultiStart),
-        variable_cost=PSY.get_variable,
-        start_up_cost=x -> getfield(PSY.get_start_up(x), :cold),
-        shut_down_cost=PSY.get_shut_down,
-        fixed_cost=PSY.get_fixed,
-        sos_status=SOSStatusVariable.VARIABLE,
-    )
-end
-
-function AddCostSpec(
-    ::Type{T},
-    ::Type{U},
-    container::OptimizationContainer,
-) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
-    if has_on_parameter(container, T)
-        sos_status = SOSStatusVariable.PARAMETER
-    else
-        sos_status = SOSStatusVariable.NO_VARIABLE
-    end
-
-    return AddCostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        has_status_variable=has_container_key(container, OnVariable, T),
-        has_status_parameter=has_container_key(container, OnStatusParameter, T),
-        variable_cost=PSY.get_variable,
-        fixed_cost=PSY.get_fixed,
-        sos_status=sos_status,
-    )
-end
-
-function AddCostSpec(
-    ::Type{T},
-    ::Type{U},
-    container::OptimizationContainer,
-) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
-    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
-    return AddCostSpec(;
-        variable_type=PowerAboveMinimumVariable,
-        component_type=T,
-        has_status_variable=has_container_key(container, OnVariable, T),
-        has_status_parameter=has_container_key(container, OnStatusParameter, T),
-        variable_cost=_get_compact_varcost,
-        shut_down_cost=PSY.get_shut_down,
-        start_up_cost=PSY.get_start_up,
-        fixed_cost=fixed_cost_func,
-        sos_status=SOSStatusVariable.VARIABLE,
-        uses_compact_power=true,
-    )
-end
-
-function AddCostSpec(
-    ::Type{T},
-    ::Type{ThermalCompactDispatch},
-    container::OptimizationContainer,
-) where {T <: PSY.ThermalGen}
-    if has_on_parameter(container, T)
-        sos_status = SOSStatusVariable.PARAMETER
-    else
-        sos_status = SOSStatusVariable.NO_VARIABLE
-    end
-    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
-    return AddCostSpec(;
-        variable_type=PowerAboveMinimumVariable,
-        component_type=T,
-        has_status_variable=has_container_key(container, OnVariable, T),
-        has_status_parameter=has_container_key(container, OnStatusParameter, T),
-        variable_cost=_get_compact_varcost,
-        fixed_cost=fixed_cost_func,
-        sos_status=sos_status,
-        uses_compact_power=true,
-    )
-end
-
-function AddCostSpec(
-    ::Type{T},
-    ::Type{U},
-    container::OptimizationContainer,
-) where {T <: PSY.ThermalGen, U <: ThermalMultiStartUnitCommitment}
-    fixed_cost_func = x -> PSY.get_fixed(x) + PSY.get_no_load(x)
-    return AddCostSpec(;
-        variable_type=PowerAboveMinimumVariable,
-        component_type=T,
-        has_status_variable=has_container_key(container, OnVariable, T),
-        has_status_parameter=has_container_key(container, OnStatusParameter, T),
-        variable_cost=_get_compact_varcost,
-        start_up_cost=PSY.get_start_up,
-        shut_down_cost=PSY.get_shut_down,
-        fixed_cost=fixed_cost_func,
-        sos_status=SOSStatusVariable.VARIABLE,
-        has_multistart_variables=true,
-        uses_compact_power=true,
-    )
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
 end
 
 """
 Cost function for generators formulated as No-Min
 """
-function cost_function!(
+function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    no_min_spec = AddCostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        has_status_variable=has_container_key(container, OnVariable, T),
-        has_status_parameter=has_container_key(container, OnStatusParameter, T),
-        variable_cost=PSY.get_variable,
-        fixed_cost=PSY.get_fixed,
-    )
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for g in devices
@@ -1377,7 +1280,7 @@ function cost_function!(
         if isa(cost_component, PSY.VariableCost{Array{Tuple{Float64, Float64}, 1}})
             @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
             slopes = PSY.get_slopes(cost_component)
-            if any(slopes .< 0) || !pwlparamcheck(cost_component)
+            if any(slopes .< 0) || !_pwlparamcheck(cost_component)
                 throw(
                     IS.InvalidValue(
                         "The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost.",
@@ -1388,12 +1291,12 @@ function cost_function!(
                 @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"
                 # adds a first intercept a x = 0.0 and Y below the intercept of the first tuple to make convex equivalent
                 first_pair = PSY.get_cost(cost_component)[1]
-                cost_function_data = deepcopy(cost_component.cost)
+                objective_function_data = deepcopy(cost_component.cost)
                 intercept_point = (0.0, first_pair[2] - COST_EPSILON)
-                cost_function_data = vcat(intercept_point, cost_function_data)
-                @assert slope_convexity_check(slopes)
+                objective_function_data = vcat(intercept_point, objective_function_data)
+                @assert _slope_convexity_check(slopes)
             else
-                cost_function_data = cost_component.cost
+                objective_function_data = cost_component.cost
             end
             time_steps = get_time_steps(container)
             for t in time_steps
@@ -1401,11 +1304,11 @@ function cost_function!(
                     container,
                     no_min_spec,
                     component_name,
-                    cost_function_data,
+                    objective_function_data,
                     t,
                     T,
                 )
-                add_to_cost_expression!(
+                _add_to_cost_expression!(
                     container,
                     no_min_spec.multiplier * gen_cost * dt,
                     g,
@@ -1413,13 +1316,13 @@ function cost_function!(
                 )
             end
         else
-            add_to_cost!(container, no_min_spec, op_cost, g)
+            _add_to_cost!(container, no_min_spec, op_cost, g)
         end
     end
     return
 end
 
-function cost_function!(
+function objective_function!(
     ::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     ::DeviceModel{PSY.ThermalMultiStart, ThermalDispatchNoMin},

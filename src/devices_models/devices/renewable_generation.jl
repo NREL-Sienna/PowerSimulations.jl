@@ -21,6 +21,12 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::Abstr
 
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) = PSY.get_max_active_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
+
+########################Objective Function##################################################
+objective_function_multiplier(::PSY.RenewableGen, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+variable_cost(::Nothing, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=1.0
+
+
 #! format: on
 
 get_initial_conditions_device_model(
@@ -119,17 +125,12 @@ function add_constraints!(
 end
 
 ##################################### renewable generation cost ############################
-function CostSpec(
-    ::Type{T},
-    ::Type{U},
-    ::OptimizationContainer,
-) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
-    # TODO: remove once objective_function is required
-    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return CostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        variable_cost=objective_function,
-        multiplier=OBJECTIVE_FUNCTION_NEGATIVE,
-    )
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
 end
