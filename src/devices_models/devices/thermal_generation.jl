@@ -1262,6 +1262,16 @@ function objective_function!(
     return
 end
 
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
+end
+
 """
 Cost function for generators formulated as No-Min
 """
