@@ -179,10 +179,11 @@ end
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
 # Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* var_key::VariableKey: The variable name
-* component_name::String: The component_name of the variable container
-* cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
+
+  - container::OptimizationContainer : the optimization_container model built in PowerSimulations
+  - var_key::VariableKey: The variable name
+  - component_name::String: The component_name of the variable container
+  - cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 """
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
@@ -209,9 +210,11 @@ function _add_variable_cost_to_objective!(
             component,
             time_period,
         )
-        _add_to_objective_invariant_expression!(container,
-        pwl_cost_expressions[t],
-        component)
+        _add_to_objective_invariant_expression!(
+            container,
+            pwl_cost_expressions[t],
+            component,
+        )
     end
     return
 end
@@ -255,7 +258,7 @@ function _add_pwl_term!(
     component::T,
     data::Vector{NTuple{2, Float64}},
     ::U,
-    ::V
+    ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(d, V())
     resolution = get_resolution(container)
@@ -267,7 +270,9 @@ function _add_pwl_term!(
     is_power_data_compact = _check_pwl_compact_data(U(), component, data, base_power)
 
     if !uses_compact_power(component, V()) && is_power_data_compact
-        error("The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions")
+        error(
+            "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
+        )
         # data = _convert_to_full_variable_cost(data, component)
     elseif uses_compact_power(component, V()) && !is_power_data_compact
         data = _convert_to_compact_variable_cost(data)
@@ -276,7 +281,7 @@ function _add_pwl_term!(
         @debug is_power_data_compact name T V
     end
 
-    break_points = PSY.get_breakpoint_upperbounds(data)./base_power
+    break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
     total_pwl_cost = JuMP.AffExpr(0.0)
 
     slopes = PSY.get_slopes(cost_data)
@@ -296,7 +301,7 @@ function _add_pwl_term!(
             end
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
-        pwl_cost = _get_cost_expression(container, component, t, data, multiplier*dt)
+        pwl_cost = _get_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
@@ -323,11 +328,12 @@ function _add_pwl_variables!(
     return pwlvars
 end
 
-function _add_pwl_constraint!(container::OptimizationContainer,
+function _add_pwl_constraint!(
+    container::OptimizationContainer,
     component::T,
     ::U,
     break_points::Vector{Float64},
-    period::Int
+    period::Int,
 ) where {T <: PSY.Component, U <: VariableType}
     const_container = lazy_container_addition!(
         container,
@@ -341,24 +347,26 @@ function _add_pwl_constraint!(container::OptimizationContainer,
     pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
     name = PSY.get_name(component)
     const_container[name, time_period] = JuMP.@constraint(
-    jump_model,
-    variable == sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
+        jump_model,
+        variable ==
+        sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
     )
     return
 end
 
-function _add_pwl_sos_constraint!(container::OptimizationContainer,
+function _add_pwl_sos_constraint!(
+    container::OptimizationContainer,
     component::T,
     ::U,
     break_points::Vector{Float64},
     sos_status,
-    period::Int
+    period::Int,
 ) where {T <: PSY.Component, U <: VariableType}
     name = PSY.get_name(component)
     @warn(
-            "The cost function provided for $(name) is not compatible with a linear PWL cost function.
-      An SOS-2 formulation will be added to the model. This will result in additional binary variables."
-        )
+        "The cost function provided for $(name) is not compatible with a linear PWL cost function.
+  An SOS-2 formulation will be added to the model. This will result in additional binary variables."
+    )
     if sos_status == SOSStatusVariable.NO_VARIABLE
         bin = 1.0
         @debug "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)" _group =
@@ -387,7 +395,7 @@ function _get_pwl_cost_expression(
     component::T,
     time_period::Int,
     cost_data::Vector{NTuple{2, Float64}},
-    multiplier::Float64
+    multiplier::Float64,
 ) where {T <: PSY.Component}
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
