@@ -596,7 +596,7 @@ end
     UC = DecisionModel(
         UnitCommitmentProblem,
         template,
-        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
+        PSB.build_system(PSITestSystems, "c_convex_pwl_test");
         optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
@@ -656,19 +656,19 @@ end
     )
 end
 
-#TODO: Add test for newer UC models
 @testset "Solving UC Models with Linear Networks" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
+    commitment_models = [ThermalStandardUnitCommitment, ThermalCompactUnitCommitment]
     PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
-    for net in networks, sys in systems
+    for net in networks, sys in systems, model in commitment_models
         template =
             get_thermal_dispatch_template_network(NetworkModel(net, PTDF=PTDF_ref[sys]))
-        set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-        UC = DecisionModel(template, sys; optimizer=GLPK_optimizer)
+        set_device_model!(template, ThermalStandard, model)
+        UC = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
         @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end

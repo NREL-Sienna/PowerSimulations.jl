@@ -253,6 +253,10 @@ function _check_pwl_compact_data(
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
+function _get_no_load_cost(component, V()) ) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
+    return no_load_cost(op_cost_data = PSY.get_operation_cost(d))
+end
+
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
@@ -275,7 +279,8 @@ function _add_pwl_term!(
         )
         # data = _convert_to_full_variable_cost(data, component)
     elseif uses_compact_power(component, V()) && !is_power_data_compact
-        data = _convert_to_compact_variable_cost(data)
+        no_load_cost_value = _get_no_load_cost(component, V())
+        data = _convert_to_compact_variable_cost(data, no_load_cost_value)
     else
         @debug uses_compact_power(component, V()) name T V
         @debug is_power_data_compact name T V
@@ -295,7 +300,7 @@ function _add_pwl_term!(
             if has_container_key(container, OnStatusParameter, T)
                 sos_val = SOSStatusVariable.PARAMETER
             else
-                sos_val = sos_status(d, V())
+                sos_val = sos_status(component, V())
             end
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
@@ -375,16 +380,18 @@ function _add_pwl_sos_constraint!(
         @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif sos_status == SOSStatusVariable.VARIABLE
-        bin = get_variable(container, OnVariable(), T)[name, time_period]
+        bin = get_variable(container, OnVariable(), T)[name, period]
         @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
             LOG_GROUP_COST_FUNCTIONS
     else
         @assert false
     end
+    jump_model = get_jump_model(container)
     pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
     bp_count = length(break_points)
-    JuMP.@constraint(jump_model, sum(pwl_vars[name, i, period] for i in 1:bp_count) == bin)
-    JuMP.@constraint(jump_model, pwl_vars in MOI.SOS2(collect(1:length(bp_count))))
+    pwl_vars_subset = [pwl_vars[name, i, period] for i in 1:bp_count]
+    JuMP.@constraint(jump_model, sum(pwl_vars_subset[i] for i in 1:bp_count) == bin)
+    JuMP.@constraint(jump_model, pwl_vars_subset in MOI.SOS2(collect(1:bp_count)))
     return
 end
 
@@ -409,6 +416,6 @@ function _get_pwl_cost_expression(
     return gen_cost
 end
 
-function _convert_to_compact_variable_cost(var_cost::Vector{NTuple{2, Float64}})
+function _convert_to_compact_variable_cost(var_cost::Vector{NTuple{2, Float64}}, no_load_cost::Float64)
     return [(c - no_load_cost, pp - p_min) for (c, pp) in var_cost]
 end
