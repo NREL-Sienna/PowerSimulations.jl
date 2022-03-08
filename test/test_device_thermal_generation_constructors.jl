@@ -221,7 +221,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, false, 120, 0, 120, 120, 0, false)
     psi_checkobjfun_test(model, GQEVF)
@@ -319,7 +319,7 @@ end
 end
 
 ################################## Ramp Limited Testing ##################################
-@testset "ThermalStandard with  ThermalStandardDispatch With DC - PF" begin
+@testset "ThermalStandard with ThermalStandardDispatch With DC - PF" begin
     constraint_keys = [
         PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
         PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
