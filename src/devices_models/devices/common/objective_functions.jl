@@ -201,14 +201,14 @@ function _add_variable_cost_to_objective!(
             LOG_GROUP_COST_FUNCTIONS
         return
     end
-    pwl_cost_expressions = _add_pwl_term!(container, T, component, cost_data, U())
-    for time_period in get_time_steps(container)
+    pwl_cost_expressions = _add_pwl_term!(container, component, cost_data, T(), U())
+    for t in get_time_steps(container)
         add_to_expression!(
             container,
             ProductionCostExpression,
             pwl_cost_expressions[t],
             component,
-            time_period,
+            t,
         )
         _add_to_objective_invariant_expression!(
             container,
@@ -260,7 +260,7 @@ function _add_pwl_term!(
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(d, V())
+    multiplier = objective_function_multiplier(component, V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     base_power = get_base_power(container)
@@ -282,16 +282,14 @@ function _add_pwl_term!(
     end
 
     break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
-    total_pwl_cost = JuMP.AffExpr(0.0)
-
-    slopes = PSY.get_slopes(cost_data)
+    slopes = PSY.get_slopes(data)
     # First element of the return is the average cost at P_min.
     # Shouldn't be passed for convexity check
     is_convex = _slope_convexity_check(slopes[2:end])
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
-        _add_pwl_variables!(container, T, name, time_period, data)
+        _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, t)
         if !is_convex
             if has_container_key(container, OnStatusParameter, T)
@@ -301,7 +299,7 @@ function _add_pwl_term!(
             end
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
-        pwl_cost = _get_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
@@ -335,20 +333,20 @@ function _add_pwl_constraint!(
     break_points::Vector{Float64},
     period::Int,
 ) where {T <: PSY.Component, U <: VariableType}
+    variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
         PieceWiseLinearCostConstraint(),
-        U,
+        T,
         axes(variables)...,
     )
     len_cost_data = length(break_points)
     jump_model = get_jump_model(container)
-    variable = get_variable(container, U(), T)[name, time_period]
     pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
     name = PSY.get_name(component)
-    const_container[name, time_period] = JuMP.@constraint(
+    const_container[name, period] = JuMP.@constraint(
         jump_model,
-        variable ==
+        variables[name, period] ==
         sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
     )
     return
