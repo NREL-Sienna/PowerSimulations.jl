@@ -253,10 +253,6 @@ function _check_pwl_compact_data(
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
-function _get_no_load_cost(component::T, ::V) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
-    return no_load_cost(PSY.get_operation_cost(component), component, V())
-end
-
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
@@ -416,6 +412,16 @@ function _get_pwl_cost_expression(
     return gen_cost
 end
 
-function _convert_to_compact_variable_cost(var_cost::Vector{NTuple{2, Float64}}, no_load_cost::Float64)
+function _get_no_load_cost(
+    component::T,
+    ::V,
+) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
+    return no_load_cost(PSY.get_operation_cost(component), component, V())
+end
+
+function _convert_to_compact_variable_cost(
+    var_cost::Vector{NTuple{2, Float64}},
+    no_load_cost::Float64,
+)
     return [(c - no_load_cost, pp - p_min) for (c, pp) in var_cost]
 end

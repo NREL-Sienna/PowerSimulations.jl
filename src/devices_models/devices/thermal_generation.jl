@@ -115,8 +115,8 @@ uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 
 variable_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
-no_load_cost(cost::MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitmen) = PSY.get_no_load(cost)
-
+no_load_cost(cost::MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment) = PSY.get_no_load(cost)
+no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(PSY.get_variable(cost))[1][1]
 
 #! format: on
 function get_initial_conditions_device_model(
