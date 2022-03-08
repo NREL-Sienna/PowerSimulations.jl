@@ -175,7 +175,8 @@ get_variables(container::OptimizationContainer) = container.variables
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
 get_objective_function(container::OptimizationContainer) = container.objective_function
-is_synchronized(container::OptimizationContainer) = container.objective_function.synchronized
+is_synchronized(container::OptimizationContainer) =
+    container.objective_function.synchronized
 
 function has_container_key(
     container::OptimizationContainer,
