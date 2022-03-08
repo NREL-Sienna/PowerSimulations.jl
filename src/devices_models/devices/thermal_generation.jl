@@ -92,7 +92,8 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstrac
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-fixed_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
+fixed_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
+fixed_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
@@ -113,6 +114,9 @@ uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
 uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 
 variable_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
+
+no_load_cost(cost::MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitmen) = PSY.get_no_load(cost)
+
 
 #! format: on
 function get_initial_conditions_device_model(
@@ -1267,8 +1271,28 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
+    add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: ThermalCompactDispatch}
+    add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
     return
 end
 
