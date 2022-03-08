@@ -1,25 +1,5 @@
 #! format: off
 
-########################### Thermal Generation Models ######################################
-
-abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
-abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
-abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
-
-abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
-abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
-
-struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
-struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
-struct ThermalBasicDispatch <: AbstractThermalDispatchFormulation end
-struct ThermalStandardDispatch <: AbstractThermalDispatchFormulation end
-struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-
-struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
-struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
-struct ThermalBasicCompactUnitCommitment <: AbstractCompactUnitCommitment end
-struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
-
 requires_initialization(::AbstractThermalFormulation) = false
 requires_initialization(::AbstractThermalUnitCommitment) = true
 requires_initialization(::ThermalStandardDispatch) = true
@@ -115,7 +95,7 @@ uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 
 variable_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
-no_load_cost(cost::MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment) = PSY.get_no_load(cost)
+no_load_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation) = PSY.get_no_load(cost)
 no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(PSY.get_variable(cost))[1][1]
 
 #! format: on
@@ -1296,66 +1276,6 @@ function objective_function!(
     return
 end
 
-"""
-Cost function for generators formulated as No-Min
-"""
-function objective_function!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, ThermalDispatchNoMin},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.ThermalGen}
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    for g in devices
-        component_name = PSY.get_name(g)
-        op_cost = PSY.get_operation_cost(g)
-        cost_component = PSY.get_variable(op_cost)
-        if isa(cost_component, PSY.VariableCost{Array{Tuple{Float64, Float64}, 1}})
-            @debug "PWL cost function detected for device $(component_name) using ThermalDispatchNoMin"
-            slopes = PSY.get_slopes(cost_component)
-            if any(slopes .< 0) || !_pwlparamcheck(cost_component)
-                throw(
-                    IS.InvalidValue(
-                        "The PWL cost data provided for generator $(PSY.get_name(g)) is not compatible with a No Min Cost.",
-                    ),
-                )
-            end
-            if slopes[1] != 0.0
-                @debug "PWL has no 0.0 intercept for generator $(PSY.get_name(g))"
-                # adds a first intercept a x = 0.0 and Y below the intercept of the first tuple to make convex equivalent
-                first_pair = PSY.get_cost(cost_component)[1]
-                objective_function_data = deepcopy(cost_component.cost)
-                intercept_point = (0.0, first_pair[2] - COST_EPSILON)
-                objective_function_data = vcat(intercept_point, objective_function_data)
-                @assert _slope_convexity_check(slopes)
-            else
-                objective_function_data = cost_component.cost
-            end
-            time_steps = get_time_steps(container)
-            for t in time_steps
-                gen_cost = pwl_gencost_linear!(
-                    container,
-                    no_min_spec,
-                    component_name,
-                    objective_function_data,
-                    t,
-                    T,
-                )
-                _add_to_cost_expression!(
-                    container,
-                    no_min_spec.multiplier * gen_cost * dt,
-                    g,
-                    t,
-                )
-            end
-        else
-            _add_to_cost!(container, no_min_spec, op_cost, g)
-        end
-    end
-    return
-end
-
 function objective_function!(
     ::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
@@ -1364,7 +1284,7 @@ function objective_function!(
 )
     throw(
         IS.ConflictingInputsError(
-            "ThermalDispatchNoMin cost function is not compatible with ThermalMultiStart formulation.",
+            "ThermalDispatchNoMin cost function is not compatible with ThermalMultiStart Devices.",
         ),
     )
 end
