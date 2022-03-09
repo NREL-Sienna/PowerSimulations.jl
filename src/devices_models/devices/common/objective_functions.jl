@@ -223,11 +223,7 @@ function _add_service_bid_cost!(
     #end
 end
 
-function _add_service_bid_cost!(
-    ::OptimizationContainer,
-    ::PSY.Component,
-    ::PSY.Service,
-) end
+function _add_service_bid_cost!(::OptimizationContainer, ::PSY.Component, ::PSY.Service) end
 
 function _add_service_bid_cost!(
     ::OptimizationContainer,

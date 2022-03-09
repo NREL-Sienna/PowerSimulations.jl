@@ -105,8 +105,6 @@ struct HVDCDispatch <: AbstractDCLineFormulation end
 # Not Implemented
 # struct VoltageSourceDC <: AbstractDCLineFormulation end
 
-
-
 ############################## Network Model Formulations ##################################
 # These formulations are taken directly from PowerModels
 
