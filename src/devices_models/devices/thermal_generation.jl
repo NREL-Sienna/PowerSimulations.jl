@@ -73,12 +73,13 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 
 ########################Objective Function##################################################
 fixed_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
+fixed_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_no_load(cost)
 fixed_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
 
-objective_function_multiplier(::PSY.ThermalGen, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::VariableType, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
 shut_down_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
 
@@ -88,6 +89,10 @@ sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusV
 sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
 
 start_up_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_start_up(cost)
+start_up_cost(cost::PSY.MultiStartCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
+start_up_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
+start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
+start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=PSY.get_start_up(cost)
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
@@ -1243,6 +1248,9 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_start_up_cost!(container, StartVariable(), devices, U())
+    add_shut_down_cost!(container, StopVariable(), devices, U())
+    add_fixed_cost!(container, OnVariable(), devices, U())
     return
 end
 
@@ -1253,6 +1261,24 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
+    add_start_up_cost!(container, StartVariable(), devices, U())
+    add_shut_down_cost!(container, StopVariable(), devices, U())
+    add_fixed_cost!(container, OnVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    ::DeviceModel{PSY.ThermalMultiStart, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {U <: ThermalMultiStartUnitCommitment}
+    add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
+    for var_type in START_VARIABLES
+        add_start_up_cost!(container, var_type(), devices, U())
+    end
+    add_shut_down_cost!(container, StopVariable(), devices, U())
+    add_fixed_cost!(container, OnVariable(), devices, U())
     return
 end
 
