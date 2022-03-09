@@ -1,11 +1,4 @@
 #! format: off
-
-abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
-abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
-struct StaticPowerLoad <: AbstractLoadFormulation end
-struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
-struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
-
 ########################### ElectricLoad ####################################
 
 get_variable_multiplier(_, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = -1.0
@@ -30,6 +23,16 @@ get_variable_binary(::OnVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadForm
 get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_active_power(d)
 get_multiplier_value(::ReactivePowerTimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_reactive_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = PSY.get_max_active_power(d)
+
+
+########################Objective Function##################################################
+fixed_cost(cost::Nothing, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
+fixed_cost(cost::PSY.OperationalCost, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_fixed(cost)
+
+objective_function_multiplier(::VariableType, ::AbstractControllablePowerLoadFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+
+variable_cost(::Nothing, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
+variable_cost(cost::PSY.OperationalCost, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_variable(cost)
 
 #! format: on
 
@@ -126,6 +129,26 @@ function add_constraints!(
 end
 
 ############################## FormulationControllable Load Cost ###########################
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ControllableLoad, U <: DispatchablePowerLoad}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ControllableLoad, U <: InterruptiblePowerLoad}
+    add_fixed_cost!(container, OnVariable(), devices, U())
+    return
+end
+
 function CostSpec(
     ::Type{T},
     ::Type{DispatchablePowerLoad},
