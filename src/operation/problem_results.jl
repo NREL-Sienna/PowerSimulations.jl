@@ -308,7 +308,7 @@ function _read_results(
             results[k] =
                 convert_result_to_natural_units(k) ? v[time_ids, :] .* base_power :
                 v[time_ids, :]
-            DataFrames.insertcols!(results[k], 1, :DateTime=>timestamps)
+            DataFrames.insertcols!(results[k], 1, :DateTime => timestamps)
         end
     end
     return results
@@ -329,8 +329,10 @@ function _process_timestamps(
         def_len = DataFrames.nrow(get_optimizer_stats(res))
         requested_range =
             collect(findfirst(x -> x >= start_time, get_timestamps(res)):def_len)
+        timestamps = repeat(get_timestamps(res), def_len)
     else
-        requested_range = findall(x -> x >= start_time, get_timestamps(res))
+        timestamps = get_timestamps(res)
+        requested_range = findall(x -> x >= start_time, timestamps)
         def_len = length(requested_range)
     end
     len = len === nothing ? def_len : len
@@ -338,7 +340,7 @@ function _process_timestamps(
         throw(IS.InvalidValue("requested results have less than $len values"))
     end
     timestamp_ids = requested_range[1:len]
-    return timestamp_ids, get_timestamps(res)[timestamp_ids]
+    return timestamp_ids, timestamps[timestamp_ids]
 end
 
 """
@@ -413,7 +415,7 @@ function read_variables_with_keys(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    (timestamp_ids, timestamps) = _process_timestamps(res, initial_time, len)
+    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
         res.variable_values,
         variables,
@@ -495,8 +497,14 @@ function read_duals_with_keys(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    (timestamp_ids, timestamps) = _process_timestamps(res, initial_time, len)
-    return _read_results(res.dual_values, duals, timestamp_ids, timestamps, get_model_base_power(res))
+    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
+    return _read_results(
+        res.dual_values,
+        duals,
+        timestamps,
+        timestamp_ids,
+        get_model_base_power(res),
+    )
 end
 
 """
@@ -576,7 +584,7 @@ function read_parameters_with_keys(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    (timestamp_ids, timestamps) = _process_timestamps(res, initial_time, len)
+    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
         res.parameter_values,
         parameters,
@@ -663,7 +671,7 @@ function read_aux_variables_with_keys(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    (timestamp_ids, timestamps) = _process_timestamps(res, initial_time, len)
+    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
         res.aux_variable_values,
         aux_variables,
@@ -750,7 +758,7 @@ function read_expressions_with_keys(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    (timestamp_ids, timestamps) = _process_timestamps(res, initial_time, len)
+    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
         res.expression_values,
         expressions,

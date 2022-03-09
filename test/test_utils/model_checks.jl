@@ -89,7 +89,7 @@ end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
     cp_duals = read_dual(res, PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
-    λ = Matrix{Float64}(cp_duals)
+    λ = Matrix{Float64}(cp_duals[:, propertynames(cp_duals) .!= :DateTime])
 
     flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
     μ = Matrix{Float64}(flow_duals[:, ptdf.axes[1]])
