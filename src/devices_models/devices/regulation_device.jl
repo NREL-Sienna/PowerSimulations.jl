@@ -1,9 +1,4 @@
 #! format: off
-
-abstract type AbstractRegulationFormulation <: AbstractDeviceFormulation end
-struct ReserveLimitedRegulation <: AbstractRegulationFormulation end
-struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
-
 get_variable_multiplier(_, ::Type{PSY.RegulationDevice{PSY.ThermalStandard}}, ::DeviceLimitedRegulation) = NaN
 ############################ DeltaActivePowerUpVariable, RegulationDevice ###########################
 

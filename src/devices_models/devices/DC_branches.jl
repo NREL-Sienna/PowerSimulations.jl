@@ -1,9 +1,3 @@
-abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
-struct HVDCUnbounded <: AbstractDCLineFormulation end
-struct HVDCLossless <: AbstractDCLineFormulation end
-struct HVDCDispatch <: AbstractDCLineFormulation end
-# Not Implemented
-# struct VoltageSourceDC <: AbstractDCLineFormulation end
 
 #################################### Branch Variables ##################################################
 get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = false

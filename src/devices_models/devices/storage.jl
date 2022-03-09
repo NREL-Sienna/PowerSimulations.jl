@@ -1,11 +1,4 @@
 #! format: off
-
-abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
-abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
-struct BookKeeping <: AbstractStorageFormulation end
-struct BatteryAncillaryServices <: AbstractStorageFormulation end
-struct EnergyTarget <: AbstractEnergyManagement end
-
 requires_initialization(::AbstractStorageFormulation) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
