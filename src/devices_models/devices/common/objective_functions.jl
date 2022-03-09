@@ -93,6 +93,25 @@ function add_fixed_cost!(
     return
 end
 
+function add_fixed_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {
+    T <: PSY.Storage,
+    U <: Union{ActivePowerInVariable, ActivePowerOutVariable},
+    V <: AbstractStorageFormulation,
+}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        for t in get_time_steps(container)
+            _add_proportional_term!(container, U(), d, COST_EPSILON * multiplier, t)
+        end
+    end
+    return
+end
+
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
