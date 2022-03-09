@@ -48,6 +48,13 @@ initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStora
 get_parameter_multiplier(::VariableValueParameter, d::PSY.Storage, ::AbstractStorageFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::AbstractStorageFormulation) = 1.0
 
+
+########################Objective Function##################################################
+objective_function_multiplier(::VariableType, ::AbstractStorageFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+variable_cost(cost::PSY.StorageManagementCost, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_variable(cost)
+
+    ::Type{PSY.BatteryEMS},
+    ::Type{EnergyTarget},
 #! format: on
 
 get_initial_conditions_device_model(
@@ -365,15 +372,24 @@ function add_constraints!(
     return
 end
 
-function CostSpec(
-    ::Type{PSY.BatteryEMS},
-    ::Type{EnergyTarget},
+##################################### Storage generation cost ############################
+function objective_function!(
     container::OptimizationContainer,
-)
-    return CostSpec(;
-        variable_type=ActivePowerOutVariable,
-        component_type=PSY.BatteryEMS,
-        variable_cost=PSY.get_variable,
-        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
-    )
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
+    add_fixed_cost!(container, ActivePowerOutVariable(), devices, U())
+    add_fixed_cost!(container, ActivePowerInVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.BatteryEMS, U <: EnergyTarget}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
+    return
 end
