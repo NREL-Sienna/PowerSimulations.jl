@@ -128,18 +128,26 @@ end
 
 function read_results(
     store::EmulationModelStore,
-    ::Symbol,
-    key::OptimizationContainerKey,
+    key::OptimizationContainerKey;
     index::Union{Int, Nothing}=nothing,
+    len::Union{Int, Nothing}=nothing,
 )
     container = get_data_field(store, get_store_container_type(key))
     df = container[key].values
     # Return a copy because callers may mutate it.
     if isnothing(index)
+        @assert_op len === nothing
         return copy(df, copycols=true)
+    elseif isnothing(len)
+        return copy(df, copycols=true)[index:end, :]
     else
-        return copy(df, copycols=true)[index, :]
+        return copy(df, copycols=true)[index:(index + len - 1), :]
     end
+end
+
+function get_dataset_size(store::EmulationModelStore, key::OptimizationContainerKey)
+    container = get_data_field(store, get_store_container_type(key))
+    return size(container[key].values)
 end
 
 function get_last_updated_timestamp(

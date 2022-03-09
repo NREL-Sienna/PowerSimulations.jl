@@ -116,7 +116,7 @@ end
         initial_time=Dates.now(),
     )
 
-    @test_throws IS.ConflictingInputsError build!(sim)
+    @test_throws IS.ConflictingInputsError build!(sim, console_level=Logging.AboveMaxLevel)
 
     sim = Simulation(
         name="fake_path",

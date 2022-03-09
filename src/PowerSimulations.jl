@@ -141,7 +141,8 @@ export export_realized_results
 export export_optimizer_stats
 export get_timestamps
 export get_model_name
-export get_problem_results
+export get_decision_problem_results
+export get_emulation_problem_results
 export get_system
 export get_system!
 export set_system!
@@ -155,7 +156,7 @@ export list_dual_names
 export list_parameter_names
 export list_aux_variable_names
 export list_expression_names
-export list_problems
+export list_decision_problems
 export list_supported_formats
 export load_results!
 export read_variable
@@ -168,11 +169,11 @@ export read_duals
 export read_parameters
 export read_aux_variables
 export read_expressions
-# export read_realized_variable TODO: uncomment these when they are implemented in simulation_problem_results.jl
-# export read_realized_dual
-# export read_realized_parameter
-# export read_realized_aux_variable
-# export read_realized_expression
+export read_realized_variable
+export read_realized_dual
+export read_realized_parameter
+export read_realized_aux_variable
+export read_realized_expression
 export read_realized_variables
 export read_realized_duals
 export read_realized_parameters
@@ -323,6 +324,26 @@ export EnergyBudgetTimeSeriesParameter
 # Feedforward Parameters
 export OnStatusParameter
 export UpperBoundValueParameter
+
+# Expressions
+export SystemBalanceExpressions
+export RangeConstraintLBExpressions
+export RangeConstraintUBExpressions
+export CostExpressions
+export ActivePowerBalance
+export ReactivePowerBalance
+export EmergencyUp
+export EmergencyDown
+export RawACE
+export ProductionCostExpression
+export ActivePowerRangeExpressionLB
+export ComponentActivePowerRangeExpressionLB
+export ReserveRangeExpressionLB
+export ActivePowerRangeExpressionUB
+export ReserveRangeExpressionUB
+export ComponentActivePowerRangeExpressionUB
+export ComponentReserveUpBalanceExpression
+export ComponentReserveDownBalanceExpression
 
 #################################################################################
 # Imports
@@ -478,6 +499,9 @@ include("simulation/simulation_store_params.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")
+include("simulation/realized_meta.jl")
+include("simulation/decision_model_simulation_results.jl")
+include("simulation/emulation_model_simulation_results.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
