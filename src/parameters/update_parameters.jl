@@ -360,7 +360,7 @@ function update_variable_cost!(
         return
     end
     variable = get_variable(container, get_variable_type(attributes)(), T)
-    gen_cost = variable[component_name, time_period]*cost_data*base_power*dt
+    gen_cost = variable[component_name, time_period] * cost_data * base_power * dt
     # Attribute doesn't have multiplier
     # gen_cost = attributes.multiplier * gen_cost_
     add_to_objective_variant_expression!(container, gen_cost)
