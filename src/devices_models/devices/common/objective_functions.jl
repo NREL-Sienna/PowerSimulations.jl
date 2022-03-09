@@ -125,6 +125,7 @@ function _add_variable_cost_to_objective!(
         component,
         T(),
         U(),
+        eltype(variable_cost_forecast_values),
     )
     pwl_cost_expressions =
         _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
@@ -210,18 +211,22 @@ function _add_start_up_cost_to_objective!(
     return
 end
 
+_get_cost_function_data_type(::Type{PSY.VariableCost{T}}) where {T} = T
+
 function _get_cost_function_parameter_container(
     container::OptimizationContainer,
     ::S,
     component::T,
     ::U,
     ::V,
+    cost_type::DataType,
 ) where {
     S <: ObjectiveFunctionParameter,
     T <: PSY.Component,
     U <: VariableType,
     V <: AbstractDeviceFormulation,
 }
+
     if has_container_key(container, S, T)
         return get_parameter(container, S, T)
     else
@@ -238,6 +243,7 @@ function _get_cost_function_parameter_container(
             sos_val,
             U,
             uses_compact_power(component, V()),
+            _get_cost_function_data_type(cost_type),
             container_axes...,
         )
     end
@@ -478,7 +484,7 @@ function _add_pwl_term!(
     cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
         proportial_value = PSY.get_cost(cost_data[t])*multiplier*base_power*dt
-        _add_proportional_term!(container, U(), component, proportial_value,t)
+        cost_expressions[t] = _add_proportional_term!(container, U(), component, proportial_value,t)
     end
     return cost_expressions
 end

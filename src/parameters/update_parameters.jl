@@ -6,7 +6,7 @@ function update_parameter_values!(
 
 ######################## Methods to update Parameters from Time Series #####################
 function _set_param_value!(
-    param::AbstractArray{PJ.ParameterRef},
+    param::JuMPParamArray,
     value::Float64,
     name::String,
     t::Int,
@@ -16,7 +16,17 @@ function _set_param_value!(
 end
 
 function _set_param_value!(
-    param::AbstractArray{Float64},
+    param::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    value::Vector{NTuple{2, Float64}},
+    name::String,
+    t::Int,
+)
+    param[name, t] = value
+    return
+end
+
+function _set_param_value!(
+    param::JuMPFloatArray,
     value::Float64,
     name::String,
     t::Int,
@@ -277,18 +287,8 @@ function update_parameter_values!(
     return
 end
 
-function _set_param_value!(
-    param::AbstractArray{Vector{NTuple{2, Float64}}},
-    value::Vector{NTuple{2, Float64}},
-    name::String,
-    t::Int,
-)
-    param[name, t] = value
-    return
-end
-
 function update_parameter_values!(
-    param_array::AbstractArray{Vector{NTuple{2, Float64}}},
+    param_array,
     attributes::CostFunctionAttributes,
     ::Type{V},
     model::DecisionModel,
@@ -356,11 +356,11 @@ end
 
 function update_variable_cost!(
     container::OptimizationContainer,
-    param_array::AbstractArray{Vector{NTuple{2, Float64}}},
-    attributes::CostFunctionAttributes,
+    param_array::DenseAxisArray{R},
+    ::CostFunctionAttributes{R},
     component::T,
     time_period::Int,
-) where {T <: PSY.Component}
+) where {R, T <: PSY.Component}
     component_name = PSY.get_name(component)
     cost_data = param_array[component_name, time_period]
     if all(iszero.(last.(cost_data)))

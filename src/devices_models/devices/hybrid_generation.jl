@@ -59,14 +59,15 @@ initial_condition_default(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractH
 initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = EnergyVariable()
 
 ########################Objective Function##################################################
-proportional_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_fixed(cost)
-variable_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_variable(cost)
-
 objective_function_multiplier(::VariableType, ::AbstractHybridFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+
+proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_no_load(cost)
 
 sos_status(::PSY.HybridSystem, ::AbstractHybridFormulation)=SOSStatusVariable.NO_VARIABLE
 
 uses_compact_power(::PSY.HybridSystem, ::AbstractHybridFormulation)=false
+variable_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_variable(cost)
 
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_electric_load(d))
