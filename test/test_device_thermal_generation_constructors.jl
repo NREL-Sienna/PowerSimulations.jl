@@ -263,7 +263,6 @@ end
 end
 
 ################################### No Minimum Dispatch tests ##############################
-
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -276,7 +275,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
 
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, false, 120, 0, 120, 120, 0, false)
     key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
@@ -316,6 +315,23 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5;)
     @test_throws IS.ConflictingInputsError mock_construct_device!(model, device_model)
+end
+
+@testset "Operation Model ThermalDispatchNoMin - and PWL Non Convex" begin
+    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
+    template = get_thermal_dispatch_template_network()
+    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+    model = DecisionModel(
+        MockOperationProblem,
+        CopperPlatePowerModel,
+        c_sys5_pwl_ed_nonconvex;
+        export_pwl_vars=true,
+        initialize_model=false,
+    )
+    @test_throws IS.InvalidValue mock_construct_device!(
+        model,
+        DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+    )
 end
 
 ################################## Ramp Limited Testing ##################################
@@ -596,7 +612,7 @@ end
     UC = DecisionModel(
         UnitCommitmentProblem,
         template,
-        PSB.build_system(PSITestSystems, "c_convex_pwl_test");
+        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
         optimizer=HiGHS_optimizer,
         initialize_model=false,
     )
@@ -635,25 +651,7 @@ end
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    # changed from 18 to 16 as built_for_recurrent_solves/use_parameters is set to false, different duration constraint is used
     moi_tests(UC, false, 38, 0, 16, 8, 13, true)
-end
-
-@testset "Operation Model ThermalDispatchNoMin - and PWL Non Convex" begin
-    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
-    template = get_thermal_dispatch_template_network()
-    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
-    model = DecisionModel(
-        MockOperationProblem,
-        CopperPlatePowerModel,
-        c_sys5_pwl_ed_nonconvex;
-        export_pwl_vars=true,
-        initialize_model=false,
-    )
-    @test_throws IS.InvalidValue mock_construct_device!(
-        model,
-        DeviceModel(ThermalStandard, ThermalDispatchNoMin),
-    )
 end
 
 @testset "Solving UC Models with Linear Networks" begin
