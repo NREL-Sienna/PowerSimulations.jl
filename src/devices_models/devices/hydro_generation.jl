@@ -121,6 +121,15 @@ initial_condition_variable(::InitialTimeDurationOn, d::PSY.HydroGen, ::AbstractH
 initial_condition_default(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_status(d) ? 0.0 : PSY.get_time_at_status(d)
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
 
+########################Objective Function##################################################
+fixed_cost(cost::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=1.0
+fixed_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_fixed(cost)
+
+objective_function_multiplier(::VariableType, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+
+variable_cost(::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=1.0
+variable_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
+
 #! format: on
 
 function get_initial_conditions_device_model(
@@ -682,35 +691,44 @@ function add_constraints!(
 end
 
 ##################################### Hydro generation cost ############################
-function CostSpec(
-    ::Type{T},
-    ::Type{U},
-    ::OptimizationContainer,
-) where {T <: PSY.HydroGen, U <: AbstractHydroFormulation}
-    # Hydro Generators currently have no OperationalCost
-    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return CostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        fixed_cost=PSY.get_fixed,
-        variable_cost=objective_function,
-        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
-    )
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HydroGen, U <: AbstractHydroUnitCommitment}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_fixed_cost!(container, OnVariable(), devices, U())
+    return
 end
 
-############################
-function CostSpec(
-    ::Type{T},
-    ::Type{U},
-    ::OptimizationContainer,
-) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroFormulation}
-    # Hydro Generators currently have no OperationalCost
-    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return CostSpec(;
-        variable_type=ActivePowerOutVariable,
-        component_type=T,
-        fixed_cost=PSY.get_fixed,
-        variable_cost=objective_function,
-        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
-    )
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroUnitCommitment}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
+    add_fixed_cost!(container, OnVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HydroGen, U <: AbstractHydroDispatchFormulation}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroDispatchFormulation}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
+    return
 end
