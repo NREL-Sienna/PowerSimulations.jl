@@ -26,8 +26,8 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractContr
 
 
 ########################Objective Function##################################################
-fixed_cost(cost::Nothing, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
-fixed_cost(cost::PSY.OperationalCost, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::Nothing, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
+proportional_cost(cost::PSY.OperationalCost, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_fixed(cost)
 
 objective_function_multiplier(::VariableType, ::AbstractControllablePowerLoadFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 
@@ -145,6 +145,6 @@ function objective_function!(
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ControllableLoad, U <: InterruptiblePowerLoad}
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end

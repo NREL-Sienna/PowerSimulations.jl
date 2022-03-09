@@ -72,9 +72,9 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstrac
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-fixed_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
-fixed_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_no_load(cost)
-fixed_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
+proportional_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_no_load(cost)
+proportional_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
@@ -1250,7 +1250,7 @@ function objective_function!(
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     add_start_up_cost!(container, StartVariable(), devices, U())
     add_shut_down_cost!(container, StopVariable(), devices, U())
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
 
@@ -1263,7 +1263,7 @@ function objective_function!(
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
     add_start_up_cost!(container, StartVariable(), devices, U())
     add_shut_down_cost!(container, StopVariable(), devices, U())
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
 
@@ -1278,7 +1278,7 @@ function objective_function!(
         add_start_up_cost!(container, var_type(), devices, U())
     end
     add_shut_down_cost!(container, StopVariable(), devices, U())
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
 

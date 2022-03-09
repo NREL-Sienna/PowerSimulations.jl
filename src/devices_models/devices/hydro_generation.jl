@@ -3,26 +3,10 @@ requires_initialization(::AbstractHydroFormulation) = false
 requires_initialization(::AbstractHydroUnitCommitment) = true
 
 get_variable_multiplier(_, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = 1.0
-get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable,
-    ::Type{<:PSY.HydroGen},
-    ::Type{<:PSY.Reserve{PSY.ReserveUp}}
-) = ActivePowerRangeExpressionUB
-get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable,
-    ::Type{<:PSY.HydroGen},
-    ::Type{<:PSY.Reserve{PSY.ReserveDown}}
-) = ActivePowerRangeExpressionLB
-get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable,
-    ::Type{<:PSY.HydroPumpedStorage},
-    ::Type{<:PSY.Reserve{PSY.ReserveUp}}
-) = ReserveRangeExpressionUB
-get_expression_type_for_reserve(
-    ::ActivePowerReserveVariable,
-    ::Type{<:PSY.HydroPumpedStorage},
-    ::Type{<:PSY.Reserve{PSY.ReserveDown}}
-) = ReserveRangeExpressionLB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ReserveRangeExpressionUB
+get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HydroPumpedStorage}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ReserveRangeExpressionLB
 
 ########################### ActivePowerVariable, HydroGen #################################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.HydroGen}, ::AbstractHydroFormulation) = false
@@ -122,12 +106,14 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractH
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-fixed_cost(cost::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=1.0
-fixed_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
+proportional_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_fixed(cost)
 
 objective_function_multiplier(::VariableType, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::EnergySurplusVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::EnergyShortageVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 
-variable_cost(::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=1.0
+variable_cost(::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
 variable_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
 
 #! format: on
@@ -698,7 +684,7 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HydroGen, U <: AbstractHydroUnitCommitment}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
 
@@ -709,7 +695,7 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroUnitCommitment}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
 
@@ -730,5 +716,17 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroDispatchFormulation}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HydroPumpedStorage, U <: HydroDispatchReservoirStorage}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
+    add_proportional_cost!(container, EnergyShortageVariable()(), devices, U())
     return
 end

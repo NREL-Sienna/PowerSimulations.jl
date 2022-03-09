@@ -59,7 +59,7 @@ initial_condition_default(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractH
 initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = EnergyVariable()
 
 ########################Objective Function##################################################
-fixed_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_fixed(cost)
 variable_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_variable(cost)
 
 objective_function_multiplier(::VariableType, ::AbstractHybridFormulation)=OBJECTIVE_FUNCTION_POSITIVE
@@ -767,6 +767,6 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
-    add_fixed_cost!(container, OnVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end

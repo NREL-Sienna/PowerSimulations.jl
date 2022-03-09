@@ -75,7 +75,7 @@ function add_shut_down_cost!(
     return
 end
 
-function add_fixed_cost!(
+function add_proportional_cost!(
     container::OptimizationContainer,
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
@@ -84,7 +84,7 @@ function add_fixed_cost!(
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
-        cost_term = fixed_cost(op_cost_data, d, V())
+        cost_term = proportional_cost(op_cost_data, d, V())
         for t in get_time_steps(container)
             iszero(cost_term) && continue
             _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
@@ -93,7 +93,7 @@ function add_fixed_cost!(
     return
 end
 
-function add_fixed_cost!(
+function add_proportional_cost!(
     container::OptimizationContainer,
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
@@ -101,12 +101,33 @@ function add_fixed_cost!(
 ) where {
     T <: PSY.Storage,
     U <: Union{ActivePowerInVariable, ActivePowerOutVariable},
-    V <: AbstractStorageFormulation,
+    V <: AbstractDeviceFormulation,
 }
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         for t in get_time_steps(container)
             _add_proportional_term!(container, U(), d, COST_EPSILON * multiplier, t)
+        end
+    end
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {
+    T <: PSY.Storage,
+    U <: Union{EnergySurplusVariable, EnergySurplusVariable},
+    V <: AbstractDeviceFormulation,
+}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_term = proportional_cost(op_cost_data, d, V())
+        for t in get_time_steps(container)
+            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
         end
     end
     return

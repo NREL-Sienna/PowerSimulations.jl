@@ -377,8 +377,8 @@ function objective_function!(
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
-    add_fixed_cost!(container, ActivePowerOutVariable(), devices, U())
-    add_fixed_cost!(container, ActivePowerInVariable(), devices, U())
+    add_proportional_cost!(container, ActivePowerOutVariable(), devices, U())
+    add_proportional_cost!(container, ActivePowerInVariable(), devices, U())
     return
 end
 
@@ -389,5 +389,7 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.BatteryEMS, U <: EnergyTarget}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
+    add_proportional_cost!(container, EnergyShortageVariable()(), devices, U())
     return
 end
