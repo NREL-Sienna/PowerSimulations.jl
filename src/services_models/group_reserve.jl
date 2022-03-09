@@ -1,4 +1,4 @@
-struct GroupReserve <: AbstractReservesFormulation end
+
 ############################### Reserve Variables` #########################################
 """
 This function checks if the variables for reserves were created

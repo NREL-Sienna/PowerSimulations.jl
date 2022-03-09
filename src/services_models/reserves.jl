@@ -1,8 +1,4 @@
 #! format: off
-struct RangeReserve <: AbstractReservesFormulation end
-struct StepwiseCostReserve <: AbstractReservesFormulation end
-struct RampReserve <: AbstractReservesFormulation end
-struct NonSpinningReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables #########################################
 
 get_variable_multiplier(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN

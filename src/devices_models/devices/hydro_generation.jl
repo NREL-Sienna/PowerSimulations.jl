@@ -1,17 +1,4 @@
 #! format: off
-
-abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
-abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
-abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
-abstract type AbstractHydroReservoirFormulation <: AbstractHydroDispatchFormulation end
-struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-struct HydroDispatchReservoirBudget <: AbstractHydroReservoirFormulation end
-struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
-struct HydroDispatchPumpedStorage <: AbstractHydroReservoirFormulation end
-struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
-struct HydroCommitmentReservoirBudget <: AbstractHydroUnitCommitment end
-struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
-
 requires_initialization(::AbstractHydroFormulation) = false
 requires_initialization(::AbstractHydroUnitCommitment) = true
 

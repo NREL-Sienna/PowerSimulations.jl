@@ -225,7 +225,6 @@ end
 
 function _add_service_bid_cost!(
     ::OptimizationContainer,
-    ::AddCostSpec,
     ::PSY.Component,
     ::PSY.Service,
 ) end

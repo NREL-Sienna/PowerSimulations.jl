@@ -1,8 +1,4 @@
 #! format: off
-
-abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
-struct PIDSmoothACE <: AbstractAGCFormulation end
-
 get_variable_multiplier(_, ::Type{<:PSY.Area}, ::AbstractAGCFormulation) = NaN
 ########################## ActivePowerVariable, Area ###########################
 
