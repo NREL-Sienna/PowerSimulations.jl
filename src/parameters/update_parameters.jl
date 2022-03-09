@@ -331,3 +331,46 @@ _has_variable_cost_parameter(component::PSY.Component) =
     _has_variable_cost_parameter(PSY.get_operation_cost(component))
 _has_variable_cost_parameter(::PSY.MarketBidCost) = true
 _has_variable_cost_parameter(::T) where {T <: PSY.OperationalCost} = false
+
+function _update_pwl_cost_expression(
+    container::OptimizationContainer,
+    ::Type{T},
+    component_name::String,
+    time_period::Int,
+    cost_data::Vector{NTuple{2, Float64}},
+) where {T <: PSY.Component}
+    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    gen_cost = JuMP.AffExpr(0.0)
+    slopes = PSY.get_slopes(cost_data)
+    upb = PSY.get_breakpoint_upperbounds(cost_data)
+    for i in 1:length(cost_data)
+        JuMP.add_to_expression!(
+            gen_cost,
+            slopes[i] * upb[i] * dt * pwl_var_container[(component_name, i, time_period)],
+        )
+    end
+    return gen_cost
+end
+
+function update_variable_cost!(
+    container::OptimizationContainer,
+    param_array::AbstractArray{Vector{NTuple{2, Float64}}},
+    attributes::CostFunctionAttributes,
+    component::T,
+    time_period::Int,
+) where {T <: PSY.Component}
+    component_name = PSY.get_name(component)
+    cost_data = param_array[component_name, time_period]
+    if all(iszero.(last.(cost_data)))
+        return
+    end
+
+    gen_cost = _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
+    # Attribute doesn't have multiplier
+    # gen_cost = attributes.multiplier * gen_cost_
+    add_to_objective_variant_expression!(container, gen_cost)
+    set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
+    return
+end
