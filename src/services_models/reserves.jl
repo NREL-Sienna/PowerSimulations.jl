@@ -380,26 +380,17 @@ function add_constraints!(
     return
 end
 
-function _add_to_cost!(
-    container::OptimizationContainer,
-    service::SR,
-) where {SR <: PSY.Reserve}
-    time_steps = get_time_steps(container)
-    variable_cost_forecast = get_time_series(container, service, "variable_cost")
-    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
-    for t in time_steps
-        variable_cost!(container, spec, service, variable_cost_forecast[t], t)
-    end
-    return
-end
-
 function objective_function!(
     container::OptimizationContainer,
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.ReserveDemandCurve}
-    # spec = CostSpec(SR, get_formulation(model), container)
-    _add_to_cost!(container, spec, service)
+    time_steps = get_time_steps(container)
+    variable_cost_forecast = get_time_series(container, service, "variable_cost")
+    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
+    for t in time_steps
+        #variable_cost!(container, spec, service, variable_cost_forecast[t], t)
+    end
     return
 end
 
