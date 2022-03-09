@@ -515,13 +515,10 @@ function add_feedforward_constraints!(
                 variable[name, target_period] + slack_var[name, target_period] >=
                 param[name, target_period] * multiplier[name, target_period]
             )
-            _proportional_objective!(
-                container,
-                EnergyShortageVariable(),
-                d,
-                penalty_cost,
-                target_period,
-            )
+            add_to_objective_invariant_expression!(
+            container,
+            slack_var[name, target_period] * penalty_cost,
+        )
         end
     end
     return
