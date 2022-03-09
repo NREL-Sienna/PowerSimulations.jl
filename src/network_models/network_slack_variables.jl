@@ -16,8 +16,11 @@ function add_variables!(
     variable = add_variable_container!(container, T(), PSY.System, time_steps)
 
     for t in time_steps
-        variable[t] =
-            JuMP.@variable(container.JuMPmodel, base_name = "$(T)_{$t}", lower_bound = 0.0)
+        variable[t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "slack_{$(T), $t}",
+            lower_bound = 0.0
+        )
     end
     return
 end
@@ -38,7 +41,7 @@ function add_variables!(
     for t in time_steps, n in bus_numbers
         variable[n, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(T)_{$n, $t}",
+            base_name = "slack_{$(T), $n, $t}",
             lower_bound = 0.0
         )
     end
@@ -64,12 +67,12 @@ function add_variables!(
     for t in time_steps, n in bus_numbers
         variable_active[n, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(T)_{p, $n, $t}",
+            base_name = "slack_{p, $(T), $n, $t}",
             lower_bound = 0.0
         )
         variable_reactive[n, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(T)_{q, $n, $t}",
+            base_name = "slack_{q, $(T), $n, $t}",
             lower_bound = 0.0
         )
     end
