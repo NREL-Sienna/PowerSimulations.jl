@@ -346,11 +346,35 @@ end
 
 function update_variable_cost!(
     container::OptimizationContainer,
-    param_array::DenseAxisArray{R},
-    ::CostFunctionAttributes{R},
+    param_array::JuMPFloatArray,
+    attributes::CostFunctionAttributes{Float64},
     component::T,
     time_period::Int,
-) where {R, T <: PSY.Component}
+) where {T <: PSY.Component}
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    component_name = PSY.get_name(component)
+    cost_data = param_array[component_name, time_period]
+    if iszero(cost_data)
+        return
+    end
+    variable = get_variable(container, get_variable_type(attributes)(), T)
+    gen_cost = variable[component_name, time_period]*cost_data*base_power*dt
+    # Attribute doesn't have multiplier
+    # gen_cost = attributes.multiplier * gen_cost_
+    add_to_objective_variant_expression!(container, gen_cost)
+    set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
+    return
+end
+
+function update_variable_cost!(
+    container::OptimizationContainer,
+    param_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    ::CostFunctionAttributes{Vector{NTuple{2, Float64}}},
+    component::T,
+    time_period::Int,
+) where {T <: PSY.Component}
     component_name = PSY.get_name(component)
     cost_data = param_array[component_name, time_period]
     if all(iszero.(last.(cost_data)))
