@@ -17,8 +17,10 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) 
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 
 ########################Objective Function##################################################
-objective_function_multiplier(::AbstractRenewableDispatchFormulation, ::ActivePowerVariable)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::ActivePowerVariable, ::AbstractRenewableDispatchFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+
 variable_cost(::Nothing, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=1.0
+variable_cost(cost::PSY.OperationalCost, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=PSY.get_variable(cost)
 
 
 #! format: on
@@ -124,7 +126,7 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.ThermalGen, U <: AbstractRenewableDispatchFormulation}
+) where {T <: PSY.RenewableGen, U <: AbstractRenewableDispatchFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     return
 end
