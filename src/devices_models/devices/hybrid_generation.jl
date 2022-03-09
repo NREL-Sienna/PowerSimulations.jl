@@ -1,3 +1,4 @@
+#! format: off
 requires_initialization(::AbstractHybridFormulation) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = 1.0
