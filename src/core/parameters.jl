@@ -55,7 +55,7 @@ end
 
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
-struct CostFunctionAttributes <: ParameterAttributes
+struct CostFunctionAttributes{T} <: ParameterAttributes
     variable_type::Type
     sos_status::SOSStatusVariable
     uses_compact_power::Bool
