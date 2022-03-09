@@ -729,7 +729,10 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.HydroPumpedStorage, U <: Union{HydroDispatchReservoirStorage,  HydroDispatchReservoirBudget}}
+) where {
+    T <: PSY.HydroPumpedStorage,
+    U <: Union{HydroDispatchReservoirStorage, HydroDispatchReservoirBudget},
+}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
     add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
     add_proportional_cost!(container, EnergyShortageVariable(), devices, U())
@@ -741,7 +744,10 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.HydroEnergyReservoir, U <: Union{HydroDispatchReservoirStorage,  HydroDispatchReservoirBudget}}
+) where {
+    T <: PSY.HydroEnergyReservoir,
+    U <: Union{HydroDispatchReservoirStorage, HydroDispatchReservoirBudget},
+}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
     add_proportional_cost!(container, EnergyShortageVariable(), devices, U())

@@ -715,7 +715,7 @@ end
 function _get_no_load_cost(
     component::T,
     ::V,
-    ::U
+    ::U,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     return no_load_cost(PSY.get_operation_cost(component), U(), component, V())
 end
