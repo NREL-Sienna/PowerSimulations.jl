@@ -77,7 +77,7 @@ function add_variables!(
 end
 
 function objective_function!(
-    container,
+    container::OptimizationContainer,
     ::Type{PSY.System},
     model::NetworkModel{T},
     S::Type{T},
@@ -86,7 +86,7 @@ function objective_function!(
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
 
     for t in get_time_steps(container)
-        add_to_objective_function!(
+        add_to_objective_invariant_expression!(
             container,
             (variable_dn[t] + variable_up[t]) * BALANCE_SLACK_COST,
         )
@@ -95,7 +95,7 @@ function objective_function!(
 end
 
 function objective_function!(
-    container,
+    container::OptimizationContainer,
     ::Type{PSY.Bus},
     model::NetworkModel{T},
     S::Type{T},
@@ -105,7 +105,7 @@ function objective_function!(
     bus_numbers = axes(variable_up)[1]
     @assert_op bus_numbers == axes(variable_dn)[1]
     for t in get_time_steps(container), n in bus_numbers
-        add_to_objective_function!(
+        add_to_objective_invariant_expression!(
             container,
             (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
         )
@@ -114,7 +114,7 @@ function objective_function!(
 end
 
 function objective_function!(
-    container,
+    container::OptimizationContainer,
     ::Type{PSY.Bus},
     model::NetworkModel{T},
     S::Type{T},
@@ -126,7 +126,7 @@ function objective_function!(
     bus_numbers = axes(variable_p_up)[1]
     @assert_op bus_numbers == axes(variable_q_dn)[1]
     for t in get_time_steps(container), n in bus_numbers
-        add_to_objective_function!(
+        add_to_objective_invariant_expression!(
             container,
             (
                 variable_p_dn[n, t] +
