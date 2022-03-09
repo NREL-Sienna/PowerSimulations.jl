@@ -1,3 +1,14 @@
+"""
+Abstract type for Device Formulations (a.k.a Models)
+
+# Example
+
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyCustomDeviceFormulation <: PSI.AbstractDeviceFormulation
+"""
+abstract type AbstractDeviceFormulation end
+
 ########################### Thermal Generation Formulations ################################
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
@@ -23,28 +34,6 @@ abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulatio
 struct StaticPowerLoad <: AbstractLoadFormulation end
 struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
-
-############################### AC Branch Formulations #####################################
-"""
-Branch type to add unbounded flow variables and use flow constraints
-"""
-struct StaticBranch <: AbstractBranchFormulation end
-"""
-Branch type to add bounded flow variables and use flow constraints
-"""
-struct StaticBranchBounds <: AbstractBranchFormulation end
-"""
-Branch type to avoid flow constraints
-"""
-struct StaticBranchUnbounded <: AbstractBranchFormulation end
-
-############################### DC Branch Formulations #####################################
-abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
-struct HVDCUnbounded <: AbstractDCLineFormulation end
-struct HVDCLossless <: AbstractDCLineFormulation end
-struct HVDCDispatch <: AbstractDCLineFormulation end
-# Not Implemented
-# struct VoltageSourceDC <: AbstractDCLineFormulation end
 
 ########################### Hybrid Generation Formulations ################################
 abstract type AbstractHybridFormulation <: AbstractDeviceFormulation end
@@ -76,13 +65,46 @@ abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulati
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
-
 ############################ Storage Generation Formulations ###############################
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
-abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
+abstract type AbstractEnergyManagement <: AbstractStorageFormulation end
 struct BookKeeping <: AbstractStorageFormulation end
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
+
+"""
+Abstract type for Branch Formulations (a.k.a Models)
+
+# Example
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyCustomBranchFormulation <: PSI.AbstractDeviceFormulation
+"""
+# Generic Branch Models
+abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
+
+############################### AC Branch Formulations #####################################
+"""
+Branch type to add unbounded flow variables and use flow constraints
+"""
+struct StaticBranch <: AbstractBranchFormulation end
+"""
+Branch type to add bounded flow variables and use flow constraints
+"""
+struct StaticBranchBounds <: AbstractBranchFormulation end
+"""
+Branch type to avoid flow constraints
+"""
+struct StaticBranchUnbounded <: AbstractBranchFormulation end
+
+############################### DC Branch Formulations #####################################
+abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
+struct HVDCUnbounded <: AbstractDCLineFormulation end
+struct HVDCLossless <: AbstractDCLineFormulation end
+struct HVDCDispatch <: AbstractDCLineFormulation end
+# Not Implemented
+# struct VoltageSourceDC <: AbstractDCLineFormulation end
+
 
 
 ############################## Network Model Formulations ##################################
@@ -140,13 +162,15 @@ import PowerModels: QCRMPowerModel
 
 import PowerModels: QCLSPowerModel
 
+abstract type AbstractServiceFormulation end
 
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
+
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
+abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
+
 struct GroupReserve <: AbstractReservesFormulation end
-
-
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 struct RampReserve <: AbstractReservesFormulation end
