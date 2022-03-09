@@ -516,9 +516,9 @@ function add_feedforward_constraints!(
                 param[name, target_period] * multiplier[name, target_period]
             )
             add_to_objective_invariant_expression!(
-            container,
-            slack_var[name, target_period] * penalty_cost,
-        )
+                container,
+                slack_var[name, target_period] * penalty_cost,
+            )
         end
     end
     return
