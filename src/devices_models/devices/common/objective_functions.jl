@@ -366,7 +366,7 @@ function _add_variable_cost_to_objective!(
                 component,
                 cost_data,
                 base_power,
-                multiplier * base_power * dt,
+                multiplier * dt,
                 time_period,
             )
         else
@@ -460,6 +460,27 @@ function _check_pwl_compact_data(
     min = PSY.get_active_power_limits(d).min
     max = PSY.get_active_power_limits(d).max
     return _check_pwl_compact_data(min, max, data, base_power)
+end
+
+function _add_pwl_term!(
+    container::OptimizationContainer,
+    component::T,
+    cost_data::Vector{PSY.VariableCost{Float64}},
+    ::U,
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    # Re-scale breakpoints by Basepower
+    time_steps = get_time_steps(container)
+    cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    for t in time_steps
+        proportial_value = PSY.get_cost(cost_data[t])*multiplier*base_power*dt
+        _add_proportional_term!(container, U(), component, proportial_value,t)
+    end
+    return cost_expressions
 end
 
 """
