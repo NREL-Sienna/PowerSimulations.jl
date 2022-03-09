@@ -227,7 +227,7 @@ function _get_cost_function_parameter_container(
     V <: AbstractDeviceFormulation,
 }
     if has_container_key(container, S, T)
-        return get_parameter(container, S, T)
+        return get_parameter(container, S(), T)
     else
         container_axes = axes(get_variable(container, U(), T))
         if has_container_key(container, OnStatusParameter, T)
