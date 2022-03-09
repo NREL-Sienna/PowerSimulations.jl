@@ -11,52 +11,6 @@ function add_variable_cost!(
     return
 end
 
-function add_start_up_cost!(
-    container::OptimizationContainer,
-    ::U,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(U(), V())
-    for d in devices
-        op_cost_data = PSY.get_operation_cost(d)
-        cost_term = start_up_cost(op_cost_data, d, V())
-        iszero(cost_term) && continue
-        for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
-        end
-    end
-    return
-end
-
-const MULTI_START_COST_MAP = Dict{DataType, Int}(
-    HotStartVariable => 1,
-    WarmStartVariable => 2,
-    ColdStartVariable => 3,
-)
-function add_start_up_cost!(
-    container::OptimizationContainer,
-    ::U,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::V,
-) where {
-    T <: PSY.ThermalMultiStart,
-    U <: Union{HotStartVariable, WarmStartVariable, ColdStartVariable},
-    V <: AbstractDeviceFormulation,
-}
-    multiplier = objective_function_multiplier(U(), V())
-    for d in devices
-        op_cost_data = PSY.get_operation_cost(d)
-        cost_terms = start_up_cost(op_cost_data, d, V())
-        cost_term = cost_terms[MULTI_START_COST_MAP[U]]
-        iszero(cost_term) && continue
-        for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
-        end
-    end
-    return
-end
-
 function add_shut_down_cost!(
     container::OptimizationContainer,
     ::U,
@@ -200,6 +154,57 @@ function _add_variable_cost_to_objective!(
     ancillary_services = PSY.get_ancillary_services(op_cost)
     for service in ancillary_services
         _add_service_bid_cost!(container, component, service)
+    end
+    return
+end
+
+function add_start_up_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        _add_start_up_cost_to_objective!(container, U(), d, op_cost_data, V())
+    end
+    return
+end
+
+function _add_start_up_cost_to_objective!(container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::PSY.OperationalCost,
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    cost_term = start_up_cost(op_cost, component, U())
+    iszero(cost_term) && return
+    multiplier = objective_function_multiplier(T(), U())
+    for t in get_time_steps(container)
+        _add_proportional_term!(container, T(), component, cost_term * multiplier, t)
+    end
+    return
+end
+
+
+const MULTI_START_COST_MAP = Dict{DataType, Int}(
+    HotStartVariable => 1,
+    WarmStartVariable => 2,
+    ColdStartVariable => 3,
+)
+
+function _add_start_up_cost_to_objective!(container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::Union{PSY.MultiStartCost, PSY.MarketBidCost},
+    ::U,
+) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
+    cost_terms = start_up_cost(op_cost, component, U())
+    cost_term = cost_terms[MULTI_START_COST_MAP[T]]
+    iszero(cost_term) && return
+    multiplier = objective_function_multiplier(T(), U())
+    for t in get_time_steps(container)
+        _add_proportional_term!(container, U(), component, cost_term * multiplier, t)
     end
     return
 end

@@ -92,7 +92,9 @@ start_up_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalForm
 start_up_cost(cost::PSY.MultiStartCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
 start_up_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
 start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=PSY.get_start_up(cost)
+start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
+# If the formulation used ignores start up costs, the model ignores that data.
+start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
