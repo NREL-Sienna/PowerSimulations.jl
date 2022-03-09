@@ -53,8 +53,6 @@ get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::Abstract
 objective_function_multiplier(::VariableType, ::AbstractStorageFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 variable_cost(cost::PSY.StorageManagementCost, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_variable(cost)
 
-    ::Type{PSY.BatteryEMS},
-    ::Type{EnergyTarget},
 #! format: on
 
 get_initial_conditions_device_model(
