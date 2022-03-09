@@ -64,6 +64,10 @@ variable_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFor
 
 objective_function_multiplier(::VariableType, ::AbstractHybridFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
+sos_status(::PSY.HybridSystem, ::AbstractHybridFormulation)=SOSStatusVariable.NO_VARIABLE
+
+uses_compact_power(::PSY.HybridSystem, ::AbstractHybridFormulation)=false
+
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_electric_load(d))
 #! format: on

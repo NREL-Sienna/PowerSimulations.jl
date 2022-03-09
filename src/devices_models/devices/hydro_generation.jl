@@ -117,6 +117,9 @@ objective_function_multiplier(::OnVariable, ::AbstractHydroFormulation)=OBJECTIV
 objective_function_multiplier(::EnergySurplusVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 objective_function_multiplier(::EnergyShortageVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
+sos_status(::PSY.HydroGen, ::AbstractHydroFormulation)=SOSStatusVariable.NO_VARIABLE
+sos_status(::PSY.HydroGen, ::AbstractHydroUnitCommitment)=SOSStatusVariable.VARIABLE
+
 variable_cost(::Nothing, ::ActivePowerVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerOutVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
