@@ -1,10 +1,4 @@
 #! format: off
-
-abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
-abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
-struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
-struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
-
 get_variable_multiplier(_, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = 1.0
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.RenewableGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.RenewableGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
