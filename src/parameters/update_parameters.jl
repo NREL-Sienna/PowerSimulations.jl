@@ -367,7 +367,8 @@ function update_variable_cost!(
         return
     end
 
-    gen_cost = _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
+    gen_cost =
+        _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
     # Attribute doesn't have multiplier
     # gen_cost = attributes.multiplier * gen_cost_
     add_to_objective_variant_expression!(container, gen_cost)

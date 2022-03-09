@@ -171,7 +171,8 @@ function add_start_up_cost!(
     return
 end
 
-function _add_start_up_cost_to_objective!(container::OptimizationContainer,
+function _add_start_up_cost_to_objective!(
+    container::OptimizationContainer,
     ::T,
     component::PSY.Component,
     op_cost::PSY.OperationalCost,
@@ -186,14 +187,14 @@ function _add_start_up_cost_to_objective!(container::OptimizationContainer,
     return
 end
 
-
 const MULTI_START_COST_MAP = Dict{DataType, Int}(
     HotStartVariable => 1,
     WarmStartVariable => 2,
     ColdStartVariable => 3,
 )
 
-function _add_start_up_cost_to_objective!(container::OptimizationContainer,
+function _add_start_up_cost_to_objective!(
+    container::OptimizationContainer,
     ::T,
     component::PSY.Component,
     op_cost::Union{PSY.MultiStartCost, PSY.MarketBidCost},
