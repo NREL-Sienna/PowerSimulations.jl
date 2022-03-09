@@ -155,9 +155,9 @@ function _add_variable_cost_to_objective!(
     end
 
     # Service Cost Bid
-    ancillary_services = PSY.get_ancillary_services(cost_data)
+    ancillary_services = PSY.get_ancillary_services(op_cost)
     for service in ancillary_services
-        add_service_bid_cost!(container, spec, component, service)
+        _add_service_bid_cost!(container, component, service)
     end
     return
 end
@@ -193,6 +193,52 @@ function _get_cost_function_parameter_container(
             container_axes...,
         )
     end
+end
+
+function _add_service_bid_cost!(
+    container::OptimizationContainer,
+    component::PSY.Component,
+    service::PSY.Reserve{T},
+) where {T <: PSY.ReserveDirection}
+    time_steps = get_time_steps(container)
+    initial_time = get_initial_time(container)
+    base_power = get_base_power(container)
+    forecast_data = PSY.get_services_bid(
+        component,
+        PSY.get_operation_cost(component),
+        service;
+        start_time=initial_time,
+        len=length(time_steps),
+    )
+    forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
+    # Not implemented yet
+    #for t in time_steps
+    #    proportional_objective!(
+    #        container,
+    #        spec.addtional_linear_terms[PSY.get_name(service)],
+    #        component,
+    #        forecast_data_values[t],
+    #        t,
+    #    )
+    #end
+end
+
+function _add_service_bid_cost!(
+    ::OptimizationContainer,
+    ::AddCostSpec,
+    ::PSY.Component,
+    ::PSY.Service,
+) end
+
+function _add_service_bid_cost!(
+    ::OptimizationContainer,
+    ::PSY.Component,
+    service::PSY.ReserveDemandCurve{T},
+) where {T <: PSY.ReserveDirection}
+    error(
+        "Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))",
+    )
+    return
 end
 
 """
@@ -300,60 +346,6 @@ function _add_variable_cost_to_objective!(
     return
 end
 
-function _add_proportional_term!(
-    container::OptimizationContainer,
-    ::T,
-    component::U,
-    linear_term::Float64,
-    time_period::Int,
-) where {T <: VariableType, U <: PSY.Component}
-    component_name = PSY.get_name(component)
-    @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    variable = get_variable(container, T(), U)[component_name, time_period]
-    lin_cost = variable * linear_term
-    _add_to_objective_invariant_expression!(container, lin_cost)
-    return lin_cost
-end
-
-function _add_quadratic_term!(
-    container::OptimizationContainer,
-    ::T,
-    component::U,
-    q_terms::NTuple{2, Float64},
-    var_multiplier::Float64,
-    expression_multiplier::Float64,
-    time_period::Int,
-) where {T <: VariableType, U <: PSY.Component}
-    component_name = PSY.get_name(component)
-    @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    var = get_variable(container, T(), U)[component_name, time_period]
-    q_cost_ = (var * var_multiplier) .^ 2 * q_terms[1] + var * var_multiplier * q_terms[2]
-    q_cost = q_cost_ * expression_multiplier
-    _add_to_objective_invariant_expression!(container, q_cost)
-    return q_cost
-end
-
-function _add_to_objective_invariant_expression!(
-    container::OptimizationContainer,
-    cost_expr::T,
-) where {T <: JuMP.AbstractJuMPScalar}
-    T_cf = typeof(container.objective_function.invariant_terms)
-    if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
-        container.objective_function.invariant_terms += cost_expr
-    else
-        JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)
-    end
-    return
-end
-
-function _add_to_objective_variant_expression!(
-    container::OptimizationContainer,
-    cost_expr::JuMP.AffExpr,
-)
-    JuMP.add_to_expression!(container.objective_function.variant_terms, cost_expr)
-    return
-end
-
 """
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
@@ -389,11 +381,7 @@ function _add_variable_cost_to_objective!(
             component,
             t,
         )
-        _add_to_objective_invariant_expression!(
-            container,
-            pwl_cost_expressions[t],
-            component,
-        )
+        _add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
     end
     return
 end
@@ -431,6 +419,9 @@ function _check_pwl_compact_data(
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
+"""
+Add PWL cost terms for data coming from the MarketBidCost
+"""
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
@@ -481,6 +472,9 @@ function _add_pwl_term!(
     return pwl_cost_expressions
 end
 
+"""
+Add PWL cost terms for data coming from a constant PWL cost function
+"""
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
@@ -701,4 +695,58 @@ end
 function _convert_to_compact_variable_cost(var_cost::Vector{NTuple{2, Float64}})
     no_load_cost, p_min = var_cost[1]
     return _convert_to_compact_variable_cost(var_cost, no_load_cost, p_min)
+end
+
+function _add_proportional_term!(
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    linear_term::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component}
+    component_name = PSY.get_name(component)
+    @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    variable = get_variable(container, T(), U)[component_name, time_period]
+    lin_cost = variable * linear_term
+    _add_to_objective_invariant_expression!(container, lin_cost)
+    return lin_cost
+end
+
+function _add_quadratic_term!(
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    q_terms::NTuple{2, Float64},
+    var_multiplier::Float64,
+    expression_multiplier::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component}
+    component_name = PSY.get_name(component)
+    @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    var = get_variable(container, T(), U)[component_name, time_period]
+    q_cost_ = (var * var_multiplier) .^ 2 * q_terms[1] + var * var_multiplier * q_terms[2]
+    q_cost = q_cost_ * expression_multiplier
+    _add_to_objective_invariant_expression!(container, q_cost)
+    return q_cost
+end
+
+function _add_to_objective_invariant_expression!(
+    container::OptimizationContainer,
+    cost_expr::T,
+) where {T <: JuMP.AbstractJuMPScalar}
+    T_cf = typeof(container.objective_function.invariant_terms)
+    if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
+        container.objective_function.invariant_terms += cost_expr
+    else
+        JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)
+    end
+    return
+end
+
+function _add_to_objective_variant_expression!(
+    container::OptimizationContainer,
+    cost_expr::JuMP.AffExpr,
+)
+    JuMP.add_to_expression!(container.objective_function.variant_terms, cost_expr)
+    return
 end
