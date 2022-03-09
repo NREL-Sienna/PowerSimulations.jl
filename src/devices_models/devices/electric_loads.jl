@@ -148,31 +148,3 @@ function objective_function!(
     add_fixed_cost!(container, OnVariable(), devices, U())
     return
 end
-
-function CostSpec(
-    ::Type{T},
-    ::Type{DispatchablePowerLoad},
-    ::OptimizationContainer,
-) where {T <: PSY.ControllableLoad}
-    objective_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return CostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        variable_cost=objective_function,
-        multiplier=OBJECTIVE_FUNCTION_NEGATIVE,
-    )
-end
-
-function CostSpec(
-    ::Type{T},
-    ::Type{InterruptiblePowerLoad},
-    ::OptimizationContainer,
-) where {T <: PSY.ControllableLoad}
-    objective_function = x -> (x === nothing ? 1.0 : PSY.get_fixed(x))
-    return CostSpec(;
-        variable_type=OnVariable,
-        component_type=T,
-        fixed_cost=objective_function,
-        multiplier=OBJECTIVE_FUNCTION_NEGATIVE,
-    )
-end
