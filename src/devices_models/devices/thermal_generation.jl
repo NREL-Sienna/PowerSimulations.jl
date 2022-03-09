@@ -88,17 +88,14 @@ sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.
 sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
 
-start_up_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_start_up(cost)
-start_up_cost(cost::PSY.MultiStartCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=PSY.get_start_up(cost)
+start_up_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
 uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
+variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
 no_load_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation) = PSY.get_no_load(cost)
 no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(PSY.get_variable(cost))[1][1]
