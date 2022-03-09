@@ -11,6 +11,88 @@ function add_variable_cost!(
     return
 end
 
+function add_start_up_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_term = start_up_cost(op_cost_data, d, V())
+        for t in get_time_steps(container)
+            iszero(cost_term) && continue
+            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+        end
+    end
+    return
+end
+
+const MULTI_START_COST_MAP = Dict{DataType, Int}(
+    HotStartVariable => 1,
+    WarmStartVariable => 2,
+    ColdStartVariable => 3,
+)
+function add_start_up_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {
+    T <: PSY.ThermalMultiStart,
+    U <: Union{HotStartVariable, WarmStartVariable, ColdStartVariable},
+    V <: AbstractDeviceFormulation,
+}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_terms = start_up_cost(op_cost_data, d, V())
+        cost_term = cost_terms[MULTI_START_COST_MAP[U]]
+        for t in get_time_steps(container)
+            iszero(cost_term) && continue
+            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+        end
+    end
+    return
+end
+
+function add_shut_down_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_term = shut_down_cost(op_cost_data, d, V())
+        for t in get_time_steps(container)
+            iszero(cost_term) && continue
+            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+        end
+    end
+    return
+end
+
+function add_fixed_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_term = fixed_cost(op_cost_data, d, V())
+        for t in get_time_steps(container)
+            iszero(cost_term) && continue
+            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+        end
+    end
+    return
+end
+
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -21,6 +103,96 @@ function _add_variable_cost_to_objective!(
     variable_cost_data = variable_cost(op_cost, component, U())
     _add_variable_cost_to_objective!(container, T(), component, variable_cost_data, U())
     return
+end
+
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::PSY.MarketBidCost,
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    component_name = PSY.get_name(component)
+    @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    time_steps = get_time_steps(container)
+    initial_time = get_initial_time(container)
+    variable_cost_forecast = PSY.get_variable_cost(
+        component,
+        op_cost;
+        start_time=initial_time,
+        len=length(time_steps),
+    )
+    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
+    parameter_container = _get_cost_function_parameter_container(
+        container,
+        CostFunctionParameter(),
+        component,
+        T(),
+        U(),
+    )
+    pwl_cost_expressions =
+        _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
+    jump_model = get_jump_model(container)
+    for t in time_steps
+        set_parameter!(
+            parameter_container,
+            jump_model,
+            PSY.get_cost(variable_cost_forecast_values[t]),
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
+            #  of base power times the time delta.
+            1.0,
+            component_name,
+            t,
+        )
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            pwl_cost_expressions[t],
+            component,
+            t,
+        )
+        _add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+    end
+
+    # Service Cost Bid
+    ancillary_services = PSY.get_ancillary_services(cost_data)
+    for service in ancillary_services
+        add_service_bid_cost!(container, spec, component, service)
+    end
+    return
+end
+
+function _get_cost_function_parameter_container(
+    container::OptimizationContainer,
+    ::S,
+    component::T,
+    ::U,
+    ::V,
+) where {
+    S <: ObjectiveFunctionParameter,
+    T <: PSY.Component,
+    U <: VariableType,
+    V <: AbstractDeviceFormulation,
+}
+    if has_container_key(container, S, T)
+        return get_parameter(container, S, T)
+    else
+        container_axes = axes(get_variable(container, U(), T))
+        if has_container_key(container, OnStatusParameter, T)
+            sos_val = SOSStatusVariable.PARAMETER
+        else
+            sos_val = sos_status(component, V())
+        end
+        return add_param_container!(
+            container,
+            S(),
+            T,
+            sos_val,
+            U,
+            uses_compact_power(component, V()),
+            container_axes...,
+        )
+    end
 end
 
 """
@@ -40,7 +212,7 @@ function _add_variable_cost_to_objective!(
     cost_component::PSY.VariableCost{Float64},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(component, U())
+    multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
     cost_data = PSY.get_cost(cost_component)
     resolution = get_resolution(container)
@@ -92,7 +264,7 @@ function _add_variable_cost_to_objective!(
     cost_component::PSY.VariableCost{NTuple{2, Float64}},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(component, U())
+    multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
     cost_data = PSY.get_cost(cost_component)
     resolution = get_resolution(container)
@@ -139,7 +311,7 @@ function _add_proportional_term!(
     @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     variable = get_variable(container, T(), U)[component_name, time_period]
     lin_cost = variable * linear_term
-    _add_to_objective_invariant_expression!(container, lin_cost, component)
+    _add_to_objective_invariant_expression!(container, lin_cost)
     return lin_cost
 end
 
@@ -157,21 +329,28 @@ function _add_quadratic_term!(
     var = get_variable(container, T(), U)[component_name, time_period]
     q_cost_ = (var * var_multiplier) .^ 2 * q_terms[1] + var * var_multiplier * q_terms[2]
     q_cost = q_cost_ * expression_multiplier
-    _add_to_objective_invariant_expression!(container, q_cost, component)
+    _add_to_objective_invariant_expression!(container, q_cost)
     return q_cost
 end
 
 function _add_to_objective_invariant_expression!(
     container::OptimizationContainer,
     cost_expr::T,
-    ::U,
-) where {T <: JuMP.AbstractJuMPScalar, U <: PSY.Component}
+) where {T <: JuMP.AbstractJuMPScalar}
     T_cf = typeof(container.objective_function.invariant_terms)
     if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
         container.objective_function.invariant_terms += cost_expr
     else
         JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)
     end
+    return
+end
+
+function _add_to_objective_variant_expression!(
+    container::OptimizationContainer,
+    cost_expr::JuMP.AffExpr,
+)
+    JuMP.add_to_expression!(container.objective_function.variant_terms, cost_expr)
     return
 end
 
@@ -243,14 +422,63 @@ function _check_pwl_compact_data(
 end
 
 function _check_pwl_compact_data(
-    ::T,
     d::PSY.Component,
     data::Vector{Tuple{Float64, Float64}},
     base_power::Float64,
-) where {T <: VariableType}
+)
     min = PSY.get_active_power_limits(d).min
     max = PSY.get_active_power_limits(d).max
     return _check_pwl_compact_data(min, max, data, base_power)
+end
+
+function _add_pwl_term!(
+    container::OptimizationContainer,
+    component::T,
+    cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
+    ::U,
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    # Re-scale breakpoints by Basepower
+    name = PSY.get_name(component)
+    time_steps = get_time_steps(container)
+    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    for t in time_steps
+        data = PSY.get_cost(cost_data[t])
+        is_power_data_compact = _check_pwl_compact_data(component, data, base_power)
+        if !uses_compact_power(component, V()) && is_power_data_compact
+            error(
+                "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
+            )
+            # data = _convert_to_full_variable_cost(data, component)
+        elseif uses_compact_power(component, V()) && !is_power_data_compact
+            data = _convert_to_compact_variable_cost(data)
+        else
+            @debug uses_compact_power(component, V()) name T V
+            @debug is_power_data_compact name T V
+        end
+        slopes = PSY.get_slopes(data)
+        # First element of the return is the average cost at P_min.
+        # Shouldn't be passed for convexity check
+        is_convex = _slope_convexity_check(slopes[2:end])
+        break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
+        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_constraint!(container, component, U(), break_points, t)
+        if !is_convex
+            if has_container_key(container, OnStatusParameter, T)
+                sos_val = SOSStatusVariable.PARAMETER
+            else
+                sos_val = sos_status(component, V())
+            end
+            _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
+        end
+        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost_expressions[t] = pwl_cost
+    end
+    return pwl_cost_expressions
 end
 
 function _add_pwl_term!(
@@ -260,14 +488,14 @@ function _add_pwl_term!(
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(component, V())
+    multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     base_power = get_base_power(container)
     # Re-scale breakpoints by Basepower
     name = PSY.get_name(component)
 
-    is_power_data_compact = _check_pwl_compact_data(U(), component, data, base_power)
+    is_power_data_compact = _check_pwl_compact_data(component, data, base_power)
 
     if !uses_compact_power(component, V()) && is_power_data_compact
         error(
@@ -275,20 +503,19 @@ function _add_pwl_term!(
         )
         # data = _convert_to_full_variable_cost(data, component)
     elseif uses_compact_power(component, V()) && !is_power_data_compact
-        no_load_cost_value = _get_no_load_cost(component, V())
-        data = _convert_to_compact_variable_cost(data, no_load_cost_value)
+        data = _convert_to_compact_variable_cost(data)
     else
         @debug uses_compact_power(component, V()) name T V
         @debug is_power_data_compact name T V
     end
 
-    break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
     slopes = PSY.get_slopes(data)
     # First element of the return is the average cost at P_min.
     # Shouldn't be passed for convexity check
     is_convex = _slope_convexity_check(slopes[2:end])
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
     for t in time_steps
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, t)
@@ -300,6 +527,50 @@ function _add_pwl_term!(
             end
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
+        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost_expressions[t] = pwl_cost
+    end
+    return pwl_cost_expressions
+end
+
+function _add_pwl_term!(
+    container::OptimizationContainer,
+    component::T,
+    data::Vector{NTuple{2, Float64}},
+    ::U,
+    ::V,
+) where {T <: PSY.ThermalGen, U <: VariableType, V <: ThermalDispatchNoMin}
+    component_name = PSY.get_name(component)
+    @debug "PWL cost function detected for device $(component_name) using $V"
+    slopes = PSY.get_slopes(data)
+    if any(slopes .< 0) || !_slope_convexity_check(slopes[2:end])
+        throw(
+            IS.InvalidValue(
+                "The PWL cost data provided for generator $(component_name) is not compatible with $U.",
+            ),
+        )
+    end
+
+    if _check_pwl_compact_data(component, data, base_power)
+        error("The data provided is not compatible with formulation $V. \\
+              Use a formulation compatible with Compact Cost Functions")
+    end
+
+    if slopes[1] != 0.0
+        @debug "PWL has no 0.0 intercept for generator $(component_name)"
+        # adds a first intercept a x = 0.0 and Y below the intercept of the first tuple to make convex equivalent
+        first_pair = data[1]
+        intercept_point = (0.0, first_pair[2] - COST_EPSILON)
+        data = vcat(intercept_point, data)
+        @assert _slope_convexity_check(slopes)
+    end
+
+    time_steps = get_time_steps(container)
+    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
+    for t in time_steps
+        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_constraint!(container, component, U(), break_points, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
@@ -358,7 +629,7 @@ function _add_pwl_sos_constraint!(
     component::T,
     ::U,
     break_points::Vector{Float64},
-    sos_status,
+    sos_status::SOSStatusVariable,
     period::Int,
 ) where {T <: PSY.Component, U <: VariableType}
     name = PSY.get_name(component)
@@ -422,6 +693,12 @@ end
 function _convert_to_compact_variable_cost(
     var_cost::Vector{NTuple{2, Float64}},
     no_load_cost::Float64,
+    p_min::Float64,
 )
     return [(c - no_load_cost, pp - p_min) for (c, pp) in var_cost]
+end
+
+function _convert_to_compact_variable_cost(var_cost::Vector{NTuple{2, Float64}})
+    no_load_cost, p_min = var_cost[1]
+    return _convert_to_compact_variable_cost(var_cost, no_load_cost, p_min)
 end
