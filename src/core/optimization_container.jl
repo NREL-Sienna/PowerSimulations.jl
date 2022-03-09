@@ -1335,8 +1335,24 @@ function get_initial_conditions_parameter(
     return get_initial_conditions_parameter(get_initial_conditions_data(container), type, T)
 end
 
-function add_to_objective_function!(container::OptimizationContainer, expr)
-    JuMP.add_to_expression!(container.objective_function.invariant_terms, expr)
+function add_to_objective_invariant_expression!(
+    container::OptimizationContainer,
+    cost_expr::T,
+) where {T <: JuMP.AbstractJuMPScalar}
+    T_cf = typeof(container.objective_function.invariant_terms)
+    if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
+        container.objective_function.invariant_terms += cost_expr
+    else
+        JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)
+    end
+    return
+end
+
+function add_to_objective_variant_expression!(
+    container::OptimizationContainer,
+    cost_expr::JuMP.AffExpr,
+)
+    JuMP.add_to_expression!(container.objective_function.variant_terms, cost_expr)
     return
 end
 

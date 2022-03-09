@@ -170,7 +170,7 @@ function _add_variable_cost_to_objective!(
             component,
             t,
         )
-        _add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+        add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
     end
 
     # Service Cost Bid
@@ -395,7 +395,7 @@ function _add_variable_cost_to_objective!(
             component,
             t,
         )
-        _add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+        add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
     end
     return
 end
@@ -722,7 +722,7 @@ function _add_proportional_term!(
     @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     variable = get_variable(container, T(), U)[component_name, time_period]
     lin_cost = variable * linear_term
-    _add_to_objective_invariant_expression!(container, lin_cost)
+    add_to_objective_invariant_expression!(container, lin_cost)
     return lin_cost
 end
 
@@ -740,27 +740,6 @@ function _add_quadratic_term!(
     var = get_variable(container, T(), U)[component_name, time_period]
     q_cost_ = (var * var_multiplier) .^ 2 * q_terms[1] + var * var_multiplier * q_terms[2]
     q_cost = q_cost_ * expression_multiplier
-    _add_to_objective_invariant_expression!(container, q_cost)
+    add_to_objective_invariant_expression!(container, q_cost)
     return q_cost
-end
-
-function _add_to_objective_invariant_expression!(
-    container::OptimizationContainer,
-    cost_expr::T,
-) where {T <: JuMP.AbstractJuMPScalar}
-    T_cf = typeof(container.objective_function.invariant_terms)
-    if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
-        container.objective_function.invariant_terms += cost_expr
-    else
-        JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)
-    end
-    return
-end
-
-function _add_to_objective_variant_expression!(
-    container::OptimizationContainer,
-    cost_expr::JuMP.AffExpr,
-)
-    JuMP.add_to_expression!(container.objective_function.variant_terms, cost_expr)
-    return
 end
