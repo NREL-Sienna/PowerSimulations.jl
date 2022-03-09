@@ -106,15 +106,20 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractH
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::AbstractHydroFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-proportional_cost(cost::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
-proportional_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::Nothing, ::PSY.HydroGen, ::ActivePowerVariable, ::AbstractHydroFormulation)=0.0
+proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.StorageManagementCost, ::EnergySurplusVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_energy_surplus_cost(cost)
+proportional_cost(cost::PSY.StorageManagementCost, ::EnergyShortageVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_energy_shortage_cost(cost)
 
-objective_function_multiplier(::VariableType, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::ActivePowerVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::ActivePowerOutVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::OnVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 objective_function_multiplier(::EnergySurplusVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 objective_function_multiplier(::EnergyShortageVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 
-variable_cost(::Nothing, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
-variable_cost(cost::PSY.OperationalCost, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
+variable_cost(::Nothing, ::ActivePowerVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
+variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
+variable_cost(cost::PSY.OperationalCost, ::ActivePowerOutVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
 
 #! format: on
 
@@ -724,9 +729,21 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.HydroPumpedStorage, U <: HydroDispatchReservoirStorage}
+) where {T <: PSY.HydroPumpedStorage, U <: Union{HydroDispatchReservoirStorage,  HydroDispatchReservoirBudget}}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
     add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
-    add_proportional_cost!(container, EnergyShortageVariable()(), devices, U())
+    add_proportional_cost!(container, EnergyShortageVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HydroEnergyReservoir, U <: Union{HydroDispatchReservoirStorage,  HydroDispatchReservoirBudget}}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
+    add_proportional_cost!(container, EnergyShortageVariable(), devices, U())
     return
 end
