@@ -21,8 +21,8 @@ function add_start_up_cost!(
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         cost_term = start_up_cost(op_cost_data, d, V())
+        iszero(cost_term) && continue
         for t in get_time_steps(container)
-            iszero(cost_term) && continue
             _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
         end
     end
@@ -49,8 +49,8 @@ function add_start_up_cost!(
         op_cost_data = PSY.get_operation_cost(d)
         cost_terms = start_up_cost(op_cost_data, d, V())
         cost_term = cost_terms[MULTI_START_COST_MAP[U]]
+        iszero(cost_term) && continue
         for t in get_time_steps(container)
-            iszero(cost_term) && continue
             _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
         end
     end
@@ -67,8 +67,8 @@ function add_shut_down_cost!(
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         cost_term = shut_down_cost(op_cost_data, d, V())
+        iszero(cost_term) && continue
         for t in get_time_steps(container)
-            iszero(cost_term) && continue
             _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
         end
     end
@@ -85,8 +85,8 @@ function add_proportional_cost!(
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         cost_term = proportional_cost(op_cost_data, U(), d, V())
+        iszero(cost_term) && continue
         for t in get_time_steps(container)
-            iszero(cost_term) && continue
             _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
         end
     end
@@ -118,16 +118,18 @@ function add_proportional_cost!(
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
 ) where {
-    T <: PSY.Storage,
-    U <: Union{EnergySurplusVariable, EnergySurplusVariable},
+    T <: PSY.Component,
+    U <: Union{EnergySurplusVariable, EnergyShortageVariable},
     V <: AbstractDeviceFormulation,
 }
+    base_p = get_base_power(container)
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
-        cost_term = proportional_cost(op_cost_data, d, V())
+        cost_term = proportional_cost(op_cost_data, U(), d, V())
+        iszero(cost_term) && continue
         for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            _add_proportional_term!(container, U(), d, cost_term * multiplier * base_p, t)
         end
     end
     return

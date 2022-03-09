@@ -51,7 +51,14 @@ get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::Abstract
 
 ########################Objective Function##################################################
 objective_function_multiplier(::VariableType, ::AbstractStorageFormulation)=OBJECTIVE_FUNCTION_POSITIVE
-variable_cost(cost::PSY.StorageManagementCost, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_variable(cost)
+objective_function_multiplier(::EnergySurplusVariable, ::EnergyTarget)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::EnergyShortageVariable, ::EnergyTarget)=OBJECTIVE_FUNCTION_POSITIVE
+
+proportional_cost(cost::PSY.StorageManagementCost, ::EnergySurplusVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_surplus_cost(cost)
+proportional_cost(cost::PSY.StorageManagementCost, ::EnergyShortageVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_shortage_cost(cost)
+
+variable_cost(cost::PSY.StorageManagementCost, ::ActivePowerOutVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_variable(cost)
+
 
 #! format: on
 
@@ -384,12 +391,12 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{PSY.BatteryEMS},
+    ::DeviceModel{PSY.BatteryEMS, T},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.BatteryEMS, U <: EnergyTarget}
-    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
-    add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
-    add_proportional_cost!(container, EnergyShortageVariable()(), devices, U())
+) where {T <: EnergyTarget}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, T())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, T())
+    add_proportional_cost!(container, EnergyShortageVariable(), devices, T())
     return
 end

@@ -115,7 +115,7 @@ objective_function_multiplier(::ActivePowerVariable, ::AbstractHydroFormulation)
 objective_function_multiplier(::ActivePowerOutVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 objective_function_multiplier(::OnVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 objective_function_multiplier(::EnergySurplusVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
-objective_function_multiplier(::EnergyShortageVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::EnergyShortageVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
 variable_cost(::Nothing, ::ActivePowerVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=0.0
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_variable(cost)
@@ -695,12 +695,11 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{PSY.HydroPumpedStorage},
+    ::DeviceModel{PSY.HydroPumpedStorage, T},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroUnitCommitment}
-    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
-    add_proportional_cost!(container, OnVariable(), devices, U())
+) where {T <: PSY.HydroPumpedStorage}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, T())
     return
 end
 
@@ -711,16 +710,6 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HydroGen, U <: AbstractHydroDispatchFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
-    return
-end
-
-function objective_function!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.HydroPumpedStorage, U <: AbstractHydroDispatchFormulation}
-    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
     return
 end
 
