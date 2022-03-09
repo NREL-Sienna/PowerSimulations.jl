@@ -962,20 +962,18 @@ end
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
-    attribute::CostFunctionAttributes,
+    attributes::CostFunctionAttributes{R},
     axs...;
     sparse=false,
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    # Temporary solution uses Float64 parameters and re-builds the cost function each time.
-    param_type = Float64
+) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
     if sparse
-        param_array = sparse_container_spec(param_type, axs...)
+        param_array = sparse_container_spec(R, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
     else
-        param_array = DenseAxisArray{Vector{NTuple{2, Float64}}}(undef, axs...)
+        param_array = DenseAxisArray{R}(undef, axs...)
         multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
     end
-    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    param_container = ParameterContainer(attributes, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
 end
@@ -1005,12 +1003,13 @@ function add_param_container!(
     sos_variable::SOSStatusVariable,
     variable_type::Type{W},
     uses_compact_power::Bool,
+    data_type::DataType,
     axs...;
     sparse=false,
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
     param_key = ParameterKey(T, U, meta)
-    attributes = CostFunctionAttributes(variable_type, sos_variable, uses_compact_power)
+    attributes = CostFunctionAttributes{data_type}(variable_type, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
 end
 
