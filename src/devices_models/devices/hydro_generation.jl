@@ -727,3 +727,33 @@ function objective_function!(
     add_proportional_cost!(container, EnergyShortageVariable(), devices, U())
     return
 end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {
+    T <: PSY.HydroEnergyReservoir,
+    U <: HydroDispatchReservoirStorage,
+}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
+    add_proportional_cost!(container, EnergyShortageVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {
+    T <: PSY.HydroEnergyReservoir,
+    U <: HydroCommitmentReservoirStorage,
+}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, U())
+    add_proportional_cost!(container, EnergyShortageVariable(), devices, U())
+    return
+end
