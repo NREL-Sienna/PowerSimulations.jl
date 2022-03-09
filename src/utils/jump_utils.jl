@@ -129,14 +129,14 @@ end
 to_matrix(array::Array) = array
 
 """
-Returns the correct container spec for the selected type of JuMP Model
+Returns the correct container specification for the selected type of JuMP Model
 """
 function container_spec(::Type{T}, axs...) where {T <: Any}
     return DenseAxisArray{T}(undef, axs...)
 end
 
 """
-Returns the correct container spec for the selected type of JuMP Model
+Returns the correct container specification for the selected type of JuMP Model
 """
 function container_spec(::Type{Float64}, axs...)
     cont = DenseAxisArray{Float64}(undef, axs...)
@@ -145,7 +145,7 @@ function container_spec(::Type{Float64}, axs...)
 end
 
 """
-Returns the correct container spec for the selected type of JuMP Model
+Returns the correct container specification for the selected type of JuMP Model
 """
 function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
