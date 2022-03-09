@@ -72,9 +72,9 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstrac
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-proportional_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
-proportional_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_no_load(cost)
-proportional_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
+proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_no_load(cost)
+proportional_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
@@ -98,10 +98,10 @@ uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
 uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 
-variable_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
+variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
-no_load_cost(cost::PSY.MultiStartCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation) = PSY.get_no_load(cost)
-no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(PSY.get_variable(cost))[1][1]
+no_load_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation) = PSY.get_no_load(cost)
+no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(PSY.get_variable(cost))[1][1]
 
 #! format: on
 function get_initial_conditions_device_model(

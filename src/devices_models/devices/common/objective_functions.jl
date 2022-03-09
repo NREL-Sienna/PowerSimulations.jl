@@ -84,7 +84,7 @@ function add_proportional_cost!(
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
-        cost_term = proportional_cost(op_cost_data, d, V())
+        cost_term = proportional_cost(op_cost_data, U(), d, V())
         for t in get_time_steps(container)
             iszero(cost_term) && continue
             _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
@@ -140,7 +140,7 @@ function _add_variable_cost_to_objective!(
     op_cost::PSY.OperationalCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
-    variable_cost_data = variable_cost(op_cost, component, U())
+    variable_cost_data = variable_cost(op_cost, T(), component, U())
     _add_variable_cost_to_objective!(container, T(), component, variable_cost_data, U())
     return
 end
@@ -715,8 +715,9 @@ end
 function _get_no_load_cost(
     component::T,
     ::V,
-) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
-    return no_load_cost(PSY.get_operation_cost(component), component, V())
+    ::U
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    return no_load_cost(PSY.get_operation_cost(component), U(), component, V())
 end
 
 function _convert_to_compact_variable_cost(
