@@ -1009,7 +1009,8 @@ function add_param_container!(
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
     param_key = ParameterKey(T, U, meta)
-    attributes = CostFunctionAttributes{data_type}(variable_type, sos_variable, uses_compact_power)
+    attributes =
+        CostFunctionAttributes{data_type}(variable_type, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
 end
 

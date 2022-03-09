@@ -226,7 +226,6 @@ function _get_cost_function_parameter_container(
     U <: VariableType,
     V <: AbstractDeviceFormulation,
 }
-
     if has_container_key(container, S, T)
         return get_parameter(container, S, T)
     else
@@ -483,8 +482,9 @@ function _add_pwl_term!(
     time_steps = get_time_steps(container)
     cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
-        proportial_value = PSY.get_cost(cost_data[t])*multiplier*base_power*dt
-        cost_expressions[t] = _add_proportional_term!(container, U(), component, proportial_value,t)
+        proportial_value = PSY.get_cost(cost_data[t]) * multiplier * base_power * dt
+        cost_expressions[t] =
+            _add_proportional_term!(container, U(), component, proportial_value, t)
     end
     return cost_expressions
 end

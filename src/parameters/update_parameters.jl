@@ -5,12 +5,7 @@ function update_parameter_values!(
 ) where {T <: Union{Float64, PJ.ParameterRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(
-    param::JuMPParamArray,
-    value::Float64,
-    name::String,
-    t::Int,
-)
+function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, t::Int)
     JuMP.set_value(param[name, t], value)
     return
 end
@@ -25,12 +20,7 @@ function _set_param_value!(
     return
 end
 
-function _set_param_value!(
-    param::JuMPFloatArray,
-    value::Float64,
-    name::String,
-    t::Int,
-)
+function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
     param[name, t] = value
     return
 end
