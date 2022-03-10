@@ -61,7 +61,7 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
                     source=OnVariable,
                     affected_values=[ActivePowerVariable],
                 ),
-                IntegralLimitFeedforward(
+                EnergyLimitFeedforward(
                     component_type=HydroEnergyReservoir,
                     source=ActivePowerVariable,
                     affected_values=[ActivePowerVariable],
@@ -115,7 +115,7 @@ function test_2_stages_with_storage_ems(in_memory)
                     source=OnVariable,
                     affected_values=[ActivePowerVariable],
                 ),
-                IntegralLimitFeedforward(
+                EnergyLimitFeedforward(
                     component_type=HydroEnergyReservoir,
                     source=ActivePowerVariable,
                     affected_values=[ActivePowerVariable],
@@ -181,7 +181,7 @@ end
                     source=OnVariable,
                     affected_values=[ActivePowerVariable],
                 ),
-                IntegralLimitFeedforward(
+                EnergyLimitFeedforward(
                     component_type=HydroEnergyReservoir,
                     source=ActivePowerVariable,
                     affected_values=[ActivePowerVariable],

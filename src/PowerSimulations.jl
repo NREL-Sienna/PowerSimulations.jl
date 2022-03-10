@@ -85,7 +85,7 @@ export StandardHybridDispatch
 export UpperBoundFeedforward
 export LowerBoundFeedforward
 export SemiContinuousFeedforward
-export IntegralLimitFeedforward
+export EnergyLimitFeedforward
 export FixValueFeedforward
 export EnergyTargetFeedforward
 
@@ -139,6 +139,11 @@ export ProblemResultsExport
 export export_results
 export export_realized_results
 export export_optimizer_stats
+export get_variable_values
+export get_dual_values
+export get_parameter_values
+export get_aux_variable_values
+export get_expression_values
 export get_timestamps
 export get_model_name
 export get_decision_problem_results
@@ -243,6 +248,7 @@ export PowerAboveMinimumVariable
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export EnergyOutput
 
 # Constraints
 export AbsoluteValueConstraint

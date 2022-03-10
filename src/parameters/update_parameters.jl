@@ -249,6 +249,77 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: EnergyLimitParameter, U <: PSY.Generator}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    internal = get_internal(model)
+    execution_count = internal.execution_count
+    current_time = get_current_time(model)
+    state_values = get_dataset_values(input, get_attribute_key(parameter_attributes))
+    component_names, time = axes(parameter_array)
+    resolution = get_resolution(model)
+    interval_time_steps = Int(get_interval(model.internal.store_parameters) / resolution)
+    state_data = get_dataset(input, get_attribute_key(parameter_attributes))
+    state_timestamps = state_data.timestamps
+    max_state_index = length(state_data)
+
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    old_parameter_values = JuMP.value.(parameter_array)
+    # The current method uses older parameter values because when passing the energy output from one stage
+    # to the next, the aux variable values gets over-written by the lower level model after its solve.
+    # This approach is a temporary hack and will be replaced in future versions.
+    for t in time
+        timestamp_ix = min(max_state_index, state_data_index + 1)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[timestamp_ix] <= sim_timestamps[t]
+            state_data_index = timestamp_ix
+        end
+        for name in component_names
+            # the if statement checks if its the first solve of the model and uses the values stored in the state
+            # and for subsequent solves uses the state data to update the parameter values for the last set of time periods 
+            # that are equal to the length of the interval i.e. the time periods that dont overlap between each solves.
+            if execution_count == 0 || t > time[end] - interval_time_steps
+                # Pass indices in this way since JuMP DenseAxisArray don't support view()
+                _set_param_value!(
+                    parameter_array,
+                    state_values[state_data_index, name],
+                    name,
+                    t,
+                )
+            else
+                # Currently the update method relies on using older parameter values of the EnergyLimitParameter
+                # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
+                # in the model interval time periods.
+                _set_param_value!(
+                    parameter_array,
+                    old_parameter_values[name, t + interval_time_steps],
+                    name,
+                    t,
+                )
+            end
+        end
+    end
+
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    return
+end
+
 """
 Update parameter function an OperationModel
 """

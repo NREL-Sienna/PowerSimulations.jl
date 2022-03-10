@@ -55,10 +55,10 @@ end
     @test isapprox(get_objective_value(res), 340000.0; atol=100000.0)
     vars = res.variable_values
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
-    @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 5)
-    @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 3)
-    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 5)
-    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 5)
+    @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 6)
+    @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 4)
+    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 6)
+    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 6)
     @test length(read_variables(res)) == 4
     @test length(read_parameters(res)) == 1
     @test length(read_duals(res)) == 0
@@ -224,9 +224,12 @@ end
             constraint_key,
         )]
     @test dual_results ==
-          dual_results_read ==
-          realized_dual_results ==
-          realized_dual_results_string
+          dual_results_read[:, propertynames(dual_results_read) .!= :DateTime] ==
+          realized_dual_results[:, propertynames(realized_dual_results) .!= :DateTime] ==
+          realized_dual_results_string[
+              :,
+              propertynames(realized_dual_results_string) .!= :DateTime,
+          ]
     for i in axes(constraints)[1]
         dual = JuMP.dual(constraints[i])
         @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])
@@ -367,7 +370,7 @@ end
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
     var4 = PSI.read_dataframe(exp_file)
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
-    @test var1_a == var4 .* 100.0
+    @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
 
     @test length(readdir(export_realized_results(results1))) === 6
 end

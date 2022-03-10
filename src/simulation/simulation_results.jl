@@ -267,6 +267,20 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                 end
             end
 
+            export_path = mkpath(joinpath(path, problem_results.problem, "aux_variables"))
+            for name in list_aux_variable_names(problem_results)
+                if should_export_aux_variable(problem_exports, name)
+                    dfs = read_aux_variable(
+                        problem_results,
+                        name;
+                        initial_time=timestamp,
+                        count=1,
+                        store=store,
+                    )
+                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                end
+            end
+
             export_path = mkpath(joinpath(path, problem_results.problem, "parameters"))
             for name in list_parameter_names(problem_results)
                 if should_export_parameter(problem_exports, name)
@@ -293,6 +307,20 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
+            end
+        end
+
+        export_path = mkpath(joinpath(path, problem_results.problem, "expression"))
+        for name in list_expression_names(problem_results)
+            if should_export_expression(problem_exports, name)
+                dfs = read_expression(
+                    problem_results,
+                    name;
+                    initial_time=timestamp,
+                    count=1,
+                    store=store,
+                )
+                export_result(file_type, export_path, name, timestamp, dfs[timestamp])
             end
         end
 

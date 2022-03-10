@@ -684,6 +684,27 @@ function add_constraints!(
     return
 end
 
+##################################### Auxillary Variables ############################
+
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{EnergyOutput, T},
+    system::PSY.System,
+) where {T <: PSY.HydroGen}
+    devices = PSY.get_components(T, system)
+    time_steps = get_time_steps(container)
+
+    p_variable_results = get_variable(container, ActivePowerVariable(), T)
+    aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
+    for d in devices, t in time_steps
+        name = PSY.get_name(d)
+        min = PSY.get_active_power_limits(d).min
+        aux_variable_container[name, t] = jump_value(p_variable_results[name, t])
+    end
+
+    return
+end
+
 ##################################### Hydro generation cost ############################
 function objective_function!(
     container::OptimizationContainer,

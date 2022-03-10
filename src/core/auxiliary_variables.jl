@@ -23,6 +23,10 @@ struct TimeDurationOff <: AuxVariableType end
 Auxiliary Variable for Thermal Generation Models that solve for power above min
 """
 struct PowerOutput <: AuxVariableType end
+"""
+Auxiliary Variable for Hydro and Storage Models that solve for total energy output
+"""
+struct EnergyOutput <: AuxVariableType end
 
 should_write_resulting_value(::Type{<:AuxVariableType}) = true
 
