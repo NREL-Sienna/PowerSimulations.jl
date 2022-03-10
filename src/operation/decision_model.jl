@@ -463,7 +463,7 @@ function solve!(
     # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
     # other logic used when solving the models separate from a simulation
     solve_impl!(model)
-    @assert get_current_time(model) == start_time
+    IS.@assert_op get_current_time(model) == start_time
     if get_run_status(model) == RunStatus.SUCCESSFUL
         write_results!(store, model, start_time, start_time; exports=exports)
         write_optimizer_stats!(store, model, start_time)
