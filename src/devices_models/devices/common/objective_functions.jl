@@ -206,7 +206,7 @@ function _add_start_up_cost_to_objective!(
     iszero(cost_term) && return
     multiplier = objective_function_multiplier(T(), U())
     for t in get_time_steps(container)
-        _add_proportional_term!(container, U(), component, cost_term * multiplier, t)
+        _add_proportional_term!(container, T(), component, cost_term * multiplier, t)
     end
     return
 end
@@ -525,15 +525,15 @@ function _add_pwl_term!(
         # First element of the return is the average cost at P_min.
         # Shouldn't be passed for convexity check
         is_convex = _slope_convexity_check(slopes[2:end])
-        break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
+        break_points = map(x -> last(x), data) ./ base_power
+        if has_container_key(container, OnStatusParameter, T)
+            sos_val = SOSStatusVariable.PARAMETER
+        else
+            sos_val = sos_status(component, V())
+        end
         _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, t)
+        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !is_convex
-            if has_container_key(container, OnStatusParameter, T)
-                sos_val = SOSStatusVariable.PARAMETER
-            else
-                sos_val = sos_status(component, V())
-            end
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
@@ -579,16 +579,16 @@ function _add_pwl_term!(
     is_convex = _slope_convexity_check(slopes[2:end])
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
+    break_points = map(x -> last(x), data) ./ base_power
     for t in time_steps
+        if has_container_key(container, OnStatusParameter, T)
+            sos_val = SOSStatusVariable.PARAMETER
+        else
+            sos_val = sos_status(component, V())
+        end
         _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, t)
+        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !is_convex
-            if has_container_key(container, OnStatusParameter, T)
-                sos_val = SOSStatusVariable.PARAMETER
-            else
-                sos_val = sos_status(component, V())
-            end
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
@@ -631,10 +631,15 @@ function _add_pwl_term!(
 
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    break_points = PSY.get_breakpoint_upperbounds(data) ./ base_power
+    break_points = map(x -> last(x), data) ./ base_power
     for t in time_steps
+        if has_container_key(container, OnStatusParameter, T)
+            sos_val = SOSStatusVariable.PARAMETER
+        else
+            sos_val = sos_status(component, V())
+        end
         _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, t)
+        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
@@ -667,6 +672,7 @@ function _add_pwl_constraint!(
     component::T,
     ::U,
     break_points::Vector{Float64},
+    sos_status::SOSStatusVariable,
     period::Int,
 ) where {T <: PSY.Component, U <: VariableType}
     variables = get_variable(container, U(), T)
@@ -685,6 +691,28 @@ function _add_pwl_constraint!(
         variables[name, period] ==
         sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
     )
+
+    if sos_status == SOSStatusVariable.NO_VARIABLE
+        bin = 1.0
+        @debug "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)" _group =
+            LOG_GROUP_COST_FUNCTIONS
+
+    elseif sos_status == SOSStatusVariable.PARAMETER
+        bin = get_parameter(container, OnStatusParameter(), T).parameter_array[name, period]
+        @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
+            LOG_GROUP_COST_FUNCTIONS
+    elseif sos_status == SOSStatusVariable.VARIABLE
+        bin = get_variable(container, OnVariable(), T)[name, period]
+        @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
+            LOG_GROUP_COST_FUNCTIONS
+    else
+        @assert false
+    end
+
+    JuMP.@constraint(
+        jump_model,
+        sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin
+    )
     return
 end
 
@@ -701,27 +729,11 @@ function _add_pwl_sos_constraint!(
         "The cost function provided for $(name) is not compatible with a linear PWL cost function.
   An SOS-2 formulation will be added to the model. This will result in additional binary variables."
     )
-    if sos_status == SOSStatusVariable.NO_VARIABLE
-        bin = 1.0
-        @debug "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)" _group =
-            LOG_GROUP_COST_FUNCTIONS
 
-    elseif sos_status == SOSStatusVariable.PARAMETER
-        bin = get_parameter(container, OnStatusParameter(), T).parameter_array[name]
-        @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
-            LOG_GROUP_COST_FUNCTIONS
-    elseif sos_status == SOSStatusVariable.VARIABLE
-        bin = get_variable(container, OnVariable(), T)[name, period]
-        @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
-            LOG_GROUP_COST_FUNCTIONS
-    else
-        @assert false
-    end
     jump_model = get_jump_model(container)
     pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
     bp_count = length(break_points)
     pwl_vars_subset = [pwl_vars[name, i, period] for i in 1:bp_count]
-    JuMP.@constraint(jump_model, sum(pwl_vars_subset[i] for i in 1:bp_count) == bin)
     JuMP.@constraint(jump_model, pwl_vars_subset in MOI.SOS2(collect(1:bp_count)))
     return
 end
@@ -741,7 +753,7 @@ function _get_pwl_cost_expression(
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            slopes[i] * upb[i] * multiplier * pwl_var_container[(name, i, time_period)],
+            cost_data[i][1] * multiplier * pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -796,6 +808,27 @@ function _add_quadratic_term!(
     @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     var = get_variable(container, T(), U)[component_name, time_period]
     q_cost_ = (var * var_multiplier) .^ 2 * q_terms[1] + var * var_multiplier * q_terms[2]
+    q_cost = q_cost_ * expression_multiplier
+    add_to_objective_invariant_expression!(container, q_cost)
+    return q_cost
+end
+
+function _add_quadratic_term!(
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    q_terms::NTuple{2, Float64},
+    var_multiplier::Float64,
+    expression_multiplier::Float64,
+    time_period::Int,
+) where {T <: PowerAboveMinimumVariable, U <: PSY.ThermalGen}
+    component_name = PSY.get_name(component)
+    p_min = PSY.get_active_power_limits(component).min
+    @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    var = get_variable(container, T(), U)[component_name, time_period]
+    q_cost_ =
+        (var * var_multiplier) .^ 2 * q_terms[1] +
+        var * var_multiplier * (q_terms[2] + 2 * q_terms[1] * p_min)
     q_cost = q_cost_ * expression_multiplier
     add_to_objective_invariant_expression!(container, q_cost)
     return q_cost
