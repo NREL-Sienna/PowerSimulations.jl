@@ -392,12 +392,11 @@ function _initialize_problem_storage!(
 
     em = get_emulation_model(models)
     if em === nothing
-        base_params = first(values(decision_model_store_params))
-        sim_time = get_step_resolution(sequence) * get_steps(sim)
+        base_params = last(collect(values(decision_model_store_params)))
         resolution = minimum([v.resolution for v in values(decision_model_store_params)])
         emulation_model_store_params = OrderedDict(
             :Emulator => ModelStoreParams(
-                sim_time ÷ resolution, # Num Executions
+                get_step_resolution(sequence) ÷ resolution, # Num Executions
                 1,
                 resolution, # Interval
                 resolution, # Resolution
@@ -641,7 +640,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     state = get_simulation_state(sim)
     model_params = get_decision_model_params(store, model_name)
     for field in fieldnames(DatasetContainer)
-        for key in list_fields(store, model_name, field)
+        for key in list_decision_model_keys(store, model_name, field)
             # TODO: Read Array here to avoid allocating the DataFrame
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)

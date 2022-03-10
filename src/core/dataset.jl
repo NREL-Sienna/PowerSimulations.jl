@@ -19,7 +19,7 @@ function set_update_timestamp!(s::AbstractDataset, val::Dates.DateTime)
     return
 end
 
-# Values field is accessed with dot syntax to avoid type inestability
+# Values field is accessed with dot syntax to avoid type instability
 
 mutable struct DataFrameDataset <: AbstractDataset
     values::DataFrames.DataFrame

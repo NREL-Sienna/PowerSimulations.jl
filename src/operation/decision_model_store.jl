@@ -92,8 +92,7 @@ end
 
 function read_results(
     store::DecisionModelStore,
-    ::Symbol,
-    key::OptimizationContainerKey,
+    key::OptimizationContainerKey;
     index::Union{DecisionModelIndexType, Nothing}=nothing,
 )
     container = getfield(store, get_store_container_type(key))

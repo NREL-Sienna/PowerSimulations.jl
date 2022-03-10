@@ -48,19 +48,18 @@ function write_result!(store::AbstractModelStore, key, index, array)
     return write_result!(store, field, key, index, array)
 end
 
-function read_results(store::AbstractModelStore, key, index=nothing)
+function read_results(store::AbstractModelStore, key; index=nothing)
     field = get_store_container_type(key)
-    return read_results(store, field, key, index)
+    return read_results(store, field, key, index=index)
 end
 
 function read_results(
     ::Type{DataFrames.DataFrame},
     store::AbstractModelStore,
-    container_type::Symbol,
-    key,
+    key;
     index=nothing,
 )
-    return read_results(store, container_type, key, index)
+    return read_results(store, key, index=index)
 end
 
 function list_keys(store::AbstractModelStore, container_type)

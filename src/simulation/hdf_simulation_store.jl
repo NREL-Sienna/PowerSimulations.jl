@@ -1,6 +1,8 @@
 const HDF_FILENAME = "simulation_store.h5"
 const HDF_SIMULATION_ROOT_PATH = "simulation"
+const EMULATION_MODEL_PATH = "$HDF_SIMULATION_ROOT_PATH/emulation_model"
 const OPTIMIZER_STATS_PATH = "optimizer_stats"
+const SERIALIZED_KEYS_PATH = "serialized_keys"
 
 # This only applies if chunks are enabled, and that will only likely happen if we enable
 # compression.
@@ -30,11 +32,7 @@ end
 
 get_initial_time(store::HdfSimulationStore) = get_initial_time(store.params)
 
-function HdfSimulationStore(
-    file_path::AbstractString,
-    mode::AbstractString;
-    problem_path=nothing,
-)
+function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
     if !(mode == "w" || mode == "r")
         throw(IS.ConflictingInputsError("mode can only be 'w' or 'r'"))
     end
@@ -60,7 +58,7 @@ function HdfSimulationStore(
         Dict{Symbol, Int}(),
         cache,
     )
-    mode == "r" && _deserialize_attributes!(store, problem_path)
+    mode == "r" && _deserialize_attributes!(store)
 
     finalizer(_check_state, store)
     return store
@@ -77,8 +75,6 @@ function in order to guarantee that the file handle gets closed.
   - `directory::AbstractString`: Directory containing the store file
   - `mode::AbstractString`: Mode to use to open the store file
   - `filename::AbstractString`: Base name of the store file
-  - `problem_path::AbstractString`: Path to the directory containing serialized problem
-    information. Required when reading an existing simulation.
 
 # Examples
 
@@ -97,13 +93,8 @@ function open_store(
     directory::AbstractString,
     mode="r";
     filename=HDF_FILENAME,
-    problem_path=nothing,
 )
-    return HdfSimulationStore(
-        joinpath(directory, filename),
-        mode,
-        problem_path=problem_path,
-    )
+    return HdfSimulationStore(joinpath(directory, filename), mode)
 end
 
 function open_store(
@@ -112,19 +103,16 @@ function open_store(
     directory::AbstractString,
     mode="r";
     filename=HDF_FILENAME,
-    problem_path=nothing,
 )
     store = nothing
     try
-        store = HdfSimulationStore(
-            joinpath(directory, filename),
-            mode,
-            problem_path=problem_path,
-        )
+        store = HdfSimulationStore(joinpath(directory, filename), mode)
         return func(store)
     finally
-        flush(store)
-        store !== nothing && close(store)
+        if store !== nothing
+            flush(store)
+            close(store)
+        end
     end
 end
 
@@ -154,20 +142,45 @@ function get_decision_model_params(store::HdfSimulationStore, model_name::Symbol
     return get_decision_model_params(get_params(store), model_name)
 end
 
-function get_emulation_model_params(store::HdfSimulationStore, model_name::Symbol)
-    return get_emulation_model_params(get_params(store), model_name)
+function get_emulation_model_params(store::HdfSimulationStore)
+    return get_emulation_model_params(get_params(store))
+end
+
+function get_container_key_lookup(store::HdfSimulationStore)
+    function _get_lookup()
+        root = _get_root(store)
+        buf = IOBuffer(root[SERIALIZED_KEYS_PATH][:])
+        return Serialization.deserialize(buf)
+    end
+    isopen(store) && return _get_lookup()
+
+    store.file = HDF5.h5open(store.file.filename, "r")
+    try
+        return _get_lookup()
+    finally
+        HDF5.close(store.file)
+    end
 end
 
 """
 Return the problem names in order of execution.
 """
-list_models(store::HdfSimulationStore) = keys(get_dm_data(store))
+list_decision_models(store::HdfSimulationStore) = keys(get_dm_data(store))
 
 """
 Return the fields stored for the `problem` and `container_type` (duals/parameters/variables).
 """
-function list_fields(store::HdfSimulationStore, problem::Symbol, container_type::Symbol)
-    container = getfield(get_dm_data(store)[problem], container_type)
+function list_decision_model_keys(
+    store::HdfSimulationStore,
+    model::Symbol,
+    container_type::Symbol,
+)
+    container = getfield(get_dm_data(store)[model], container_type)
+    return keys(container)
+end
+
+function list_emulation_model_keys(store::HdfSimulationStore, container_type::Symbol)
+    container = getfield(get_em_data(store), container_type)
     return keys(container)
 end
 
@@ -237,6 +250,7 @@ function initialize_problem_storage!(
     set_min_flush_size!(store.cache, flush_rules.min_flush_size)
     @debug "initialize_problem_storage" store.cache
     initial_time = get_initial_time(store)
+    container_key_lookup = Dict{String, OptimizationContainerKey}()
     for (problem, problem_params) in store.params.decision_models_params
         get_dm_data(store)[problem] = DatasetContainer{HDF5Dataset}()
         problem_group = _get_group_or_create(problems_group, string(problem))
@@ -264,6 +278,7 @@ function initialize_problem_storage!(
                     key,
                     get_rule(flush_rules, problem, key),
                 )
+                container_key_lookup[encode_key_as_string(key)] = key
             end
         end
 
@@ -282,27 +297,37 @@ function initialize_problem_storage!(
         @debug "Initialized optimizer_stats_datasets $problem ($num_columns, $num_stats)"
     end
 
-    emulator_group = _get_group_or_create(root, "emulation_model")
-    emulation_params = first(values(store.params.decision_models_params))
-    for type in STORE_CONTAINERS
-        group = _get_group_or_create(emulator_group, string(type))
-        for (key, reqs) in getfield(em_problem_reqs, type)
-            name = encode_key_as_string(key)
-            dataset = _create_dataset(group, name, reqs)
-            # Columns can't be stored in attributes because they might be larger than
-            # the max size of 64 KiB.
-            col = _make_column_name(name)
-            HDF5.write_dataset(group, col, string.(reqs["columns"]))
-            column_dataset = group[col]
-            datasets = getfield(get_em_data(store), type)
-            datasets[key] = HDF5Dataset(
-                dataset,
-                column_dataset,
-                get_resolution(emulation_params),
-                initial_time,
-            )
+    emulation_group = _get_group_or_create(root, "emulation_model")
+    for emulation_params in values(store.params.emulation_model_params)
+        for type in STORE_CONTAINERS
+            group = _get_group_or_create(emulation_group, string(type))
+            for (key, reqs) in getfield(em_problem_reqs, type)
+                name = encode_key_as_string(key)
+                dataset = _create_dataset(group, name, reqs)
+                # Columns can't be stored in attributes because they might be larger than
+                # the max size of 64 KiB.
+                col = _make_column_name(name)
+                HDF5.write_dataset(group, col, string.(reqs["columns"]))
+                column_dataset = group[col]
+                datasets = getfield(store.em_data, type)
+                datasets[key] = HDF5Dataset(
+                    dataset,
+                    column_dataset,
+                    # TODO: Josè, why is this broken?
+                    #get_resolution(emulation_params),
+                    get_resolution(first(values(params.decision_models_params))),
+                    initial_time,
+                )
+                container_key_lookup[encode_key_as_string(key)] = key
+            end
         end
     end
+
+    buf = IOBuffer()
+    Serialization.serialize(buf, container_key_lookup)
+    seek(buf, 0)
+    root[SERIALIZED_KEYS_PATH] = buf.data
+
     # This has to run after problem groups are created.
     _serialize_attributes(store)
     return
@@ -354,6 +379,35 @@ function read_result(
     end
 end
 
+function read_results(
+    store::HdfSimulationStore,
+    key::OptimizationContainerKey;
+    index::Union{Nothing, EmulationModelIndexType}=nothing,
+    len::Union{Nothing, Int}=nothing,
+)
+    dataset = _get_em_dataset(store, key)
+    @assert_op ndims(dataset.values) == 2
+    if isnothing(index)
+        @assert_op(isnothing(len))
+        data = dataset.values[:, :]
+    elseif isnothing(len)
+        data = dataset.values[index:end, :]
+    else
+        data = dataset.values[index:(index + len - 1), :]
+    end
+    columns = get_column_names(key, dataset)
+    @assert_op size(data)[2] == length(columns)
+    return DataFrames.DataFrame(data, columns)
+end
+
+function get_emulation_model_dataset_size(
+    store::HdfSimulationStore,
+    key::OptimizationContainerKey,
+)
+    dataset = _get_em_dataset(store, key)
+    return size(dataset.values)
+end
+
 function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
@@ -361,7 +415,7 @@ function _read_result(
     index::EmulationModelIndexType,
 )
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
-    model_params = get_emulation_model_params(store, model_name)
+    model_params = get_emulation_model_params(store)
 
     if index > model_params.num_executions
         throw(
@@ -548,8 +602,8 @@ function _create_dataset(group, name, reqs)
     return dataset
 end
 
-function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
-    problem_path === nothing && error("problem_path must be set when reading")
+function _deserialize_attributes!(store::HdfSimulationStore)
+    container_key_lookup = get_container_key_lookup(store)
     group = store.file["simulation"]
     initial_time = Dates.DateTime(HDF5.read(HDF5.attributes(group)["initial_time"]))
     step_resolution =
@@ -560,8 +614,6 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
     for model in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/decision_models/$model"]
         model_name = Symbol(model)
-        container_metadata =
-            deserialize_metadata(OptimizationContainerMetadata, problem_path, model_name)
         store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
             HDF5.read(HDF5.attributes(problem_group)["horizon"]),
@@ -569,7 +621,6 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
             Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
-            container_metadata,
         )
         get_dm_data(store)[model_name] = DatasetContainer{HDF5Dataset}()
         for type in STORE_CONTAINERS
@@ -581,7 +632,7 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
                     item = HDF5Dataset(dataset, column_dataset, resolution, initial_time)
-                    container_key = deserialize_key(container_metadata, name)
+                    container_key = container_key_lookup[name]
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(
                         store.cache,
@@ -596,6 +647,32 @@ function _deserialize_attributes!(store::HdfSimulationStore, problem_path)
         store.optimizer_stats_datasets[model_name] = problem_group[OPTIMIZER_STATS_PATH]
         store.optimizer_stats_write_index[model_name] = 0
     end
+
+    em_group = _get_emulation_model_path(store)
+    model_name = Symbol(HDF5.read(HDF5.attributes(em_group)["name"]))
+    resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["resolution_ms"]))
+    store.params.emulation_model_params[model_name] = ModelStoreParams(
+        HDF5.read(HDF5.attributes(em_group)["num_executions"]),
+        HDF5.read(HDF5.attributes(em_group)["horizon"]),
+        Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["interval_ms"])),
+        resolution,
+        HDF5.read(HDF5.attributes(em_group)["base_power"]),
+        Base.UUID(HDF5.read(HDF5.attributes(em_group)["system_uuid"])),
+    )
+    for type in STORE_CONTAINERS
+        group = em_group[string(type)]
+        for name in keys(group)
+            if !endswith(name, "columns")
+                dataset = group[name]
+                column_dataset = group[_make_column_name(name)]
+                item = HDF5Dataset(dataset, column_dataset, resolution, initial_time)
+                container_key = container_key_lookup[name]
+                getfield(store.em_data, type)[container_key] = item
+                add_output_cache!(store.cache, model_name, container_key, CacheFlushRule())
+            end
+        end
+    end
+    # TODO: optimizer stats are not being written for EM.
 
     @debug "deserialized store params and datasets" store.params
 end
@@ -626,22 +703,20 @@ function _serialize_attributes(store::HdfSimulationStore)
             string(params.decision_models_params[problem].system_uuid)
     end
 
-    em_params = first(values(params.emulation_model_params))
-    emulation_group = store.file["simulation/emulation_model"]
-    HDF5.attributes(emulation_group)["num_executions"] = em_params.num_executions
-    HDF5.attributes(emulation_group)["horizon"] = em_params.horizon
-    HDF5.attributes(emulation_group)["resolution_ms"] =
-        Dates.Millisecond(em_params.resolution).value
-    HDF5.attributes(emulation_group)["interval_ms"] =
-        Dates.Millisecond(em_params.interval).value
-    HDF5.attributes(emulation_group)["base_power"] = em_params.base_power
-    HDF5.attributes(emulation_group)["system_uuid"] = string(em_params.system_uuid)
-    return
-end
-
-function _serialize_em_attributes(store::HdfSimulationStore, emulation_group, em_reqs)
-    params = store.params
-
+    if !isempty(params.emulation_model_params)
+        em_params = first(values(params.emulation_model_params))
+        emulation_group = store.file["simulation/emulation_model"]
+        HDF5.attributes(emulation_group)["name"] =
+            string(first(keys(params.emulation_model_params)))
+        HDF5.attributes(emulation_group)["num_executions"] = em_params.num_executions
+        HDF5.attributes(emulation_group)["horizon"] = em_params.horizon
+        HDF5.attributes(emulation_group)["resolution_ms"] =
+            Dates.Millisecond(em_params.resolution).value
+        HDF5.attributes(emulation_group)["interval_ms"] =
+            Dates.Millisecond(em_params.interval).value
+        HDF5.attributes(emulation_group)["base_power"] = em_params.base_power
+        HDF5.attributes(emulation_group)["system_uuid"] = string(em_params.system_uuid)
+    end
     return
 end
 
@@ -750,6 +825,7 @@ function _get_indices(store::HdfSimulationStore, model_name::Symbol, timestamp)
 end
 
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
+_get_emulation_model_path(store::HdfSimulationStore) = store.file[EMULATION_MODEL_PATH]
 
 function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
     dataset = _get_dataset(OptimizerStats, store)

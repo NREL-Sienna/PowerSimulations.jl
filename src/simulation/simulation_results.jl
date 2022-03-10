@@ -17,7 +17,11 @@ end
 struct SimulationResults
     path::String
     params::SimulationStoreParams
-    problem_results::Dict{String, SimulationProblemResults}
+    decision_problem_results::Dict{
+        String,
+        SimulationProblemResults{DecisionModelSimulationResults},
+    }
+    emulation_problem_results::SimulationProblemResults{EmulationModelSimulationResults}
     store::Union{Nothing, SimulationStore}
 end
 
@@ -60,28 +64,43 @@ function SimulationResults(path::AbstractString, execution=nothing; ignore_statu
     simulation_store_path = joinpath(execution_path, "data_store")
     check_file_integrity(simulation_store_path)
 
-    problem_path = joinpath(execution_path, "problems")
-    return open_store(
-        HdfSimulationStore,
-        simulation_store_path,
-        "r",
-        problem_path=problem_path,
-    ) do store
-        problem_results = Dict{String, SimulationProblemResults}()
+    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
+        decision_problem_results =
+            Dict{String, SimulationProblemResults{DecisionModelSimulationResults}}()
         sim_params = get_params(store)
+        container_key_lookup = get_container_key_lookup(store)
         for (name, problem_params) in sim_params.decision_models_params
             name = string(name)
             problem_result = SimulationProblemResults(
+                DecisionModel,
                 store,
                 name,
                 problem_params,
                 sim_params,
                 execution_path,
+                container_key_lookup,
             )
-            problem_results[name] = problem_result
+            decision_problem_results[name] = problem_result
         end
 
-        return SimulationResults(execution_path, sim_params, problem_results, nothing)
+        emulation_params = get_emulation_model_params(sim_params)
+        emulation_result = SimulationProblemResults(
+            EmulationModel,
+            store,
+            string(first(keys(sim_params.emulation_model_params))),
+            first(values(sim_params.emulation_model_params)),
+            sim_params,
+            execution_path,
+            container_key_lookup,
+        )
+
+        return SimulationResults(
+            execution_path,
+            sim_params,
+            decision_problem_results,
+            emulation_result,
+            nothing,
+        )
     end
 end
 
@@ -89,53 +108,78 @@ end
 Construct SimulationResults from a simulation.
 """
 function SimulationResults(sim::Simulation; ignore_status=false, kwargs...)
-    if get_simulation_store(sim) isa InMemorySimulationStore
-        _check_status(get_simulation_status(sim), ignore_status)
-        store = get_simulation_store(sim)
-        execution_path = get_simulation_dir(sim)
-        problem_results = Dict{String, SimulationProblemResults}()
-        sim_params = get_params(store)
-        for (name, problem_params) in sim_params.decision_models_params
-            model = get_simulation_model(get_models(sim), name)
-            name = string(name)
-            problem_result = SimulationProblemResults(
-                store,
-                name,
-                problem_params,
-                sim_params,
-                execution_path,
-                system=get_system(model),
-            )
-            problem_results[name] = problem_result
-        end
-
-        return SimulationResults(execution_path, sim_params, problem_results, store)
-    else
-        return SimulationResults(
-            get_simulation_dir(sim);
-            ignore_status=ignore_status,
-            kwargs...,
+    _check_status(get_simulation_status(sim), ignore_status)
+    store = get_simulation_store(sim)
+    execution_path = get_simulation_dir(sim)
+    decision_problem_results =
+        Dict{String, SimulationProblemResults{DecisionModelSimulationResults}}()
+    sim_params = get_params(store)
+    models = get_models(sim)
+    container_key_lookup = get_container_key_lookup(store)
+    for (name, problem_params) in sim_params.decision_models_params
+        model = get_simulation_model(models, name)
+        name = string(name)
+        problem_result = SimulationProblemResults(
+            DecisionModel,
+            store,
+            name,
+            problem_params,
+            sim_params,
+            execution_path,
+            container_key_lookup,
+            system=get_system(model),
         )
+        decision_problem_results[name] = problem_result
     end
+
+    emulation_model = get_emulation_model(models)
+    emulation_results = SimulationProblemResults(
+        EmulationModel,
+        store,
+        string(first(keys(sim_params.emulation_model_params))),
+        first(values(sim_params.emulation_model_params)),
+        sim_params,
+        execution_path,
+        container_key_lookup,
+        system=isnothing(emulation_model) ? nothing : get_system(emulation_model),
+    )
+
+    return SimulationResults(
+        execution_path,
+        sim_params,
+        decision_problem_results,
+        emulation_results,
+        store,
+    )
 end
 
-Base.empty!(res::SimulationResults) = foreach(empty!, values(res.problem_results))
-Base.isempty(res::SimulationResults) = all(isempty, values(res.problem_results))
-Base.length(res::SimulationResults) = mapreduce(length, +, values(res.problem_results))
+function Base.empty!(res::SimulationResults)
+    foreach(empty!, values(res.decision_problem_results))
+    empty!(res.emulation_problem_results)
+end
+
+Base.isempty(res::SimulationResults) = all(isempty, values(res.decision_problem_results))
+Base.length(res::SimulationResults) =
+    mapreduce(length, +, values(res.decision_problem_results))
 get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
-function get_problem_results(results::SimulationResults, problem)
-    if !haskey(results.problem_results, problem)
+function get_decision_problem_results(results::SimulationResults, problem)
+    if !haskey(results.decision_problem_results, problem)
         throw(IS.InvalidValue("$problem is not stored"))
     end
 
-    return results.problem_results[problem]
+    return results.decision_problem_results[problem]
+end
+
+function get_emulation_problem_results(results::SimulationResults)
+    return results.emulation_problem_results
 end
 
 """
 Return the problem names in the simulation.
 """
-list_problems(results::SimulationResults) = collect(keys(results.problem_results))
+list_decision_problems(results::SimulationResults) =
+    collect(keys(results.decision_problem_results))
 
 """
 Export results to files in the results directory.
@@ -188,13 +232,7 @@ function export_results(results::SimulationResults, exports)
         export_results(results, exports, results.store)
     else
         simulation_store_path = joinpath(results.path, "data_store")
-        problem_path = joinpath(results.path, "problems")
-        open_store(
-            HdfSimulationStore,
-            simulation_store_path,
-            "r",
-            problem_path=problem_path,
-        ) do store
+        open_store(HdfSimulationStore, simulation_store_path, "r") do store
             export_results(results, exports, store)
         end
     end
@@ -208,7 +246,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
 
     file_type = get_export_file_type(exports)
 
-    for problem_results in values(results.problem_results)
+    for problem_results in values(results.decision_problem_results)
         problem_exports = get_problem_exports(exports, problem_results.problem)
         path =
             exports.path === nothing ? problem_results.results_output_folder : exports.path

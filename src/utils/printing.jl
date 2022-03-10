@@ -84,9 +84,12 @@ function Base.show(io::IO, sim::Simulation)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)
-    for res in values(results.problem_results)
+    println(io, "Decision Problem Results:")
+    for res in values(results.decision_problem_results)
         show(io, MIME"text/plain"(), res)
     end
+    println(io, "\nEmulation Problem Results:")
+    show(io, MIME"text/plain"(), results.emulation_problem_results)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::SimulationProblemResults)
