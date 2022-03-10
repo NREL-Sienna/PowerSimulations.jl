@@ -588,13 +588,30 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
-    simulation_time = get_current_time(sim_state)
+    @show simulation_time = get_current_time(sim_state)
+    current_execution_index = get_current_execution_index(sim)
+    exec_order = get_execution_order(sim)
+    end_of_step_timestamp = false
+    if current_execution_index == length(exec_order)
+        end_of_step_timestamp = true
+    elseif execution_order[exec_order] != execution_order[exec_order + 1]
+        end_of_step_timestamp = true
+    else
+        IS.@assert_op execution_order[exec_order] == execution_order[exec_order + 1]
+    end
+
     for key in get_dataset_keys(decision_state)
         state_data = get_dataset(decision_state, key)
         last_update = get_update_timestamp(decision_state, key)
         simulation_time > get_end_of_step_timestamp(state_data) && continue
+        if end_of_step_timestamp
+            update_timestamp = get_end_of_step_timestamp(state_data)
+        else
+            update_timestamp = simulation_time
+        end
+        @show update_timestamp
         if last_update <= simulation_time
-            update_system_state!(system_state, key, decision_state, simulation_time)
+            update_system_state!(system_state, key, decision_state, update_timestamp)
         else
             error("Something went really wrong. Please report this error. \\
                   last_update: $(last_update) \\
@@ -641,13 +658,11 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_params = get_decision_model_params(store, model_name)
     for field in fieldnames(DatasetContainer)
         for key in list_decision_model_keys(store, model_name, field)
-            # TODO: Read Array here to avoid allocating the DataFrame
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
             update_decision_state!(
                 state,
                 key,
-                # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
                 res,
                 simulation_time,
                 model_params,
@@ -739,8 +754,11 @@ function _execute!(
         for (ix, model_number) in enumerate(execution_order)
             model = get_simulation_model(models, model_number)
             model_name = get_name(model)
+            set_current_time!(sim, sim.internal.date_ref[model_number])
+            sequence.current_execution_index = ix
+            current_time = get_current_time(sim)
             IS.@record :simulation_status ProblemExecutionEvent(
-                get_current_time(sim),
+                current_time,
                 step,
                 model_name,
                 "start",
@@ -749,9 +767,7 @@ function _execute!(
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
                 end
-                problem_interval = get_interval(sequence, model_name)
-                set_current_time!(sim, sim.internal.date_ref[model_number])
-                sequence.current_execution_index = ix
+
 
                 # Is first run of first problem? Yes -> don't update problem
 
@@ -760,13 +776,12 @@ function _execute!(
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
-                    status =
-                        solve!(step, model, get_current_time(sim), store; exports=exports)
+                    status = solve!(step, model, current_time, store; exports=exports)
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
                     if status == RunStatus.SUCCESSFUL
-                        # TODO: _update_simulation_state! needs performance improvements
+                        # TODO: _update_simulation_state! can use performance improvements
                         _update_simulation_state!(sim, model)
                         _write_state_to_store!(store, sim)
                     end
@@ -774,7 +789,7 @@ function _execute!(
 
                 global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1
-                sim.internal.date_ref[model_number] += problem_interval
+                sim.internal.date_ref[model_number] += get_interval(sequence, model_name)
 
                 # _apply_warm_start! can only be called once all the operations that read solutions
                 # from the optimization container have been called.
