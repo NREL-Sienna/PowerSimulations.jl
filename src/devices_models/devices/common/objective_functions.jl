@@ -709,7 +709,10 @@ function _add_pwl_constraint!(
         @assert false
     end
 
-    JuMP.@constraint(jump_model, sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin)
+    JuMP.@constraint(
+        jump_model,
+        sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin
+    )
     return
 end
 
@@ -823,7 +826,9 @@ function _add_quadratic_term!(
     p_min = PSY.get_active_power_limits(component).min
     @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     var = get_variable(container, T(), U)[component_name, time_period]
-    q_cost_ = (var * var_multiplier) .^ 2 * q_terms[1] + var * var_multiplier * (q_terms[2] + 2 * q_terms[1] * p_min)
+    q_cost_ =
+        (var * var_multiplier) .^ 2 * q_terms[1] +
+        var * var_multiplier * (q_terms[2] + 2 * q_terms[1] * p_min)
     q_cost = q_cost_ * expression_multiplier
     add_to_objective_invariant_expression!(container, q_cost)
     return q_cost
