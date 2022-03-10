@@ -7,7 +7,8 @@ requires_initialization(::ThermalBasicCompactUnitCommitment) = false
 requires_initialization(::ThermalBasicUnitCommitment) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
-get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
+get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}) = PSY.get_active_power_limits(d).min
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
 
@@ -73,7 +74,9 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 
 ########################Objective Function##################################################
 proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.OperationalCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractCompactUnitCommitment) = no_load_cost(cost, S, T, U)  + PSY.get_fixed(cost)
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_no_load(cost)
+proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractCompactUnitCommitment)=PSY.get_no_load(cost)
 proportional_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_fixed(cost) + PSY.get_no_load(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
@@ -103,10 +106,17 @@ uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
-no_load_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation) = PSY.get_no_load(cost)
-no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(PSY.get_variable(cost))[1][1]
+no_load_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, U::AbstractThermalFormulation) = PSY.get_no_load(cost)
+function no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
+    return no_load_cost(PSY.get_variable(cost), S, T, U)
+end
 
-#! format: on
+no_load_cost(cost::PSY.VariableCost{Vector{NTuple{2, Float64}}}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = first(PSY.get_cost(cost))[1]
+
+function no_load_cost(cost::PSY.VariableCost{Tuple{Float64, Float64}}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+    return (PSY.get_cost(cost)[1] * (PSY.get_active_power_limits(d).min)^2 + PSY.get_cost(cost)[2] * PSY.get_active_power_limits(d).min)* PSY.get_base_power(d)
+end
+    #! format: on
 function get_initial_conditions_device_model(
     model::OperationModel,
     ::DeviceModel{T, D},
