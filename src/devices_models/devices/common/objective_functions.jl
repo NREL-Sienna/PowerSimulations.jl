@@ -467,6 +467,15 @@ function _check_pwl_compact_data(
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
+function _get_sos_value(container::OptimizationContainer, ::Type{V}, component::T) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
+    if has_container_key(container, OnStatusParameter, T)
+        sos_val = SOSStatusVariable.PARAMETER
+    else
+        sos_val = sos_status(component, V())
+    end
+    return sos_val
+end
+
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
@@ -507,6 +516,7 @@ function _add_pwl_term!(
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         data = PSY.get_cost(cost_data[t])
         is_power_data_compact = _check_pwl_compact_data(component, data, base_power)
@@ -526,11 +536,6 @@ function _add_pwl_term!(
         # Shouldn't be passed for convexity check
         is_convex = _slope_convexity_check(slopes[2:end])
         break_points = map(x -> last(x), data) ./ base_power
-        if has_container_key(container, OnStatusParameter, T)
-            sos_val = SOSStatusVariable.PARAMETER
-        else
-            sos_val = sos_status(component, V())
-        end
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !is_convex
@@ -580,12 +585,8 @@ function _add_pwl_term!(
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     break_points = map(x -> last(x), data) ./ base_power
+    sos_val = _get_sos_value(container, V, component)
     for t in time_steps
-        if has_container_key(container, OnStatusParameter, T)
-            sos_val = SOSStatusVariable.PARAMETER
-        else
-            sos_val = sos_status(component, V())
-        end
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !is_convex
@@ -632,12 +633,8 @@ function _add_pwl_term!(
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     break_points = map(x -> last(x), data) ./ base_power
+    sos_val = _get_sos_value(container, V, component)
     for t in time_steps
-        if has_container_key(container, OnStatusParameter, T)
-            sos_val = SOSStatusVariable.PARAMETER
-        else
-            sos_val = sos_status(component, V())
-        end
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
