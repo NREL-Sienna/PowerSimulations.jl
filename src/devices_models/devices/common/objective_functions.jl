@@ -467,7 +467,11 @@ function _check_pwl_compact_data(
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
-function _get_sos_value(container::OptimizationContainer, ::Type{V}, component::T) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
+function _get_sos_value(
+    container::OptimizationContainer,
+    ::Type{V},
+    component::T,
+) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
     if has_container_key(container, OnStatusParameter, T)
         sos_val = SOSStatusVariable.PARAMETER
     else
