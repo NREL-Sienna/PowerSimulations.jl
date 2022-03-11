@@ -207,7 +207,7 @@ function add_to_expression!(
     T <: SystemBalanceExpressions,
     U <: OnVariable,
     V <: PSY.ThermalGen,
-    W <: AbstractDeviceFormulation,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
@@ -322,7 +322,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: OnVariable,
     V <: PSY.ThermalGen,
-    W <: AbstractDeviceFormulation,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
     X <: CopperPlatePowerModel,
 }
     variable = get_variable(container, U(), V)
@@ -447,7 +447,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: OnVariable,
     V <: PSY.ThermalGen,
-    W <: AbstractDeviceFormulation,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
     X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
     variable = get_variable(container, U(), V)

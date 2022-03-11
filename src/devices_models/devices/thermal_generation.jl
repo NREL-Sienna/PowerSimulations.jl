@@ -7,7 +7,6 @@ requires_initialization(::ThermalBasicCompactUnitCommitment) = false
 requires_initialization(::ThermalBasicUnitCommitment) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
-get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
 get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}) = PSY.get_active_power_limits(d).min
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.ThermalGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
@@ -110,9 +109,8 @@ no_load_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStart, U:
 function no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
     return no_load_cost(PSY.get_variable(cost), S, T, U)
 end
-
 no_load_cost(cost::PSY.VariableCost{Vector{NTuple{2, Float64}}}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = first(PSY.get_cost(cost))[1]
-
+no_load_cost(cost::PSY.VariableCost{Float64}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(cost) * PSY.get_active_power_limits(d).min * PSY.get_base_power(d)
 function no_load_cost(cost::PSY.VariableCost{Tuple{Float64, Float64}}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
     return (PSY.get_cost(cost)[1] * (PSY.get_active_power_limits(d).min)^2 + PSY.get_cost(cost)[2] * PSY.get_active_power_limits(d).min)* PSY.get_base_power(d)
 end
