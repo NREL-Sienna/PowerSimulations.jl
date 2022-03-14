@@ -11,6 +11,21 @@ function add_variable_cost!(
     return
 end
 
+function add_variable_cost!(
+    container::OptimizationContainer,
+    ::U,
+    service::T,
+    ::V,
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
+    time_steps = get_time_steps(container)
+    variable_cost_forecast = get_time_series(container, service, "variable_cost")
+    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
+    for t in time_steps
+        variable_cost!(container, spec, service, variable_cost_forecast[t], t)
+    end
+    return
+end
+
 function add_shut_down_cost!(
     container::OptimizationContainer,
     ::U,
@@ -86,6 +101,27 @@ function add_proportional_cost!(
             _add_proportional_term!(container, U(), d, cost_term * multiplier * base_p, t)
         end
     end
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    service::T,
+    ::V,
+) where {
+    T <: PSY.Reserve,
+    U <: ActivePowerReserveVariable,
+    V <: AbstractReservesFormulation,
+}
+    reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
+    for index in Iterators.product(axes(reserve_variable)...)
+        add_to_objective_invariant_expression!(
+            container,
+            DEFAULT_RESERVE_COST * reserve_variable[index...],
+        )
+    end
+    _add_proportional_term!
     return
 end
 

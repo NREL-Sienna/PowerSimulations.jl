@@ -172,15 +172,7 @@ function objective_function!(
     service::SR,
     ::ServiceModel{SR, T},
 ) where {SR <: PSY.AbstractReserve, T <: AbstractReservesFormulation}
-    reserve =
-        get_variable(container, ActivePowerReserveVariable(), SR, PSY.get_name(service))
-    for r in reserve
-        JuMP.add_to_expression!(
-            container.objective_function.invariant_terms,
-            r,
-            DEFAULT_RESERVE_COST,
-        )
-    end
+    add_proportional_cost!(container, ActivePowerReserveVariable(), service, T())
     return
 end
 
@@ -383,14 +375,9 @@ end
 function objective_function!(
     container::OptimizationContainer,
     service::SR,
-    model::ServiceModel{SR, StepwiseCostReserve},
-) where {SR <: PSY.ReserveDemandCurve}
-    time_steps = get_time_steps(container)
-    variable_cost_forecast = get_time_series(container, service, "variable_cost")
-    variable_cost_forecast = map(PSY.VariableCost, variable_cost_forecast)
-    for t in time_steps
-        #variable_cost!(container, spec, service, variable_cost_forecast[t], t)
-    end
+    ::ServiceModel{PSY.ReserveDemandCurve, SR},
+) where {SR <: StepwiseCostReserve}
+    add_variable_cost!(container, ActivePowerReserveVariable(), service, SR)
     return
 end
 
@@ -412,8 +399,7 @@ function modify_device_model!(
     service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
     contributing_devices::Vector{<:PSY.Component},
 )
-    device_types = unique(typeof.(contributing_devices))
-    for dt in device_types
+    for dt in unique(typeof.(contributing_devices))
         for device_model in values(devices_template)
             # add message here when it exists
             get_component_type(device_model) != dt && continue
