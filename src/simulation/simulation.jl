@@ -588,7 +588,7 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
-    @show simulation_time = get_current_time(sim_state)
+    simulation_time = get_current_time(sim_state)
     current_execution_index = get_current_execution_index(sim)
     exec_order = get_execution_order(sim)
     end_of_step_timestamp = false
@@ -609,7 +609,6 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
         else
             update_timestamp = simulation_time
         end
-        @show update_timestamp
         if last_update <= simulation_time
             update_system_state!(system_state, key, decision_state, update_timestamp)
         else
@@ -675,15 +674,17 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
 end
 
 function _write_state_to_store!(store::SimulationStore, sim::Simulation)
+    decision_state = get_decision_states(sim_state)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
+    em_store = get_em_data(store)
+    simulation_time = get_current_time(sim)
     for key in get_dataset_keys(system_state)
         state_data = get_dataset(system_state, key)
-        em_store = get_em_data(store)
         # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
-        store_update_time = get_last_updated_timestamp(em_store, key)
-        state_update_time = get_update_timestamp(system_state, key)
+        @show store_update_time = get_last_updated_timestamp(em_store, key)
+        @show state_update_time = get_update_timestamp(system_state, key)
         if store_update_time < state_update_time
             state_values = get_last_recorded_value(state_data)
             ix = get_last_recorded_row(em_store, key) + 1
