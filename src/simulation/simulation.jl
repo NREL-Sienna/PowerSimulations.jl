@@ -659,13 +659,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         for key in list_decision_model_keys(store, model_name, field)
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
-            update_decision_state!(
-                state,
-                key,
-                res,
-                simulation_time,
-                model_params,
-            )
+            update_decision_state!(state, key, res, simulation_time, model_params)
         end
     end
     IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
@@ -674,7 +668,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
 end
 
 function _write_state_to_store!(store::SimulationStore, sim::Simulation)
-    decision_state = get_decision_states(sim_state)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
@@ -683,15 +676,25 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     for key in get_dataset_keys(system_state)
         state_data = get_dataset(system_state, key)
         # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
-        @show store_update_time = get_last_updated_timestamp(em_store, key)
-        @show state_update_time = get_update_timestamp(system_state, key)
-        if store_update_time < state_update_time
+        store_update_time = get_last_updated_timestamp(em_store, key)
+        state_update_time = get_update_timestamp(system_state, key)
+        if simulation_time < state_update_time
+            dm_dataset = get_decision_state_data(sim_state, key)
+            dm_data_resolution = get_data_resolution(dm_dataset)
+            _update_timestamp = simulation_time
+            while _update_timestamp <= state_update_time
+                state_values = get_decision_state_value(sim_state, key, _update_timestamp)
+                ix = get_last_recorded_row(em_store, key) + 1
+                write_result!(store, model_name, key, ix, state_update_time, state_values)
+                _update_timestamp += dm_data_resolution
+            end
+        elseif simulation_time == state_update_time
             state_values = get_last_recorded_value(state_data)
-            ix = get_last_recorded_row(em_store, key) + 1
-            write_result!(store, model_name, key, ix, state_update_time, state_values)
-        elseif store_update_time == state_update_time
-            state_values = get_last_recorded_value(state_data)
-            ix = get_last_recorded_row(em_store, key)
+            if store_update_time == state_update_time
+                ix = get_last_recorded_row(em_store, key)
+            else
+                ix = get_last_recorded_row(em_store, key) + 1
+            end
             write_result!(store, model_name, key, ix, state_update_time, state_values)
         else
             continue
@@ -768,7 +771,6 @@ function _execute!(
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
                 end
-
 
                 # Is first run of first problem? Yes -> don't update problem
 
