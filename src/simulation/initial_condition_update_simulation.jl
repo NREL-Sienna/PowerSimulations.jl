@@ -83,7 +83,7 @@ function update_initial_conditions!(
                 set_ic_quantity!(ic, max)
             else
                 error(
-                    "Variable value $(var_val) for ActivePowerVariable for $(comp_type) is out of bounds [$(min), $(max)].",
+                    "Variable value $(var_val) for ActivePowerVariable for $(comp_type)-$(comp_name) is out of bounds [$(min), $(max)].",
                 )
             end
         else
