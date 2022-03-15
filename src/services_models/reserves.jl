@@ -28,6 +28,10 @@ get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.ReserveNonSpinning
 
 get_parameter_multiplier(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 1.0
+
+objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = 1.0
+sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO_VARIABLE
+uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 #! format: on
 
 function get_default_time_series_names(
@@ -374,10 +378,10 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    service::SR,
-    ::ServiceModel{PSY.ReserveDemandCurve, SR},
-) where {SR <: StepwiseCostReserve}
-    add_variable_cost!(container, ActivePowerReserveVariable(), service, SR)
+    service::PSY.ReserveDemandCurve{T},
+    ::ServiceModel{PSY.ReserveDemandCurve{T}, SR},
+) where {T <: PSY.ReserveDirection, SR <: StepwiseCostReserve}
+    add_variable_cost!(container, ServiceRequirementVariable(), service, SR())
     return
 end
 

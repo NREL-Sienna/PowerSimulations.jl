@@ -1119,11 +1119,26 @@ function read_parameters(container::OptimizationContainer)
     for (k, v) in parameters
         param_array = axis_array_to_dataframe(get_parameter_array(v), k)
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
-        params_dict[k] = param_array .* multiplier_array
+        _calculate_parameter_values(k, param_array, multiplier_array)
     end
     return params_dict
 end
 
+function _calculate_parameter_values(
+    key::ParameterKey{<:ParameterType, <:PSY.Component},
+    param_array,
+    multiplier_array,
+)
+    return param_array .* multiplier_array
+end
+
+function _calculate_parameter_values(
+    key::ParameterKey{<:ObjectiveFunctionParameter, <:PSY.Component},
+    param_array,
+    multiplier_array,
+)
+    return param_array
+end
 ##################################### Expression Container #################################
 function _add_expression_container!(
     container::OptimizationContainer,
