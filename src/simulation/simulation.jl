@@ -589,23 +589,18 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
     simulation_time = get_current_time(sim_state)
-    current_execution_index = get_current_execution_index(sim)
+    current_exec_index = get_current_execution_index(sim)
     exec_order = get_execution_order(sim)
-    end_of_step_timestamp = false
-    if current_execution_index == length(exec_order)
-        end_of_step_timestamp = true
-    elseif execution_order[exec_order] != execution_order[exec_order + 1]
-        end_of_step_timestamp = true
-    else
-        IS.@assert_op execution_order[exec_order] == execution_order[exec_order + 1]
-    end
+    use_end_of_step_timestamp = current_exec_index == length(exec_order)
+    next_stage_initial_time = get_simulation_time(sim, exec_order[current_exec_index])
 
     for key in get_dataset_keys(decision_state)
         state_data = get_dataset(decision_state, key)
+        end_of_step_timestamp = get_end_of_step_timestamp(state_data)
         last_update = get_update_timestamp(decision_state, key)
-        simulation_time > get_end_of_step_timestamp(state_data) && continue
-        if end_of_step_timestamp
-            update_timestamp = get_end_of_step_timestamp(state_data)
+        simulation_time > end_of_step_timestamp && continue
+        if use_end_of_step_timestamp || (next_stage_initial_time > end_of_step_timestamp)
+            update_timestamp = end_of_step_timestamp
         else
             update_timestamp = simulation_time
         end
@@ -678,7 +673,17 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
         store_update_time = get_last_updated_timestamp(em_store, key)
         state_update_time = get_update_timestamp(system_state, key)
-        if simulation_time < state_update_time
+        if simulation_time == state_update_time
+            state_values = get_last_recorded_value(state_data)
+            if store_update_time < state_update_time
+                ix = get_last_recorded_row(em_store, key) + 1
+            elseif store_update_time == state_update_time
+                ix = get_last_recorded_row(em_store, key)
+            else
+                @assert false (store_update_time, state_update_time)
+            end
+            write_result!(store, model_name, key, ix, state_update_time, state_values)
+        elseif simulation_time < state_update_time
             dm_dataset = get_decision_state_data(sim_state, key)
             dm_data_resolution = get_data_resolution(dm_dataset)
             _update_timestamp = simulation_time
@@ -688,14 +693,6 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
                 write_result!(store, model_name, key, ix, state_update_time, state_values)
                 _update_timestamp += dm_data_resolution
             end
-        elseif simulation_time == state_update_time
-            state_values = get_last_recorded_value(state_data)
-            if store_update_time == state_update_time
-                ix = get_last_recorded_row(em_store, key)
-            else
-                ix = get_last_recorded_row(em_store, key) + 1
-            end
-            write_result!(store, model_name, key, ix, state_update_time, state_values)
         else
             continue
         end
@@ -723,7 +720,6 @@ function _execute!(
     exports=nothing,
     enable_progress_bar=progress_meter_enabled(),
     disable_timer_outputs=false,
-    serialize=true,
 )
     @assert sim.internal !== nothing
 
@@ -786,6 +782,7 @@ function _execute!(
                     if status == RunStatus.SUCCESSFUL
                         # TODO: _update_simulation_state! can use performance improvements
                         _update_simulation_state!(sim, model)
+                        @error model_name
                         _write_state_to_store!(store, sim)
                     end
                 end
