@@ -91,7 +91,7 @@ function _initialize_model_states!(
                 field_states[key] = DataFrameDataset(
                     DataFrames.DataFrame(
                         fill(NaN, value_counts, length(column_names)),
-                        column_names,
+                        sort!(column_names),
                     ),
                     collect(
                         range(
@@ -123,7 +123,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                DataFrames.DataFrame(cols .=> NaN),
+                DataFrames.DataFrame(sort!(cols) .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -151,7 +151,7 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 make_system_state(
-                    DataFrames.DataFrame(column_names .=> NaN),
+                    DataFrames.DataFrame(sort!(column_names) .=> NaN),
                     simulation_initial_time,
                     get_resolution(emulation_model),
                 ),
@@ -168,7 +168,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                DataFrames.DataFrame(cols .=> NaN),
+                DataFrames.DataFrame(sort!(cols) .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -331,10 +331,10 @@ function update_system_state!(
     em_data = get_em_data(store)
     ix = get_last_recorded_row(em_data, key)
     res = read_result(DataFrames.DataFrame, store, model_name, key, ix)
-    data_set = get_dataset(state, key)
-    set_update_timestamp!(data_set, simulation_time)
+    dataset = get_dataset(state, key)
+    set_update_timestamp!(dataset, simulation_time)
     set_dataset_values!(state, key, 1, res)
-    set_last_recorded_row!(data_set, 1)
+    set_last_recorded_row!(dataset, 1)
     return
 end
 
@@ -344,29 +344,24 @@ function update_system_state!(
     decision_state::DatasetContainer{DataFrameDataset},
     simulation_time::Dates.DateTime,
 )
-    decision_data_set = get_dataset(decision_state, key)
+    decision_dataset = get_dataset(decision_state, key)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
 
-    ts = get_value_timestamp(decision_data_set, simulation_time)
-    system_data_set = get_dataset(state, key)
+    ts = get_value_timestamp(decision_dataset, simulation_time)
+    system_dataset = get_dataset(state, key)
 
-    if get_update_timestamp(system_data_set) == ts
+    if get_update_timestamp(system_dataset) == ts
         return
     end
 
     # Writes the timestamp of the value used for the update
-    set_update_timestamp!(system_data_set, ts)
+    set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
-    system_data_set.timestamps[1] = ts
-    set_dataset_values!(
-        state,
-        key,
-        1,
-        get_dataset_value(decision_data_set, simulation_time),
-    )
+    system_dataset.timestamps[1] = ts
+    set_dataset_values!(state, key, 1, get_dataset_value(decision_dataset, simulation_time))
     # This value shouldn't be other than one and after one execution is no-op.
-    set_last_recorded_row!(system_data_set, 1)
+    set_last_recorded_row!(system_dataset, 1)
     return
 end
 
