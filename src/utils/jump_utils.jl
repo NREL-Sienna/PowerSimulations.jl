@@ -30,6 +30,10 @@ function jump_value(input::Float64)::Float64
     return input
 end
 
+function jump_value(input::Vector{Tuple{Float64, Float64}})::Vector{Tuple{Float64, Float64}}
+    return input
+end
+
 function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}}
     data = jump_value.(array.data)
     data = reshape(data, length(data), 1)
@@ -44,6 +48,17 @@ end
 function to_matrix(array::DenseAxisArray{T, 2, K}) where {T, K <: NTuple{2, Any}}
     ax = axes(array)
     data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
+    for t in ax[2], (ix, name) in enumerate(ax[1])
+        data[t, ix] = jump_value(array[name, t])
+    end
+    return data
+end
+
+function to_matrix(
+    array::DenseAxisArray{T, 2, K},
+) where {T <: Vector{Tuple{Float64, Float64}}, K <: NTuple{2, Any}}
+    ax = axes(array)
+    data = Matrix{Vector{Tuple{Float64, Float64}}}(undef, length(ax[2]), length(ax[1]))
     for t in ax[2], (ix, name) in enumerate(ax[1])
         data[t, ix] = jump_value(array[name, t])
     end
@@ -189,9 +204,9 @@ function _calc_dimensions(
         dims = (horizon, 1, num_rows)
     elseif length(ax) == 2
         dims = (horizon, length(columns), num_rows)
-        # elseif length(ax) == 3
+    elseif length(ax) == 3
         #     # TODO: untested
-        #     dims = (length(ax[2]), horizon, length(columns), num_rows)
+        dims = (length(ax[2]), horizon, length(columns), num_rows)
     else
         error("unsupported data size $(length(ax))")
     end
