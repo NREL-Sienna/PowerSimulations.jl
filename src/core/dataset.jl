@@ -146,7 +146,7 @@ function get_last_updated_timestamp(s::HDF5Dataset)
     if last_recorded_row == 0
         return UNSET_INI_TIME
     end
-    return s.initial_timestamp + s.resolution * last_recorded_row
+    return s.initial_timestamp + s.resolution * (last_recorded_row - 1)
 end
 
 function get_value_timestamp(s::HDF5Dataset, date::Dates.DateTime)
@@ -154,7 +154,7 @@ function get_value_timestamp(s::HDF5Dataset, date::Dates.DateTime)
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
     end
-    return s.initial_timestamp + s.resolution * s_index
+    return s.initial_timestamp + s.resolution * (s_index - 1)
 end
 
 function set_value!(s::HDF5Dataset, vals, index::Int)
