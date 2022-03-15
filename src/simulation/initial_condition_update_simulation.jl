@@ -75,7 +75,6 @@ function update_initial_conditions!(
             comp = get_component(ic)
             min = PSY.get_active_power_limits(comp).min
             max = PSY.get_active_power_limits(comp).max
-            value_in_bounds = true
             if var_val <= max && var_val >= min
                 set_ic_quantity!(ic, var_val)
             elseif isapprox(min - var_val, 0.0, atol=ABSOLUTE_TOLERANCE)
