@@ -311,9 +311,7 @@ function initialize_problem_storage!(
                 datasets[key] = HDF5Dataset(
                     dataset,
                     column_dataset,
-                    # TODO: Josè, why is this broken?
-                    #get_resolution(emulation_params),
-                    get_resolution(first(values(params.decision_models_params))),
+                    get_resolution(emulation_params),
                     initial_time,
                 )
                 container_key_lookup[encode_key_as_string(key)] = key
