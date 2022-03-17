@@ -99,7 +99,11 @@ function _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)
         end
 
         for output_cache in values(store.cache.data)
-            @test get_cache_hit_percentage(output_cache) == 100.0
+            if PSI.should_keep_in_cache(output_cache)
+                @test get_cache_hit_percentage(output_cache) == 100.0
+            else
+                @test get_cache_hit_percentage(output_cache) < 100.0
+            end
         end
 
         flush(store)
@@ -139,20 +143,22 @@ function _verify_data(expected, store, model, name, time, columns)
     expected_df = DataFrames.DataFrame(expected, columns)
     df = read_result(DataFrames.DataFrame, store, model, name, time)
     @test expected_df == df
-
-    # TODO-DT read_result with DenseAxisArray
 end
 
 @testset "Test SimulationStore 2-d arrays" begin
     sim = Dict(
         "initial_time" => Dates.DateTime("2020-01-01T00:00:00"),
         "step_resolution" => Dates.Hour(24),
-        "num_steps" => 2,
+        "num_steps" => 50,
     )
     variables = Dict(
         PSI.VariableKey(ActivePowerVariable, ThermalStandard) =>
             Dict("cache_priority" => CachePriority.HIGH, "keep_in_cache" => true),
+        PSI.VariableKey(ActivePowerVariable, RenewableDispatch) =>
+            Dict("cache_priority" => CachePriority.HIGH, "keep_in_cache" => true),
         PSI.VariableKey(ActivePowerVariable, InterruptibleLoad) =>
+            Dict("cache_priority" => CachePriority.LOW, "keep_in_cache" => false),
+        PSI.VariableKey(ActivePowerVariable, RenewableFix) =>
             Dict("cache_priority" => CachePriority.LOW, "keep_in_cache" => false),
     )
     model_defs = OrderedDict(
@@ -192,17 +198,20 @@ end
         :ED,
         PSI.VariableKey(ActivePowerVariable, InterruptibleLoad),
     )
-    cache = PSI.OptimzationResultCache(key, PSI.CacheFlushRule())
+    cache = PSI.OptimzationResultCache(key, PSI.CacheFlushRule(true, PSI.CachePriority.LOW))
     @test !PSI.has_clean(cache)
     @test !PSI.is_dirty(cache, Dates.now())
 
     timestamp1 = Dates.DateTime("2020-01-01T00:00:00")
     timestamp2 = Dates.DateTime("2020-01-01T01:00:00")
     timestamp3 = Dates.DateTime("2020-01-01T02:00:00")
+    timestamp4 = Dates.DateTime("2020-01-01T03:00:00")
     PSI.add_result!(cache, timestamp1, ones(2), false)
     @test PSI.is_dirty(cache, timestamp1)
     PSI.add_result!(cache, timestamp2, ones(2), false)
     @test PSI.is_dirty(cache, timestamp2)
+
+    @test_throws IS.InvalidValue PSI.add_result!(cache, timestamp2, ones(2), false)
 
     @test length(cache.data) == 2
     @test length(cache.dirty_timestamps) == 2
@@ -210,9 +219,21 @@ end
     popfirst!(cache.dirty_timestamps)
     @test !PSI.is_dirty(cache, timestamp1)
     @test PSI.has_clean(cache)
-    PSI.add_result!(cache, timestamp3, ones(2), true)
     @test length(cache.data) == 2
+    @test length(cache.dirty_timestamps) == 1
 
+    PSI.add_result!(cache, timestamp3, ones(2), false)
+    @test length(cache.data) == 3
+    @test length(cache.dirty_timestamps) == 2
+
+    PSI.add_result!(cache, timestamp4, ones(2), true)
+    @test length(cache.data) == 3
+    @test length(cache.dirty_timestamps) == 3
+
+    popfirst!(cache.dirty_timestamps)
+    @test PSI.has_clean(cache)
+
+    empty!(cache.dirty_timestamps)
     empty!(cache)
     @test isempty(cache.data)
     @test isempty(cache.dirty_timestamps)

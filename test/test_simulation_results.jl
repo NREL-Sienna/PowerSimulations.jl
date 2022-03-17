@@ -663,8 +663,6 @@ end
 
 @testset "Test simulation results" begin
     for in_memory in (false, true)
-        file_path = "test_simulation_results"
-        export_path = "test_export_simulation_results"
         file_path = mktempdir(cleanup=true)
         export_path = mktempdir(cleanup=true)
         test_simulation_results(file_path, export_path, in_memory=in_memory)

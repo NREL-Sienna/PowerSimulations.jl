@@ -380,7 +380,7 @@ function _initialize_problem_storage!(
     dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     rules = CacheFlushRules(
         max_size=cache_size_mib * MiB,
-        min_flush_size=min_cache_flush_size_mib,
+        min_flush_size=trunc(min_cache_flush_size_mib * MiB),
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
@@ -699,7 +699,7 @@ end
 
 function _execute!(
     sim::Simulation;
-    cache_size_mib=1024,
+    cache_size_mib=DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
     min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
     exports=nothing,
     enable_progress_bar=progress_meter_enabled(),

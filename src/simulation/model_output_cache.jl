@@ -42,15 +42,14 @@ function is_dirty(cache::OptimzationResultCache, timestamp)
 end
 
 function Base.empty!(cache::OptimzationResultCache)
+    @assert isempty(cache.dirty_timestamps) "dirty cache was still present $(cache.key) $(cache.dirty_timestamps)"
     empty!(cache.data)
-    empty!(cache.dirty_timestamps)
     cache.size_per_entry = 0
     return
 end
 
 """
-Adds thrame result to the cache.
-Return true if the cache needs to be flushed.
+Add result to the cache.
 """
 function add_result!(cache::OptimzationResultCache, timestamp, array, system_cache_is_full)
     if cache.size_per_entry == 0
@@ -58,14 +57,18 @@ function add_result!(cache::OptimzationResultCache, timestamp, array, system_cac
     end
 
     @debug "add_result!" cache.key timestamp get_size(cache)
-    @assert !haskey(cache.data, timestamp) "$(cache.key) $timestamp"
+    if haskey(cache.data, timestamp)
+        throw(IS.InvalidValue("$timestamp is already stored in $(cache.key)"))
+    end
 
-    if system_cache_is_full
+    # Note that we buffer all writes in cache until we reach the flush size.
+    # The entries using "should_keep_in_cache" can grow quite large for read caching.
+    if system_cache_is_full && should_keep_in_cache(cache)
         if has_clean(cache)
             popfirst!(cache.data)
-            @debug "replaced cache entry" cache.key
-        else
-            @error "sys cache is full but there are no clean entries to pop: $(cache.key)"
+            @debug "replaced cache entry" LOG_GROUP_SIMULATION_STORE cache.key length(
+                cache.data,
+            )
         end
     end
 
@@ -88,12 +91,12 @@ function discard_results!(cache::OptimzationResultCache, timestamps)
     return
 end
 
-function get_data_to_flush!(cache::OptimzationResultCache, flush_size)
-    num_chunks = flush_size < cache.size_per_entry ? 1 : flush_size ÷ cache.size_per_entry
-    num_chunks = minimum((num_chunks, length(cache.dirty_timestamps)))
-    @assert_op num_chunks > 0
-
-    timestamps = [popfirst!(cache.dirty_timestamps) for i in 1:num_chunks]
+"""
+Return all dirty data from the cache. Mark the timestamps as clean.
+"""
+function get_dirty_data_to_flush!(cache::OptimzationResultCache)
+    timestamps = [x for x in cache.dirty_timestamps]
+    empty!(cache.dirty_timestamps)
     # Uncomment for performance testing of CacheFlush
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Concatenate arrays for flush" begin
     arrays = (cache.data[x] for x in timestamps)

@@ -14,6 +14,11 @@ end
 
 CacheFlushRule() = CacheFlushRule(false, CachePriority.LOW)
 
+const DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB = 1024
+const DEFAULT_SIMULATION_STORE_CACHE_SIZE = DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB * MiB
+const MIN_CACHE_FLUSH_SIZE_MiB = 1
+const MIN_CACHE_FLUSH_SIZE = MIN_CACHE_FLUSH_SIZE_MiB * MiB
+
 """
 Informs the flusher on what data to keep in cache.
 """
@@ -23,13 +28,16 @@ struct CacheFlushRules
     max_size::Int
 end
 
-const MIN_CACHE_FLUSH_SIZE_MiB = MiB
-
-function CacheFlushRules(; max_size=GiB, min_flush_size=MIN_CACHE_FLUSH_SIZE_MiB)
+function CacheFlushRules(;
+    max_size=DEFAULT_SIMULATION_STORE_CACHE_SIZE,
+    min_flush_size=MIN_CACHE_FLUSH_SIZE,
+)
     return CacheFlushRules(
         Dict{OptimizationResultCacheKey, CacheFlushRule}(),
         min_flush_size,
         max_size,
+        trunc(low_threshold_percent * 0.01 * max_size),
+        trunc(high_threshold_percent * 0.01 * max_size),
     )
 end
 
