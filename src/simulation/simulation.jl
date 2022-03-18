@@ -594,45 +594,51 @@ function _get_next_problem_initial_time(sim::Simulation, model_name::Symbol)
     # Solving the same problem again
     elseif exec_order[current_exec_index + 1] == exec_order[current_exec_index]
         current_model_interval = get_interval(sim.sequence, model_name)
-        next_time = get_current_time(sim) + current_model_interval
+        next_initial_time = get_current_time(sim) + current_model_interval
     # Solving another problem next
     else
-        next_time = get_simulation_time(sim, exec_order[current_exec_index + 1])
+        next_initial_time = get_simulation_time(sim, exec_order[current_exec_index + 1])
     end
-    return next_time
+    return next_initial_time
 end
 
 function _update_system_state!(sim::Simulation, model_name::Symbol)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
-    @show "Updating state $(model_name)"
-    @show simulation_time = get_current_time(sim_state)
-    @show next_stage_initial_time = _get_next_problem_initial_time(sim, model_name)
+    @error "Updating state $(model_name)"
+    simulation_time = get_current_time(sim_state)
+    next_stage_initial_time = _get_next_problem_initial_time(sim, model_name)
 
     for key in get_dataset_keys(decision_state)
         state_data = get_dataset(decision_state, key)
-        @show key
-        @show end_of_step_timestamp = get_end_of_step_timestamp(state_data)
-        @show last_update = get_update_timestamp(decision_state, key)
-        resolution = get_data_resolution(state_data)
-        @show update_timestamp = max(next_stage_initial_time - resolution, simulation_time)
+        end_of_step_timestamp = get_end_of_step_timestamp(state_data)
+        last_update = get_update_timestamp(decision_state, key)
 
-        @show get_update_timestamp(system_state, key)
-        if last_update <= simulation_time
+        get_update_timestamp(system_state, key)
+
+        if last_update > simulation_time
+            error("Something went really wrong. Please report this error. \\
+            last_update: $(last_update) \\
+            simulation_time: $(simulation_time) \\
+            key: $(encode_key_as_string(key))")
+        end
+
+        resolution = get_data_resolution(state_data)
+        update_timestamp = max(next_stage_initial_time - resolution, simulation_time)
+        if end_of_step_timestamp < update_timestamp
+            @error("Can't update the state with a data beyond the step")
+        end
+        if update_timestamp < get_update_timestamp(system_state, key)
+            error("The update overwrites more recent data with past data")
+        elseif update_timestamp > get_update_timestamp(system_state, key)
             update_system_state!(system_state, key, decision_state, update_timestamp)
         else
-            error("Something went really wrong. Please report this error. \\
-                  last_update: $(last_update) \\
-                  simulation_time: $(simulation_time) \\
-                  key: $(encode_key_as_string(key))")
+            @assert_op update_timestamp == get_update_timestamp(system_state, key)
         end
     end
 
     IS.@record :execution StateUpdateEvent(simulation_time, model_name, "SystemState")
-    if simulation_time > Dates.DateTime("2020-01-01T01:15:00")
-        error()
-    end
     return
 end
 
@@ -643,21 +649,40 @@ end
 
 function _update_system_state!(sim::Simulation, model::EmulationModel)
     sim_state = get_simulation_state(sim)
-    simulation_time = get_current_time(sim)
+    decision_state = get_decision_states(sim_state)
+    @show simulation_time = get_current_time(sim)
     system_state = get_system_states(sim_state)
     store = get_simulation_store(sim)
     em_model_name = get_name(model)
+    @show "Updating em_state $(em_model_name)"
     for key in get_container_keys(get_optimization_container(model))
         !should_write_resulting_value(key) && continue
+        if key == VariableKey{ActivePowerVariable, PSY.ThermalStandard}("")
+            on_decision = get_dataset(decision_state, VariableKey{OnVariable, PSY.ThermalStandard}(""))
+            on_vals = get_dataset_value(on_decision, simulation_time)
+
+            em_data = get_em_data(store)
+            ix = get_last_recorded_row(em_data, key)
+            res = read_result(DataFrames.DataFrame, store, em_model_name, key, ix)
+            @assert names(on_vals) == names(res)
+            for n in names(on_vals)
+                if on_vals[n] > 0.001 && res[1,n] <= 0.01
+                    error("$n, $(on_vals[n]), $(res[!,n])")
+                end
+            end
+        end
         update_system_state!(system_state, key, store, em_model_name, simulation_time)
     end
-    IS.@record :execution StateUpdateEvent(simulation_time, get_name(model), "SystemState")
+    IS.@record :execution StateUpdateEvent(simulation_time, em_model_name, "SystemState")
     return
 end
 
 function _update_simulation_state!(sim::Simulation, model::EmulationModel)
-    _update_system_state!(sim, get_name(model))
+    # Order of these operations matters. Do not reverse.
+    # This will update the state with the results of the store first and then fill
+    # the remaning values with the decision state.
     _update_system_state!(sim, model)
+    _update_system_state!(sim, get_name(model))
     return
 end
 
@@ -684,33 +709,23 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     model_name = get_last_decision_model(sim_state)
     em_store = get_em_data(store)
     simulation_time = get_current_time(sim)
+    sim_ini_time = get_initial_time(sim)
     for key in get_dataset_keys(system_state)
-        state_data = get_dataset(system_state, key)
-        # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
-        store_update_time = get_last_updated_timestamp(em_store, key)
-        state_update_time = get_update_timestamp(system_state, key)
-        if simulation_time == state_update_time
-            state_values = get_last_recorded_value(state_data)
-            if store_update_time < state_update_time
-                ix = get_last_recorded_row(em_store, key) + 1
-            elseif store_update_time == state_update_time
-                ix = get_last_recorded_row(em_store, key)
-            else
-                @assert false (store_update_time, state_update_time)
-            end
-            write_result!(store, model_name, key, ix, state_update_time, state_values)
-        elseif simulation_time < state_update_time
+        @show key
+        @show store_update_time = get_last_updated_timestamp(em_store, key)
+        @show state_update_time = get_update_timestamp(system_state, key)
+        # If the store is outdated w.r.t to the state
+        @assert store_update_time <= simulation_time
+        if store_update_time < state_update_time
             dm_dataset = get_decision_state_data(sim_state, key)
             dm_data_resolution = get_data_resolution(dm_dataset)
-            _update_timestamp = simulation_time
+            @show _update_timestamp = max(store_update_time + dm_data_resolution, sim_ini_time)
             while _update_timestamp <= state_update_time
                 state_values = get_decision_state_value(sim_state, key, _update_timestamp)
-                ix = get_last_recorded_row(em_store, key) + 1
-                write_result!(store, model_name, key, ix, state_update_time, state_values)
+                @show ix = get_last_recorded_row(em_store, key) + 1
+                write_result!(store, model_name, key, ix, _update_timestamp, state_values)
                 _update_timestamp += dm_data_resolution
             end
-        else
-            continue
         end
     end
     return

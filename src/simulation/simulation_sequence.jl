@@ -85,9 +85,10 @@ function _fill_execution_order(
     interval_run_counts::Vector{Int},
 )
     function _fill_problem(index::Int, problem::Int)
+        last_problem = problems[end]
         if problem < last_problem
             next_problem = problem + 1
-            for _ in 1:interval_run_counts[next_problem]
+            for i in 1:interval_run_counts[next_problem]
                 index = _fill_problem(index, next_problem)
             end
         end
