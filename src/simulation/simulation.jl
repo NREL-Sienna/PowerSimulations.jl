@@ -605,7 +605,6 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
-    @error "Updating state $(model_name)"
     simulation_time = get_current_time(sim_state)
     next_stage_initial_time = _get_next_problem_initial_time(sim, model_name)
 
