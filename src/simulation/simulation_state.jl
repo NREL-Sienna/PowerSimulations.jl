@@ -91,7 +91,7 @@ function _initialize_model_states!(
                 field_states[key] = DataFrameDataset(
                     DataFrames.DataFrame(
                         fill(NaN, value_counts, length(column_names)),
-                        sort!(column_names),
+                        column_names,
                     ),
                     collect(
                         range(
@@ -123,7 +123,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                DataFrames.DataFrame(sort!(cols) .=> NaN),
+                DataFrames.DataFrame(cols .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -151,7 +151,7 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 make_system_state(
-                    DataFrames.DataFrame(sort!(column_names) .=> NaN),
+                    DataFrames.DataFrame(column_names .=> NaN),
                     simulation_initial_time,
                     get_resolution(emulation_model),
                 ),
@@ -161,6 +161,9 @@ function _initialize_system_states!(
 
     for key in get_dataset_keys(decision_states)
         if has_dataset(emulator_states, key)
+            dm_cols = get_column_names(key, get_dataset(decision_states, key))
+            em_cols = get_column_names(key, get_dataset(emulator_states, key))
+            @assert_op dm_cols == em_cols
             continue
         end
         cols = get_column_names(key, get_dataset(decision_states, key))
@@ -168,7 +171,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                DataFrames.DataFrame(sort!(cols) .=> NaN),
+                DataFrames.DataFrame(cols .=> NaN),
                 simulation_initial_time,
                 params[key].resolution,
             ),
@@ -384,9 +387,21 @@ function update_system_state!(
     decision_dataset = get_dataset(decision_state, key)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
-
     ts = get_value_timestamp(decision_dataset, simulation_time)
     system_dataset = get_dataset(state, key)
+    get_update_timestamp(system_dataset)
+    if ts == get_update_timestamp(system_dataset)
+        # Uncomment for debugging
+        #@warn "Skipped overwriting data with the same timestamp \\
+        #       key: $(encode_key_as_string(key)), $(simulation_time), $ts"
+        return
+    end
+
+    if get_update_timestamp(system_dataset) > ts
+        error("Trying to update with past data a future state timestamp \\
+            key: $(encode_key_as_string(key)), $(simulation_time), $ts")
+    end
+
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
