@@ -117,6 +117,7 @@ function _initialize_system_states!(
 )
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
+    min_res = minimum([v.resolution for v in values(params)])
     for key in get_dataset_keys(decision_states)
         cols = get_column_names(key, get_dataset(decision_states, key))
         set_dataset!(
@@ -125,7 +126,7 @@ function _initialize_system_states!(
             make_system_state(
                 DataFrames.DataFrame(cols .=> NaN),
                 simulation_initial_time,
-                params[key].resolution,
+                min_res,
             ),
         )
     end
@@ -173,7 +174,7 @@ function _initialize_system_states!(
             make_system_state(
                 DataFrames.DataFrame(cols .=> NaN),
                 simulation_initial_time,
-                params[key].resolution,
+                get_resolution(emulation_model),
             ),
         )
     end
@@ -383,7 +384,6 @@ function update_system_state!(
     decision_state::DatasetContainer{DataFrameDataset},
     simulation_time::Dates.DateTime,
 )
-
     decision_dataset = get_dataset(decision_state, key)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
