@@ -87,7 +87,7 @@ function _fill_execution_order(
     function _fill_problem(index::Int, problem::Int)
         if problem < last_problem
             next_problem = problem + 1
-            for i in 1:interval_run_counts[next_problem]
+            for _ in 1:interval_run_counts[next_problem]
                 index = _fill_problem(index, next_problem)
             end
         end
@@ -97,7 +97,6 @@ function _fill_execution_order(
 
     index = length(execution_order)
     problems = sort!(collect(keys(interval_run_counts)))
-    last_problem = problems[end]
     _fill_problem(index, problems[1])
     return
 end
@@ -213,3 +212,21 @@ function get_interval(sequence::SimulationSequence, model::DecisionModel)
 end
 
 get_execution_order(sequence::SimulationSequence) = sequence.execution_order
+
+function _get_next_problem_initial_time(sequence::SimulationSequence, model_name::Symbol)
+    current_exec_index = sequence.current_execution_index
+    exec_order = get_execution_order(sequence)
+
+    # Moving to the next step
+    if current_exec_index + 1 > length(exec_order)
+        next_initial_time = get_simulation_time(sim, exec_order[1])
+    # Solving the same problem again
+    elseif exec_order[current_exec_index + 1] == exec_order[current_exec_index]
+        current_model_interval = get_interval(sim.sequence, model_name)
+        next_time = get_current_time(sim_state) + current_model_interval
+    # Solving another problem next
+    else
+        next_time = get_simulation_time(sim, exec_order[current_exec_index + 1])
+    end
+    return next_time
+end

@@ -584,26 +584,41 @@ function _apply_warm_start!(model::OperationModel)
     return
 end
 
+function _get_next_problem_initial_time(sim::Simulation, model_name::Symbol)
+    current_exec_index = get_current_execution_index(sim)
+    exec_order = get_execution_order(sim)
+
+    # Moving to the next step
+    if current_exec_index + 1 > length(exec_order)
+        next_initial_time = get_simulation_time(sim, exec_order[1])
+    # Solving the same problem again
+    elseif exec_order[current_exec_index + 1] == exec_order[current_exec_index]
+        current_model_interval = get_interval(sim.sequence, model_name)
+        next_time = get_current_time(sim) + current_model_interval
+    # Solving another problem next
+    else
+        next_time = get_simulation_time(sim, exec_order[current_exec_index + 1])
+    end
+    return next_time
+end
+
 function _update_system_state!(sim::Simulation, model_name::Symbol)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
-    simulation_time = get_current_time(sim_state)
-    current_exec_index = get_current_execution_index(sim)
-    exec_order = get_execution_order(sim)
-    use_end_of_step_timestamp = current_exec_index == length(exec_order)
-    next_stage_initial_time = get_simulation_time(sim, exec_order[current_exec_index])
+    @show "Updating state $(model_name)"
+    @show simulation_time = get_current_time(sim_state)
+    @show next_stage_initial_time = _get_next_problem_initial_time(sim, model_name)
 
     for key in get_dataset_keys(decision_state)
         state_data = get_dataset(decision_state, key)
-        end_of_step_timestamp = get_end_of_step_timestamp(state_data)
-        last_update = get_update_timestamp(decision_state, key)
-        simulation_time > end_of_step_timestamp && continue
-        if use_end_of_step_timestamp || (next_stage_initial_time > end_of_step_timestamp)
-            update_timestamp = end_of_step_timestamp
-        else
-            update_timestamp = simulation_time
-        end
+        @show key
+        @show end_of_step_timestamp = get_end_of_step_timestamp(state_data)
+        @show last_update = get_update_timestamp(decision_state, key)
+        resolution = get_data_resolution(state_data)
+        @show update_timestamp = max(next_stage_initial_time - resolution, simulation_time)
+
+        @show get_update_timestamp(system_state, key)
         if last_update <= simulation_time
             update_system_state!(system_state, key, decision_state, update_timestamp)
         else
@@ -615,7 +630,9 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
     end
 
     IS.@record :execution StateUpdateEvent(simulation_time, model_name, "SystemState")
-
+    if simulation_time > Dates.DateTime("2020-01-01T01:15:00")
+        error()
+    end
     return
 end
 
@@ -658,7 +675,6 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
         end
     end
     IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
-    _update_system_state!(sim, model)
     return
 end
 
@@ -781,9 +797,13 @@ function _execute!(
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
                     if status == RunStatus.SUCCESSFUL
                         # TODO: _update_simulation_state! can use performance improvements
-                        _update_simulation_state!(sim, model)
                         @error model_name
-                        _write_state_to_store!(store, sim)
+                        _update_simulation_state!(sim, model)
+                        if model_number == execution_order[end]
+                            @error "updating system state"
+                            _update_system_state!(sim, model)
+                            _write_state_to_store!(store, sim)
+                        end
                     end
                 end
 

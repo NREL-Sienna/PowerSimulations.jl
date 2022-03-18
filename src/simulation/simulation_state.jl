@@ -233,7 +233,6 @@ function update_decision_state!(
         set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
     end
-
     return
 end
 
@@ -381,17 +380,13 @@ function update_system_state!(
     decision_state::DatasetContainer{DataFrameDataset},
     simulation_time::Dates.DateTime,
 )
+
     decision_dataset = get_dataset(decision_state, key)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
 
     ts = get_value_timestamp(decision_dataset, simulation_time)
     system_dataset = get_dataset(state, key)
-
-    if get_update_timestamp(system_dataset) == ts
-        return
-    end
-
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
