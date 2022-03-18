@@ -587,7 +587,18 @@ end
 function _get_next_problem_initial_time(sim::Simulation, model_name::Symbol)
     current_time = get_current_time(sim)
     sequence = get_sequence(sim)
-    return get_next_problem_initial_time(sequence, model_name, current_time)
+    current_exec_index = sequence.current_execution_index
+    exec_order = get_execution_order(sequence)
+
+    if current_exec_index + 1 > length(exec_order) # Moving to the next step
+        next_initial_time = get_simulation_time(sim, exec_order[1])
+    elseif exec_order[current_exec_index + 1] == exec_order[current_exec_index] # Solving the same problem again
+        current_model_interval = get_interval(sim.sequence, model_name)
+        next_initial_time = current_time + current_model_interval
+    else # Solving another problem next
+        next_initial_time = get_simulation_time(sim, exec_order[current_exec_index + 1])
+    end
+    return next_initial_time
 end
 
 function _update_system_state!(sim::Simulation, model_name::Symbol)
