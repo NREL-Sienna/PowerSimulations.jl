@@ -318,7 +318,6 @@ function initialize_problem_storage!(
             end
         end
     end
-
     buf = IOBuffer()
     Serialization.serialize(buf, container_key_lookup)
     seek(buf, 0)
