@@ -692,21 +692,20 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     simulation_time = get_current_time(sim)
     sim_ini_time = get_initial_time(sim)
     for key in get_dataset_keys(system_state)
-        @error key
-        @show store_update_time = get_last_updated_timestamp(em_store, key)
-        @show state_update_time = get_update_timestamp(system_state, key)
+        store_update_time = get_last_updated_timestamp(em_store, key)
+        state_update_time = get_update_timestamp(system_state, key)
         # If the store is outdated w.r.t to the state
         @assert store_update_time <= simulation_time
         if store_update_time < state_update_time
             dm_dataset = get_decision_state_data(sim_state, key)
             dm_data_resolution = get_data_resolution(dm_dataset)
-            @show _update_timestamp =
+            _update_timestamp =
                 max(store_update_time + dm_data_resolution, sim_ini_time)
             while _update_timestamp <= state_update_time
                 state_values = get_decision_state_value(sim_state, key, _update_timestamp)
                 ix = get_last_recorded_row(em_store, key) + 1
                 write_result!(store, model_name, key, ix, _update_timestamp, state_values)
-                @show _update_timestamp += dm_data_resolution
+                _update_timestamp += dm_data_resolution
             end
         end
     end
