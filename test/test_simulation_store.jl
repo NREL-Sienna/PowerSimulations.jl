@@ -198,7 +198,8 @@ end
         :ED,
         PSI.VariableKey(ActivePowerVariable, InterruptibleLoad),
     )
-    cache = PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true, PSI.CachePriority.LOW))
+    cache =
+        PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true, PSI.CachePriority.LOW))
     @test !PSI.has_clean(cache)
     @test !PSI.is_dirty(cache, Dates.now())
 

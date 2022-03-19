@@ -28,7 +28,8 @@ end
 Base.length(x::OptimizationOutputCache) = length(x.data)
 get_cache_hit_percentage(x::OptimizationOutputCache) = get_cache_hit_percentage(x.stats)
 get_size(x::OptimizationOutputCache) = length(x) * x.size_per_entry
-has_clean(x::OptimizationOutputCache) = !isempty(x.data) && !is_dirty(x, first(keys(x.data)))
+has_clean(x::OptimizationOutputCache) =
+    !isempty(x.data) && !is_dirty(x, first(keys(x.data)))
 has_dirty(x::OptimizationOutputCache) = !isempty(x.dirty_timestamps)
 should_keep_in_cache(x::OptimizationOutputCache) = x.flush_rule.keep_in_cache
 
