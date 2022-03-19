@@ -110,7 +110,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 1032, 0, 888, 192, 240, true)
+    moi_tests(model, false, 1032, 0, 888, 192, 288, true)
 end
 
 @testset "Test Upwards Reserves from Renewable Dispatch" begin
