@@ -22,7 +22,8 @@ get_system_states(s::SimulationState) = s.system_states
 # Not to be used in hot loops
 function get_system_states_resolution(s::SimulationState)
     system_state = get_system_states(s)
-    return minimum(get_data_resolution.(values(system_state.variables)))
+    # All the system states have the same resolution
+    return get_data_resolution(first(values(system_state.variables)))
 end
 
 function set_current_time!(s::SimulationState, val::Dates.DateTime)
