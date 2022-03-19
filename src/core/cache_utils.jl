@@ -36,8 +36,6 @@ function CacheFlushRules(;
         Dict{OptimizationResultCacheKey, CacheFlushRule}(),
         min_flush_size,
         max_size,
-        trunc(low_threshold_percent * 0.01 * max_size),
-        trunc(high_threshold_percent * 0.01 * max_size),
     )
 end
 

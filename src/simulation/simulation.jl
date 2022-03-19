@@ -843,9 +843,9 @@ function execute!(sim::Simulation; kwargs...)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
-        open_store(store_type, get_store_dir(sim), "w") do store
-            set_simulation_store!(sim, store)
-            Logging.with_logger(logger) do
+        Logging.with_logger(logger) do
+            open_store(store_type, get_store_dir(sim), "w") do store
+                set_simulation_store!(sim, store)
                 try
                     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
