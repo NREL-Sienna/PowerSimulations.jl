@@ -18,27 +18,70 @@ function _test_html_print_methods(list::Array)
     end
 end
 
+@testset "Test Model Print Methods" begin
+    template = get_thermal_dispatch_template_network()
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
 
+    dm_model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
+    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
-# TODO: Enable for test coverage later
-# @testset "Test print methods" begin
-#     template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     model = DecisionModel(
-#         MockDecisionProblem,
-#         template,
-#         c_sys5;
-#         optimizer = GLPK_optimizer,
-#
-#     )
-#     list = [template, model, model.container, services]
-#     _test_plain_print_methods(list)
-#     list = [services]
-#     _test_html_print_methods(list)
-# end
+    list = [
+        template,
+        dm_model,
+        PSI.get_model(template, ThermalStandard),
+        PSI.get_network_model(template),
+    ]
+    _test_plain_print_methods(list)
+    _test_html_print_methods(list)
+end
 
-# TODO: Enable for test coverage later
-# @testset "Test print methods" begin
-#     list = [sim, sim.sequence, sim.stages["UC"]]
-#     _test_plain_print_methods(list)
-# end
+@testset "Test Simulation Print Methods" begin
+    template_uc = get_template_basic_uc_simulation()
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
+    set_network_model!(template_uc, NetworkModel(
+        CopperPlatePowerModel,
+        # MILP "duals" not supported with free solvers
+        # duals = [CopperPlateBalanceConstraint],
+    ))
+    set_network_model!(
+        template_ed,
+        NetworkModel(
+            CopperPlatePowerModel,
+            duals=[CopperPlateBalanceConstraint],
+            use_slacks=true,
+        ),
+    )
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    models = SimulationModels(
+        decision_models=[
+            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
+            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=ipopt_optimizer),
+        ],
+    )
+
+    sequence = SimulationSequence(
+        models=models,
+        feedforwards=Dict(
+            "ED" => [
+                SemiContinuousFeedforward(
+                    component_type=ThermalStandard,
+                    source=OnVariable,
+                    affected_values=[ActivePowerVariable],
+                ),
+                IntegralLimitFeedforward(
+                    component_type=HydroEnergyReservoir,
+                    source=ActivePowerVariable,
+                    affected_values=[ActivePowerVariable],
+                    number_of_periods=12,
+                ),
+            ],
+        ),
+        ini_cond_chronology=InterProblemChronology(),
+    )
+    list = [models, sequence, template_uc, template_ed]
+    _test_plain_print_methods(list)
+    _test_html_print_methods(list)
+end

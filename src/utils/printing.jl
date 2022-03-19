@@ -2,7 +2,15 @@ function Base.show(io::IO, container::OptimizationContainer)
     show(io, get_jump_model(container))
 end
 
-function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, DeviceModel})
+function Base.show(io::IO, ::MIME"text/plain", input::Union{ServiceModel, DeviceModel})
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::Union{ServiceModel, DeviceModel})
+    _show_method(io, input, :html)
+end
+
+function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::Symbol)
     println(io)
     header = ["Device Type", "Formulation", "Slacks"]
 
@@ -11,7 +19,14 @@ function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, Device
     table[1, 2] = string(get_formulation(model))
     table[1, 3] = string(model.use_slacks)
 
-    PrettyTables.pretty_table(io, table; header=header, title="Device Model", alignment=:l)
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=header,
+        backend=backend,
+        title="Device Model",
+        alignment=:l,
+    )
 
     if !isempty(model.attributes)
         println(io)
@@ -27,6 +42,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, Device
             io,
             table;
             header=header,
+            backend=backend,
             title="Attributes",
             alignment=:l,
         )
@@ -46,6 +62,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, Device
             io,
             table;
             header=header,
+            backend=backend,
             title="Time Series Names",
             alignment=:l,
         )
@@ -55,7 +72,14 @@ function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, Device
         println(io)
         table = string.(model.duals)
 
-        PrettyTables.pretty_table(io, table; header=header, title="Duals", alignment=:l)
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            backend=backend,
+            title="Duals",
+            alignment=:l,
+        )
     end
 
     if !isempty(model.feedforwards)
@@ -66,6 +90,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, Device
             io,
             table;
             header=header,
+            backend=backend,
             title="Feedforwards",
             alignment=:l,
         )
@@ -75,7 +100,15 @@ function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, Device
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", network_model::NetworkModel)
+function Base.show(io::IO, ::MIME"text/plain", input::NetworkModel)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::NetworkModel)
+    _show_method(io, input, :html)
+end
+
+function _show_method(io::IO, network_model::NetworkModel, backend::Symbol)
     table = [
         "Network Model" string(get_network_formulation(network_model))
         "Slacks" get_use_slacks(network_model)
@@ -86,6 +119,7 @@ function Base.show(io::IO, ::MIME"text/plain", network_model::NetworkModel)
     PrettyTables.pretty_table(
         io,
         table;
+        backend=backend,
         header=["Field", "Value"],
         title="Network Model",
         alignment=:l,
@@ -93,7 +127,27 @@ function Base.show(io::IO, ::MIME"text/plain", network_model::NetworkModel)
     return
 end
 
-function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
+function Base.show(io::IO, ::MIME"text/plain", input::OperationModel)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::OperationModel)
+    _show_method(io, input, :html)
+end
+
+function _show_method(io::IO, model::OperationModel, backend::Symbol)
+    _show_method(io, model.template, backend)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", input::ProblemTemplate)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::ProblemTemplate)
+    _show_method(io, input, :html)
+end
+
+function _show_method(io::IO, template::ProblemTemplate, backend::Symbol)
     table = [
         "Network Model" string(get_network_formulation(template.network_model))
         "Slacks" get_use_slacks(template.network_model)
@@ -104,6 +158,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
     PrettyTables.pretty_table(
         io,
         table;
+        backend=backend,
         header=["Field", "Value"],
         title="Network Model",
         alignment=:l,
@@ -136,6 +191,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
             io,
             table;
             header=header,
+            backend=backend,
             title="Branch Models",
             alignment=:l,
         )
@@ -169,6 +225,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
             io,
             table;
             header=header,
+            backend=backend,
             title="Service Models",
             alignment=:l,
         )
@@ -176,14 +233,18 @@ function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
     return
 end
 
-function Base.show(io::IO, m::MIME"text/plain", model::OperationModel)
-    show(io, m, model.template)
+function Base.show(io::IO, ::MIME"text/plain", input::SimulationModels)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::SimulationModels)
+    _show_method(io, input, :html)
 end
 
 _get_model_type(::DecisionModel{T}) where {T <: DecisionProblem} = T
 _get_model_type(::EmulationModel{T}) where {T <: DecisionProblem} = T
 
-function Base.show(io::IO, ::MIME"text/plain", sim_models::SimulationModels)
+function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol)
     println(io)
     header = ["Model Name", "Model Type", "Status", "Output Directory"]
 
@@ -199,6 +260,7 @@ function Base.show(io::IO, ::MIME"text/plain", sim_models::SimulationModels)
         io,
         table;
         header=header,
+        backend=backend,
         title="Decision Models",
         alignment=:l,
     )
@@ -215,6 +277,7 @@ function Base.show(io::IO, ::MIME"text/plain", sim_models::SimulationModels)
             io,
             table;
             header=header,
+            backend=backend,
             title="Emulator Models",
             alignment=:l,
         )
@@ -224,7 +287,15 @@ function Base.show(io::IO, ::MIME"text/plain", sim_models::SimulationModels)
     end
 end
 
-function Base.show(io::IO, sequence::SimulationSequence)
+function Base.show(io::IO, ::MIME"text/plain", input::SimulationSequence)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::SimulationSequence)
+    _show_method(io, input, :html)
+end
+
+function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol)
     println(io)
     table = [
         "Simulation Step Interval" Dates.Hour(get_step_resolution(sequence))
@@ -234,6 +305,7 @@ function Base.show(io::IO, sequence::SimulationSequence)
     PrettyTables.pretty_table(
         io,
         table;
+        backend=backend,
         header=["Property", "Value"],
         title="Simulation Sequence",
         alignment=:l,
@@ -254,6 +326,7 @@ function Base.show(io::IO, sequence::SimulationSequence)
         io,
         table;
         header=header,
+        backend=backend,
         title="Simulation Problems",
         alignment=:l,
     )
@@ -264,12 +337,13 @@ function Base.show(io::IO, sequence::SimulationSequence)
         table = Matrix{Any}(undef, length(sequence.feedforwards), length(header))
         for (ix, (k, ff)) in enumerate(sequence.feedforwards)
             table[ix, 1] = k
-            table[ix, 2] = join(string.(typeof.(ff)), "\n")
+            table[ix, 2] = join(string.(typeof.(ff)), " ")
         end
         PrettyTables.pretty_table(
             io,
             table;
             header=header,
+            backend=backend,
             title="Feedforwards",
             alignment=:l,
         )
