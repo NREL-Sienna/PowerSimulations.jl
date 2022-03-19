@@ -10,7 +10,6 @@ import PowerSimulations:
     MiB,
     GiB,
     STORE_CONTAINER_VARIABLES,
-    CachePriority,
     initialize_problem_storage!,
     add_rule!,
     write_result!,
@@ -43,8 +42,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
                 "dims" => (horizon, length(model_defs[model]["names"]), num_rows),
             )
             keep_in_cache = variables[key]["keep_in_cache"]
-            cache_priority = variables[key]["cache_priority"]
-            add_rule!(cache_rules, model, key, keep_in_cache, cache_priority)
+            add_rule!(cache_rules, model, key, keep_in_cache)
         end
 
         models[model] = model_params
@@ -153,13 +151,13 @@ end
     )
     variables = Dict(
         PSI.VariableKey(ActivePowerVariable, ThermalStandard) =>
-            Dict("cache_priority" => CachePriority.HIGH, "keep_in_cache" => true),
+            Dict("keep_in_cache" => true),
         PSI.VariableKey(ActivePowerVariable, RenewableDispatch) =>
-            Dict("cache_priority" => CachePriority.HIGH, "keep_in_cache" => true),
+            Dict("keep_in_cache" => true),
         PSI.VariableKey(ActivePowerVariable, InterruptibleLoad) =>
-            Dict("cache_priority" => CachePriority.LOW, "keep_in_cache" => false),
+            Dict("keep_in_cache" => false),
         PSI.VariableKey(ActivePowerVariable, RenewableFix) =>
-            Dict("cache_priority" => CachePriority.LOW, "keep_in_cache" => false),
+            Dict("keep_in_cache" => false),
     )
     model_defs = OrderedDict(
         :ED => Dict(
@@ -198,8 +196,7 @@ end
         :ED,
         PSI.VariableKey(ActivePowerVariable, InterruptibleLoad),
     )
-    cache =
-        PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true, PSI.CachePriority.LOW))
+    cache = PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true))
     @test !PSI.has_clean(cache)
     @test !PSI.is_dirty(cache, Dates.now())
 
