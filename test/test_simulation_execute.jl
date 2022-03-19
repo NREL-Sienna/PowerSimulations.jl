@@ -264,11 +264,6 @@ end
     #     end
     # end
 
-    # TODO: Enable for test coverage later
-    # @testset "Test print methods" begin
-    #     list = [sim, sim.sequence, sim.stages["UC"]]
-    #     _test_plain_print_methods(list)
-    # end
 end
 
 function test_3_stage_simulation_with_feedforwards(in_memory)

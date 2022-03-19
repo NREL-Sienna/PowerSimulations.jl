@@ -229,26 +229,6 @@ function PSI.jump_value(int::Int)
     return int
 end
 
-function _test_plain_print_methods(list::Array)
-    for object in list
-        normal = repr(object)
-        io = IOBuffer()
-        show(io, "text/plain", object)
-        grabbed = String(take!(io))
-        @test grabbed !== nothing
-    end
-end
-
-function _test_html_print_methods(list::Array)
-    for object in list
-        normal = repr(object)
-        io = IOBuffer()
-        show(io, "text/html", object)
-        grabbed = String(take!(io))
-        @test grabbed !== nothing
-    end
-end
-
 function _check_constraint_bounds(bounds::PSI.ConstraintBounds, valid_bounds::NamedTuple)
     @test bounds.coefficient.min == valid_bounds.coefficient.min
     @test bounds.coefficient.max == valid_bounds.coefficient.max

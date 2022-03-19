@@ -179,9 +179,8 @@ struct MockStagesStruct
 end
 
 function Base.show(io::IO, struct_stages::MockStagesStruct)
-    PSI._print_inter_stages(io, struct_stages.stages)
-    println(io, "\n\n")
-    return PSI._print_intra_stages(io, struct_stages.stages)
+    println(io, "mock problem")
+    return
 end
 
 function setup_ic_model_container!(model::DecisionModel)
