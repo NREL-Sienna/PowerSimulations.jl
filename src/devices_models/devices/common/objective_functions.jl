@@ -351,16 +351,14 @@ function _add_service_bid_cost!(
         len=length(time_steps),
     )
     forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
-    # Not implemented yet
-    #for t in time_steps
-    #    proportional_objective!(
-    #        container,
-    #        spec.addtional_linear_terms[PSY.get_name(service)],
-    #        component,
-    #        forecast_data_values[t],
-    #        t,
-    #    )
-    #end
+    reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
+    component_name = PSY.get_name(component)
+    for t in time_steps
+        add_to_objective_invariant_expression!(
+            container,
+            forecast_data_values[t] * reserve_variable[component_name, t],
+        )
+    end
 end
 
 function _add_service_bid_cost!(::OptimizationContainer, ::PSY.Component, ::PSY.Service) end
@@ -371,7 +369,9 @@ function _add_service_bid_cost!(
     service::PSY.ReserveDemandCurve{T},
 ) where {T <: PSY.ReserveDirection}
     error(
-        "Current version doesn't supports cost bid for ReserveDemandCurve services, please change the forecast data for $(PSY.get_name(service))",
+        "The Current version doesn't supports cost bid for ReserveDemandCurve services, \\
+        please change the forecast data for $(PSY.get_name(service)) \\
+        and open a feature request",
     )
     return
 end
