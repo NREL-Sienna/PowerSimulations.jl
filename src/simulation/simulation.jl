@@ -590,9 +590,10 @@ function _get_next_problem_initial_time(sim::Simulation, model_name::Symbol)
     current_exec_index = sequence.current_execution_index
     exec_order = get_execution_order(sequence)
 
-    if current_exec_index + 1 > length(exec_order) # Moving to the next step
+    if length(exec_order) > 1 && (current_exec_index + 1 > length(exec_order)) # Moving to the next step
         next_initial_time = get_simulation_time(sim, exec_order[1])
-    elseif exec_order[current_exec_index + 1] == exec_order[current_exec_index] # Solving the same problem again
+    elseif length(exec_order) == 1 ||
+           exec_order[current_exec_index + 1] == exec_order[current_exec_index] # Solving the same problem again
         current_model_interval = get_interval(sim.sequence, model_name)
         next_initial_time = current_time + current_model_interval
     else # Solving another problem next
@@ -612,8 +613,6 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
         state_data = get_dataset(decision_state, key)
         end_of_step_timestamp = get_end_of_step_timestamp(state_data)
         last_update = get_update_timestamp(decision_state, key)
-
-        get_update_timestamp(system_state, key)
 
         if last_update > simulation_time
             error("Something went really wrong. Please report this error. \\
@@ -693,19 +692,21 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     simulation_time = get_current_time(sim)
     sim_ini_time = get_initial_time(sim)
     for key in get_dataset_keys(system_state)
-        store_update_time = get_last_updated_timestamp(em_store, key)
-        state_update_time = get_update_timestamp(system_state, key)
+        @error key
+        @show store_update_time = get_last_updated_timestamp(em_store, key)
+        @show state_update_time = get_update_timestamp(system_state, key)
         # If the store is outdated w.r.t to the state
         @assert store_update_time <= simulation_time
         if store_update_time < state_update_time
             dm_dataset = get_decision_state_data(sim_state, key)
             dm_data_resolution = get_data_resolution(dm_dataset)
-            _update_timestamp = max(store_update_time + dm_data_resolution, sim_ini_time)
+            @show _update_timestamp =
+                max(store_update_time + dm_data_resolution, sim_ini_time)
             while _update_timestamp <= state_update_time
                 state_values = get_decision_state_value(sim_state, key, _update_timestamp)
                 ix = get_last_recorded_row(em_store, key) + 1
                 write_result!(store, model_name, key, ix, _update_timestamp, state_values)
-                _update_timestamp += dm_data_resolution
+                @show _update_timestamp += dm_data_resolution
             end
         end
     end
