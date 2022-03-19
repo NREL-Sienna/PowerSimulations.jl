@@ -1,82 +1,279 @@
-function _display_model(
-    val::Dict{Tuple{String, Symbol}, T},
-    field::Symbol,
-    io::IO,
-) where {T <: ServiceModel}
-    field = titlecase(string(field))
-    println(io, "$(field) Models:\n")
-    if isempty(val)
-        println("\t No Models Specified\n")
-        return
-    end
-    for (i, ix) in val
-        println(
-            io,
-            "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n",
-        )
+function Base.show(io::IO, container::OptimizationContainer)
+    show(io, get_jump_model(container))
+end
 
-        println(io, "\tName specific Model\n")
+function Base.show(io::IO, ::MIME"text/plain", model::Union{ServiceModel, DeviceModel})
+    println(io)
+    header = ["Device Type", "Formulation", "Slacks"]
+
+    table = Matrix{String}(undef, 1, length(header))
+    table[1, 1] = string(get_component_type(model))
+    table[1, 2] = string(get_formulation(model))
+    table[1, 3] = string(model.use_slacks)
+
+    PrettyTables.pretty_table(io, table; header=header, title="Device Model", alignment=:l)
+
+    if !isempty(model.attributes)
+        println(io)
+        header = ["Name", "Value"]
+
+        table = Matrix{String}(undef, length(model.attributes), length(header))
+        for (ix, (k, v)) in enumerate(model.attributes)
+            table[ix, 1] = string(k)
+            table[ix, 2] = string(v)
+        end
+
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Attributes",
+            alignment=:l,
+        )
+    end
+
+    if !isempty(model.time_series_names)
+        println(io)
+        header = ["Parameter Name", "Time Series Name"]
+
+        table = Matrix{String}(undef, length(model.time_series_names), length(header))
+        for (ix, (k, v)) in enumerate(model.time_series_names)
+            table[ix, 1] = string(k)
+            table[ix, 2] = string(v)
+        end
+
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Time Series Names",
+            alignment=:l,
+        )
+    end
+
+    if !isempty(model.duals)
+        println(io)
+        table = string.(model.duals)
+
+        PrettyTables.pretty_table(io, table; header=header, title="Duals", alignment=:l)
+    end
+
+    if !isempty(model.feedforwards)
+        println(io)
+        table = string.(model.feedforwards)
+
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Feedforwards",
+            alignment=:l,
+        )
+    else
+        println(io)
+        print(io, "No FeedForwards Assigned")
     end
 end
 
-function _display_model(
-    val::Dict{Symbol, T},
-    field::Symbol,
-    io::IO,
-) where {T <: DeviceModel}
-    field = titlecase(string(field))
-    println(io, "$(field) Models: \n")
-    if isempty(val)
-        println("\t No Models Specified\n")
-        return
-    end
-    for (i, ix) in val
-        println(
-            io,
-            "\tType: $(get_component_type(ix))\n \tFormulation: $(get_formulation(ix))\n",
-        )
-    end
+function Base.show(io::IO, ::MIME"text/plain", network_model::NetworkModel)
+    table = [
+        "Network Model" string(get_network_formulation(network_model))
+        "Slacks" get_use_slacks(network_model)
+        "PTDF" !isnothing(get_PTDF(network_model))
+        "Duals" join(string.(get_duals(network_model)), " ")
+    ]
+
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=["Field", "Value"],
+        title="Network Model",
+        alignment=:l,
+    )
+    return
 end
 
-"""
-    Base.show(io::IO, ::MIME"text/plain", op_model::DecisionModel)
+function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
+    table = [
+        "Network Model" string(get_network_formulation(template.network_model))
+        "Slacks" get_use_slacks(template.network_model)
+        "PTDF" !isnothing(get_PTDF(template.network_model))
+        "Duals" join(string.(get_duals(template.network_model)), " ")
+    ]
 
-This function goes through the fields in DecisionModel and then in ProblemTemplate,
-if the field contains a Device model dictionary, it calls organize_device_model() &
-prints the data by field, key, value. If the field is not a Device model dictionary,
-and a value exists for that field it prints the value.
-"""
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=["Field", "Value"],
+        title="Network Model",
+        alignment=:l,
+    )
+
+    println(io)
+    header = ["Device Type", "Formulation", "Slacks"]
+
+    table = Matrix{String}(undef, length(template.devices), length(header))
+    for (ix, model) in enumerate(values(template.devices))
+        table[ix, 1] = string(get_component_type(model))
+        table[ix, 2] = string(get_formulation(model))
+        table[ix, 3] = string(model.use_slacks)
+    end
+
+    PrettyTables.pretty_table(io, table; header=header, title="Device Models", alignment=:l)
+
+    if !isempty(template.branches)
+        println(io)
+        header = ["Branch Type", "Formulation", "Slacks"]
+
+        table = Matrix{String}(undef, length(template.branches), length(header))
+        for (ix, model) in enumerate(values(template.branches))
+            table[ix, 1] = string(get_component_type(model))
+            table[ix, 2] = string(get_formulation(model))
+            table[ix, 3] = string(model.use_slacks)
+        end
+
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Branch Models",
+            alignment=:l,
+        )
+    end
+
+    if !isempty(template.services)
+        println(io)
+        if isempty(first(keys(template.services))[1])
+            header = ["Service Type", "Formulation", "Slacks", "Aggregated Model"]
+        else
+            header = ["Name", "Service Type", "Formulation", "Slacks", "Aggregated Model"]
+        end
+
+        table = Matrix{String}(undef, length(template.services), length(header))
+        for (ix, (key, model)) in enumerate(template.services)
+            if isempty(key[1])
+                table[ix, 1] = string(get_component_type(model))
+                table[ix, 2] = string(get_formulation(model))
+                table[ix, 3] = string(model.use_slacks)
+                table[ix, 4] = string(model.attributes["aggregated_service_model"])
+            else
+                table[ix, 1] = key[1]
+                table[ix, 2] = string(get_component_type(model))
+                table[ix, 3] = string(get_formulation(model))
+                table[ix, 4] = string(model.use_slacks)
+                table[ix, 5] = string(model.attributes["aggregated_service_model"])
+            end
+        end
+
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Service Models",
+            alignment=:l,
+        )
+    end
+    return
+end
+
 function Base.show(io::IO, m::MIME"text/plain", model::OperationModel)
     show(io, m, model.template)
 end
 
+_get_model_type(::DecisionModel{T}) where {T <: DecisionProblem} = T
+_get_model_type(::EmulationModel{T}) where {T <: DecisionProblem} = T
+
 function Base.show(io::IO, ::MIME"text/plain", sim_models::SimulationModels)
-    println(io, "Simulation Models")
-end
+    println(io)
+    header = ["Model Name", "Model Type", "Status", "Output Directory"]
 
-function Base.show(io::IO, ::MIME"text/plain", template::ProblemTemplate)
-    println(io, "\nOperations Problem Specification")
-    println(io, "============================================")
-
-    for field in fieldnames(ProblemTemplate)
-        val = getfield(template, Symbol(field))
-        if field == :network_model
-            println(io, "Transmission: $(get_network_formulation(val))")
-        elseif typeof(val) <: Dict{Symbol, <:DeviceModel}
-            println(io, "============================================")
-            _display_model(val, field, io)
-        elseif typeof(val) <: Dict{Tuple{String, Symbol}, <:ServiceModel}
-            println(io, "============================================")
-            _display_model(val, field, io)
-        else
-            println(io, "")
-        end
+    table = Matrix{Any}(undef, length(sim_models.decision_models), length(header))
+    for (ix, model) in enumerate(sim_models.decision_models)
+        table[ix, 1] = string(get_name(model))
+        table[ix, 2] = string(_get_model_type(model))
+        table[ix, 3] = string(get_status(model))
+        table[ix, 4] = get_output_dir(model)
     end
-    println(io, "============================================")
+
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=header,
+        title="Decision Models",
+        alignment=:l,
+    )
+
+    if !isnothing(sim_models.emulation_model)
+        println(io)
+        table = Matrix{Any}(undef, 1, length(header))
+        table[1, 1] = string(get_name(sim_models.emulation_model))
+        table[1, 2] = string(_get_model_type(sim_models.emulation_model))
+        table[1, 3] = string(get_status(sim_models.emulation_model))
+        table[1, 4] = get_output_dir(sim_models.emulation_model)
+
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Emulator Models",
+            alignment=:l,
+        )
+    else
+        println(io)
+        println(io, "No Emulator Model Specified")
+    end
 end
 
-function Base.show(io::IO, container::OptimizationContainer)
-    show(io, get_jump_model(container))
+function Base.show(io::IO, sequence::SimulationSequence)
+    println(io)
+    table = [
+        "Simulation Step Interval" Dates.Hour(get_step_resolution(sequence))
+        "Number of Problems" length(sequence.executions_by_model)
+    ]
+
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=["Property", "Value"],
+        title="Simulation Sequence",
+        alignment=:l,
+    )
+
+    println(io)
+    header = ["Model Name", "Horizon", "Interval", "Executions Per Step"]
+
+    table = Matrix{Any}(undef, length(sequence.executions_by_model), length(header))
+    for (ix, (model, executions)) in enumerate(sequence.executions_by_model)
+        table[ix, 1] = string(model)
+        table[ix, 2] = sequence.horizons[model]
+        table[ix, 3] = Dates.Minute(sequence.intervals[model])
+        table[ix, 4] = executions
+    end
+
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=header,
+        title="Simulation Problems",
+        alignment=:l,
+    )
+
+    if !isempty(sequence.feedforwards)
+        println(io)
+        header = ["Model Name", "Feed Forward Type"]
+        table = Matrix{Any}(undef, length(sequence.feedforwards), length(header))
+        for (ix, (k, ff)) in enumerate(sequence.feedforwards)
+            table[ix, 1] = k
+            table[ix, 2] = join(string.(typeof.(ff)), "\n")
+        end
+        PrettyTables.pretty_table(
+            io,
+            table;
+            header=header,
+            title="Feedforwards",
+            alignment=:l,
+        )
+    end
 end
 
 function Base.show(io::IO, sim::Simulation)
@@ -198,199 +395,6 @@ function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)
     println(io, "  Duals: $duals")
     params = join(keys(results.parameter_values), " ")
     println(io, "  Parameters: $params")
-end
-
-function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, ServiceModel})
-    println(io, "<h1>Services</h1>")
-    for (k, v) in services
-        println(io, "<p><b>$(k)</b></p>")
-        println(io, "<p>$(v)</p>")
-    end
-end
-
-function _count_stages(sequence::Array)
-    stages = Dict{Int, Int}()
-    stage = 1
-    count = 0
-    for i in 1:length(sequence)
-        if sequence[i] == stage
-            count += 1
-            if i == length(sequence)
-                stages[stage] = count
-            end
-        else
-            stages[stage] = count
-            stage += 1
-            count = 1
-        end
-    end
-    return stages
-end
-
-function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
-    for (keys, sync) in feed_forward
-        period = sync.periods
-        # TODO: this is incorrect
-        stage1 = string(keys[1])
-        stage2 = stage1
-        spaces = " "^(length(stage2) + 2)
-        dashes = "-"^(length(stage2) + 2)
-        if period <= 12
-            times = period
-            line5 = string("└─$stage2 "^times, "($period) to : $to")
-        else
-            times = 12
-            line5 = string("└─$stage2 "^times, "... (x$period) to : $to")
-        end
-        if times == 1
-            line1 = "$stage1--┐ from : $from"
-            println(io, "$line1\n$spaces|\n$spaces$line5\n")
-        else
-            if times == 2
-                line3 = string("┌", string(dashes, "┤"))
-                spacing = 0
-            elseif times == 3
-                line3 = string("┌", string(dashes, "┼"), string(dashes, "┐"))
-                spacing = 0
-            elseif iseven(times)
-                spacing = (Int(times / 2) - 2)
-                line3 = string(
-                    "┌",
-                    string(dashes, "┬")^spacing,
-                    "----",
-                    "┼",
-                    string(dashes, "┬")^(spacing + 1),
-                    "----┐",
-                )
-            else
-                spacing = Int((times / 2) - 1.5)
-                line3 = string(
-                    "┌",
-                    string(dashes, "┬")^spacing,
-                    "----",
-                    "┼",
-                    string(dashes, "┬")^(spacing),
-                    "----┐",
-                )
-            end
-            line1 = string("     "^(spacing), " $stage1--┐ from : $from")
-            line2 = string("     "^(spacing), " "^length(stage1), "   |")
-            line4 = string("|", string(spaces, "|")^(times - 2), "    |")
-            println(io, "$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
-        end
-    end
-end
-function _print_inter_stages(io::IO, stages::Dict{Int, Int})
-    list = sort!(collect(keys(stages)))
-    for i in list
-        num = stages[i]
-        total = length(list)
-        if total > 5
-            println(io, "Too many stages to print.")
-            break
-        else
-            if length("$num") == 1
-                num = " (x0$num)"
-            elseif length("$num") == 3
-                num = " ($num)"
-            elseif length("$num") == 4
-                num = "($num)"
-            else
-                num = " (x$num)"
-            end
-            if i == 1
-                if total == 2
-                    println(io, "$i")
-                else
-                    println(io, "$i\n|")
-                end
-            else
-                N = 2^(i - 2)
-                space_count = 10 * (2^(total - i))
-                if i == total
-                    print1 = "|             ┌----/"^(N - 1)
-                    print2 = "|             |     "^(N - 1)
-                    print3 = "$i --> $i ...$num   "^N
-                    println(io, "$print1|\n$print2|\n$print3")
-                else
-                    spaces = " "^(space_count - 11)
-                    up = Int(space_count / 2)
-                    print = string("$i ", " "^(space_count - 4), "  $i ...$num", spaces)^N
-                    println(io, "$print")
-                    if i !== total - 1
-                        indent1 = string(
-                            string("|", " "^(up + 7), "┌", "-"^(up - 10), "/")^(2 * N - 1),
-                            "|",
-                        )
-                        indent2 = string("|", " "^(up + 7), "|", " "^(up - 9))^(2 * N - 1)
-                        println(io, "$indent1\n$indent2|")
-                    end
-                end
-            end
-        end
-    end
-end
-
-function _print_intra_stages(io::IO, stages::Dict{Int, Int})
-    list = sort!(collect(keys(stages)))
-    for i in list
-        num = stages[i]
-        total = length(list)
-        if total > 5
-            println(io, "Too many stages to print.")
-            break
-        else
-            if length("$num") == 1
-                num = " (x0$num)"
-            elseif length("$num") == 3
-                num = " ($num)"
-            elseif length("$num") == 4
-                num = "($num)"
-            else
-                num = " (x$num)"
-            end
-            if i == 1
-                println(io, "$i\n")
-            else
-                N = 2^(i - 2)
-                space_count = 10 * (2^(total - i))
-                if i == total
-                    print = "$i --> $i ...$num   "^N
-                    println(io, "$print\n\n")
-                else
-                    spaces = " "^(space_count - 11)
-                    print = string("$i ", "-"^(space_count - 4), "> $i ...$num", spaces)^N
-                    indent = string(" "^(space_count))^(N * 2)
-                    println(io, "$print\n$indent")
-                end
-            end
-        end
-    end
-end
-
-function Base.show(io::IO, sequence::SimulationSequence)
-    stages = _count_stages(sequence.execution_order)
-    println(io, "Feed Forward Chronology")
-    println(io, "-----------------------\n")
-    to = []
-    from = ""
-    for (k, v) in sequence.feedforwards
-        #println(io, "$(k): $(typeof(v)) -> $(v.device_type)\n")
-        #to = string.(v.affected_variables)
-        #if isa(v, SemiContinuousFeedforward)
-        #    from = string.(v.binary_source_problem)
-        #else
-        #    from = string.(v.variable_source_problem)
-        #end
-        #_print_feedforward(io, sequence.feedforward_chronologies, to, from)
-    end
-    println(io, "Initial Condition Chronology")
-    println(io, "----------------------------\n")
-    if sequence.ini_cond_chronology == IntraProblemChronology()
-        _print_intra_stages(io, stages)
-    elseif sequence.ini_cond_chronology == InterProblemChronology()
-        _print_inter_stages(io, stages)
-    end
 end
 
 function Base.show(io::IO, ::MIME"text/plain", bounds::ConstraintBounds)
