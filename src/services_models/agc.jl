@@ -242,10 +242,7 @@ function objective_function!(
     areas::IS.FlattenIteratorWrapper{T},
     ::ServiceModel{<:PSY.AGC, U},
 ) where {T <: PSY.Area, U <: PIDSmoothACE}
-    time_steps = get_time_steps(container)
-    for a in areas, t in time_steps
-        _proportional_objective!(container, LiftVariable(), a, SERVICES_SLACK_COST, t)
-    end
+    add_proportional_cost!(container, LiftVariable(), areas, U())
     return
 end
 

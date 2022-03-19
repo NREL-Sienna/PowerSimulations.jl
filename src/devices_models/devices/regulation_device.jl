@@ -21,6 +21,13 @@ get_variable_binary(::AdditionalDeltaActivePowerDownVariable, ::Type{<:PSY.Regul
 get_variable_lower_bound(::AdditionalDeltaActivePowerDownVariable, ::PSY.RegulationDevice, ::AbstractRegulationFormulation) = 0.0
 
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.RegulationDevice, _)  = PSY.get_max_active_power(d)
+
+########################Objective Function##################################################
+proportional_cost(::PSY.OperationalCost, ::AdditionalDeltaActivePowerUpVariable, d::PSY.RegulationDevice, ::AbstractRegulationFormulation) = isapprox(PSY.get_participation_factor(d).up, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / PSY.get_participation_factor(d).up
+proportional_cost(::PSY.OperationalCost, ::AdditionalDeltaActivePowerDownVariable, d::PSY.RegulationDevice, ::AbstractRegulationFormulation) = isapprox(PSY.get_participation_factor(d).dn, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / PSY.get_participation_factor(d).dn
+
+objective_function_multiplier(::VariableType, ::AbstractRegulationFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+
 #! format: on
 
 function get_default_time_series_names(
@@ -228,30 +235,13 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, <:AbstractRegulationFormulation},
-) where {T <: PSY.RegulationDevice{U}} where {U <: PSY.StaticInjection}
-    time_steps = get_time_steps(container)
-    for d in devices, t in time_steps
-        p_factor = PSY.get_participation_factor(d)
-        up_cost =
-            isapprox(p_factor.up, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.up
-        dn_cost =
-            isapprox(p_factor.dn, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.dn
-        _proportional_objective!(
-            container,
-            AdditionalDeltaActivePowerUpVariable(),
-            d,
-            up_cost,
-            t,
-        )
-        _proportional_objective!(
-            container,
-            AdditionalDeltaActivePowerDownVariable(),
-            d,
-            dn_cost,
-            t,
-        )
-    end
+    devs::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+) where {
+    T <: PSY.RegulationDevice{V},
+    U <: AbstractRegulationFormulation,
+} where {V <: PSY.StaticInjection}
+    add_proportional_cost!(container, AdditionalDeltaActivePowerUpVariable(), devs, U())
+    add_proportional_cost!(container, AdditionalDeltaActivePowerDownVariable(), devs, U())
     return
 end

@@ -17,7 +17,6 @@ function add_variable_cost!(
     service::T,
     ::V,
 ) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
-    time_steps = get_time_steps(container)
     _add_variable_cost_to_objective!(container, U(), service, V())
     return
 end
@@ -117,7 +116,22 @@ function add_proportional_cost!(
             DEFAULT_RESERVE_COST * reserve_variable[index...],
         )
     end
-    _add_proportional_term!
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    areas::IS.FlattenIteratorWrapper{T},
+    ::PIDSmoothACE,
+) where {T <: PSY.Area, U <: LiftVariable}
+    lift_variable = get_variable(container, U(), T)
+    for index in Iterators.product(axes(lift_variable)...)
+        add_to_objective_invariant_expression!(
+            container,
+            SERVICES_SLACK_COST * lift_variable[index...],
+        )
+    end
     return
 end
 
