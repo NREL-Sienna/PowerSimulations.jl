@@ -387,6 +387,7 @@ import JSON
 import CSV
 import SHA
 import HDF5
+import PrettyTables
 
 # PowerModels exports
 export ACPPowerModel
