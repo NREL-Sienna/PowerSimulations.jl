@@ -27,7 +27,7 @@ mutable struct HdfSimulationStore <: SimulationStore
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
-    cache::OptimizationResultCache
+    cache::OptimizationOutputCaches
 end
 
 get_initial_time(store::HdfSimulationStore) = get_initial_time(store.params)
@@ -54,7 +54,7 @@ function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
         DatasetContainer{HDF5Dataset}(),
         Dict{Symbol, HDF5.Dataset}(),
         Dict{Symbol, Int}(),
-        OptimizationResultCache(),
+        OptimizationOutputCaches(),
     )
     mode == "r" && _deserialize_attributes!(store)
 
@@ -245,7 +245,7 @@ function initialize_problem_storage!(
     store.params = params
     root = store.file[HDF_SIMULATION_ROOT_PATH]
     problems_group = _get_group_or_create(root, "decision_models")
-    store.cache = OptimizationResultCache(flush_rules)
+    store.cache = OptimizationOutputCaches(flush_rules)
     @info "Initialize store cache" get_min_flush_size(store.cache) get_max_size(store.cache)
     initial_time = get_initial_time(store)
     container_key_lookup = Dict{String, OptimizationContainerKey}()
@@ -719,7 +719,7 @@ function _serialize_attributes(store::HdfSimulationStore)
 end
 
 function _flush_data!(
-    cache::OptimzationResultCache,
+    cache::OptimizationOutputCache,
     store::HdfSimulationStore,
     model_name,
     key::OptimizationContainerKey,
@@ -729,7 +729,7 @@ function _flush_data!(
 end
 
 function _flush_data!(
-    cache::OptimzationResultCache,
+    cache::OptimizationOutputCache,
     store::HdfSimulationStore,
     cache_key::OptimizationResultCacheKey,
     discard::Bool,

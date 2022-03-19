@@ -193,12 +193,12 @@ end
     # _verify_read_results(path, sim, variables, model_defs, seed)
 end
 
-@testset "Test OptimzationResultCache" begin
+@testset "Test OptimizationOutputCache" begin
     key = PSI.OptimizationResultCacheKey(
         :ED,
         PSI.VariableKey(ActivePowerVariable, InterruptibleLoad),
     )
-    cache = PSI.OptimzationResultCache(key, PSI.CacheFlushRule(true, PSI.CachePriority.LOW))
+    cache = PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true, PSI.CachePriority.LOW))
     @test !PSI.has_clean(cache)
     @test !PSI.is_dirty(cache, Dates.now())
 

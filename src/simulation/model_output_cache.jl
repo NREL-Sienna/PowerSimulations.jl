@@ -2,7 +2,7 @@
 Cache for a single parameter/variable/dual.
 Stores arrays chronologically by simulation timestamp.
 """
-mutable struct OptimzationResultCache
+mutable struct OptimizationOutputCache
     key::OptimizationResultCacheKey
     "Contains both clean and dirty entries. Any key in data that is earlier than the first
     dirty timestamp must be clean."
@@ -14,8 +14,8 @@ mutable struct OptimzationResultCache
     flush_rule::CacheFlushRule
 end
 
-function OptimzationResultCache(key, flush_rule)
-    return OptimzationResultCache(
+function OptimizationOutputCache(key, flush_rule)
+    return OptimizationOutputCache(
         key,
         OrderedDict{Dates.DateTime, Array}(),
         Deque{Dates.DateTime}(),
@@ -25,23 +25,23 @@ function OptimzationResultCache(key, flush_rule)
     )
 end
 
-Base.length(x::OptimzationResultCache) = length(x.data)
-get_cache_hit_percentage(x::OptimzationResultCache) = get_cache_hit_percentage(x.stats)
-get_size(x::OptimzationResultCache) = length(x) * x.size_per_entry
-has_clean(x::OptimzationResultCache) = !isempty(x.data) && !is_dirty(x, first(keys(x.data)))
-has_dirty(x::OptimzationResultCache) = !isempty(x.dirty_timestamps)
-should_keep_in_cache(x::OptimzationResultCache) = x.flush_rule.keep_in_cache
+Base.length(x::OptimizationOutputCache) = length(x.data)
+get_cache_hit_percentage(x::OptimizationOutputCache) = get_cache_hit_percentage(x.stats)
+get_size(x::OptimizationOutputCache) = length(x) * x.size_per_entry
+has_clean(x::OptimizationOutputCache) = !isempty(x.data) && !is_dirty(x, first(keys(x.data)))
+has_dirty(x::OptimizationOutputCache) = !isempty(x.dirty_timestamps)
+should_keep_in_cache(x::OptimizationOutputCache) = x.flush_rule.keep_in_cache
 
-function get_dirty_size(cache::OptimzationResultCache)
+function get_dirty_size(cache::OptimizationOutputCache)
     return length(cache.dirty_timestamps) * cache.size_per_entry
 end
 
-function is_dirty(cache::OptimzationResultCache, timestamp)
+function is_dirty(cache::OptimizationOutputCache, timestamp)
     isempty(cache.dirty_timestamps) && return false
     return timestamp >= first(cache.dirty_timestamps)
 end
 
-function Base.empty!(cache::OptimzationResultCache)
+function Base.empty!(cache::OptimizationOutputCache)
     @assert isempty(cache.dirty_timestamps) "dirty cache was still present $(cache.key) $(cache.dirty_timestamps)"
     empty!(cache.data)
     cache.size_per_entry = 0
@@ -51,7 +51,7 @@ end
 """
 Add result to the cache.
 """
-function add_result!(cache::OptimzationResultCache, timestamp, array, system_cache_is_full)
+function add_result!(cache::OptimizationOutputCache, timestamp, array, system_cache_is_full)
     if cache.size_per_entry == 0
         cache.size_per_entry = length(array) * sizeof(first(array))
     end
@@ -76,13 +76,13 @@ function add_result!(cache::OptimzationResultCache, timestamp, array, system_cac
     return cache.size_per_entry
 end
 
-function _add_result!(cache::OptimzationResultCache, timestamp, data)
+function _add_result!(cache::OptimizationOutputCache, timestamp, data)
     cache.data[timestamp] = data
     push!(cache.dirty_timestamps, timestamp)
     return
 end
 
-function discard_results!(cache::OptimzationResultCache, timestamps)
+function discard_results!(cache::OptimizationOutputCache, timestamps)
     for timestamp in timestamps
         pop!(cache.data, timestamp)
     end
@@ -94,7 +94,7 @@ end
 """
 Return all dirty data from the cache. Mark the timestamps as clean.
 """
-function get_dirty_data_to_flush!(cache::OptimzationResultCache)
+function get_dirty_data_to_flush!(cache::OptimizationOutputCache)
     timestamps = [x for x in cache.dirty_timestamps]
     empty!(cache.dirty_timestamps)
     # Uncomment for performance testing of CacheFlush
@@ -106,7 +106,7 @@ function get_dirty_data_to_flush!(cache::OptimzationResultCache)
     return timestamps, arrays
 end
 
-function has_timestamp(cache::OptimzationResultCache, timestamp)
+function has_timestamp(cache::OptimizationOutputCache, timestamp)
     present = haskey(cache.data, timestamp)
     if present
         cache.stats.hits += 1
