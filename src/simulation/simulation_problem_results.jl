@@ -526,7 +526,13 @@ Refer to [`read_realized_variable`](@ref) for help and examples.
 """
 function read_realized_dual(res::SimulationProblemResults, dual::AbstractString; kwargs...)
     return first(
-        values(read_realized_duals(res, [_deserialize_key(ConstraintKey, res, dual)]; kwargs...)),
+        values(
+            read_realized_duals(
+                res,
+                [_deserialize_key(ConstraintKey, res, dual)];
+                kwargs...,
+            ),
+        ),
     )
 end
 
