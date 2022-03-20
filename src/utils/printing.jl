@@ -368,8 +368,62 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
     end
 end
 
-function Base.show(io::IO, sim::Simulation)
-    println(io, "Simulation()")
+function Base.show(io::IO, ::MIME"text/plain", input::Simulation)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::Simulation)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+end
+
+function _get_initial_time_for_show(sim::Simulation)
+    ini_time = get_initial_time(sim)
+    if isnothing(ini_time)
+        return "Unset Initial Time"
+    else
+        return string(ini_time)
+    end
+end
+
+function _get_build_status_for_show(sim::Simulation)
+    internal = sim.internal
+    if isnothing(internal)
+        return "EMPTY"
+    else
+        return string(internal.build_status)
+    end
+end
+
+function _get_run_status_for_show(sim::Simulation)
+    internal = sim.internal
+    if isnothing(internal)
+        return "NOT_READY"
+    else
+        return string(internal.status)
+    end
+end
+
+function _show_method(io::IO, sim::Simulation, backend::Symbol; kwargs...)
+    table = [
+        "Simulation Name" get_name(sim)
+        "Build Status" _get_build_status_for_show(sim)
+        "Run Status" _get_run_status_for_show(sim)
+        "Initial Time" _get_initial_time_for_show(sim)
+        "Steps" get_steps(sim)
+    ]
+
+    PrettyTables.pretty_table(
+        io,
+        table;
+        backend=backend,
+        noheader=true,
+        title="Simulation",
+        alignment=:l,
+        kwargs...,
+    )
+
+    _show_method(io, sim.models, backend; kwargs...)
+    _show_method(io, sim.sequence, backend; kwargs...)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)

@@ -55,6 +55,7 @@ end
     )
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+
     models = SimulationModels(
         decision_models=[
             DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
@@ -81,7 +82,25 @@ end
         ),
         ini_cond_chronology=InterProblemChronology(),
     )
-    list = [models, sequence, template_uc, template_ed]
+
+    sim_not_built = Simulation(
+        name="printing_sim",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
+    )
+
+    sim = Simulation(
+        name="printing_sim",
+        steps=2,
+        models=models,
+        sequence=sequence,
+        simulation_folder=mktempdir(cleanup=true),
+    )
+
+    build!(sim)
+    list = [models, sequence, template_uc, template_ed, sim, sim_not_built]
     _test_plain_print_methods(list)
     _test_html_print_methods(list)
 end
