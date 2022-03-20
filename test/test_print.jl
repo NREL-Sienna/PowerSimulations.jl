@@ -100,7 +100,10 @@ end
     )
 
     build!(sim)
-    list = [models, sequence, template_uc, template_ed, sim, sim_not_built]
+    execute!(sim)
+    results = SimulationResults(sim)
+    results_uc = get_decision_problem_results(results, "UC")
+    list = [models, sequence, template_uc, template_ed, sim, sim_not_built, results_uc]
     _test_plain_print_methods(list)
     _test_html_print_methods(list)
 end

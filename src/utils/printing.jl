@@ -426,121 +426,94 @@ function _show_method(io::IO, sim::Simulation, backend::Symbol; kwargs...)
     _show_method(io, sim.sequence, backend; kwargs...)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::SimulationResults)
-    println(io, "Decision Problem Results:")
-    for res in values(results.decision_problem_results)
-        show(io, MIME"text/plain"(), res)
-    end
-    println(io, "\nEmulation Problem Results:")
-    show(io, MIME"text/plain"(), results.emulation_problem_results)
+function Base.show(io::IO, ::MIME"text/plain", input::SimulationResults)
+    _show_method(io, input, :auto)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", results::SimulationProblemResults)
-    title = results.problem * " Results"
-    println(io, "\n$title")
-    bars = join(("=" for _ in 1:length(title)))
-    println(io, "$bars\n")
-    timestamps = get_timestamps(results)
-    println(io, "Start: $(timestamps.start)")
-    println(io, "End: $(timestamps.stop)")
-    println(io, "Resolution: $(timestamps.step)")
-    println(io, "\n")
-    println(io, "Variables")
-    println(io, "=========\n")
-    for v in list_variable_names(results)
-        println(io, "$(v)")
-    end
-    println(io, "\n")
-    parameters = list_parameter_names(results)
-    duals = list_dual_names(results)
-    for val in [("Parameters", parameters), ("Duals", duals)]
-        if !isempty(val[2])
-            println(io, "$(val[1])")
-            println(io, "==========\n")
-            for v in val[2]
-                println(io, "$(v)")
-            end
-            println(io, "\n")
-        end
-    end
+function Base.show(io::IO, ::MIME"text/html", input::SimulationResults)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-PSIResults = Union{ProblemResults, SimulationProblemResults, SimulationResults}
+function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwargs...)
+    header = ["Problem Name", "Initial Time", "Resolution", "Last Solution Timestamp"]
 
-function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
-    println(io, "<h1>Results</h1>")
+    table = Matrix{Any}(undef, length(results.decision_problem_results), length(header))
+    for (ix, (key, result)) in enumerate(results.decision_problem_results)
+        table[ix, 1] = key
+        table[ix, 2] = result.timestamps.start
+        table[ix, 3] = Dates.Minute(result.timestamps.step)
+        table[ix, 4] = result.timestamps.stop
+    end
+    println(io)
+    PrettyTables.pretty_table(
+        io,
+        table;
+        header=header,
+        backend=backend,
+        title="Decision Problem Results",
+        alignment=:l,
+    )
+
+    println(io)
+    table = [
+        "Name" results.emulation_problem_results.problem
+        "Resolution" Dates.Minute(results.emulation_problem_results.resolution)
+        "Number of steps" length(results.emulation_problem_results.timestamps)
+    ]
+    PrettyTables.pretty_table(
+        io,
+        table;
+        noheader=true,
+        backend=backend,
+        title="Emulator Results",
+        alignment=:l,
+        kwargs...
+    )
+end
+
+ProblemResultsTypes = Union{ProblemResults, SimulationProblemResults}
+function Base.show(io::IO, ::MIME"text/plain", input::ProblemResultsTypes)
+    _show_method(io, input, :auto)
+end
+
+function Base.show(io::IO, ::MIME"text/html", input::ProblemResultsTypes)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+end
+
+function _show_method(io::IO, results::ProblemResultsTypes, backend::Symbol; kwargs...)
     timestamps = get_timestamps(results)
-    println(io, "<p> Start: $(timestamps.start)</p>")
-    println(io, "<p> End: $(timestamps.stop)</p>")
-    println(io, "<p> Resolution: $(timestamps.step)</p>")
-    println(io, "<h2>Variables</h2>")
-    times = IS.get_timestamp(results)
-    variables = IS.get_variables(results)
-    if (length(keys(variables)) > 5)
-        for (k, v) in variables
-            println(io, "<p>$k: $(size(v))</p>")
-        end
+
+    if backend == :html
+        println(io, "<p> Start: $(timestamps.start)</p>")
+        println(io, "<p> End: $(timestamps.stop)</p>")
+        println(io, "<p> Resolution: $(Dates.Minute(timestamps.step))</p>")
     else
-        for (k, v) in IS.get_variables(results)
-            if size(times, 1) == size(v, 1)
-                var = hcat(times, v)
-            else
-                var = v
-            end
-            (l, w) = size(var)
-            if w < 6
-                println(io, "<b>$(k)</b>")
-                println(io, "<p>$("-" ^ length("$k"))</p>")
-                show(io, MIME"text/html"(), var)
-            else
-                println(io, "<p>$(k)  size ($l, $w)</p>")
-            end
-        end
+        println(io, "Start: $(timestamps.start)")
+        println(io, "End: $(timestamps.stop)")
+        println(io, "Resolution: $(Dates.Minute(timestamps.step))")
     end
-    parameters = IS.get_parameters(results)
-    if !isempty(parameters)
-        println(io, "<h2>Parameters</h2>")
-        for (k, v) in parameters
-            if size(times, 1) == size(v, 1)
-                var = hcat(times, v)
-            else
-                var = v
-            end
-            (l, w) = size(var)
-            if w < 6
-                println(io, "<b>$(k)</b>")
-                println(io, "<p>$("-" ^ length("$k"))</p>")
-                show(io, MIME"text/html"(), var)
-            else
-                println(io, "<p>$(k)  size ($l, $w)</p>")
-            end
-        end
-    end
-    println(io, "<p><b>Optimizer Log</b></p>")
-    for (k, v) in results.optimizer_stats
-        if v !== nothing
-            println(io, "<p>        $(k) = $(v)</p>")
-        end
-    end
-    println(io, "\n")
-    for (k, v) in results.total_cost
-        println(io, "<p><b>Total Cost: $(v)<b/></p>")
-    end
-end
 
-function Base.show(io::IO, stage::DecisionModel)
-    println(io, "DecisionModel()")
-end
-
-function Base.show(io::IO, ::MIME"text/plain", results::ProblemResults)
-    println(io, "ProblemResults:")
-    println(io, "  Base power: $(results.base_power)")
-    vars = join(keys(results.variable_values), " ")
-    println(io, "  Variables: $vars")
-    duals = join(keys(results.dual_values), " ")
-    println(io, "  Duals: $duals")
-    params = join(keys(results.parameter_values), " ")
-    println(io, "  Parameters: $params")
+    values = Dict{String, Vector{String}}(
+        "Variables" => list_variable_names(results),
+        "Auxiliary variables" => list_aux_variable_names(results),
+        "Duals" => list_dual_names(results),
+        "Expressions" => list_expression_names(results),
+        "Parameters" => list_parameter_names(results),
+    )
+    for (k, val) in values
+        if !isempty(val)
+            println(io)
+            PrettyTables.pretty_table(
+                io,
+                val;
+                noheader=true,
+                backend=backend,
+                title="$(results.problem) Problem $k Results",
+                alignment=:l,
+                kwargs...
+            )
+        end
+    end
 end
 
 function Base.show(io::IO, ::MIME"text/plain", bounds::ConstraintBounds)
