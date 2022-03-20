@@ -7,10 +7,15 @@ function Base.show(io::IO, ::MIME"text/plain", input::Union{ServiceModel, Device
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::Union{ServiceModel, DeviceModel})
-    _show_method(io, input, :html)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::Symbol)
+function _show_method(
+    io::IO,
+    model::Union{ServiceModel, DeviceModel},
+    backend::Symbol;
+    kwargs...,
+)
     println(io)
     header = ["Device Type", "Formulation", "Slacks"]
 
@@ -26,6 +31,7 @@ function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::
         backend=backend,
         title="Device Model",
         alignment=:l,
+        kwargs...,
     )
 
     if !isempty(model.attributes)
@@ -45,6 +51,7 @@ function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::
             backend=backend,
             title="Attributes",
             alignment=:l,
+            kwargs...,
         )
     end
 
@@ -65,6 +72,7 @@ function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::
             backend=backend,
             title="Time Series Names",
             alignment=:l,
+            kwargs...,
         )
     end
 
@@ -79,6 +87,7 @@ function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::
             backend=backend,
             title="Duals",
             alignment=:l,
+            kwargs...,
         )
     end
 
@@ -93,6 +102,7 @@ function _show_method(io::IO, model::Union{ServiceModel, DeviceModel}, backend::
             backend=backend,
             title="Feedforwards",
             alignment=:l,
+            kwargs...,
         )
     else
         println(io)
@@ -105,10 +115,10 @@ function Base.show(io::IO, ::MIME"text/plain", input::NetworkModel)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::NetworkModel)
-    _show_method(io, input, :html)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-function _show_method(io::IO, network_model::NetworkModel, backend::Symbol)
+function _show_method(io::IO, network_model::NetworkModel, backend::Symbol; kwargs...)
     table = [
         "Network Model" string(get_network_formulation(network_model))
         "Slacks" get_use_slacks(network_model)
@@ -123,6 +133,7 @@ function _show_method(io::IO, network_model::NetworkModel, backend::Symbol)
         header=["Field", "Value"],
         title="Network Model",
         alignment=:l,
+        kwargs...,
     )
     return
 end
@@ -132,11 +143,11 @@ function Base.show(io::IO, ::MIME"text/plain", input::OperationModel)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::OperationModel)
-    _show_method(io, input, :html)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-function _show_method(io::IO, model::OperationModel, backend::Symbol)
-    _show_method(io, model.template, backend)
+function _show_method(io::IO, model::OperationModel, backend::Symbol; kwargs...)
+    _show_method(io, model.template, backend; kwargs...)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", input::ProblemTemplate)
@@ -144,10 +155,10 @@ function Base.show(io::IO, ::MIME"text/plain", input::ProblemTemplate)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::ProblemTemplate)
-    _show_method(io, input, :html)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-function _show_method(io::IO, template::ProblemTemplate, backend::Symbol)
+function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs...)
     table = [
         "Network Model" string(get_network_formulation(template.network_model))
         "Slacks" get_use_slacks(template.network_model)
@@ -159,9 +170,10 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol)
         io,
         table;
         backend=backend,
-        header=["Field", "Value"],
+        noheader=true,
         title="Network Model",
         alignment=:l,
+        kwargs...,
     )
 
     println(io)
@@ -194,6 +206,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol)
             backend=backend,
             title="Branch Models",
             alignment=:l,
+            kwargs...,
         )
     end
 
@@ -228,6 +241,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol)
             backend=backend,
             title="Service Models",
             alignment=:l,
+            kwargs...,
         )
     end
     return
@@ -238,13 +252,13 @@ function Base.show(io::IO, ::MIME"text/plain", input::SimulationModels)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationModels)
-    _show_method(io, input, :html)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
 _get_model_type(::DecisionModel{T}) where {T <: DecisionProblem} = T
 _get_model_type(::EmulationModel{T}) where {T <: DecisionProblem} = T
 
-function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol)
+function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwargs...)
     println(io)
     header = ["Model Name", "Model Type", "Status", "Output Directory"]
 
@@ -263,6 +277,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol)
         backend=backend,
         title="Decision Models",
         alignment=:l,
+        kwargs...,
     )
 
     if !isnothing(sim_models.emulation_model)
@@ -280,6 +295,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol)
             backend=backend,
             title="Emulator Models",
             alignment=:l,
+            kwargs...,
         )
     else
         println(io)
@@ -292,10 +308,10 @@ function Base.show(io::IO, ::MIME"text/plain", input::SimulationSequence)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationSequence)
-    _show_method(io, input, :html)
+    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol)
+function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwargs...)
     println(io)
     table = [
         "Simulation Step Interval" Dates.Hour(get_step_resolution(sequence))
@@ -306,9 +322,10 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol)
         io,
         table;
         backend=backend,
-        header=["Property", "Value"],
+        noheader=true,
         title="Simulation Sequence",
         alignment=:l,
+        kwargs...,
     )
 
     println(io)
@@ -346,6 +363,7 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol)
             backend=backend,
             title="Feedforwards",
             alignment=:l,
+            kwargs...,
         )
     end
 end
