@@ -530,7 +530,6 @@ function Base.show(io::IO, ::MIME"text/plain", bounds::VariableBounds)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", bounds::NumericalBounds)
-    spacing = 1
     println(io, rpad("  Minimum", 20), "Maximum")
     println(io, rpad("  $(bounds.min)", 20), "$(bounds.max)")
 end
