@@ -467,7 +467,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
         backend=backend,
         title="Emulator Results",
         alignment=:l,
-        kwargs...
+        kwargs...,
     )
 end
 
@@ -510,7 +510,7 @@ function _show_method(io::IO, results::ProblemResultsTypes, backend::Symbol; kwa
                 backend=backend,
                 title="$(results.problem) Problem $k Results",
                 alignment=:l,
-                kwargs...
+                kwargs...,
             )
         end
     end
