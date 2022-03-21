@@ -401,7 +401,7 @@ function read_realized_aux_variable(
         values(
             read_realized_aux_variables(
                 res,
-                [_deserialize_key(aux_variableKey, res, aux_variable)];
+                [_deserialize_key(AuxVarKey, res, aux_variable)];
                 kwargs...,
             ),
         ),
