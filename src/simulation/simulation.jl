@@ -294,32 +294,32 @@ function _get_model_store_requirements!(
     for (key, array) in get_duals(container)
         !should_write_resulting_value(key) && continue
         reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, true, CachePriority.LOW)
+        add_rule!(rules, model_name, key, true)
     end
 
     for (key, param_container) in get_parameters(container)
         !should_write_resulting_value(key) && continue
         array = get_parameter_array(param_container)
         reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+        add_rule!(rules, model_name, key, false)
     end
 
     for (key, array) in get_variables(container)
         !should_write_resulting_value(key) && continue
         reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, true, CachePriority.HIGH)
+        add_rule!(rules, model_name, key, true)
     end
 
     for (key, array) in get_aux_variables(container)
         !should_write_resulting_value(key) && continue
         reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, true, CachePriority.HIGH)
+        add_rule!(rules, model_name, key, true)
     end
 
     for (key, array) in get_expressions(container)
         !should_write_resulting_value(key) && continue
         reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon)
-        add_rule!(rules, model_name, key, false, CachePriority.LOW)
+        add_rule!(rules, model_name, key, false)
     end
 
     return reqs
@@ -380,7 +380,7 @@ function _initialize_problem_storage!(
     dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     rules = CacheFlushRules(
         max_size=cache_size_mib * MiB,
-        min_flush_size=min_cache_flush_size_mib,
+        min_flush_size=trunc(min_cache_flush_size_mib * MiB),
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
@@ -699,7 +699,7 @@ end
 
 function _execute!(
     sim::Simulation;
-    cache_size_mib=1024,
+    cache_size_mib=DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
     min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
     exports=nothing,
     enable_progress_bar=progress_meter_enabled(),
@@ -843,9 +843,9 @@ function execute!(sim::Simulation; kwargs...)
         error("Simulation status is invalid, you need to rebuild the simulation")
     end
     try
-        open_store(store_type, get_store_dir(sim), "w") do store
-            set_simulation_store!(sim, store)
-            Logging.with_logger(logger) do
+        Logging.with_logger(logger) do
+            open_store(store_type, get_store_dir(sim), "w") do store
+                set_simulation_store!(sim, store)
                 try
                     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
@@ -859,10 +859,12 @@ function execute!(sim::Simulation; kwargs...)
                     @error "simulation failed" exception = (e, catch_backtrace())
                 end
             end
+            @error "expect the log to close now"
         end
     finally
         _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)
+        @error "explicitly close log now"
         close(logger)
     end
 

@@ -4,15 +4,16 @@ struct OptimizationResultCacheKey
     key::OptimizationContainerKey
 end
 
-# Priority for keeping data in cache to serve reads. Currently unused.
-IS.@scoped_enum(CachePriority, LOW = 1, MEDIUM = 2, HIGH = 3,)
-
 struct CacheFlushRule
     keep_in_cache::Bool
-    priority::CachePriority
 end
 
-CacheFlushRule() = CacheFlushRule(false, CachePriority.LOW)
+CacheFlushRule() = CacheFlushRule(false)
+
+const DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB = 1024
+const DEFAULT_SIMULATION_STORE_CACHE_SIZE = DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB * MiB
+const MIN_CACHE_FLUSH_SIZE_MiB = 1
+const MIN_CACHE_FLUSH_SIZE = MIN_CACHE_FLUSH_SIZE_MiB * MiB
 
 """
 Informs the flusher on what data to keep in cache.
@@ -23,9 +24,10 @@ struct CacheFlushRules
     max_size::Int
 end
 
-const MIN_CACHE_FLUSH_SIZE_MiB = MiB
-
-function CacheFlushRules(; max_size=GiB, min_flush_size=MIN_CACHE_FLUSH_SIZE_MiB)
+function CacheFlushRules(;
+    max_size=DEFAULT_SIMULATION_STORE_CACHE_SIZE,
+    min_flush_size=MIN_CACHE_FLUSH_SIZE,
+)
     return CacheFlushRules(
         Dict{OptimizationResultCacheKey, CacheFlushRule}(),
         min_flush_size,
@@ -38,10 +40,9 @@ function add_rule!(
     model_name,
     op_container_key,
     keep_in_cache::Bool,
-    priority,
 )
     key = OptimizationResultCacheKey(model_name, op_container_key)
-    rules.data[key] = CacheFlushRule(keep_in_cache, priority)
+    rules.data[key] = CacheFlushRule(keep_in_cache)
     return
 end
 

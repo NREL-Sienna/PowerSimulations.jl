@@ -27,7 +27,7 @@ mutable struct HdfSimulationStore <: SimulationStore
     # The key is the problem name.
     optimizer_stats_datasets::Dict{Symbol, HDF5.Dataset}
     optimizer_stats_write_index::Dict{Symbol, Int}
-    cache::OptimizationResultCache
+    cache::OptimizationOutputCaches
 end
 
 get_initial_time(store::HdfSimulationStore) = get_initial_time(store.params)
@@ -47,16 +47,14 @@ function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
         @debug "Created store" file_path
     end
 
-    datasets = OrderedDict{Symbol, DatasetContainer{HDF5Dataset}}()
-    cache = OptimizationResultCache()
     store = HdfSimulationStore(
         file,
         SimulationStoreParams(),
-        datasets,
+        OrderedDict{Symbol, DatasetContainer{HDF5Dataset}}(),
         DatasetContainer{HDF5Dataset}(),
         Dict{Symbol, HDF5.Dataset}(),
         Dict{Symbol, Int}(),
-        cache,
+        OptimizationOutputCaches(),
     )
     mode == "r" && _deserialize_attributes!(store)
 
@@ -110,7 +108,6 @@ function open_store(
         return func(store)
     finally
         if store !== nothing
-            flush(store)
             close(store)
         end
     end
@@ -119,6 +116,7 @@ end
 function Base.close(store::HdfSimulationStore)
     flush(store)
     HDF5.close(store.file)
+    empty!(store.cache)
     @debug "Close store file handle" store.file
 end
 
@@ -129,6 +127,7 @@ end
 function Base.flush(store::HdfSimulationStore)
     for (key, output_cache) in store.cache.data
         _flush_data!(output_cache, store, key, false)
+        @assert !has_dirty(output_cache) "$key has dirty cache after flushing"
     end
 
     flush(store.file)
@@ -246,9 +245,8 @@ function initialize_problem_storage!(
     store.params = params
     root = store.file[HDF_SIMULATION_ROOT_PATH]
     problems_group = _get_group_or_create(root, "decision_models")
-    set_max_size!(store.cache, flush_rules.max_size)
-    set_min_flush_size!(store.cache, flush_rules.min_flush_size)
-    @debug "initialize_problem_storage" store.cache
+    store.cache = OptimizationOutputCaches(flush_rules)
+    @info "Initialize store cache" get_min_flush_size(store.cache) get_max_size(store.cache)
     initial_time = get_initial_time(store)
     container_key_lookup = Dict{String, OptimizationContainerKey}()
     for (problem, problem_params) in store.params.decision_models_params
@@ -511,7 +509,7 @@ function write_result!(
         # flushes and submit them in parallel.
         size_flushed = _flush_data!(output_cache, store, model_name, key, discard)
 
-        @debug "flushed data" key size_flushed discard
+        @debug "flushed data" LOG_GROUP_SIMULATION_STORE key size_flushed discard cur_size
     end
 
     # Disabled because this is currently a noop.
@@ -519,7 +517,7 @@ function write_result!(
     #    _flush_data!(store.cache, store)
     #end
 
-    @debug "write_result" get_size(store.cache)
+    @debug "write_result" get_size(store.cache) encode_key_as_string(key)
     return
 end
 
@@ -721,7 +719,7 @@ function _serialize_attributes(store::HdfSimulationStore)
 end
 
 function _flush_data!(
-    cache::OptimzationResultCache,
+    cache::OptimizationOutputCache,
     store::HdfSimulationStore,
     model_name,
     key::OptimizationContainerKey,
@@ -731,14 +729,14 @@ function _flush_data!(
 end
 
 function _flush_data!(
-    cache::OptimzationResultCache,
+    cache::OptimizationOutputCache,
     store::HdfSimulationStore,
     cache_key::OptimizationResultCacheKey,
     discard::Bool,
 )
     !has_dirty(cache) && return 0
     dataset = _get_dm_dataset(store, cache_key)
-    timestamps, data = get_data_to_flush!(cache, get_min_flush_size(store.cache))
+    timestamps, data = get_dirty_data_to_flush!(cache)
     num_results = length(timestamps)
     @assert_op num_results == size(data)[end]
     end_index = dataset.write_index + length(timestamps) - 1
@@ -753,16 +751,10 @@ function _flush_data!(
     dataset.write_index += num_results
     size_flushed = cache.size_per_entry * num_results
 
-    @debug "Flushed cache results to HDF5" key size_flushed
+    @debug "Flushed cache results to HDF5" LOG_GROUP_SIMULATION_STORE cache_key size_flushed num_results get_size(
+        store.cache,
+    )
     return size_flushed
-end
-
-function _flush_data!(cache::OptimzationResultCache, store::HdfSimulationStore)
-    # PERF: may need to optimize memory management
-    # Do we need flush down to some ~70% watermark?
-    # What are GC implications of doing replacing entries one at a time vs freeing large
-    # chunks at once?
-    return
 end
 
 function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_name)

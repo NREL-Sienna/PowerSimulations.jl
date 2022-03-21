@@ -172,7 +172,7 @@ function read_result(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
-    return read_results(get_em_data(store), key, index)
+    return read_results(get_em_data(store), key, index=index)
 end
 
 function read_results(
