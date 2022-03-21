@@ -623,9 +623,6 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
 
         resolution = get_data_resolution(state_data)
         update_timestamp = max(next_stage_initial_time - resolution, simulation_time)
-        if end_of_step_timestamp < update_timestamp
-            @error("Can't update the state with a data beyond the step")
-        end
         if update_timestamp < get_update_timestamp(system_state, key)
             error("The update overwrites more recent data with past data")
         elseif update_timestamp > get_update_timestamp(system_state, key)
