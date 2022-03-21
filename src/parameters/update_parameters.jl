@@ -5,22 +5,22 @@ function update_parameter_values!(
 ) where {T <: Union{Float64, PJ.ParameterRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(
-    param::AbstractArray{PJ.ParameterRef},
-    value::Float64,
-    name::String,
-    t::Int,
-)
+function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, t::Int)
     JuMP.set_value(param[name, t], value)
     return
 end
 
 function _set_param_value!(
-    param::AbstractArray{Float64},
-    value::Float64,
+    param::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    value::Vector{NTuple{2, Float64}},
     name::String,
     t::Int,
 )
+    param[name, t] = value
+    return
+end
+
+function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
     param[name, t] = value
     return
 end
@@ -249,6 +249,77 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: EnergyLimitParameter, U <: PSY.Generator}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    internal = get_internal(model)
+    execution_count = internal.execution_count
+    current_time = get_current_time(model)
+    state_values = get_dataset_values(input, get_attribute_key(parameter_attributes))
+    component_names, time = axes(parameter_array)
+    resolution = get_resolution(model)
+    interval_time_steps = Int(get_interval(model.internal.store_parameters) / resolution)
+    state_data = get_dataset(input, get_attribute_key(parameter_attributes))
+    state_timestamps = state_data.timestamps
+    max_state_index = length(state_data)
+
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    old_parameter_values = JuMP.value.(parameter_array)
+    # The current method uses older parameter values because when passing the energy output from one stage
+    # to the next, the aux variable values gets over-written by the lower level model after its solve.
+    # This approach is a temporary hack and will be replaced in future versions.
+    for t in time
+        timestamp_ix = min(max_state_index, state_data_index + 1)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[timestamp_ix] <= sim_timestamps[t]
+            state_data_index = timestamp_ix
+        end
+        for name in component_names
+            # the if statement checks if its the first solve of the model and uses the values stored in the state
+            # and for subsequent solves uses the state data to update the parameter values for the last set of time periods 
+            # that are equal to the length of the interval i.e. the time periods that dont overlap between each solves.
+            if execution_count == 0 || t > time[end] - interval_time_steps
+                # Pass indices in this way since JuMP DenseAxisArray don't support view()
+                _set_param_value!(
+                    parameter_array,
+                    state_values[state_data_index, name],
+                    name,
+                    t,
+                )
+            else
+                # Currently the update method relies on using older parameter values of the EnergyLimitParameter
+                # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
+                # in the model interval time periods.
+                _set_param_value!(
+                    parameter_array,
+                    old_parameter_values[name, t + interval_time_steps],
+                    name,
+                    t,
+                )
+            end
+        end
+    end
+
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    return
+end
+
 """
 Update parameter function an OperationModel
 """
@@ -277,18 +348,8 @@ function update_parameter_values!(
     return
 end
 
-function _set_param_value!(
-    param::AbstractArray{Vector{NTuple{2, Float64}}},
-    value::Vector{NTuple{2, Float64}},
-    name::String,
-    t::Int,
-)
-    param[name, t] = value
-    return
-end
-
 function update_parameter_values!(
-    param_array::AbstractArray{Vector{NTuple{2, Float64}}},
+    param_array,
     attributes::CostFunctionAttributes,
     ::Type{V},
     model::DecisionModel,
@@ -299,7 +360,7 @@ function update_parameter_values!(
     horizon = time_steps[end]
     container = get_optimization_container(model)
     if is_synchronized(container)
-        obj_func = get_cost_function(container)
+        obj_func = get_objective_function(container)
         set_synchronized_status(obj_func, false)
         reset_variant_terms(obj_func)
     end
@@ -331,3 +392,71 @@ _has_variable_cost_parameter(component::PSY.Component) =
     _has_variable_cost_parameter(PSY.get_operation_cost(component))
 _has_variable_cost_parameter(::PSY.MarketBidCost) = true
 _has_variable_cost_parameter(::T) where {T <: PSY.OperationalCost} = false
+
+function _update_pwl_cost_expression(
+    container::OptimizationContainer,
+    ::Type{T},
+    component_name::String,
+    time_period::Int,
+    cost_data::Vector{NTuple{2, Float64}},
+) where {T <: PSY.Component}
+    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    gen_cost = JuMP.AffExpr(0.0)
+    slopes = PSY.get_slopes(cost_data)
+    upb = PSY.get_breakpoint_upperbounds(cost_data)
+    for i in 1:length(cost_data)
+        JuMP.add_to_expression!(
+            gen_cost,
+            slopes[i] * upb[i] * dt * pwl_var_container[(component_name, i, time_period)],
+        )
+    end
+    return gen_cost
+end
+
+function update_variable_cost!(
+    container::OptimizationContainer,
+    param_array::JuMPFloatArray,
+    attributes::CostFunctionAttributes{Float64},
+    component::T,
+    time_period::Int,
+) where {T <: PSY.Component}
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    component_name = PSY.get_name(component)
+    cost_data = param_array[component_name, time_period]
+    if iszero(cost_data)
+        return
+    end
+    variable = get_variable(container, get_variable_type(attributes)(), T)
+    gen_cost = variable[component_name, time_period] * cost_data * base_power * dt
+    # Attribute doesn't have multiplier
+    # gen_cost = attributes.multiplier * gen_cost_
+    add_to_objective_variant_expression!(container, gen_cost)
+    set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
+    return
+end
+
+function update_variable_cost!(
+    container::OptimizationContainer,
+    param_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    ::CostFunctionAttributes{Vector{NTuple{2, Float64}}},
+    component::T,
+    time_period::Int,
+) where {T <: PSY.Component}
+    component_name = PSY.get_name(component)
+    cost_data = param_array[component_name, time_period]
+    if all(iszero.(last.(cost_data)))
+        return
+    end
+
+    gen_cost =
+        _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
+    # Attribute doesn't have multiplier
+    # gen_cost = attributes.multiplier * gen_cost_
+    add_to_objective_variant_expression!(container, gen_cost)
+    set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
+    return
+end

@@ -196,6 +196,34 @@ function add_to_expression!(
     return
 end
 
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: OnVariable,
+    V <: PSY.ThermalGen,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+    X <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), X)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        _add_to_jump_expression!(
+            expression[bus_number, t],
+            variable[name, t],
+            get_variable_multiplier(U(), d, W()),
+        )
+    end
+    return
+end
+
 """
 Default implementation to add parameters to SystemBalanceExpressions
 """
@@ -278,6 +306,33 @@ function add_to_expression!(
             expression[t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnVariable,
+    V <: PSY.ThermalGen,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+    X <: CopperPlatePowerModel,
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), X)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        _add_to_jump_expression!(
+            expression[t],
+            variable[name, t],
+            get_variable_multiplier(U(), d, W()),
         )
     end
     return
@@ -376,6 +431,40 @@ function add_to_expression!(
             nodal_expr[bus_no, t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnVariable,
+    V <: PSY.ThermalGen,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
+}
+    variable = get_variable(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    nodal_expr = get_expression(container, T(), PSY.Bus)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        bus_no = PSY.get_number(PSY.get_bus(d))
+        _add_to_jump_expression!(
+            sys_expr[t],
+            variable[name, t],
+            get_variable_multiplier(U(), d, W()),
+        )
+        _add_to_jump_expression!(
+            nodal_expr[bus_no, t],
+            variable[name, t],
+            get_variable_multiplier(U(), d, W()),
         )
     end
     return

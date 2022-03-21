@@ -81,7 +81,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     aux_variables::Dict{AuxVarKey, AbstractArray}
     duals::Dict{ConstraintKey, AbstractArray}
     constraints::Dict{ConstraintKey, AbstractArray}
-    cost_function::ObjectiveFunction
+    objective_function::ObjectiveFunction
     expressions::Dict{ExpressionKey, AbstractArray}
     parameters::Dict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
@@ -174,8 +174,9 @@ get_variables(container::OptimizationContainer) = container.variables
 
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
-get_cost_function(container::OptimizationContainer) = container.cost_function
-is_synchronized(container::OptimizationContainer) = container.cost_function.synchronized
+get_objective_function(container::OptimizationContainer) = container.objective_function
+is_synchronized(container::OptimizationContainer) =
+    container.objective_function.synchronized
 
 function has_container_key(
     container::OptimizationContainer,
@@ -555,7 +556,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         JuMP.@objective(
             container.JuMPmodel,
             MOI.MIN_SENSE,
-            get_objective_fuction(container.cost_function)
+            get_objective_fuction(container.objective_function)
         )
     end
     @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
@@ -566,11 +567,11 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     return
 end
 
-function update_cost_function!(container::OptimizationContainer)
+function update_objective_function!(container::OptimizationContainer)
     JuMP.@objective(
         container.JuMPmodel,
         MOI.MIN_SENSE,
-        get_objective_fuction(container.cost_function)
+        get_objective_fuction(container.objective_function)
     )
     return
 end
@@ -810,7 +811,7 @@ function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     if aux === nothing
         name = encode_key(key)
         keys = encode_key.(get_variable_keys(container))
-        throw(IS.InvalidValue("Auxiliary variable $name is not stored"))
+        throw(IS.InvalidValue("Auxiliary variable $name is not stored. $keys"))
     end
     return aux
 end
@@ -961,20 +962,18 @@ end
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
-    attribute::CostFunctionAttributes,
+    attributes::CostFunctionAttributes{R},
     axs...;
     sparse=false,
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    # Temporary solution uses Float64 paramters and re-builds the cost function each time.
-    param_type = Float64
+) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
     if sparse
-        param_array = sparse_container_spec(param_type, axs...)
+        param_array = sparse_container_spec(R, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
     else
-        param_array = DenseAxisArray{Vector{NTuple{2, Float64}}}(undef, axs...)
+        param_array = DenseAxisArray{R}(undef, axs...)
         multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
     end
-    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    param_container = ParameterContainer(attributes, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
 end
@@ -1004,12 +1003,14 @@ function add_param_container!(
     sos_variable::SOSStatusVariable,
     variable_type::Type{W},
     uses_compact_power::Bool,
+    data_type::DataType,
     axs...;
     sparse=false,
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
     param_key = ParameterKey(T, U, meta)
-    attributes = CostFunctionAttributes(variable_type, sos_variable, uses_compact_power)
+    attributes =
+        CostFunctionAttributes{data_type}(variable_type, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
 end
 
@@ -1109,20 +1110,34 @@ function iterate_parameter_containers(container::OptimizationContainer)
     end
 end
 
+# Slow implementation not to be used in hot loops
 function read_parameters(container::OptimizationContainer)
-    # TODO: Still not obvious implementation since it needs to get the multipliers from
-    # the system
     params_dict = Dict{ParameterKey, DataFrames.DataFrame}()
     parameters = get_parameters(container)
     (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         param_array = axis_array_to_dataframe(get_parameter_array(v), k)
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
-        params_dict[k] = param_array .* multiplier_array
+        params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)
     end
     return params_dict
 end
 
+function _calculate_parameter_values(
+    key::ParameterKey{<:ParameterType, <:PSY.Component},
+    param_array,
+    multiplier_array,
+)
+    return param_array .* multiplier_array
+end
+
+function _calculate_parameter_values(
+    key::ParameterKey{<:ObjectiveFunctionParameter, <:PSY.Component},
+    param_array,
+    multiplier_array,
+)
+    return param_array
+end
 ##################################### Expression Container #################################
 function _add_expression_container!(
     container::OptimizationContainer,
@@ -1334,8 +1349,24 @@ function get_initial_conditions_parameter(
     return get_initial_conditions_parameter(get_initial_conditions_data(container), type, T)
 end
 
-function add_to_objective_function!(container::OptimizationContainer, expr)
-    JuMP.add_to_expression!(container.cost_function.invariant_terms, expr)
+function add_to_objective_invariant_expression!(
+    container::OptimizationContainer,
+    cost_expr::T,
+) where {T <: JuMP.AbstractJuMPScalar}
+    T_cf = typeof(container.objective_function.invariant_terms)
+    if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
+        container.objective_function.invariant_terms += cost_expr
+    else
+        JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)
+    end
+    return
+end
+
+function add_to_objective_variant_expression!(
+    container::OptimizationContainer,
+    cost_expr::JuMP.AffExpr,
+)
+    JuMP.add_to_expression!(container.objective_function.variant_terms, cost_expr)
     return
 end
 

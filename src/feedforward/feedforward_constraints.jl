@@ -372,7 +372,7 @@ function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
-    ff::IntegralLimitFeedforward,
+    ff::EnergyLimitFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
@@ -390,21 +390,27 @@ function add_feedforward_constraints!(
                 "The number of affected periods $affected_periods is larger than the periods available $(set_time[end])",
             )
         end
-
+        no_trenches = set_time[end] ÷ affected_periods
         var_type = get_entry_type(var)
         con_ub = add_constraints_container!(
             container,
             FeedforwardIntegralLimitConstraint(),
             T,
             set_name,
+            1:no_trenches,
             meta="$(var_type)integral",
         )
 
-        for name in set_name
-            con_ub[name] = JuMP.@constraint(
+        for name in set_name, i in 1:no_trenches
+            con_ub[name, i] = JuMP.@constraint(
                 container.JuMPmodel,
-                sum(variable[name, t] for t in 1:affected_periods) / affected_periods <=
-                sum(param[name, t] * multiplier[name, t] for t in 1:affected_periods)
+                sum(
+                    variable[name, t] for
+                    t in (1 + (i - 1) * affected_periods):(i * affected_periods)
+                ) <= sum(
+                    param[name, t] * multiplier[name, t] for
+                    t in (1 + (i - 1) * affected_periods):(i * affected_periods)
+                )
             )
         end
     end
@@ -515,12 +521,9 @@ function add_feedforward_constraints!(
                 variable[name, target_period] + slack_var[name, target_period] >=
                 param[name, target_period] * multiplier[name, target_period]
             )
-            proportional_objective!(
+            add_to_objective_invariant_expression!(
                 container,
-                EnergyShortageVariable(),
-                d,
-                penalty_cost,
-                target_period,
+                slack_var[name, target_period] * penalty_cost,
             )
         end
     end

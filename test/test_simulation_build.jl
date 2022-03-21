@@ -181,7 +181,7 @@ end
 
     feedforwards = Dict(
         "UC" => [
-            IntegralLimitFeedforward(
+            EnergyLimitFeedforward(
                 source=ActivePowerVariable,
                 affected_values=[ActivePowerVariable],
                 component_type=HydroEnergyReservoir,
@@ -189,7 +189,7 @@ end
             ),
         ],
         "ED" => [
-            IntegralLimitFeedforward(
+            EnergyLimitFeedforward(
                 source=ActivePowerVariable,
                 affected_values=[ActivePowerVariable],
                 component_type=HydroEnergyReservoir,

@@ -1,4 +1,3 @@
-# TODO: Make more tests with Settings
 @testset "Decision Model kwargs" begin
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")

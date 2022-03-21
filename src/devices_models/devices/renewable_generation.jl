@@ -1,10 +1,4 @@
 #! format: off
-
-abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
-abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
-struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
-struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
-
 get_variable_multiplier(_, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = 1.0
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.RenewableGen}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ActivePowerRangeExpressionUB
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.RenewableGen}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ActivePowerRangeExpressionLB
@@ -21,6 +15,13 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::Abstr
 
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) = PSY.get_max_active_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
+
+########################Objective Function##################################################
+objective_function_multiplier(::ActivePowerVariable, ::AbstractRenewableDispatchFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+
+variable_cost(::Nothing, ::ActivePowerVariable, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=1.0
+variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=PSY.get_variable(cost)
+
 #! format: on
 
 get_initial_conditions_device_model(
@@ -119,17 +120,12 @@ function add_constraints!(
 end
 
 ##################################### renewable generation cost ############################
-function AddCostSpec(
-    ::Type{T},
-    ::Type{U},
-    ::OptimizationContainer,
-) where {T <: PSY.RenewableDispatch, U <: AbstractRenewableDispatchFormulation}
-    # TODO: remove once cost_function is required
-    cost_function = x -> (x === nothing ? 1.0 : PSY.get_variable(x))
-    return AddCostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        variable_cost=cost_function,
-        multiplier=OBJECTIVE_FUNCTION_NEGATIVE,
-    )
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.RenewableGen, U <: AbstractRenewableDispatchFormulation}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    return
 end

@@ -545,9 +545,9 @@ end
     moi_tests(model, true, 24, 0, 48, 48, 0, false)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirBudget model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroEnergyReservoir,
         source=ActivePowerVariable,
         affected_values=[ActivePowerVariable],
@@ -558,12 +558,12 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 24, 0, 26, 24, 0, false)
+    moi_tests(model, true, 24, 0, 27, 24, 0, false)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroEnergyReservoir,
         source=ActivePowerVariable,
         affected_values=[ActivePowerVariable],
@@ -574,7 +574,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 120, 0, 25, 24, 48, false)
+    moi_tests(model, true, 120, 0, 26, 24, 48, false)
 end
 
 @testset "Test LowerBoundFeedforward to HydroEnergyReservoir with HydroDispatchReservoirStorage model" begin
@@ -592,9 +592,9 @@ end
     moi_tests(model, true, 120, 0, 24, 48, 48, false)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
     device_model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroEnergyReservoir,
         source=ActivePowerVariable,
         affected_values=[ActivePowerVariable],
@@ -604,7 +604,7 @@ end
     c_sys5_hy = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_hy)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 144, 0, 25, 24, 48, true)
+    moi_tests(model, true, 144, 0, 26, 24, 48, true)
 end
 
 @testset "Test SemiContinuousFeedforward to HydroEnergyReservoir with HydroCommitmentReservoirStorage model" begin
@@ -621,10 +621,10 @@ end
     moi_tests(model, true, 144, 0, 48, 48, 48, true)
 end
 
-@testset "Test IntegralLimitFeedforward to HydroEnergyReservoir models" begin
+@testset "Test EnergyLimitFeedforward to HydroEnergyReservoir models" begin
     device_model = DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=HydroPumpedStorage,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],

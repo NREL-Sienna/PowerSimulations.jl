@@ -480,7 +480,7 @@ function update_parameters!(
         update_parameter_values!(model, key, decision_states)
     end
     if !is_synchronized(model)
-        update_cost_function!(get_optimization_container(model))
+        update_objective_function!(get_optimization_container(model))
     end
     return
 end

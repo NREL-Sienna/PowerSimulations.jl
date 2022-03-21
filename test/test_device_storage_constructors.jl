@@ -184,10 +184,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to GenericBattery with BookKeeping model" begin
+@testset "Test EnergyLimitFeedforward to GenericBattery with BookKeeping model" begin
     device_model = DeviceModel(GenericBattery, BookKeeping)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=GenericBattery,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -198,7 +198,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
@@ -219,10 +219,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to GenericBattery with BatteryAncillaryServices model" begin
+@testset "Test EnergyLimitFeedforward to GenericBattery with BatteryAncillaryServices model" begin
     device_model = DeviceModel(GenericBattery, BatteryAncillaryServices)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=GenericBattery,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -233,7 +233,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
@@ -254,10 +254,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to BatteryEMS with BookKeeping model" begin
+@testset "Test EnergyLimitFeedforward to BatteryEMS with BookKeeping model" begin
     device_model = DeviceModel(BatteryEMS, BookKeeping)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=BatteryEMS,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -268,7 +268,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BatteryAncillaryServices model" begin
@@ -289,10 +289,10 @@ end
     moi_tests(model, true, 120, 0, 72, 73, 24, true)
 end
 
-@testset "Test IntegralLimitFeedforward to BatteryEMS with BatteryAncillaryServices model" begin
+@testset "Test EnergyLimitFeedforward to BatteryEMS with BatteryAncillaryServices model" begin
     device_model = DeviceModel(BatteryEMS, BatteryAncillaryServices)
 
-    ff_il = IntegralLimitFeedforward(
+    ff_il = EnergyLimitFeedforward(
         component_type=BatteryEMS,
         source=ActivePowerOutVariable,
         affected_values=[ActivePowerOutVariable],
@@ -303,5 +303,5 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 73, 72, 24, true)
+    moi_tests(model, true, 96, 0, 74, 72, 24, true)
 end

@@ -86,7 +86,7 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
-
+    add_variables!(container, EnergyOutput, devices, D())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -169,7 +169,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -193,7 +193,7 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     add_variables!(container, ActivePowerVariable, devices, D())
-
+    add_variables!(container, EnergyOutput, devices, D())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -259,7 +259,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -284,7 +284,7 @@ function construct_device!(
         devices,
         HydroDispatchReservoirBudget(),
     )
-
+    add_variables!(container, EnergyOutput, devices, HydroDispatchReservoirBudget())
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -365,7 +365,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -385,7 +385,7 @@ function construct_device!(
     devices = get_available_components(H, sys)
 
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
-
+    add_variables!(container, EnergyOutput, devices, HydroDispatchReservoirBudget())
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -450,7 +450,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -494,7 +494,7 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
-
+    add_variables!(container, EnergyOutput, devices, HydroDispatchReservoirStorage())
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
@@ -582,7 +582,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -621,7 +621,7 @@ function construct_device!(
         devices,
         HydroDispatchReservoirStorage(),
     )
-
+    add_variables!(container, EnergyOutput, devices, HydroDispatchReservoirStorage())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -695,7 +695,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -716,7 +716,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
-
+    add_variables!(container, EnergyOutput, devices, D())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -796,7 +796,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -821,7 +821,7 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
-
+    add_variables!(container, EnergyOutput, devices, D())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -887,7 +887,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -908,7 +908,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
-
+    add_variables!(container, EnergyOutput, devices, D())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -989,7 +989,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -1014,7 +1014,7 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
-
+    add_variables!(container, EnergyOutput, devices, D())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1083,7 +1083,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -1133,7 +1133,7 @@ function construct_device!(
         devices,
         HydroCommitmentReservoirStorage(),
     )
-
+    add_variables!(container, EnergyOutput, devices, HydroCommitmentReservoirStorage())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1222,7 +1222,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -1276,7 +1276,7 @@ function construct_device!(
         model,
         S,
     )
-
+    add_variables!(container, EnergyOutput, devices, HydroCommitmentReservoirStorage())
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
     add_parameters!(container, InflowTimeSeriesParameter, devices, model)
 
@@ -1340,7 +1340,7 @@ function construct_device!(
     add_constraints!(container, EnergyTargetConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -1364,6 +1364,7 @@ function construct_device!(
     add_variables!(container, EnergyVariableUp, devices, HydroDispatchPumpedStorage())
     add_variables!(container, EnergyVariableDown, devices, HydroDispatchPumpedStorage())
     add_variables!(container, WaterSpillageVariable, devices, HydroDispatchPumpedStorage())
+    add_variables!(container, EnergyOutput, devices, HydroDispatchPumpedStorage())
     if get_attribute(model, "reservation")
         add_variables!(
             container,
@@ -1446,7 +1447,7 @@ function construct_device!(
     add_constraints!(container, EnergyCapacityDownConstraint, devices, model, S)
     add_feedforward_constraints!(container, model, devices)
 
-    cost_function!(container, devices, model, S)
+    objective_function!(container, devices, model, S)
 
     add_constraint_dual!(container, sys, model)
     return

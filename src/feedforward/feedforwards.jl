@@ -134,11 +134,11 @@ end
 """
 Adds a constraint to limit the sum of a variable over the number of periods to the source value
 """
-struct IntegralLimitFeedforward <: AbstractAffectFeedforward
+struct EnergyLimitFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
     number_of_periods::Int
-    function IntegralLimitFeedforward(;
+    function EnergyLimitFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
@@ -152,7 +152,7 @@ struct IntegralLimitFeedforward <: AbstractAffectFeedforward
                     get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "IntegralLimitFeedforward is only compatible with VariableType or ParamterType affected values",
+                    "EnergyLimitFeedforward is only compatible with VariableType or ParamterType affected values",
                 )
             end
         end
@@ -164,7 +164,7 @@ struct IntegralLimitFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::IntegralLimitFeedforward, _) = IntegralLimitParameter()
+get_default_parameter_type(::EnergyLimitFeedforward, _) = EnergyLimitParameter()
 get_optimization_container_key(ff) = ff.optimization_container_key
 get_number_of_periods(ff) = ff.number_of_periods
 

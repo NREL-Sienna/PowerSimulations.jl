@@ -103,7 +103,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 384, 0, 240, 48, 96, true)
+    moi_tests(model, false, 384, 0, 240, 48, 144, true)
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
@@ -126,7 +126,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 432, 0, 288, 96, 96, true)
+    moi_tests(model, false, 432, 0, 288, 96, 144, true)
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
@@ -190,7 +190,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 384, 0, 96, 48, 96, true)
+    moi_tests(model, false, 384, 0, 96, 48, 144, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -206,7 +206,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 432, 0, 144, 96, 96, true)
+    moi_tests(model, false, 432, 0, 144, 96, 144, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -221,7 +221,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, false, 120, 0, 120, 120, 0, false)
     psi_checkobjfun_test(model, GQEVF)
@@ -249,7 +249,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 240, 0, 48, 48, 48, false)
+    moi_tests(model, false, 240, 0, 48, 48, 96, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -258,12 +258,11 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 288, 0, 96, 96, 48, false)
+    moi_tests(model, false, 288, 0, 96, 96, 96, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
 ################################### No Minimum Dispatch tests ##############################
-
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -276,7 +275,7 @@ end
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
 
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, false, 120, 0, 120, 120, 0, false)
     key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
@@ -318,8 +317,25 @@ end
     @test_throws IS.ConflictingInputsError mock_construct_device!(model, device_model)
 end
 
+@testset "Operation Model ThermalDispatchNoMin - and PWL Non Convex" begin
+    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
+    template = get_thermal_dispatch_template_network()
+    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+    model = DecisionModel(
+        MockOperationProblem,
+        CopperPlatePowerModel,
+        c_sys5_pwl_ed_nonconvex;
+        export_pwl_vars=true,
+        initialize_model=false,
+    )
+    @test_throws IS.InvalidValue mock_construct_device!(
+        model,
+        DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+    )
+end
+
 ################################## Ramp Limited Testing ##################################
-@testset "ThermalStandard with  ThermalStandardDispatch With DC - PF" begin
+@testset "ThermalStandard with ThermalStandardDispatch With DC - PF" begin
     constraint_keys = [
         PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
         PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
@@ -368,7 +384,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 240, 0, 144, 48, 48, false)
+    moi_tests(model, false, 240, 0, 144, 48, 96, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -382,7 +398,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 288, 0, 192, 96, 48, false)
+    moi_tests(model, false, 288, 0, 192, 96, 96, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -412,7 +428,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 528, 0, no_less_than[false], 60, 144, true)
+    moi_tests(model, false, 528, 0, no_less_than[false], 60, 192, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -440,7 +456,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 576, 0, no_less_than[false], 108, 144, true)
+    moi_tests(model, false, 576, 0, no_less_than[false], 108, 192, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
 end
@@ -460,7 +476,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 384, 0, 240, 48, 96, true)
+    moi_tests(model, false, 384, 0, 240, 48, 144, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -478,7 +494,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 432, 0, 288, 96, 96, true)
+    moi_tests(model, false, 432, 0, 288, 96, 144, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -497,7 +513,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 384, 0, 96, 48, 96, true)
+    moi_tests(model, false, 384, 0, 96, 48, 144, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -515,7 +531,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 432, 0, 144, 96, 96, true)
+    moi_tests(model, false, 432, 0, 144, 96, 144, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -535,7 +551,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 240, 0, 144, 48, 48, false)
+    moi_tests(model, true, 240, 0, 144, 48, 96, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -553,7 +569,7 @@ end
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 288, 0, 192, 96, 48, false)
+    moi_tests(model, true, 288, 0, 192, 96, 96, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -601,7 +617,7 @@ end
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(UC, false, 32, 0, 8, 4, 10, true)
+    moi_tests(UC, false, 32, 0, 8, 4, 14, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
 end
 
@@ -618,7 +634,7 @@ end
     moi_tests(UC, false, 32, 0, 8, 4, 14, true)
     # Cbc can have reliability issues with SoS. The objective function target in the this
     # test was calculated with CPLEX do not change if Cbc gets a bad result
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 1286.0, 10.0)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.0, 10.0)
 end
 
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
@@ -635,40 +651,22 @@ end
         initialize_model=false,
     )
     @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    # changed from 18 to 16 as built_for_recurrent_solves/use_parameters is set to false, different duration constraint is used
-    moi_tests(UC, false, 38, 0, 16, 8, 13, true)
+    moi_tests(UC, false, 38, 0, 16, 8, 16, true)
 end
 
-@testset "Operation Model ThermalDispatchNoMin - and PWL Non Convex" begin
-    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
-    template = get_thermal_dispatch_template_network()
-    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
-    model = DecisionModel(
-        MockOperationProblem,
-        CopperPlatePowerModel,
-        c_sys5_pwl_ed_nonconvex;
-        export_pwl_vars=true,
-        initialize_model=false,
-    )
-    @test_throws IS.InvalidValue mock_construct_device!(
-        model,
-        DeviceModel(ThermalStandard, ThermalDispatchNoMin),
-    )
-end
-
-#TODO: Add test for newer UC models
 @testset "Solving UC Models with Linear Networks" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
+    commitment_models = [ThermalStandardUnitCommitment, ThermalCompactUnitCommitment]
     PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
-    for net in networks, sys in systems
+    for net in networks, sys in systems, model in commitment_models
         template =
             get_thermal_dispatch_template_network(NetworkModel(net, PTDF=PTDF_ref[sys]))
-        set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-        UC = DecisionModel(template, sys; optimizer=GLPK_optimizer)
+        set_device_model!(template, ThermalStandard, model)
+        UC = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
         @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
@@ -759,7 +757,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 240, 0, 192, 48, 48, false)
+    moi_tests(model, true, 240, 0, 192, 48, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalBasicDispatch" begin
@@ -781,7 +779,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 240, 0, 96, 48, 48, false)
+    moi_tests(model, true, 240, 0, 96, 48, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalCompactDispatch" begin
@@ -803,5 +801,5 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 240, 0, 192, 48, 48, false)
+    moi_tests(model, true, 240, 0, 192, 48, 96, false)
 end

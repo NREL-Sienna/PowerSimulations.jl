@@ -55,19 +55,10 @@ end
 
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
-struct CostFunctionAttributes <: ParameterAttributes
+struct CostFunctionAttributes{T} <: ParameterAttributes
     variable_type::Type
     sos_status::SOSStatusVariable
     uses_compact_power::Bool
-end
-
-function CostFunctionAttributes(
-    variable_type::Type,
-    sos_status::SOSStatusVariable,
-    segments::Int,
-    uses_compact_power::Bool,
-)
-    return CostFunctionAttributes(variable_type, sos_status, uses_compact_power)
 end
 
 get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
@@ -182,7 +173,7 @@ abstract type VariableValueParameter <: RightHandSideParameter end
 struct UpperBoundValueParameter <: VariableValueParameter end
 struct LowerBoundValueParameter <: VariableValueParameter end
 struct OnStatusParameter <: VariableValueParameter end
-struct IntegralLimitParameter <: VariableValueParameter end
+struct EnergyLimitParameter <: VariableValueParameter end
 struct FixValueParameter <: VariableValueParameter end
 struct EnergyTargetParameter <: VariableValueParameter end
 
@@ -204,5 +195,5 @@ convert_result_to_natural_units(::Type{EnergyBudgetTimeSeriesParameter}) = true
 #convert_result_to_natural_units(::Type{OutflowTimeSeriesParameter}) = true # TODO: is this pu?
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
-convert_result_to_natural_units(::Type{IntegralLimitParameter}) = true
+convert_result_to_natural_units(::Type{EnergyLimitParameter}) = true
 convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true

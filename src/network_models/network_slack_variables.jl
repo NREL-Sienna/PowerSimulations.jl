@@ -16,8 +16,11 @@ function add_variables!(
     variable = add_variable_container!(container, T(), PSY.System, time_steps)
 
     for t in time_steps
-        variable[t] =
-            JuMP.@variable(container.JuMPmodel, base_name = "$(T)_{$t}", lower_bound = 0.0)
+        variable[t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "slack_{$(T), $t}",
+            lower_bound = 0.0
+        )
     end
     return
 end
@@ -38,7 +41,7 @@ function add_variables!(
     for t in time_steps, n in bus_numbers
         variable[n, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(T)_{$n, $t}",
+            base_name = "slack_{$(T), $n, $t}",
             lower_bound = 0.0
         )
     end
@@ -64,20 +67,20 @@ function add_variables!(
     for t in time_steps, n in bus_numbers
         variable_active[n, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(T)_{p, $n, $t}",
+            base_name = "slack_{p, $(T), $n, $t}",
             lower_bound = 0.0
         )
         variable_reactive[n, t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "$(T)_{q, $n, $t}",
+            base_name = "slack_{q, $(T), $n, $t}",
             lower_bound = 0.0
         )
     end
     return
 end
 
-function cost_function!(
-    container,
+function objective_function!(
+    container::OptimizationContainer,
     ::Type{PSY.System},
     model::NetworkModel{T},
     S::Type{T},
@@ -86,7 +89,7 @@ function cost_function!(
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
 
     for t in get_time_steps(container)
-        add_to_objective_function!(
+        add_to_objective_invariant_expression!(
             container,
             (variable_dn[t] + variable_up[t]) * BALANCE_SLACK_COST,
         )
@@ -94,8 +97,8 @@ function cost_function!(
     return
 end
 
-function cost_function!(
-    container,
+function objective_function!(
+    container::OptimizationContainer,
     ::Type{PSY.Bus},
     model::NetworkModel{T},
     S::Type{T},
@@ -105,7 +108,7 @@ function cost_function!(
     bus_numbers = axes(variable_up)[1]
     @assert_op bus_numbers == axes(variable_dn)[1]
     for t in get_time_steps(container), n in bus_numbers
-        add_to_objective_function!(
+        add_to_objective_invariant_expression!(
             container,
             (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
         )
@@ -113,8 +116,8 @@ function cost_function!(
     return
 end
 
-function cost_function!(
-    container,
+function objective_function!(
+    container::OptimizationContainer,
     ::Type{PSY.Bus},
     model::NetworkModel{T},
     S::Type{T},
@@ -126,7 +129,7 @@ function cost_function!(
     bus_numbers = axes(variable_p_up)[1]
     @assert_op bus_numbers == axes(variable_q_dn)[1]
     for t in get_time_steps(container), n in bus_numbers
-        add_to_objective_function!(
+        add_to_objective_invariant_expression!(
             container,
             (
                 variable_p_dn[n, t] +

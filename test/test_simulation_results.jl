@@ -154,7 +154,7 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
                         source=OnVariable,
                         affected_values=[ActivePowerVariable],
                     ),
-                    IntegralLimitFeedforward(
+                    EnergyLimitFeedforward(
                         component_type=HydroEnergyReservoir,
                         source=ActivePowerVariable,
                         affected_values=[ActivePowerVariable],
@@ -182,12 +182,14 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
                     "store_all_variables" => true,
                     "store_all_parameters" => true,
                     "store_all_duals" => true,
+                    "store_all_aux_variables" => true,
                 ),
                 Dict(
                     "name" => "ED",
                     "store_all_variables" => true,
                     "store_all_parameters" => true,
                     "store_all_duals" => true,
+                    "store_all_aux_variables" => true,
                 ),
             ],
             "path" => export_path,
@@ -209,7 +211,7 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
 
         verify_export_results(results, export_path)
 
-        @test length(readdir(export_realized_results(results_ed))) === 17
+        @test length(readdir(export_realized_results(results_ed))) === 18
 
         # Test that you can't read a failed simulation.
         PSI.set_simulation_status!(sim, RunStatus.FAILED)

@@ -1,16 +1,3 @@
-# Abstract Line Models
-"""
-Branch type to add unbounded flow variables and use flow constraints
-"""
-struct StaticBranch <: AbstractBranchFormulation end
-"""
-Branch type to add bounded flow variables and use flow constraints
-"""
-struct StaticBranchBounds <: AbstractBranchFormulation end
-"""
-Branch type to avoid flow constraints
-"""
-struct StaticBranchUnbounded <: AbstractBranchFormulation end
 
 # Note: Any future concrete formulation requires the definition of
 

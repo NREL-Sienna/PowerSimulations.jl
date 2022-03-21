@@ -1,10 +1,4 @@
 #! format: off
-
-abstract type AbstractHybridFormulation <: AbstractDeviceFormulation end
-abstract type AbstractStandardHybridFormulation <: AbstractHybridFormulation end
-struct BasicHybridDispatch <: AbstractHybridFormulation end
-struct StandardHybridDispatch <: AbstractStandardHybridFormulation end
-
 requires_initialization(::AbstractHybridFormulation) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = 1.0
@@ -19,34 +13,34 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractS
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_output_active_power_limits(d).max
 
 ############## ComponentActivePowerVariable, HybridSystem ####################
-get_variable_binary(::ComponentActivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation,) = false
-get_variable_lower_bound(::ComponentActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = 0.0
+get_variable_binary(::ComponentActivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_lower_bound(::ComponentActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
 
 ############## ActivePowerInVariable, HybridSystem ####################
-get_variable_binary(::ActivePowerInVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation,) = false
-get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_input_active_power_limits(d).min
-get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_input_active_power_limits(d).max
+get_variable_binary(::ActivePowerInVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_input_active_power_limits(d).min
+get_variable_upper_bound(::ActivePowerInVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_input_active_power_limits(d).max
 
 ############## ActivePowerOutVariable, HybridSystem ####################
-get_variable_binary(::ActivePowerOutVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation,) = false
-get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_output_active_power_limits(d).max
-get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_output_active_power_limits(d).min
+get_variable_binary(::ActivePowerOutVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_output_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_output_active_power_limits(d).min
 
 ############## EnergyVariable, HybridSystem ####################
-get_variable_binary(::EnergyVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation,) = false
-get_variable_upper_bound(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).max
-get_variable_lower_bound(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).min
-get_variable_warm_start_value(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_initial_energy(PSY.get_storage(d))
+get_variable_binary(::EnergyVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_upper_bound(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).max
+get_variable_lower_bound(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).min
+get_variable_warm_start_value(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
 
 ############## ReactivePowerVariable, HybridSystem ####################
-get_variable_binary(::ReactivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation,) = false
-get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_reactive_power_limits(PSY.get_storage(d)).max
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_reactive_power_limits(PSY.get_storage(d)).min
-get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = PSY.get_reactive_power(PSY.get_storage(d))
+get_variable_binary(::ReactivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_reactive_power_limits(PSY.get_storage(d)).max
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_reactive_power_limits(PSY.get_storage(d)).min
+get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_reactive_power(PSY.get_storage(d))
 
 ############## ComponentReactivePowerVariable, ThermalGen ####################
-get_variable_binary(::ComponentReactivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation,) = false
-get_variable_lower_bound(::ComponentReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = 0.0
+get_variable_binary(::ComponentReactivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_lower_bound(::ComponentReactivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
 
 ############## ComponentActivePowerReserveUpVariable, HybridSystem ####################
 get_variable_binary(::ComponentActivePowerReserveUpVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = false
@@ -59,10 +53,21 @@ get_variable_lower_bound(::ComponentActivePowerReserveDownVariable, d::PSY.Hybri
 ############## ReservationVariable, HybridSystem ####################
 get_variable_binary(::ReservationVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = true
 
-####################
+#################### Initial Conditions for models ###############
 
 initial_condition_default(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
-initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation,) = EnergyVariable()
+initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = EnergyVariable()
+
+########################Objective Function##################################################
+objective_function_multiplier(::VariableType, ::AbstractHybridFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+
+proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_fixed(cost)
+proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_no_load(cost)
+
+sos_status(::PSY.HybridSystem, ::AbstractHybridFormulation)=SOSStatusVariable.NO_VARIABLE
+
+uses_compact_power(::PSY.HybridSystem, ::AbstractHybridFormulation)=false
+variable_cost(cost::PSY.OperationalCost, ::PSY.HybridSystem, ::AbstractHybridFormulation)=PSY.get_variable(cost)
 
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.RenewableGen}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_renewable_unit(d))
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Type{<:PSY.ElectricLoad}, ::AbstractHybridFormulation) = PSY.get_max_active_power(PSY.get_electric_load(d))
@@ -760,16 +765,13 @@ function initial_conditions!(
 end
 
 ########################### Cost Function Calls#############################################
-
-function AddCostSpec(
-    ::Type{T},
-    ::Type{U},
-    psi_container::OptimizationContainer,
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
-    return AddCostSpec(;
-        variable_type=ActivePowerVariable,
-        component_type=T,
-        variable_cost=PSY.get_variable,
-        fixed_cost=PSY.get_fixed,
-    )
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
+    return
 end

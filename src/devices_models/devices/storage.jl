@@ -1,11 +1,4 @@
 #! format: off
-
-abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
-abstract type AbstractEnergyManagement  <: AbstractStorageFormulation end
-struct BookKeeping <: AbstractStorageFormulation end
-struct BatteryAncillaryServices <: AbstractStorageFormulation end
-struct EnergyTarget <: AbstractEnergyManagement end
-
 requires_initialization(::AbstractStorageFormulation) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.Storage}, ::AbstractStorageFormulation) = NaN
@@ -54,6 +47,18 @@ initial_condition_variable(::InitialEnergyLevel, d::PSY.Storage, ::AbstractStora
 ########################### Parameter related set functions ################################
 get_parameter_multiplier(::VariableValueParameter, d::PSY.Storage, ::AbstractStorageFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::AbstractStorageFormulation) = 1.0
+
+
+########################Objective Function##################################################
+objective_function_multiplier(::VariableType, ::AbstractStorageFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::EnergySurplusVariable, ::EnergyTarget)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::EnergyShortageVariable, ::EnergyTarget)=OBJECTIVE_FUNCTION_POSITIVE
+
+proportional_cost(cost::PSY.StorageManagementCost, ::EnergySurplusVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_surplus_cost(cost)
+proportional_cost(cost::PSY.StorageManagementCost, ::EnergyShortageVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_shortage_cost(cost)
+
+variable_cost(cost::PSY.StorageManagementCost, ::ActivePowerOutVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_variable(cost)
+
 
 #! format: on
 
@@ -372,15 +377,26 @@ function add_constraints!(
     return
 end
 
-function AddCostSpec(
-    ::Type{PSY.BatteryEMS},
-    ::Type{EnergyTarget},
+##################################### Storage generation cost ############################
+function objective_function!(
     container::OptimizationContainer,
-)
-    return AddCostSpec(;
-        variable_type=ActivePowerOutVariable,
-        component_type=PSY.BatteryEMS,
-        variable_cost=PSY.get_variable,
-        multiplier=OBJECTIVE_FUNCTION_POSITIVE,
-    )
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
+    add_proportional_cost!(container, ActivePowerOutVariable(), devices, U())
+    add_proportional_cost!(container, ActivePowerInVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.BatteryEMS},
+    ::DeviceModel{PSY.BatteryEMS, T},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: EnergyTarget}
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, T())
+    add_proportional_cost!(container, EnergySurplusVariable(), devices, T())
+    add_proportional_cost!(container, EnergyShortageVariable(), devices, T())
+    return
 end

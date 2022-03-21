@@ -85,7 +85,7 @@ export StandardHybridDispatch
 export UpperBoundFeedforward
 export LowerBoundFeedforward
 export SemiContinuousFeedforward
-export IntegralLimitFeedforward
+export EnergyLimitFeedforward
 export FixValueFeedforward
 export EnergyTargetFeedforward
 
@@ -139,6 +139,11 @@ export ProblemResultsExport
 export export_results
 export export_realized_results
 export export_optimizer_stats
+export get_variable_values
+export get_dual_values
+export get_parameter_values
+export get_aux_variable_values
+export get_expression_values
 export get_timestamps
 export get_model_name
 export get_decision_problem_results
@@ -243,6 +248,7 @@ export PowerAboveMinimumVariable
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export EnergyOutput
 
 # Constraints
 export AbsoluteValueConstraint
@@ -435,13 +441,12 @@ using DocStringExtensions
 include("core/definitions.jl")
 
 # Core components
-include("core/abstract_formulations.jl")
+include("core/formulations.jl")
 include("core/abstract_simulation_store.jl")
 include("core/operation_model_abstract_types.jl")
 include("core/optimization_container_types.jl")
 include("core/abstract_feedforward.jl")
 include("core/optimization_container_keys.jl")
-include("network_models/powermodels_formulations.jl")
 include("core/network_model.jl")
 include("core/parameters.jl")
 include("core/service_model.jl")
@@ -509,7 +514,7 @@ include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 
-include("devices_models/devices/common/cost_functions.jl")
+include("devices_models/devices/common/objective_functions.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
@@ -549,7 +554,7 @@ include("network_models/area_balance_model.jl")
 include("initial_conditions/initialization.jl")
 
 # Device constructors
-include("devices_models/device_constructors/common/constructor_validations.jl")
+include("devices_models/device_constructors/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
 include("devices_models/device_constructors/hydrogeneration_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")

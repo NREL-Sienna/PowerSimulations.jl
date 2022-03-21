@@ -34,7 +34,7 @@ end
             source=OnVariable,
             affected_values=[ActivePowerVariable, ReactivePowerVariable],
         ),
-        IntegralLimitFeedforward(
+        EnergyLimitFeedforward(
             component_type=GenericBattery,
             source=EnergyVariable,
             affected_values=[EnergyVariable],
@@ -58,7 +58,7 @@ end
         @test isa(av, PSI.ParameterKey)
     end
 
-    @test_throws ErrorException IntegralLimitFeedforward(
+    @test_throws ErrorException EnergyLimitFeedforward(
         component_type=GenericBattery,
         source=EnergyVariable,
         affected_values=[OnStatusParameter],

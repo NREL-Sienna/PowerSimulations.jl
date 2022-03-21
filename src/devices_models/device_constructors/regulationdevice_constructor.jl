@@ -50,7 +50,7 @@ function construct_device!(
         model,
         AreaBalancePowerModel,
     )
-    cost_function!(container, devices, model)
+    objective_function!(container, devices, model)
     return
 end
 
@@ -99,7 +99,7 @@ function construct_device!(
     )
 
     add_constraints!(container, ParticipationAssignmentConstraint, devices, model, S)
-    cost_function!(container, devices, model)
+    objective_function!(container, devices, model)
     return
 end
 

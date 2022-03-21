@@ -11,16 +11,13 @@ function reserve_slacks(
         time_steps,
     )
 
-    for jx in time_steps
-        variable[jx] = JuMP.@variable(
+    for t in time_steps
+        variable[t] = JuMP.@variable(
             container.JuMPmodel,
-            base_name = "slacks_{$(jx)}",
+            base_name = "slack_{$(PSY.get_name(service)), $(t)}",
             lower_bound = 0.0
         )
-        JuMP.add_to_expression!(
-            container.cost_function.invariant_terms,
-            variable[jx] * SERVICES_SLACK_COST,
-        )
+        add_to_objective_invariant_expression!(container, variable[t] * SERVICES_SLACK_COST)
     end
     return variable
 end

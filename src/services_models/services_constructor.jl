@@ -192,7 +192,7 @@ function construct_service!(
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
-    cost_function!(container, service, model)
+    objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
 
@@ -237,7 +237,7 @@ function construct_service!(
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
-    cost_function!(container, service, model)
+    objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
 
@@ -282,7 +282,7 @@ function construct_service!(
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
 
-    cost_function!(container, service, model)
+    objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
     return
@@ -373,7 +373,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, services)
 
-    cost_function!(container, areas, model)
+    objective_function!(container, areas, model)
     return
 end
 
@@ -460,7 +460,7 @@ function construct_service!(
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     add_constraints!(container, RampConstraint, service, contributing_devices, model)
 
-    cost_function!(container, service, model)
+    objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
     return
@@ -511,7 +511,7 @@ function construct_service!(
         model,
     )
 
-    cost_function!(container, service, model)
+    objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
     return
