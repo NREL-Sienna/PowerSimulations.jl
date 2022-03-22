@@ -611,7 +611,6 @@ function _update_system_state!(sim::Simulation, model_name::Symbol)
 
     for key in get_dataset_keys(decision_state)
         state_data = get_dataset(decision_state, key)
-        end_of_step_timestamp = get_end_of_step_timestamp(state_data)
         last_update = get_update_timestamp(decision_state, key)
 
         if last_update > simulation_time
