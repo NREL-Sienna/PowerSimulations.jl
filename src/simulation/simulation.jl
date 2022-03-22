@@ -859,12 +859,10 @@ function execute!(sim::Simulation; kwargs...)
                     @error "simulation failed" exception = (e, catch_backtrace())
                 end
             end
-            @error "expect the log to close now"
         end
     finally
         _empty_problem_caches!(sim)
         unregister_recorders!(sim.internal)
-        @error "explicitly close log now"
         close(logger)
     end
 
