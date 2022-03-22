@@ -72,7 +72,7 @@ end
                     source=OnVariable,
                     affected_values=[ActivePowerVariable],
                 ),
-                IntegralLimitFeedforward(
+                EnergyLimitFeedforward(
                     component_type=HydroEnergyReservoir,
                     source=ActivePowerVariable,
                     affected_values=[ActivePowerVariable],
