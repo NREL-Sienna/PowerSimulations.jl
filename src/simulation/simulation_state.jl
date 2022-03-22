@@ -22,7 +22,8 @@ get_system_states(s::SimulationState) = s.system_states
 # Not to be used in hot loops
 function get_system_states_resolution(s::SimulationState)
     system_state = get_system_states(s)
-    return minimum(get_data_resolution.(values(system_state.variables)))
+    # All the system states have the same resolution
+    return get_data_resolution(first(values(system_state.variables)))
 end
 
 function set_current_time!(s::SimulationState, val::Dates.DateTime)
@@ -117,6 +118,7 @@ function _initialize_system_states!(
 )
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
+    min_res = minimum([v.resolution for v in values(params)])
     for key in get_dataset_keys(decision_states)
         cols = get_column_names(key, get_dataset(decision_states, key))
         set_dataset!(
@@ -125,7 +127,7 @@ function _initialize_system_states!(
             make_system_state(
                 DataFrames.DataFrame(cols .=> NaN),
                 simulation_initial_time,
-                params[key].resolution,
+                min_res,
             ),
         )
     end
@@ -161,6 +163,9 @@ function _initialize_system_states!(
 
     for key in get_dataset_keys(decision_states)
         if has_dataset(emulator_states, key)
+            dm_cols = get_column_names(key, get_dataset(decision_states, key))
+            em_cols = get_column_names(key, get_dataset(emulator_states, key))
+            @assert_op dm_cols == em_cols
             continue
         end
         cols = get_column_names(key, get_dataset(decision_states, key))
@@ -170,7 +175,7 @@ function _initialize_system_states!(
             make_system_state(
                 DataFrames.DataFrame(cols .=> NaN),
                 simulation_initial_time,
-                params[key].resolution,
+                get_resolution(emulation_model),
             ),
         )
     end
@@ -233,7 +238,6 @@ function update_decision_state!(
         set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
     end
-
     return
 end
 
@@ -312,15 +316,7 @@ function update_decision_state!(
         @assert_op state_range[end] <= length(state_data)
         for name in DataFrames.names(store_data), i in state_range
             if t == 1 && i == 1
-                if store_data[t, name] > 1
-                    # Account for the fact that previous model stores the state at the end of the hour/period
-                    # we take look one timestep back. As all models save Duration data based on its resolution/timesteps
-                    # The 2nd terms scales the data to the state resolution.
-                    state_data.values[i, name] =
-                        (store_data[t, name] - 1.0) * resolution_ratio
-                else
-                    state_data.values[i, name] = store_data[t, name] * resolution_ratio
-                end
+                state_data.values[i, name] = store_data[t, name] * resolution_ratio
             else
                 state_data.values[i, name] =
                     store_data[t, name] > 0 ?
@@ -368,10 +364,10 @@ function update_system_state!(
     em_data = get_em_data(store)
     ix = get_last_recorded_row(em_data, key)
     res = read_result(DataFrames.DataFrame, store, model_name, key, ix)
-    data_set = get_dataset(state, key)
-    set_update_timestamp!(data_set, simulation_time)
+    dataset = get_dataset(state, key)
+    set_update_timestamp!(dataset, simulation_time)
     set_dataset_values!(state, key, 1, res)
-    set_last_recorded_row!(data_set, 1)
+    set_last_recorded_row!(dataset, 1)
     return
 end
 
@@ -381,29 +377,74 @@ function update_system_state!(
     decision_state::DatasetContainer{DataFrameDataset},
     simulation_time::Dates.DateTime,
 )
-    decision_data_set = get_dataset(decision_state, key)
+    decision_dataset = get_dataset(decision_state, key)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
-
-    ts = get_value_timestamp(decision_data_set, simulation_time)
-    system_data_set = get_dataset(state, key)
-
-    if get_update_timestamp(system_data_set) == ts
+    ts = get_value_timestamp(decision_dataset, simulation_time)
+    system_dataset = get_dataset(state, key)
+    get_update_timestamp(system_dataset)
+    if ts == get_update_timestamp(system_dataset)
+        # Uncomment for debugging
+        #@warn "Skipped overwriting data with the same timestamp \\
+        #       key: $(encode_key_as_string(key)), $(simulation_time), $ts"
         return
     end
 
+    if get_update_timestamp(system_dataset) > ts
+        error("Trying to update with past data a future state timestamp \\
+            key: $(encode_key_as_string(key)), $(simulation_time), $ts")
+    end
+
     # Writes the timestamp of the value used for the update
-    set_update_timestamp!(system_data_set, ts)
+    set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
-    system_data_set.timestamps[1] = ts
-    set_dataset_values!(
-        state,
-        key,
-        1,
-        get_dataset_value(decision_data_set, simulation_time),
-    )
+    system_dataset.timestamps[1] = ts
+    set_dataset_values!(state, key, 1, get_dataset_value(decision_dataset, simulation_time))
     # This value shouldn't be other than one and after one execution is no-op.
-    set_last_recorded_row!(system_data_set, 1)
+    set_last_recorded_row!(system_dataset, 1)
+    return
+end
+
+function update_system_state!(
+    state::DatasetContainer{DataFrameDataset},
+    key::AuxVarKey{T, PSY.ThermalStandard},
+    decision_state::DatasetContainer{DataFrameDataset},
+    simulation_time::Dates.DateTime,
+) where {T <: Union{TimeDurationOn, TimeDurationOff}}
+    decision_dataset = get_dataset(decision_state, key)
+    # Gets the timestamp of the value used for the update, which might not match exactly the
+    # simulation time since the value might have not been updated yet
+
+    ts = get_value_timestamp(decision_dataset, simulation_time)
+    system_dataset = get_dataset(state, key)
+    system_state_resolution = get_data_resolution(system_dataset)
+    decision_state_resolution = get_data_resolution(decision_dataset)
+
+    decision_state_value = get_dataset_value(decision_dataset, simulation_time)
+
+    if ts == get_update_timestamp(system_dataset)
+        # Uncomment for debugging
+        #@warn "Skipped overwriting data with the same timestamp \\
+        #       key: $(encode_key_as_string(key)), $(simulation_time), $ts"
+        return
+    end
+
+    if get_update_timestamp(system_dataset) > ts
+        error("Trying to update with past data a future state timestamp \\
+            key: $(encode_key_as_string(key)), $(simulation_time), $ts")
+    end
+
+    # Writes the timestamp of the value used for the update
+    set_update_timestamp!(system_dataset, ts)
+    # Keep coordination between fields. System state is an array of size 1
+    system_dataset.timestamps[1] = ts
+    time_ratio = (decision_state_resolution / system_state_resolution)
+    # Don't use set_dataset_values!(state, key, 1, decision_state_value).
+    # For the time variables we need to grab the values to avoid mutation of the
+    # dataframe row
+    set_value!(system_dataset, values(decision_state_value) .* time_ratio, 1)
+    # This value shouldn't be other than one and after one execution is no-op.
+    set_last_recorded_row!(system_dataset, 1)
     return
 end
 

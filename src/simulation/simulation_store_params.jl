@@ -44,6 +44,7 @@ function SimulationStoreParams()
 end
 
 get_initial_time(store_params::SimulationStoreParams) = store_params.initial_time
+
 function get_decision_model_params(store_params::SimulationStoreParams, model_name::Symbol)
     return store_params.decision_models_params[model_name]
 end

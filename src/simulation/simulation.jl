@@ -584,27 +584,54 @@ function _apply_warm_start!(model::OperationModel)
     return
 end
 
+function _get_next_problem_initial_time(sim::Simulation, model_name::Symbol)
+    current_time = get_current_time(sim)
+    sequence = get_sequence(sim)
+    current_exec_index = sequence.current_execution_index
+    exec_order = get_execution_order(sequence)
+
+    if length(exec_order) > 1 && (current_exec_index + 1 > length(exec_order)) # Moving to the next step
+        next_initial_time = get_simulation_time(sim, exec_order[1])
+    elseif length(exec_order) == 1 ||
+           exec_order[current_exec_index + 1] == exec_order[current_exec_index] # Solving the same problem again
+        current_model_interval = get_interval(sim.sequence, model_name)
+        next_initial_time = current_time + current_model_interval
+    else # Solving another problem next
+        next_initial_time = get_simulation_time(sim, exec_order[current_exec_index + 1])
+    end
+    return next_initial_time
+end
+
 function _update_system_state!(sim::Simulation, model_name::Symbol)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     decision_state = get_decision_states(sim_state)
     simulation_time = get_current_time(sim_state)
+    next_stage_initial_time = _get_next_problem_initial_time(sim, model_name)
+
     for key in get_dataset_keys(decision_state)
         state_data = get_dataset(decision_state, key)
         last_update = get_update_timestamp(decision_state, key)
-        simulation_time > get_end_of_step_timestamp(state_data) && continue
-        if last_update <= simulation_time
-            update_system_state!(system_state, key, decision_state, simulation_time)
-        else
+
+        if last_update > simulation_time
             error("Something went really wrong. Please report this error. \\
-                  last_update: $(last_update) \\
-                  simulation_time: $(simulation_time) \\
-                  key: $(encode_key_as_string(key))")
+            last_update: $(last_update) \\
+            simulation_time: $(simulation_time) \\
+            key: $(encode_key_as_string(key))")
+        end
+
+        resolution = get_data_resolution(state_data)
+        update_timestamp = max(next_stage_initial_time - resolution, simulation_time)
+        if update_timestamp < get_update_timestamp(system_state, key)
+            error("The update overwrites more recent data with past data")
+        elseif update_timestamp > get_update_timestamp(system_state, key)
+            update_system_state!(system_state, key, decision_state, update_timestamp)
+        else
+            @assert_op update_timestamp == get_update_timestamp(system_state, key)
         end
     end
 
     IS.@record :execution StateUpdateEvent(simulation_time, model_name, "SystemState")
-
     return
 end
 
@@ -623,13 +650,16 @@ function _update_system_state!(sim::Simulation, model::EmulationModel)
         !should_write_resulting_value(key) && continue
         update_system_state!(system_state, key, store, em_model_name, simulation_time)
     end
-    IS.@record :execution StateUpdateEvent(simulation_time, get_name(model), "SystemState")
+    IS.@record :execution StateUpdateEvent(simulation_time, em_model_name, "SystemState")
     return
 end
 
 function _update_simulation_state!(sim::Simulation, model::EmulationModel)
-    _update_system_state!(sim, get_name(model))
+    # Order of these operations matters. Do not reverse.
+    # This will update the state with the results of the store first and then fill
+    # the remaning values with the decision state.
     _update_system_state!(sim, model)
+    _update_system_state!(sim, get_name(model))
     return
 end
 
@@ -641,21 +671,12 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     model_params = get_decision_model_params(store, model_name)
     for field in fieldnames(DatasetContainer)
         for key in list_decision_model_keys(store, model_name, field)
-            # TODO: Read Array here to avoid allocating the DataFrame
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
-            update_decision_state!(
-                state,
-                key,
-                # TODO: Pass Array{Float64} here to avoid allocating the DataFrame
-                res,
-                simulation_time,
-                model_params,
-            )
+            update_decision_state!(state, key, res, simulation_time, model_params)
         end
     end
     IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
-    _update_system_state!(sim, model)
     return
 end
 
@@ -663,22 +684,23 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     model_name = get_last_decision_model(sim_state)
+    em_store = get_em_data(store)
+    simulation_time = get_current_time(sim)
+    sim_ini_time = get_initial_time(sim)
+    state_resolution = get_system_states_resolution(sim_state)
     for key in get_dataset_keys(system_state)
-        state_data = get_dataset(system_state, key)
-        em_store = get_em_data(store)
-        # Use last_updated_timestamp here because the writing has to be sequential at the em_store and the state
         store_update_time = get_last_updated_timestamp(em_store, key)
         state_update_time = get_update_timestamp(system_state, key)
+        # If the store is outdated w.r.t to the state
+        @assert store_update_time <= simulation_time
         if store_update_time < state_update_time
-            state_values = get_last_recorded_value(state_data)
-            ix = get_last_recorded_row(em_store, key) + 1
-            write_result!(store, model_name, key, ix, state_update_time, state_values)
-        elseif store_update_time == state_update_time
-            state_values = get_last_recorded_value(state_data)
-            ix = get_last_recorded_row(em_store, key)
-            write_result!(store, model_name, key, ix, state_update_time, state_values)
-        else
-            continue
+            _update_timestamp = max(store_update_time + state_resolution, sim_ini_time)
+            while _update_timestamp <= state_update_time
+                state_values = get_decision_state_value(sim_state, key, _update_timestamp)
+                ix = get_last_recorded_row(em_store, key) + 1
+                write_result!(store, model_name, key, ix, _update_timestamp, state_values)
+                _update_timestamp += state_resolution
+            end
         end
     end
     return
@@ -704,7 +726,6 @@ function _execute!(
     exports=nothing,
     enable_progress_bar=progress_meter_enabled(),
     disable_timer_outputs=false,
-    serialize=true,
 )
     @assert sim.internal !== nothing
 
@@ -739,19 +760,30 @@ function _execute!(
         for (ix, model_number) in enumerate(execution_order)
             model = get_simulation_model(models, model_number)
             model_name = get_name(model)
+            set_current_time!(sim, sim.internal.date_ref[model_number])
+            sequence.current_execution_index = ix
+            current_time = get_current_time(sim)
             IS.@record :simulation_status ProblemExecutionEvent(
-                get_current_time(sim),
+                current_time,
                 step,
                 model_name,
                 "start",
             )
+
+            ProgressMeter.update!(
+                prog_bar,
+                (step - 1) * length(execution_order) + ix;
+                showvalues=[
+                    (:Step, step),
+                    (:model, model_name),
+                    (:("Simulation Timestamp"), get_current_time(sim)),
+                ],
+            )
+
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
                 end
-                problem_interval = get_interval(sequence, model_name)
-                set_current_time!(sim, sim.internal.date_ref[model_number])
-                sequence.current_execution_index = ix
 
                 # Is first run of first problem? Yes -> don't update problem
 
@@ -760,21 +792,22 @@ function _execute!(
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
-                    status =
-                        solve!(step, model, get_current_time(sim), store; exports=exports)
+                    status = solve!(step, model, current_time, store; exports=exports)
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
                     if status == RunStatus.SUCCESSFUL
-                        # TODO: _update_simulation_state! needs performance improvements
+                        # TODO: _update_simulation_state! can use performance improvements
                         _update_simulation_state!(sim, model)
-                        _write_state_to_store!(store, sim)
+                        if model_number == execution_order[end]
+                            _update_system_state!(sim, model)
+                            _write_state_to_store!(store, sim)
+                        end
                     end
                 end
 
-                global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1
-                sim.internal.date_ref[model_number] += problem_interval
+                sim.internal.date_ref[model_number] += get_interval(sequence, model_name)
 
                 # _apply_warm_start! can only be called once all the operations that read solutions
                 # from the optimization container have been called.
@@ -789,16 +822,6 @@ function _execute!(
                     step,
                     model_name,
                     "done",
-                )
-
-                ProgressMeter.update!(
-                    prog_bar,
-                    global_problem_execution_count;
-                    showvalues=[
-                        (:Step, step),
-                        (:model, model_name),
-                        (:("Simulation Timestamp"), get_current_time(sim)),
-                    ],
                 )
             end #execution problem timer
         end # execution order for loop

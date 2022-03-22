@@ -56,7 +56,7 @@ function update_initial_conditions!(
         # The state data is stored in the state resolution (i.e. lowest resolution among all models)
         # so this step scales the data to the model resolution.
         val = var_val[get_component_name(ic)] / (model_resolution / state_resolution)
-        set_ic_quantity!(ic, var_val[get_component_name(ic)])
+        set_ic_quantity!(ic, val)
     end
     return
 end
@@ -75,7 +75,6 @@ function update_initial_conditions!(
             comp = get_component(ic)
             min = PSY.get_active_power_limits(comp).min
             max = PSY.get_active_power_limits(comp).max
-            value_in_bounds = true
             if var_val <= max && var_val >= min
                 set_ic_quantity!(ic, var_val)
             elseif isapprox(min - var_val, 0.0, atol=ABSOLUTE_TOLERANCE)
@@ -83,9 +82,9 @@ function update_initial_conditions!(
             elseif isapprox(var_val - max, 0.0, atol=ABSOLUTE_TOLERANCE)
                 set_ic_quantity!(ic, max)
             else
-                error(
-                    "Variable value $(var_val) for ActivePowerVariable for $(comp_type) is out of bounds [$(min), $(max)].",
-                )
+                error("Variable value $(var_val) for ActivePowerVariable \\
+                      Status value $(status_val) for OnVariable \\
+                      $(comp_type)-$(comp_name) is out of bounds [$(min), $(max)].")
             end
         else
             @assert isapprox(var_val, 0.0, atol=ABSOLUTE_TOLERANCE) "status and power don't match"

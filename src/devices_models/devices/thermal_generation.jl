@@ -687,8 +687,6 @@ function calculate_aux_variable_value!(
     ini_cond = get_initial_condition(container, InitialTimeDurationOn(), T)
 
     time_steps = get_time_steps(container)
-    resolution = get_resolution(container)
-    minutes_per_period = Dates.value(Dates.Minute(resolution))
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
@@ -731,9 +729,6 @@ function calculate_aux_variable_value!(
     ini_cond = get_initial_condition(container, InitialTimeDurationOff(), T)
 
     time_steps = get_time_steps(container)
-    resolution = get_resolution(container)
-    minutes_per_period = Dates.value(Dates.Minute(resolution))
-
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
         IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
                       JuMP.axes(on_variable_results)[1][ix]
