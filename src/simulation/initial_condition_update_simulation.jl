@@ -56,7 +56,7 @@ function update_initial_conditions!(
         # The state data is stored in the state resolution (i.e. lowest resolution among all models)
         # so this step scales the data to the model resolution.
         val = var_val[get_component_name(ic)] / (model_resolution / state_resolution)
-        set_ic_quantity!(ic, var_val[get_component_name(ic)])
+        set_ic_quantity!(ic, val)
     end
     return
 end
