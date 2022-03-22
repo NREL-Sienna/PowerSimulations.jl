@@ -163,8 +163,7 @@ function run_tests()
             @includetests ARGS
         end
 
-        # TODO: Enable this once all expected errors are not logged.
-        #@test length(IS.get_log_events(multi_logger.tracker, Logging.Error)) == 0
+        @test length(IS.get_log_events(multi_logger.tracker, Logging.Error)) == 0
 
         @info IS.report_log_summary(multi_logger)
     end
