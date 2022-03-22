@@ -771,14 +771,14 @@ function _execute!(
             )
 
             ProgressMeter.update!(
-                    prog_bar,
-                    (step - 1) * length(execution_order) + ix;
-                    showvalues=[
-                        (:Step, step),
-                        (:model, model_name),
-                        (:("Simulation Timestamp"), get_current_time(sim)),
-                    ],
-                )
+                prog_bar,
+                (step - 1) * length(execution_order) + ix;
+                showvalues=[
+                    (:Step, step),
+                    (:model, model_name),
+                    (:("Simulation Timestamp"), get_current_time(sim)),
+                ],
+            )
 
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
