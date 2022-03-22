@@ -769,6 +769,17 @@ function _execute!(
                 model_name,
                 "start",
             )
+
+            ProgressMeter.update!(
+                    prog_bar,
+                    (step - 1) * length(execution_order) + ix;
+                    showvalues=[
+                        (:Step, step),
+                        (:model, model_name),
+                        (:("Simulation Timestamp"), get_current_time(sim)),
+                    ],
+                )
+
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
@@ -795,7 +806,6 @@ function _execute!(
                     end
                 end
 
-                global_problem_execution_count = (step - 1) * length(execution_order) + ix
                 sim.internal.run_count[step][model_number] += 1
                 sim.internal.date_ref[model_number] += get_interval(sequence, model_name)
 
@@ -812,16 +822,6 @@ function _execute!(
                     step,
                     model_name,
                     "done",
-                )
-
-                ProgressMeter.update!(
-                    prog_bar,
-                    global_problem_execution_count;
-                    showvalues=[
-                        (:Step, step),
-                        (:model, model_name),
-                        (:("Simulation Timestamp"), get_current_time(sim)),
-                    ],
                 )
             end #execution problem timer
         end # execution order for loop
