@@ -28,21 +28,19 @@ end
     results = ProblemResults(dm_model)
     variables = read_variables(results)
 
-
     list = [
         template,
         dm_model,
         PSI.get_model(template, ThermalStandard),
         PSI.get_network_model(template),
         results,
-        variables
     ]
 
     _test_plain_print_methods(list)
     _test_html_print_methods(list)
 end
 
-@testset "Test Simulation Print Methods" begin
+@testset "Test Simulation Print Methods" beginßå
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
@@ -65,8 +63,8 @@ end
 
     models = SimulationModels(
         decision_models=[
-            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
-            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=ipopt_optimizer),
+            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=HiGHS_optimizer),
+            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=HiGHS_optimizer),
         ],
     )
 
