@@ -24,13 +24,18 @@ end
 
     dm_model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
     @test build!(dm_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test solve!(dm_model; optimizer=GLPK_optimizer) == RunStatus.SUCCESSFUL
+    results = ProblemResults(dm_model)
+    variables = read_variables(results)
 
     list = [
         template,
         dm_model,
         PSI.get_model(template, ThermalStandard),
         PSI.get_network_model(template),
+        results,
     ]
+
     _test_plain_print_methods(list)
     _test_html_print_methods(list)
 end
@@ -58,8 +63,8 @@ end
 
     models = SimulationModels(
         decision_models=[
-            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=GLPK_optimizer),
-            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=ipopt_optimizer),
+            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=HiGHS_optimizer),
+            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=HiGHS_optimizer),
         ],
     )
 
