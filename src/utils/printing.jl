@@ -480,7 +480,12 @@ function Base.show(io::IO, ::MIME"text/html", input::ProblemResultsTypes)
     _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
 end
 
-function _show_method(io::IO, results::T, backend::Symbol; kwargs...) where T <: ProblemResultsTypes
+function _show_method(
+    io::IO,
+    results::T,
+    backend::Symbol;
+    kwargs...,
+) where {T <: ProblemResultsTypes}
     timestamps = get_timestamps(results)
 
     if backend == :html
