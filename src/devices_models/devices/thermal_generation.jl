@@ -1309,6 +1309,28 @@ function objective_function!(
 end
 
 function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: ThermalBasicCompactUnitCommitment}
+    add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen, U <: ThermalBasicUnitCommitment}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_proportional_cost!(container, OnVariable(), devices, U())
+    return
+end
+
+function objective_function!(
     ::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     ::DeviceModel{PSY.ThermalMultiStart, ThermalDispatchNoMin},
