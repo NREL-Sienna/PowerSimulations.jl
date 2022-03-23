@@ -40,7 +40,7 @@ end
     _test_html_print_methods(list)
 end
 
-@testset "Test Simulation Print Methods" beginßå
+@testset "Test Simulation Print Methods" begin
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
