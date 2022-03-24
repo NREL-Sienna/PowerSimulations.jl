@@ -110,7 +110,7 @@ function add_constraints!(
     area_names = PSY.get_name.(areas)
 
     frequency_response = 0.0
-    for area in PSY.get_components(PSY.Area, sys)
+    for area in get_available_components(PSY.Area, sys)
         frequency_response += PSY.get_load_response(area)
     end
 
@@ -158,7 +158,7 @@ function add_constraints!(
     ::ServiceModel{PSY.AGC, V},
     sys::PSY.System,
 ) where {T <: SACEPIDAreaConstraint, U <: PSY.Area, V <: PIDSmoothACE}
-    services = PSY.get_components(PSY.AGC, sys)
+    services = get_available_components(PSY.AGC, sys)
     time_steps = get_time_steps(container)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
     RAW_ACE = get_expression(container, RawACE(), U)

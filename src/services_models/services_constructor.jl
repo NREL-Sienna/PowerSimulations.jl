@@ -35,7 +35,7 @@ function populate_aggregated_service_model!(template, sys::PSY.System)
             delete!(services_template, key)
             D = get_component_type(service_model)
             B = get_formulation(service_model)
-            for service in PSY.get_components(D, sys)
+            for service in get_available_components(D, sys)
                 new_key = (PSY.get_name(service), Symbol(D))
                 if !haskey(services_template, new_key)
                     set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
@@ -296,9 +296,9 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-    services = PSY.get_components(S, sys)
+    services = get_available_components(S, sys)
     agc_areas = PSY.get_area.(services)
-    areas = PSY.get_components(PSY.Area, sys)
+    areas = get_available_components(PSY.Area, sys)
     if !isempty(setdiff(areas, agc_areas))
         throw(
             IS.ConflictingInputsError(
@@ -349,8 +349,8 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-    areas = PSY.get_components(PSY.Area, sys)
-    services = PSY.get_components(S, sys)
+    areas = get_available_components(PSY.Area, sys)
+    services = get_available_components(S, sys)
 
     add_constraints!(container, AbsoluteValueConstraint, LiftVariable, areas, model)
     add_constraints!(

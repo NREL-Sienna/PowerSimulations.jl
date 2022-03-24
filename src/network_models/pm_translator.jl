@@ -358,7 +358,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         template.branches,
         length(ac_lines),
     )
-    buses = PSY.get_components(PSY.Bus, sys)
+    buses = get_available_components(PSY.Bus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(
         "bus" => pm_buses,
