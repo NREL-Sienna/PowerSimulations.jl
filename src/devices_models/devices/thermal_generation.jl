@@ -767,7 +767,7 @@ function calculate_aux_variable_value!(
     ::AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    devices = PSY.get_components(T, system)
+    devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
     if has_container_key(container, OnVariable, T)
         on_variable_results = get_variable(container, OnVariable(), T)
