@@ -440,7 +440,7 @@ function initialize_system_expressions!(
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
     bus_numbers =
-        sort([PSY.get_number(b) for b in get_available_components(PSY.Bus, system)])
+        sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, system)])
     _make_system_expressions!(container, bus_numbers, T)
     return
 end
