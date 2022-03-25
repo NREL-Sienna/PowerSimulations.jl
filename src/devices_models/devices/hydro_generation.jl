@@ -691,7 +691,7 @@ function calculate_aux_variable_value!(
     ::AuxVarKey{EnergyOutput, T},
     system::PSY.System,
 ) where {T <: PSY.HydroGen}
-    devices = PSY.get_components(T, system)
+    devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
 
     p_variable_results = get_variable(container, ActivePowerVariable(), T)
