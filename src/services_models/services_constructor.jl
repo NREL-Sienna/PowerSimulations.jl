@@ -349,7 +349,7 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-    areas = get_available_components(PSY.Area, sys)
+    areas = PSY.get_components(PSY.Area, sys)
     services = get_available_components(S, sys)
 
     add_constraints!(container, AbsoluteValueConstraint, LiftVariable, areas, model)

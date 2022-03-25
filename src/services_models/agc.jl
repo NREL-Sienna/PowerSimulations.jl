@@ -110,7 +110,7 @@ function add_constraints!(
     area_names = PSY.get_name.(areas)
 
     frequency_response = 0.0
-    for area in get_available_components(PSY.Area, sys)
+    for area in PSY.get_components(PSY.Area, sys)
         frequency_response += PSY.get_load_response(area)
     end
 
