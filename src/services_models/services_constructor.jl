@@ -298,7 +298,7 @@ function construct_service!(
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     services = get_available_components(S, sys)
     agc_areas = PSY.get_area.(services)
-    areas = get_available_components(PSY.Area, sys)
+    areas = PSY.get_components(PSY.Area, sys)
     if !isempty(setdiff(areas, agc_areas))
         throw(
             IS.ConflictingInputsError(
