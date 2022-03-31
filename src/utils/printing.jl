@@ -224,13 +224,15 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
                 table[ix, 1] = string(get_component_type(model))
                 table[ix, 2] = string(get_formulation(model))
                 table[ix, 3] = string(model.use_slacks)
-                table[ix, 4] = string(model.attributes["aggregated_service_model"])
+                table[ix, 4] =
+                    string(get(model.attributes, "aggregated_service_model", "false"))
             else
                 table[ix, 1] = key[1]
                 table[ix, 2] = string(get_component_type(model))
                 table[ix, 3] = string(get_formulation(model))
                 table[ix, 4] = string(model.use_slacks)
-                table[ix, 5] = string(model.attributes["aggregated_service_model"])
+                table[ix, 5] =
+                    string(get(model.attributes, "aggregated_service_model", "false"))
             end
         end
 
