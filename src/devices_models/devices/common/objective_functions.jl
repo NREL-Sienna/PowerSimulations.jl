@@ -62,6 +62,25 @@ function add_proportional_cost!(
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
+) where {T <: PSY.ThermalGen, U <: OnVariable, V <: AbstractCompactUnitCommitment}
+    multiplier = objective_function_multiplier(U(), V())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_term = proportional_cost(op_cost_data, U(), d, V())
+        iszero(cost_term) && continue
+        for t in get_time_steps(container)
+            exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            add_to_expression!(container, ProductionCostExpression, exp, d, t)
+        end
+    end
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
 ) where {
     T <: PSY.Storage,
     U <: Union{ActivePowerInVariable, ActivePowerOutVariable},
