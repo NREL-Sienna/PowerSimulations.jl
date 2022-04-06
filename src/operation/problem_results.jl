@@ -409,6 +409,13 @@ function read_variables(
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
+"""
+Return the values for all variables.
+"""
+function read_variables(res::IS.Results)
+    variables = Dict(x => read_variable(res, x) for x in list_variable_names(res))
+end
+
 function read_variables_with_keys(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
@@ -489,6 +496,13 @@ function read_duals(
 )
     result_values = read_duals_with_keys(res, duals; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all duals.
+"""
+function read_duals(res::IS.Results)
+    duals = Dict(x => read_dual(res, x) for x in list_dual_names(res))
 end
 
 function read_duals_with_keys(
@@ -578,6 +592,13 @@ function read_parameters(
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
+"""
+Return the values for all parameters.
+"""
+function read_parameters(res::IS.Results)
+    parameters = Dict(x => read_parameter(res, x) for x in list_parameter_names(res))
+end
+
 function read_parameters_with_keys(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
@@ -665,6 +686,13 @@ function read_aux_variables(
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
+"""
+Return the values for all auxiliary variables.
+"""
+function read_aux_variables(res::IS.Results)
+    variables = Dict(x => read_aux_variable(res, x) for x in list_aux_variable_names(res))
+end
+
 function read_aux_variables_with_keys(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
@@ -750,6 +778,13 @@ function read_expressions(
     result_values =
         read_expressions_with_keys(res, expressions; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all expressions.
+"""
+function read_expressions(res::IS.Results)
+    expressions = Dict(x => read_expression(res, x) for x in list_expression_names(res))
 end
 
 function read_expressions_with_keys(
