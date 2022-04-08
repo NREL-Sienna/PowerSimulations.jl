@@ -383,10 +383,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_variables(res::ProblemResults; kwargs...)
-    return read_variables(res, collect(keys(res.variable_values)); kwargs...)
-end
-
 function read_variables(res::ProblemResults, variables; kwargs...)
     return read_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
 end
@@ -472,10 +468,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_duals(res::ProblemResults; kwargs...)
-    return read_duals(res, collect(keys(res.dual_values)); kwargs...)
-end
-
 function read_duals(res::ProblemResults, duals; kwargs...)
     return read_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
 end
@@ -561,10 +553,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_parameters(res::ProblemResults; kwargs...)
-    return read_parameters(res, collect(keys(res.parameter_values)); kwargs...)
-end
-
 function read_parameters(res::ProblemResults, parameters; kwargs...)
     return read_parameters(res, [ParameterKey(x...) for x in parameters]; kwargs...)
 end
@@ -655,10 +643,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_aux_variables(res::ProblemResults; kwargs...)
-    return read_aux_variables(res, collect(keys(res.aux_variable_values)); kwargs...)
-end
-
 function read_aux_variables(res::ProblemResults, aux_variables; kwargs...)
     return read_aux_variables(res, [AuxVarKey(x...) for x in aux_variables]; kwargs...)
 end
