@@ -756,8 +756,12 @@ function _add_pwl_term!(
     ::U,
     ::V,
 ) where {T <: PSY.ThermalGen, U <: VariableType, V <: ThermalDispatchNoMin}
+    multiplier = objective_function_multiplier(U(), V())
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     component_name = PSY.get_name(component)
     @debug "PWL cost function detected for device $(component_name) using $V"
+    base_power = get_base_power(container)
     slopes = PSY.get_slopes(data)
     if any(slopes .< 0) || !_slope_convexity_check(slopes[2:end])
         throw(
@@ -786,7 +790,7 @@ function _add_pwl_term!(
     break_points = map(x -> last(x), data) ./ base_power
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
-        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_variables!(container, T, component_name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost

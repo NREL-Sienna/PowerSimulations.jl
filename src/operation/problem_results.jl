@@ -383,10 +383,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_variables(res::ProblemResults; kwargs...)
-    return read_variables(res, collect(keys(res.variable_values)); kwargs...)
-end
-
 function read_variables(res::ProblemResults, variables; kwargs...)
     return read_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
 end
@@ -407,6 +403,13 @@ function read_variables(
 )
     result_values = read_variables_with_keys(res, variables; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all variables.
+"""
+function read_variables(res::IS.Results)
+    variables = Dict(x => read_variable(res, x) for x in list_variable_names(res))
 end
 
 function read_variables_with_keys(
@@ -465,10 +468,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_duals(res::ProblemResults; kwargs...)
-    return read_duals(res, collect(keys(res.dual_values)); kwargs...)
-end
-
 function read_duals(res::ProblemResults, duals; kwargs...)
     return read_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
 end
@@ -489,6 +488,13 @@ function read_duals(
 )
     result_values = read_duals_with_keys(res, duals; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all duals.
+"""
+function read_duals(res::IS.Results)
+    duals = Dict(x => read_dual(res, x) for x in list_dual_names(res))
 end
 
 function read_duals_with_keys(
@@ -547,10 +553,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_parameters(res::ProblemResults; kwargs...)
-    return read_parameters(res, collect(keys(res.parameter_values)); kwargs...)
-end
-
 function read_parameters(res::ProblemResults, parameters; kwargs...)
     return read_parameters(res, [ParameterKey(x...) for x in parameters]; kwargs...)
 end
@@ -576,6 +578,13 @@ function read_parameters(
     result_values =
         read_parameters_with_keys(res, parameters; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all parameters.
+"""
+function read_parameters(res::IS.Results)
+    parameters = Dict(x => read_parameter(res, x) for x in list_parameter_names(res))
 end
 
 function read_parameters_with_keys(
@@ -634,10 +643,6 @@ loaded using the [load_results!](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_aux_variables(res::ProblemResults; kwargs...)
-    return read_aux_variables(res, collect(keys(res.aux_variable_values)); kwargs...)
-end
-
 function read_aux_variables(res::ProblemResults, aux_variables; kwargs...)
     return read_aux_variables(res, [AuxVarKey(x...) for x in aux_variables]; kwargs...)
 end
@@ -663,6 +668,13 @@ function read_aux_variables(
     result_values =
         read_aux_variables_with_keys(res, aux_variables; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all auxiliary variables.
+"""
+function read_aux_variables(res::IS.Results)
+    variables = Dict(x => read_aux_variable(res, x) for x in list_aux_variable_names(res))
 end
 
 function read_aux_variables_with_keys(
@@ -750,6 +762,13 @@ function read_expressions(
     result_values =
         read_expressions_with_keys(res, expressions; start_time=start_time, len=len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
+end
+
+"""
+Return the values for all expressions.
+"""
+function read_expressions(res::IS.Results)
+    expressions = Dict(x => read_expression(res, x) for x in list_expression_names(res))
 end
 
 function read_expressions_with_keys(
