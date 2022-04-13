@@ -293,7 +293,7 @@ function add_semicontinuous_ramp_constraints!(
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             variable[name, 1] - ic_power <=
-            ramp_limits.up * minutes_per_period + power_limits.max * varstart[name, 1]
+            ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
@@ -304,7 +304,7 @@ function add_semicontinuous_ramp_constraints!(
             con_up[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 variable[name, t] - variable[name, t - 1] <=
-                ramp_limits.up * minutes_per_period + power_limits.max * varstart[name, t]
+                ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, t]
             )
             con_down[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
