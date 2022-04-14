@@ -83,6 +83,7 @@ function _get_store_value(
     timestamps,
     store::SimulationStore,
 )
+    base_power = get_model_base_power(res)
     results =
         Dict{OptimizationContainerKey, SortedDict{Dates.DateTime, DataFrames.DataFrame}}()
     model_name = Symbol(get_model_name(res))
@@ -92,6 +93,9 @@ function _get_store_value(
         _results = SortedDict{Dates.DateTime, DataFrames.DataFrame}()
         for ts in timestamps
             out = read_result(DataFrames.DataFrame, store, model_name, key, ts)
+            if convert_result_to_natural_units(key)
+                out .*= base_power
+            end
             time_col = range(ts, length=horizon, step=resolution)
             DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out
