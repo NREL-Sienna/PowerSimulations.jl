@@ -60,7 +60,6 @@ function get_realization(
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
                 step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
-            result_length = length(first_id:last_id)
             for colname in propertynames(df)
                 colname == :DateTime && continue
                 col = df[!, colname][first_id:last_id]
