@@ -79,6 +79,7 @@ function compare_results(rpath, epath, model, field, name, timestamp)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
     df2 = PSI.read_dataframe(ep)
+    df2[!,2:end] .*= 100.0
     names1 = names(df1)
     names2 = names(df2)
     names1 != names2 && return false
