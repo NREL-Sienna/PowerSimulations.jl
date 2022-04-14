@@ -94,6 +94,7 @@ function _get_store_value(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Nothing, Int}=nothing,
 )
+    base_power = get_base_power(res)
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for key in container_keys
         start_time, _len, resolution = _check_offsets(res, key, store, start_time, len)
