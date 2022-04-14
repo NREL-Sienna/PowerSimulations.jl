@@ -775,7 +775,7 @@ function _execute!(
                 (step - 1) * length(execution_order) + ix;
                 showvalues=[
                     (:Step, step),
-                    (:model, model_name),
+                    (:Problem, model_name),
                     (:("Simulation Timestamp"), get_current_time(sim)),
                 ],
             )
