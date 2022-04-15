@@ -94,11 +94,15 @@ function _get_store_value(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Nothing, Int}=nothing,
 )
+    base_power = res.base_power
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for key in container_keys
         start_time, _len, resolution = _check_offsets(res, key, store, start_time, len)
         start_index = (start_time - first(res.timestamps)) ÷ resolution + 1
         df = read_results(store, key, index=start_index, len=_len)
+        if convert_result_to_natural_units(key)
+            df .*= base_power
+        end
         time_col = range(start_time, length=_len, step=res.resolution)
         DataFrames.insertcols!(df, 1, :DateTime => time_col)
         results[key] = df

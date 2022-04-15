@@ -73,12 +73,31 @@ function verify_export_results(results, export_path)
     end
 end
 
+NATURAL_UNITS_VALUES = [
+    "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__RenewableDispatch",
+    "ActivePowerVariable__ThermalStandard",
+    "ActivePowerTimeSeriesParameter__PowerLoad",
+    "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
+    "ActivePowerTimeSeriesParameter__RenewableDispatch",
+    "ActivePowerTimeSeriesParameter__InterruptibleLoad",
+    "EnergyLimitParameter__HydroEnergyReservoir",
+    "SystemBalanceSlackDown__System",
+    "SystemBalanceSlackUp__System",
+    "EnergyBudgetTimeSeriesParameter__HydroEnergyReservoir",
+]
+
 function compare_results(rpath, epath, model, field, name, timestamp)
     filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
     rp = joinpath(rpath, model, field, filename)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
     df2 = PSI.read_dataframe(ep)
+
+    if name ∈ NATURAL_UNITS_VALUES
+        df2[!, 2:end] .*= 100.0
+    end
+
     names1 = names(df1)
     names2 = names(df2)
     names1 != names2 && return false
