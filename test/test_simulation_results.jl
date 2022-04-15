@@ -85,7 +85,6 @@ NATURAL_UNITS_VALUES = [
     "SystemBalanceSlackDown__System",
     "SystemBalanceSlackUp__System",
     "EnergyBudgetTimeSeriesParameter__HydroEnergyReservoir",
-
 ]
 
 function compare_results(rpath, epath, model, field, name, timestamp)
@@ -96,7 +95,7 @@ function compare_results(rpath, epath, model, field, name, timestamp)
     df2 = PSI.read_dataframe(ep)
 
     if name ∈ NATURAL_UNITS_VALUES
-        df2[!,2:end] .*= 100.0
+        df2[!, 2:end] .*= 100.0
     end
 
     names1 = names(df1)
