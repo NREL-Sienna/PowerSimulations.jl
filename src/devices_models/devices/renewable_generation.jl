@@ -19,7 +19,7 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenew
 ########################Objective Function##################################################
 objective_function_multiplier(::ActivePowerVariable, ::AbstractRenewableDispatchFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 
-variable_cost(::Nothing, ::ActivePowerVariable, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=1.0
+variable_cost(::Nothing, ::ActivePowerVariable, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=0.0
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.RenewableDispatch, ::AbstractRenewableDispatchFormulation)=PSY.get_variable(cost)
 
 #! format: on
