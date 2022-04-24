@@ -125,11 +125,7 @@ function get_initial_conditions_device_model(
     if supports_milp(get_optimization_container(model))
         return DeviceModel(T, ThermalBasicUnitCommitment)
     else
-        throw(
-            IS.ConflictingInputsError(
-                "Model requires initialization but provided solver doesn't support mixed integer problems.",
-            ),
-        )
+        return DeviceModel(T, ThermalBasicDispatch)
     end
 end
 
