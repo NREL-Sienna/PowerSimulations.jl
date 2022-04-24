@@ -1466,7 +1466,10 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
     JuMP.optimize!(jump_model)
 
     model_status = JuMP.primal_status(jump_model)
-    if model_status ∉ [MOI.FEASIBLE_POINT::MOI.ResultStatusCode, MOI.NEARLY_FEASIBLE_POINT::MOI.ResultStatusCode]
+    if model_status ∉ [
+        MOI.FEASIBLE_POINT::MOI.ResultStatusCode,
+        MOI.NEARLY_FEASIBLE_POINT::MOI.ResultStatusCode,
+    ]
         @error "Optimizer returned $model_status"
         return RunStatus.FAILED
     end
