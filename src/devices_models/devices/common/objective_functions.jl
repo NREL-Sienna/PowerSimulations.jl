@@ -133,7 +133,7 @@ function add_proportional_cost!(
     for index in Iterators.product(axes(reserve_variable)...)
         add_to_objective_invariant_expression!(
             container,
-            DEFAULT_RESERVE_COST/base_p * reserve_variable[index...],
+            DEFAULT_RESERVE_COST / base_p * reserve_variable[index...],
         )
     end
     return
