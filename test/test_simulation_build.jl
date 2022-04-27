@@ -269,28 +269,28 @@ end
         PSI.get_optimization_container(ac_power_model),
         FeedforwardSemiContinousConstraint(),
         ThermalStandard,
-        "ActivePowerVariableub",
+        "ActivePowerVariable_ub",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
         FeedforwardSemiContinousConstraint(),
         ThermalStandard,
-        "ActivePowerVariablelb",
+        "ActivePowerVariable_lb",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
         FeedforwardSemiContinousConstraint(),
         ThermalStandard,
-        "ReactivePowerVariableub",
+        "ReactivePowerVariable_ub",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
         FeedforwardSemiContinousConstraint(),
         ThermalStandard,
-        "ReactivePowerVariablelb",
+        "ReactivePowerVariable_lb",
     )
     @test !isempty(c)
 end
