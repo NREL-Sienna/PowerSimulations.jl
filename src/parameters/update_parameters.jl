@@ -1,4 +1,4 @@
-function update_parameter_values!(
+function _update_parameter_values!(
     ::AbstractArray{T},
     ::NoAttributes,
     args...,
@@ -268,7 +268,7 @@ function _update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     ::AbstractArray{T},
     ::VariableValueAttributes,
     ::Type{<:PSY.Component},
@@ -405,7 +405,7 @@ function update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array,
     attributes::CostFunctionAttributes,
     ::Type{V},
