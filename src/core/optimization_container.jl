@@ -616,25 +616,25 @@ function compute_conflict!(container::OptimizationContainer)
     conflict = container.infeasibility_conflict
     try
         JuMP.compute_conflict!(jump_model)
+        if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
+            @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
+        end
+
+        for (key, field_container) in get_constraints(container)
+            conflict_indices = check_conflict_status(jump_model, field_container)
+            if isempty(conflict_indices)
+                continue
+            else
+                conflict[encode_key(key)] = conflict_indices
+            end
+        end
+        @error "$(conflict)"
     catch e
         jump_model.is_model_dirty = true
         if isa(e, MethodError)
             @info "Can't compute conflict, check that your optimizer supports conflict refining/IIS"
         else
             @error "Can't compute conflict" exception = (e, catch_backtrace())
-        end
-    end
-
-    if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
-        @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
-    end
-
-    for (key, field_container) in get_constraints(container)
-        conflict_indices = check_conflict_status(jump_model, field_container)
-        if isempty(conflict_indices)
-            continue
-        else
-            conflict[encode_key(key)] = conflict_indices
         end
     end
 
@@ -1465,8 +1465,11 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
 
     JuMP.optimize!(jump_model)
 
-    model_status = JuMP.dual_status(jump_model)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+    model_status = JuMP.primal_status(jump_model)
+    if model_status ∉ [
+        MOI.FEASIBLE_POINT::MOI.ResultStatusCode,
+        MOI.NEARLY_FEASIBLE_POINT::MOI.ResultStatusCode,
+    ]
         @error "Optimizer returned $model_status"
         return RunStatus.FAILED
     end

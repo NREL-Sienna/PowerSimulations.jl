@@ -680,6 +680,32 @@ end
 
 function add_to_expression!(
     container::OptimizationContainer,
+    ::Type{T},
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB},
+    U <: OnStatusParameter,
+    V <: PSY.ThermalGen,
+    W <: AbstractThermalDispatchFormulation,
+}
+    parameter_array = get_parameter_array(container, U(), V)
+    if !has_container_key(container, T, V)
+        add_expressions!(container, T, devices, model)
+    end
+    expression = get_expression(container, T(), V)
+    for d in devices, mult in get_expression_multiplier(U(), T(), d, W())
+        for t in get_time_steps(container)
+            name = PSY.get_name(d)
+            _add_to_jump_expression!(expression[name, t], parameter_array[name, t], -mult)
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
     ::Type{U},
     model::ServiceModel{V, W},
     devices_template::Dict{Symbol, DeviceModel},

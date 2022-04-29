@@ -56,6 +56,20 @@ function add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     add_parameters!(container, parameter_type, source_key, model, devices)
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        parameter_type,
+        devices,
+        model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        parameter_type,
+        devices,
+        model,
+    )
     return
 end
 

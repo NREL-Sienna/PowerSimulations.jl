@@ -128,11 +128,12 @@ function add_proportional_cost!(
     U <: ActivePowerReserveVariable,
     V <: AbstractReservesFormulation,
 }
+    base_p = get_base_power(container)
     reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
     for index in Iterators.product(axes(reserve_variable)...)
         add_to_objective_invariant_expression!(
             container,
-            DEFAULT_RESERVE_COST * reserve_variable[index...],
+            DEFAULT_RESERVE_COST / base_p * reserve_variable[index...],
         )
     end
     return

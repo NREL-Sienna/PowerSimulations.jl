@@ -1,4 +1,4 @@
-function update_parameter_values!(
+function _update_parameter_values!(
     ::AbstractArray{T},
     ::NoAttributes,
     args...,
@@ -46,7 +46,7 @@ function _set_parameter_value_sparse_array!(parameter::PJ.ParameterRef, value::F
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
@@ -77,7 +77,7 @@ function update_parameter_values!(
     end
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array::SparseAxisArray,
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
@@ -106,7 +106,7 @@ function update_parameter_values!(
     end
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
     service::V,
@@ -134,7 +134,7 @@ function update_parameter_values!(
     end
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
@@ -158,7 +158,7 @@ function update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
@@ -191,7 +191,42 @@ function update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
+    param_array::AbstractArray{T},
+    attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
+    ::Type{U},
+    model::DecisionModel,
+    state::DatasetContainer{DataFrameDataset},
+) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.Component}
+    current_time = get_current_time(model)
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
+    component_names, time = axes(param_array)
+    resolution = get_resolution(model)
+
+    state_data = get_dataset(state, get_attribute_key(attributes))
+    state_timestamps = state_data.timestamps
+    max_state_index = length(state_data)
+
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+
+    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    for t in time
+        timestamp_ix = min(max_state_index, state_data_index + 1)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[timestamp_ix] <= sim_timestamps[t]
+            state_data_index = timestamp_ix
+        end
+        for name in component_names
+            # Pass indices in this way since JuMP DenseAxisArray don't support view()
+            val = round(state_values[state_data_index, name])
+            @assert 0.0 <= val <= 1.0
+            _set_param_value!(param_array, val, name, t)
+        end
+    end
+    return
+end
+
+function _update_parameter_values!(
     param_array::AbstractArray{T},
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
@@ -211,7 +246,29 @@ function update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
+    param_array::AbstractArray{T},
+    attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
+    ::Type{<:PSY.Component},
+    model::EmulationModel,
+    state::DatasetContainer{DataFrameDataset},
+) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.Component}
+    current_time = get_current_time(model)
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
+    component_names, _ = axes(param_array)
+    state_data = get_dataset(state, get_attribute_key(attributes))
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    for name in component_names
+        # Pass indices in this way since JuMP DenseAxisArray don't support view()
+        val = round(state_values[state_data_index, name])
+        @assert 0.0 <= val <= 1.0
+        _set_param_value!(param_array, val, name, 1)
+    end
+    return
+end
+
+function _update_parameter_values!(
     ::AbstractArray{T},
     ::VariableValueAttributes,
     ::Type{<:PSY.Component},
@@ -237,7 +294,7 @@ function update_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
@@ -286,7 +343,7 @@ function update_parameter_values!(
         end
         for name in component_names
             # the if statement checks if its the first solve of the model and uses the values stored in the state
-            # and for subsequent solves uses the state data to update the parameter values for the last set of time periods 
+            # and for subsequent solves uses the state data to update the parameter values for the last set of time periods
             # that are equal to the length of the interval i.e. the time periods that dont overlap between each solves.
             if execution_count == 0 || t > time[end] - interval_time_steps
                 # Pass indices in this way since JuMP DenseAxisArray don't support view()
@@ -336,7 +393,7 @@ function update_parameter_values!(
     param_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     service = PSY.get_component(U, get_system(model), key.meta)
-    update_parameter_values!(param_array, parameter_attributes, service, model, input)
+    _update_parameter_values!(param_array, parameter_attributes, service, model, input)
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
@@ -348,7 +405,7 @@ function update_parameter_values!(
     return
 end
 
-function update_parameter_values!(
+function _update_parameter_values!(
     param_array,
     attributes::CostFunctionAttributes,
     ::Type{V},

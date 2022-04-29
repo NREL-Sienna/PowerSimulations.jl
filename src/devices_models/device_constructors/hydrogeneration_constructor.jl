@@ -5,7 +5,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{H, FixedOutput},
+    model::DeviceModel{H, FixedOutput},
     ::Type{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
@@ -17,7 +17,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable,
+        ActivePowerTimeSeriesParameter,
         devices,
         model,
         S,
@@ -25,7 +25,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance,
-        ReactivePowerVariable,
+        ReactivePowerTimeSeriesParameter,
         devices,
         model,
         S,
