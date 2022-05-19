@@ -962,6 +962,26 @@ end
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
+    attribute::TimeSeriesAttributes{V},
+    axs...;
+    sparse=false,
+) where {T <: EnergyValueTimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+    # Temporary while we change to POI vs PJ
+    if sparse
+        param_array = sparse_container_spec(Float64, axs...)
+        multiplier_array = sparse_container_spec(Float64, axs...)
+    else
+        param_array = DenseAxisArray{Float64}(undef, axs...)
+        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
     attributes::CostFunctionAttributes{R},
     axs...;
     sparse=false,
