@@ -53,6 +53,7 @@ get_initial_parameter_value(::VariableValueParameter, d::PSY.Storage, ::Abstract
 objective_function_multiplier(::VariableType, ::AbstractStorageFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 objective_function_multiplier(::EnergySurplusVariable, ::EnergyTarget)=OBJECTIVE_FUNCTION_NEGATIVE
 objective_function_multiplier(::EnergyShortageVariable, ::EnergyTarget)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::EnergyVariable, ::EnergyValue)=OBJECTIVE_FUNCTION_NEGATIVE
 
 proportional_cost(cost::PSY.StorageManagementCost, ::EnergySurplusVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_surplus_cost(cost)
 proportional_cost(cost::PSY.StorageManagementCost, ::EnergyShortageVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_shortage_cost(cost)
@@ -73,12 +74,27 @@ get_multiplier_value(
     ::AbstractStorageFormulation,
 ) = PSY.get_rating(d)
 
+get_multiplier_value(
+    ::EnergyValueTimeSeriesParameter,
+    d::PSY.Storage,
+    ::AbstractStorageFormulation,
+) = 1.0
+
 function get_default_time_series_names(
     ::Type{D},
     ::Type{EnergyTarget},
 ) where {D <: PSY.Storage}
     return Dict{Type{<:TimeSeriesParameter}, String}(
         EnergyTargetTimeSeriesParameter => "storage_target",
+    )
+end
+
+function get_default_time_series_names(
+    ::Type{D},
+    ::Type{EnergyValue},
+) where {D <: PSY.Storage}
+    return Dict{Type{<:ParameterType}, String}(
+        EnergyValueTimeSeriesParameter => "energy_value",
     )
 end
 
@@ -398,5 +414,16 @@ function objective_function!(
     add_variable_cost!(container, ActivePowerOutVariable(), devices, T())
     add_proportional_cost!(container, EnergySurplusVariable(), devices, T())
     add_proportional_cost!(container, EnergyShortageVariable(), devices, T())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, S},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.Storage, S <: EnergyValue}
+    @show "called objective_function!"
+    add_variable_cost!(container, EnergyVariable(), devices, S())
     return
 end
