@@ -162,6 +162,8 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
 struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
 
+struct EnergyValueTimeSeriesParameter <: TimeSeriesParameter end
+
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
 
 struct InflowTimeSeriesParameter <: TimeSeriesParameter end
@@ -178,6 +180,7 @@ struct FixValueParameter <: VariableValueParameter end
 struct EnergyTargetParameter <: VariableValueParameter end
 
 struct CostFunctionParameter <: ObjectiveFunctionParameter end
+struct EnergyValueParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
@@ -197,3 +200,4 @@ convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{EnergyLimitParameter}) = true
 convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true
+convert_result_to_natural_units(::Type{EnergyValueParameter}) = false

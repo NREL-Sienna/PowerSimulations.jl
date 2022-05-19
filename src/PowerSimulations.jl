@@ -61,6 +61,7 @@ export HydroDispatchPumpedStorage
 export BookKeeping
 export BatteryAncillaryServices
 export EnergyTarget
+export EnergyValue
 
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
@@ -326,6 +327,7 @@ export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
 export EnergyTargetTimeSeriesParameter
 export EnergyBudgetTimeSeriesParameter
+export EnergyValueTimeSeriesParameter
 
 # Feedforward Parameters
 export OnStatusParameter
