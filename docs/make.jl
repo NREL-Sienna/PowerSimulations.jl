@@ -2,53 +2,42 @@ using Documenter
 using PowerSystems
 using PowerSimulations
 using Literate
-#using PowerGraphics
 using DataStructures
-#const PG = PowerGraphics
 
-folders = Dict(
-#  "Operations" => readdir("docs/src/Operations"),
-#  "Simulations" => readdir("docs/src/Simulations"),
-# "PowerGraphics" => readdir("docs/src/PowerGraphics"),
-)
-
-for (name, folder) in folders
-    for file in folder
-        outputdir = joinpath(pwd(), "docs/src/howto")
-        inputfile = joinpath(pwd(), "docs/src/$name/$file")
-        Literate.markdown(inputfile, outputdir)
-    end
-end
-if isfile("docs/src/howto/.DS_Store.md")
-    rm("docs/src/howto/.DS_Store.md")
-end
-
-makedocs(
-    sitename="PowerSimulations.jl",
-    format=Documenter.HTML(
-        mathengine=Documenter.MathJax(),
-        prettyurls=get(ENV, "CI", nothing) == "true",
-    ),
-    modules=[PowerSimulations],
-    authors="Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
-    pages=Any[
-        "Introduction" => "index.md",
-        #"Quick Start Guide" => "qs_guide.md",
-        #"Logging" => "man/logging.md",
-        # "Operation Model" => "man/op_problem.md",
-        # "How To" => Any[
-        #     "Set Up Plots" => "howto/3.0_set_up_plots.md",
-        #     "Make Stack Plots" => "howto/3.1_make_stack_plots.md",
-        #     "Make Bar Plots" => "howto/3.2_make_bar_plots.md",
-        #     "Make Fuel Plots" => "howto/3.3_make_fuel_plots.md",
-        #     "Make Forecast Plots" => "howto/3.4_make_forecast_plots.md",
-        #     "Plot Fewer Variables" => "howto/3.5_plot_fewer_variables.md",
-        #     "Plot Multiple Results" => "howto/3.6_plot_multiple_results.md",
-        # ],
-        #"Simulation Recorder" => "man/simulation_recorder.md",
-        #"Model References" => Any["Hydro Models" => "ref/hydro.md"],
-        "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
-    ],
+pages = OrderedDict(
+        "Welcome Page" => "index.md",
+        "Quick Start Guide" => "quick_start_guide.md",
+        "Tutorials" =>  "tutorials/intro_page.md",
+        "Modeler Guide" =>
+            Any[
+            #"modeler_guide/type_structure.md",
+            #"modeler_guide/system.md",
+            #"modeler_guide/time_series.md",
+            #"modeler_guide/enumerated_types.md",
+            #"modeler_guide/example_dynamic_data.md",
+            "modeler_guide/definitions.md",
+            "modeler_guide/simulation_recorder.md",
+            "modeler_guide/Logging.md"
+            ],
+        "Model Developer Guide" =>
+            Any[
+                "Adding Formulation" => "model_developer_guide/adding_device_formulation.md"
+                "Adding Problems" => "model_developer_guide/adding_new_problem_model.md"
+                "Troubleshooting" => "model_developer_guide/troubleshooting.md"
+            ],
+        "Code Base Developer Guide" =>
+            Any[
+                "Developer Guide" => "code_base_developer_guide/developer.md",
+                "Troubleshooting" => "code_base_developer_guide/troubleshooting.md"
+            ],
+        "Formulation Library" => Any[
+            "Thermal Generation" => "formulation_library/ThermalGen.md",
+            "Hydro Generation" => "formulation_library/HydroGen.md",
+            "Storage" => "formulation_library/Storage.md",
+            "Network" => "formulation_library/Network.md"
+        ],
+        "Public API Reference" => "api/public.md",
+        "Internal API Reference" => "api/internal.md"
 )
 
 deploydocs(
@@ -57,5 +46,6 @@ deploydocs(
     branch="gh-pages",
     devbranch="master",
     devurl="dev",
+    push_preview=true,
     versions=["stable" => "v^", "v#.#"],
 )
