@@ -36,11 +36,11 @@ pages = OrderedDict(
 )
 
 makedocs(
-    modules = [PowerSimulations],
-    format = Documenter.HTML(prettyurls = haskey(ENV, "GITHUB_ACTIONS"),),
-    sitename = "PowerSimulations.jl",
-    authors = "Jose Daniel Lara, Daniel Thom and Clayton Barrows",
-    pages = Any[p for p in pages]
+    modules=[PowerSimulations],
+    format=Documenter.HTML(prettyurls=haskey(ENV, "GITHUB_ACTIONS")),
+    sitename="PowerSimulations.jl",
+    authors="Jose Daniel Lara, Daniel Thom and Clayton Barrows",
+    pages=Any[p for p in pages],
 )
 
 deploydocs(

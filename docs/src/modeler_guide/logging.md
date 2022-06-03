@@ -1,6 +1,6 @@
 # Logging
 
-PowerSimulations will output many log messages when building systems and
+`PowerSimulations.jl` will output many log messages when building systems and
 running simulations. You may want to customize what gets logged to the console
 and, optionally, a file.
 
