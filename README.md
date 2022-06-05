@@ -23,7 +23,6 @@ For example, an annual production cost modeling simulation can be created by for
 ### _Simulations_ enabled by PowerSimulations
 
 - Production Cost Modeling
-- Load Flow and Contingency Analysis - _TODO_
 
 ### _Model_ formulations contained in PowerSimulations
 
