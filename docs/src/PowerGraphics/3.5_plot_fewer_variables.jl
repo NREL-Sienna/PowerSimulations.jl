@@ -60,4 +60,4 @@
 # ![this one](plots-52/Selected_Variables_Plot.png)
 
 # `sort_data()` creates a new results object only containing the subset of variables and generators listed in the dictionary.
-# If the Variables key word argument is not called, the default for `sort_data()` is to alphebatize the generators per variable.
+# If the Variables key word argument is not called, the default for `sort_data()` is to alphabetize the generators per variable.

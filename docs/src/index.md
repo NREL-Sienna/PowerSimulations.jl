@@ -6,7 +6,7 @@ PowerSimulations.jl is a Julia/JuMP package designed to develop and study power 
 
 The package supports two major analysis tools:
 
-- Operational Models: Meant to study and analyze multiperiod operational model formulations that can be specified by the combination of device formulations and network models.
+- Operational Models: Meant to study and analyze multi-period operational model formulations that can be specified by the combination of device formulations and network models.
 - Simulations Models: Developed to run sequences of operational models to study model interactions such as cost-production-modeling.
 
 The documentation is still work in progress.

@@ -1,12 +1,12 @@
 # Energy Target Storage Formulation
-This formulation provides a way for user to tackle the end of horizon effect in battery operation by adding a constraint on stored energy at the end of period. The target constraint includes a slack variable which is associated with a penalty for any violation of the constraints, this ensure feasibility of the model for scenarios where it is not optimal to excatly meet the target.
+This formulation provides a way for user to tackle the end of horizon effect in battery operation by adding a constraint on stored energy at the end of period. The target constraint includes a slack variable which is associated with a penalty for any violation of the constraints, this ensure feasibility of the model for scenarios where it is not optimal to exactly meet the target.
 
 # Formulation Overview
  The features of this model are:
 - Standard Battery Operation Constraint
   - Energy balance constraint
   - Energy range constraint
-  - Charging and discharing limit constraint
+  - Charging and discharging limit constraint
 - Power Contribution in eligible services 
 - Stored Energy Target Constraint 
 
