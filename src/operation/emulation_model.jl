@@ -344,6 +344,8 @@ function update_parameters!(model::EmulationModel, data::DatasetContainer{DataFr
     end
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
+        obj_func = get_objective_function(get_optimization_container(model))
+        set_synchronized_status(obj_func, true)
     end
     return
 end
