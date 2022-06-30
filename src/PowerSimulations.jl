@@ -62,6 +62,7 @@ export BookKeeping
 export BatteryAncillaryServices
 export EnergyTarget
 export EnergyValue
+export EnergyValueCurve
 
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
