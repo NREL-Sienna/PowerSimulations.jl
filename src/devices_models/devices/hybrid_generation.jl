@@ -75,7 +75,7 @@ get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.HybridSystem, ::Ty
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, <:AbstractHybridFormulation},
-) where {T <: PSY.HybridSystem} = DeviceModel(T, BasicHybridDisaptch)
+) where {T <: PSY.HybridSystem} = DeviceModel(T, BasicHybridDispatch)
 
 does_subcomponent_exist(v::PSY.HybridSystem, ::Type{PSY.ThermalGen}) =
     !isnothing(PSY.get_thermal_unit(v))
