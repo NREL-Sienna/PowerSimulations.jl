@@ -59,8 +59,8 @@ proportional_cost(cost::PSY.StorageManagementCost, ::EnergySurplusVariable, ::PS
 proportional_cost(cost::PSY.StorageManagementCost, ::EnergyShortageVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_energy_shortage_cost(cost)
 
 variable_cost(cost::PSY.StorageManagementCost, ::ActivePowerOutVariable, ::PSY.BatteryEMS, ::EnergyTarget)=PSY.get_variable(cost)
-
-
+sos_status(::PSY.Storage, ::AbstractStorageFormulation)=SOSStatusVariable.NO_VARIABLE
+uses_compact_power(::PSY.Storage, ::AbstractStorageFormulation)=false
 #! format: on
 
 get_initial_conditions_device_model(
@@ -423,7 +423,16 @@ function objective_function!(
     ::DeviceModel{T, S},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.Storage, S <: EnergyValue}
-    @show "called objective_function!"
+    add_variable_cost!(container, EnergyVariable(), devices, S())
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, S},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.Storage, S <: EnergyValueCurve}
     add_variable_cost!(container, EnergyVariable(), devices, S())
     return
 end

@@ -194,6 +194,59 @@ end
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
+    component::U,
+    op_cost::PSY.MarketBidCost,
+    ::V,
+) where {T <: EnergyVariable,  U <: PSY.Storage, V <: EnergyValueCurve}
+    component_name = PSY.get_name(component)
+    @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    time_steps = get_time_steps(container)
+    initial_time = get_initial_time(container)
+    variable_cost_forecast = PSY.get_variable_cost(
+        component,
+        op_cost;
+        start_time=initial_time,
+        len=length(time_steps),
+    )
+    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
+    parameter_container = _get_cost_function_parameter_container(
+        container,
+        CostFunctionParameter(),
+        component,
+        T(),
+        V(),
+        eltype(variable_cost_forecast_values),
+    )
+    pwl_cost_expressions =
+        _add_pwl_term!(container, component, variable_cost_forecast_values, T(), V())
+    jump_model = get_jump_model(container)
+    for t in time_steps
+        set_parameter!(
+            parameter_container,
+            jump_model,
+            PSY.get_cost(variable_cost_forecast_values[t]),
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
+            #  of base power times the time delta.
+            1.0,
+            component_name,
+            t,
+        )
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            pwl_cost_expressions[t],
+            component,
+            t,
+        )
+        add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+    end
+
+    return
+end
+
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
     component::PSY.Component,
     op_cost::PSY.MarketBidCost,
     ::U,
@@ -711,6 +764,39 @@ function _add_pwl_term!(
         slopes = PSY.get_slopes(data)
         # Shouldn't be passed for convexity check
         is_convex = false
+        break_points = map(x -> last(x), data) ./ base_power
+        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
+        if !is_convex
+            _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
+        end
+        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost_expressions[t] = pwl_cost
+    end
+    return pwl_cost_expressions
+end
+
+function _add_pwl_term!(
+    container::OptimizationContainer,
+    component::T,
+    cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
+    ::U,
+    ::V,
+) where {T <: PSY.Storage, U <: VariableType, V <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    @show "used this function"
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    # Re-scale breakpoints by Basepower
+    name = PSY.get_name(component)
+    time_steps = get_time_steps(container)
+    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    sos_val = _get_sos_value(container, V, component)
+    for t in time_steps
+        data = PSY.get_cost(cost_data[t])
+        slopes = PSY.get_slopes(data)
+        is_convex = _slope_convexity_check(slopes)
         break_points = map(x -> last(x), data) ./ base_power
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)

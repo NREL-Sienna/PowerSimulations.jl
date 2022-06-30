@@ -72,6 +72,7 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
 struct EnergyTarget <: AbstractEnergyManagement end
 struct EnergyValue <: AbstractEnergyManagement end
+struct EnergyValueCurve <: AbstractEnergyManagement end
 """
 Abstract type for Branch Formulations (a.k.a Models)
 
