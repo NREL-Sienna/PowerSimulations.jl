@@ -784,7 +784,6 @@ function _add_pwl_term!(
     ::V,
 ) where {T <: PSY.Storage, U <: VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
-    @show "used this function"
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     base_power = get_base_power(container)
