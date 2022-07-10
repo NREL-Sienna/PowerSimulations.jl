@@ -2,15 +2,16 @@ function _update_parameter_values!(
     ::AbstractArray{T},
     ::NoAttributes,
     args...,
-) where {T <: Union{Float64, PJ.ParameterRef}} end
+) where {T <: Union{Float64, JuMP.VariableRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, t::Int)
-    JuMP.set_value(param[name, t], value)
+function _set_param_value!(model::JuMP.Model, param::JuMPVariableArray, value::Float64, name::String, t::Int)
+    MOI.set(model, POI.ParameterValue(), param[name, t], value)
     return
 end
 
 function _set_param_value!(
+    ::JuMP.Model,
     param::DenseAxisArray{Vector{NTuple{2, Float64}}},
     value::Vector{NTuple{2, Float64}},
     name::String,
@@ -20,28 +21,29 @@ function _set_param_value!(
     return
 end
 
-function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
+function _set_param_value!(::JuMP.Model, param::JuMPFloatArray, value::Float64, name::String, t::Int)
     param[name, t] = value
     return
 end
 
 function _set_param_value!(
+    model::JuMP.Model,
     param::SparseAxisArray,
     value::Float64,
     name::String,
     subcomp::String,
     t::Int,
 )
-    _set_parameter_value_sparse_array!(param[name, subcomp, t], value)
+    _set_parameter_value_sparse_array!(model, param[name, subcomp, t], value)
     return
 end
 
-function _set_parameter_value_sparse_array!(parameter::Float64, value::Float64)
+function _set_parameter_value_sparse_array!(::JuMP.Model, parameter::Float64, value::Float64)
     parameter = value
     return
 end
 
-function _set_parameter_value_sparse_array!(parameter::PJ.ParameterRef, value::Float64)
+function _set_parameter_value_sparse_array!(model::JuMP.Model, parameter::JuMP.VariableRef, value::Float64)
     JuMP.set_value(parameter, value)
     return
 end
@@ -53,7 +55,7 @@ function _update_parameter_values!(
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
 ) where {
-    T <: Union{PJ.ParameterRef, Float64},
+    T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.Component,
 }
@@ -113,7 +115,7 @@ function _update_parameter_values!(
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
 ) where {
-    T <: Union{PJ.ParameterRef, Float64},
+    T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.Service,
 }
@@ -140,7 +142,7 @@ function _update_parameter_values!(
     ::Type{V},
     model::EmulationModel,
     ::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
     for component in components
@@ -164,7 +166,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     model::DecisionModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}}
+) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
@@ -197,7 +199,7 @@ function _update_parameter_values!(
     ::Type{U},
     model::DecisionModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.Component}
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
@@ -232,7 +234,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     model::EmulationModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}}
+) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(param_array)
@@ -252,7 +254,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     model::EmulationModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.Component}
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(param_array)
@@ -274,7 +276,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     ::EmulationModel,
     ::EmulationModelStore,
-) where {T <: Union{PJ.ParameterRef, Float64}}
+) where {T <: Union{JuMP.VariableRef, Float64}}
     error("The emulation model has parameters that can't be updated from its results")
     return
 end
