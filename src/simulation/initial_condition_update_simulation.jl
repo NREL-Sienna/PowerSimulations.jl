@@ -65,7 +65,9 @@ function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
     ::Dates.Millisecond,
-) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, JuMP.VariableRef}}
+) where {
+    T <: InitialCondition{DevicePower, S},
+} where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
         comp_name = get_component_name(ic)
         comp_type = get_component_type(ic)
