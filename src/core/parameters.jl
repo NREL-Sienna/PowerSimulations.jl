@@ -111,7 +111,7 @@ function _set_parameter!(
 end
 
 function _set_parameter!(
-    array::AbstractArray{PJ.ParameterRef},
+    array::AbstractArray{JuMP.VariableRef},
     model::JuMP.Model,
     value::Float64,
     ixs::Tuple,

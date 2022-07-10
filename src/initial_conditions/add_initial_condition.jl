@@ -28,7 +28,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialConditionType}
@@ -78,7 +78,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOff}
@@ -132,7 +132,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOn}
@@ -159,7 +159,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}

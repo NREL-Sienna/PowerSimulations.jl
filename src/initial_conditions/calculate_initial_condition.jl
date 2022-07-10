@@ -2,7 +2,7 @@
 Default implementation of set_initial_condition_value
 """
 function set_ic_quantity!(
-    ic::InitialCondition{T, PJ.ParameterRef},
+    ic::InitialCondition{T, JuMP.VariableRef},
     var_value::Float64,
 ) where {T <: InitialConditionType}
     @assert isfinite(var_value) ic
