@@ -33,7 +33,9 @@ function update_initial_conditions!(
     ics::Vector{T},
     store::EmulationModelStore,
     ::Dates.Millisecond,
-) where {T <: InitialCondition{DevicePower, S}} where {S <: Union{Float64, JuMP.VariableRef}}
+) where {
+    T <: InitialCondition{DevicePower, S},
+} where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
         var_val = get_variable_value(store, ActivePowerVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
