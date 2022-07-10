@@ -925,7 +925,7 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -946,7 +946,7 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -1237,7 +1237,7 @@ function _add_initial_condition_container!(
     length_devices::Int,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     if built_for_recurrent_solves(container)
-        ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
+        ini_conds = Vector{InitialCondition{T, JuMP.VariableRef}}(undef, length_devices)
     else
         ini_conds = Vector{InitialCondition{T, Float64}}(undef, length_devices)
     end
