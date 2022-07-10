@@ -367,11 +367,7 @@ end
 
 # This function is necessary while we switch from ParameterJuMP to POI
 function _make_container_array(parameter_jump::Bool, ax...)
-    if parameter_jump
-        return remove_undef!(DenseAxisArray{PGAE}(undef, ax...))
-    else
-        return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
-    end
+    return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
 end
 
 function _make_system_expressions!(
@@ -1165,8 +1161,7 @@ function add_expression_container!(
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
-    return _add_expression_container!(container, expr_key, expr_type, axs...; sparse=sparse)
+    return _add_expression_container!(container, expr_key, GAE, axs...; sparse=sparse)
 end
 
 function add_expression_container!(
