@@ -6,7 +6,7 @@ function set_ic_quantity!(
     var_value::Float64,
 ) where {T <: InitialConditionType}
     @assert isfinite(var_value) ic
-    PJ.set_value(ic.value, var_value)
+    set_value(ic.value, var_value)
     return
 end
 
