@@ -269,12 +269,9 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
 end
 
 function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
-    if !haskey(JuMPmodel.ext, :ParameterJuMP)
-        @debug "Model doesn't have Parameters enabled. Parameters will be enabled" _group =
-            LOG_GROUP_OPTIMIZATION_CONTAINER
-        PJ.enable_parameters(JuMPmodel)
-        JuMP.set_optimizer(JuMPmodel, optimizer)
-    end
+    @debug "Model doesn't have Parameters enabled. Parameters will be enabled" _group =
+        LOG_GROUP_OPTIMIZATION_CONTAINER
+    JuMP.set_optimizer(JuMPmodel, () -> ParametricOptInterface.Optimizer(settings.Optimizer())())
     return
 end
 
@@ -365,8 +362,7 @@ function get_problem_size(container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-# This function is necessary while we switch from ParameterJuMP to POI
-function _make_container_array(parameter_jump::Bool, ax...)
+function _make_container_array(ax...)
     return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
 end
 
@@ -375,13 +371,13 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
-    parameter_jump = built_for_recurrent_solves(container)
+
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
     )
     return
 end
@@ -391,11 +387,11 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
-    parameter_jump = built_for_recurrent_solves(container)
+
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
     )
     return
 end
@@ -405,11 +401,10 @@ function _make_system_expressions!(
     ::Vector{Int},
     ::Type{CopperPlatePowerModel},
 )
-    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameter_jump, time_steps),
+            _make_container_array(time_steps),
     )
     return
 end
@@ -419,13 +414,12 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
-    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameter_jump, time_steps),
+            _make_container_array(time_steps),
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
     )
     return
 end
