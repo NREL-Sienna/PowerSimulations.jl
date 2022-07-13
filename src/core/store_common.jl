@@ -13,12 +13,12 @@ const EmulationModelIndexType = Int
 function write_results!(
     store,
     model::OperationModel,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::Union{DecisionModelIndexType,EmulationModelIndexType},
     update_timestamp::Dates.DateTime;
-    exports=nothing,
+    exports=nothing
 )
     if exports !== nothing
-        export_params = Dict{Symbol, Any}(
+        export_params = Dict{Symbol,Any}(
             :exports => exports,
             :exports_path => joinpath(exports.path, string(get_name(model))),
             :file_type => get_export_file_type(exports),
@@ -40,10 +40,10 @@ end
 function write_model_dual_results!(
     store,
     model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::Union{DecisionModelIndexType,EmulationModelIndexType},
     update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: OperationModel}
+    export_params::Union{Dict{Symbol,Any},Nothing},
+) where {T<:OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -69,14 +69,14 @@ function write_model_dual_results!(
     return
 end
 
-function calaculate_parameter_values(
+function calculate_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
     return jump_value.(param_array) .* multiplier_array
 end
 
-function calaculate_parameter_values(
+function calculate_parameter_values(
     param_array::SparseAxisArray,
     multiplier_array::SparseAxisArray,
 )
@@ -88,10 +88,10 @@ end
 function write_model_parameter_results!(
     store,
     model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::Union{DecisionModelIndexType,EmulationModelIndexType},
     update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: OperationModel}
+    export_params::Union{Dict{Symbol,Any},Nothing},
+) where {T<:OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -107,7 +107,7 @@ function write_model_parameter_results!(
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
         # @assert_op length(axes(param_array)) == 2
-        data = calaculate_parameter_values(param_array, multiplier_array)
+        data = calculate_parameter_values(param_array, multiplier_array)
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
@@ -126,10 +126,10 @@ end
 function write_model_variable_results!(
     store,
     model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::Union{DecisionModelIndexType,EmulationModelIndexType},
     update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: OperationModel}
+    export_params::Union{Dict{Symbol,Any},Nothing},
+) where {T<:OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -164,10 +164,10 @@ end
 function write_model_aux_variable_results!(
     store,
     model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::Union{DecisionModelIndexType,EmulationModelIndexType},
     update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: OperationModel}
+    export_params::Union{Dict{Symbol,Any},Nothing},
+) where {T<:OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
@@ -196,10 +196,10 @@ end
 function write_model_expression_results!(
     store,
     model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    index::Union{DecisionModelIndexType,EmulationModelIndexType},
     update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: OperationModel}
+    export_params::Union{Dict{Symbol,Any},Nothing},
+) where {T<:OperationModel}
     container = get_optimization_container(model)
     model_name = get_name(model)
     if export_params !== nothing
