@@ -286,7 +286,8 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
         println(io)
         table = Matrix{Any}(undef, 1, length(header))
         table[1, 1] = string(get_name(sim_models.emulation_model))
-        table[1, 2] = IS.strip_module_name(string(_get_model_type(sim_models.emulation_model)))
+        table[1, 2] =
+            IS.strip_module_name(string(_get_model_type(sim_models.emulation_model)))
         table[1, 3] = string(get_status(sim_models.emulation_model))
         table[1, 4] = get_output_dir(sim_models.emulation_model)
 
