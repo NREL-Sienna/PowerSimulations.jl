@@ -116,8 +116,7 @@ function OptimizationContainer(
     end
 
     return OptimizationContainer(
-        jump_model === nothing ? _make_jump_model(settings) :
-        _finalize_jump_model!(jump_model, settings),
+        jump_model === nothing ? JuMP.Model() : jump_model,
         1:1,
         IS.time_period_conversion(resolution),
         settings,
@@ -254,7 +253,40 @@ function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled:
     return solver_supports_warm_start
 end
 
-function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
+function _finalize_jump_model!(container::OptimizationContainer, settings::Settings)
+    @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    if built_for_recurrent_solves(container) && get_optimizer(settings) !== nothing
+        optimizer =
+            () -> begin
+                opt = POI.Optimizer(
+                    MOI.instantiate(get_optimizer(settings)),
+                    evaluate_duals=false,
+                    save_original_objective_and_constraints=false,
+                )
+                # Option not working properly, requires investigation of the consequences
+                # opt.constraints_interpretation = POI.BOUNDS_AND_CONSTRAINTS
+                return opt
+            end
+    elseif built_for_recurrent_solves(container) && get_optimizer(settings) === nothing
+        throw(
+            IS.ConflictingInputsError(
+                "Optimizer can not be nothing when building for recurrent solves",
+            ),
+        )
+    else
+        optimizer = () -> MOI.instantiate(get_optimizer(settings))
+    end
+
+    if get_direct_mode_optimizer(settings)
+        container.JuMPmodel = JuMP.direct_model(optimizer())
+    elseif optimizer === nothing
+        @debug "The optimization model has no optimizer attached" _group =
+            LOG_GROUP_OPTIMIZATION_CONTAINER
+    else
+        JuMP.set_optimizer(container.JuMPmodel, optimizer)
+    end
+
+    JuMPmodel = container.JuMPmodel
     warm_start_enabled = get_warm_start(settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
@@ -265,30 +297,7 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
         JuMP.set_silent(JuMPmodel)
         @debug "optimizer set to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     end
-    return JuMPmodel
-end
-
-function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
-    @debug "Model doesn't have Parameters enabled. Parameters will be enabled" _group =
-        LOG_GROUP_OPTIMIZATION_CONTAINER
-    JuMP.set_optimizer(JuMPmodel, () -> ParametricOptInterface.Optimizer(settings.Optimizer())())
     return
-end
-
-function _make_jump_model(settings::Settings)
-    @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    optimizer = get_optimizer(settings)
-    if get_direct_mode_optimizer(settings)
-        JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
-    elseif optimizer === nothing
-        JuMPmodel = JuMP.Model()
-        @debug "The optimization model has no optimizer attached" _group =
-            LOG_GROUP_OPTIMIZATION_CONTAINER
-    else
-        JuMPmodel = JuMP.Model(optimizer)
-    end
-    _finalize_jump_model!(JuMPmodel, settings)
-    return JuMPmodel
 end
 
 function init_optimization_container!(
@@ -296,7 +305,6 @@ function init_optimization_container!(
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    @assert container.JuMPmodel !== nothing
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
     # The order of operations matter
     settings = get_settings(container)
@@ -331,6 +339,7 @@ function init_optimization_container!(
     stats = get_optimizer_stats(container)
     stats.detailed_stats = get_detailed_optimizer_stats(settings)
 
+    _finalize_jump_model!(container, settings)
     return
 end
 
@@ -371,7 +380,6 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
-
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
@@ -387,7 +395,6 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
-
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
