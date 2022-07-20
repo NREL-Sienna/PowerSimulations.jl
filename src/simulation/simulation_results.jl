@@ -1,8 +1,10 @@
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
-    alien_files = filter(!∈(KNOWN_SIMULATION_PATHS), folder_files)
+    alien_files = setdiff(folder_files, KNOWN_SIMULATION_PATHS)
     if isempty(alien_files)
         return true
+    else
+        @warn "Unrecognized simulation files: $(sort(alien_files))"
     end
     if "data_store" ∉ folder_files
         error("The file path doesn't contain any data_store folder")
@@ -83,7 +85,6 @@ function SimulationResults(path::AbstractString, execution=nothing; ignore_statu
             decision_problem_results[name] = problem_result
         end
 
-        emulation_params = get_emulation_model_params(sim_params)
         emulation_result = SimulationProblemResults(
             EmulationModel,
             store,
