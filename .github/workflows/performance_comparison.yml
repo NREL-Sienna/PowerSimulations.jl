@@ -51,11 +51,9 @@ jobs:
             | :---        |    :----:   |
             ${{ steps.precompile_results.outputs.body }}
 
-            | Version      | Run Time |
+            | Version      | Build Time |
             | :---        |    :----:   |
             ${{ steps.execute_results.outputs.body }}
-
-            **ResidualModel and MassMatrixModel performance results should be compared between versions and not between models due to the execution order of the tests**
       - name: Update comment
         if: steps.fc.outputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v1
@@ -67,9 +65,8 @@ jobs:
             | :---        |    :----:   |
             ${{ steps.precompile_results.outputs.body }}
 
-            | Version      | Execute Time |
+            | Version      | Build Time |
             | :---        |    :----:   |
             ${{ steps.execute_results.outputs.body }}
 
-            **ResidualModel and MassMatrixModel performance results should be compared between versions and not between models due to the execution order of the tests**
           edit-mode: replace
