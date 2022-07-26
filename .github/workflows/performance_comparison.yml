@@ -53,7 +53,7 @@ jobs:
 
             | Version      | Build Time |
             | :---        |    :----:   |
-            ${{ steps.execute_results.outputs.body }}
+            ${{ steps.build_results.outputs.body }}
       - name: Update comment
         if: steps.fc.outputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v1
@@ -67,6 +67,6 @@ jobs:
 
             | Version      | Build Time |
             | :---        |    :----:   |
-            ${{ steps.execute_results.outputs.body }}
+            ${{ steps.build_results.outputs.body }}
 
           edit-mode: replace
