@@ -7,6 +7,7 @@ const PSY = PowerSystems
 using Logging
 using PowerSystemCaseBuilder
 using HiGHS
+using Dates
 
 open("precompile_time.txt", "a") do io
     write(io, "| $(ARGS[1]) | $(precompile_time.time) |\n")
