@@ -263,8 +263,6 @@ function _finalize_jump_model!(container::OptimizationContainer, settings::Setti
                     evaluate_duals=false,
                     save_original_objective_and_constraints=false,
                 )
-                # Option not working properly, requires investigation of the consequences
-                # opt.constraints_interpretation = POI.BOUNDS_AND_CONSTRAINTS
                 return opt
             end
     elseif built_for_recurrent_solves(container) && get_optimizer(settings) === nothing
