@@ -1,0 +1,75 @@
+name: 'Performance Comparison'
+
+on:
+  pull_request:
+
+jobs:
+  comparison:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: julia-actions/setup-julia@latest
+      - uses: actions/checkout@v1
+      - name: Run Perfomance Test Master
+        run: |
+          julia --project=test -e 'using Pkg; Pkg.add(PackageSpec(name="PowerSimulationsDynamics", rev="master")); Pkg.instantiate()'
+          julia --project=test test/performance/performance_test.jl "Master"
+      - name: Run Perfomance Test Branch
+        run: |
+          julia --project=test -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+          julia --project=test test/performance/performance_test.jl "This Branch"
+      - name: Read precompile results
+        id: precompile_results
+        run: |
+          body="$(cat precompile_time.txt)"
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}"
+          echo "::set-output name=body::$body"
+      - name: Read build results
+        id: build_results
+        run: |
+          body="$(cat build_time.txt)"
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}"
+          echo "::set-output name=body::$body"
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Performance Results
+      - name: Create comment
+        if: steps.fc.outputs.comment-id == ''
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            Performance Results
+            | Version      | Precompile Time |
+            | :---        |    :----:   |
+            ${{ steps.precompile_results.outputs.body }}
+
+            | Version      | Run Time |
+            | :---        |    :----:   |
+            ${{ steps.execute_results.outputs.body }}
+
+            **ResidualModel and MassMatrixModel performance results should be compared between versions and not between models due to the execution order of the tests**
+      - name: Update comment
+        if: steps.fc.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body: |
+            Performance Results
+            | Version      | Precompile Time |
+            | :---        |    :----:   |
+            ${{ steps.precompile_results.outputs.body }}
+
+            | Version      | Execute Time |
+            | :---        |    :----:   |
+            ${{ steps.execute_results.outputs.body }}
+
+            **ResidualModel and MassMatrixModel performance results should be compared between versions and not between models due to the execution order of the tests**
+          edit-mode: replace
