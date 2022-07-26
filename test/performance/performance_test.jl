@@ -132,6 +132,7 @@ try
         end
     end
 catch e
+    rethrow(e)
     open("build_time.txt", "a") do io
         write(io, "| $(ARGS[1])- Build Time | FAILED TO TEST |\n")
     end
