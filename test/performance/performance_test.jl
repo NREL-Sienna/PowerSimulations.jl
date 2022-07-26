@@ -36,7 +36,10 @@ try
         set_device_model!(template_uc, TapTransformer, StaticBranchUnbounded)
         set_device_model!(template_uc, HydroDispatch, FixedOutput)
         set_device_model!(template_uc, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-        set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+        set_service_model!(
+            template_uc,
+            ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        )
         set_service_model!(
             template_uc,
             ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
@@ -114,7 +117,8 @@ try
             simulation_folder=mktempdir(cleanup=true),
         )
 
-        build_out, time_build, _, _ = @timed build!(sim; console_level=Logging.Error, serialize=false)
+        build_out, time_build, _, _ =
+            @timed build!(sim; console_level=Logging.Error, serialize=false)
 
         if build_out == PSI.BuildStatus.BUILT
             name = i > 1 ? "Postcompile" : "Precompile"
@@ -127,7 +131,7 @@ try
             end
         end
     end
-    catch e
+catch e
     open("build_time.txt", "a") do io
         write(io, "| $(ARGS[1])- Build Time | FAILED TO TEST |\n")
     end
