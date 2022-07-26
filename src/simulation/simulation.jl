@@ -628,9 +628,9 @@ function _apply_warm_start!(model::OperationModel)
     # the results need to be read from the primal cache
     if isempty(container.primal_values_cache)
         jump_model = get_jump_model(container)
-        all_vars = JuMP.all_variables(jump_model)
-        all_vars_value = jump_value.(all_vars)
-        JuMP.set_start_value.(all_vars, all_vars_value)
+        #all_vars = JuMP.all_variables(jump_model)
+        #all_vars_value = jump_value.(all_vars)
+        #JuMP.set_start_value.(all_vars, all_vars_value)
     else
         for (var_key, variable_value) in container.primal_values_cache.variables_cache
             variable = get_variable(container, var_key)
