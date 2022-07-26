@@ -83,7 +83,7 @@ try
                 template_em,
                 sys_rts_realization;
                 name="PF",
-                optimizer=optimizer_with_attributes(CPLEX.Optimizer),
+                optimizer=optimizer_with_attributes(HiGHS.Optimizer),
             ),
         )
 
