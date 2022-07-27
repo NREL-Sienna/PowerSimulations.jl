@@ -12,11 +12,11 @@ jobs:
       - name: Run Perfomance Test Master
         run: |
           julia --project=test -e 'using Pkg; Pkg.add(PackageSpec(name="PowerSimulationsDynamics", rev="master")); Pkg.instantiate()'
-          julia --project=test test/performance/performance_test.jl "Master"
+          julia -t 4 --project=test test/performance/performance_test.jl "Master"
       - name: Run Perfomance Test Branch
         run: |
           julia --project=test -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-          julia --project=test test/performance/performance_test.jl "This Branch"
+          julia -t 4 --project=test test/performance/performance_test.jl "This Branch"
       - name: Read precompile results
         id: precompile_results
         run: |
