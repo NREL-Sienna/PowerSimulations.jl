@@ -41,7 +41,8 @@ end
         num_steps=3,
         period=1,
         num_overlap_steps=1,
-        num_parallel_processes=1,
+        # Running multiple processes in CI can kill the VM.
+        num_parallel_processes=haskey(ENV, "CI") ? 1 : 3,
         exeflags="--project=test",
         force=true,
     )
