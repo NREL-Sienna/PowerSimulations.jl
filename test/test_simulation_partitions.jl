@@ -41,7 +41,7 @@ end
         num_steps=3,
         period=1,
         num_overlap_steps=1,
-        num_parallel_processes=3,
+        num_parallel_processes=1,
         exeflags="--project=test",
         force=true,
     )
