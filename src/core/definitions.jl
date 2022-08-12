@@ -71,6 +71,7 @@ const KNOWN_SIMULATION_PATHS = [
     "recorder",
     "results",
     "simulation_files",
+    "simulation_partitions",
 ]
 const RESULTS_DIR = "results"
 
