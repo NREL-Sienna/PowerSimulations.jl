@@ -496,7 +496,7 @@ function test_decision_problem_results(
 
     test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
     if !in_memory
-        test_simulation_results_from_file(results.path, c_sys5_hy_ed, c_sys5_hy_uc)
+        test_simulation_results_from_file(dirname(results.path), c_sys5_hy_ed, c_sys5_hy_uc)
     end
 end
 
@@ -666,7 +666,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
 end
 
 function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c_sys5_hy_uc)
-    results = SimulationResults(path)
+    results = SimulationResults(path, "no_cache")
     @test list_decision_problems(results) == ["ED", "UC"]
     results_uc = get_decision_problem_results(results, "UC")
     results_ed = get_decision_problem_results(results, "ED")

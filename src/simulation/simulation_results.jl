@@ -27,34 +27,67 @@ struct SimulationResults
     store::Union{Nothing, SimulationStore}
 end
 
+function SimulationResults(path::AbstractString, execution=nothing; ignore_status=false)
+    # This method maintains compatibility with the old interface as long as there is only
+    # one simulation name.
+    unique_names = Set{String}()
+    for name in readdir(path)
+        m = match(r"(.*)-\d+$", name)
+        if isnothing(m)
+            push!(unique_names, name)
+        else
+            push!(unique_names, m.captures[1])
+        end
+    end
+
+    if length(unique_names) == 1
+        name = first(unique_names)
+        return SimulationResults(path, name, execution; ignore_status=ignore_status)
+    end
+
+    if "data_store" in readdir(path)
+        return SimulationResults(
+            dirname(path),
+            basename(path),
+            execution;
+            ignore_status=ignore_status,
+        )
+    end
+
+    error(
+        "Found more than one simulation name in $path. Please call the constructor that includes 'name.'",
+    )
+end
+
 """
 Construct SimulationResults from a simulation output directory.
 
 # Arguments
 
   - `path::AbstractString`: Simulation output directory
+  - `name::AbstractString`: Simulation name
   - `execution::AbstractString`: Execution number. Default is the most recent.
   - `ignore_status::Bool`: If true, return results even if the simulation failed.
 """
-function SimulationResults(path::AbstractString, execution=nothing; ignore_status=false)
-    # path will be either the execution_path or the directory containing all executions.
-    contents = readdir(path)
-    if "data_store" in contents
-        execution_path = path
+function SimulationResults(
+    path::AbstractString,
+    name::AbstractString,
+    execution=nothing;
+    ignore_status=false,
+)
+    if isnothing(execution)
+        execution = _get_most_recent_execution(path, name)
+    end
+    if execution == 1
+        execution_path = joinpath(path, name)
     else
-        if execution === nothing
-            executions = [parse(Int, f) for f in contents if occursin(r"^\d+$", f)]
-            if isempty(executions)
-                error("There are no simulation results in the path")
-            end
-            execution = maximum(executions)
-        end
-        execution_path = joinpath(path, string(execution))
-        if !isdir(execution_path)
-            error("Execution $execution not in the simulations results")
-        end
+        execution_path = joinpath(path, "$name-$execution")
+    end
+    if !isdir(execution_path)
+        error("No valid simulation in $execution_path: execution = $execution")
     end
 
+    @info "Loading simulation results from $execution_path"
     status = deserialize_status(joinpath(execution_path, RESULTS_DIR))
     _check_status(status, ignore_status)
 
