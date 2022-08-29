@@ -56,8 +56,8 @@ end
     )
     @test execute_simulation(regular_sim) == PSI.RunStatus.SUCCESSFUL
 
-    regular_results = SimulationResults(joinpath(sim_dir, regular_name))
-    partitioned_results = SimulationResults(joinpath(sim_dir, partition_name))
+    regular_results = SimulationResults(sim_dir, regular_name)
+    partitioned_results = SimulationResults(sim_dir, partition_name)
 
     functions = (
         read_realized_aux_variables,

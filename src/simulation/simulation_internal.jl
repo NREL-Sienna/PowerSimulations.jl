@@ -93,20 +93,31 @@ function make_dirs(internal::SimulationInternal)
 end
 
 function _get_output_dir_name(path, sim_name)
-    # Return the next highest integer.
-    index = 2
-    for path_name in readdir(path)
+    index = _get_most_recent_execution(path, sim_name) + 1
+    return joinpath(path, "$sim_name-$index")
+end
+
+function _get_most_recent_execution(path, sim_name)
+    sim_dirs = readdir(path)
+    if isempty(sim_dirs)
+        fail = true
+    elseif length(sim_dirs) == 1
+        fail = sim_dirs[1] != sim_name
+    else
+        fail = false
+    end
+
+    fail && error("No simulation directories with name=$sim_name are in $path")
+    executions = [1]
+    for path_name in sim_dirs
         regex = Regex("\\Q$sim_name\\E-(\\d+)\$")
         m = match(regex, path_name)
         if !isnothing(m)
-            num = parse(Int, m.captures[1])
-            if num >= index
-                index = num + 1
-            end
+            push!(executions, parse(Int, m.captures[1]))
         end
     end
 
-    return joinpath(path, "$sim_name-$index")
+    return maximum(executions)
 end
 
 function configure_logging(internal::SimulationInternal, file_mode)
