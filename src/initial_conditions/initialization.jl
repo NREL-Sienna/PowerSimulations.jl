@@ -26,14 +26,31 @@ function get_initial_conditions_template(model::OperationModel)
     return ic_template
 end
 
+function _make_init_jump_model(ic_settings::Settings)
+    optimizer = get_optimizer(ic_settings)
+    JuMPmodel = JuMP.Model(optimizer)
+    warm_start_enabled = get_warm_start(ic_settings)
+    solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
+    set_warm_start!(ic_settings, solver_supports_warm_start)
+    if get_optimizer_solve_log_print(ic_settings)
+        JuMP.unset_silent(JuMPmodel)
+        @debug "optimizer unset to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    else
+        JuMP.set_silent(JuMPmodel)
+        @debug "optimizer set to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    end
+    return JuMPmodel
+end
+
 function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     model.internal.ic_model_container = deepcopy(get_optimization_container(model))
     ic_settings = deepcopy(model.internal.ic_model_container.settings)
     main_problem_horizon = get_horizon(ic_settings)
     # TODO: add an interface to allow user to configure initial_conditions problem
-    model.internal.ic_model_container.JuMPmodel = _make_jump_model(ic_settings)
+    model.internal.ic_model_container.JuMPmodel = _make_init_jump_model(ic_settings)
     template = get_initial_conditions_template(model)
     model.internal.ic_model_container.settings = ic_settings
+    model.internal.ic_model_container.built_for_recurrent_solves = false
     set_horizon!(ic_settings, min(INITIALIZATION_PROBLEM_HORIZON, main_problem_horizon))
     init_optimization_container!(
         model.internal.ic_model_container,

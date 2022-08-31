@@ -1,7 +1,6 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
-    param = JuMP.@variable(jump_model, variable_type = PJ.Param())
-    PJ.set_value(param, val)
+    param = JuMP.@variable(jump_model, set = POI.Parameter(val))
     return param
 end
 
@@ -16,10 +15,6 @@ end
 
 function jump_value(input::T)::Float64 where {T <: JuMP.AbstractJuMPScalar}
     return JuMP.value(input)
-end
-
-function jump_value(input::PJ.ParameterRef)::Float64
-    return PJ.value(input)
 end
 
 function jump_value(input::JuMP.ConstraintRef)::Float64

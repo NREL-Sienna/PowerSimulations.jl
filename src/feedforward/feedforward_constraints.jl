@@ -207,7 +207,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 # Arguments
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
-* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
+* param_reference : Reference to the JuMP.VariableRef used to determine the upperbound
 * var_key::VariableKey : the name of the continuous variable
 """
 function add_feedforward_constraints!(
@@ -266,7 +266,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 # Arguments
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
-* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
+* param_reference : Reference to the JuMP.VariableRef used to determine the upperbound
 * var_key::VariableKey : the name of the continuous variable
 """
 function add_feedforward_constraints!(
