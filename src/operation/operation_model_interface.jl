@@ -222,7 +222,7 @@ function validate_template(model::OperationModel)
     end
     for m in setdiff(system_component_types, modeled_types)
         @warn "The system data doesn't include components of type $(m), consider changing the models in the template" _group =
-            LOG_GROUP_MODELS_VALIDATION _group = LOG_GROUP_MODELS_VALIDATION
+            LOG_GROUP_MODELS_VALIDATION
     end
     return
 end
