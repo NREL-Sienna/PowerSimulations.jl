@@ -502,7 +502,11 @@ function read_realized_duals(res::SimulationProblemResults; kwargs...)
     return read_realized_duals(res, collect(keys(get_duals(res))); kwargs...)
 end
 
-function read_realized_duals(res::SimulationProblemResults, duals::Vector{Tuple{DataType, DataType}}; kwargs...)
+function read_realized_duals(
+    res::SimulationProblemResults,
+    duals::Vector{Tuple{DataType, DataType}};
+    kwargs...,
+)
     return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
 end
 
