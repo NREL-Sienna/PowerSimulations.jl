@@ -266,7 +266,7 @@ end
 
 function read_realized_variables(
     res::SimulationProblemResults,
-    variables::Vector{Tuple};
+    variables::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
     return read_realized_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
@@ -360,7 +360,7 @@ end
 
 function read_realized_aux_variables(
     res::SimulationProblemResults,
-    aux_variables::Vector{Tuple};
+    aux_variables::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
     return read_realized_aux_variables(
@@ -435,7 +435,7 @@ end
 
 function read_realized_parameters(
     res::SimulationProblemResults,
-    parameters::Vector{Tuple};
+    parameters::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
     return read_realized_parameters(
@@ -502,7 +502,7 @@ function read_realized_duals(res::SimulationProblemResults; kwargs...)
     return read_realized_duals(res, collect(keys(get_duals(res))); kwargs...)
 end
 
-function read_realized_duals(res::SimulationProblemResults, duals::Vector{Tuple}; kwargs...)
+function read_realized_duals(res::SimulationProblemResults, duals::Vector{Tuple{DataType, DataType}}; kwargs...)
     return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
 end
 
@@ -559,7 +559,7 @@ end
 
 function read_realized_expressions(
     res::SimulationProblemResults,
-    expressions::Vector{Tuple};
+    expressions::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
     return read_realized_expressions(
