@@ -40,6 +40,10 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
         get_network_formulation(get_template(model)),
         get_system(model),
     )
+    JuMP.set_string_names_on_creation(
+        get_jump_model(model.internal.ic_model_container),
+        false,
+    )
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
         build_impl!(model.internal.ic_model_container, template, get_system(model))
     end
