@@ -163,7 +163,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         "Network Model" string(get_network_formulation(template.network_model))
         "Slacks" get_use_slacks(template.network_model)
         "PTDF" !isnothing(get_PTDF(template.network_model))
-        "Duals" join(string.(get_duals(template.network_model)), " ")
+        "Duals" isempty(get_duals(template.network_model)) ? "None" : string.(get_duals(template.network_model))
     ]
 
     PrettyTables.pretty_table(
@@ -186,7 +186,14 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         table[ix, 3] = string(model.use_slacks)
     end
 
-    PrettyTables.pretty_table(io, table; header=header, title="Device Models", alignment=:l)
+    PrettyTables.pretty_table(
+        io,
+        table;
+        backend=backend,
+        header=header,
+        title="Device Models",
+        alignment=:l,
+    )
 
     if !isempty(template.branches)
         println(io)
