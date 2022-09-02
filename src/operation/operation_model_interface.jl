@@ -216,11 +216,12 @@ function validate_template(model::OperationModel)
     modeled_types = get_component_types(template)
     system = get_system(model)
     system_component_types = PSY.get_existing_component_types(system)
+    exclusions = [PSY.Arc, PSY.Area, PSY.Bus, PSY.LoadZone]
     for m in setdiff(modeled_types, system_component_types)
         @warn "The system data doesn't include components of type $(m), consider changing the models in the template" _group =
             LOG_GROUP_MODELS_VALIDATION
     end
-    for m in setdiff(system_component_types, modeled_types)
+    for m in setdiff(system_component_types, union(modeled_types, exclusions))
         @warn "The template doesn't include models for components of type $(m), consider changing the template" _group =
             LOG_GROUP_MODELS_VALIDATION
     end
