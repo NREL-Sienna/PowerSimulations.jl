@@ -779,7 +779,7 @@ end
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
+    cost_data::Array{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
     ::U,
     ::V,
 ) where {T <: PSY.Storage, U <: VariableType, V <: AbstractDeviceFormulation}
