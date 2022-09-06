@@ -8,7 +8,14 @@ Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
   - `key::OptimizationContainerKey`:
 """
 function axis_array_to_dataframe(
-    array::Union{DenseAxisArray, SparseAxisArray},
+    array::DenseAxisArray,
+    key::OptimizationContainerKey,
+)
+    return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array))
+end
+
+function axis_array_to_dataframe(
+    array::SparseAxisArray,
     key::OptimizationContainerKey,
 )
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array))
