@@ -34,6 +34,7 @@ abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulatio
 struct StaticPowerLoad <: AbstractLoadFormulation end
 struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
+struct DispatchableEVLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### Hybrid Generation Formulations ################################
 abstract type AbstractHybridFormulation <: AbstractDeviceFormulation end

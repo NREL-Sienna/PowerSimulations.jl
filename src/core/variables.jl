@@ -109,6 +109,10 @@ struct VoltageMagnitude <: VariableType end
 
 struct VoltageAngle <: VariableType end
 
+struct DefferedChargeVariable <: VariableType end
+
+struct CumulativeDefferedChargeVariable <: VariableType end
+
 """
 Struct to dispatch the creation of Flow Active Power Variables
 """

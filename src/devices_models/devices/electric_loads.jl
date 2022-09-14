@@ -46,6 +46,18 @@ function get_default_time_series_names(
     )
 end
 
+function get_default_time_series_names(
+    ::Type{<:PSY.ElectricLoad},
+    ::Type{DispatchableEVLoad},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        BaseLoadTimeSeriesParameter => "baseload",
+        DefferableChargingTimeSeriesParameter => "defferable_capacity",
+        MaximumChargingTimeSeriesParameter => "charging_capacity",
+        MaximumDefferedChargingTimeSeriesParameter => "deffered_charge_limit",
+    )
+end
+
 function get_default_attributes(
     ::Type{U},
     ::Type{V},
@@ -125,6 +137,77 @@ function add_constraints!(
         model,
         X,
     )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    #TODO: Juliette this is an example of how you would have to add new constraints 
+    # in this case I'm adding a upper bound constraint. Also this is type 1 of a constraint
+    # call as we are passing both the constraint type and a variable with the idea that this constraint
+    # is generalizable.
+    constraint = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
+    variable = get_variable(container, U(), V)
+    parameter = get_parameter_array(container, P(), V)
+    multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        constraint[name, t] = JuMP.@constraint(
+            jump_model,
+            # this is an example and not the real constraint
+            array[name, t] <= multiplier[name, t] * parameter[name, t]
+        )
+    end
+    return
+end
+
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{EVLoadBalanceConstraint},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    #TODO: Juliette this is an example of how you would have to add new constraints 
+    # in this case I'm adding the ev load balance constraint. this is a type 2 constraint call
+    # where we are only passing the constraint type as it will use multiple different variables
+    # that are called within the function.
+    constraint_a = add_constraints_container!(container, T(), V, names, time_steps,)
+    # you can create more than one constraint using passing unique meta String like this
+    constraint_b = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
+    variable_p = get_variable(container, ActivePowerVariable(), V)
+    variable_def = get_variable(container, DefferedChargeVariable(), V)
+    variable_c_def = get_variable(container, CumulativeDefferedChargeVariable(), V)
+    # you can also call parameters in here if needed 
+    parameter = get_parameter_array(container, MaximumDefferedChargingTimeSeriesParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, MaximumDefferedChargingTimeSeriesParameter(), V)
+    jump_model = get_jump_model(container)
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        constraint_a[name, t] = JuMP.@constraint(
+            jump_model,
+            # this is an example and not the real constraint
+            variable_c_def[name, t] == variable_c_def[name, t-1] + variable_def[name, t]
+        )
+        constraint_b[name, t] = JuMP.@constraint(
+            jump_model,
+            # this is an example and not the real constraint
+            variable_c_def[name, t] <= multiplier[name, t] * parameter[name, t]
+        )
+    end
     return
 end
 

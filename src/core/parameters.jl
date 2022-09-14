@@ -168,6 +168,11 @@ struct InflowTimeSeriesParameter <: TimeSeriesParameter end
 
 struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
+struct BaseLoadTimeSeriesParameter <: TimeSeriesParameter end
+struct DefferableChargingTimeSeriesParameter <: TimeSeriesParameter end
+struct MaximumChargingTimeSeriesParameter <: TimeSeriesParameter end
+struct MaximumDefferedChargingTimeSeriesParameter <: TimeSeriesParameter end
+
 abstract type VariableValueParameter <: RightHandSideParameter end
 
 struct UpperBoundValueParameter <: VariableValueParameter end
