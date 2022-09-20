@@ -387,6 +387,7 @@ import Distributed
 import Base.getindex
 import Base.length
 import Base.first
+import InteractiveUtils: methodswith
 
 # TimeStamp Management Imports
 import Dates
@@ -590,5 +591,6 @@ include("utils/jump_utils.jl")
 include("utils/powersystems_utils.jl")
 include("utils/recorder_events.jl")
 include("utils/datetime_utils.jl")
+include("utils/generate_valid_formulations.jl")
 
 end
