@@ -236,7 +236,7 @@ Emulation problem results are returned in a Dict{String, DataFrame}.
 Limit the data sizes returned by specifying `initial_time` and `count` for decision problems
 or `start_time` and `len` for emulation problems.
 
-See also [load_results!](@ref) to preload data into memory.
+See also [`load_results!`](@ref) to preload data into memory.
 
 # Arguments
 
@@ -303,7 +303,7 @@ Emulation problem results are returned in a DataFrame.
 Limit the data sizes returned by specifying `initial_time` and `count` for decision problems
 or `start_time` and `len` for emulation problems.
 
-See also [load_results!](@ref) to preload data into memory.
+See also [`load_results!`](@ref) to preload data into memory.
 
 # Arguments
 

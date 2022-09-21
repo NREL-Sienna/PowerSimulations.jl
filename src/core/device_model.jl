@@ -1,3 +1,6 @@
+"""
+Formulation type to augment the power balance constraint with an expression term populated with a device parameter
+"""
 struct FixedOutput <: AbstractDeviceFormulation end
 
 function _check_device_formulation(

@@ -1,8 +1,12 @@
-# Power Grid Lib - Unit Commitment / Multi-Start Unit Commitment
+# `ThermalGen` Formulations
+## `ThermalMultiStart`
+
 This formulation is from the benchmark library maintained by the IEEE PES Task Force on Benchmarks for Validation of Emerging Power System Algorithms and is designed to evaluate a well established version of the Unit Commitment problem.
 
-# Formulation Overview
+### Formulation Overview
+
  The features of this model are:
+
 - A global load requirement with time series
 - An optional global spinning reserve requirement with time series
 - Thermal generators with technical parameters, including
@@ -18,11 +22,12 @@ This formulation is from the benchmark library maintained by the IEEE PES Task F
   - No-load costs
 - Optional renewable generators with time series for minimum and maximum production.
 
+### Reference
 
-# Formulations
 A detailed description of this mathematical model is available here. This model does have some augmentation to constraints but is mathematically equivalent to the formulation found [here](https://github.com/power-grid-lib/pglib-uc/blob/master/MODEL.pdf).
 
 ### Indices and Sets
+
 ```math
 \begin{itemize}
 	\item[$g \in \cG$] Set of thermal generators.
@@ -35,6 +40,7 @@ A detailed description of this mathematical model is available here. This model 
 ```
 
 ### Thermal Generator Parameters
+
 ```math
 \begin{itemize}
 	\item[$CS_g^s$]  Startup cost in category $s$ for generator $g$ (\$), {\tt startup['cost']}.
@@ -58,6 +64,7 @@ A detailed description of this mathematical model is available here. This model 
 ```
 
 ### Variables
+
 ```math
 \begin{itemize}
 	\item[$c_g(t)$]    Cost of power produced above minimum for thermal generator $g$ at time $t$ (MW), $\in \bbR$.
@@ -73,9 +80,11 @@ A detailed description of this mathematical model is available here. This model 
 ```
 
 ### Model Description
+
 Below we describe the unit commitment model given by~\cite{morales2013tight}, with the piecewise production cost description from~\cite{sridhar2013locally}.
 The unit commitment problem can then be formulated as:\
 *Objective Function*
+
 ```math
 {\allowdisplaybreaks
 \begin{align}
@@ -83,9 +92,11 @@ The unit commitment problem can then be formulated as:\
 \end{align}
 }%
 ```
+
 subject to:\
 
 *Active power constraints with Startup/Shutdown lag*
+
 ```math
 \begin{align}
 		& U_g^0(P_g^0-\uP_g) \leq (\oP_g - \uP_g) U_g^0 - \max\{(\oP_g - SD_g),0\} w_g(1) & \forall g \in \cG \label{eq:MaxOutput2Init}
@@ -93,7 +104,9 @@ subject to:\
 		& p_g(t) + r_g(t) \leq (\oP_g - \uP_g) u_g(t) - \max\{(\oP_g - SD_g),0\} w_g(t+1) & \forall t \in \cT\setminus \{T\}, \, \forall g \in \cG \label{eq:MaxOutput2}
 \end{align}
 ```
+
 *Ramp constraints*
+
 ```math
 \begin{align}
 		& p_g(1) + r_g(1) - U_g^0(P_g^0-\uP_g) \leq RU_g & \forall g \in \cG \label{eq:RampUpInit} \\
@@ -102,7 +115,9 @@ subject to:\
 		& p_g(t-1) - p_g(t) \leq RD_g & \forall t \in \cT\setminus\{1\}, \, \forall g \in \cG \label{eq:RampDown}
 \end{align}
 ```
+
 *Unit Commitment constraint*
+
 ```math
 \begin{align}
 		& u_g(1) - U_g^0 = v_g(1) - w_g(1) & \forall g \in \cG \label{eq:LogicalInitial} \\
@@ -111,6 +126,7 @@ subject to:\
 ```
 
 *Minimum Uptime constraints*
+
 ```math
 \begin{align}
 		& UT_g w_g(t) - \sum_{i=t-UT_g + 1}^t u_g(i) - UT_g^0 \leq 0 & \forall t \in \{1 \ldots, \min\{UT_g,T\}\}, \, \forall g \in \cG \label{eq:StartupInit} \\
@@ -119,6 +135,7 @@ subject to:\
 ```
 
 *Minimum Downtime constraints*
+
 ```math
 \begin{align}
 		& DT_g v_g(t) - \sum_{i=t-DT_g + 1}^t u_g(i) - DT_g^0 \leq 0 & \forall t \in \{1 \ldots, \min\{DT_g,T\}\}, \, \forall g \in \cG \label{eq:ShutdownInit} \\
@@ -127,12 +144,15 @@ subject to:\
 ```
 
 *Must run constraint*
+
 ```math
 \begin{align}
 		& u_g(t) \geq U_g & \hspace{1cm} \forall t \in \cT, \, \forall g \in \cG \label{eq:MustRun}
 \end{align}
 ```
+
 *Start-up time_limits constraints*
+
 ```math
 \begin{align}
 		& \delta^s_g(t) \leq \sum_{i = TS^s_g}^{TS^{s+1}_g-1} w_g(t-i) & \forall t \in \{TS^{s+1}_g,\ldots,T\},\,\forall s \in \cS_g\!\setminus\!\{S_g\},\,  \forall g \in \cG \label{eq:STISelect}
@@ -140,6 +160,7 @@ subject to:\
 ```
 
 *Start-up type selection constraint*
+
 ```math
 \begin{align}
 		& v_g(t) = \sum_{s = 1}^{S_g} \delta^s_g(t) & \forall t \in \cT,\, \forall g \in \cG \label{eq:STILink}
@@ -147,6 +168,7 @@ subject to:\
 ```
 
 *Start-up initial condition constraints*
+
 ```math
 \begin{align}
 		& (TS^{s+1}_g - 1)\delta^s_g(t) + (1 - \delta^s_g(t)) M \geq \sum_{i = 1}^{t} u_g(i) + DT_g^0 & \forall t \in \{1,\ldots,TS^{s+1}_g -1\},\, \forall g \in \cG \label{eq:STInitUB}
@@ -155,6 +177,7 @@ subject to:\
 ```
 
 *Piecewise Cost Constraint*
+
 ```math
 \begin{align}
 		& p_g(t) = \sum_{l \in \cL_g} (P_g^l - P_g^1) \lambda_g^l(t) &\hspace{5cm} \forall t \in \cT, \, \forall g \in \cG \label{eq:PiecewiseParts} \\
@@ -164,13 +187,14 @@ subject to:\
 ```
 
 *Active power limits*
+
 ```math
 \begin{align}
 		& \uP_w(t) \leq p_w(t) \leq \oP_w(t) &\hspace{6cm} \forall t \in \cT, \, \forall w \in \cW \label{eq:WindLimit}
 \end{align}
 ```
 
-# References
+### References
 
 [1] Knueven, Bernard, James Ostrowski, and Jean-Paul Watson. "On mixed integer programming formulations for the unit commitment problem." Pre-print available at http://www.optimization-online.org/DB_HTML/2018/11/6930.pdf (2018).
 

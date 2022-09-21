@@ -15,6 +15,7 @@ pages = OrderedDict(
         "modeler_guide/logging.md",
         "modeler_guide/tips_and_tricks.md",
         "modeler_guide/debugging_infeasible_models.md",
+        "modeler_guide/parallel_simulations.md",
         "modeler_guide/modeling_faq.md",
     ],
     "Model Developer Guide" => Any[
@@ -29,8 +30,10 @@ pages = OrderedDict(
     "Formulation Library" => Any[
         "Thermal Generation" => "formulation_library/ThermalGen.md",
         "Hydro Generation" => "formulation_library/HydroGen.md",
+        "Renewable Generation" => "formulation_library/RenewableGen.md",
         "Storage" => "formulation_library/Storage.md",
         "Network" => "formulation_library/Network.md",
+        "Common" => "formulation_library/common_formulations.md",
     ],
     "API Reference" => "api/PowerSimulations.md",
 )

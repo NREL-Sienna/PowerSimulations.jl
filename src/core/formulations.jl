@@ -62,7 +62,15 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 ########################### Renewable Generation Formulations ##############################
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
+
+"""
+Formulation type to add an injection variables bounded by `max_active_power` time series for `RenewableGen`
+"""
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
+
+"""
+Formulation type to add real and reactive injection variables with constant power factor bounded by `max_active_power` time series for `RenewableGen`
+"""
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ############################ Storage Generation Formulations ###############################
