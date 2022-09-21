@@ -1,0 +1,57 @@
+{
+  "name": "no_min_ed",
+  "num_steps": 2,
+  "sequence": {
+    "initial_condition_chronology_type": "InterProblemChronology",
+    "feedforwards_by_model": [
+    ]
+  },
+  "models": {
+    "decision_models": [
+      {
+        "optimizer": {
+          "time_limit": 100,
+          "log_to_console": false,
+          "type": "HiGHS"
+        },
+        "system_to_file": true,
+        "direct_mode_optimizer": false,
+        "decision_problem_type": "EconomicDispatchProblem",
+        "horizon": 0,
+        "check_numerical_bounds": true,
+        "name": "ed",
+        "export_pwl_vars": false,
+        "allow_fails": false,
+        "deserialize_initial_conditions": false,
+        "initialization_file": "",
+        "detailed_optimizer_stats": false,
+        "initial_time": "0000-01-01T00:00:00",
+        "initialize_model": true,
+        "calculate_conflict": false,
+        "optimizer_solve_log_print": false,
+        "template": {
+          "devices": [
+            {
+              "device_type": "PowerLoad",
+              "formulation": "StaticPowerLoad"
+            },
+            {
+              "device_type": "ThermalStandard",
+              "formulation": "ThermalDispatchNoMin"
+            }
+          ],
+          "network": {
+            "network_type": "CopperPlatePowerModel",
+            "use_slacks": false
+          },
+          "services": [
+          ]
+        },
+        "system_path": "c_sys5_uc.json",
+        "warm_start": true,
+        "time_series_cache_size": 1048576
+      }
+    ],
+    "emulation_model": null
+  }
+}

@@ -73,6 +73,14 @@ get_duals(m::DeviceModel) = m.duals
 get_time_series_names(m::DeviceModel) = m.time_series_names
 get_attributes(m::DeviceModel) = m.attributes
 get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
+
+# function get_default_time_series_names(
+#     ::Type{<:PSY.Device},
+#     ::Type{<:AbstractDeviceFormulation},
+# )
+#     return Dict{Type{<:TimeSeriesParameter}, String}()
+# end
+
 DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 
 function _set_model!(

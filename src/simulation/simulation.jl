@@ -68,6 +68,72 @@ function Simulation(directory::AbstractString, model_info::Dict)
     return deserialize_model(Simulation, directory, model_info)
 end
 
+function Simulation(filename::AbstractString, simulation_folder::AbstractString)
+    sim = open(filename) do io
+        JSON3.read(io, Api.Simulation)
+    end
+
+    return Simulation(sim, simulation_folder)
+end
+
+function Simulation(sim::Api.Simulation, simulation_folder::AbstractString)
+    decision_models = Vector{DecisionModel}()
+    for api_model in sim.models.decision_models
+        optimizer_type = construct_optimizer(api_model.optimizer)
+        kwargs = Dict{String, Any}()
+        for name in fieldnames(typeof(api_model.optimizer))
+            if name != :type
+                kwargs[string(name)] = getproperty(api_model.optimizer, name)
+            end
+        end
+        optimizer = JuMP.optimizer_with_attributes(optimizer_type, kwargs...)
+        sys = PSY.System(api_model.system_path, time_series_read_only=true)
+        decision_problem_type = getproperty(PowerSimulations, Symbol(api_model.decision_problem_type))
+        network_type = getproperty(PowerSimulations, Symbol(api_model.template.network.network_type))
+        use_slacks = api_model.template.network.use_slacks
+        template = ProblemTemplate()
+        set_network_model!(
+            template,
+            NetworkModel(
+                network_type,
+                use_slacks=use_slacks,
+            ),
+        )
+        for api_device_model in api_model.template.devices
+            device_type = getproperty(PowerSystems, Symbol(api_device_model.device_type))
+            formulation_type = getproperty(PowerSimulations, Symbol(api_device_model.formulation))
+            set_device_model!(template, device_type, formulation_type)
+        end
+        decision_model = DecisionModel{decision_problem_type}(template, sys; name=api_model.name, optimizer=optimizer)
+        push!(decision_models, decision_model)
+    end
+
+    models = SimulationModels(decision_models=decision_models)
+    initial_condition_chronology_type = getproperty(PowerSimulations, Symbol(sim.sequence.initial_condition_chronology_type))
+    return Simulation(
+        name=sim.name,
+        steps=sim.num_steps,
+        sequence=SimulationSequence(models=models, ini_cond_chronology=initial_condition_chronology_type()),
+        models=SimulationModels(decision_models=decision_models),
+        simulation_folder=simulation_folder,
+    )
+end
+
+function construct_optimizer(optimizer::Api.AbstractOptimizer)
+    if optimizer isa Api.HiGHS
+        try
+            @eval Main begin
+                import HiGHS
+                return HiGHS.Optimizer
+            end
+        catch
+            error("The HiGHS optimizer must be installed.")
+        end
+    else
+        error("optimizer = $(typeof(optimizer)) is not supported yet")
+    end
+end
+
 ###################### Simulation Accessor Functions ####################
 function get_base_powers(sim::Simulation)
     base_powers = Dict()
