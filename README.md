@@ -48,7 +48,7 @@ using PowerSystems
 
 ## Development
 
-Contributions to the development and enahancement of PowerSimulations is welcome. Please see [CONTRIBUTING.md](https://github.com/NREL-SIIP/PowerSimulations.jl/blob/master/CONTRIBUTING.md) for code contribution guidelines.
+Contributions to the development and enhancement of PowerSimulations is welcome. Please see [CONTRIBUTING.md](https://github.com/NREL-SIIP/PowerSimulations.jl/blob/master/CONTRIBUTING.md) for code contribution guidelines.
 
 ## License
 

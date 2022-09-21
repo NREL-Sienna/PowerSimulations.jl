@@ -4,8 +4,6 @@ function validate_available_devices(
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     devices = get_available_components(T, system)
     if isempty(devices)
-        @info "The data doesn't include devices of type $(T), consider changing the device models" _group =
-            LOG_GROUP_MODELS_VALIDATION
         return false
     end
     PSY.check_components(system, devices)
