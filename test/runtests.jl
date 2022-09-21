@@ -17,6 +17,7 @@ using JuMP
 using TimeSeries
 using ParameterJuMP
 using CSV
+import JSON3
 using DataFrames
 using DataStructures
 import UUIDs
