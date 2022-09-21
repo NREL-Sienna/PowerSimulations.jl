@@ -186,6 +186,7 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
+    # Type 1 Constraint def 
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -195,7 +196,15 @@ function construct_device!(
         S,
     )
 
-    
+    # Type 2 Constraint def 
+    add_constraints!(
+        container,
+        EVLoadBalanceConstraint,
+        devices,
+        model,
+        S,
+    )
+
 
     add_feedforward_constraints!(container, model, devices)
 

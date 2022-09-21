@@ -174,7 +174,6 @@ end
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{EVLoadBalanceConstraint},
-    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
