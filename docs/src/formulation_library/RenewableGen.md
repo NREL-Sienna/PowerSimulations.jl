@@ -9,9 +9,10 @@ using DataFrames
 using Latexify
 combos = PowerSimulations.generate_device_formulation_combinations()
 filter!(x -> x["device_type"] <: RenewableGen, combos)
-combo_table = DataFrame(combos)
-combo_table.device_type = string.(combo_table.device_type)
-combo_table.formulation = ["[$d](@ref)" for d in combo_table.formulation]
+combo_table = DataFrame(
+    "Valid DeviceModels" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
+    )
 mdtable(combo_table, latex = false)
 ```
 
