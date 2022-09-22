@@ -1,5 +1,5 @@
 """
-Formulation type to augment the power balance constraint with an expression term populated with a device parameter
+Formulation type to augment the power balance constraint expression with a time series parameter
 """
 struct FixedOutput <: AbstractDeviceFormulation end
 

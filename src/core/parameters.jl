@@ -154,8 +154,14 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
+"""
+Parameter to define active power time series
+"""
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define reactive power time series
+"""
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end

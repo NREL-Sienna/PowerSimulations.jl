@@ -6,19 +6,30 @@
 FixedOutput
 ```
 
-**Variables**
+**Variables:**
 
 No variables are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
-**Parameters**
+**Time Series Parameters:**
 
-- ``P_t``: power injection (generators) or withdrawal (loads) for the device at time ``t`` (MW) - defaults to use the `max_active_power` time series
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.get_default_time_series_names(RenewableGen, FixedOutput)
+combo_table = DataFrame(
+    "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
+    "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
+    )
+mdtable(combo_table, latex = false)
+```
 
-**Objective**
+**Objective:**
 
 No objective terms are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
-**Constraints**
+**Constraints:**
 
 No constraints are created for `DeviceModel(<:DeviceType, FixedOutput)`
 

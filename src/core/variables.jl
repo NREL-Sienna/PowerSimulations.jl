@@ -33,21 +33,29 @@ get_component_type(
 
 """
 Struct to dispatch the creation of Active Power Variables
+
+Docs abbreviation: ``Pg``
 """
 struct ActivePowerVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
+
+Docs abbreviation: ``\\hat{Pg}``
 """
 struct PowerAboveMinimumVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
+
+Docs abbreviation: ``Pg^{in}``
 """
 struct ActivePowerInVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro
+
+Docs abbreviation: ``Pg^{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
@@ -71,10 +79,20 @@ struct LiftVariable <: VariableType end
 
 struct OnVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Reactive Power Variables
+
+Docs abbreviation: ``Qg``
+"""
 struct ReactivePowerVariable <: VariableType end
 
 struct ReservationVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Active Power Reserve Variables
+
+Docs abbreviation: ``Pr``
+"""
 struct ActivePowerReserveVariable <: VariableType end
 
 struct ServiceRequirementVariable <: VariableType end
@@ -110,19 +128,41 @@ struct VoltageMagnitude <: VariableType end
 struct VoltageAngle <: VariableType end
 
 """
-Struct to dispatch the creation of Flow Active Power Variables
+Struct to dispatch the creation of bidirectional Active Power Flow Variables
+
+Docs abbreviation: ``P``
 """
 struct FlowActivePowerVariable <: VariableType end
 
 # This Variable Type doesn't make sense since there are no lossless NetworkModels with ReactivePower.
 # struct FlowReactivePowerVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of unidirectional Active Power Flow Variables
+
+Docs abbreviation: ``\\overrightarrow{P}``
+"""
 struct FlowActivePowerFromToVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of unidirectional Active Power Flow Variables
+
+Docs abbreviation: ``\\overleftarrow{P}``
+"""
 struct FlowActivePowerToFromVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
+
+Docs abbreviation: ``\\overrightarrow{Q}``
+"""
 struct FlowReactivePowerFromToVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
+
+Docs abbreviation: ``\\overleftarrow{Q}``
+"""
 struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct VariableNotDefined <: VariableType end

@@ -26,23 +26,51 @@ RenewableFullDispatch
 
 **Variables:**
 
-- ``P_t \geq 0``: active power injected by renewable generator at time ``t`` (MW)
-- ``Q_t \geq 0``: reactive power injected by renewable generator at time ``t`` (MW)
+- [`ActivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`ReactivePowerVariable`](@ref): 
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_reactive_power(device)`
 
-**Parameters**
+**Service Variables:**
 
-- ``P^\text{max}_t``: maximum active power availability for generator at time ``t`` (MW) - defined by `max_active_power` time series
+- [`ActivePowerReserveVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
 
-**Objective**
+**Static Parameters:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) using ``G_t = P^\text{max}_t - P_t``
+- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
-**Constraints**
+**Time Series Parameters:**
+
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.get_default_time_series_names(RenewableGen, RenewableFullDispatch)
+combo_table = DataFrame(
+    "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
+    "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
+    )
+mdtable(combo_table, latex = false)
+```
+
+**Objective:**
+
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined by ``ActivePowerTimeSeriesParameter_t - Pg_t``
+
+**Constraints:**
 
 ```math
 \begin{aligned}
-&  P^\text{min} \le P_t \le P^\text{max}_t \\
-&  Q^\text{min} \le Q_t \le Q^\text{max}
+&  Pg_t + \sum_{i \in S^{\uparrow}}{Pr^{\uparrow}_{i,t}} \le ActivePowerTimeSeriesParameter_t \\
+&  Pg_t - \sum_{i \in S^{\downarrow}}{Pr^{\downarrow}_{i,t}} \ge Pg^\text{min} \\
+&  Qg^\text{min} \le Qg_t \le Qg^\text{max}
 \end{aligned}
 ```
 
@@ -54,25 +82,54 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) u
 RenewableConstantPowerFactor
 ```
 
-**Variables**
+**Variables:**
 
-- ``P_t \geq 0``: active power injected by renewable generator at time ``t`` (MW)
-- ``Q_t \geq 0``: reactive power injected by renewable generator at time ``t`` (MW)
+- [`ActivePowerVariable`](@ref):
+  - Bounds: [0,]
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`ReactivePowerVariable`](@ref): 
+  - Bounds: [0,]
+  - Default initial value: `PowerSystems.get_reactive_power(device)`
 
-**Parameters**
+**Service Variables:**
 
-- ``P^\text{max}_t``: maximum active power availability for generator at time ``t`` (MW) - defined by `max_active_power` time series
-- ``pf``: renewable generator power factor (see `PowerSystems.get_power_factor`)
+- [`ActivePowerReserveVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
 
-**Objective**
+**Static Parameters:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) using ``G_t = P^\text{max}_t - P_t``
+- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+- ``pf`` = `PowerSystems.get_power_factor(device)`
 
-**Constraints**
+**Time Series Parameters:**
+
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.get_default_time_series_names(RenewableGen, RenewableConstantPowerFactor)
+combo_table = DataFrame(
+    "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
+    "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
+    )
+mdtable(combo_table, latex = false)
+```
+
+**Objective:**
+
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined by ``ActivePowerTimeSeriesParameter_t - Pg_t``
+
+**Constraints:**
 
 ```math
-\begin{align}
-&  P^\text{min} \le P_t \le \eta_t P^\text{max} \\
-&  Q^\text{min} \le Q_t \le pf * P_t
-\end{align}
+\begin{aligned}
+&  Pg_t + \sum_{i \in S^{\uparrow}}{Pr^{\uparrow}_{i,t}} \le ActivePowerTimeSeriesParameter_t \\
+&  Pg_t - \sum_{i \in S^{\downarrow}}{Pr^{\downarrow}_{i,t}} \ge Pg^\text{min} \\
+&  Qg^\text{min} \le Qg_t \le Qg^\text{max} \\
+&  Qg_t = pf * Pg_t
+\end{aligned}
 ```
