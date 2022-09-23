@@ -1,21 +1,3 @@
-@testset "Renewable data misspecification" begin
-    # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
-    info_message = "The data doesn't include devices of type HydroEnergyReservoir, consider changing the device models"
-    device_model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:info, info_message) match_mode = :any mock_construct_device!(
-        model,
-        device_model,
-    )
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
-    @test_logs (:info, info_message) match_mode = :any mock_construct_device!(
-        model,
-        device_model,
-    )
-end
-
 ###################################
 ###### FIXED OUTPUT TESTS #########
 ###################################

@@ -14,6 +14,8 @@ export InitialCondition
 export SimulationModels
 export SimulationSequence
 export SimulationResults
+export SimulationPartitions
+export SimulationPartitionResults
 
 # Network Relevant Exports
 export NetworkModel
@@ -120,6 +122,7 @@ export run!
 ## Sim Model Exports
 export execute!
 export get_simulation_model
+export run_parallel_simulation
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
@@ -199,6 +202,7 @@ export show_recorder_events
 export list_simulation_events
 export show_simulation_events
 export export_realized_results
+export get_num_partitions
 
 ## Enums
 export BuildStatus
@@ -377,11 +381,13 @@ export get_resolution
 import PowerModels
 import TimerOutputs
 import ProgressMeter
+import Distributed
 
 # Base Imports
 import Base.getindex
 import Base.length
 import Base.first
+import InteractiveUtils: methodswith
 
 # TimeStamp Management Imports
 import Dates
@@ -407,6 +413,8 @@ export SOCWRPowerModel
 export SOCWRConicPowerModel
 export QCRMPowerModel
 export QCLSPowerModel
+
+export process_simulation_partition_cli_args
 
 ################################################################################
 
@@ -508,6 +516,8 @@ include("simulation/simulation_problem_results.jl")
 include("simulation/realized_meta.jl")
 include("simulation/decision_model_simulation_results.jl")
 include("simulation/emulation_model_simulation_results.jl")
+include("simulation/simulation_partitions.jl")
+include("simulation/simulation_partition_results.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
@@ -581,5 +591,6 @@ include("utils/jump_utils.jl")
 include("utils/powersystems_utils.jl")
 include("utils/recorder_events.jl")
 include("utils/datetime_utils.jl")
+include("utils/generate_valid_formulations.jl")
 
 end
