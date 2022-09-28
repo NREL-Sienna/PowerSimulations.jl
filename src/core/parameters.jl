@@ -168,10 +168,14 @@ struct InflowTimeSeriesParameter <: TimeSeriesParameter end
 
 struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
-struct BaseLoadTimeSeriesParameter <: TimeSeriesParameter end
-struct DefferableChargingTimeSeriesParameter <: TimeSeriesParameter end
-struct MaximumChargingTimeSeriesParameter <: TimeSeriesParameter end
-struct MaximumDefferedChargingTimeSeriesParameter <: TimeSeriesParameter end
+"""
+Parameters for dispatchable EVs
+    DP_c_max	DP_c_min	DS_min	P_c_base
+"""
+struct DeltaPowerMaxParameter <: TimeSeriesParameter end
+struct DeltaPowerMinParameter <: TimeSeriesParameter end
+struct DeltaStateChargeMinParameter <: TimeSeriesParameter end
+struct PowerBaseParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 

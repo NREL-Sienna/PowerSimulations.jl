@@ -45,6 +45,14 @@ struct EnergyTargetConstraint <: ConstraintType end
 struct EnergyShortageVariableLimitsConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 struct EVLoadBalanceConstraint <: ConstraintType end
+
+"""
+Constraints for dispatchable EVs
+We will use EnergyBalanceConstraint to track the change in defered charge
+"""
+struct DeltaPowerBoundsConstraint <: ConstraintType end
+struct DeltaStateChargeBoundsConstraint <: ConstraintType end
+
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
 struct FeedforwardUpperBoundConstraint <: ConstraintType end

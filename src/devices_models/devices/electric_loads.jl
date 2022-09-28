@@ -9,6 +9,15 @@ get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::Abstrac
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_active_power(d)
 
+############################ DeltaPowerVariable and DeferedChargeVariable ############################
+get_variable_binary(::DeltaPowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
+get_variable_lower_bound(::DeltaPowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_delta_power_min()
+get_variable_upper_bound(::DeltaPowerVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_delta_power_max()
+
+get_variable_binary(::DeferedChargeVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
+get_variable_lower_bound(::DeferedChargeVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = PSY.get_delta_charge_min()
+get_variable_upper_bound(::DeferedChargeVariable, d::PSY.ElectricLoad, ::AbstractLoadFormulation) = 0.0
+
 ########################### ReactivePowerVariable, ElectricLoad ####################################
 
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ElectricLoad}, ::AbstractLoadFormulation) = false
@@ -50,11 +59,12 @@ function get_default_time_series_names(
     ::Type{<:PSY.ElectricLoad},
     ::Type{DispatchableEVLoad},
 )
+    #TODO: replace with new names
     return Dict{Type{<:TimeSeriesParameter}, String}(
-        BaseLoadTimeSeriesParameter => "baseload",
-        DefferableChargingTimeSeriesParameter => "defferable_capacity",
-        MaximumChargingTimeSeriesParameter => "charging_capacity",
-        MaximumDefferedChargingTimeSeriesParameter => "deffered_charge_limit",
+        PowerBaseParameter => "baseload",
+        DeltaStateChargeMinParameter => "min_deferebale_charge",
+        DeltaPowerMaxParameter => "Max_charge_power",
+        DeltaPowerMinParameter => "Min_charge_power",
     )
 end
 
@@ -140,75 +150,149 @@ function add_constraints!(
     return
 end
 
+# Constraint for bounding DeltaPowerVariable
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{ActivePowerVariableLimitsConstraint},
-    U::Type{<:VariableType},
+    T::Type{DeltaPowerBoundsConstraint},
+    U::Type{DeltaPowerVariable},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    #TODO: Juliette this is an example of how you would have to add new constraints 
-    # in this case I'm adding a upper bound constraint. Also this is type 1 of a constraint
-    # call as we are passing both the constraint type and a variable with the idea that this constraint
-    # is generalizable.
-    constraint = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
-    variable = get_variable(container, U(), V)
-    parameter = get_parameter_array(container, P(), V)
-    multiplier = get_parameter_multiplier_array(container, P(), V)
+
+    constraint_lb = add_constraints_container!(container, T(), V, names, time_steps, meta="lb")
+    constraint_ub = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
+    variable = get_variable(container, DeltaPowerVariable(), V)
+    parameter_min = get_parameter_array(container, DeltaPowerMinParameter(), V)
+    parameter_max = get_parameter_array(container, DeltaPowerMaxParameter(), V)
+    multiplier_min = get_parameter_multiplier_array(container, DeltaPowerMinParameter(), V)
+    multiplier_max = get_parameter_multiplier_array(container, DeltaPowerMaxParameter(), V)
     jump_model = get_jump_model(container)
     for device in devices, t in time_steps
         name = PSY.get_name(device)
-        constraint[name, t] = JuMP.@constraint(
+        constraint_lb[name, t] = JuMP.@constraint(
             jump_model,
-            # this is an example and not the real constraint
-            array[name, t] <= multiplier[name, t] * parameter[name, t]
+            variable[name, t] >= multiplier_min[name, t] * parameter_min[name, t]
+        )
+
+        constraint_ub[name, t] = JuMP.@constraint(
+            jump_model,
+            variable[name, t] <= multiplier_max[name, t] * parameter_max[name, t]
         )
     end
     return
 end
 
-
+# Constraint for bounding DeferedChargeVariable
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{EVLoadBalanceConstraint},
+    T::Type{DeltaStateChargeBoundsConstraint},
+    U::Type{DeferedChargeVariable},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    #TODO: Juliette this is an example of how you would have to add new constraints 
-    # in this case I'm adding the ev load balance constraint. this is a type 2 constraint call
-    # where we are only passing the constraint type as it will use multiple different variables
-    # that are called within the function.
-    constraint_a = add_constraints_container!(container, T(), V, names, time_steps,)
-    # you can create more than one constraint using passing unique meta String like this
-    constraint_b = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
-    variable_p = get_variable(container, ActivePowerVariable(), V)
-    variable_def = get_variable(container, DefferedChargeVariable(), V)
-    variable_c_def = get_variable(container, CumulativeDefferedChargeVariable(), V)
-    # you can also call parameters in here if needed 
-    parameter = get_parameter_array(container, MaximumDefferedChargingTimeSeriesParameter(), V)
-    multiplier = get_parameter_multiplier_array(container, MaximumDefferedChargingTimeSeriesParameter(), V)
+
+    constraint_lb = add_constraints_container!(container, T(), V, names, time_steps, meta="lb")
+    constraint_ub = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
+    variable = get_variable(container, DeferedChargeVariable(), V)
+    parameter_min = get_parameter_array(container, DeltaStateChargeMinParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, DeltaStateChargeMinParameter(), V)
     jump_model = get_jump_model(container)
     for device in devices, t in time_steps
         name = PSY.get_name(device)
-        constraint_a[name, t] = JuMP.@constraint(
+        constraint_lb[name, t] = JuMP.@constraint(
             jump_model,
-            # this is an example and not the real constraint
-            variable_c_def[name, t] == variable_c_def[name, t-1] + variable_def[name, t]
+            variable[name, t] >= multiplier[name, t] * parameter_min[name, t]
         )
-        constraint_b[name, t] = JuMP.@constraint(
+
+        constraint_ub[name, t] = JuMP.@constraint(
             jump_model,
-            # this is an example and not the real constraint
-            variable_c_def[name, t] <= multiplier[name, t] * parameter[name, t]
+            variable[name, t] <= 0.0
         )
     end
     return
 end
+
+# Constraint for calculating defered charge in each time step
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{EnergyBalanceConstraint},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+
+    constraint= add_constraints_container!(container, T(), V, names, time_steps, meta="defered")
+    variable_S = get_variable(container, DeferedChargeVariable(), V)
+    variable_P = get_variable(container, DeltaPowerVariable(), V)
+    multiplier_S = get_parameter_multiplier_array(container, DeferedChargeVariable(), V)
+    multiplier_P = get_parameter_multiplier_array(container, DeltaPowerVariable(), V)
+    jump_model = get_jump_model(container)
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        if t == 1
+            constraint_lb[name, t] = JuMP.@constraint(
+                jump_model,
+                variable_S[name, t] = multiplier_P[name, t] * variable_P[name, t] * fraction_of_hour
+            )
+        else
+            constraint_ub[name, t] = JuMP.@constraint(
+                jump_model,
+                variable_S[name, t] = multiplier_S[name, t-1] * variable_S[name, t-1] + multiplier_P[name, t] * variable_P[name, t] * fraction_of_hour
+            )
+    end
+    return
+end
+
+
+# function add_constraints!(
+#     container::OptimizationContainer,
+#     T::Type{EVLoadBalanceConstraint},
+#     devices::IS.FlattenIteratorWrapper{V},
+#     model::DeviceModel{V, W},
+#     X::Type{<:PM.AbstractPowerModel},
+# ) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
+#     time_steps = get_time_steps(container)
+#     names = [PSY.get_name(d) for d in devices]
+#     #TODO: Juliette this is an example of how you would have to add new constraints
+#     # in this case I'm adding the ev load balance constraint. this is a type 2 constraint call
+#     # where we are only passing the constraint type as it will use multiple different variables
+#     # that are called within the function.
+#     constraint_a = add_constraints_container!(container, T(), V, names, time_steps,)
+#     # you can create more than one constraint using passing unique meta String like this
+#     constraint_b = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
+#     variable_p = get_variable(container, ActivePowerVariable(), V)
+#     variable_def = get_variable(container, DeferedChargeVariable(), V)
+#     variable_c_def = get_variable(container, CumulativeDefferedChargeVariable(), V)
+#     # you can also call parameters in here if needed
+#     parameter = get_parameter_array(container, MaximumDefferedChargingTimeSeriesParameter(), V)
+#     multiplier = get_parameter_multiplier_array(container, MaximumDefferedChargingTimeSeriesParameter(), V)
+#     jump_model = get_jump_model(container)
+#     for device in devices, t in time_steps
+#         name = PSY.get_name(device)
+#         constraint_a[name, t] = JuMP.@constraint(
+#             jump_model,
+#             # this is an example and not the real constraint
+#             variable_c_def[name, t] == variable_c_def[name, t-1] + variable_def[name, t]
+#         )
+#         constraint_b[name, t] = JuMP.@constraint(
+#             jump_model,
+#             # this is an example and not the real constraint
+#             variable_c_def[name, t] <= multiplier[name, t] * parameter[name, t]
+#         )
+#     end
+#     return
+# end
 
 ############################## FormulationControllable Load Cost ###########################
 function objective_function!(

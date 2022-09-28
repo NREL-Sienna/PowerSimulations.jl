@@ -150,26 +150,36 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    add_variables!(container, ActivePowerVariable, devices, D())
-    add_variables!(container, DefferedChargeVariable, devices, D())
-    add_variables!(container, CumulativeDefferedChargeVariable, devices, D())
+    # Adding new variables
+    add_variables!(container, DeltaPowerVariable, devices, D())
+    add_variables!(container, DeferedChargeVariable, devices, D())
 
-    # Add Variables to expressions
+    # Adding new parameters
+    add_parameters!(container, DeltaPowerMaxParameter, devices, model)
+    add_parameters!(container, DeltaPowerMinParameter, devices, model)
+    add_parameters!(container, DeltaStateChargeMinParameter, devices, model)
+    add_parameters!(container, PowerBaseParameter, devices, model)
+
+    # Add base charging load
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable,
+        PowerBaseParameter,
         devices,
         model,
         S,
     )
 
-    add_parameters!(container, BaseLoadTimeSeriesParameter, devices, model)
-    add_parameters!(container, DefferableChargingTimeSeriesParameter, devices, model)
-    add_parameters!(container, MaximumChargingTimeSeriesParameter, devices, model)
-    add_parameters!(container, MaximumDefferedChargingTimeSeriesParameter, devices, model)
+    # Adding defered charge
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        DeferedChargeVariable,  # I don't need to make this negative as it is bounded up by 0
+        devices,
+        model,
+        S,
+    )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
     return
 end
 
@@ -186,25 +196,32 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    # Type 1 Constraint def 
+    # Type 2 Constraint def
     add_constraints!(
         container,
-        ActivePowerVariableLimitsConstraint,
-        ActivePowerVariable,
+        DeltaPowerBoundsConstraint,
+        DeltaPowerVariable,
         devices,
         model,
         S,
     )
 
-    # Type 2 Constraint def 
     add_constraints!(
         container,
-        EVLoadBalanceConstraint,
+        DeltaStateChargeBoundsConstraint,
+        DeferedChargeVariable,
         devices,
         model,
         S,
     )
 
+    add_constraints!(
+        container,
+        EnergyBalanceConstraint,
+        devices,
+        model,
+        S,
+    )
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -347,7 +364,7 @@ function construct_device!(
     ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
-
+    # Follow this example to add parameters to load balance
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 

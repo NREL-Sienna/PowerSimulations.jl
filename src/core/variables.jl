@@ -109,9 +109,12 @@ struct VoltageMagnitude <: VariableType end
 
 struct VoltageAngle <: VariableType end
 
-struct DefferedChargeVariable <: VariableType end
+"""
+variables for dispatchable EVs
+"""
 
-struct CumulativeDefferedChargeVariable <: VariableType end
+struct DeltaPowerVariable <: VariableType end   # Change in charging power
+struct DeferedChargeVariable <: VariableType end  # How far behind the baseline are you
 
 """
 Struct to dispatch the creation of Flow Active Power Variables
