@@ -10,7 +10,8 @@ using Latexify
 combos = PowerSimulations.generate_device_formulation_combinations()
 filter!(x -> x["device_type"] <: RenewableGen, combos)
 combo_table = DataFrame(
-    "Valid DeviceModels" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Device Type" => ["[$(c["device_type"])](https://nrel-siip.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
     "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
     )
 mdtable(combo_table, latex = false)
@@ -29,15 +30,9 @@ RenewableFullDispatch
 - [`ActivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: `PowerSystems.get_active_power(device)`
-- [`ReactivePowerVariable`](@ref): 
+- [`ReactivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: `PowerSystems.get_reactive_power(device)`
-
-**Service Variables:**
-
-- [`ActivePowerReserveVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
 
 **Static Parameters:**
 
@@ -62,14 +57,13 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined by ``ActivePowerTimeSeriesParameter_t - Pg_t``
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- Pg_t`` to incentivize generation from `RenewableGen` devices.
 
 **Constraints:**
 
 ```math
 \begin{aligned}
-&  Pg_t + \sum_{i \in S^{\uparrow}}{Pr^{\uparrow}_{i,t}} \le ActivePowerTimeSeriesParameter_t \\
-&  Pg_t - \sum_{i \in S^{\downarrow}}{Pr^{\downarrow}_{i,t}} \ge Pg^\text{min} \\
+&  Pg^\text{min} \le Pg_t \le ActivePowerTimeSeriesParameter_t \\
 &  Qg^\text{min} \le Qg_t \le Qg^\text{max}
 \end{aligned}
 ```
@@ -85,17 +79,11 @@ RenewableConstantPowerFactor
 **Variables:**
 
 - [`ActivePowerVariable`](@ref):
-  - Bounds: [0,]
-  - Default initial value: `PowerSystems.get_active_power(device)`
-- [`ReactivePowerVariable`](@ref): 
-  - Bounds: [0,]
-  - Default initial value: `PowerSystems.get_reactive_power(device)`
-
-**Service Variables:**
-
-- [`ActivePowerReserveVariable`](@ref):
   - Bounds: [0.0, ]
-  - Default initial value: 0.0
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`ReactivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_reactive_power(device)`
 
 **Static Parameters:**
 
@@ -121,14 +109,13 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined by ``ActivePowerTimeSeriesParameter_t - Pg_t``
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- Pg_t`` to incentivize generation from `RenewableGen` devices.
 
 **Constraints:**
 
 ```math
 \begin{aligned}
-&  Pg_t + \sum_{i \in S^{\uparrow}}{Pr^{\uparrow}_{i,t}} \le ActivePowerTimeSeriesParameter_t \\
-&  Pg_t - \sum_{i \in S^{\downarrow}}{Pr^{\downarrow}_{i,t}} \ge Pg^\text{min} \\
+&  Pg^\text{min} \le Pg_t \le ActivePowerTimeSeriesParameter_t \\
 &  Qg^\text{min} \le Qg_t \le Qg^\text{max} \\
 &  Qg_t = pf * Pg_t
 \end{aligned}

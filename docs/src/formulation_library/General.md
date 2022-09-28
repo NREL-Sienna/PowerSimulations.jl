@@ -1,4 +1,6 @@
-# Common Formulations
+# Formulations
+
+Modeling formulations are created by dispatching on abstract subtypes of [`PowerSimulations.AbstractDeviceFormulation`](@ref)
 
 ## `FixedOutput`
 

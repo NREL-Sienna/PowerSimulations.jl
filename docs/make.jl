@@ -28,12 +28,15 @@ pages = OrderedDict(
         "Troubleshooting" => "code_base_developer_guide/troubleshooting.md",
     ],
     "Formulation Library" => Any[
+        "General" => "formulation_library/General.md",
         "Thermal Generation" => "formulation_library/ThermalGen.md",
         "Hydro Generation" => "formulation_library/HydroGen.md",
         "Renewable Generation" => "formulation_library/RenewableGen.md",
         "Storage" => "formulation_library/Storage.md",
+        "Hybrid System" => "formulation_library/HybridSystem.md",
+        "Load" => "formulation_library/Load.md",
         "Network" => "formulation_library/Network.md",
-        "Common" => "formulation_library/common_formulations.md",
+        "Branch" => "formulation_library/Branch.md",
     ],
     "API Reference" => "api/PowerSimulations.md",
 )

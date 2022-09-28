@@ -65,14 +65,29 @@ struct WarmStartVariable <: VariableType end
 
 struct ColdStartVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of a variable for energy storage level (state of charge)
+
+Docs abbreviation: ``E``
+"""
 struct EnergyVariable <: VariableType end
 
 struct EnergyVariableUp <: VariableType end
 
 struct EnergyVariableDown <: VariableType end
 
+"""
+Struct to dispatch the creation of a slack variable for energy storage levels < target storage levels
+
+Docs abbreviation: ``E^{shortage}``
+"""
 struct EnergyShortageVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of a slack variable for energy storage levels > target storage levels
+
+Docs abbreviation: ``E^{surplus}``
+"""
 struct EnergySurplusVariable <: VariableType end
 
 struct LiftVariable <: VariableType end
@@ -97,6 +112,11 @@ struct ActivePowerReserveVariable <: VariableType end
 
 struct ServiceRequirementVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of energy (water) spillage variable representing energy released from a storage/reservoir not injected into the network
+
+Docs abbreviation: ``S``
+"""
 struct WaterSpillageVariable <: VariableType end
 
 struct StartVariable <: VariableType end
