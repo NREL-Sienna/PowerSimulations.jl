@@ -92,6 +92,11 @@ struct EnergySurplusVariable <: VariableType end
 
 struct LiftVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of a binary commitment status variable
+
+Docs abbreviation: ``u``
+"""
 struct OnVariable <: VariableType end
 
 """

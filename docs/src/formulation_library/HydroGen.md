@@ -17,6 +17,8 @@ combo_table = DataFrame(
 mdtable(combo_table, latex = false)
 ```
 
+---
+
 ## `HydroDispatchRunOfRiver`
 
 ```@docs
@@ -55,7 +57,7 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as `` Pg_t``.
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as `` Pg``.
 
 **Constraints:**
 
@@ -65,6 +67,8 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 &  Qg^\text{min} \le Qg_t \le Qg^\text{max}
 \end{aligned}
 ```
+
+---
 
 ## `HydroDispatchPumpedStorage`
 
@@ -94,6 +98,8 @@ mdtable(combo_table, latex = false)
 **Objective:**
 
 **Constraints:**
+
+---
 
 ## `HydroDispatchReservoirBudget`
 
@@ -138,12 +144,9 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg_t``.
-TODO: add slack terms
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 
 **Constraints:**
-
-TODOl: add slack terms
 
 ```math
 \begin{aligned}
@@ -152,6 +155,8 @@ TODOl: add slack terms
 &  \sum_{t = 1}^N(Pg_t) \cdot \Delta T \le \sum_{t = 1}^N(EnergyBudgetTimeSeriesParameter_t) \cdot \Delta T
 \end{aligned}
 ```
+
+---
 
 ## `HydroDispatchReservoirStorage`
 
@@ -209,28 +214,21 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg_t``.
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 TODO: add slack terms
 
 **Constraints:**
 
-TODO: Add slack terms
-
 ```math
 \begin{aligned}
 &  E_{t+1} = E_t + (InflowTimeSeriesParameter_t - S_t - Pg_t) \cdot \Delta T \\
+&  E_t - E^{surplus}_t + E^{shortage}_t = EnergyTargetTimeSeriesParameter_t \\
 &  Pg^\text{min} \le Pg_t \le Pg^\text{max} \\
 &  Qg^\text{min} \le Qg_t \le Qg^\text{max}
 \end{aligned}
 ```
 
-Future releases will also implement a requirement of the energy at the last time point ``N``:
-
-```math
-\begin{aligned}
-& E_N \ge E^\text{requirement}
-\end{aligned}
-```
+---
 
 ## `HydroCommitmentReservoirBudget`
 
@@ -240,7 +238,26 @@ HydroCommitmentReservoirBudget
 
 **Variables:**
 
+- [`ActivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`ReactivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_reactive_power(device)`
+- [`OnVariable`](@ref):
+  - Bounds: {0, 1}
+  - Default initial value: `PowerSystems.get_status(device)`
+
+**Auxillary Variables:**
+
+- [`EnergyOutput`](@ref) - TODO
+
 **Static Parameters:**
+
+- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Pg^\text{max}`` = `PowerSystems.get_active_power_limits(device).max`
+- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Time Series Parameters:**
 
@@ -259,22 +276,21 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg_t``.
-TODO: add slack and UC terms
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 
 **Constraints:**
-
-Similar to the dispatch formulation, but considering a binary variable ``u_t \in \{0, 1\}`` with semi continuous constraints for both active and reactive power:
 
 ```math
 \begin{aligned}
 &  \sum_{t = 1}^N P_t \cdot \Delta T \le E^\text{budget} \\
-&  P_t - u_t P^\text{max} \le 0 \\
-&  P_t - u_t P^\text{min} \ge 0 \\
-&  Q_t - u_t Q^\text{max} \le 0 \\
-&  Q_t - u_t Q^\text{min} \ge 0
+&  Pg_t - u_t Pg^\text{max} \le 0 \\
+&  Pg_t - u_t Pg^\text{min} \ge 0 \\
+&  Qg_t - u_t Qg^\text{max} \le 0 \\
+&  Qg_t - u_t Qg^\text{min} \ge 0
 \end{aligned}
 ```
+
+---
 
 ## `HydroCommitmentReservoirStorage`
 
@@ -284,7 +300,39 @@ HydroCommitmentReservoirStorage
 
 **Variables:**
 
+- [`ActivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`ReactivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_reactive_power(device)`
+- [`EnergyVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_initial_storage(device)`
+- [`WaterSpillageVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+- [`EnergyShortageVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+- [`EnergySurplusVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+- [`OnVariable`](@ref):
+  - Bounds: {0, 1}
+  - Default initial value: `PowerSystems.get_status(device)`
+
+**Auxillary Variables:**
+
+- [`EnergyOutput`](@ref)
+
 **Static Parameters:**
+
+- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Pg^\text{max}`` = `PowerSystems.get_active_power_limits(device).max`
+- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+- ``Eg^\text{max}`` = `PowerSystems.get_storage_capacity(device)`
 
 **Time Series Parameters:**
 
@@ -303,40 +351,24 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg_t``.
-TODO: add slack and UC terms
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
+
+TODO: add slack terms
 
 **Constraints:**
-
-TODO: Add slack and UC terms
 
 ```math
 \begin{aligned}
 &  E_{t+1} = E_t + (InflowTimeSeriesParameter_t - S_t - Pg_t) \cdot \Delta T \\
-&  Pg^\text{min} \le Pg_t \le Pg^\text{max} \\
-&  Qg^\text{min} \le Qg_t \le Qg^\text{max}
+&  E_t - E^{surplus}_t + E^{shortage}_t = EnergyTargetTimeSeriesParameter_t \\
+&  Pg_t - u_t Pg^\text{max} \le 0 \\
+&  Pg_t - u_t Pg^\text{min} \ge 0 \\
+&  Qg_t - u_t Qg^\text{max} \le 0 \\
+&  Qg_t - u_t Qg^\text{min} \ge 0
 \end{aligned}
 ```
 
-Future releases will also implement a requirement of the energy at the last time point ``N``:
-
-```math
-\begin{aligned}
-& E_N \ge E^\text{requirement}
-\end{aligned}
-```
-
-Similar to the dispatch formulation, but considering a binary variable ``u_t \in \{0, 1\}`` with semi continuous constraints for both active and reactive power:
-
-```math
-\begin{aligned}
-&  E_{t+1} = E_t + (I_t - S_t - P_t)\Delta T \\
-&  P_t - u_t P^\text{max} \le 0 \\
-&  P_t - u_t P^\text{min} \ge 0 \\
-&  Q_t - u_t Q^\text{max} \le 0 \\
-&  Q_t - u_t Q^\text{min} \ge 0
-\end{aligned}
-```
+---
 
 ## `HydroCommitmentRunOfRiver`
 
@@ -346,7 +378,21 @@ HydroCommitmentRunOfRiver
 
 **Variables:**
 
+- [`ActivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`ReactivePowerVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_reactive_power(device)`
+- [`OnVariable`](@ref):
+  - Bounds: {0, 1}
+  - Default initial value: `PowerSystems.get_status(device)`
+
 **Static Parameters:**
+
+- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Time Series Parameters:**
 
@@ -365,19 +411,16 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg_t``.
-TODO: add UC terms
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 
 **Constraints:**
 
-Similar to the dispatch formulation, but considering a binary variable ``u_t \in \{0, 1\}`` with semi continuous constraints for both active and reactive power:
-
 ```math
 \begin{aligned}
-&  P_t \le \eta_t P^\text{max}\\
-&  P_t - u_t P^\text{max} \le 0 \\
-&  P_t - u_t P^\text{min} \ge 0 \\
-&  Q_t - u_t Q^\text{max} \le 0 \\
-&  Q_t - u_t Q^\text{min} \ge 0
+&  Pg_t \le Pg^\text{max}\\
+&  Pg_t - u_t Pg^\text{max} \le 0 \\
+&  Pg_t - u_t Pg^\text{min} \ge 0 \\
+&  Qg_t - u_t Qg^\text{max} \le 0 \\
+&  Qg_t - u_t Qg^\text{min} \ge 0
 \end{aligned}
 ```

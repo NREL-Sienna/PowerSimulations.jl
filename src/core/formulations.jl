@@ -31,8 +31,20 @@ struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 ############################# Electric Load Formulations ###################################
 abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
+
+"""
+Formulation type to add a time series paraemter for non-dispatchable `ElectricLoad` withdrawls to power balance constraints
+"""
 struct StaticPowerLoad <: AbstractLoadFormulation end
+
+"""
+Formulation type to enable (binary) load interruptions
+"""
 struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
+
+"""
+Formulation type to enable (continuous) load interruption dispatch
+"""
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### Hybrid Generation Formulations ################################
