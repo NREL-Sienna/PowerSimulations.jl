@@ -59,6 +59,10 @@ mdtable(combo_table, latex = false)
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- Pg_t`` to incentivize generation from `RenewableGen` devices.
 
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+
 **Constraints:**
 
 ```math
@@ -110,6 +114,10 @@ mdtable(combo_table, latex = false)
 **Objective:**
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- Pg_t`` to incentivize generation from `RenewableGen` devices.
+
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
 
 **Constraints:**
 

@@ -44,6 +44,10 @@ combo_table = DataFrame(
 mdtable(combo_table, latex = false)
 ```
 
+**Expressions:**
+
+Subtracts the parameters listed above from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+
 **Constraints:**
 
 No constraints are created
@@ -86,6 +90,11 @@ mdtable(combo_table, latex = false)
 **Objective:**
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
+
+**Expressions:**
+
+- Adds ``Pg`` and ``Qg`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+- Subtracts the time series parameters listed above terms from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
 
 **Constraints:**
 
@@ -135,6 +144,11 @@ mdtable(combo_table, latex = false)
 **Objective:**
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
+
+**Expressions:**
+
+- Adds ``Pg`` and ``Qg`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+- Subtracts the time series parameters listed above terms from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
 
 **Constraints:**
 

@@ -72,8 +72,18 @@ Docs abbreviation: ``E``
 """
 struct EnergyVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of a variable for energy storage level (state of charge) of upper reservoir
+
+Docs abbreviation: ``E^{up}``
+"""
 struct EnergyVariableUp <: VariableType end
 
+"""
+Struct to dispatch the creation of a variable for energy storage level (state of charge) of lower reservoir
+
+Docs abbreviation: ``E^{down}``
+"""
 struct EnergyVariableDown <: VariableType end
 
 """
@@ -106,6 +116,11 @@ Docs abbreviation: ``Qg``
 """
 struct ReactivePowerVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of binary storage charge reservation variable
+
+Docs abbreviation: ``r``
+"""
 struct ReservationVariable <: VariableType end
 
 """

@@ -59,6 +59,10 @@ mdtable(combo_table, latex = false)
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as `` Pg``.
 
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+
 **Constraints:**
 
 ```math
@@ -78,7 +82,35 @@ HydroDispatchPumpedStorage
 
 **Variables:**
 
+- [`ActivePowerInVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `-1 * PowerSystems.get_active_power(device)`
+- [`ActivePowerOutVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_active_power(device)`
+- [`EnergyVariableUp`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_initial_storage(device).up`
+- [`EnergyVariableDown`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: `PowerSystems.get_initial_storage(device).down`
+- [`WaterSpillageVariable`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+- [`EnergyOutput`](@ref):
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+- [`ReservationVariable`](@ref):
+  - only included if `DeviceModel(HydroPumpedStorage, HydroDispatchPumpedStorage; attributes = Dict(reservation => true))`
+  - Bounds: {0, 1}
+  - Default initial value: 1
+
 **Static Parameters:**
+
+- ``Pg^\text{out, max}`` = `map(x -> x.max - x.min, PowerSystems.get_active_power_limits(device))`
+- ``Pg^\text{in, max}`` = `map(x -> x.max - x.min, PowerSystems.get_active_power_limits_pump(device))`
+- ``Eg^\text{up, max}`` = `PowerSystems.get_storage_capacity(device).up`
+- ``Eg^\text{down, max}`` = `PowerSystems.get_storage_capacity(device).down`
 
 **Time Series Parameters:**
 
@@ -97,7 +129,24 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg^{out}``.
+
+**Expressions:**
+
+Adds ``Pg`` term(s) to the active power balance expression(s) created by the selected [Network Formulations](@ref)
+
 **Constraints:**
+
+```math
+\begin{aligned}
+&  E^{up}_{t+1} = E^{up}_t + (InflowTimeSeriesParameter_t - S_t - Pg^{out}_t + Pg^{in}_t) \cdot \Delta T \\
+&  E^{down}_{t+1} = E^{down}_t + (S_t - OutflowTimeSeriesParameter_t + Pg^{out}_t - Pg^{in}_t) \cdot \Delta T \\
+&  Pg^{in}_t - r * Pg^\text{in, max} \le Pg^\text{in, max} \\
+&  Pg^{out}_t + r * Pg^\text{out, max} \le Pg^\text{out, max} \\
+&  E^{up}_t \le E^{up, max}
+&  E^{down}_t \le E^{down, max}
+\end{aligned}
+```
 
 ---
 
@@ -146,6 +195,10 @@ mdtable(combo_table, latex = false)
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+
 **Constraints:**
 
 ```math
@@ -179,7 +232,7 @@ HydroDispatchReservoirStorage
   - Bounds: [0.0, ]
   - Default initial value: 0.0
 - [`EnergyShortageVariable`](@ref):
-  - Bounds: [0.0, ]
+  - Bounds: [ , 0.0]
   - Default initial value: 0.0
 - [`EnergySurplusVariable`](@ref):
   - Bounds: [0.0, ]
@@ -216,6 +269,10 @@ mdtable(combo_table, latex = false)
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 TODO: add slack terms
+
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
 
 **Constraints:**
 
@@ -278,6 +335,10 @@ mdtable(combo_table, latex = false)
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
 
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+
 **Constraints:**
 
 ```math
@@ -313,7 +374,7 @@ HydroCommitmentReservoirStorage
   - Bounds: [0.0, ]
   - Default initial value: 0.0
 - [`EnergyShortageVariable`](@ref):
-  - Bounds: [0.0, ]
+  - Bounds: [ , 0.0]
   - Default initial value: 0.0
 - [`EnergySurplusVariable`](@ref):
   - Bounds: [0.0, ]
@@ -351,9 +412,12 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``,
+and objective function terms for [StorageManagementCost](@ref).
 
-TODO: add slack terms
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
 
 **Constraints:**
 
@@ -412,6 +476,10 @@ mdtable(combo_table, latex = false)
 **Objective:**
 
 Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``Pg``.
+
+**Expressions:**
+
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
 
 **Constraints:**
 

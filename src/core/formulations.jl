@@ -16,16 +16,41 @@ abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
-
+"""
+Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
+"""
 struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
+"""
+Formulaiton type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
+"""
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
+"""
+Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
+"""
 struct ThermalBasicDispatch <: AbstractThermalDispatchFormulation end
+"""
+Formulation type to enable standard dispatch with a range and enforce intertemporal ramp constraints
+"""
 struct ThermalStandardDispatch <: AbstractThermalDispatchFormulation end
+"""
+Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *may not work with PWL cost definitions*
+"""
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-
+"""
+Formulation type to enable pg-lib commitment formulation with startup/shutdown profiles
+"""
 struct ThermalMultiStartUnitCommitment <: AbstractCompactUnitCommitment end
+"""
+Formulation type to enable thermal compact commitment
+"""
 struct ThermalCompactUnitCommitment <: AbstractCompactUnitCommitment end
+"""
+Formulation type to enable thermal compact commitment without intertemporal (ramp, min on/off time) constraints
+"""
 struct ThermalBasicCompactUnitCommitment <: AbstractCompactUnitCommitment end
+"""
+Formulation type to enable thermal compact dispatch
+"""
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
 ############################# Electric Load Formulations ###################################
@@ -116,8 +141,21 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 ############################ Storage Generation Formulations ###############################
 abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 abstract type AbstractEnergyManagement <: AbstractStorageFormulation end
+
+"""
+Formulation type to add basic storage formulation. With `attributes=Dict("reservation"=>true)` the formulation is augmented
+with abinary variable to prevent simultanious charging and discharging
+"""
 struct BookKeeping <: AbstractStorageFormulation end
+"""
+Formulation type to add storage formulation than can provide ancillary services. With `attributes=Dict("reservation"=>true)` the formulation is augmented
+with abinary variable to prevent simultanious charging and discharging
+"""
 struct BatteryAncillaryServices <: AbstractStorageFormulation end
+"""
+Formulation type to add storage formulation that respects end of horizon energy state of charge target. With `attributes=Dict("reservation"=>true)` the formulation is augmented
+with abinary variable to prevent simultanious charging and discharging
+"""
 struct EnergyTarget <: AbstractEnergyManagement end
 
 """
