@@ -86,15 +86,7 @@ PowerSimulations can represent variable costs using a variety of different metho
 
 `variable_cost <: Vector{Tuple{Float64, Float64}}`: creates a piecewise linear cost term in the objective function 
 
-TODO: Fix this formulation 
-
-```math
-\begin{aligned}
-&  G_t = \sum_{l \in 1..L}(G_l - G_1) \lambda_l{l,t} & \forall t \in T \\
-&  C_t = \sum_{l \in 1..L}(G_t*C_l - G_t*C_1) \lambda_{l,t} & \forall t \in T\\
-&  U_g(t) = \sum_{l \in 1..L} \lambda_{l,t} & \forall t \in T 
-\end{aligned}
-```
+TODO: add formulation 
 
 ___
 

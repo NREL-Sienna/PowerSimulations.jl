@@ -1,4 +1,4 @@
-# Operations [`ProblemTemplate`](@ref)s
+# [Operations [`ProblemTemplate`](@ref)s](@id op_problem_template)
 
 Templates are used to specify the modeling properties of the devices and network that are going to he used to specify a problem.
 A `ProblemTemplate` is just a collection of `DeviceModel`s that allows the user to specify the formulations

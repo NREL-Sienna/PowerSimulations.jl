@@ -8,7 +8,7 @@ pages = OrderedDict(
     "Quick Start Guide" => "quick_start_guide.md",
     "Modeler Guide" => Any[
         "modeler_guide/definitions.md",
-        "modeler_guide/operations_problems.md",
+        "modeler_guide/psi_structure.md",
         "modeler_guide/problem_templates.md",
         "modeler_guide/running_a_simulation.md",
         "modeler_guide/simulation_recorder.md",
