@@ -1,5 +1,6 @@
-## Logging
-PowerSimulations will output many log messages when building systems and
+# Logging
+
+`PowerSimulations.jl` will output many log messages when building systems and
 running simulations. You may want to customize what gets logged to the console
 and, optionally, a file.
 
@@ -9,7 +10,8 @@ logger will take over and log its messages to a file in the `logs` directory in
 the simulation output directory. When finished it will relinquish control back
 to the global logger.
 
-### Configuring the global logger
+## Configuring the global logger
+
 To configure the global logger in a Jupyter Notebook or REPL you may configure
 your own logger with the Julia Logging standard library or use the convenience
 function provided by PowerSimulations.  This example will log messages of level
@@ -26,7 +28,8 @@ logger = configure_logging(
 )
 ```
 
-### Configuring the simulation logger
+## Configuring the simulation logger
+
 You can configure the logging level used by the simulation logger when you call
 `build!(simulation)`.  Here is an example that increases logging verbosity:
 
@@ -39,14 +42,14 @@ build!(simulation, console_level = Logging.Info, file_level = Logging.Debug)
 
 The log file will be located at `<your-output-path>/<simulation-name>/<run-output-dir>/logs/simulation.log`.
 
+## Solver logs
 
-### Solver logs
 You can configure logging for the solver you use.  Refer to the solver
 documentation.  PowerSimulations does not redirect or intercept prints to
 `stdout` or `stderr` from other libraries.
 
+## Recorder events
 
-### Recorder events
 PowerSimulations uses the `InfrastructureSystems.Recorder` to store simulation
 events in a log file.  Refer to this [link](./simulation_recorder.md) for more
 information.

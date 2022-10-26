@@ -154,18 +154,39 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
+"""
+Parameter to define active power time series
+"""
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define reactive power time series
+"""
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Paramter to define requirement time series
+"""
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy storage target level time series
+"""
 struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy budget time series
+"""
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy inflow to storage or reservoir time series
+"""
 struct InflowTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy outflow from storage or reservoir time series
+"""
 struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
