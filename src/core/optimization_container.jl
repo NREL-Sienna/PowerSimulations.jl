@@ -1434,7 +1434,7 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
             container.primal_values_cache.variables_cache[k] = jump_value.(v)
             for idx in eachindex(v)
                 container.primal_values_cache.variables_cache[k][idx] = jump_value(v[idx])
-            end  
+            end
         else
             container.primal_values_cache.variables_cache[k] = jump_value.(v)
         end
@@ -1503,7 +1503,6 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
         if isa(variable, JuMP.Containers.SparseAxisArray)
             continue
         else
-
             JuMP.unfix.(variable)
             JuMP.set_binary.(variable)
             #= Needed if a model has integer variables
