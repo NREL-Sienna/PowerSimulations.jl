@@ -181,10 +181,11 @@ function _add_variable_cost_to_objective!(
     param = get_parameter_array(container, EnergyValueTimeSeriesParameter(), U)
     multiplier =
         get_parameter_multiplier_array(container, EnergyValueTimeSeriesParameter(), U)
-    
+
     for t in time_steps
         variable = get_variable(container, T(), U)[component_name, t]
-        lin_cost = variable * param[component_name, t] * multiplier[component_name, t] * base_power
+        lin_cost =
+            variable * param[component_name, t] * multiplier[component_name, t] * base_power
         add_to_objective_variant_expression!(container, lin_cost)
     end
 
@@ -197,7 +198,7 @@ function _add_variable_cost_to_objective!(
     component::U,
     op_cost::PSY.MarketBidCost,
     ::V,
-) where {T <: EnergyVariable,  U <: PSY.Storage, V <: EnergyValueCurve}
+) where {T <: EnergyVariable, U <: PSY.Storage, V <: EnergyValueCurve}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
     time_steps = get_time_steps(container)
