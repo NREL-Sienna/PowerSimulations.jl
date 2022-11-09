@@ -1,10 +1,12 @@
 mutable struct SimulationInternal
     sim_files_dir::String
+    partitions::Union{Nothing, SimulationPartitions}
     store_dir::String
     logs_dir::String
     models_dir::String
     recorder_dir::String
     results_dir::String
+    partitions_dir::String
     run_count::OrderedDict{Int, OrderedDict{Int, Int}}
     date_ref::OrderedDict{Int, Dates.DateTime}
     status::RunStatus
@@ -21,19 +23,19 @@ end
 function SimulationInternal(
     steps::Int,
     models::SimulationModels,
-    sim_dir::String,
+    base_dir::String,
     name::String,
-    output_dir::Union{Nothing, String},
     recorders,
     console_level::Logging.LogLevel,
-    file_level::Logging.LogLevel,
+    file_level::Logging.LogLevel;
+    partitions::Union{Nothing, SimulationPartitions}=nothing,
     cache_size_mib=1024,
     min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
 )
-    count_dict = Dict{Int, Dict{Int, Int}}()
+    count_dict = OrderedDict{Int, Dict{Int, Int}}()
 
     for s in 1:steps
-        count_dict[s] = Dict{Int, Int}()
+        count_dict[s] = OrderedDict{Int, Int}()
         model_count = length(get_decision_models(models))
         for st in 1:model_count
             count_dict[s][st] = 0
@@ -43,13 +45,9 @@ function SimulationInternal(
         end
     end
 
-    base_dir = joinpath(sim_dir, name)
-    mkpath(base_dir)
-
-    output_dir = _get_output_dir_name(base_dir, output_dir)
-    simulation_dir = joinpath(base_dir, output_dir)
+    simulation_dir = joinpath(base_dir, name)
     if isdir(simulation_dir)
-        error("$simulation_dir already exists. Delete it or pass a different output_dir.")
+        simulation_dir = _get_output_dir_name(base_dir, name)
     end
 
     sim_files_dir = joinpath(simulation_dir, "simulation_files")
@@ -58,31 +56,22 @@ function SimulationInternal(
     models_dir = joinpath(simulation_dir, "problems")
     recorder_dir = joinpath(simulation_dir, "recorder")
     results_dir = joinpath(simulation_dir, RESULTS_DIR)
-
-    for path in (
-        simulation_dir,
-        sim_files_dir,
-        logs_dir,
-        models_dir,
-        recorder_dir,
-        results_dir,
-        store_dir,
-    )
-        mkpath(path)
-    end
+    partitions_dir = joinpath(simulation_dir, "simulation_partitions")
 
     unique_recorders = Set(REQUIRED_RECORDERS)
     foreach(x -> push!(unique_recorders, x), recorders)
 
     return SimulationInternal(
         sim_files_dir,
+        partitions,
         store_dir,
         logs_dir,
         models_dir,
         recorder_dir,
         results_dir,
+        partitions_dir,
         count_dict,
-        Dict{Int, Dates.DateTime}(),
+        OrderedDict{Int, Dates.DateTime}(),
         RunStatus.NOT_READY,
         BuildStatus.EMPTY,
         SimulationState(),
@@ -95,24 +84,40 @@ function SimulationInternal(
     )
 end
 
-function _get_output_dir_name(path, output_dir)
-    if output_dir !== nothing
-        # The user wants a custom name.
-        return output_dir
+function make_dirs(internal::SimulationInternal)
+    mkdir(dirname(internal.sim_files_dir))
+    for field in
+        (:sim_files_dir, :store_dir, :logs_dir, :models_dir, :recorder_dir, :results_dir)
+        mkdir(getproperty(internal, field))
+    end
+end
+
+function _get_output_dir_name(path, sim_name)
+    index = _get_most_recent_execution(path, sim_name) + 1
+    return joinpath(path, "$sim_name-$index")
+end
+
+function _get_most_recent_execution(path, sim_name)
+    sim_dirs = readdir(path)
+    if isempty(sim_dirs)
+        fail = true
+    elseif length(sim_dirs) == 1
+        fail = sim_dirs[1] != sim_name
+    else
+        fail = false
     end
 
-    # Return the next highest integer.
-    output_dir = 1
-    for name in readdir(path)
-        if occursin(r"^\d+$", name)
-            num = parse(Int, name)
-            if num >= output_dir
-                output_dir = num + 1
-            end
+    fail && error("No simulation directories with name=$sim_name are in $path")
+    executions = [1]
+    for path_name in sim_dirs
+        regex = Regex("\\Q$sim_name\\E-(\\d+)\$")
+        m = match(regex, path_name)
+        if !isnothing(m)
+            push!(executions, parse(Int, m.captures[1]))
         end
     end
 
-    return string(output_dir)
+    return maximum(executions)
 end
 
 function configure_logging(internal::SimulationInternal, file_mode)

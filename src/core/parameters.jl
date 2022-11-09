@@ -1,4 +1,4 @@
-struct ParameterKey{T <: ParameterType, U <: PSY.Component} <: OptimizationContainerKey
+struct ParameterKey{T<:ParameterType,U<:PSY.Component} <: OptimizationContainerKey
     meta::String
 end
 
@@ -6,29 +6,29 @@ function ParameterKey(
     ::Type{T},
     ::Type{U},
     meta=CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType, U <: PSY.Component}
+) where {T<:ParameterType,U<:PSY.Component}
     if isabstracttype(U)
         error("Type $U can't be abstract")
     end
     check_meta_chars(meta)
-    return ParameterKey{T, U}(meta)
+    return ParameterKey{T,U}(meta)
 end
 
 function ParameterKey(
     ::Type{T},
     meta::String=CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType}
+) where {T<:ParameterType}
     return ParameterKey(T, PSY.Component, meta)
 end
 
-get_entry_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = T
-get_component_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = U
+get_entry_type(::ParameterKey{T,U}) where {T<:ParameterType,U<:PSY.Component} = T
+get_component_type(::ParameterKey{T,U}) where {T<:ParameterType,U<:PSY.Component} = U
 
 abstract type ParameterAttributes end
 
 struct NoAttributes end
 
-struct TimeSeriesAttributes{T <: PSY.TimeSeriesData} <: ParameterAttributes
+struct TimeSeriesAttributes{T<:PSY.TimeSeriesData} <: ParameterAttributes
     name::String
     multiplier_id::Base.RefValue{Int}
 end
@@ -37,11 +37,11 @@ function TimeSeriesAttributes(
     ::Type{T},
     name::String,
     multiplier_id::Int=1,
-) where {T <: PSY.TimeSeriesData}
+) where {T<:PSY.TimeSeriesData}
     return TimeSeriesAttributes{T}(name, Base.RefValue{Int}(multiplier_id))
 end
 
-get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
+get_time_series_type(::TimeSeriesAttributes{T}) where {T<:PSY.TimeSeriesData} = T
 get_time_series_name(attr::TimeSeriesAttributes) = attr.name
 get_time_series_multiplier_id(attr::TimeSeriesAttributes) = attr.multiplier_id[]
 function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
@@ -49,7 +49,7 @@ function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
     return
 end
 
-struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
+struct VariableValueAttributes{T<:OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
 end
 
@@ -101,9 +101,9 @@ function _set_parameter!(array::AbstractArray, ::JuMP.Model, value::Float64, ixs
 end
 
 function _set_parameter!(
-    array::AbstractArray{Vector{NTuple{2, Float64}}},
+    array::AbstractArray{Vector{NTuple{2,Float64}}},
     ::JuMP.Model,
-    value::Vector{NTuple{2, Float64}},
+    value::Vector{NTuple{2,Float64}},
     ixs::Tuple,
 )
     array[ixs...] = value
@@ -136,7 +136,7 @@ end
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::Vector{NTuple{2, Float64}},
+    parameter::Vector{NTuple{2,Float64}},
     multiplier::Float64,
     ixs...,
 )
@@ -154,20 +154,45 @@ abstract type ObjectiveFunctionParameter <: ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
+"""
+Parameter to define active power time series
+"""
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define reactive power time series
+"""
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Paramter to define requirement time series
+"""
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy storage target level time series
+"""
 struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
 
-struct EnergyValueTimeSeriesParameter <: TimeSeriesParameter end
-
+"""
+Parameter to define energy budget time series
+"""
 struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy value time series
+"""
+struct EnergyValueTimeSeriesParameter <: TimeSeriesParameter end
+
+
+"""
+Parameter to define energy inflow to storage or reservoir time series
+"""
 struct InflowTimeSeriesParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define energy outflow from storage or reservoir time series
+"""
 struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end

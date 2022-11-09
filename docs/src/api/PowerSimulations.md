@@ -24,6 +24,7 @@ Pages = ["PowerSimulations.md"]
 ```@autodocs
 Modules = [PowerSimulations]
 Private = false
+Filter = t -> typeof(t) === DataType ? !(t <: Union{PowerSimulations.AbstractDeviceFormulation, PowerSimulations.AbstractServiceFormulation}) : true
 ```
 
 ## Internal

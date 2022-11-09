@@ -4,7 +4,7 @@ Pkg.instantiate()
 
 using JuliaFormatter
 
-main_paths = ["."]
+main_paths = [".", "./docs/src"]
 for main_path in main_paths
     format(
         main_path;

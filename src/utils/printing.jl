@@ -28,7 +28,7 @@ function _show_method(
         io,
         table;
         header=header,
-        backend=backend,
+        backend=Val(backend),
         title="Device Model",
         alignment=:l,
         kwargs...,
@@ -48,7 +48,7 @@ function _show_method(
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Attributes",
             alignment=:l,
             kwargs...,
@@ -69,7 +69,7 @@ function _show_method(
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Time Series Names",
             alignment=:l,
             kwargs...,
@@ -84,7 +84,7 @@ function _show_method(
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Duals",
             alignment=:l,
             kwargs...,
@@ -99,7 +99,7 @@ function _show_method(
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Feedforwards",
             alignment=:l,
             kwargs...,
@@ -129,7 +129,7 @@ function _show_method(io::IO, network_model::NetworkModel, backend::Symbol; kwar
     PrettyTables.pretty_table(
         io,
         table;
-        backend=backend,
+        backend=Val(backend),
         header=["Field", "Value"],
         title="Network Model",
         alignment=:l,
@@ -163,13 +163,13 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         "Network Model" string(get_network_formulation(template.network_model))
         "Slacks" get_use_slacks(template.network_model)
         "PTDF" !isnothing(get_PTDF(template.network_model))
-        "Duals" join(string.(get_duals(template.network_model)), " ")
+        "Duals" isempty(get_duals(template.network_model)) ? "None" : string.(get_duals(template.network_model))
     ]
 
     PrettyTables.pretty_table(
         io,
         table;
-        backend=backend,
+        backend=Val(backend),
         noheader=true,
         title="Network Model",
         alignment=:l,
@@ -186,7 +186,14 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         table[ix, 3] = string(model.use_slacks)
     end
 
-    PrettyTables.pretty_table(io, table; header=header, title="Device Models", alignment=:l)
+    PrettyTables.pretty_table(
+        io,
+        table;
+        backend=Val(backend),
+        header=header,
+        title="Device Models",
+        alignment=:l,
+    )
 
     if !isempty(template.branches)
         println(io)
@@ -203,7 +210,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Branch Models",
             alignment=:l,
             kwargs...,
@@ -240,7 +247,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Service Models",
             alignment=:l,
             kwargs...,
@@ -276,7 +283,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
         io,
         table;
         header=header,
-        backend=backend,
+        backend=Val(backend),
         title="Decision Models",
         alignment=:l,
         kwargs...,
@@ -294,7 +301,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Emulator Models",
             alignment=:l,
             kwargs...,
@@ -323,7 +330,7 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
     PrettyTables.pretty_table(
         io,
         table;
-        backend=backend,
+        backend=Val(backend),
         noheader=true,
         title="Simulation Sequence",
         alignment=:l,
@@ -345,7 +352,7 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
         io,
         table;
         header=header,
-        backend=backend,
+        backend=Val(backend),
         title="Simulation Problems",
         alignment=:l,
     )
@@ -362,7 +369,7 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
             io,
             table;
             header=header,
-            backend=backend,
+            backend=Val(backend),
             title="Feedforwards",
             alignment=:l,
             kwargs...,
@@ -417,7 +424,7 @@ function _show_method(io::IO, sim::Simulation, backend::Symbol; kwargs...)
     PrettyTables.pretty_table(
         io,
         table;
-        backend=backend,
+        backend=Val(backend),
         noheader=true,
         title="Simulation",
         alignment=:l,
@@ -451,7 +458,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
         io,
         table;
         header=header,
-        backend=backend,
+        backend=Val(backend),
         title="Decision Problem Results",
         alignment=:l,
     )
@@ -466,7 +473,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
         io,
         table;
         noheader=true,
-        backend=backend,
+        backend=Val(backend),
         title="Emulator Results",
         alignment=:l,
         kwargs...,
@@ -521,7 +528,7 @@ function _show_method(
                 io,
                 val;
                 noheader=true,
-                backend=backend,
+                backend=Val(backend),
                 title="$name Problem $k Results",
                 alignment=:l,
                 kwargs...,

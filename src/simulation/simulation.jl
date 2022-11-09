@@ -22,7 +22,7 @@ mutable struct Simulation
         name::String,
         steps::Int,
         models::SimulationModels,
-        simulation_folder::String,
+        simulation_folder::AbstractString,
         initial_time=nothing,
     )
         for model in get_decision_models(models)
@@ -85,6 +85,8 @@ get_simulation_model(s::Simulation, name) = get_simulation_model(get_models(s), 
 get_models(sim::Simulation) = sim.models
 get_simulation_dir(sim::Simulation) = dirname(sim.internal.logs_dir)
 get_simulation_files_dir(sim::Simulation) = sim.internal.sim_files_dir
+get_simulation_partitions_dir(sim::Simulation) =
+    joinpath(get_simulation_dir(sim), "simulation_partitions")
 get_store_dir(sim::Simulation) = sim.internal.store_dir
 get_simulation_status(sim::Simulation) = sim.internal.status
 get_simulation_build_status(sim::Simulation) = sim.internal.build_status
@@ -431,12 +433,27 @@ function _initialize_problem_storage!(
     return simulation_store_params
 end
 
-function _build!(sim::Simulation, serialize::Bool)
+function _build!(
+    sim::Simulation;
+    serialize=true,
+    setup_simulation_partitions=false,
+    partitions=nothing,
+    index=nothing,
+)
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     step_resolution = get_step_resolution(sequence)
     simulation_models = get_models(sim)
+
+    if !isnothing(partitions) && !isnothing(index)
+        step_range = get_absolute_step_range(partitions, index)
+        sim.initial_time += step_resolution * (step_range.start - 1)
+        set_current_time!(sim.internal.simulation_state, sim.initial_time)
+        sim.steps = length(step_range)
+        @info "Set parameters for simulation partition" index sim.initial_time sim.steps
+    end
+
     for (ix, model) in enumerate(get_decision_models(simulation_models))
         problem_interval = get_interval(sequence, model)
         # Note to devs: Here we are setting the number of operations problem executions we
@@ -485,12 +502,19 @@ function _build!(sim::Simulation, serialize::Bool)
             serialize_problem(em)
         end
     end
+
+    if setup_simulation_partitions
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Setup Simulation Partition" begin
+            _setup_simulation_partitions(sim)
+        end
+    end
+
     return
 end
 
 function _set_simulation_internal!(
     sim::Simulation,
-    output_dir,
+    partitions::Union{Nothing, SimulationPartitions},
     recorders,
     console_level,
     file_level,
@@ -500,12 +524,31 @@ function _set_simulation_internal!(
         get_models(sim),
         get_simulation_folder(sim),
         get_name(sim),
-        output_dir,
         recorders,
         console_level,
         file_level,
+        partitions=partitions,
     )
     return
+end
+
+function _setup_simulation_partitions(sim::Simulation)
+    mkdir(sim.internal.partitions_dir)
+    filename = joinpath(sim.internal.partitions_dir, "config.json")
+    IS.to_json(sim.internal.partitions, filename, pretty=true)
+    for i in 1:get_num_partitions(sim.internal.partitions)
+        mkdir(joinpath(sim.internal.partitions_dir, string(i)))
+    end
+
+    open_store(HdfSimulationStore, get_store_dir(sim), "w") do store
+        set_simulation_store!(sim, store)
+        _initialize_problem_storage!(
+            sim,
+            DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
+            MIN_CACHE_FLUSH_SIZE_MiB,
+        )
+    end
+    set_simulation_store!(sim, nothing)
 end
 
 """
@@ -516,8 +559,6 @@ Build the Simulation, problems and the related folder structure
 # Arguments
 
   - `sim::Simulation`: simulation object
-  - `output_dir` = nothing: Name of the output directory for the simulation. If nothing, the
-    folder will have the same name as the simulation
   - `serialize::Bool = true`: serializes the simulation objects in the simulation
   - `recorders::Vector{Symbol} = []`: recorder names to register
   - `console_level = Logging.Error`:
@@ -527,18 +568,28 @@ Throws an exception if name is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
-    output_dir=nothing,
     recorders=[],
     console_level=Logging.Error,
     file_level=Logging.Info,
     serialize=true,
-    initialize_problem=false,
+    partitions::Union{Nothing, SimulationPartitions}=nothing,
+    index=nothing,
 )
+    if !isnothing(partitions) && !isnothing(index) && serialize
+        # This is build of a partition. No need to serialize again.
+        serialize = false
+    end
     TimerOutputs.reset_timer!(BUILD_PROBLEMS_TIMER)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Simulation" begin
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation Internal" begin
-            _check_folder(sim)
-            _set_simulation_internal!(sim, output_dir, recorders, console_level, file_level)
+        _check_folder(sim)
+        _set_simulation_internal!(sim, partitions, recorders, console_level, file_level)
+        make_dirs(sim.internal)
+        if !isnothing(partitions) && isnothing(index)
+            # This is the build for the overall simulation.
+            setup_simulation_partitions = true
+            serialize = true
+        else
+            setup_simulation_partitions = false
         end
         file_mode = "w"
         logger = configure_logging(sim.internal, file_mode)
@@ -546,7 +597,13 @@ function build!(
         try
             Logging.with_logger(logger) do
                 try
-                    _build!(sim, serialize)
+                    _build!(
+                        sim,
+                        serialize=serialize,
+                        setup_simulation_partitions=setup_simulation_partitions,
+                        partitions=partitions,
+                        index=index,
+                    )
                     set_simulation_build_status!(sim, BuildStatus.BUILT)
                     set_simulation_status!(sim, RunStatus.READY)
                 catch e
@@ -561,7 +618,6 @@ function build!(
             close(logger)
         end
     end
-    initialize_problem && _initial_conditions_problems!(sim)
     @info "\n$(BUILD_PROBLEMS_TIMER)\n"
     return get_simulation_build_status(sim)
 end
@@ -1018,8 +1074,12 @@ function deserialize_model(
 end
 
 function serialize_status(sim::Simulation)
-    data = Dict("run_status" => string(get_simulation_status(sim)))
-    filename = joinpath(get_results_dir(sim), "status.json")
+    serialize_status(get_simulation_status(sim), get_results_dir(sim))
+end
+
+function serialize_status(status::RunStatus, results_dir::AbstractString)
+    data = Dict("run_status" => string(status))
+    filename = joinpath(results_dir, "status.json")
     open(filename, "w") do io
         JSON3.write(io, data)
     end
