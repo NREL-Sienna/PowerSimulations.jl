@@ -76,7 +76,6 @@ function add_constraints!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     parameters = built_for_recurrent_solves(container)
-    initial_time = get_initial_time(container)
 
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
