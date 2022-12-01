@@ -22,7 +22,14 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.attributes = device_model.attributes
         set_device_model!(ic_template, base_model)
     end
-    ic_template.services = model.template.services
+
+    for service_model in values(model.template.services)
+        base_model = get_initial_conditions_service_model(model, service_model)
+        base_model.use_slacks = service_model.use_slacks
+        base_model.time_series_names = service_model.time_series_names
+        base_model.attributes = service_model.attributes
+        set_service_model!(ic_template, base_model)
+    end
     return ic_template
 end
 

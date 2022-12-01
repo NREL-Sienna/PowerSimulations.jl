@@ -34,6 +34,13 @@ sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 #! format: on
 
+function get_initial_conditions_service_model(
+    ::OperationModel,
+    ::ServiceModel{T, D},
+) where {T <: PSY.Service, D <: AbstractServiceFormulation}
+    return ServiceModel(T, D)
+end
+
 function get_default_time_series_names(
     ::Type{<:PSY.Reserve},
     ::Type{T},
