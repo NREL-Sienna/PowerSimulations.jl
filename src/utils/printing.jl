@@ -78,12 +78,13 @@ function _show_method(
 
     if !isempty(model.duals)
         println(io)
+
         table = string.(model.duals)
 
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
+            noheader=true,
             backend=Val(backend),
             title="Duals",
             alignment=:l,
@@ -98,7 +99,7 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
+            noheader=true,
             backend=Val(backend),
             title="Feedforwards",
             alignment=:l,
