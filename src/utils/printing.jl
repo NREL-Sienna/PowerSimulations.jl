@@ -265,7 +265,7 @@ function Base.show(io::IO, ::MIME"text/html", input::SimulationModels)
 end
 
 _get_model_type(::DecisionModel{T}) where {T <: DecisionProblem} = T
-_get_model_type(::EmulationModel{T}) where {T <: DecisionProblem} = T
+_get_model_type(::EmulationModel{T}) where {T <: EmulationProblem} = T
 
 function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwargs...)
     println(io)
@@ -274,7 +274,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
     table = Matrix{Any}(undef, length(sim_models.decision_models), length(header))
     for (ix, model) in enumerate(sim_models.decision_models)
         table[ix, 1] = string(get_name(model))
-        table[ix, 2] = string(_get_model_type(model))
+        table[ix, 2] = IS.strip_module_name(string(_get_model_type(model)))
         table[ix, 3] = string(get_status(model))
         table[ix, 4] = get_output_dir(model)
     end
@@ -293,7 +293,8 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
         println(io)
         table = Matrix{Any}(undef, 1, length(header))
         table[1, 1] = string(get_name(sim_models.emulation_model))
-        table[1, 2] = string(_get_model_type(sim_models.emulation_model))
+        table[1, 2] =
+            IS.strip_module_name(string(_get_model_type(sim_models.emulation_model)))
         table[1, 3] = string(get_status(sim_models.emulation_model))
         table[1, 4] = get_output_dir(sim_models.emulation_model)
 
