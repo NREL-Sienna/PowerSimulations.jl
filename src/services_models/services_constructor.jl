@@ -207,7 +207,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -254,7 +254,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -300,7 +300,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -389,7 +389,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, services)
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
 
     objective_function!(container, areas, model)
     return
@@ -435,7 +435,7 @@ function construct_service!(
         model,
     )
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -483,7 +483,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -536,6 +536,6 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
-    add_constraint_dual!(container, model, service)
+    add_constraint_dual!(container, sys, model)
     return
 end
