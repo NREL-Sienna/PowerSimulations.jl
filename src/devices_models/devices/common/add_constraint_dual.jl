@@ -57,7 +57,7 @@ function assign_dual_variable!(
     container::OptimizationContainer,
     constraint_type::Type{<:ConstraintType},
     service::D,
-    ::Type{AbstractServiceFormulation},
+    ::Type{<: AbstractServiceFormulation},
 ) where {D <: PSY.Service}
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
