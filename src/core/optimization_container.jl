@@ -836,13 +836,14 @@ function add_dual_container!(
     ::Type{U},
     axs...;
     sparse=false,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
         @warn("The model has resulted in a MILP, \\
               dual value retrieval requires solving an additional Linear Program \\
               which increases simulation time and the results could be innacurate.")
     end
-    const_key = ConstraintKey(T, U)
+    const_key = ConstraintKey(T, U, meta)
     if sparse
         dual_container = sparse_container_spec(Float64, axs...)
     else
