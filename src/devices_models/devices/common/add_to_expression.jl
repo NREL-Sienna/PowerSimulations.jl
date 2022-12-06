@@ -78,16 +78,16 @@ end
 
 function _add_to_jump_expression!(
     expression::T,
-    parameter::PJ.ParameterRef,
+    parameter::JuMP.VariableRef,
     multiplier::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
-    PJ.add_to_expression!(expression, multiplier, parameter)
+    JuMP.add_to_expression!(expression, multiplier, parameter)
     return
 end
 
 function _add_to_jump_expression!(
     expression::T,
-    var::Union{JuMP.VariableRef, PJ.ParameterRef},
+    var::Union{JuMP.VariableRef, JuMP.VariableRef},
     multiplier::Float64,
     constant::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}

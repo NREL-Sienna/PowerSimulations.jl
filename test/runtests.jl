@@ -35,7 +35,6 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PSB = PowerSystemCaseBuilder
 
-const PJ = ParameterJuMP
 const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")

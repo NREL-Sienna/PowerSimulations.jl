@@ -272,16 +272,6 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
     return JuMPmodel
 end
 
-function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
-    if !haskey(JuMPmodel.ext, :ParameterJuMP)
-        @debug "Model doesn't have Parameters enabled. Parameters will be enabled" _group =
-            LOG_GROUP_OPTIMIZATION_CONTAINER
-        PJ.enable_parameters(JuMPmodel)
-        JuMP.set_optimizer(JuMPmodel, optimizer)
-    end
-    return
-end
-
 function _make_jump_model(settings::Settings)
     @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     optimizer = get_optimizer(settings)
@@ -371,11 +361,7 @@ end
 
 # This function is necessary while we switch from ParameterJuMP to POI
 function _make_container_array(parameter_jump::Bool, ax...)
-    if parameter_jump
-        return remove_undef!(DenseAxisArray{PGAE}(undef, ax...))
-    else
-        return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
-    end
+    return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
 end
 
 function _make_system_expressions!(
@@ -930,7 +916,7 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -951,7 +937,7 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -1170,7 +1156,7 @@ function add_expression_container!(
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
+    expr_type = GAE
     return _add_expression_container!(container, expr_key, expr_type, axs...; sparse=sparse)
 end
 
@@ -1242,7 +1228,7 @@ function _add_initial_condition_container!(
     length_devices::Int,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     if built_for_recurrent_solves(container)
-        ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
+        ini_conds = Vector{InitialCondition{T, JuMP.VariableRef}}(undef, length_devices)
     else
         ini_conds = Vector{InitialCondition{T, Float64}}(undef, length_devices)
     end
