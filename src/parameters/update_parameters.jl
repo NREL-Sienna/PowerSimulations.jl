@@ -6,7 +6,7 @@ function _update_parameter_values!(
 
 ######################## Methods to update Parameters from Time Series #####################
 function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, t::Int)
-    JuMP.set_value(param[name, t], value)
+    JuMP.fix(param[name, t], value)
     return
 end
 
@@ -42,7 +42,7 @@ function _set_parameter_value_sparse_array!(parameter::Float64, value::Float64)
 end
 
 function _set_parameter_value_sparse_array!(parameter::JuMP.VariableRef, value::Float64)
-    JuMP.set_value(parameter, value)
+    JuMP.fix(parameter, value)
     return
 end
 
