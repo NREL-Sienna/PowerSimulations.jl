@@ -1,16 +1,4 @@
 test_path = mktempdir()
-@testset "ThermalGen data misspecification" begin
-    # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
-    info_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
-    device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
-    c_sys5_re_only = PSB.build_system(PSITestSystems, "c_sys5_re_only")
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re_only)
-    @test_logs (:info, info_message) match_mode = :any mock_construct_device!(
-        model,
-        device_model,
-    )
-end
-
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_keys = [

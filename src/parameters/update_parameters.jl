@@ -5,14 +5,8 @@ function _update_parameter_values!(
 ) where {T <: Union{Float64, JuMP.VariableRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(
-    model::JuMP.Model,
-    param::JuMPVariableArray,
-    value::Float64,
-    name::String,
-    t::Int,
-)
-    MOI.set(model, POI.ParameterValue(), param[name, t], value)
+function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, t::Int)
+    JuMP.fix(param[name, t], value)
     return
 end
 
@@ -59,12 +53,8 @@ function _set_parameter_value_sparse_array!(
     return
 end
 
-function _set_parameter_value_sparse_array!(
-    model::JuMP.Model,
-    parameter::JuMP.VariableRef,
-    value::Float64,
-)
-    JuMP.set_value(parameter, value)
+function _set_parameter_value_sparse_array!(parameter::JuMP.VariableRef, value::Float64)
+    JuMP.fix(parameter, value)
     return
 end
 

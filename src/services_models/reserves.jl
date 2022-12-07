@@ -34,6 +34,13 @@ sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 #! format: on
 
+function get_initial_conditions_service_model(
+    ::OperationModel,
+    ::ServiceModel{T, D},
+) where {T <: PSY.Service, D <: AbstractServiceFormulation}
+    return ServiceModel(T, D)
+end
+
 function get_default_time_series_names(
     ::Type{<:PSY.Reserve},
     ::Type{T},
@@ -76,7 +83,6 @@ function add_constraints!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     parameters = built_for_recurrent_solves(container)
-    initial_time = get_initial_time(container)
 
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)

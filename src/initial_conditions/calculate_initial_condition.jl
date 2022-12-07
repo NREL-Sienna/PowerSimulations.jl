@@ -7,7 +7,7 @@ function set_ic_quantity!(
     var_value::Float64,
 ) where {T <: InitialConditionType}
     @assert isfinite(var_value) ic
-    MOI.set(model, POI.ParameterValue(), ic.value, var_value)
+    JuMP.fix(ic.value, var_value)
     return
 end
 

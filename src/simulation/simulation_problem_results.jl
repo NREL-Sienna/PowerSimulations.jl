@@ -236,7 +236,7 @@ Emulation problem results are returned in a Dict{String, DataFrame}.
 Limit the data sizes returned by specifying `initial_time` and `count` for decision problems
 or `start_time` and `len` for emulation problems.
 
-See also [load_results!](@ref) to preload data into memory.
+See also [`load_results!`](@ref) to preload data into memory.
 
 # Arguments
 
@@ -264,7 +264,11 @@ function read_realized_variables(res::SimulationProblemResults; kwargs...)
     return read_realized_variables(res, collect(keys(get_variables(res))); kwargs...)
 end
 
-function read_realized_variables(res::SimulationProblemResults, variables; kwargs...)
+function read_realized_variables(
+    res::SimulationProblemResults,
+    variables::Vector{Tuple{DataType, DataType}};
+    kwargs...,
+)
     return read_realized_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
 end
 
@@ -299,7 +303,7 @@ Emulation problem results are returned in a DataFrame.
 Limit the data sizes returned by specifying `initial_time` and `count` for decision problems
 or `start_time` and `len` for emulation problems.
 
-See also [load_results!](@ref) to preload data into memory.
+See also [`load_results!`](@ref) to preload data into memory.
 
 # Arguments
 
@@ -356,7 +360,7 @@ end
 
 function read_realized_aux_variables(
     res::SimulationProblemResults,
-    aux_variables;
+    aux_variables::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
     return read_realized_aux_variables(
@@ -429,7 +433,11 @@ function read_realized_parameters(res::SimulationProblemResults; kwargs...)
     return read_realized_parameters(res, collect(keys(get_parameters(res))); kwargs...)
 end
 
-function read_realized_parameters(res::SimulationProblemResults, parameters; kwargs...)
+function read_realized_parameters(
+    res::SimulationProblemResults,
+    parameters::Vector{Tuple{DataType, DataType}};
+    kwargs...,
+)
     return read_realized_parameters(
         res,
         [ParameterKey(x...) for x in parameters];
@@ -494,7 +502,11 @@ function read_realized_duals(res::SimulationProblemResults; kwargs...)
     return read_realized_duals(res, collect(keys(get_duals(res))); kwargs...)
 end
 
-function read_realized_duals(res::SimulationProblemResults, duals; kwargs...)
+function read_realized_duals(
+    res::SimulationProblemResults,
+    duals::Vector{Tuple{DataType, DataType}};
+    kwargs...,
+)
     return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
 end
 
@@ -549,7 +561,11 @@ function read_realized_expressions(res::SimulationProblemResults; kwargs...)
     return read_realized_expressions(res, collect(keys(get_expressions(res))); kwargs...)
 end
 
-function read_realized_expressions(res::SimulationProblemResults, expressions; kwargs...)
+function read_realized_expressions(
+    res::SimulationProblemResults,
+    expressions::Vector{Tuple{DataType, DataType}};
+    kwargs...,
+)
     return read_realized_expressions(
         res,
         [ExpressionKey(x...) for x in expressions];

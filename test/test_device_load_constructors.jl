@@ -1,21 +1,3 @@
-@testset "Load data misspecification" begin
-    device_model = DeviceModel(InterruptibleLoad, DispatchablePowerLoad)
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    info_message = "The data doesn't include devices of type InterruptibleLoad, consider changing the device models"
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:info, info_message) match_mode = :any mock_construct_device!(
-        model,
-        device_model,
-    )
-    device_model = DeviceModel(PowerLoad, DispatchablePowerLoad)
-    warn_message = "The Formulation DispatchablePowerLoad only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
-    @test_logs (:warn, warn_message) match_mode = :any mock_construct_device!(
-        model,
-        device_model,
-    )
-end
-
 @testset "StaticPowerLoad" begin
     models = [StaticPowerLoad, DispatchablePowerLoad, InterruptiblePowerLoad]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")

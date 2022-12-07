@@ -41,6 +41,14 @@ get_network_model(template::ProblemTemplate) = template.network_model
 get_network_formulation(template::ProblemTemplate) =
     get_network_formulation(get_network_model(template))
 
+function get_component_types(template::ProblemTemplate)::Vector{DataType}
+    return vcat(
+        get_component_type.(values(get_device_models(template))),
+        get_component_type.(values(get_branch_models(template))),
+        get_component_type.(values(get_service_models(template))),
+    )
+end
+
 function get_model(template::ProblemTemplate, device_type)
     if device_type <: PSY.Device
         return get(template.devices, Symbol(device_type), nothing)

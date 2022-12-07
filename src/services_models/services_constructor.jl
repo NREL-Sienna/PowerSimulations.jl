@@ -31,6 +31,8 @@ function populate_aggregated_service_model!(template, sys::PSY.System)
     services_template = get_service_models(template)
     for (key, service_model) in services_template
         attributes = get_attributes(service_model)
+        use_slacks = service_model.use_slacks
+        duals = service_model.duals
         if get(attributes, "aggregated_service_model", false)
             delete!(services_template, key)
             D = get_component_type(service_model)
@@ -38,7 +40,16 @@ function populate_aggregated_service_model!(template, sys::PSY.System)
             for service in get_available_components(D, sys)
                 new_key = (PSY.get_name(service), Symbol(D))
                 if !haskey(services_template, new_key)
-                    set_service_model!(template, ServiceModel(D, B, PSY.get_name(service)))
+                    set_service_model!(
+                        template,
+                        ServiceModel(
+                            D,
+                            B,
+                            PSY.get_name(service);
+                            use_slacks=use_slacks,
+                            duals=duals,
+                        ),
+                    )
                 end
             end
         end
@@ -196,6 +207,8 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
+    add_constraint_dual!(container, sys, model)
+
     return
 end
 
@@ -241,6 +254,7 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, service)
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -285,6 +299,8 @@ function construct_service!(
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -373,6 +389,8 @@ function construct_service!(
 
     add_feedforward_constraints!(container, model, services)
 
+    add_constraint_dual!(container, sys, model)
+
     objective_function!(container, areas, model)
     return
 end
@@ -417,6 +435,7 @@ function construct_service!(
         model,
     )
 
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -463,6 +482,8 @@ function construct_service!(
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -514,5 +535,7 @@ function construct_service!(
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
     return
 end

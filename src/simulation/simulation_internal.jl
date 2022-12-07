@@ -32,10 +32,10 @@ function SimulationInternal(
     cache_size_mib=1024,
     min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
 )
-    count_dict = Dict{Int, Dict{Int, Int}}()
+    count_dict = OrderedDict{Int, Dict{Int, Int}}()
 
     for s in 1:steps
-        count_dict[s] = Dict{Int, Int}()
+        count_dict[s] = OrderedDict{Int, Int}()
         model_count = length(get_decision_models(models))
         for st in 1:model_count
             count_dict[s][st] = 0
@@ -71,7 +71,7 @@ function SimulationInternal(
         results_dir,
         partitions_dir,
         count_dict,
-        Dict{Int, Dates.DateTime}(),
+        OrderedDict{Int, Dates.DateTime}(),
         RunStatus.NOT_READY,
         BuildStatus.EMPTY,
         SimulationState(),

@@ -22,7 +22,14 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.attributes = device_model.attributes
         set_device_model!(ic_template, base_model)
     end
-    ic_template.services = model.template.services
+
+    for service_model in values(model.template.services)
+        base_model = get_initial_conditions_service_model(model, service_model)
+        base_model.use_slacks = service_model.use_slacks
+        base_model.time_series_names = service_model.time_series_names
+        base_model.attributes = service_model.attributes
+        set_service_model!(ic_template, base_model)
+    end
     return ic_template
 end
 
@@ -56,6 +63,10 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
         model.internal.ic_model_container,
         get_network_formulation(get_template(model)),
         get_system(model),
+    )
+    JuMP.set_string_names_on_creation(
+        get_jump_model(model.internal.ic_model_container),
+        false,
     )
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
         build_impl!(model.internal.ic_model_container, template, get_system(model))
