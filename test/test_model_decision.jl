@@ -379,10 +379,10 @@ end
         :ActivePowerVariableLimitsConstraint__ThermalStandard__ub =>
             (coefficient=(min=1.0, max=1.0), rhs=(min=0.4, max=6.0)),
     )
-    for (constriant_key, constriant_bounds) in model_bounds
+    for (constraint_key, constraint_bounds) in model_bounds
         _check_constraint_bounds(
-            constriant_bounds,
-            valid_model_bounds[PSI.encode_key(constriant_key)],
+            constraint_bounds,
+            valid_model_bounds[PSI.encode_key(constraint_key)],
         )
     end
 end

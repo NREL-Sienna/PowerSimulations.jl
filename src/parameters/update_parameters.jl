@@ -11,6 +11,7 @@ function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, 
 end
 
 function _set_param_value!(
+    ::JuMP.Model,
     param::DenseAxisArray{Vector{NTuple{2, Float64}}},
     value::Vector{NTuple{2, Float64}},
     name::String,
@@ -20,23 +21,34 @@ function _set_param_value!(
     return
 end
 
-function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
+function _set_param_value!(
+    ::JuMP.Model,
+    param::JuMPFloatArray,
+    value::Float64,
+    name::String,
+    t::Int,
+)
     param[name, t] = value
     return
 end
 
 function _set_param_value!(
+    model::JuMP.Model,
     param::SparseAxisArray,
     value::Float64,
     name::String,
     subcomp::String,
     t::Int,
 )
-    _set_parameter_value_sparse_array!(param[name, subcomp, t], value)
+    _set_parameter_value_sparse_array!(model, param[name, subcomp, t], value)
     return
 end
 
-function _set_parameter_value_sparse_array!(parameter::Float64, value::Float64)
+function _set_parameter_value_sparse_array!(
+    ::JuMP.Model,
+    parameter::Float64,
+    value::Float64,
+)
     parameter = value
     return
 end
@@ -72,7 +84,7 @@ function _update_parameter_values!(
             horizon,
         )
         for (t, value) in enumerate(ts_vector)
-            _set_param_value!(param_array, value, name, t)
+            _set_param_value!(get_jump_model(model), param_array, value, name, t)
         end
     end
 end
@@ -101,7 +113,14 @@ function _update_parameter_values!(
             horizon,
         )
         for (t, value) in enumerate(ts_vector)
-            _set_param_value!(param_array, value, name, string(subcomp_type), t)
+            _set_param_value!(
+                get_jump_model(model),
+                param_array,
+                value,
+                name,
+                string(subcomp_type),
+                t,
+            )
         end
     end
 end
@@ -130,7 +149,7 @@ function _update_parameter_values!(
     )
     service_name = PSY.get_name(service)
     for (t, value) in enumerate(ts_vector)
-        _set_param_value!(param_array, value, service_name, t)
+        _set_param_value!(get_jump_model(model), param_array, value, service_name, t)
     end
 end
 
@@ -153,7 +172,13 @@ function _update_parameter_values!(
             get_time_series_multiplier_id(attributes),
             initial_forecast_time,
         )
-        _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)
+        _set_param_value!(
+            get_jump_model(model),
+            param_array,
+            ts_vector[1],
+            PSY.get_name(component),
+            1,
+        )
     end
     return
 end
@@ -185,7 +210,13 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            _set_param_value!(param_array, state_values[state_data_index, name], name, t)
+            _set_param_value!(
+                get_jump_model(model),
+                param_array,
+                state_values[state_data_index, name],
+                name,
+                t,
+            )
         end
     end
     return
@@ -220,7 +251,7 @@ function _update_parameter_values!(
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
             val = round(state_values[state_data_index, name])
             @assert 0.0 <= val <= 1.0
-            _set_param_value!(param_array, val, name, t)
+            _set_param_value!(get_jump_model(model), param_array, val, name, t)
         end
     end
     return
@@ -241,7 +272,13 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        _set_param_value!(param_array, state_values[state_data_index, name], name, 1)
+        _set_param_value!(
+            get_jump_model(model),
+            param_array,
+            state_values[state_data_index, name],
+            name,
+            1,
+        )
     end
     return
 end
@@ -263,7 +300,7 @@ function _update_parameter_values!(
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
         val = round(state_values[state_data_index, name])
         @assert 0.0 <= val <= 1.0
-        _set_param_value!(param_array, val, name, 1)
+        _set_param_value!(get_jump_model(model), param_array, val, name, 1)
     end
     return
 end
@@ -348,6 +385,7 @@ function update_parameter_values!(
             if execution_count == 0 || t > time[end] - interval_time_steps
                 # Pass indices in this way since JuMP DenseAxisArray don't support view()
                 _set_param_value!(
+                    get_jump_model(model),
                     parameter_array,
                     state_values[state_data_index, name],
                     name,
@@ -358,6 +396,7 @@ function update_parameter_values!(
                 # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
                 # in the model interval time periods.
                 _set_param_value!(
+                    get_jump_model(model),
                     parameter_array,
                     old_parameter_values[name, t + interval_time_steps],
                     name,
@@ -437,7 +476,13 @@ function _update_parameter_values!(
                 if attributes.uses_compact_power
                     value, _ = _convert_variable_cost(value)
                 end
-                _set_param_value!(param_array, PSY.get_cost(value), name, t)
+                _set_param_value!(
+                    get_jump_model(model),
+                    param_array,
+                    PSY.get_cost(value),
+                    name,
+                    t,
+                )
                 update_variable_cost!(container, param_array, attributes, component, t)
             end
         end
