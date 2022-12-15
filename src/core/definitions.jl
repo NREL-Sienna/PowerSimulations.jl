@@ -15,9 +15,8 @@ const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = DenseAxisArray{JuMP.ConstraintRef}
-const JuMPVariableArray = DenseA
+const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 const JuMPFloatArray = DenseAxisArray{Float64}
-const POI = ParametricOptInterface
 
 # Settings constants
 const UNSET_HORIZON = 0
