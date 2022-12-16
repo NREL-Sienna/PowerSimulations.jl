@@ -117,7 +117,6 @@ function get_constraint_numerical_bounds(model::OperationModel)
             end
         else
             for idx in Iterators.product(constraint_array.axes...)
-                @error const_key idx
                 !isassigned(constraint_array, idx...) && continue
                 con_obj = JuMP.constraint_object(constraint_array[idx...])
                 update_coefficient_bounds(bounds, con_obj, (const_key, idx))
