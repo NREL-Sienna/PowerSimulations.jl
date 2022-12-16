@@ -255,33 +255,22 @@ end
 
 function _finalize_jump_model!(container::OptimizationContainer, settings::Settings)
     @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    if built_for_recurrent_solves(container) && get_optimizer(settings) !== nothing
-        optimizer =
-            () -> begin
-                opt = POI.Optimizer(
-                    MOI.instantiate(get_optimizer(settings)),
-                    evaluate_duals=false,
-                    save_original_objective_and_constraints=false,
-                )
-                return opt
-            end
-    elseif built_for_recurrent_solves(container) && get_optimizer(settings) === nothing
+    if built_for_recurrent_solves(container) && get_optimizer(settings) === nothing
         throw(
             IS.ConflictingInputsError(
                 "Optimizer can not be nothing when building for recurrent solves",
             ),
         )
-    else
-        optimizer = () -> MOI.instantiate(get_optimizer(settings))
     end
 
     if get_direct_mode_optimizer(settings)
+        optimizer = () -> MOI.instantiate(get_optimizer(settings))
         container.JuMPmodel = JuMP.direct_model(optimizer())
-    elseif optimizer === nothing
+    elseif get_optimizer(settings) === nothing
         @debug "The optimization model has no optimizer attached" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     else
-        JuMP.set_optimizer(container.JuMPmodel, optimizer)
+        JuMP.set_optimizer(container.JuMPmodel, get_optimizer(settings))
     end
 
     JuMPmodel = container.JuMPmodel
