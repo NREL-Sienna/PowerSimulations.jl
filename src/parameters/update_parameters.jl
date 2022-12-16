@@ -5,13 +5,12 @@ function _update_parameter_values!(
 ) where {T <: Union{Float64, JuMP.VariableRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(param::JuMPVariableArray, value::Float64, name::String, t::Int)
+function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::String, t::Int)
     JuMP.fix(param[name, t], value)
     return
 end
 
 function _set_param_value!(
-    ::JuMP.Model,
     param::DenseAxisArray{Vector{NTuple{2, Float64}}},
     value::Vector{NTuple{2, Float64}},
     name::String,
@@ -22,7 +21,6 @@ function _set_param_value!(
 end
 
 function _set_param_value!(
-    ::JuMP.Model,
     param::JuMPFloatArray,
     value::Float64,
     name::String,
@@ -33,23 +31,13 @@ function _set_param_value!(
 end
 
 function _set_param_value!(
-    model::JuMP.Model,
     param::SparseAxisArray,
     value::Float64,
     name::String,
     subcomp::String,
     t::Int,
 )
-    _set_parameter_value_sparse_array!(model, param[name, subcomp, t], value)
-    return
-end
-
-function _set_parameter_value_sparse_array!(
-    ::JuMP.Model,
-    parameter::Float64,
-    value::Float64,
-)
-    parameter = value
+    _set_parameter_value_sparse_array!(param[name, subcomp, t], value)
     return
 end
 
@@ -84,7 +72,7 @@ function _update_parameter_values!(
             horizon,
         )
         for (t, value) in enumerate(ts_vector)
-            _set_param_value!(get_jump_model(model), param_array, value, name, t)
+            _set_param_value!(param_array, value, name, t)
         end
     end
 end
@@ -114,7 +102,6 @@ function _update_parameter_values!(
         )
         for (t, value) in enumerate(ts_vector)
             _set_param_value!(
-                get_jump_model(model),
                 param_array,
                 value,
                 name,
@@ -149,7 +136,7 @@ function _update_parameter_values!(
     )
     service_name = PSY.get_name(service)
     for (t, value) in enumerate(ts_vector)
-        _set_param_value!(get_jump_model(model), param_array, value, service_name, t)
+        _set_param_value!(param_array, value, service_name, t)
     end
 end
 
@@ -173,7 +160,6 @@ function _update_parameter_values!(
             initial_forecast_time,
         )
         _set_param_value!(
-            get_jump_model(model),
             param_array,
             ts_vector[1],
             PSY.get_name(component),
