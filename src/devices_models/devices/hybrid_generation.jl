@@ -190,7 +190,7 @@ function add_lower_bound_range_constraints_impl!(
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
+    ::DeviceModel{V, W},
 ) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
     constraint = T()
     component_type = V
@@ -224,7 +224,7 @@ function add_upper_bound_range_constraints_impl!(
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
+    ::DeviceModel{V, W},
 ) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
     constraint = T()
     component_type = V
@@ -518,13 +518,12 @@ function add_constraints!(
 
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-
+        subtypes = PSY.get_ext(d)["subtypes"]
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            var_p[name, t] ==
-            var_sub_p[name, string(PSY.RenewableGen), t] +
-            var_sub_p[name, string(PSY.ThermalGen), t] +
-            var_out[name, t] - var_in[name, t]
+            var_p[name, t] -
+            sum(var_sub_p[name, s, t] for s in subtypes) -
+            var_out[name, t] + var_in[name, t] == 0.0
         )
     end
 
