@@ -65,10 +65,10 @@ get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
 get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
 
-struct ParameterContainer
+struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
-    parameter_array::AbstractArray
-    multiplier_array::AbstractArray
+    parameter_array::T
+    multiplier_array::U
 end
 
 function ParameterContainer(parameter_array, multiplier_array)
@@ -95,11 +95,6 @@ function _set_parameter!(
     return
 end
 
-function _set_parameter!(array::AbstractArray, ::JuMP.Model, value::Float64, ixs::Tuple)
-    array[ixs...] = value
-    return
-end
-
 function _set_parameter!(
     array::AbstractArray{Vector{NTuple{2, Float64}}},
     ::JuMP.Model,
@@ -119,6 +114,17 @@ function _set_parameter!(
     array[ixs...] = add_jump_parameter(model, value)
     return
 end
+
+function _set_parameter!(
+    array::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
+    model::JuMP.Model,
+    value::Float64,
+    ixs::Tuple,
+)
+    array[ixs...] = add_jump_parameter(model, value)
+    return
+end
+
 
 function set_parameter!(
     container::ParameterContainer,

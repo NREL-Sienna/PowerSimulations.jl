@@ -6,7 +6,7 @@ function _update_parameter_values!(
 
 ######################## Methods to update Parameters from Time Series #####################
 function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::String, t::Int)
-    JuMP.fix(param[name, t], value)
+    fix_parameter_value(param[name, t], value)
     return
 end
 
@@ -31,18 +31,24 @@ function _set_param_value!(
 end
 
 function _set_param_value!(
-    param::SparseAxisArray,
+    param::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
     value::Float64,
     name::String,
     subcomp::String,
     t::Int,
 )
-    _set_parameter_value_sparse_array!(param[name, subcomp, t], value)
+    fix_parameter_value(param[name, subcomp, t], value)
     return
 end
 
-function _set_parameter_value_sparse_array!(parameter::JuMP.VariableRef, value::Float64)
-    JuMP.fix(parameter, value)
+function _set_param_value!(
+    param::SparseAxisArray{Float64},
+    value::Float64,
+    name::String,
+    subcomp::String,
+    t::Int,
+)
+    param[name, subcomp, t] = value
     return
 end
 
@@ -237,7 +243,7 @@ function _update_parameter_values!(
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
             val = round(state_values[state_data_index, name])
             @assert 0.0 <= val <= 1.0
-            _set_param_value!(get_jump_model(model), param_array, val, name, t)
+            _set_param_value!(param_array, val, name, t)
         end
     end
     return
@@ -259,7 +265,6 @@ function _update_parameter_values!(
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
         _set_param_value!(
-            get_jump_model(model),
             param_array,
             state_values[state_data_index, name],
             name,
@@ -354,7 +359,7 @@ function update_parameter_values!(
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     sim_timestamps = range(current_time, step=resolution, length=time[end])
-    old_parameter_values = JuMP.value.(parameter_array)
+    old_parameter_values = jump_value.(parameter_array)
     # The current method uses older parameter values because when passing the energy output from one stage
     # to the next, the aux variable values gets over-written by the lower level model after its solve.
     # This approach is a temporary hack and will be replaced in future versions.
@@ -371,7 +376,6 @@ function update_parameter_values!(
             if execution_count == 0 || t > time[end] - interval_time_steps
                 # Pass indices in this way since JuMP DenseAxisArray don't support view()
                 _set_param_value!(
-                    get_jump_model(model),
                     parameter_array,
                     state_values[state_data_index, name],
                     name,
@@ -382,7 +386,6 @@ function update_parameter_values!(
                 # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
                 # in the model interval time periods.
                 _set_param_value!(
-                    get_jump_model(model),
                     parameter_array,
                     old_parameter_values[name, t + interval_time_steps],
                     name,
@@ -463,7 +466,6 @@ function _update_parameter_values!(
                     value, _ = _convert_variable_cost(value)
                 end
                 _set_param_value!(
-                    get_jump_model(model),
                     param_array,
                     PSY.get_cost(value),
                     name,
