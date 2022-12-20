@@ -571,8 +571,10 @@ function add_to_expression!(
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
-    for d in devices, sub_comp_key in PSY.get_ext(d)["subtypes"]
-        for t in get_time_steps(container)
+
+    for d in devices
+        !haskey(PSY.get_ext(d), "subtypes") && continue
+        for sub_comp_key in PSY.get_ext(d)["subtypes"], t in get_time_steps(container)
             name = PSY.get_name(d)
             _add_to_jump_expression!(
                 expression[name, sub_comp_key, t],
@@ -580,7 +582,7 @@ function add_to_expression!(
                 1.0,
             )
         end
-        end
+    end
     return
 end
 

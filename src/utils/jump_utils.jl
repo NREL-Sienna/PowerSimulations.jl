@@ -181,6 +181,12 @@ function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.VariableRef}
     return SparseAxisArray(contents)
 end
 
+function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.ConstraintRef}
+    indexes = Base.Iterators.product(axs...)
+    contents = Dict{eltype(indexes), Union{Nothing, T}}(indexes .=> nothing)
+    return SparseAxisArray(contents)
+end
+
 function sparse_container_spec(::Type{T}, axs...) where {T <: Number}
     indexes = Base.Iterators.product(axs...)
     contents = Dict{eltype(indexes), T}(indexes .=> zero(T))
