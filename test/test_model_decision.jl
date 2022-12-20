@@ -139,10 +139,10 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model_ed =
         EconomicDispatchProblem(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
-    moi_tests(model_ed, false, 120, 0, 120, 120, 24, false)
+    moi_tests(model_ed, 120, 0, 120, 120, 24, false)
     model_uc =
         UnitCommitmentProblem(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
-    moi_tests(model_uc, false, 480, 0, 240, 120, 144, true)
+    moi_tests(model_uc, 480, 0, 240, 120, 144, true)
     ED_output =
         run_economic_dispatch(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
     UC_output =

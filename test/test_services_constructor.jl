@@ -220,7 +220,7 @@ end
     agc_problem = DecisionModel(AGCReserveDeployment, template_agc, c_sys5_reg)
     @test build!(agc_problem; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     # These values might change as the AGC model is refined
-    moi_tests(agc_problem, false, 696, 0, 480, 0, 384, false)
+    moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin

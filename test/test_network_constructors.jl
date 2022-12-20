@@ -61,7 +61,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -122,7 +121,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -177,7 +175,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -223,7 +220,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -271,7 +267,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -314,7 +309,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[sys][1],
             test_results[sys][2],
             test_results[sys][3],
@@ -365,7 +359,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[network][sys][1],
             test_results[network][sys][2],
             test_results[network][sys][3],
@@ -409,7 +402,6 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            false,
             test_results[network][sys][1],
             test_results[network][sys][2],
             test_results[network][sys][3],
