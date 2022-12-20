@@ -222,10 +222,12 @@ function add_variable!(
 
             if get_warm_start(settings)
                 init = get_variable_warm_start_value(variable_type, d, formulation)
-                init !== nothing && JuMP.set_start_value(variable[name, subcomp_key, t], init)
+                init !== nothing &&
+                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
             end
         end
     end
+    # Workaround to remove invalid key combinations
     filter!(x -> x.second !== nothing, variable.data)
     return
 end
