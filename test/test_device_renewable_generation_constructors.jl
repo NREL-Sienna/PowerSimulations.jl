@@ -3,7 +3,7 @@
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 72, 0, 72, 0, 0, false)
+    moi_tests(model, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -12,7 +12,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 144, 0, 144, 72, 0, false)
+    moi_tests(model, 144, 0, 144, 72, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -21,7 +21,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 72, 0, 72, 0, 0, false)
+    moi_tests(model, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -30,7 +30,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 144, 0, 72, 0, 72, false)
+    moi_tests(model, 144, 0, 72, 0, 72, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -39,7 +39,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 0, 0, 0, 0, 0, false)
+    moi_tests(model, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -48,6 +48,6 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 0, 0, 0, 0, 0, false)
+    moi_tests(model, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(model, GAEVF)
 end
