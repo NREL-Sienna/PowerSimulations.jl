@@ -2,12 +2,11 @@
 Default implementation of set_initial_condition_value
 """
 function set_ic_quantity!(
-    model::JuMP.Model,
     ic::InitialCondition{T, JuMP.VariableRef},
     var_value::Float64,
 ) where {T <: InitialConditionType}
     @assert isfinite(var_value) ic
-    JuMP.fix(ic.value, var_value)
+    fix_parameter_value(ic.value, var_value)
     return
 end
 
@@ -15,7 +14,6 @@ end
 Default implementation of set_initial_condition_value
 """
 function set_ic_quantity!(
-    ::JuMP.Model,
     ic::InitialCondition{T, Float64},
     var_value::Float64,
 ) where {T <: InitialConditionType}

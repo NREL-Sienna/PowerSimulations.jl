@@ -13,7 +13,7 @@ function _update_initial_conditions!(
     previous_values = get_condition.(ini_conditions_vector)
     # The implementation of specific update_initial_conditions! is located in the files
     # update_initial_conditions_in_memory_store.jl and update_initial_conditions_simulation.jl
-    update_initial_conditions!(model, ini_conditions_vector, source, model_resolution)
+    update_initial_conditions!(ini_conditions_vector, source, model_resolution)
     for (i, initial_condition) in enumerate(ini_conditions_vector)
         IS.@record :execution InitialConditionUpdateEvent(
             timestamp,
@@ -34,6 +34,7 @@ function update_initial_conditions!(
     _update_initial_conditions!(model, key, source)
     return
 end
+
 function update_initial_conditions!(
     model::EmulationModel,
     key::ICKey{T, U},

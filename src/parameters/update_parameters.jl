@@ -20,12 +20,7 @@ function _set_param_value!(
     return
 end
 
-function _set_param_value!(
-    param::JuMPFloatArray,
-    value::Float64,
-    name::String,
-    t::Int,
-)
+function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
     param[name, t] = value
     return
 end
@@ -107,13 +102,7 @@ function _update_parameter_values!(
             horizon,
         )
         for (t, value) in enumerate(ts_vector)
-            _set_param_value!(
-                param_array,
-                value,
-                name,
-                string(subcomp_type),
-                t,
-            )
+            _set_param_value!(param_array, value, name, string(subcomp_type), t)
         end
     end
 end
@@ -165,12 +154,7 @@ function _update_parameter_values!(
             get_time_series_multiplier_id(attributes),
             initial_forecast_time,
         )
-        _set_param_value!(
-            param_array,
-            ts_vector[1],
-            PSY.get_name(component),
-            1,
-        )
+        _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)
     end
     return
 end
@@ -264,12 +248,7 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        _set_param_value!(
-            param_array,
-            state_values[state_data_index, name],
-            name,
-            1,
-        )
+        _set_param_value!(param_array, state_values[state_data_index, name], name, 1)
     end
     return
 end
@@ -465,12 +444,7 @@ function _update_parameter_values!(
                 if attributes.uses_compact_power
                     value, _ = _convert_variable_cost(value)
                 end
-                _set_param_value!(
-                    param_array,
-                    PSY.get_cost(value),
-                    name,
-                    t,
-                )
+                _set_param_value!(param_array, PSY.get_cost(value), name, t)
                 update_variable_cost!(container, param_array, attributes, component, t)
             end
         end

@@ -439,5 +439,9 @@ function device_duration_compact_retrospective!(
                 JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
         end
     end
+    for c in [con_up, con_down]
+        # Workaround to remove invalid key combinations
+        filter!(x -> x.second !== nothing, c.data)
+    end
     return
 end
