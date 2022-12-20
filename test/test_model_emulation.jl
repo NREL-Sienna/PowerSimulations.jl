@@ -117,7 +117,7 @@ end
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_var = JuMP.value(PSI.get_value(ic))
+        e_var = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_energy(ic.component) == e_var
     end
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -141,7 +141,7 @@ end
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_var = JuMP.value(PSI.get_value(ic))
+        e_var = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_energy(ic.component) == e_var
     end
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -165,7 +165,7 @@ end
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_var = JuMP.value(PSI.get_value(ic))
+        e_var = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_energy(ic.component) == e_var
     end
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -285,7 +285,7 @@ end
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_var = JuMP.value(PSI.get_value(ic))
+        e_var = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_storage(ic.component) == e_var
     end
     @test run!(model) == RunStatus.SUCCESSFUL
@@ -316,7 +316,7 @@ end
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_var = JuMP.value(PSI.get_value(ic))
+        e_var = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_storage(ic.component) == e_var
     end
     @test run!(model) == RunStatus.SUCCESSFUL

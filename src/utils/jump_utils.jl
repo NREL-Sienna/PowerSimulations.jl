@@ -1,7 +1,7 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
     param = JuMP.@variable(jump_model)
-    JuMP.fix(param, val; force = true)
+    JuMP.fix(param, val; force=true)
     return param
 end
 
@@ -37,7 +37,7 @@ function jump_value(input::Vector{Tuple{Float64, Float64}})::Vector{Tuple{Float6
 end
 
 function fix_parameter_value(input::JuMP.VariableRef, value::Float64)
-    JuMP.fix(input, value; force = true)
+    JuMP.fix(input, value; force=true)
     return
 end
 
