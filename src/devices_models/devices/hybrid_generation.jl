@@ -434,6 +434,10 @@ function add_constraints!(
         constraint_lb[name, subcomp, t] =
             JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] >= limits.min)
     end
+    for c in [constraint_ub, constraint_lb]
+        # Workaround to remove invalid key combinations
+        filter!(x -> x.second !== nothing, c.data)
+    end
     return
 end
 ######################## Energy balance constraints ############################
@@ -522,15 +526,13 @@ function add_constraints!(
             subtypes = PSY.get_ext(d)["subtypes"]
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                var_p[name, t] -
-                sum(var_sub_p[name, s, t] for s in subtypes) -
+                var_p[name, t] - sum(var_sub_p[name, s, t] for s in subtypes) -
                 var_out[name, t] + var_in[name, t] == 0.0
             )
         else
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                var_p[name, t] -
-                var_out[name, t] + var_in[name, t] == 0.0
+                var_p[name, t] - var_out[name, t] + var_in[name, t] == 0.0
             )
         end
     end
