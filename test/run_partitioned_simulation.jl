@@ -96,8 +96,16 @@ function build_simulation(
         c.shut_down = 1500
     end
 
-    to_json(c_sys5_pjm_da, joinpath(output_dir, "PSI-5-BUS-UC-ED/c_sys5_pjm_da.json"); force=true)
-    to_json(c_sys5_pjm_rt, joinpath(output_dir, "PSI-5-BUS-UC-ED/c_sys5_pjm_rt.json"); force=true)
+    to_json(
+        c_sys5_pjm_da,
+        joinpath(output_dir, "PSI-5-BUS-UC-ED/c_sys5_pjm_da.json");
+        force=true,
+    )
+    to_json(
+        c_sys5_pjm_rt,
+        joinpath(output_dir, "PSI-5-BUS-UC-ED/c_sys5_pjm_rt.json");
+        force=true,
+    )
 
     HiGHSoptimizer = optimizer_with_attributes(HiGHS.Optimizer)
 
