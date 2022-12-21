@@ -933,8 +933,11 @@ function _add_param_container!(
     axs...;
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
-    # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type= JuMP.VariableRef
+    else
+        param_type= Float64
+    end
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -954,8 +957,12 @@ function _add_param_container!(
     axs...;
     sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
-    # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type= JuMP.VariableRef
+    else
+        param_type= Float64
+    end
+
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
