@@ -135,8 +135,8 @@ function build_initial_conditions!(model::OperationModel)
     return
 end
 
-function write_initial_conditions_data(model::OperationModel)
-    write_initial_conditions_data(
+function write_initial_conditions_data!(model::OperationModel)
+    write_initial_conditions_data!(
         get_optimization_container(model),
         model.internal.ic_model_container,
     )
@@ -200,7 +200,7 @@ function initialize!(model::OperationModel)
         error("Model failed to initialize")
     end
 
-    write_initial_conditions_data(container, model.internal.ic_model_container)
+    write_initial_conditions_data!(container, model.internal.ic_model_container)
     init_file = get_initial_conditions_file(model)
     Serialization.serialize(init_file, get_initial_conditions_data(container))
     @info "Serialized initial conditions to $init_file"
