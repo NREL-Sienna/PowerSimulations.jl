@@ -14,6 +14,8 @@ struct Settings
     deserialize_initial_conditions::Bool
     export_pwl_vars::Bool
     allow_fails::Bool
+    rebuild_model::Bool
+    store_variable_names::Bool
     check_numerical_bounds::Bool
     ext::Dict{String, Any}
 end
@@ -36,6 +38,8 @@ function Settings(
     export_pwl_vars::Bool=false,
     allow_fails::Bool=false,
     check_numerical_bounds=true,
+    rebuild_model = false,
+    store_variable_names=false,
     ext=Dict{String, Any}(),
 )
     if time_series_cache_size > 0 &&
@@ -70,6 +74,8 @@ function Settings(
         deserialize_initial_conditions,
         export_pwl_vars,
         allow_fails,
+        rebuild_model,
+        store_variable_names,
         check_numerical_bounds,
         ext,
     )
@@ -140,7 +146,10 @@ get_optimizer_solve_log_print(settings::Settings) = settings.optimizer_solve_log
 get_calculate_conflict(settings::Settings) = settings.calculate_conflict
 get_detailed_optimizer_stats(settings::Settings) = settings.detailed_optimizer_stats
 get_direct_mode_optimizer(settings::Settings) = settings.direct_mode_optimizer
+get_store_variable_names(settings::Settings) = settings.store_variable_names
+get_rebuild_model(settings::Settings) = settings.rebuild_model
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
+
 
 function set_horizon!(settings::Settings, horizon::Int)
     settings.horizon[] = horizon
