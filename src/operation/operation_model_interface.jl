@@ -15,12 +15,12 @@ get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
 is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
 
-function get_requires_rebuild(model::OperationModel)
+function get_rebuild_model(model::OperationModel)
     sim_info = get_internal(model).simulation_info
     if sim_info === nothing
-        error("Model not part of a simulation")
+        error("Model not part of a simulation")ß
     end
-    return sim_info.requires_rebuild
+    return get_rebuild_model(get_optimization_container(model).settings)
 end
 
 get_optimization_container(model::OperationModel) = get_internal(model).container

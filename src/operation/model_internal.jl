@@ -9,7 +9,6 @@ end
 
 mutable struct SimulationInfo
     number::Int
-    requires_rebuild::Bool
     sequence_uuid::Base.UUID
 end
 
