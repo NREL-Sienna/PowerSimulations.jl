@@ -11,7 +11,6 @@ using DataFrames
 using Dates
 using JuMP
 using TimeSeries
-using ParameterJuMP
 using CSV
 using DataFrames
 using DataStructures

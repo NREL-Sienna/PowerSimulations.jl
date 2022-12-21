@@ -36,8 +36,6 @@
     )
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(model).JuMPmodel.ext, :PSI_Testing)
-    @test (:ParameterJuMP in keys(PSI.get_optimization_container(model).JuMPmodel.ext)) ==
-          false
 end
 
 @testset "Set optimizer at solve call" begin
