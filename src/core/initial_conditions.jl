@@ -19,7 +19,7 @@ get_component_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Com
 """
 Container for the initial condition data
 """
-struct InitialCondition{T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}}
+struct InitialCondition{T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}}
     component::PSY.Component
     value::U
 end
@@ -28,7 +28,7 @@ function InitialCondition(
     ::Type{T},
     component::PSY.Component,
     value::U,
-) where {T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}}
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}}
     return InitialCondition{T, U}(component, value)
 end
 
@@ -39,7 +39,7 @@ function InitialCondition(
 ) where {
     T <: InitialConditionType,
     U <: PSY.Component,
-    V <: Union{PJ.ParameterRef, Float64},
+    V <: Union{JuMP.VariableRef, Float64},
 }
     return InitialCondition{T, U}(component, value)
 end
@@ -49,7 +49,7 @@ function get_condition(p::InitialCondition{T, Float64}) where {T <: InitialCondi
 end
 
 function get_condition(
-    p::InitialCondition{T, PJ.ParameterRef},
+    p::InitialCondition{T, JuMP.VariableRef},
 ) where {T <: InitialConditionType}
     return jump_value(p.value)
 end
@@ -60,10 +60,10 @@ get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
 get_component_type(ic::InitialCondition) = typeof(ic.component)
 get_ic_type(
     ::Type{InitialCondition{T, U}},
-) where {T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}} = T
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
 get_ic_type(
     ::InitialCondition{T, U},
-) where {T <: InitialConditionType, U <: Union{PJ.ParameterRef, Float64}} = T
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
 
 """
 Stores data to populate initial conditions before the build call

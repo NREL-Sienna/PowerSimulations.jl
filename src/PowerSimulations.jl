@@ -367,7 +367,6 @@ import JuMP: optimizer_with_attributes
 import JuMP.Containers: DenseAxisArray, SparseAxisArray
 export optimizer_with_attributes
 import MathOptInterface
-import ParameterJuMP
 import LinearAlgebra
 import JSON3
 import PowerSystems
@@ -425,7 +424,6 @@ const PSI = PowerSimulations
 const IS = InfrastructureSystems
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
-const PJ = ParameterJuMP
 const MOPFM = MOI.FileFormats.Model
 const TS = TimeSeries
 

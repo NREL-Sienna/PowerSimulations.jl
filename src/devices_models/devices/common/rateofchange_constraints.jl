@@ -90,7 +90,7 @@ function add_linear_ramp_constraints!(
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
-        @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
+        @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             expr_up[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
@@ -143,7 +143,7 @@ function add_linear_ramp_constraints!(
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
-        @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
+        @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             variable[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
@@ -229,7 +229,7 @@ function add_semicontinuous_ramp_constraints!(
         power_limits = PSY.get_active_power_limits(device)
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
-        @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
+        @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             expr_up[name, 1] - ic_power <=
@@ -289,7 +289,7 @@ function add_semicontinuous_ramp_constraints!(
         power_limits = PSY.get_active_power_limits(device)
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
-        @assert (parameters && isa(ic_power, PJ.ParameterRef)) || !parameters
+        @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             variable[name, 1] - ic_power <=

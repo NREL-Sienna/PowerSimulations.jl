@@ -2,11 +2,11 @@ function _update_parameter_values!(
     ::AbstractArray{T},
     ::NoAttributes,
     args...,
-) where {T <: Union{Float64, PJ.ParameterRef}} end
+) where {T <: Union{Float64, JuMP.VariableRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(param::JuMPParamArray, value::Float64, name::String, t::Int)
-    JuMP.set_value(param[name, t], value)
+function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::String, t::Int)
+    fix_parameter_value(param[name, t], value)
     return
 end
 
@@ -26,23 +26,24 @@ function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, 
 end
 
 function _set_param_value!(
-    param::SparseAxisArray,
+    param::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
     value::Float64,
     name::String,
     subcomp::String,
     t::Int,
 )
-    _set_parameter_value_sparse_array!(param[name, subcomp, t], value)
+    fix_parameter_value(param[name, subcomp, t], value)
     return
 end
 
-function _set_parameter_value_sparse_array!(parameter::Float64, value::Float64)
-    parameter = value
-    return
-end
-
-function _set_parameter_value_sparse_array!(parameter::PJ.ParameterRef, value::Float64)
-    JuMP.set_value(parameter, value)
+function _set_param_value!(
+    param::SparseAxisArray{Float64},
+    value::Float64,
+    name::String,
+    subcomp::String,
+    t::Int,
+)
+    param[name, subcomp, t] = value
     return
 end
 
@@ -53,7 +54,7 @@ function _update_parameter_values!(
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
 ) where {
-    T <: Union{PJ.ParameterRef, Float64},
+    T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.Component,
 }
@@ -113,7 +114,7 @@ function _update_parameter_values!(
     model::DecisionModel,
     ::DatasetContainer{DataFrameDataset},
 ) where {
-    T <: Union{PJ.ParameterRef, Float64},
+    T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.Service,
 }
@@ -140,7 +141,7 @@ function _update_parameter_values!(
     ::Type{V},
     model::EmulationModel,
     ::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
     for component in components
@@ -164,7 +165,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     model::DecisionModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}}
+) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
@@ -185,7 +186,13 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            _set_param_value!(param_array, state_values[state_data_index, name], name, t)
+            _set_param_value!(
+                get_jump_model(model),
+                param_array,
+                state_values[state_data_index, name],
+                name,
+                t,
+            )
         end
     end
     return
@@ -197,7 +204,7 @@ function _update_parameter_values!(
     ::Type{U},
     model::DecisionModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.Component}
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(param_array)
@@ -232,7 +239,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     model::EmulationModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}}
+) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(param_array)
@@ -252,7 +259,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     model::EmulationModel,
     state::DatasetContainer{DataFrameDataset},
-) where {T <: Union{PJ.ParameterRef, Float64}, U <: PSY.Component}
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(param_array)
@@ -263,7 +270,7 @@ function _update_parameter_values!(
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
         val = round(state_values[state_data_index, name])
         @assert 0.0 <= val <= 1.0
-        _set_param_value!(param_array, val, name, 1)
+        _set_param_value!(get_jump_model(model), param_array, val, name, 1)
     end
     return
 end
@@ -274,7 +281,7 @@ function _update_parameter_values!(
     ::Type{<:PSY.Component},
     ::EmulationModel,
     ::EmulationModelStore,
-) where {T <: Union{PJ.ParameterRef, Float64}}
+) where {T <: Union{JuMP.VariableRef, Float64}}
     error("The emulation model has parameters that can't be updated from its results")
     return
 end
@@ -331,7 +338,7 @@ function update_parameter_values!(
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     sim_timestamps = range(current_time, step=resolution, length=time[end])
-    old_parameter_values = JuMP.value.(parameter_array)
+    old_parameter_values = jump_value.(parameter_array)
     # The current method uses older parameter values because when passing the energy output from one stage
     # to the next, the aux variable values gets over-written by the lower level model after its solve.
     # This approach is a temporary hack and will be replaced in future versions.

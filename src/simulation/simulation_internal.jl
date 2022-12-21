@@ -32,7 +32,7 @@ function SimulationInternal(
     cache_size_mib=1024,
     min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
 )
-    count_dict = OrderedDict{Int, Dict{Int, Int}}()
+    count_dict = OrderedDict{Int, OrderedDict{Int, Int}}()
 
     for s in 1:steps
         count_dict[s] = OrderedDict{Int, Int}()

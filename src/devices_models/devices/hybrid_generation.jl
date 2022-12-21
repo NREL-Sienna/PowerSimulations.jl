@@ -190,7 +190,7 @@ function add_lower_bound_range_constraints_impl!(
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
+    ::DeviceModel{V, W},
 ) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
     constraint = T()
     component_type = V
@@ -224,7 +224,7 @@ function add_upper_bound_range_constraints_impl!(
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
+    ::DeviceModel{V, W},
 ) where {V <: PSY.HybridSystem, W <: AbstractDeviceFormulation}
     constraint = T()
     component_type = V
@@ -434,6 +434,10 @@ function add_constraints!(
         constraint_lb[name, subcomp, t] =
             JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] >= limits.min)
     end
+    for c in [constraint_ub, constraint_lb]
+        # Workaround to remove invalid key combinations
+        filter!(x -> x.second !== nothing, c.data)
+    end
     return
 end
 ######################## Energy balance constraints ############################
@@ -518,14 +522,19 @@ function add_constraints!(
 
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-
-        constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            var_p[name, t] ==
-            var_sub_p[name, string(PSY.RenewableGen), t] +
-            var_sub_p[name, string(PSY.ThermalGen), t] +
-            var_out[name, t] - var_in[name, t]
-        )
+        if haskey(PSY.get_ext(d), "subtypes")
+            subtypes = PSY.get_ext(d)["subtypes"]
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                var_p[name, t] - sum(var_sub_p[name, s, t] for s in subtypes) -
+                var_out[name, t] + var_in[name, t] == 0.0
+            )
+        else
+            constraint[name, t] = JuMP.@constraint(
+                container.JuMPmodel,
+                var_p[name, t] - var_out[name, t] + var_in[name, t] == 0.0
+            )
+        end
     end
 
     return

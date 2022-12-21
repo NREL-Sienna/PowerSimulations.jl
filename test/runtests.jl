@@ -15,7 +15,6 @@ using DataFrames
 using Dates
 using JuMP
 using TimeSeries
-using ParameterJuMP
 using CSV
 import JSON3
 using DataFrames
@@ -35,7 +34,6 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PSB = PowerSystemCaseBuilder
 
-const PJ = ParameterJuMP
 const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
@@ -51,28 +49,28 @@ const LOG_FILE = "power-simulations-test.log"
 ENV["RUNNING_PSI_TESTS"] = "true"
 
 const DISABLED_TEST_FILES = [
-# "test_basic_model_structs.jl",
-# "test_device_branch_constructors.jl",
-# "test_device_hydro_generation_constructors.jl",
-# "test_device_load_constructors.jl",
-# "test_device_renewable_generation_constructors.jl",
-# "test_device_storage_constructors.jl",
-# "test_device_thermal_generation_constructors.jl",
-# "test_jump_model_utils.jl",
-# "test_model_decision.jl",
-# "test_problem_template.jl",
-# "test_model_emulation.jl",
-# "test_network_constructors.jl",
-# "test_services_constructor.jl",
-# "test_simulation_models.jl",
-# "test_simulation_sequence.jl",
-# "test_simulation_build.jl",
-# "test_device_hybrid_generation_constructors.jl",
-# "test_initialization_problem.jl",
-# "test_simulation_execute.jl",
-# "test_simulation_results.jl",
-# "test_simulation_results_export.jl",
-# "test_simulation_store.jl",
+    # "test_basic_model_structs.jl",
+    # "test_device_branch_constructors.jl",
+    # "test_device_hydro_generation_constructors.jl",
+    # "test_device_load_constructors.jl",
+    "test_device_hybrid_generation_constructors.jl",
+    # "test_device_renewable_generation_constructors.jl",
+    # "test_device_storage_constructors.jl",
+    # "test_device_thermal_generation_constructors.jl",
+    # "test_jump_model_utils.jl",
+    # "test_model_decision.jl",
+    # "test_problem_template.jl",
+    # "test_model_emulation.jl",
+    # "test_network_constructors.jl",
+    # "test_services_constructor.jl",
+    # "test_simulation_models.jl",
+    # "test_simulation_sequence.jl",
+    # "test_simulation_build.jl",
+    # "test_initialization_problem.jl",
+    # "test_simulation_execute.jl",
+    # "test_simulation_results.jl",
+    # "test_simulation_results_export.jl",
+    # "test_simulation_store.jl",
 ]
 
 LOG_LEVELS = Dict(

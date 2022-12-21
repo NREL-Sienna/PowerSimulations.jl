@@ -247,7 +247,7 @@ function add_parameters!(
     time_series_mult_id = create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    @debug "adding" parameter_type U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    @debug "adding" T U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container = add_param_container!(
         container,
         T(),

@@ -21,24 +21,25 @@ The flexible modeling framework is enabled through a modular set of capabilities
 
 For example, an annual production cost modeling simulation can be created by formulating a unit commitment model against system data to assemble a set of 365 daily time-coupled scheduling problems.
 
-### _Simulations_ enabled by PowerSimulations
+## Simulations enabled by PowerSimulations
 
+- Integrated Resource Planning
 - Production Cost Modeling
 
-### _Model_ formulations contained in PowerSimulations
+## Opertation model formulations contained in PowerSimulations
 
 - [Unit Commitment](https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production)
 - [Economic Dispatch](https://en.wikipedia.org/wiki/Economic_dispatch)
 
-### Installation
+## Installation
 
 ```julia
 julia> ]
-(v1.6) pkg> add PowerSystems
-(v1.6) pkg> add PowerSimulations
+(v1.8) pkg> add PowerSystems
+(v1.8) pkg> add PowerSimulations
 ```
 
-### Usage
+## Usage
 
 `PowerSimulations.jl` uses [PowerSystems.jl](https://github.com/NREL/PowerSystems.jl) to handle the data used in the simulations.
 

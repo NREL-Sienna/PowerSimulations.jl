@@ -11,7 +11,6 @@ using DataFrames
 using Dates
 using JuMP
 using TimeSeries
-using ParameterJuMP
 using CSV
 using DataFrames
 using DataStructures
@@ -24,7 +23,6 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PSB = PowerSystemCaseBuilder
 
-const PJ = ParameterJuMP
 const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
@@ -98,8 +96,16 @@ function build_simulation(
         c.shut_down = 1500
     end
 
-    to_json(c_sys5_pjm_da, "PSI-5-BUS-UC-ED/c_sys5_pjm_da.json"; force=true)
-    to_json(c_sys5_pjm_rt, "PSI-5-BUS-UC-ED/c_sys5_pjm_rt.json"; force=true)
+    to_json(
+        c_sys5_pjm_da,
+        joinpath(output_dir, "PSI-5-BUS-UC-ED/c_sys5_pjm_da.json");
+        force=true,
+    )
+    to_json(
+        c_sys5_pjm_rt,
+        joinpath(output_dir, "PSI-5-BUS-UC-ED/c_sys5_pjm_rt.json");
+        force=true,
+    )
 
     HiGHSoptimizer = optimizer_with_attributes(HiGHS.Optimizer)
 

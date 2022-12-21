@@ -69,14 +69,14 @@ function write_model_dual_results!(
     return
 end
 
-function calaculate_parameter_values(
+function calculate_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
     return jump_value.(param_array) .* multiplier_array
 end
 
-function calaculate_parameter_values(
+function calculate_parameter_values(
     param_array::SparseAxisArray,
     multiplier_array::SparseAxisArray,
 )
@@ -107,7 +107,7 @@ function write_model_parameter_results!(
         param_array = get_parameter_array(container)
         multiplier_array = get_multiplier_array(container)
         # @assert_op length(axes(param_array)) == 2
-        data = calaculate_parameter_values(param_array, multiplier_array)
+        data = calculate_parameter_values(param_array, multiplier_array)
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&

@@ -1,7 +1,7 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
-    param = JuMP.@variable(jump_model, variable_type = PJ.Param())
-    PJ.set_value(param, val)
+    param = JuMP.@variable(jump_model)
+    JuMP.fix(param, val; force=true)
     return param
 end
 
@@ -11,15 +11,17 @@ function write_data(base_power::Float64, save_path::String)
 end
 
 function jump_value(input::JuMP.VariableRef)::Float64
-    return JuMP.value(input)
+    if JuMP.has_values(input.model)
+        return JuMP.value(input)
+    elseif JuMP.is_fixed(input)
+        return JuMP.fix_value(input)
+    else
+        return NaN
+    end
 end
 
 function jump_value(input::T)::Float64 where {T <: JuMP.AbstractJuMPScalar}
     return JuMP.value(input)
-end
-
-function jump_value(input::PJ.ParameterRef)::Float64
-    return PJ.value(input)
 end
 
 function jump_value(input::JuMP.ConstraintRef)::Float64
@@ -32,6 +34,11 @@ end
 
 function jump_value(input::Vector{Tuple{Float64, Float64}})::Vector{Tuple{Float64, Float64}}
     return input
+end
+
+function fix_parameter_value(input::JuMP.VariableRef, value::Float64)
+    JuMP.fix(input, value; force=true)
+    return
 end
 
 function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}}
@@ -164,13 +171,25 @@ Returns the correct container specification for the selected type of JuMP Model
 """
 function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.AbstractJuMPScalar}
     indexes = Base.Iterators.product(axs...)
-    contents = Dict{eltype(indexes), Any}(indexes .=> zero(T))
+    contents = Dict{eltype(indexes), T}(indexes .=> zero(T))
     return SparseAxisArray(contents)
 end
 
-function sparse_container_spec(::Type{T}, axs...) where {T <: Any}
+function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.VariableRef}
     indexes = Base.Iterators.product(axs...)
-    contents = Dict{eltype(indexes), Any}(indexes .=> 0.0)
+    contents = Dict{eltype(indexes), Union{Nothing, T}}(indexes .=> nothing)
+    return SparseAxisArray(contents)
+end
+
+function sparse_container_spec(::Type{T}, axs...) where {T <: JuMP.ConstraintRef}
+    indexes = Base.Iterators.product(axs...)
+    contents = Dict{eltype(indexes), Union{Nothing, T}}(indexes .=> nothing)
+    return SparseAxisArray(contents)
+end
+
+function sparse_container_spec(::Type{T}, axs...) where {T <: Number}
+    indexes = Base.Iterators.product(axs...)
+    contents = Dict{eltype(indexes), T}(indexes .=> zero(T))
     return SparseAxisArray(contents)
 end
 

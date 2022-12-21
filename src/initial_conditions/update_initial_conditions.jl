@@ -34,6 +34,7 @@ function update_initial_conditions!(
     _update_initial_conditions!(model, key, source)
     return
 end
+
 function update_initial_conditions!(
     model::EmulationModel,
     key::ICKey{T, U},

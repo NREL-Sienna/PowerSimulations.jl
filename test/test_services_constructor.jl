@@ -20,7 +20,7 @@
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 648, 0, 120, 216, 72, false)
+    moi_tests(model, 648, 0, 120, 216, 72, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1
         :ActivePowerReserveVariable__ReserveDemandCurve_ReserveUp_ORDC1
@@ -55,7 +55,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 384, 0, 336, 192, 24, false)
+    moi_tests(model, 384, 0, 336, 192, 24, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve_ReserveDown_Reserve2,
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1,
@@ -93,7 +93,7 @@ end
 
     model = DecisionModel(template, c_sys5_uc; optimizer=cbc_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 1008, 0, 480, 216, 192, true)
+    moi_tests(model, 1008, 0, 480, 216, 192, true)
 end
 
 @testset "Test Reserves from Thermal Standard UC with NonSpinningReserve" begin
@@ -110,7 +110,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 1032, 0, 888, 192, 288, true)
+    moi_tests(model, 1032, 0, 888, 192, 288, true)
 end
 
 @testset "Test Upwards Reserves from Renewable Dispatch" begin
@@ -129,7 +129,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves=true)
     model = DecisionModel(template, c_sys5_re)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 360, 0, 72, 48, 72, false)
+    moi_tests(model, 360, 0, 72, 48, 72, false)
 end
 
 @testset "Test Reserves from Storage" begin
@@ -152,7 +152,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves=true)
     model = DecisionModel(template, c_sys5_bat)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 432, 0, 288, 264, 96, true)
+    moi_tests(model, 432, 0, 288, 264, 96, true)
 end
 
 @testset "Test Reserves from Hydro" begin
@@ -175,7 +175,7 @@ end
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves=true)
     model = DecisionModel(template, c_sys5_hyd)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 240, 0, 48, 96, 72, false)
+    moi_tests(model, 240, 0, 48, 96, 72, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
@@ -208,7 +208,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc;)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 504, 0, 120, 192, 24, false)
+    moi_tests(model, 504, 0, 120, 192, 24, false)
 end
 
 @testset "Test AGC" begin
@@ -220,7 +220,7 @@ end
     agc_problem = DecisionModel(AGCReserveDeployment, template_agc, c_sys5_reg)
     @test build!(agc_problem; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     # These values might change as the AGC model is refined
-    moi_tests(agc_problem, false, 696, 0, 480, 0, 384, false)
+    moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
@@ -264,7 +264,7 @@ end
 
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 648, 0, 120, 240, 72, false)
+    moi_tests(model, 648, 0, 120, 240, 72, false)
 end
 
 @testset "Test GroupReserve Errors" begin
@@ -338,5 +338,5 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 240, 0, 120, 264, 24, false)
+    moi_tests(model, 240, 0, 120, 264, 24, false)
 end
