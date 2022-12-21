@@ -768,7 +768,6 @@ Default problem update function for most problems with no customization
 function update_model!(model::OperationModel, sim::Simulation)
     if get_rebuild_model(model)
         container = get_optimization_container(model)
-        #write_initial_conditions_data!(container, container)
         reset_optimization_model!(container)
         build_impl!(container, get_template(model), get_system(model))
     end
