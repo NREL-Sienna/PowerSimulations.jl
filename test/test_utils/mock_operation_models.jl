@@ -40,13 +40,13 @@ end
 
 function PSI.DecisionModel(::Type{MockOperationProblem}; name=nothing, kwargs...)
     sys = System(100.0)
-    add_component!(sys, Bus(nothing); runchecks=false)
+    add_component!(sys, Bus(nothing); skip_validation = true)
     l = PowerLoad(nothing)
     gen = ThermalStandard(nothing)
     set_bus!(l, get_component(Bus, sys, "init"))
     set_bus!(gen, get_component(Bus, sys, "init"))
-    add_component!(sys, l; runchecks=false)
-    add_component!(sys, gen; runchecks=false)
+    add_component!(sys, l; skip_validation = true)
+    add_component!(sys, gen; skip_validation = true)
     forecast = make_mock_forecast(
         get(kwargs, :horizon, 24),
         get(kwargs, :resolution, Hour(1)),
@@ -67,13 +67,13 @@ end
 
 function PSI.EmulationModel(::Type{MockEmulationProblem}; name=nothing, kwargs...)
     sys = System(100.0)
-    add_component!(sys, Bus(nothing); runchecks=false)
+    add_component!(sys, Bus(nothing); skip_validation = true)
     l = PowerLoad(nothing)
     gen = ThermalStandard(nothing)
     set_bus!(l, get_component(Bus, sys, "init"))
     set_bus!(gen, get_component(Bus, sys, "init"))
-    add_component!(sys, l; runchecks=false)
-    add_component!(sys, gen; runchecks=false)
+    add_component!(sys, l; skip_validation = true)
+    add_component!(sys, gen; skip_validation = true)
     single_ts = make_mock_singletimeseries(
         get(kwargs, :horizon, 24),
         get(kwargs, :resolution, Hour(1)),
