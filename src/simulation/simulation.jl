@@ -766,14 +766,13 @@ end
 Default problem update function for most problems with no customization
 """
 function update_model!(model::OperationModel, sim::Simulation)
-    update_model!(model, get_simulation_state(sim), get_ini_cond_chronology(sim))
     if get_rebuild_model(model)
         container = get_optimization_container(model)
-        write_initial_conditions_data!(container, container)
+        #write_initial_conditions_data!(container, container)
         reset_optimization_model!(container)
         build_impl!(container, get_template(model), get_system(model))
     end
-    error()
+    update_model!(model, get_simulation_state(sim), get_ini_cond_chronology(sim))
     return
 end
 
