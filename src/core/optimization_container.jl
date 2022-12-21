@@ -339,7 +339,15 @@ function init_optimization_container!(
 end
 
 function reset_optimization_model!(container::OptimizationContainer)
-    for field in [:variables, :aux_variables, :constraints, :expressions, :duals, :initial_conditions, :parameters]
+    for field in [
+        :variables,
+        :aux_variables,
+        :constraints,
+        :expressions,
+        :duals,
+        :initial_conditions,
+        :parameters,
+    ]
         empty!(getfield(container, field))
     end
     container.objective_function = ObjectiveFunction()

@@ -38,7 +38,7 @@ function Settings(
     export_pwl_vars::Bool=false,
     allow_fails::Bool=false,
     check_numerical_bounds=true,
-    rebuild_model = false,
+    rebuild_model=false,
     store_variable_names=false,
     ext=Dict{String, Any}(),
 )
@@ -149,7 +149,6 @@ get_direct_mode_optimizer(settings::Settings) = settings.direct_mode_optimizer
 get_store_variable_names(settings::Settings) = settings.store_variable_names
 get_rebuild_model(settings::Settings) = settings.rebuild_model
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
-
 
 function set_horizon!(settings::Settings, horizon::Int)
     settings.horizon[] = horizon

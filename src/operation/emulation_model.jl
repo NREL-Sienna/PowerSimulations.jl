@@ -94,8 +94,8 @@ function EmulationModel{M}(
     detailed_optimizer_stats=false,
     direct_mode_optimizer=false,
     check_numerical_bounds=true,
-    store_variable_names = false,
-    rebuild_model = false,
+    store_variable_names=false,
+    rebuild_model=false,
     initial_time=UNSET_INI_TIME,
     time_series_cache_size::Int=IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: EmulationProblem}
