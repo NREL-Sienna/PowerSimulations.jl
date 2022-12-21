@@ -334,6 +334,16 @@ function init_optimization_container!(
     return
 end
 
+function reset_optimization_model!(container::OptimizationContainer)
+    for field in [:variables, :aux_variables, :constraints, :expressions, :duals]
+        empty!(getfield(container, field))
+    end
+    container.objective_function = ObjectiveFunction()
+    container.primal_values_cache = PrimalValuesCache()
+    JuMP.empty!(container.JuMPmodel)
+    return
+end
+
 function check_parameter_multiplier_values(multiplier_array::DenseAxisArray)
     return !all(isnan.(multiplier_array.data))
 end
@@ -1275,7 +1285,7 @@ function get_initial_conditions_keys(container::OptimizationContainer)
     return collect(keys(container.initial_conditions))
 end
 
-function write_initial_conditions_data(
+function write_initial_conditions_data!(
     container::OptimizationContainer,
     ic_container::OptimizationContainer,
 )
