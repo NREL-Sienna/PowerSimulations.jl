@@ -350,6 +350,7 @@ function reset_optimization_model!(container::OptimizationContainer)
     ]
         empty!(getfield(container, field))
     end
+    container.initial_conditions_data = InitialConditionsData()
     container.objective_function = ObjectiveFunction()
     container.primal_values_cache = PrimalValuesCache()
     JuMP.empty!(container.JuMPmodel)
