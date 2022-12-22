@@ -227,6 +227,16 @@ function has_container_key(
     return haskey(container.parameters, key)
 end
 
+function has_container_key(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    meta=CONTAINER_KEY_EMPTY_META,
+) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
+    key = ICKey(T, U, meta)
+    return haskey(container.initial_conditions, key)
+end
+
 function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
     if !isempty(
@@ -337,15 +347,7 @@ function init_optimization_container!(
 end
 
 function reset_optimization_model!(container::OptimizationContainer)
-    for field in [
-        :variables,
-        :aux_variables,
-        :constraints,
-        :expressions,
-        :duals,
-        :initial_conditions,
-        :parameters,
-    ]
+    for field in [:variables, :aux_variables, :constraints, :expressions, :duals]
         empty!(getfield(container, field))
     end
     container.initial_conditions_data = InitialConditionsData()
@@ -934,10 +936,10 @@ function _add_param_container!(
     axs...;
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
-    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
-        param_type= JuMP.VariableRef
+    if built_for_recurrent_solves(container) || !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
     else
-        param_type= Float64
+        param_type = Float64
     end
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
@@ -959,9 +961,9 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
-        param_type= JuMP.VariableRef
+        param_type = JuMP.VariableRef
     else
-        param_type= Float64
+        param_type = Float64
     end
 
     if sparse
@@ -1119,14 +1121,6 @@ function get_parameter_attributes(
     return get_attributes(get_parameter(container, ParameterKey(T, U, meta)))
 end
 
-function iterate_parameter_containers(container::OptimizationContainer)
-    Channel() do channel
-        for param_container in values(container.parameters)
-            put!(channel, param_container)
-        end
-    end
-end
-
 # Slow implementation not to be used in hot loops
 function read_parameters(container::OptimizationContainer)
     params_dict = Dict{ParameterKey, DataFrames.DataFrame}()
@@ -1252,11 +1246,12 @@ function _add_initial_condition_container!(
     ic_key::ICKey{T, U},
     length_devices::Int,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
-    if built_for_recurrent_solves(container)
-        ini_conds = Vector{InitialCondition{T, JuMP.VariableRef}}(undef, length_devices)
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
     else
-        ini_conds = Vector{InitialCondition{T, Float64}}(undef, length_devices)
+        param_type = Float64
     end
+    ini_conds = Vector{InitialCondition{T, param_type}}(undef, length_devices)
     _assign_container!(container.initial_conditions, ic_key, ini_conds)
     return ini_conds
 end
@@ -1271,14 +1266,6 @@ function add_initial_condition_container!(
     ic_key = ICKey(T, U, meta)
     @debug "add_initial_condition_container" ic_key _group = LOG_GROUP_SERVICE_CONSTUCTORS
     return _add_initial_condition_container!(container, ic_key, length(axs))
-end
-
-function has_initial_condition(container::OptimizationContainer, key::ICKey)
-    return haskey(container.initial_conditions, key)
-end
-
-function iterate_initial_condition(container::OptimizationContainer)
-    return pairs(container.initial_conditions)
 end
 
 function get_initial_condition(
