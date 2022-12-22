@@ -962,6 +962,10 @@ function add_constraints!(
             end
         end
     end
+    for c in con
+        # Workaround to remove invalid key combinations
+        filter!(x -> x.second !== nothing, c.data)
+    end
     return
 end
 
@@ -1094,7 +1098,10 @@ function add_constraints!(
             end
         end
     end
-
+    for c in [con_ub, con_lb]
+        # Workaround to remove invalid key combinations
+        filter!(x -> x.second !== nothing, c.data)
+    end
     return
 end
 

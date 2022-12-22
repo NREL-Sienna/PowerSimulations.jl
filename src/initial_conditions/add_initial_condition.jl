@@ -28,7 +28,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialConditionType}
@@ -78,7 +78,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOff}
@@ -132,7 +132,7 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOn}
@@ -159,11 +159,10 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: InitialCondition{U, PJ.ParameterRef},
+    T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
-    ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -181,7 +180,6 @@ function _get_initial_conditions_value(
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
-    ic_data = get_initial_conditions_data(container)
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -203,4 +201,5 @@ function add_initial_condition!(
         ini_cond_vector[ix] =
             _get_initial_conditions_value(ini_cond_vector, component, D(), U(), container)
     end
+    return
 end

@@ -7,7 +7,7 @@
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 72, 0, 72, 72, 24, false)
+    moi_tests(model, 72, 0, 72, 72, 24, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -20,7 +20,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 96, 0, 96, 96, 24, false)
+    moi_tests(model, 96, 0, 96, 96, 24, false)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -29,7 +29,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 96, 0, 72, 72, 24, true)
+    moi_tests(model, 96, 0, 72, 72, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -38,7 +38,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 120, 0, 96, 96, 24, true)
+    moi_tests(model, 120, 0, 96, 96, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -47,7 +47,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 96, 0, 72, 72, 24, true)
+    moi_tests(model, 96, 0, 72, 72, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -56,7 +56,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 120, 0, 96, 96, 24, true)
+    moi_tests(model, 120, 0, 96, 96, 24, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -65,7 +65,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 144, 0, 72, 72, 48, true)
+    moi_tests(model, 144, 0, 72, 72, 48, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -74,7 +74,7 @@ end
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_bat)
     mock_construct_device!(model, device_model)
-    moi_tests(model, false, 168, 0, 96, 96, 48, true)
+    moi_tests(model, 168, 0, 96, 96, 48, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -87,7 +87,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 21, 0, 12, 9, 9, true)
+    moi_tests(model, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], 5811.0, 10.0)
 end
 
@@ -101,7 +101,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 21, 0, 12, 9, 9, true)
+    moi_tests(model, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], -63.0, 10.0)
 end
 
@@ -115,7 +115,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 28, 0, 16, 12, 12, true)
+    moi_tests(model, 28, 0, 16, 12, 12, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], -11118.0, 10.0)
 end
 
@@ -128,7 +128,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 21, 0, 12, 9, 9, true)
+    moi_tests(model, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], 5547.0, 10.0)
 end
 
@@ -142,7 +142,7 @@ end
     model =
         DecisionModel(EconomicDispatchProblem, template, c_sys5; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, false, 21, 0, 12, 9, 9, true)
+    moi_tests(model, 21, 0, 12, 9, 9, true)
     psi_checksolve_test(model, [MOI.OPTIMAL], -1825.0, 10.0)
 end
 
@@ -163,7 +163,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 120, 0, 72, 73, 24, true)
+    moi_tests(model, 145, 0, 72, 73, 24, true)
 end
 
 @testset "Test EnergyLimitFeedforward to GenericBattery with BookKeeping model" begin
@@ -180,7 +180,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 74, 72, 24, true)
+    moi_tests(model, 121, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
@@ -198,7 +198,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 120, 0, 72, 73, 24, true)
+    moi_tests(model, 145, 0, 72, 73, 24, true)
 end
 
 @testset "Test EnergyLimitFeedforward to GenericBattery with BatteryAncillaryServices model" begin
@@ -215,7 +215,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 74, 72, 24, true)
+    moi_tests(model, 121, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BookKeeping model" begin
@@ -233,7 +233,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 120, 0, 72, 73, 24, true)
+    moi_tests(model, 145, 0, 72, 73, 24, true)
 end
 
 @testset "Test EnergyLimitFeedforward to BatteryEMS with BookKeeping model" begin
@@ -250,7 +250,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 74, 72, 24, true)
+    moi_tests(model, 121, 0, 74, 72, 24, true)
 end
 
 @testset "Test EnergyTargetFeedforward to GenericBattery with BatteryAncillaryServices model" begin
@@ -268,7 +268,7 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 120, 0, 72, 73, 24, true)
+    moi_tests(model, 145, 0, 72, 73, 24, true)
 end
 
 @testset "Test EnergyLimitFeedforward to BatteryEMS with BatteryAncillaryServices model" begin
@@ -285,5 +285,5 @@ end
     sys = PSB.build_system(PSITestSystems, "c_sys5_bat_ems")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
-    moi_tests(model, true, 96, 0, 74, 72, 24, true)
+    moi_tests(model, 121, 0, 74, 72, 24, true)
 end

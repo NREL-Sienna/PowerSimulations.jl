@@ -650,7 +650,7 @@ function lower_bound_range_with_parameter!(
     constraint_container::JuMPConstraintArray,
     lhs_array,
     param_multiplier::JuMPFloatArray,
-    param_array::Union{JuMPParamArray, JuMPFloatArray},
+    param_array::Union{JuMPVariableArray, JuMPFloatArray},
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     time_steps = axes(constraint_container)[2]
@@ -758,7 +758,7 @@ function upper_bound_range_with_parameter!(
     constraint_container::JuMPConstraintArray,
     lhs_array,
     param_multiplier::JuMPFloatArray,
-    param_array::Union{JuMPParamArray, JuMPFloatArray},
+    param_array::Union{JuMPVariableArray, JuMPFloatArray},
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     time_steps = axes(constraint_container)[2]

@@ -116,8 +116,7 @@ function OptimizationContainer(
     end
 
     return OptimizationContainer(
-        jump_model === nothing ? _make_jump_model(settings) :
-        _finalize_jump_model!(jump_model, settings),
+        jump_model === nothing ? JuMP.Model() : jump_model,
         1:1,
         IS.time_period_conversion(resolution),
         settings,
@@ -254,7 +253,27 @@ function _validate_warm_start_support(JuMPmodel::JuMP.Model, warm_start_enabled:
     return solver_supports_warm_start
 end
 
-function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
+function _finalize_jump_model!(container::OptimizationContainer, settings::Settings)
+    @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    if built_for_recurrent_solves(container) && get_optimizer(settings) === nothing
+        throw(
+            IS.ConflictingInputsError(
+                "Optimizer can not be nothing when building for recurrent solves",
+            ),
+        )
+    end
+
+    if get_direct_mode_optimizer(settings)
+        optimizer = () -> MOI.instantiate(get_optimizer(settings))
+        container.JuMPmodel = JuMP.direct_model(optimizer())
+    elseif get_optimizer(settings) === nothing
+        @debug "The optimization model has no optimizer attached" _group =
+            LOG_GROUP_OPTIMIZATION_CONTAINER
+    else
+        JuMP.set_optimizer(container.JuMPmodel, get_optimizer(settings))
+    end
+
+    JuMPmodel = container.JuMPmodel
     warm_start_enabled = get_warm_start(settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
@@ -269,33 +288,7 @@ function _finalize_jump_model!(JuMPmodel::JuMP.Model, settings::Settings)
         JuMP.set_silent(JuMPmodel)
         @debug "optimizer set to silent" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     end
-    return JuMPmodel
-end
-
-function _prepare_jump_model_for_simulation!(JuMPmodel::JuMP.Model, settings::Settings)
-    if !haskey(JuMPmodel.ext, :ParameterJuMP)
-        @debug "Model doesn't have Parameters enabled. Parameters will be enabled" _group =
-            LOG_GROUP_OPTIMIZATION_CONTAINER
-        PJ.enable_parameters(JuMPmodel)
-        JuMP.set_optimizer(JuMPmodel, optimizer)
-    end
     return
-end
-
-function _make_jump_model(settings::Settings)
-    @debug "Instantiating the JuMP model" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    optimizer = get_optimizer(settings)
-    if get_direct_mode_optimizer(settings)
-        JuMPmodel = JuMP.direct_model(MOI.instantiate(optimizer))
-    elseif optimizer === nothing
-        JuMPmodel = JuMP.Model()
-        @debug "The optimization model has no optimizer attached" _group =
-            LOG_GROUP_OPTIMIZATION_CONTAINER
-    else
-        JuMPmodel = JuMP.Model(optimizer)
-    end
-    _finalize_jump_model!(JuMPmodel, settings)
-    return JuMPmodel
 end
 
 function init_optimization_container!(
@@ -303,7 +296,6 @@ function init_optimization_container!(
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    @assert container.JuMPmodel !== nothing
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
     # The order of operations matter
     settings = get_settings(container)
@@ -338,6 +330,7 @@ function init_optimization_container!(
     stats = get_optimizer_stats(container)
     stats.detailed_stats = get_detailed_optimizer_stats(settings)
 
+    _finalize_jump_model!(container, settings)
     return
 end
 
@@ -369,13 +362,8 @@ function get_problem_size(container::OptimizationContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-# This function is necessary while we switch from ParameterJuMP to POI
-function _make_container_array(parameter_jump::Bool, ax...)
-    if parameter_jump
-        return remove_undef!(DenseAxisArray{PGAE}(undef, ax...))
-    else
-        return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
-    end
+function _make_container_array(ax...)
+    return remove_undef!(DenseAxisArray{GAE}(undef, ax...))
 end
 
 function _make_system_expressions!(
@@ -383,13 +371,12 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
-    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
     )
     return
 end
@@ -399,11 +386,10 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
-    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
     )
     return
 end
@@ -413,11 +399,10 @@ function _make_system_expressions!(
     ::Vector{Int},
     ::Type{CopperPlatePowerModel},
 )
-    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameter_jump, time_steps),
+            _make_container_array(time_steps),
     )
     return
 end
@@ -427,13 +412,12 @@ function _make_system_expressions!(
     bus_numbers::Vector{Int},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
-    parameter_jump = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(parameter_jump, time_steps),
+            _make_container_array(time_steps),
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(parameter_jump, bus_numbers, time_steps),
+            _make_container_array(bus_numbers, time_steps),
     )
     return
 end
@@ -717,7 +701,7 @@ function _add_variable_container!(
     axs...,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if sparse
-        var_container = sparse_container_spec(Float64, axs...)
+        var_container = sparse_container_spec(JuMP.VariableRef, axs...)
         # We initialize sparse containers with Float64, not ideal and introduces type instability,
         # because JuMP.Containers.SparseAxisArrays can't be initialized with undef
     else
@@ -930,7 +914,7 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -951,7 +935,7 @@ function _add_param_container!(
     sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     # Temporary while we change to POI vs PJ
-    param_type = built_for_recurrent_solves(container) ? PJ.ParameterRef : Float64
+    param_type = built_for_recurrent_solves(container) ? JuMP.VariableRef : Float64
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -1170,8 +1154,7 @@ function add_expression_container!(
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    expr_type = built_for_recurrent_solves(container) ? PGAE : GAE
-    return _add_expression_container!(container, expr_key, expr_type, axs...; sparse=sparse)
+    return _add_expression_container!(container, expr_key, GAE, axs...; sparse=sparse)
 end
 
 function add_expression_container!(
@@ -1242,7 +1225,7 @@ function _add_initial_condition_container!(
     length_devices::Int,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     if built_for_recurrent_solves(container)
-        ini_conds = Vector{InitialCondition{T, PJ.ParameterRef}}(undef, length_devices)
+        ini_conds = Vector{InitialCondition{T, JuMP.VariableRef}}(undef, length_devices)
     else
         ini_conds = Vector{InitialCondition{T, Float64}}(undef, length_devices)
     end

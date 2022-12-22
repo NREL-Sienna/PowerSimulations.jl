@@ -178,7 +178,7 @@ function add_variable!(
 ) where {
     T <: SubComponentVariableType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.Component}
+} where {D <: PSY.HybridSystem}
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
     settings = get_settings(container)
@@ -196,29 +196,38 @@ function add_variable!(
         sparse=true,
     )
 
-    for t in time_steps, d in devices, subcomp in subcomp_types
+    for d in devices, (ix, subcomp) in enumerate(subcomp_types)
         !does_subcomponent_exist(d, subcomp) && continue
-        subcomp_key = string(subcomp)
-        name = PSY.get_name(d)
-        variable[name, subcomp_key, t] = JuMP.@variable(
-            container.JuMPmodel,
-            base_name = "$(variable_type)_$(D)_$(subcomp)_{$(name), $(t)}",
-            binary = binary
-        )
+        subcomp_key = subcomp_keys[ix]
+        if !haskey(PSY.get_ext(d), "subtypes")
+            PSY.get_ext(d)["subtypes"] = [subcomp_key]
+        else
+            push!(PSY.get_ext(d)["subtypes"], subcomp_key)
+        end
+        for t in time_steps
+            name = PSY.get_name(d)
+            variable[name, subcomp_key, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(variable_type)_$(D)_$(subcomp)_{$(name), $(t)}",
+                binary = binary
+            )
 
-        ub = get_variable_upper_bound(variable_type, d, formulation)
-        ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
+            ub = get_variable_upper_bound(variable_type, d, formulation)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
 
-        lb = get_variable_lower_bound(variable_type, d, formulation)
-        lb !== nothing &&
-            !binary &&
-            JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
+            lb = get_variable_lower_bound(variable_type, d, formulation)
+            lb !== nothing &&
+                !binary &&
+                JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
 
-        if get_warm_start(settings)
-            init = get_variable_warm_start_value(variable_type, d, formulation)
-            init !== nothing && JuMP.set_start_value(variable[name, subcomp_key, t], init)
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(variable_type, d, formulation)
+                init !== nothing &&
+                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
+            end
         end
     end
-
+    # Workaround to remove invalid key combinations
+    filter!(x -> x.second !== nothing, variable.data)
     return
 end

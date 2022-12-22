@@ -78,16 +78,7 @@ end
 
 function _add_to_jump_expression!(
     expression::T,
-    parameter::PJ.ParameterRef,
-    multiplier::Float64,
-) where {T <: JuMP.AbstractJuMPScalar}
-    PJ.add_to_expression!(expression, multiplier, parameter)
-    return
-end
-
-function _add_to_jump_expression!(
-    expression::T,
-    var::Union{JuMP.VariableRef, PJ.ParameterRef},
+    var::Union{JuMP.VariableRef, JuMP.VariableRef},
     multiplier::Float64,
     constant::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
@@ -580,17 +571,17 @@ function add_to_expression!(
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
-    for d in devices,
-        t in get_time_steps(container),
-        sub_comp in [PSY.ThermalGen, PSY.RenewableGen]
 
-        sub_comp_key = string(sub_comp)
-        name = PSY.get_name(d)
-        _add_to_jump_expression!(
-            expression[name, sub_comp_key, t],
-            variable[name, sub_comp_key, t],
-            1.0,
-        )
+    for d in devices
+        !haskey(PSY.get_ext(d), "subtypes") && continue
+        for sub_comp_key in PSY.get_ext(d)["subtypes"], t in get_time_steps(container)
+            name = PSY.get_name(d)
+            _add_to_jump_expression!(
+                expression[name, sub_comp_key, t],
+                variable[name, sub_comp_key, t],
+                1.0,
+            )
+        end
     end
     return
 end

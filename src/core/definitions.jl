@@ -10,15 +10,22 @@ const BUILD_PROBLEMS_TIMER = TimerOutputs.TimerOutput()
 const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
-# Type Alias for JuMP and PJ containers
-const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
+# Type Alias for JuMP containers
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = DenseAxisArray{JuMP.ConstraintRef}
-const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
-const JuMPParamArray = DenseAxisArray{PJ.ParameterRef}
+const JuMPVariableMatrix = DenseAxisArray{
+    JuMP.VariableRef,
+    2,
+    Tuple{Vector{String}, UnitRange{Int64}},
+    Tuple{
+        JuMP.Containers._AxisLookup{Dict{String, Int64}},
+        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
+    },
+}
 const JuMPFloatArray = DenseAxisArray{Float64}
+const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 
 # Settings constants
 const UNSET_HORIZON = 0

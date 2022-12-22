@@ -62,20 +62,20 @@ function get_detailed_constraint_numerical_bounds(model::OperationModel)
         error("Model not built, can't calculate constraint numerical bounds")
     end
     constraint_bounds = Dict()
-    for (const_key, constriant_array) in get_constraints(get_optimization_container(model))
-        if isa(constriant_array, SparseAxisArray)
+    for (const_key, constraint_array) in get_constraints(get_optimization_container(model))
+        if isa(constraint_array, SparseAxisArray)
             bounds = ConstraintBounds()
-            for idx in eachindex(constriant_array)
-                constriant_array[idx] == 0.0 && continue
-                con_obj = JuMP.constraint_object(constriant_array[idx])
+            for idx in eachindex(constraint_array)
+                constraint_array[idx] == 0.0 && continue
+                con_obj = JuMP.constraint_object(constraint_array[idx])
                 update_coefficient_bounds(bounds, con_obj, idx)
                 update_rhs_bounds(bounds, con_obj, idx)
             end
             constraint_bounds[const_key] = bounds
         else
             bounds = ConstraintBounds()
-            for idx in Iterators.product(constriant_array.axes...)
-                con_obj = JuMP.constraint_object(constriant_array[idx...])
+            for idx in Iterators.product(constraint_array.axes...)
+                con_obj = JuMP.constraint_object(constraint_array[idx...])
                 update_coefficient_bounds(bounds, con_obj, idx)
                 update_rhs_bounds(bounds, con_obj, idx)
             end

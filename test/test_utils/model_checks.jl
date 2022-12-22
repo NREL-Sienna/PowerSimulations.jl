@@ -3,7 +3,6 @@ const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
 function moi_tests(
     model::DecisionModel,
-    params::Bool,
     vars::Int,
     interval::Int,
     lessthan::Int,
@@ -12,7 +11,6 @@ function moi_tests(
     binary::Bool,
 )
     JuMPmodel = PSI.get_jump_model(model)
-    @test (:ParameterJuMP in keys(JuMPmodel.ext)) == params
     @test JuMP.num_variables(JuMPmodel) == vars
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.Interval{Float64}) == interval
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.LessThan{Float64}) == lessthan
@@ -151,7 +149,7 @@ function check_flow_variable_values(
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
-        if !(JuMP.value(var) <= (limit + 1e-2))
+        if !(PSI.jump_value(var) <= (limit + 1e-2))
             return false
         end
     end
@@ -169,8 +167,8 @@ function check_flow_variable_values(
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
-        if !(JuMP.value(var) <= (limit_max + 1e-2)) ||
-           !(JuMP.value(var) >= (limit_min - 1e-2))
+        if !(PSI.jump_value(var) <= (limit_max + 1e-2)) ||
+           !(PSI.jump_value(var) >= (limit_min - 1e-2))
             return false
         end
     end
@@ -191,8 +189,8 @@ function check_flow_variable_values(
     pvariable = PSI.get_variable(psi_cont, T(), V)
     qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
-        fp = JuMP.value(pvariable[device_name, t])
-        fq = JuMP.value(qvariable[device_name, t])
+        fp = PSI.jump_value(pvariable[device_name, t])
+        fq = PSI.jump_value(qvariable[device_name, t])
         flow = sqrt((fp)^2 + (fq)^2)
         if !(flow <= (limit_max + 1e-2)^2) || !(flow >= (limit_min - 1e-2)^2)
             return false
@@ -214,8 +212,8 @@ function check_flow_variable_values(
     pvariable = PSI.get_variable(psi_cont, T(), V)
     qvariable = PSI.get_variable(psi_cont, U(), V)
     for t in time_steps
-        fp = JuMP.value(pvariable[device_name, t])
-        fq = JuMP.value(qvariable[device_name, t])
+        fp = PSI.jump_value(pvariable[device_name, t])
+        fq = PSI.jump_value(qvariable[device_name, t])
         flow = sqrt((fp)^2 + (fq)^2)
         if !(flow <= (limit + 1e-2)^2)
             return false
@@ -258,7 +256,7 @@ function check_duration_on_initial_conditions_values(
             1,
             name,
         ]
-        duration_on = JuMP.value(PSI.get_value(ic))
+        duration_on = PSI.jump_value(PSI.get_value(ic))
         if on_var == 1.0 && PSY.get_status(ic.component)
             @test duration_on == PSY.get_time_at_status(ic.component)
         elseif on_var == 1.0 && !PSY.get_status(ic.component)
@@ -284,7 +282,7 @@ function check_duration_off_initial_conditions_values(
             1,
             name,
         ]
-        duration_off = JuMP.value(PSI.get_value(ic))
+        duration_off = PSI.jump_value(PSI.get_value(ic))
         if on_var == 0.0 && !PSY.get_status(ic.component)
             @test duration_off == PSY.get_time_at_status(ic.component)
         elseif on_var == 0.0 && PSY.get_status(ic.component)
@@ -301,7 +299,7 @@ function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PS
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_value = JuMP.value(PSI.get_value(ic))
+        e_value = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_energy(ic.component) == e_value
     end
 end
@@ -314,7 +312,7 @@ function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PS
     )
     for ic in ic_data
         name = PSY.get_name(ic.component)
-        e_value = JuMP.value(PSI.get_value(ic))
+        e_value = PSI.jump_value(PSI.get_value(ic))
         @test PSY.get_initial_storage(ic.component) == e_value
     end
 end
@@ -330,7 +328,7 @@ function check_status_initial_conditions_values(model, ::Type{T}) where {T <: PS
             1,
             name,
         ]
-        @test JuMP.value(PSI.get_value(ic)) == status
+        @test PSI.jump_value(PSI.get_value(ic)) == status
     end
 end
 
@@ -352,7 +350,7 @@ function check_active_power_initial_condition_values(
             1,
             name,
         ]
-        @test JuMP.value(PSI.get_value(ic)) == power
+        @test PSI.jump_value(PSI.get_value(ic)) == power
     end
 end
 
@@ -377,7 +375,7 @@ function check_active_power_abovemin_initial_condition_values(
             1,
             name,
         ]
-        @test JuMP.value(PSI.get_value(ic)) == power
+        @test PSI.jump_value(PSI.get_value(ic)) == power
     end
 end
 
