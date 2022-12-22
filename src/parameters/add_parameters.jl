@@ -27,6 +27,9 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
     add_parameters!(container, T(), devices, model)
     return
 end
@@ -41,6 +44,9 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.HybridSystem}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
     _devices = [d for d in devices if PSY.get_renewable_unit(d) !== nothing]
     add_parameters!(container, T(), _devices, model)
     return
@@ -52,6 +58,9 @@ function add_parameters!(
     service::U,
     model::ServiceModel{U, V},
 ) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, U)
+        return
+    end
     add_parameters!(container, T(), service, model)
     return
 end
@@ -68,6 +77,9 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
     add_parameters!(container, T(), key, model, devices)
     return
 end
