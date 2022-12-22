@@ -278,9 +278,7 @@ function _finalize_jump_model!(container::OptimizationContainer, settings::Setti
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
 
-    if get_store_variable_names(settings)
-        JuMP.set_string_names_on_creation(JuMPmodel, false)
-    end
+    JuMP.set_string_names_on_creation(JuMPmodel, get_store_variable_names(settings))
 
     @debug begin
         JuMP.set_string_names_on_creation(JuMPmodel, true)
