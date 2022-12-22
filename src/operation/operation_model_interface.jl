@@ -18,7 +18,7 @@ is_synchronized(model::OperationModel) = is_synchronized(get_optimization_contai
 function get_rebuild_model(model::OperationModel)
     sim_info = get_internal(model).simulation_info
     if sim_info === nothing
-        error("Model not part of a simulation")ß
+        error("Model not part of a simulation")
     end
     return get_rebuild_model(get_optimization_container(model).settings)
 end
