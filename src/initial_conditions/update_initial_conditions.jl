@@ -10,12 +10,11 @@ function _update_initial_conditions!(
     model_resolution = get_resolution(model.internal.store_parameters)
     ini_conditions_vector = get_initial_condition(container, key)
     timestamp = get_current_timestamp(model)
-    @show previous_values = get_condition.(ini_conditions_vector)
+    previous_values = get_condition.(ini_conditions_vector)
     # The implementation of specific update_initial_conditions! is located in the files
     # update_initial_conditions_in_memory_store.jl and update_initial_conditions_simulation.jl
     update_initial_conditions!(ini_conditions_vector, source, model_resolution)
     for (i, initial_condition) in enumerate(ini_conditions_vector)
-        @error initial_condition
         IS.@record :execution InitialConditionUpdateEvent(
             timestamp,
             initial_condition,
