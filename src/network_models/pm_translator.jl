@@ -65,34 +65,6 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.PhaseShiftingTransformer,
-    device_formulation::Type{D},
-) where {D <: AbstractBranchFormulation}
-    PM_branch = Dict{String, Any}(
-        "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
-        "shift" => PSY.get_α(branch),
-        "rate_b" => PSY.get_rate(branch),
-        "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
-        "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
-        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
-        "br_status" => Float64(PSY.get_available(branch)),
-        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
-        "index" => ix,
-        "angmin" => -π / 2,
-        "angmax" => π / 2,
-        "transformer" => true,
-        "tap" => PSY.get_tap(branch),
-    )
-    return PM_branch
-end
-
-function get_branch_to_pm(
-    ix::Int,
-    branch::PSY.PhaseShiftingTransformer,
     device_formulation::Type{StaticBranchUnbounded},
 )
     PM_branch = Dict{String, Any}(
