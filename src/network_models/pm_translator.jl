@@ -1,14 +1,65 @@
+const PM_MAP_TUPLE = NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
 struct PMmap
     bus::Dict{Int, PSY.Bus}
-    arcs::Dict{
-        NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}},
-        t where t <: PSY.ACBranch,
-    }
-    arcs_dc::Dict{
-        NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}},
-        t where t <: PSY.DCBranch,
-    }
+    arcs::Dict{PM_MAP_TUPLE, <: PSY.ACBranch}
+    arcs_dc::Dict{PM_MAP_TUPLE, <: PSY.DCBranch}
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.PhaseShiftingTransformer,
+    ::Type{PhaseControl},
+)
+    PM_branch = Dict{String, Any}(
+        "br_r" => PSY.get_r(branch),
+        "rate_a" => PSY.get_rate(branch),
+        "shift" => PSY.get_α(branch),
+        "rate_b" => PSY.get_rate(branch),
+        "br_x" => PSY.get_x(branch),
+        "rate_c" => PSY.get_rate(branch),
+        "g_to" => 0.0,
+        "g_fr" => 0.0,
+        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
+        "br_status" => 0.0, # Turn off the branch while keeping the function type stable
+        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
+        "b_to" => PSY.get_primary_shunt(branch) / 2,
+        "index" => ix,
+        "angmin" => -π / 2,
+        "angmax" => π / 2,
+        "transformer" => true,
+        "tap" => PSY.get_tap(branch),
+    )
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.PhaseShiftingTransformer,
+    ::Type{D},
+) where {D <: AbstractBranchFormulation}
+    PM_branch = Dict{String, Any}(
+        "br_r" => PSY.get_r(branch),
+        "rate_a" => PSY.get_rate(branch),
+        "shift" => PSY.get_α(branch),
+        "rate_b" => PSY.get_rate(branch),
+        "br_x" => PSY.get_x(branch),
+        "rate_c" => PSY.get_rate(branch),
+        "g_to" => 0.0,
+        "g_fr" => 0.0,
+        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
+        "br_status" => Float64(PSY.get_available(branch)),
+        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
+        "b_to" => PSY.get_primary_shunt(branch) / 2,
+        "index" => ix,
+        "angmin" => -π / 2,
+        "angmax" => π / 2,
+        "transformer" => true,
+        "tap" => PSY.get_tap(branch),
+    )
+    return PM_branch
 end
 
 function get_branch_to_pm(
@@ -262,19 +313,16 @@ end
 
 function get_branches_to_pm(
     sys::PSY.System,
-    system_formulation::Type{S},
-    branch_type::Type{T},
+    ::Type{S},
+    ::Type{T},
     branch_template::BranchModelContainer,
     start_idx=0,
 ) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
-    PMmap_br = Dict{
-        NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}},
-        t where t <: T,
-    }()
+    PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
     for (d, device_model) in branch_template
-        !(get_component_type(device_model) <: branch_type) && continue
+        !(get_component_type(device_model) <: T) && continue
         start_idx += length(PM_branches)
         for (i, branch) in
             enumerate(get_available_components(get_component_type(device_model), sys))
@@ -292,18 +340,14 @@ function get_branches_to_pm(
 end
 
 function get_branches_to_pm(
-    sys::PSY.System,
-    system_formulation::Type{PTDFPowerModel},
+    ::PSY.System,
+    ::Type{PTDFPowerModel},
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx=0,
 ) where {T <: PSY.DCBranch}
     PM_branches = Dict{String, Any}()
-    PMmap_br = Dict{
-        NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}},
-        t where t <: T,
-    }()
-
+    PMmap_br = Dict{PM_MAP_TUPLE, T}()
     return PM_branches, PMmap_br
 end
 

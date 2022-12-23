@@ -182,6 +182,10 @@ struct StaticBranchBounds <: AbstractBranchFormulation end
 Branch type to avoid flow constraints
 """
 struct StaticBranchUnbounded <: AbstractBranchFormulation end
+"""
+Branch formulation for PhaseShiftingTransformer flow control
+"""
+struct PhaseControl <: AbstractBranchFormulation end
 
 ############################### DC Branch Formulations #####################################
 abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end

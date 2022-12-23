@@ -12,7 +12,6 @@
 
 # Not implemented yet
 # struct TapControl <: AbstractBranchFormulation end
-# struct PhaseControl <: AbstractBranchFormulation end
 
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
