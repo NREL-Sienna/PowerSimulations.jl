@@ -1,15 +1,16 @@
-const PM_MAP_TUPLE = NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
+const PM_MAP_TUPLE =
+    NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
 struct PMmap
     bus::Dict{Int, PSY.Bus}
-    arcs::Dict{PM_MAP_TUPLE, <: PSY.ACBranch}
-    arcs_dc::Dict{PM_MAP_TUPLE, <: PSY.DCBranch}
+    arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
+    arcs_dc::Dict{PM_MAP_TUPLE, <:PSY.DCBranch}
 end
 
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.PhaseShiftingTransformer,
-    ::Type{PhaseControl},
+    ::Type{PhaseAngleControl},
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),

@@ -205,7 +205,7 @@ Docs abbreviation: ``\\overleftarrow{Q}``
 """
 struct FlowReactivePowerToFromVariable <: VariableType end
 
-struct VariableNotDefined <: VariableType end
+struct PhaseShifterAngle <: VariableType end
 
 struct ComponentActivePowerVariable <: SubComponentVariableType end
 
@@ -215,7 +215,7 @@ struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
 
 struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
 
-# Necessary as a work around ofr HVDC models with losses
+# Necessary as a work around for HVDC models with losses
 struct HVDCTotalPowerDeliveredVariable <: VariableType end
 
 struct PieceWiseLinearCostVariable <: VariableType end

@@ -40,6 +40,12 @@ get_variable_binary(
     ::AbstractBranchFormulation,
 ) = false
 
+get_variable_binary(
+    ::PhaseShifterAngle,
+    ::Type{PSY.PhaseShiftingTransformer},
+    ::AbstractBranchFormulation,
+) = false
+
 get_variable_multiplier(_, ::Type{<:PSY.ACBranch}, _) = NaN
 
 function get_default_time_series_names(
@@ -100,11 +106,22 @@ end
 Min and max limits for Abstract Branch Formulation
 """
 function get_min_max_limits(
-    device,
+    device::PSY.ACBranch,
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (min=-1 * PSY.get_rate(device), max=PSY.get_rate(device))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_min_max_limits(
+    ::PSY.PhaseShiftingTransformer,
+    ::Type{PhaseAngleControlLimit},
+    ::Type{PhaseAngleControl},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    return (min=-π / 2, max=π / 2)
 end
 
 """
@@ -128,7 +145,7 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
@@ -162,7 +179,7 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintToFrom},
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
@@ -194,7 +211,7 @@ Add network flow constraints for ACBranch and NetworkModel with StandardPTDFMode
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{NetworkFlowConstraint},
+    ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{S},
@@ -251,16 +268,19 @@ function get_min_max_limits(
 end
 
 ############################## Flow Limits Constraints #####################################
-# TODO: Write tests for these functions
 """
 Add branch flow constraints for monitored lines with DC Power Model
 """
-function branch_flow_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    ::Type{FlowLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     X::Type{<:PM.AbstractDCPModel},
-) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
+) where {
+    T <: Union{PSY.PhaseShiftingTransformer, PSY.MonitoredLine},
+    U <: AbstractBranchFormulation,
+}
     add_range_constraints!(
         container,
         FlowLimitConstraint,
@@ -275,8 +295,9 @@ end
 """
 Don't add branch flow constraints for monitored lines if formulation is StaticBranchUnbounded
 """
-function branch_flow_constraints!(
-    container::OptimizationContainer,
+function add_constraints!(
+    ::OptimizationContainer,
+    ::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractDCPModel},
@@ -325,8 +346,9 @@ end
 """
 Add branch flow constraints for monitored lines
 """
-function branch_flow_constraints!(
+function add_constraints!(
     container::OptimizationContainer,
+    ::Type{FlowLimitFromToConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
@@ -353,11 +375,74 @@ end
 """
 Don't add branch flow constraints for monitored lines if formulation is StaticBranchUnbounded
 """
-function branch_flow_constraints!(
-    container::OptimizationContainer,
+function add_constraints!(
+    ::OptimizationContainer,
+    ::Type{FlowLimitToFromConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
     return
+end
+
+"""
+Add phase angle limits for phase shifters
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{PhaseAngleControlLimit},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    X::Type{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.PhaseShiftingTransformer, U <: PhaseAngleControl}
+    add_range_constraints!(
+        container,
+        PhaseAngleControlLimit,
+        PhaseShifterAngle,
+        devices,
+        model,
+        X,
+    )
+    return
+end
+
+"""
+Add network flow constraints for ACBranch and NetworkModel with StandardPTDFModel
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{NetworkFlowConstraint},
+    devices::IS.FlattenIteratorWrapper{B},
+    model::DeviceModel{B, PhaseAngleControl},
+    ::Type{PM.DCPPowerModel},
+) where {B <: PSY.PhaseShiftingTransformer}
+    time_steps = get_time_steps(container)
+    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    ps_angle_variables = get_variable(container, FlowActivePowerVariable(), B)
+    bus_angle_variables = get_variable(container, VoltageAngle(), PSY.Bus)
+    jump_model = get_jump_model(container)
+    branch_flow = add_constraints_container!(
+        container,
+        NetworkFlowConstraint(),
+        B,
+        axes(flow_variables)[1],
+        time_steps,
+    )
+    for br in devices
+        name = PSY.get_name(br)
+        inv_x = 1 / PSY.get_x(br)
+        flow_variables_ = flow_variables[name, :]
+        from_bus = PSY.get_name(PSY.get_from(PSY.get_arc(br)))
+        to_bus = PSY.get_name(PSY.get_from(PSY.get_arc(br)))
+        angle_variables_ = ps_angle_variables[name, :]
+        bus_angle_from = bus_angle_variables[from_bus, :]
+        bus_angle_to = bus_angle_variables[to_bus, :]
+        for t in time_steps
+            branch_flow[name, t] = JuMP.@constraint(
+                jump_model,
+                flow_variables_[t] ==
+                inv_x * (bus_angle_from[t] - bus_angle_to[t] + angle_variables_[t])
+            )
+        end
+    end
 end

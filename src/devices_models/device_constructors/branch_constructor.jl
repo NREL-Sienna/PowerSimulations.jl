@@ -97,8 +97,8 @@ construct_device!(
 
 # For DC Power only. Implements constraints
 function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
+    ::OptimizationContainer,
+    ::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
@@ -298,7 +298,6 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
     add_constraints!(container, HVDCPowerBalance, devices, model, S)
-
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -455,6 +454,34 @@ function construct_device!(
     devices = get_available_components(B, sys)
 
     add_constraints!(container, FlowRateConstraint, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
+    ::NetworkModel{PM.DCPPowerModel},
+)
+    devices = get_available_components(PSY.PhaseShiftingTransformer, sys)
+    add_variables!(container, FlowActivePowerVariable, devices, PhaseAngleControl())
+    add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
+    ::NetworkModel{PM.DCPPowerModel},
+)
+    devices = get_available_components(PSY.PhaseShiftingTransformer, sys)
+    add_constraints!(container, FlowLimitConstraint, devices, model, PM.DCPPowerModel)
+    add_constraints!(container, PhaseAngleControlLimit, devices, model, PM.DCPPowerModel)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, PM.DCPPowerModel)
     add_constraint_dual!(container, sys, model)
     return
 end

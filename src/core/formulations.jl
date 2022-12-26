@@ -185,7 +185,7 @@ struct StaticBranchUnbounded <: AbstractBranchFormulation end
 """
 Branch formulation for PhaseShiftingTransformer flow control
 """
-struct PhaseControl <: AbstractBranchFormulation end
+struct PhaseAngleControl <: AbstractBranchFormulation end
 
 ############################### DC Branch Formulations #####################################
 abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
