@@ -17,37 +17,17 @@
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
 
-get_initial_conditions_device_model(
-    ::OperationModel,
-    ::DeviceModel{T, <:AbstractBranchFormulation},
-) where {T <: PSY.ACBranch} = DeviceModel(T, StaticBranch)
-
-get_initial_conditions_device_model(
-    ::OperationModel,
-    ::DeviceModel{T, <:AbstractBranchFormulation},
-) where {T <: PSY.MonitoredLine} = DeviceModel(T, StaticBranchUnbounded)
-
-add_variables!(
-    container::OptimizationContainer,
-    ::Type{<:AbstractPTDFModel},
-    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
-    formulation::AbstractBranchFormulation,
-) = add_variable!(container, FlowActivePowerVariable(), devices, formulation)
-
-get_variable_binary(
-    ::FlowActivePowerVariable,
-    ::Type{<:PSY.ACBranch},
-    ::AbstractBranchFormulation,
-) = false
-
-get_variable_binary(
-    ::PhaseShifterAngle,
-    ::Type{PSY.PhaseShiftingTransformer},
-    ::AbstractBranchFormulation,
-) = false
+#! format: off
+get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
+get_variable_binary(::PhaseShifterAngle, ::Type{PSY.PhaseShiftingTransformer}, ::AbstractBranchFormulation,) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.ACBranch}, _) = NaN
+get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
+get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, <:AbstractBranchFormulation}) where {T <: PSY.ACBranch} = DeviceModel(T, StaticBranch)
+get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, <:AbstractBranchFormulation},) where {T <: PSY.MonitoredLine} = DeviceModel(T, StaticBranchUnbounded)
+
+#! format: on
 function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
@@ -62,6 +42,13 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 #################################### Flow Variable Bounds ##################################################
+
+add_variables!(
+    container::OptimizationContainer,
+    ::Type{<:AbstractPTDFModel},
+    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
+    formulation::AbstractBranchFormulation,
+) = add_variable!(container, FlowActivePowerVariable(), devices, formulation)
 
 function branch_rate_bounds!(
     container::OptimizationContainer,
@@ -407,15 +394,15 @@ function add_constraints!(
 end
 
 """
-Add network flow constraints for ACBranch and NetworkModel with StandardPTDFModel
+Add network flow constraints for PhaseShiftingTransformer and NetworkModel with PM.DCPPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
-    devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, PhaseAngleControl},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, PhaseAngleControl},
     ::Type{PM.DCPPowerModel},
-) where {B <: PSY.PhaseShiftingTransformer}
+) where {T <: PSY.PhaseShiftingTransformer}
     time_steps = get_time_steps(container)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     ps_angle_variables = get_variable(container, FlowActivePowerVariable(), B)
@@ -445,4 +432,5 @@ function add_constraints!(
             )
         end
     end
+    return
 end

@@ -306,6 +306,7 @@ export OutputActivePowerVariableLimitsConstraint
 export PieceWiseLinearCostConstraint
 export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
+export PhaseShifterAngle
 export RampConstraint
 export RampLimitConstraint
 export RangeLimitConstraint
