@@ -201,8 +201,8 @@ function add_constraints!(
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
-    network_model::NetworkModel{S},
-) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
+    network_model::NetworkModel{StandardPTDFModel},
+) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(network_model)
     branches = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
@@ -227,6 +227,46 @@ function add_constraints!(
                     ptdf_col[i] * nodal_balance_expressions.data[i, t] for
                     i in 1:length(ptdf_col)
                 ) - flow_variables_[t] == 0.0
+            )
+        end
+    end
+end
+
+"""
+Add network flow constraints for PhaseShiftingTransformer and NetworkModel with StandardPTDFModel
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{NetworkFlowConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, PhaseAngleControl},
+    network_model::NetworkModel{StandardPTDFModel},
+) where {T <: PSY.PhaseShiftingTransformer}
+    ptdf = get_PTDF(network_model)
+    branches = PSY.get_name.(devices)
+    time_steps = get_time_steps(container)
+    branch_flow = add_constraints_container!(
+        container,
+        NetworkFlowConstraint(),
+        T,
+        branches,
+        time_steps,
+    )
+    nodal_balance_expressions = get_expression(container, ActivePowerBalance(), U)
+    flow_variables = get_variable(container, FlowActivePowerVariable(), T)
+    angle_variables = get_variable(container, PhaseShifterAngle(), T)
+    jump_model = get_jump_model(container)
+    for br in devices
+        name = PSY.get_name(br)
+        ptdf_col = ptdf[name, :]
+        inv_x = 1 / PSY.get_x(br)
+        for t in time_steps
+            branch_flow[name, t] = JuMP.@constraint(
+                jump_model,
+                sum(
+                    ptdf_col[i] * nodal_balance_expressions.data[i, t] for
+                    i in 1:length(ptdf_col)
+                ) + inv_x * angle_variables[name, t] - flow_variables[name, t] == 0.0
             )
         end
     end
@@ -263,10 +303,11 @@ function add_constraints!(
     ::Type{FlowLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    X::Type{<:PM.AbstractDCPModel},
+    ::NetworkModel{V},
 ) where {
     T <: Union{PSY.PhaseShiftingTransformer, PSY.MonitoredLine},
     U <: AbstractBranchFormulation,
+    V <: PM.AbstractDCPModel,
 }
     add_range_constraints!(
         container,
@@ -274,7 +315,7 @@ function add_constraints!(
         FlowActivePowerVariable,
         devices,
         model,
-        X,
+        V,
     )
     return
 end
@@ -379,16 +420,16 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{PhaseAngleControlLimit},
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
-    X::Type{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.PhaseShiftingTransformer, U <: PhaseAngleControl}
+    model::DeviceModel{T, PhaseAngleControl},
+    ::NetworkModel{U},
+) where {T <: PSY.PhaseShiftingTransformer, U <: PM.AbstractActivePowerModel}
     add_range_constraints!(
         container,
         PhaseAngleControlLimit,
         PhaseShifterAngle,
         devices,
         model,
-        X,
+        U,
     )
     return
 end
@@ -401,29 +442,31 @@ function add_constraints!(
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, PhaseAngleControl},
-    ::Type{PM.DCPPowerModel},
+    ::NetworkModel{PM.DCPPowerModel},
 ) where {T <: PSY.PhaseShiftingTransformer}
     time_steps = get_time_steps(container)
-    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
-    ps_angle_variables = get_variable(container, FlowActivePowerVariable(), B)
+    flow_variables = get_variable(container, FlowActivePowerVariable(), T)
+    ps_angle_variables = get_variable(container, PhaseShifterAngle(), T)
     bus_angle_variables = get_variable(container, VoltageAngle(), PSY.Bus)
     jump_model = get_jump_model(container)
     branch_flow = add_constraints_container!(
         container,
         NetworkFlowConstraint(),
-        B,
+        T,
         axes(flow_variables)[1],
         time_steps,
     )
+
     for br in devices
         name = PSY.get_name(br)
-        inv_x = 1 / PSY.get_x(br)
+        inv_x = 1.0 / PSY.get_x(br)
         flow_variables_ = flow_variables[name, :]
         from_bus = PSY.get_name(PSY.get_from(PSY.get_arc(br)))
-        to_bus = PSY.get_name(PSY.get_from(PSY.get_arc(br)))
+        to_bus = PSY.get_name(PSY.get_to(PSY.get_arc(br)))
         angle_variables_ = ps_angle_variables[name, :]
         bus_angle_from = bus_angle_variables[from_bus, :]
         bus_angle_to = bus_angle_variables[to_bus, :]
+        @assert inv_x > 0.0
         for t in time_steps
             branch_flow[name, t] = JuMP.@constraint(
                 jump_model,

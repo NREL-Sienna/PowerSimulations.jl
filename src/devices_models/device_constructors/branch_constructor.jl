@@ -142,9 +142,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
-
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
-
     add_constraints!(container, RateLimitConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -463,11 +461,40 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
-    ::NetworkModel{T},
-) where {T <: PM.AbstractActivePowerModel}
+    ::NetworkModel{PM.DCPPowerModel},
+)
     devices = get_available_components(PSY.PhaseShiftingTransformer, sys)
     add_variables!(container, FlowActivePowerVariable, devices, PhaseAngleControl())
     add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        PM.DCPPowerModel,
+    )
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
+    network_model::NetworkModel{StandardPTDFModel},
+)
+    devices = get_available_components(PSY.PhaseShiftingTransformer, sys)
+    add_variables!(container, FlowActivePowerVariable, devices, PhaseAngleControl())
+    add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        PhaseShifterAngle,
+        devices,
+        model,
+        StandardPTDFModel,
+    )
     return
 end
 
@@ -476,12 +503,12 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
-    ::NetworkModel{PM.DCPPowerModel},
+    network_model::NetworkModel{PM.DCPPowerModel},
 )
     devices = get_available_components(PSY.PhaseShiftingTransformer, sys)
-    add_constraints!(container, FlowLimitConstraint, devices, model, PM.DCPPowerModel)
-    add_constraints!(container, PhaseAngleControlLimit, devices, model, PM.DCPPowerModel)
-    add_constraints!(container, NetworkFlowConstraint, devices, model, PM.DCPPowerModel)
+    add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
+    add_constraints!(container, PhaseAngleControlLimit, devices, model, network_model)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -491,19 +518,12 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
-    ::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{StandardPTDFModel},
 )
     devices = get_available_components(PSY.PhaseShiftingTransformer, sys)
-    add_constraints!(container, FlowLimitConstraint, devices, model, StandardPTDFModel)
-    add_constraints!(container, PhaseAngleControlLimit, devices, model, StandardPTDFModel)
-    add_to_expression!(
-        container,
-        ActivePowerBalance,
-        PhaseShifterAngle,
-        devices,
-        model,
-        StandardPTDFModel,
-    )
+    add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
+    add_constraints!(container, PhaseAngleControlLimit, devices, model, network_model)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
