@@ -23,7 +23,7 @@ function add_parameters!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <: TimeSeriesParameter,
+    T <: ParameterType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -31,6 +31,26 @@ function add_parameters!(
         return
     end
     add_parameters!(container, T(), devices, model)
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    key::VariableKey{U, S},
+    model::ServiceModel{S, W},
+    devices::V,
+) where {
+    S <: PSY.AbstractReserve,
+    T <: VariableValueParameter,
+    U <: VariableType,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractReservesFormulation,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, S)
+        return
+    end
+    add_parameters!(container, T(), key, model, devices)
     return
 end
 
@@ -58,7 +78,7 @@ function add_parameters!(
     service::U,
     model::ServiceModel{U, V},
 ) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
-    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, U)
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, U, PSY.get_name(service))
         return
     end
     add_parameters!(container, T(), service, model)
@@ -230,23 +250,6 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
-    ::Type{T},
-    key::VariableKey{U, S},
-    model::ServiceModel{S, W},
-    devices::V,
-) where {
-    S <: PSY.AbstractReserve,
-    T <: VariableValueParameter,
-    U <: VariableType,
-    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractReservesFormulation,
-} where {D <: PSY.Component}
-    add_parameters!(container, T(), key, model, devices)
-    return
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
     ::T,
     service::U,
     model::ServiceModel{U, V},
@@ -293,6 +296,9 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
@@ -327,6 +333,9 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, U)
+        return
+    end
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
