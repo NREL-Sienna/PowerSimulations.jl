@@ -702,8 +702,6 @@ function _add_variable_container!(
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if sparse
         var_container = sparse_container_spec(JuMP.VariableRef, axs...)
-        # We initialize sparse containers with Float64, not ideal and introduces type instability,
-        # because JuMP.Containers.SparseAxisArrays can't be initialized with undef
     else
         var_container = container_spec(JuMP.VariableRef, axs...)
     end
