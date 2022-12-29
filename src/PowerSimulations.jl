@@ -247,6 +247,7 @@ export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
 export FlowReactivePowerToFromVariable
 export PowerAboveMinimumVariable
+export PhaseShifterAngle
 
 # Auxiliary variables
 export TimeDurationOn
@@ -306,7 +307,7 @@ export OutputActivePowerVariableLimitsConstraint
 export PieceWiseLinearCostConstraint
 export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
-export PhaseShifterAngle
+export PhaseAngleControlLimit
 export RampConstraint
 export RampLimitConstraint
 export RangeLimitConstraint
