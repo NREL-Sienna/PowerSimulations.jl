@@ -338,5 +338,5 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, 240, 0, 120, 264, 24, false)
+    moi_tests(model, 360, 0, 120, 264, 24, false)
 end
