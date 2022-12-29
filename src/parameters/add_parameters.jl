@@ -78,7 +78,8 @@ function add_parameters!(
     service::U,
     model::ServiceModel{U, V},
 ) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
-    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, U, PSY.get_name(service))
+    if get_rebuild_model(get_settings(container)) &&
+       has_container_key(container, T, U, PSY.get_name(service))
         return
     end
     add_parameters!(container, T(), service, model)
