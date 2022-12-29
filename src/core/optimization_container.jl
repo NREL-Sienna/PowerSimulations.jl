@@ -936,7 +936,7 @@ function _add_param_container!(
     axs...;
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
-    if built_for_recurrent_solves(container) || !get_rebuild_model(get_settings(container))
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
         param_type = JuMP.VariableRef
     else
         param_type = Float64
