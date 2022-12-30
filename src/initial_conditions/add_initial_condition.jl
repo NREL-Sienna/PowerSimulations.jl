@@ -163,13 +163,8 @@ function _get_initial_conditions_value(
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
-    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
-    if !has_initial_condition_value(ic_data, var_type, W)
-        val = initial_condition_default(U(), component, V())
-    else
-        val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
-    end
+    val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, add_jump_parameter(get_jump_model(container), val))
@@ -186,13 +181,8 @@ function _get_initial_conditions_value(
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
-    ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
-    if !has_initial_condition_value(ic_data, var_type, W)
-        val = initial_condition_default(U(), component, V())
-    else
-        val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
-    end
+    val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, val)
