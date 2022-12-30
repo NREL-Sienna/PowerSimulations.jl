@@ -215,7 +215,7 @@ struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
 
 struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
 
-# Necessary as a work around for HVDC models with losses
+# Necessary as a work around for HVDCP2P models with losses
 struct HVDCTotalPowerDeliveredVariable <: VariableType end
 
 struct PieceWiseLinearCostVariable <: VariableType end

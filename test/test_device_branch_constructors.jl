@@ -86,7 +86,7 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     for model in [DCPPowerModel, StandardPTDFModel],
-        hvdc_model in [HVDCDispatch, HVDCLossless]
+        hvdc_model in [HVDCP2PDispatch, HVDCP2PLossless]
 
         template =
             get_template_dispatch_with_network(NetworkModel(model; PTDF=PSY.PTDF(system)))
@@ -146,7 +146,7 @@ end
     for model in [DCPPowerModel, StandardPTDFModel]
         template =
             get_template_dispatch_with_network(NetworkModel(model; PTDF=PSY.PTDF(system)))
-        set_device_model!(template, DeviceModel(HVDCLine, HVDCUnbounded))
+        set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
         model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
@@ -213,7 +213,7 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
-    set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
+    set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PDispatch))
     model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
     @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
@@ -282,7 +282,7 @@ end
     template = get_template_dispatch_with_network(
         NetworkModel(StandardPTDFModel; PTDF=PSY.PTDF(system)),
     )
-    set_device_model!(template, DeviceModel(HVDCLine, HVDCDispatch))
+    set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PDispatch))
     model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
     @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 

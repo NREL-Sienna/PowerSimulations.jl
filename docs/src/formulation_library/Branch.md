@@ -44,24 +44,24 @@ StaticBranchUnbounded
 
 ---
 
-## `HVDCLossless`
+## `HVDCP2PLossless`
 
 ```@docs
-HVDCLossless
+HVDCP2PLossless
 ```
 
 ---
 
-## `HVDCDispatch`
+## `HVDCP2PDispatch`
 
 ```@docs
-HVDCDispatch
+HVDCP2PDispatch
 ```
 
 ---
 
-## `HVDCUnbounded`
+## `HVDCP2PUnbounded`
 
 ```@docs
-HVDCUnbounded
+HVDCP2PUnbounded
 ```

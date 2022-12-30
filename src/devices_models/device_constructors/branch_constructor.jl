@@ -51,7 +51,7 @@ construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, HVDCDispatch},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PDispatch},
     ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
 
@@ -59,7 +59,7 @@ construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, HVDCDispatch},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PDispatch},
     ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
 
@@ -67,7 +67,7 @@ construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, HVDCLossless},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PLossless},
     ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
 
@@ -75,7 +75,7 @@ construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, HVDCLossless},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PLossless},
     ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
 
@@ -254,7 +254,7 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCLossless, S <: PM.AbstractPowerModel} end
+) where {B <: PSY.DCBranch, F <: HVDCP2PLossless, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -262,7 +262,7 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCUnbounded, S <: PM.AbstractPowerModel} end
+) where {B <: PSY.DCBranch, F <: HVDCP2PUnbounded, S <: PM.AbstractPowerModel} end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -270,7 +270,7 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCDispatch, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     add_variables!(container, HVDCTotalPowerDeliveredVariable, devices, F())
     add_to_expression!(
@@ -290,7 +290,7 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCDispatch, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     branch_rate_bounds!(container, devices, model, S)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
@@ -300,7 +300,7 @@ function construct_device!(
     return
 end
 
-# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+# Repeated method to avoid ambiguity between HVDCP2PUnbounded and HVDCP2PLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -309,7 +309,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: HVDCLossless,
+    U <: HVDCP2PLossless,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -326,7 +326,7 @@ function construct_device!(
     return
 end
 
-# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+# Repeated method to avoid ambiguity between HVDCP2PUnbounded and HVDCP2PLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -335,7 +335,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: HVDCUnbounded,
+    U <: HVDCP2PUnbounded,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -352,7 +352,7 @@ function construct_device!(
     return
 end
 
-# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+# Repeated method to avoid ambiguity between HVDCP2PUnbounded and HVDCP2PP2PLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -361,7 +361,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: HVDCUnbounded,
+    U <: HVDCP2PUnbounded,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -371,7 +371,7 @@ function construct_device!(
     return
 end
 
-# Repeated method to avoid ambiguity between HVDCUnbounded and HVDCLossless
+# Repeated method to avoid ambiguity between HVDCP2PUnbounded and HVDCP2PLossless
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -380,7 +380,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: HVDCLossless,
+    U <: HVDCP2PLossless,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -396,7 +396,7 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, U <: HVDCLossless, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, U <: HVDCP2PLossless, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     branch_rate_bounds!(container, devices, model, S)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
@@ -411,7 +411,7 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{B, U},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, U <: HVDCUnbounded, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, U <: HVDCP2PUnbounded, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
@@ -427,7 +427,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: HVDCDispatch,
+    U <: HVDCP2PDispatch,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)
@@ -446,7 +446,7 @@ function construct_device!(
     ::NetworkModel{S},
 ) where {
     B <: PSY.DCBranch,
-    U <: HVDCDispatch,
+    U <: HVDCP2PDispatch,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
     devices = get_available_components(B, sys)

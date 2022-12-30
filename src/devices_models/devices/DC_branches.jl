@@ -15,10 +15,10 @@ get_variable_multiplier(
     ::AbstractDCLineFormulation,
 ) = 1.0
 
-get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCUnbounded) =
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCP2PUnbounded) =
     nothing
 
-get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCUnbounded) =
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCP2PUnbounded) =
     nothing
 
 get_variable_lower_bound(
@@ -52,13 +52,13 @@ end
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, <:AbstractDCLineFormulation},
-) where {T <: PSY.HVDCLine} = DeviceModel(T, HVDCDispatch)
+) where {T <: PSY.HVDCLine} = DeviceModel(T, HVDCP2PDispatch)
 
 #################################### Rate Limits Constraints ##################################################
 function branch_rate_bounds!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCLossless},
+    ::DeviceModel{B, HVDCP2PLossless},
     ::Type{<:PM.AbstractPowerModel},
 ) where {B <: PSY.HVDCLine}
     var = get_variable(container, FlowActivePowerVariable(), B)
@@ -107,7 +107,7 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{FlowRateConstraint},
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCLossless},
+    ::DeviceModel{B, HVDCP2PLossless},
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.DCBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
@@ -135,7 +135,7 @@ add_constraints!(
     ::OptimizationContainer,
     ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint}},
     ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
-    ::DeviceModel{<:PSY.DCBranch, HVDCUnbounded},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
     ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
