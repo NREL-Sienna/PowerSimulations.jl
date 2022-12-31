@@ -295,7 +295,7 @@ export FlowReactivePowerFromToConstraint
 export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
-export HVDCTotalPowerDeliveredVariable
+export HVDCLosses
 export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint

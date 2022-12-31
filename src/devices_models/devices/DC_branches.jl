@@ -7,12 +7,15 @@ get_variable_multiplier(
     ::FlowActivePowerFromToVariable,
     ::Type{<:PSY.DCBranch},
     ::AbstractDCLineFormulation,
-) = -1.0
+) = 1.0
+
 get_variable_multiplier(
     ::FlowActivePowerToFromVariable,
     ::Type{<:PSY.DCBranch},
     ::AbstractDCLineFormulation,
-) = 1.0
+) = -1.0
+
+get_variable_multiplier(::HVDCLosses, ::Type{<:PSY.DCBranch}, ::HVDCP2PDispatch) = -1.0
 
 get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCP2PUnbounded) =
     nothing
@@ -24,15 +27,15 @@ get_variable_lower_bound(
     ::FlowActivePowerVariable,
     d::PSY.DCBranch,
     ::AbstractDCLineFormulation,
-) = max(PSY.get_active_power_limits_from(d).min, PSY.get_active_power_limits_to(d).min)
+) = nothing
 
 get_variable_upper_bound(
     ::FlowActivePowerVariable,
     d::PSY.DCBranch,
     ::AbstractDCLineFormulation,
-) = min(PSY.get_active_power_limits_from(d).max, PSY.get_active_power_limits_to(d).max)
+) = nothing
 
-#! format: on
+get_variable_lower_bound(::HVDCLosses, d::PSY.DCBranch, ::AbstractDCLineFormulation) = 0.0
 
 function get_default_time_series_names(
     ::Type{U},
@@ -50,94 +53,10 @@ end
 
 get_initial_conditions_device_model(
     ::OperationModel,
-    ::DeviceModel{T, <:AbstractDCLineFormulation},
-) where {T <: PSY.HVDCLine} = DeviceModel(T, HVDCP2PDispatch)
+    ::DeviceModel{T, U},
+) where {T <: PSY.HVDCLine, U <: AbstractDCLineFormulation} = DeviceModel(T, U)
 
 #################################### Rate Limits Constraints ##################################################
-function branch_rate_bounds!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCP2PLossless},
-    ::Type{<:PM.AbstractPowerModel},
-) where {B <: PSY.HVDCLine}
-    var = get_variable(container, FlowActivePowerVariable(), B)
-    for d in devices
-        name = PSY.get_name(d)
-        for t in get_time_steps(container)
-            _var = var[name, t]
-            max_val = max(
-                PSY.get_active_power_limits_to(d).max,
-                PSY.get_active_power_limits_from(d).max,
-            )
-            min_val = min(
-                PSY.get_active_power_limits_to(d).min,
-                PSY.get_active_power_limits_from(d).min,
-            )
-            JuMP.set_upper_bound(_var, max_val)
-            JuMP.set_lower_bound(_var, min_val)
-        end
-    end
-    return
-end
-
-function branch_rate_bounds!(
-    container::OptimizationContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractPowerModel},
-) where {B <: PSY.HVDCLine}
-    vars = [
-        get_variable(container, FlowActivePowerVariable(), B),
-        get_variable(container, HVDCTotalPowerDeliveredVariable(), B),
-    ]
-    for d in devices
-        name = PSY.get_name(d)
-        for t in get_time_steps(container)
-            JuMP.set_upper_bound(vars[1][name, t], PSY.get_active_power_limits_from(d).max)
-            JuMP.set_lower_bound(vars[1][name, t], PSY.get_active_power_limits_from(d).min)
-            JuMP.set_upper_bound(vars[2][name, t], PSY.get_active_power_limits_to(d).max)
-            JuMP.set_lower_bound(vars[2][name, t], PSY.get_reactive_power_limits_to(d).min)
-        end
-    end
-    return
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
-    cons_type::Type{FlowRateConstraint},
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, HVDCP2PLossless},
-    ::Type{<:PM.AbstractDCPModel},
-) where {B <: PSY.DCBranch}
-    var = get_variable(container, FlowActivePowerVariable(), B)
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
-    for t in time_steps, d in devices
-        min_rate = max(
-            PSY.get_active_power_limits_from(d).min,
-            PSY.get_active_power_limits_to(d).min,
-        )
-        max_rate = min(
-            PSY.get_active_power_limits_from(d).max,
-            PSY.get_active_power_limits_to(d).max,
-        )
-        constraint[PSY.get_name(d), t] = JuMP.@constraint(
-            get_jump_model(container),
-            min_rate <= var[PSY.get_name(d), t] <= max_rate
-        )
-    end
-    return
-end
-
-add_constraints!(
-    ::OptimizationContainer,
-    ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint}},
-    ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
-    ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
-    ::Type{<:PM.AbstractPowerModel},
-) = nothing
-
 function _get_flow_bounds(d::PSY.HVDCLine)
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
@@ -189,20 +108,87 @@ function _get_flow_bounds(d::PSY.HVDCLine)
     return min_rate, max_rate
 end
 
+add_constraints!(
+    ::OptimizationContainer,
+    ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint}},
+    ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
+    ::Type{<:PM.AbstractPowerModel},
+) = nothing
+
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, <:AbstractDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
-) where {
-    T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint},
-    U <: PSY.DCBranch,
-}
+) where {T <: FlowRateConstraint, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
 
     var = get_variable(container, FlowActivePowerVariable(), U)
+    constraint_ub =
+        add_constraints_container!(container, T(), U, names, time_steps; meta="ub")
+    constraint_lb =
+        add_constraints_container!(container, T(), U, names, time_steps; meta="lb")
+    for d in devices
+        min_rate, max_rate = PSY.get_active_power_limits_from(d)
+        for t in time_steps
+            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                var[PSY.get_name(d), t] <= max_rate
+            )
+            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                min_rate <= var[PSY.get_name(d), t]
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, <:AbstractDCLineFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: FlowRateConstraintFromTo, U <: PSY.DCBranch}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+
+    var = get_variable(container, FlowActivePowerFromToVariable(), U)
+    constraint_ub =
+        add_constraints_container!(container, T(), U, names, time_steps; meta="ub")
+    constraint_lb =
+        add_constraints_container!(container, T(), U, names, time_steps; meta="lb")
+    for d in devices
+        min_rate, max_rate = PSY.get_active_power_limits_to(d)
+        for t in time_steps
+            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                var[PSY.get_name(d), t] <= max_rate
+            )
+            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                min_rate <= var[PSY.get_name(d), t]
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, <:AbstractDCLineFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: FlowRateConstraintToFrom, U <: PSY.DCBranch}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+
+    var = get_variable(container, FlowActivePowerToFromVariable(), U)
     constraint_ub =
         add_constraints_container!(container, T(), U, names, time_steps; meta="ub")
     constraint_lb =
@@ -225,23 +211,91 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{HVDCPowerBalance},
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractDCLineFormulation},
+    ::Type{HVDCPowerBalance},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:AbstractDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
-) where {B <: PSY.DCBranch}
+) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
+    tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
+    ft_var = get_variable(container, FlowActivePowerFromToVariable(), T)
+    constraint_ub = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta="ub",
+    )
+    constraint_lb = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta="lb",
+    )
+    for d in devices
+        l1 = PSY.get_loss(d).l1
+        l0 = PSY.get_loss(d).l0
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                ft_var[name, t] - tf_var[name, t] >= l1 * ft_var[name, t] + l0
+            )
+            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                tf_var[name, t] - ft_var[name, t] <= l1 * tf_var[name, t] - l0
+            )
+        end
+    end
+    return
+end
 
-    delivered_power_var = get_variable(container, HVDCTotalPowerDeliveredVariable(), B)
-    flow_var = get_variable(container, FlowActivePowerVariable(), B)
-    constraint = add_constraints_container!(container, cons_type(), B, names, time_steps)
-    for t in get_time_steps(container), d in devices
-        constraint[PSY.get_name(d), t] = JuMP.@constraint(
-            get_jump_model(container),
-            delivered_power_var[PSY.get_name(d), t] ==
-            -PSY.get_loss(d).l1 * flow_var[PSY.get_name(d), t] - PSY.get_loss(d).l0,
-        )
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCLossesAbsoluteValue},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:AbstractDCLineFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.DCBranch}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    losses = get_variable(container, HVDCLosses(), T)
+    tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
+    ft_var = get_variable(container, FlowActivePowerFromToVariable(), T)
+    constraint_ub = add_constraints_container!(
+        container,
+        HVDCLossesAbsoluteValue(),
+        T,
+        names,
+        time_steps;
+        meta="ub",
+    )
+    constraint_lb = add_constraints_container!(
+        container,
+        HVDCLossesAbsoluteValue(),
+        T,
+        names,
+        time_steps;
+        meta="lb",
+    )
+    for d in devices
+        l1 = PSY.get_loss(d).l1
+        l0 = PSY.get_loss(d).l0
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                l1 * ft_var[name, t] + l0 <= losses[name, t]
+            )
+            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses[name, t] >= -l1 * tf_var[name, t] + l0
+            )
+        end
     end
     return
 end

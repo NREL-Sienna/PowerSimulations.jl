@@ -1175,7 +1175,11 @@ end
 function get_expression(container::OptimizationContainer, key::ExpressionKey)
     var = get(container.expressions, key, nothing)
     if var === nothing
-        throw(IS.InvalidValue("constraint $key is not stored"))
+        throw(
+            IS.InvalidValue(
+                "constraint $key is not stored. $(collect(keys(container.expressions)))",
+            ),
+        )
     end
 
     return var

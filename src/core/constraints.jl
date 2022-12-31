@@ -92,6 +92,7 @@ struct StartTypeConstraint <: ConstraintType end
 struct StartupInitialConditionConstraint <: ConstraintType end
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
+struct HVDCLossesAbsoluteValue <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 struct EnergyVariableLimitUpConstraint <: ConstraintType end

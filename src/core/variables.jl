@@ -216,7 +216,7 @@ struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
 struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
 
 # Necessary as a work around for HVDCP2P models with losses
-struct HVDCTotalPowerDeliveredVariable <: VariableType end
+struct HVDCLosses <: VariableType end
 
 struct PieceWiseLinearCostVariable <: VariableType end
 
@@ -258,4 +258,4 @@ convert_result_to_natural_units(::Type{ComponentActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ComponentReactivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ComponentActivePowerReserveUpVariable}) = true
 convert_result_to_natural_units(::Type{ComponentActivePowerReserveDownVariable}) = true
-convert_result_to_natural_units(::Type{HVDCTotalPowerDeliveredVariable}) = true
+convert_result_to_natural_units(::Type{HVDCLosses}) = true
