@@ -287,14 +287,25 @@ function add_constraints!(
         l0 = PSY.get_loss(d).l0
         name = PSY.get_name(d)
         for t in get_time_steps(container)
-            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+            if l1 == 0.0 && l0 == 0.0
+                constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                l1 * ft_var[name, t] + l0 <= losses[name, t]
-            )
-            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                losses[name, t] >= -l1 * tf_var[name, t] + l0
-            )
+                ft_var[name, t] - tf_var[name, t] <= 0.0
+                )
+                constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    0.0 >= tf_var[name, t] - ft_var[name, t]
+                )
+            else
+                constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    ft_var[name, t] - tf_var[name, t] <= losses[name, t]
+                )
+                constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    losses[name, t] >= -tf_var[name, t] + ft_var[name, t]
+                )
+            end
         end
     end
     return
