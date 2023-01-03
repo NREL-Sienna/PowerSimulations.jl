@@ -110,7 +110,15 @@ end
 
 add_constraints!(
     ::OptimizationContainer,
-    ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom, FlowRateConstraint}},
+    ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom}},
+    ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
+    ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
+    ::Type{<:PM.AbstractPowerModel},
+) = nothing
+
+add_constraints!(
+    ::OptimizationContainer,
+    ::Type{FlowRateConstraint},
     ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
     ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
     ::Type{<:PM.AbstractPowerModel},
@@ -151,7 +159,7 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, <:AbstractDCLineFormulation},
+    ::DeviceModel{U, HVDCP2PDispatch},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: FlowRateConstraintFromTo, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
@@ -182,7 +190,7 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, <:AbstractDCLineFormulation},
+    ::DeviceModel{U, HVDCP2PDispatch},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: FlowRateConstraintToFrom, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
