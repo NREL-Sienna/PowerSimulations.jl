@@ -110,6 +110,23 @@ function _check_hvdc_line_limits_consistency(d::PSY.HVDCLine)
     end
     return
 end
+
+function _check_hvdc_line_limits_unidirectional(d::PSY.HVDCLine)
+    from_min = PSY.get_active_power_limits_from(d).min
+    to_min = PSY.get_active_power_limits_to(d).min
+    from_max = PSY.get_active_power_limits_from(d).max
+    to_max = PSY.get_active_power_limits_to(d).max
+
+    if from_min < 0 || to_min < 0 || from_max < 0 || to_max < 0
+        throw(
+            IS.ConflictingInputsError(
+                "Changing flow direction on HVDC Line $(PSY.get_name(d)) is compatible with the network formulation. \
+                Bi-directional models with losses are only compatible with AbstractActivePowerModels"
+            ),
+        )
+    return
+end
+
 function _get_flow_bounds(d::PSY.HVDCLine)
     _check_hvdc_line_limits_consistency(d)
     from_min = PSY.get_active_power_limits_from(d).min
@@ -192,7 +209,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCP2PDispatch},
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: FlowRateConstraintFromTo, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -223,7 +240,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCP2PDispatch},
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: FlowRateConstraintToFrom, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -254,7 +271,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCP2PDispatch},
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: HVDCDirection, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -302,7 +319,7 @@ function add_constraints!(
     ::Type{HVDCPowerBalance},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -386,7 +403,7 @@ function add_constraints!(
     ::Type{HVDCLossesAbsoluteValue},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -419,6 +436,38 @@ function add_constraints!(
             constraint_ft[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
                 -tf_var[name, t] + ft_var[name, t] <= losses[name, t]
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, HVDCP2PDispatch},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: FlowRateConstraint, U <: PSY.DCBranch}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+
+    var = get_variable(container, FlowActivePowerVariable(), U)
+    constraint_ub =
+        add_constraints_container!(container, T(), U, names, time_steps; meta="ub")
+    constraint_lb =
+        add_constraints_container!(container, T(), U, names, time_steps; meta="lb")
+    for d in devices
+        _check_hvdc_line_limits_unidirectional(d)
+        min_rate, max_rate = _get_flow_bounds(d)
+        for t in time_steps
+            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                var[PSY.get_name(d), t] <= max_rate
+            )
+            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                min_rate <= var[PSY.get_name(d), t]
             )
         end
     end

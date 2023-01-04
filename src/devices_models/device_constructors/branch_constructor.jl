@@ -427,7 +427,7 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(B, sys)
     add_variables!(container, FlowActivePowerToFromVariable, devices, F())
     add_variables!(container, FlowActivePowerFromToVariable, devices, F())
@@ -457,12 +457,45 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(B, sys)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
     add_constraints!(container, HVDCPowerBalance, devices, model, S)
     add_constraints!(container, HVDCDirection, devices, model, S)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, U},
+    ::NetworkModel{V},
+) where {T <: PSY.DCBranch, U <: HVDCP2PDispatch, V <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    add_variables!(container, FlowActivePowerVariable, devices, U())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{B, F},
+    ::NetworkModel{S},
+) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    add_constraints!(container, FlowRateConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
 end
