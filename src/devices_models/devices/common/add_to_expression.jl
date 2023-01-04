@@ -196,39 +196,6 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
-) where {
-    T <: ActivePowerBalance,
-    U <: FlowActivePowerToFromVariable,
-    V <: PSY.Branch,
-    W <: AbstractDeviceFormulation,
-    X <: PM.AbstractPowerModel,
-}
-    variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
-    for d in devices
-        name = PSY.get_name(d)
-        bus_number = PSY.get_number(PSY.get_arc(d).to)
-        for t in get_time_steps(container)
-            _add_to_jump_expression!(
-                expression[bus_number, t],
-                variable[name, t],
-                get_variable_multiplier(U(), V, W()),
-            )
-        end
-    end
-    return
-end
-
-"""
-Default implementation to add branch variables to SystemBalanceExpressions
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
     ::Type{StandardPTDFModel},
 ) where {T <: ActivePowerBalance, U <: HVDCLosses, V <: PSY.HVDCLine, W <: HVDCP2PDispatch}
     variable = get_variable(container, U(), V)
@@ -239,7 +206,7 @@ function add_to_expression!(
             _add_to_jump_expression!(
                 expression[t],
                 variable[name, t],
-                get_variable_multiplier(U(), V, W()),
+                get_variable_multiplier(U(), d, W()),
             )
         end
     end
@@ -268,6 +235,39 @@ function add_to_expression!(
     for d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[bus_number, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add branch variables to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerToFromVariable,
+    V <: PSY.Branch,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), X)
+    for d in devices
+        name = PSY.get_name(d)
+        bus_number = PSY.get_number(PSY.get_arc(d).to)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 expression[bus_number, t],
@@ -570,43 +570,6 @@ function add_to_expression!(
     W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
-    var = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
-    for d in devices
-        for t in get_time_steps(container)
-            flow_variable = var[PSY.get_name(d), t]
-            _add_to_jump_expression!(
-                expression[PSY.get_number(PSY.get_arc(d).from), t],
-                flow_variable,
-                -1.0,
-            )
-            _add_to_jump_expression!(
-                expression[PSY.get_number(PSY.get_arc(d).to), t],
-                flow_variable,
-                1.0,
-            )
-        end
-    end
-    return
-end
-
-"""
-Implementation of add_to_expression! for lossless branch/network models
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, HVDCP2PDispatch},
-    ::Type{X},
-) where {
-    T <: ActivePowerBalance,
-    U <: FlowActivePowerVariable,
-    V <: PSY.DCBranch,
-    X <: PM.AbstractActivePowerModel,
-}
-    @error "broken"
     var = get_variable(container, U(), V)
     expression = get_expression(container, T(), X)
     for d in devices
