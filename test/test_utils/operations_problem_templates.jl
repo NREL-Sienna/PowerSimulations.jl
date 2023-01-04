@@ -13,7 +13,7 @@ function get_thermal_dispatch_template_network(network=CopperPlatePowerModel)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)
-    set_device_model!(template, HVDCLine, HVDCLossless)
+    set_device_model!(template, HVDCLine, HVDCP2PLossless)
     return template
 end
 
@@ -70,6 +70,6 @@ function get_template_dispatch_with_network(network=StandardPTDFModel)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)
-    set_device_model!(template, HVDCLine, HVDCLossless)
+    set_device_model!(template, HVDCLine, HVDCP2PLossless)
     return template
 end

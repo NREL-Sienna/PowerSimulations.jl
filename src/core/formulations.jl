@@ -192,15 +192,15 @@ abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
 """
 Branch type to avoid flow constraints
 """
-struct HVDCUnbounded <: AbstractDCLineFormulation end
+struct HVDCP2PUnbounded <: AbstractDCLineFormulation end
 """
 Branch type to represent lossless power flow on DC lines
 """
-struct HVDCLossless <: AbstractDCLineFormulation end
+struct HVDCP2PLossless <: AbstractDCLineFormulation end
 """
 Branch type to represent lossy power flow on DC lines
 """
-struct HVDCDispatch <: AbstractDCLineFormulation end
+struct HVDCP2PDispatch <: AbstractDCLineFormulation end
 # Not Implemented
 # struct VoltageSourceDC <: AbstractDCLineFormulation end
 

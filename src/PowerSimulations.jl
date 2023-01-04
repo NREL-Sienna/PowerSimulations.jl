@@ -39,9 +39,9 @@ export GroupReserve
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
-export HVDCLossless
-export HVDCDispatch
-export HVDCUnbounded
+export HVDCP2PLossless
+export HVDCP2PDispatch
+export HVDCP2PUnbounded
 # export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad
@@ -295,7 +295,7 @@ export FlowReactivePowerFromToConstraint
 export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
-export HVDCTotalPowerDeliveredVariable
+export HVDCLosses
 export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint

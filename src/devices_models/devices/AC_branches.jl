@@ -215,6 +215,7 @@ function add_constraints!(
     )
     nodal_balance_expressions =
         get_expression(container, ActivePowerBalance(), StandardPTDFModel)
+
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)
     for br in devices
