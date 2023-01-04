@@ -117,24 +117,24 @@ function _get_flow_bounds(d::PSY.HVDCLine)
     from_max = PSY.get_active_power_limits_from(d).max
     to_max = PSY.get_active_power_limits_to(d).max
 
-    if from_max <= to_max && from_min <= to_min
-        # Case bounds dominated by from side of HVDC Line
-        max_rate = from_max
+    if from_min >= 0.0 && to_min >= 0.0
+        min_rate = min(from_min, to_min)
+    elseif from_min <= 0.0 && to_min <= 0.0
+        min_rate = max(from_min, to_min)
+    elseif from_min <= 0.0 && to_min >= 0.0
         min_rate = from_min
-    elseif from_max >= to_max && from_min >= to_min
-        # Case bounds dominated by to side of HVDC Line
-        max_rate = to_max
+    elseif to_min <= 0.0 && from_min >= 0.0
         min_rate = to_min
-    elseif from_max >= to_max && from_min <= to_min
-        # Case bounds mix upper bound set by to side and lower bound set by from side
-        max_rate = to_max
-        min_rate = from_min
-    elseif from_max <= to_max && from_min >= to_min
-        # Case bounds mix lower bound set by to side and upper bound set by from side
+    end
+
+    if from_max >= 0.0 && to_max >= 0.0
+        max_rate = min(from_max, to_max)
+    elseif from_max <= 0.0 && to_max <= 0.0
+        max_rate = max(from_max, to_max)
+    elseif from_max <= 0.0 && to_max >= 0.0
         max_rate = from_max
-        min_rate = to_min
-    else
-        @assert false
+    elseif from_max >= 0.0 && to_max <= 0.0
+        max_rate = to_max
     end
 
     return min_rate, max_rate
@@ -272,24 +272,25 @@ function add_constraints!(
     constraint_tf_lb =
         add_constraints_container!(container, T(), U, names, time_steps; meta="tf_lb")
     for d in devices
-        min_rate, max_rate = _get_flow_bounds(d)
+        min_rate_to, max_rate_to = PSY.get_active_power_limits_to(d)
+        min_rate_from, max_rate_from = PSY.get_active_power_limits_to(d)
         name = PSY.get_name(d)
         for t in time_steps
             constraint_tf_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                tf_var[name, t] <= max_rate * (1 - direction_var[name, t])
+                tf_var[name, t] <= max_rate_to * (1 - direction_var[name, t])
             )
             constraint_ft_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                ft_var[name, t] <= max_rate * (1 - direction_var[name, t])
+                ft_var[name, t] <= max_rate_from * (1 - direction_var[name, t])
             )
             constraint_tf_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                direction_var[name, t] * min_rate <= tf_var[name, t]
+                direction_var[name, t] * min_rate_to <= tf_var[name, t]
             )
             constraint_ft_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                direction_var[name, t] * min_rate <= tf_var[name, t]
+                direction_var[name, t] * min_rate_from <= tf_var[name, t]
             )
         end
     end
@@ -347,14 +348,25 @@ function add_constraints!(
         name = PSY.get_name(d)
 
         for t in get_time_steps(container)
-            constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                tf_var[name, t] - ft_var[name, t] <= l1 * tf_var[name, t] - l0
-            )
-            constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                ft_var[name, t] - tf_var[name, t] >= l1 * ft_var[name, t] + l0
-            )
+            if l1 == 0.0 && l0 == 0.0
+                constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    tf_var[name, t] - ft_var[name, t] == 0.0
+                )
+                constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    ft_var[name, t] - tf_var[name, t] == 0.0
+                )
+            else
+                constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    tf_var[name, t] - ft_var[name, t] <= l1 * tf_var[name, t] - l0
+                )
+                constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    ft_var[name, t] - tf_var[name, t] >= l1 * ft_var[name, t] + l0
+                )
+            end
             constraint_tf_lb[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
                 ft_var[name, t] - tf_var[name, t] >=
@@ -398,29 +410,16 @@ function add_constraints!(
         meta="ft",
     )
     for d in devices
-        l1 = PSY.get_loss(d).l1
-        l0 = PSY.get_loss(d).l0
         name = PSY.get_name(d)
         for t in get_time_steps(container)
-            if l1 == 0.0 && l0 == 0.0
-                constraint_ft[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    -ft_var[name, t] + tf_var[name, t] == 0.0
-                )
-                constraint_tf[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    ft_var[name, t] - tf_var[name, t] == 0.0
-                )
-            else
-                constraint_tf[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    tf_var[name, t] - ft_var[name, t] <= losses[name, t]
-                )
-                constraint_ft[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    - tf_var[name, t] + ft_var[name, t] <= losses[name, t]
-                )
-            end
+            constraint_tf[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                tf_var[name, t] - ft_var[name, t] <= losses[name, t]
+            )
+            constraint_ft[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                -tf_var[name, t] + ft_var[name, t] <= losses[name, t]
+            )
         end
     end
     return
