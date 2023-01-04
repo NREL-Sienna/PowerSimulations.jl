@@ -414,11 +414,11 @@ function add_constraints!(
             else
                 constraint_tf[PSY.get_name(d), t] = JuMP.@constraint(
                     get_jump_model(container),
-                    -l1 * tf_var[name, t] + l0 <= losses[name, t]
+                    tf_var[name, t] - ft_var[name, t] <= losses[name, t]
                 )
                 constraint_ft[PSY.get_name(d), t] = JuMP.@constraint(
                     get_jump_model(container),
-                    l1 * ft_var[name, t] + l0 <= losses[name, t]
+                    - tf_var[name, t] + ft_var[name, t] <= losses[name, t]
                 )
             end
         end
