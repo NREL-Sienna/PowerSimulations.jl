@@ -221,22 +221,13 @@ end
 
     add_component!(sys_5, hvdc)
 
-    template_uc = ProblemTemplate(NetworkModel(
-        StandardPTDFModel,
-        PTDF=PTDF(sys_5),
-    ))
+    template_uc = ProblemTemplate(NetworkModel(StandardPTDFModel, PTDF=PTDF(sys_5)))
 
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-    set_device_model!(template_uc, DeviceModel(
-        Line,
-        StaticBranchUnbounded,
-    ))
-    set_device_model!(template_uc, DeviceModel(
-        HVDCLine,
-        HVDCP2PLossless,
-    ))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+    set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PLossless))
 
     model = DecisionModel(
         template_uc,
@@ -251,9 +242,7 @@ end
     ptdf_values = ptdf_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
     ptdf_objective = model.internal.container.optimizer_stats.objective_value
 
-    set_network_model!(template_uc, NetworkModel(
-        DCPPowerModel
-    ))
+    set_network_model!(template_uc, NetworkModel(DCPPowerModel))
 
     model = DecisionModel(
         template_uc,
@@ -268,9 +257,9 @@ end
     dcp_values = dcp_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
     dcp_objective = model.internal.container.optimizer_stats.objective_value
 
-    @test isapprox(dcp_objective, ptdf_objective; atol = 0.1)
+    @test isapprox(dcp_objective, ptdf_objective; atol=0.1)
     for col in names(ptdf_values)
-        @test all(isapprox.(ptdf_values[!, col], dcp_values[!, col]; atol = 0.1))
+        @test all(isapprox.(ptdf_values[!, col], dcp_values[!, col]; atol=0.1))
     end
 end
 
@@ -296,23 +285,14 @@ end
 
     add_component!(sys_5, hvdc)
     for net_model in [DCPPowerModel, StandardPTDFModel]
-        template_uc = ProblemTemplate(NetworkModel(
-            net_model,
-            PTDF=PTDF(sys_5),
-            use_slacks=true
-        ))
+        template_uc =
+            ProblemTemplate(NetworkModel(net_model, PTDF=PTDF(sys_5), use_slacks=true))
 
         set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
         set_device_model!(template_uc, RenewableDispatch, FixedOutput)
         set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-        set_device_model!(template_uc, DeviceModel(
-            Line,
-            StaticBranchUnbounded,
-        ))
-        set_device_model!(template_uc, DeviceModel(
-            HVDCLine,
-            HVDCP2PLossless,
-        ))
+        set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+        set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PLossless))
 
         model_ref = DecisionModel(
             template_uc,
@@ -324,14 +304,13 @@ end
 
         solve!(model_ref; output_dir=mktempdir())
         ref_vars = get_variable_values(ProblemResults(model_ref))
-        ref_values = ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
-        hvdc_ref_values = ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]
+        ref_values =
+            ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
+        hvdc_ref_values =
+            ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]
         ref_objective = model_ref.internal.container.optimizer_stats.objective_value
 
-        set_device_model!(template_uc, DeviceModel(
-            HVDCLine,
-            HVDCP2PDispatch,
-        ))
+        set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PDispatch))
 
         model = DecisionModel(
             template_uc,
@@ -343,14 +322,25 @@ end
 
         solve!(model; output_dir=mktempdir())
         no_loss_vars = get_variable_values(ProblemResults(model))
-        no_loss_values = no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
-        hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerFromToVariable, HVDCLine}("")]
-        hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerToFromVariable, HVDCLine}("")]
+        no_loss_values =
+            no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
+        hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
+            FlowActivePowerFromToVariable,
+            HVDCLine,
+        }(
+            "",
+        )]
+        hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
+            FlowActivePowerToFromVariable,
+            HVDCLine,
+        }(
+            "",
+        )]
         no_loss_objective = model.internal.container.optimizer_stats.objective_value
 
-        @test isapprox(no_loss_objective, ref_objective; atol = 0.1)
+        @test isapprox(no_loss_objective, ref_objective; atol=0.1)
         for col in names(ref_values)
-            @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol = 0.1))
+            @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol=0.1))
         end
 
         for col in names(hvdc_ft_no_loss_values)
@@ -369,10 +359,21 @@ end
 
         solve!(model_wl; output_dir=mktempdir())
         dispatch_vars = get_variable_values(ProblemResults(model_wl))
-        dispatch_values = dispatch_vars[PowerSimulations.VariableKey{HVDCLosses, HVDCLine}("")]
+        dispatch_values =
+            dispatch_vars[PowerSimulations.VariableKey{HVDCLosses, HVDCLine}("")]
         # dispatch_values = dispatch_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
-        dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{FlowActivePowerFromToVariable, HVDCLine}("")]
-        dispatch_values_tf = dispatch_vars[PowerSimulations.VariableKey{FlowActivePowerToFromVariable, HVDCLine}("")]
+        dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
+            FlowActivePowerFromToVariable,
+            HVDCLine,
+        }(
+            "",
+        )]
+        dispatch_values_tf = dispatch_vars[PowerSimulations.VariableKey{
+            FlowActivePowerToFromVariable,
+            HVDCLine,
+        }(
+            "",
+        )]
         dispatch_objective = model_wl.internal.container.optimizer_stats.objective_value
 
         @test dispatch_objective > no_loss_objective
@@ -380,7 +381,6 @@ end
         for col in names(dispatch_values_tf)
             @test all(dispatch_values_tf[!, col] .>= dispatch_values_ft[!, col])
         end
-
     end
 end
 

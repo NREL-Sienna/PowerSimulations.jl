@@ -116,11 +116,7 @@ function get_branch_to_pm(
     return PM_branch
 end
 
-function get_branch_to_pm(
-    ix::Int,
-    branch::PSY.Transformer2W,
-    ::Type{StaticBranchUnbounded},
-)
+function get_branch_to_pm(ix::Int, branch::PSY.Transformer2W, ::Type{StaticBranchUnbounded})
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
@@ -222,11 +218,7 @@ function get_branch_to_pm(
     return PM_branch
 end
 
-function get_branch_to_pm(
-    ix::Int,
-    branch::PSY.ACBranch,
-    ::Type{StaticBranchUnbounded},
-)
+function get_branch_to_pm(ix::Int, branch::PSY.ACBranch, ::Type{StaticBranchUnbounded})
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
@@ -247,12 +239,7 @@ function get_branch_to_pm(
     return PM_branch
 end
 
-
-function get_branch_to_pm(
-    ix::Int,
-    branch::PSY.HVDCLine,
-    ::Type{HVDCP2PDispatch},
-)
+function get_branch_to_pm(ix::Int, branch::PSY.HVDCLine, ::Type{HVDCP2PDispatch})
     PM_branch = Dict{String, Any}(
         "loss1" => PSY.get_loss(branch).l1,
         "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,

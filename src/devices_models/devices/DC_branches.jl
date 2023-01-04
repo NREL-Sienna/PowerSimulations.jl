@@ -1,7 +1,11 @@
 #################################### Branch Variables ##################################################
 get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = false
 
-get_variable_binary(::HVDCFlowDirectionVariable, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = true
+get_variable_binary(
+    ::HVDCFlowDirectionVariable,
+    ::Type{<:PSY.DCBranch},
+    ::AbstractDCLineFormulation,
+) = true
 
 get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}, _) = NaN
 
@@ -56,7 +60,6 @@ function get_variable_upper_bound(::HVDCLosses, d::PSY.DCBranch, ::HVDCP2PDispat
         return nothing
     end
 end
-
 
 function get_default_time_series_names(
     ::Type{U},
@@ -274,19 +277,19 @@ function add_constraints!(
         for t in time_steps
             constraint_tf_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                tf_var[name, t] <= max_rate*(1 - direction_var[name, t])
+                tf_var[name, t] <= max_rate * (1 - direction_var[name, t])
             )
             constraint_ft_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                ft_var[name, t] <= max_rate*(1 - direction_var[name, t])
+                ft_var[name, t] <= max_rate * (1 - direction_var[name, t])
             )
             constraint_tf_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                direction_var[name, t]*min_rate <= tf_var[name, t]
+                direction_var[name, t] * min_rate <= tf_var[name, t]
             )
             constraint_ft_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                direction_var[name, t]*min_rate <= tf_var[name, t]
+                direction_var[name, t] * min_rate <= tf_var[name, t]
             )
         end
     end
@@ -354,11 +357,12 @@ function add_constraints!(
             )
             constraint_tf_lb[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                ft_var[name, t] - tf_var[name, t] >= -M_VALUE*(1-direction_var[name, t])
+                ft_var[name, t] - tf_var[name, t] >=
+                -M_VALUE * (1 - direction_var[name, t])
             )
             constraint_ft_lb[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                tf_var[name, t] - ft_var[name, t] >= -M_VALUE*(direction_var[name, t])
+                tf_var[name, t] - ft_var[name, t] >= -M_VALUE * (direction_var[name, t])
             )
         end
     end
