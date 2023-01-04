@@ -66,7 +66,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.PhaseShiftingTransformer,
-    device_formulation::Type{StaticBranchUnbounded},
+    ::Type{StaticBranchUnbounded},
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -91,7 +91,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.Transformer2W,
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -119,7 +119,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.Transformer2W,
-    device_formulation::Type{StaticBranchUnbounded},
+    ::Type{StaticBranchUnbounded},
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -144,7 +144,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TapTransformer,
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -172,7 +172,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TapTransformer,
-    device_formulation::Type{StaticBranchUnbounded},
+    ::Type{StaticBranchUnbounded},
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -197,7 +197,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.ACBranch,
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -225,7 +225,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.ACBranch,
-    device_formulation::Type{StaticBranchUnbounded},
+    ::Type{StaticBranchUnbounded},
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
@@ -243,6 +243,44 @@ function get_branch_to_pm(
         "angmax" => PSY.get_angle_limits(branch).max,
         "transformer" => false,
         "tap" => 1.0,
+    )
+    return PM_branch
+end
+
+
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.HVDCLine,
+    ::Type{HVDCP2PDispatch},
+)
+    PM_branch = Dict{String, Any}(
+        "loss1" => PSY.get_loss(branch).l1,
+        "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,
+        "model" => 2,
+        "shutdown" => 0.0,
+        "pmaxt" => PSY.get_active_power_limits_to(branch).max,
+        "pmaxf" => PSY.get_active_power_limits_from(branch).max,
+        "startup" => 0.0,
+        "loss0" => PSY.get_loss(branch).l1,
+        "pt" => 0.0,
+        "vt" => PSY.get_magnitude(PSY.get_arc(branch).to),
+        "qmaxf" => PSY.get_reactive_power_limits_from(branch).max,
+        "pmint" => PSY.get_active_power_limits_to(branch).min,
+        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
+        "mp_pmin" => PSY.get_reactive_power_limits_from(branch).min,
+        "br_status" => 0.0,
+        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
+        "index" => ix,
+        "qmint" => PSY.get_reactive_power_limits_to(branch).min,
+        "qf" => 0.0,
+        "cost" => 0.0,
+        "pminf" => PSY.get_active_power_limits_from(branch).min,
+        "qt" => 0.0,
+        "qminf" => PSY.get_reactive_power_limits_from(branch).min,
+        "vf" => PSY.get_magnitude(PSY.get_arc(branch).from),
+        "qmaxt" => PSY.get_reactive_power_limits_to(branch).max,
+        "ncost" => 0,
+        "pf" => 0.0,
     )
     return PM_branch
 end
@@ -250,7 +288,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.HVDCLine,
-    device_formulation::Type{D},
+    ::Type{D},
 ) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "loss1" => PSY.get_loss(branch).l1,
