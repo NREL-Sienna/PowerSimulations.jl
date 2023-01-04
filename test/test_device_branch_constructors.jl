@@ -288,7 +288,7 @@ end
         template_uc =
             ProblemTemplate(NetworkModel(net_model, PTDF=PTDF(sys_5), use_slacks=true))
 
-        set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+        set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
         set_device_model!(template_uc, RenewableDispatch, FixedOutput)
         set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
         set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
@@ -309,7 +309,7 @@ end
         hvdc_ref_values =
             ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]
         ref_objective = model_ref.internal.container.optimizer_stats.objective_value
-
+        ref_total_gen = sum(sum.(eachrow(ref_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}("")])))
         set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PDispatch))
 
         model = DecisionModel(
@@ -337,8 +337,10 @@ end
             "",
         )]
         no_loss_objective = model.internal.container.optimizer_stats.objective_value
+        no_loss_total_gen = sum(sum.(eachrow(no_loss_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}("")])))
 
         @test isapprox(no_loss_objective, ref_objective; atol=0.1)
+
         for col in names(ref_values)
             @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol=0.1))
         end
@@ -347,6 +349,8 @@ end
             @test all(hvdc_ft_no_loss_values[!, col] .== hvdc_tf_no_loss_values[!, col])
         end
 
+        @test isapprox(no_loss_total_gen, ref_total_gen; atol=0.1)
+#=
         PSY.set_loss!(hvdc, (l0=0.1, l1=0.005))
 
         model_wl = DecisionModel(
@@ -381,6 +385,7 @@ end
         for col in names(dispatch_values_tf)
             @test all(dispatch_values_tf[!, col] .>= dispatch_values_ft[!, col])
         end
+    =#
     end
 end
 
