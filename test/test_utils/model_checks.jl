@@ -28,7 +28,12 @@ function psi_constraint_test(
 )
     constraints = PSI.get_constraints(model)
     for con in constraint_keys
-        @test get(constraints, con, nothing) !== nothing
+        if get(constraints, con, nothing) !== nothing
+            @test true
+        else
+            @error con
+            @test false
+        end
     end
     return
 end
@@ -150,6 +155,7 @@ function check_flow_variable_values(
     variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(PSI.jump_value(var) <= (limit + 1e-2))
+            @error "$device_name out of bounds $(PSI.jump_value(var))"
             return false
         end
     end

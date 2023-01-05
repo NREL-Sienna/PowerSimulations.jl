@@ -104,7 +104,7 @@ end
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 168],
         c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 48, 552, 552, 456],
+        c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
@@ -161,7 +161,7 @@ end
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 168],
         c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 48, 552, 552, 456],
+        c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
@@ -207,12 +207,12 @@ end
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
         c_sys14 => [936, 0, 1080, 1080, 840],
-        c_sys14_dc => [984, 96, 984, 984, 840],
+        c_sys14_dc => [984, 0, 1080, 984, 840],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
         c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
+        c_sys14_dc => 143000.0,
     )
     for (ix, sys) in enumerate(systems)
         ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
@@ -254,7 +254,7 @@ end
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
         c_sys14 => [2832, 0, 720, 720, 696],
-        c_sys14_dc => [2832, 96, 672, 672, 744],
+        c_sys14_dc => [2832, 0, 768, 672, 744],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
@@ -284,7 +284,6 @@ end
     end
 end
 
-# TODO: Add constraint tests for these models, other is redundant with first test
 @testset "Network Solve AC-PF PowerModels NFAPowerModel" begin
     template = get_thermal_dispatch_template_network(NFAPowerModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -296,7 +295,7 @@ end
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
-        c_sys14_dc => [648, 96, 552, 552, 384],
+        c_sys14_dc => [648, 0, 648, 552, 384],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 300000.0,
@@ -326,7 +325,6 @@ end
     end
 end
 
-# TODO: Add constraint tests for these models, other is redundant with first test
 @testset "Other Network AC PowerModels models" begin
     networks = [#ACPPowerModel, Already tested
         ACRPowerModel,
@@ -344,12 +342,12 @@ end
     ACR_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 240, 240, 264],
         c_sys14 => [2832, 0, 240, 240, 696],
-        c_sys14_dc => [2832, 96, 240, 240, 744],
+        c_sys14_dc => [2832, 0, 336, 240, 744],
     )
     ACT_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1344, 0, 384, 384, 840],
         c_sys14 => [3792, 0, 720, 720, 2616],
-        c_sys14_dc => [3696, 96, 672, 672, 2472],
+        c_sys14_dc => [3696, 0, 768, 672, 2472],
     )
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems
@@ -387,12 +385,12 @@ end
     DCPLL_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [528, 0, 408, 408, 288],
         c_sys14 => [1416, 0, 1080, 1080, 840],
-        c_sys14_dc => [1416, 96, 984, 984, 840],
+        c_sys14_dc => [1416, 0, 1080, 984, 840],
     )
     LPACC_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1200, 0, 384, 384, 840],
         c_sys14 => [3312, 0, 720, 720, 2616],
-        c_sys14_dc => [3264, 96, 672, 672, 2472],
+        c_sys14_dc => [3264, 0, 768, 672, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, (ix, sys) in enumerate(systems)

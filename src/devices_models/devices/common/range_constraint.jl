@@ -9,14 +9,6 @@ function get_startup_shutdown(
     nothing
 end
 
-function get_min_max_limits(
-    device,
-    ::Type{<:VariableType},
-    ::Type{<:AbstractDeviceFormulation},
-) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    return (min=0.0, max=0.0)
-end
-
 @doc raw"""
 Constructs min/max range constraint from device variable.
 

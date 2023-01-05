@@ -117,7 +117,8 @@ no_load_cost(cost::PSY.VariableCost{Float64}, ::OnVariable, ::PSY.ThermalGen, ::
 function no_load_cost(cost::PSY.VariableCost{Tuple{Float64, Float64}}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
     return (PSY.get_cost(cost)[1] * (PSY.get_active_power_limits(d).min)^2 + PSY.get_cost(cost)[2] * PSY.get_active_power_limits(d).min)* PSY.get_base_power(d)
 end
-    #! format: on
+
+#! format: on
 function get_initial_conditions_device_model(
     model::OperationModel,
     ::DeviceModel{T, D},

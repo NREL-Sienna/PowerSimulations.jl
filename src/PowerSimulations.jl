@@ -39,9 +39,10 @@ export GroupReserve
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
-export HVDCLossless
-export HVDCDispatch
-export HVDCUnbounded
+export HVDCP2PLossless
+export HVDCP2PDispatch
+export HVDCP2PUnbounded
+export PhaseAngleControl
 # export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad
@@ -247,6 +248,7 @@ export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
 export FlowReactivePowerToFromVariable
 export PowerAboveMinimumVariable
+export PhaseShifterAngle
 
 # Auxiliary variables
 export TimeDurationOn
@@ -294,7 +296,7 @@ export FlowReactivePowerFromToConstraint
 export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
-export HVDCTotalPowerDeliveredVariable
+export HVDCLosses
 export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint
@@ -306,6 +308,7 @@ export OutputActivePowerVariableLimitsConstraint
 export PieceWiseLinearCostConstraint
 export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
+export PhaseAngleControlLimit
 export RampConstraint
 export RampLimitConstraint
 export RangeLimitConstraint
