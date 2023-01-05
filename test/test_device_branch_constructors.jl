@@ -440,7 +440,8 @@ end
         PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
         PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
-        PSI.ConstraintKey(FlowRateConstraint, HVDCLine),
+        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -460,11 +461,10 @@ end
     template = get_template_dispatch_with_network(
         NetworkModel(StandardPTDFModel; PTDF=PSY.PTDF(system)),
     )
-    set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PDispatch))
+    set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PLossless))
     model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
     @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
-    @test check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, Transformer2W)
     @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
@@ -496,14 +496,14 @@ end
     )
 end
 
-#=
 @testset "AC Power Flow Models for HVDCLine Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
         PSI.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
         PSI.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
         PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
-        PSI.ConstraintKey(FlowRateConstraint, HVDCLine),
+        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -525,8 +525,6 @@ end
     model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
     @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
-    check_variable_bounded(model_m, FlowReactivePowerToFromVariable, HVDCLine)
-    check_variable_bounded(model_m, FlowActivePowerVariable, HVDCLine)
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, TapTransformer)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, TapTransformer)
     @test check_variable_bounded(model_m, FlowActivePowerToFromVariable, Transformer2W)
@@ -561,4 +559,3 @@ end
         rate_limit2w,
     )
 end
-=#
