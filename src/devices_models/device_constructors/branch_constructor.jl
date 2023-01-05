@@ -52,22 +52,6 @@ construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, HVDCP2PDispatch},
-    ::NetworkModel{CopperPlatePowerModel},
-) = nothing
-
-construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
-    ::ModelConstructStage,
-    ::DeviceModel{<:PSY.DCBranch, HVDCP2PDispatch},
-    ::NetworkModel{CopperPlatePowerModel},
-) = nothing
-
-construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
-    ::ArgumentConstructStage,
     ::DeviceModel{<:PSY.DCBranch, HVDCP2PLossless},
     ::NetworkModel{CopperPlatePowerModel},
 ) = nothing
@@ -363,7 +347,7 @@ function construct_device!(
     model::DeviceModel{B, U},
     ::NetworkModel{S},
 ) where {
-    B <: PSY.DCBranch,
+    B <: PSY.HVDCLine,
     U <: HVDCP2PLossless,
     S <: Union{StandardPTDFModel, PTDFPowerModel},
 }
@@ -377,21 +361,21 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{B, F},
-    ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: StandardPTDFModel}
-    devices = get_available_components(B, sys)
-    add_variables!(container, FlowActivePowerToFromVariable, devices, F())
-    add_variables!(container, FlowActivePowerFromToVariable, devices, F())
-    add_variables!(container, HVDCLosses, devices, F())
-    add_variables!(container, HVDCFlowDirectionVariable, devices, F())
+    model::DeviceModel{PSY.HVDCLine, HVDCP2PDispatch},
+    ::NetworkModel{StandardPTDFModel},
+)
+    devices = get_available_components(PSY.HVDCLine, sys)
+    add_variables!(container, FlowActivePowerToFromVariable, devices, HVDCP2PDispatch())
+    add_variables!(container, FlowActivePowerFromToVariable, devices, HVDCP2PDispatch())
+    add_variables!(container, HVDCLosses, devices, HVDCP2PDispatch())
+    add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCP2PDispatch())
     add_to_expression!(
         container,
         ActivePowerBalance,
         FlowActivePowerToFromVariable,
         devices,
         model,
-        S,
+        StandardPTDFModel,
     )
     add_to_expression!(
         container,
@@ -399,9 +383,16 @@ function construct_device!(
         FlowActivePowerFromToVariable,
         devices,
         model,
-        S,
+        StandardPTDFModel,
     )
-    add_to_expression!(container, ActivePowerBalance, HVDCLosses, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCLosses,
+        devices,
+        model,
+        StandardPTDFModel,
+    )
     return
 end
 
@@ -409,14 +400,14 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{B, F},
-    ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: StandardPTDFModel}
-    devices = get_available_components(B, sys)
-    add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
-    add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
-    add_constraints!(container, HVDCPowerBalance, devices, model, S)
-    add_constraints!(container, HVDCLossesAbsoluteValue, devices, model, S)
+    model::DeviceModel{PSY.HVDCLine, HVDCP2PDispatch},
+    ::NetworkModel{StandardPTDFModel},
+)
+    devices = get_available_components(PSY.HVDCLine, sys)
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, StandardPTDFModel)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, StandardPTDFModel)
+    add_constraints!(container, HVDCPowerBalance, devices, model, StandardPTDFModel)
+    add_constraints!(container, HVDCLossesAbsoluteValue, devices, model, StandardPTDFModel)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -425,20 +416,20 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{B, F},
-    ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(B, sys)
-    add_variables!(container, FlowActivePowerToFromVariable, devices, F())
-    add_variables!(container, FlowActivePowerFromToVariable, devices, F())
-    add_variables!(container, HVDCFlowDirectionVariable, devices, F())
+    model::DeviceModel{PSY.HVDCLine, HVDCP2PDispatch},
+    ::NetworkModel{T},
+) where {T <: PM.AbstractActivePowerModel}
+    devices = get_available_components(PSY.HVDCLine, sys)
+    add_variables!(container, FlowActivePowerToFromVariable, devices, HVDCP2PDispatch())
+    add_variables!(container, FlowActivePowerFromToVariable, devices, HVDCP2PDispatch())
+    add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCP2PDispatch())
     add_to_expression!(
         container,
         ActivePowerBalance,
         FlowActivePowerToFromVariable,
         devices,
         model,
-        S,
+        T,
     )
     add_to_expression!(
         container,
@@ -446,7 +437,7 @@ function construct_device!(
         FlowActivePowerFromToVariable,
         devices,
         model,
-        S,
+        T,
     )
     return
 end
@@ -455,48 +446,35 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{B, F},
-    ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(B, sys)
-    add_constraints!(container, FlowRateConstraintFromTo, devices, model, S)
-    add_constraints!(container, FlowRateConstraintToFrom, devices, model, S)
-    add_constraints!(container, HVDCPowerBalance, devices, model, S)
-    add_constraints!(container, HVDCDirection, devices, model, S)
+    model::DeviceModel{PSY.HVDCLine, HVDCP2PDispatch},
+    ::NetworkModel{T},
+) where {T <: PM.AbstractActivePowerModel}
+    devices = get_available_components(PSY.HVDCLine, sys)
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, T)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, T)
+    add_constraints!(container, HVDCPowerBalance, devices, model, T)
+    add_constraints!(container, HVDCDirection, devices, model, T)
     add_constraint_dual!(container, sys, model)
     return
 end
 
 function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
+    ::OptimizationContainer,
+    ::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, U},
-    ::NetworkModel{V},
-) where {T <: PSY.DCBranch, U <: HVDCP2PDispatch, V <: PM.AbstractPowerModel}
-    devices = get_available_components(B, sys)
-    add_variables!(container, FlowActivePowerVariable, devices, U())
-    add_to_expression!(
-        container,
-        ActivePowerBalance,
-        FlowActivePowerVariable,
-        devices,
-        model,
-        S,
-    )
+    ::DeviceModel{PSY.HVDCLine, HVDCP2PDispatch},
+    ::NetworkModel{T},
+) where {T <: PM.AbstractPowerModel}
     return
 end
 
 function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
+    ::OptimizationContainer,
+    ::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{B, F},
-    ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PDispatch, S <: PM.AbstractPowerModel}
-    devices = get_available_components(B, sys)
-    add_constraints!(container, FlowRateConstraint, devices, model, S)
-    add_constraint_dual!(container, sys, model)
+    ::DeviceModel{PSY.HVDCLine, HVDCP2PDispatch},
+    ::NetworkModel{T},
+) where {T <: PM.AbstractPowerModel}
     return
 end
 
