@@ -57,8 +57,8 @@ function add_expressions!(
     return
 end
 
-# Note: add_to_jump_expression! are legacy when more control was needed over the calls to
-# add_to_expression. These might be removed post JuMP 1.0 release.
+# Note: add_to_jump_expression! are used to control depending on the parameter type used
+# on the simulation.
 function _add_to_jump_expression!(
     expression::T,
     var::JuMP.VariableRef,
@@ -78,7 +78,7 @@ end
 
 function _add_to_jump_expression!(
     expression::T,
-    var::Union{JuMP.VariableRef, JuMP.VariableRef},
+    var::JuMP.VariableRef,
     multiplier::Float64,
     constant::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
