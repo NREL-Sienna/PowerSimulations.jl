@@ -2,7 +2,13 @@ function test_single_stage_sequential(in_memory, rebuild)
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
     models = SimulationModels([
-        DecisionModel(template_ed, c_sys, name="ED", optimizer=ipopt_optimizer, rebuild_model = rebuild),
+        DecisionModel(
+            template_ed,
+            c_sys,
+            name="ED",
+            optimizer=ipopt_optimizer,
+            rebuild_model=rebuild,
+        ),
     ])
     test_sequence =
         SimulationSequence(models=models, ini_cond_chronology=InterProblemChronology())
