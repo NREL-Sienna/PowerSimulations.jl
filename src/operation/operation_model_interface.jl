@@ -15,12 +15,12 @@ get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
 is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
 
-function get_requires_rebuild(model::OperationModel)
+function get_rebuild_model(model::OperationModel)
     sim_info = get_internal(model).simulation_info
     if sim_info === nothing
         error("Model not part of a simulation")
     end
-    return sim_info.requires_rebuild
+    return get_rebuild_model(get_optimization_container(model).settings)
 end
 
 get_optimization_container(model::OperationModel) = get_internal(model).container
@@ -135,8 +135,8 @@ function build_initial_conditions!(model::OperationModel)
     return
 end
 
-function write_initial_conditions_data(model::OperationModel)
-    write_initial_conditions_data(
+function write_initial_conditions_data!(model::OperationModel)
+    write_initial_conditions_data!(
         get_optimization_container(model),
         model.internal.ic_model_container,
     )
@@ -200,7 +200,7 @@ function initialize!(model::OperationModel)
         error("Model failed to initialize")
     end
 
-    write_initial_conditions_data(container, model.internal.ic_model_container)
+    write_initial_conditions_data!(container, model.internal.ic_model_container)
     init_file = get_initial_conditions_file(model)
     Serialization.serialize(init_file, get_initial_conditions_data(container))
     @info "Serialized initial conditions to $init_file"

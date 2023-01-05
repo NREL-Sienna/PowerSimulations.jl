@@ -19,7 +19,10 @@ get_component_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Com
 """
 Container for the initial condition data
 """
-struct InitialCondition{T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}}
+mutable struct InitialCondition{
+    T <: InitialConditionType,
+    U <: Union{JuMP.VariableRef, Float64},
+}
     component::PSY.Component
     value::U
 end

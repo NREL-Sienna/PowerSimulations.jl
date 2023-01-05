@@ -337,6 +337,8 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves=true)
     model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
+    # set manually to test cases for simulation
+    model.internal.container.built_for_recurrent_solves = true
     @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, 240, 0, 120, 264, 24, false)
+    moi_tests(model, 456, 0, 120, 264, 24, false)
 end
