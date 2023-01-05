@@ -395,8 +395,6 @@ end
 
             solve!(model_wl; output_dir=mktempdir())
             dispatch_vars = get_variable_values(ProblemResults(model_wl))
-            #dispatch_values = dispatch_vars[PowerSimulations.VariableKey{HVDCLosses, HVDCLine}("")]
-            # dispatch_values = dispatch_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
             dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
                 HVDCLine,
@@ -423,6 +421,8 @@ end
             )
             dispatch_objective = model_wl.internal.container.optimizer_stats.objective_value
 
+            # Note: for this test data the system does better by allowing more losses so
+            # the total cost is lower.
             @test wl_total_gen > no_loss_total_gen
 
             for col in names(dispatch_values_tf)
@@ -493,6 +493,62 @@ end
         Transformer2W,
         "Trans4",
         rate_limit2w,
+    )
+end
+
+@testset "DC Power Flow Models for PhaseShiftingTransformer and Line" begin
+    system = build_system(PSITestSystems, "c_sys5_uc")
+
+    line = get_component(Line, system, "1")
+    remove_component!(system, line)
+
+    ps = PhaseShiftingTransformer(
+        name=get_name(line),
+        available=true,
+        active_power_flow=0.0,
+        reactive_power_flow=0.0,
+        r=get_r(line),
+        x=get_r(line),
+        primary_shunt=0.0,
+        tap=1.0,
+        α=0.0,
+        rate=get_rate(line),
+        arc=get_arc(line),
+    )
+
+    add_component!(system, ps)
+
+    template = get_template_dispatch_with_network(
+        NetworkModel(StandardPTDFModel; PTDF=PSY.PTDF(system)),
+    )
+    set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
+    model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
+    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+
+    @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
+    @test check_variable_unbounded(
+        model_m,
+        FlowActivePowerVariable,
+        PhaseShiftingTransformer,
+    )
+
+    @test solve!(model_m) == RunStatus.SUCCESSFUL
+
+    @test check_flow_variable_values(
+        model_m,
+        FlowActivePowerVariable,
+        PhaseShiftingTransformer,
+        "1",
+        get_rate(ps),
+    )
+
+    @test check_flow_variable_values(
+        model_m,
+        PhaseShifterAngle,
+        PhaseShiftingTransformer,
+        "1",
+        -π / 2,
+        π / 2,
     )
 end
 

@@ -155,6 +155,7 @@ function check_flow_variable_values(
     variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
         if !(PSI.jump_value(var) <= (limit + 1e-2))
+            @error "$device_name out of bounds $(PSI.jump_value(var))"
             return false
         end
     end

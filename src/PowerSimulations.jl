@@ -42,6 +42,7 @@ export StaticBranchUnbounded
 export HVDCP2PLossless
 export HVDCP2PDispatch
 export HVDCP2PUnbounded
+export PhaseAngleControl
 # export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad

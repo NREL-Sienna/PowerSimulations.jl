@@ -254,7 +254,7 @@ function add_constraints!(
         branches,
         time_steps,
     )
-    nodal_balance_expressions = get_expression(container, ActivePowerBalance(), U)
+    nodal_balance_expressions = get_expression(container, ActivePowerBalance(), PSY.Bus)
     flow_variables = get_variable(container, FlowActivePowerVariable(), T)
     angle_variables = get_variable(container, PhaseShifterAngle(), T)
     jump_model = get_jump_model(container)
