@@ -64,8 +64,7 @@ function write_formulation_combinations(filename::AbstractString, sys=nothing)
     open(filename, "w") do io
         JSON3.pretty(io, serialize_formulation_combinations(sys))
     end
-
-    println("Wrote valid formulations to $filename")
+    @info(" to $filename")
 end
 
 function generate_device_formulation_combinations()
