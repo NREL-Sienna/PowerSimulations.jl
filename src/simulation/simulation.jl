@@ -766,11 +766,11 @@ end
 Default problem update function for most problems with no customization
 """
 function update_model!(model::OperationModel, sim::Simulation)
-    if get_requires_rebuild(model)
-        # TODO: Implement this case where the model is re-built
-        # build_impl!(model)
-    else
-        update_model!(model, get_simulation_state(sim), get_ini_cond_chronology(sim))
+    update_model!(model, get_simulation_state(sim), get_ini_cond_chronology(sim))
+    if get_rebuild_model(model)
+        container = get_optimization_container(model)
+        reset_optimization_model!(container)
+        build_impl!(container, get_template(model), get_system(model))
     end
     return
 end

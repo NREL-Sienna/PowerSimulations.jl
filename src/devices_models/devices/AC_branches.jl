@@ -96,18 +96,15 @@ function get_min_max_limits(
     device::PSY.ACBranch,
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
-) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+)
     return (min=-1 * PSY.get_rate(device), max=PSY.get_rate(device))
 end
 
-"""
-Min and max limits for Abstract Branch Formulation
-"""
 function get_min_max_limits(
     ::PSY.PhaseShiftingTransformer,
     ::Type{PhaseAngleControlLimit},
     ::Type{PhaseAngleControl},
-) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+)
     return (min=-π / 2, max=π / 2)
 end
 

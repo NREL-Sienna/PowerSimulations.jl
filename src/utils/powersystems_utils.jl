@@ -22,14 +22,6 @@ function check_hvdc_line_limits_consistency(d::PSY.HVDCLine)
     from_max = PSY.get_active_power_limits_from(d).max
     to_max = PSY.get_active_power_limits_to(d).max
 
-    if from_max < from_min || to_max < to_min
-        throw(
-            IS.ConflictingInputsError(
-                "Limits in HVDC Line $(PSY.get_name(d)) are inconsistent",
-            ),
-        )
-    end
-
     if from_max < to_min
         throw(
             IS.ConflictingInputsError(

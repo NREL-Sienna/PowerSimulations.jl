@@ -163,6 +163,7 @@ function _get_initial_conditions_value(
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
+    var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -180,6 +181,7 @@ function _get_initial_conditions_value(
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
 } where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
+    var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -196,6 +198,10 @@ function add_initial_condition!(
     U <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     D <: InitialConditionType,
 }
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, D, T)
+        return
+    end
+
     ini_cond_vector = add_initial_condition_container!(container, D(), T, components)
     for (ix, component) in enumerate(components)
         ini_cond_vector[ix] =
