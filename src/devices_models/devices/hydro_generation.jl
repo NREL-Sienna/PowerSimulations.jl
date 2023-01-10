@@ -519,7 +519,7 @@ function add_constraints!(
                 energy_var[name, t] ==
                 energy_var[name, t - 1] +
                 param[name, t] * multiplier[name, t] +
-                (powerin_var[name, 1] - powerout_var[name, t] - spillage_var[name, t]) *
+                (powerin_var[name, t] - powerout_var[name, t] - spillage_var[name, t]) *
                 fraction_of_hour
             )
         end
@@ -583,7 +583,7 @@ function add_constraints!(
                 energy_var[name, t] ==
                 energy_var[name, t - 1] - param[name, t] * multiplier[name, t] +
                 (
-                    powerout_var[name, 1] - powerin_var[name, t] / efficiency +
+                    powerout_var[name, t] - powerin_var[name, t] / efficiency +
                     spillage_var[name, t]
                 ) * fraction_of_hour
             )
