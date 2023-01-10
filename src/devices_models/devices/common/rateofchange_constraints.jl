@@ -97,7 +97,7 @@ function add_linear_ramp_constraints!(
         )
         con_down[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
-            ic_power - expr_dn[name, 1] >= -1 * ramp_limits.down * minutes_per_period
+            ic_power - expr_dn[name, 1] <= ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
@@ -107,8 +107,8 @@ function add_linear_ramp_constraints!(
             )
             con_down[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                variable[name, t - 1] - expr_dn[name, t] >=
-                -1 * ramp_limits.down * minutes_per_period
+                variable[name, t - 1] - expr_dn[name, t] <=
+                ramp_limits.down * minutes_per_period
             )
         end
     end
