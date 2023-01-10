@@ -699,7 +699,8 @@ function calculate_aux_variable_value!(
     aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-        aux_variable_container[name, t] = jump_value(p_variable_results[name, t]) * fraction_of_hour
+        aux_variable_container[name, t] =
+            jump_value(p_variable_results[name, t]) * fraction_of_hour
     end
 
     return
@@ -718,7 +719,8 @@ function calculate_aux_variable_value!(
     aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-        aux_variable_container[name, t] = jump_value(p_variable_results[name, t]) * fraction_of_hour
+        aux_variable_container[name, t] =
+            jump_value(p_variable_results[name, t]) * fraction_of_hour
     end
 
     return
