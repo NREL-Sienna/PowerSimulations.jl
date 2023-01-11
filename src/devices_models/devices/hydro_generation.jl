@@ -507,8 +507,8 @@ function add_constraints!(
             energy_var[name, 1] ==
             get_value(ic) +
             (
-                powerin_var[name, 1] * efficiency - spillage_var[name, 1] -
-                powerout_var[name, 1]
+                powerin_var[name, 1] -
+                (spillage_var[name, 1] + powerout_var[name, 1]) / efficiency
             ) * fraction_of_hour +
             param[name, 1] * multiplier[name, 1]
         )
@@ -519,8 +519,10 @@ function add_constraints!(
                 energy_var[name, t] ==
                 energy_var[name, t - 1] +
                 param[name, t] * multiplier[name, t] +
-                (powerin_var[name, 1] - powerout_var[name, t] - spillage_var[name, t]) *
-                fraction_of_hour
+                (
+                    powerin_var[name, 1] -
+                    (powerout_var[name, t] + spillage_var[name, t]) / efficiency
+                ) * fraction_of_hour
             )
         end
     end
@@ -583,7 +585,7 @@ function add_constraints!(
                 energy_var[name, t] ==
                 energy_var[name, t - 1] - param[name, t] * multiplier[name, t] +
                 (
-                    powerout_var[name, 1] - powerin_var[name, t] / efficiency +
+                    powerout_var[name, t] - powerin_var[name, t] / efficiency +
                     spillage_var[name, t]
                 ) * fraction_of_hour
             )
@@ -693,13 +695,34 @@ function calculate_aux_variable_value!(
 ) where {T <: PSY.HydroGen}
     devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
-
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     p_variable_results = get_variable(container, ActivePowerVariable(), T)
     aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-        min = PSY.get_active_power_limits(d).min
-        aux_variable_container[name, t] = jump_value(p_variable_results[name, t])
+        aux_variable_container[name, t] =
+            jump_value(p_variable_results[name, t]) * fraction_of_hour
+    end
+
+    return
+end
+
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{EnergyOutput, T},
+    system::PSY.System,
+) where {T <: PSY.HydroPumpedStorage}
+    devices = get_available_components(T, system)
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+    p_variable_results = get_variable(container, ActivePowerOutVariable(), T)
+    aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
+    for d in devices, t in time_steps
+        name = PSY.get_name(d)
+        aux_variable_container[name, t] =
+            jump_value(p_variable_results[name, t]) * fraction_of_hour
     end
 
     return
