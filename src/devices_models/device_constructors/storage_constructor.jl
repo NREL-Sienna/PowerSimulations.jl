@@ -437,7 +437,7 @@ function construct_device!(
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
     end
     add_feedforward_constraints!(container, model, devices)
@@ -519,7 +519,7 @@ function construct_device!(
     # Energy Balanace limits
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
     end
 

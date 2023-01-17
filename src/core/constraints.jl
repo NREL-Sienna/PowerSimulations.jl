@@ -80,7 +80,7 @@ struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
 struct RequirementConstraint <: ConstraintType end
-struct ReserveEnergyConstraint <: ConstraintType end
+struct ReserveEnergyCoverageConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
 struct ComponentReserveUpBalance <: ConstraintType end
 struct ComponentReserveDownBalance <: ConstraintType end

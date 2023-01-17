@@ -266,7 +266,12 @@ export AreaDispatchBalanceConstraint
 export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
+export ComponentActivePowerVariableLimitsConstraint
+export ComponentReactivePowerVariableLimitsConstraint
 export CopperPlateBalanceConstraint
+export DeviceNetActivePowerConstraint
+export DeviceNetReactivePowerConstraint
+export ComponentReactivePowerVariableLimitsConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EnergyBudgetConstraint
@@ -299,6 +304,7 @@ export HVDCLosses
 export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint
+export InterConnectionLimitConstraint
 export MustRunConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
@@ -316,7 +322,7 @@ export RateLimitConstraintToFrom
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
-export ReserveEnergyConstraint
+export ReserveEnergyCoverageConstraint
 export ReservePowerConstraint
 export SACEPIDAreaConstraint
 export StartTypeConstraint

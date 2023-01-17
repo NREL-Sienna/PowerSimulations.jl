@@ -31,10 +31,10 @@ get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, ::Abstra
 get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_output_active_power_limits(d).min
 
 ############## EnergyVariable, HybridSystem ####################
-get_variable_binary(::EnergyVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
-get_variable_upper_bound(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).max
-get_variable_lower_bound(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).min
-get_variable_warm_start_value(::EnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
+get_variable_binary(::ComponentEnergyVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_upper_bound(::ComponentEnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).max
+get_variable_lower_bound(::ComponentEnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_state_of_charge_limits(PSY.get_storage(d)).min
+get_variable_warm_start_value(::ComponentEnergyVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
 
 ############## ReactivePowerVariable, HybridSystem ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
@@ -202,15 +202,70 @@ const SUB_COMPONENT_TYPES =
     [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage]
 const SUB_COMPONENT_KEYS = ["ThermalGen", "RenewableGen", "ElectricLoad", "Storage"]
 const _INPUT_TYPES = [PSY.ElectricLoad, PSY.Storage]
-const _OUTPUT_TYPES = [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad]
+const _OUTPUT_TYPES = [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
 const _INPUT_KEYS = ["ElectricLoad", "Storage"]
-const _OUTPUT_KEYS = ["ThermalGen", "RenewableGen", "ElectricLoad"]
+const _OUTPUT_KEYS = ["ThermalGen", "RenewableGen", "Storage"]
 
 function _add_variable!(
     container::OptimizationContainer,
     ::T,
     devices::U,
-    formulation,
+    formulation::AbstractHybridFormulation,
+) where {
+    T <: ComponentReactivePowerVariable,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.HybridSystem}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    binary = get_variable_binary(T(), D, formulation)
+
+    variable = add_variable_container!(
+        container,
+        T(),
+        D,
+        [PSY.get_name(d) for d in devices],
+        SUB_COMPONENT_KEYS,
+        time_steps;
+        sparse=true,
+    )
+
+    for d in devices, (ix, subcomp) in enumerate(SUB_COMPONENT_TYPES)
+        !does_subcomponent_exist(d, subcomp) && continue
+        subcomp_key = SUB_COMPONENT_KEYS[ix]
+        for t in time_steps
+            name = PSY.get_name(d)
+            variable[name, subcomp_key, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(D)_$(subcomp_key)_{$(name), $(t)}",
+                binary = binary
+            )
+
+            ub = get_variable_upper_bound(T(), d, formulation)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
+
+            lb = get_variable_lower_bound(T(), d, formulation)
+            lb !== nothing &&
+                !binary &&
+                JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
+
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(T(), d, formulation)
+                init !== nothing &&
+                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
+            end
+        end
+    end
+    # Workaround to remove invalid key combinations
+    filter!(x -> x.second !== nothing, variable.data)
+    return
+end
+
+function _add_variable!(
+    container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation::AbstractHybridFormulation,
 ) where {
     T <: ComponentInputActivePowerVariable,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -265,7 +320,7 @@ function _add_variable!(
     container::OptimizationContainer,
     ::T,
     devices::U,
-    formulation,
+    formulation::AbstractHybridFormulation,
 ) where {
     T <: ComponentOutputActivePowerVariable,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -287,7 +342,7 @@ function _add_variable!(
 
     for d in devices, (ix, subcomp) in enumerate(_OUTPUT_TYPES)
         !does_subcomponent_exist(d, subcomp) && continue
-        subcomp_key = SUB_COMPONENT_KEYS[ix]
+        subcomp_key = _OUTPUT_KEYS[ix]
         for t in time_steps
             name = PSY.get_name(d)
             variable[name, subcomp_key, t] = JuMP.@variable(
@@ -320,9 +375,9 @@ function _add_variable!(
     container::OptimizationContainer,
     ::T,
     devices::U,
-    formulation,
+    formulation::AbstractHybridFormulation,
 ) where {
-    T <: ComponentReservationVariable,
+    T <: Union{ComponentEnergyVariable, ComponentReservationVariable},
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.HybridSystem}
     @assert !isempty(devices)
@@ -350,17 +405,14 @@ function _add_variable!(
             )
 
             ub = get_variable_upper_bound(T(), d, formulation)
-            ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
             lb = get_variable_lower_bound(T(), d, formulation)
-            lb !== nothing &&
-                !binary &&
-                JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
+            lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
             if get_warm_start(settings)
                 init = get_variable_warm_start_value(T(), d, formulation)
-                init !== nothing &&
-                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
+                init !== nothing && JuMP.set_start_value(variable[name, t], init)
             end
         end
     end
@@ -374,9 +426,13 @@ function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
-    formulation::AbstractDeviceFormulation,
+    formulation::AbstractHybridFormulation,
 ) where {
-    T <: Union{ComponentInputActivePowerVariable, ComponentOutputActivePowerVariable},
+    T <: Union{
+        ComponentInputActivePowerVariable,
+        ComponentOutputActivePowerVariable,
+        ComponentReactivePowerVariable,
+    },
     U <: PSY.HybridSystem,
 }
     _add_variable!(container, T(), devices, formulation)
@@ -387,8 +443,11 @@ function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
-    formulation::AbstractDeviceFormulation,
-) where {T <: ComponentReservationVariable, U <: PSY.HybridSystem}
+    formulation::AbstractHybridFormulation,
+) where {
+    T <: Union{ComponentEnergyVariable, ComponentReservationVariable},
+    U <: PSY.HybridSystem,
+}
     if !all(isnothing.(PSY.get_storage.(devices)))
         _add_variable!(container, T(), devices, formulation)
     end
@@ -534,7 +593,7 @@ function _add_lower_bound_range_constraints!(
         subcomp_key = string(PSY.ThermalGen)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, subcomp_key, t] >= limits.min
         )
     end
@@ -568,7 +627,7 @@ function _add_upper_bound_range_constraints!(
         subcomp_key = string(PSY.ThermalGen)
         limits = get_min_max_limits(device, PSY.ThermalGen, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, subcomp_key, t] <= limits.max
         )
     end
@@ -604,7 +663,7 @@ function _add_parameterized_upper_bound_range_constraints!(
         subcomp_key = string(PSY.RenewableGen)
         name = PSY.get_name(device)
         constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[name, subcomp_key, t] <=
             multiplier[name, subcomp_key, t] * parameter[name, subcomp_key, t]
         )
@@ -796,16 +855,16 @@ function add_constraints!(
     ::Type{EnergyBalanceConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
-) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation, X <: PM.AbstractPowerModel}
+    ::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    names = [PSY.get_name(x) for x in devices if !isnothing(PSY.get_storage(x))]
     initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
-    energy_var = get_variable(container, EnergyVariable(), V)
-    powerin_var = get_variable(container, ActivePowerInVariable(), V)
-    powerout_var = get_variable(container, ActivePowerOutVariable(), V)
+    energy_var = get_variable(container, ComponentEnergyVariable(), V, "storage")
+    names = axes(energy_var)[1]
+    powerin_var = get_variable(container, ComponentInputActivePowerVariable(), V)
+    powerout_var = get_variable(container, ComponentOutputActivePowerVariable(), V)
 
     constraint = add_constraints_container!(
         container,
@@ -817,28 +876,28 @@ function add_constraints!(
 
     for ic in initial_conditions
         device = get_component(ic)
-        isnothing(PSY.get_storage(device)) && continue
+        does_subcomponent_exist(device, PSY.Storage) && continue
         storage_device = PSY.get_storage(device)
         efficiency = PSY.get_efficiency(storage_device)
         name = PSY.get_name(device)
         constraint[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             energy_var[name, 1] ==
             get_value(ic) +
             (
-                powerin_var[name, 1] * efficiency.in -
-                (powerout_var[name, 1] / efficiency.out)
+                powerin_var[name, "Storage", 1] * efficiency.in -
+                (powerout_var[name, "Storage", 1] / efficiency.out)
             ) * fraction_of_hour
         )
 
         for t in time_steps[2:end]
             constraint[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 energy_var[name, t] ==
                 energy_var[name, t - 1] +
                 (
-                    powerin_var[name, t] * efficiency.in -
-                    (powerout_var[name, t] / efficiency.out)
+                    powerin_var[name, "Storage", t] * efficiency.in -
+                    (powerout_var[name, "Storage", t] / efficiency.out)
                 ) * fraction_of_hour
             )
         end
@@ -886,15 +945,15 @@ function add_constraints!(
             for subcomp in _OUTPUT_TYPES
                 !does_subcomponent_exist(d, subcomp) && continue
                 JuMP.add_to_expression!(
-                    total_power_in,
-                    var_sub_in[name, string(subcomp), t],
+                    total_power_out,
+                    var_sub_out[name, string(subcomp), t],
                 )
             end
             for subcomp in _INPUT_TYPES
                 !does_subcomponent_exist(d, subcomp) && continue
                 JuMP.add_to_expression!(
-                    total_power_out,
-                    var_sub_out[name, string(subcomp), t],
+                    total_power_in,
+                    var_sub_in[name, string(subcomp), t],
                 )
             end
             constraint_out[name, t] = JuMP.@constraint(
@@ -986,16 +1045,65 @@ function add_constraints!(
         name = PSY.get_name(d)
         rating = PSY.get_interconnection_rating(d)
         constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             rating^2 == var_q[name, t]^2 + var_p_in[name, t]^2 + var_p_out[name, t]^2
         )
     end
     return
 end
 
+#=
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{ReserveEnergyConstraint},
+    ::Type{ComponentReservationConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, D},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.HybridSystem, D <: AbstractHybridFormulation}
+    time_steps = get_time_steps(container)
+    var_in = get_variable(container, ComponentInputActivePowerVariable(), T)
+    var_out = get_variable(container, ComponentOutputActivePowerVariable(), T)
+    reserve = get_variable(container, ReservationVariable(), T)
+    names = [PSY.get_name(x) for x in devices if does_subcomponent_exist(x, PSY.Storage)]
+    con_in = add_constraints_container!(
+        container,
+        ComponentReservationConstraint(),
+        T,
+        names,
+        time_steps;
+        meta="in",
+    )
+    con_out = add_constraints_container!(
+        container,
+        ReserveEnergyCoverageConstraint(),
+        T,
+        names,
+        time_steps;
+        meta="out",
+    )
+
+    for d in devices
+        !does_subcomponent_exist(d, PSY.Storage) && continue
+        name = PSY.get_name(d)
+        out_limits = PSY.get_output_active_power_limits(d)
+        in_limits = PSY.get_input_active_power_limits(d)
+        for t in time_steps
+            con_in[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_in[name, "Storage", t] <= in_limits.max * (1 - reserve[name, t])
+            )
+            con_out[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_out[name, "Storage", t] <= out_limits.max * reserve[name, t]
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ReserveEnergyCoverageConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
@@ -1007,7 +1115,7 @@ function add_constraints!(
     names = [PSY.get_name(x) for x in devices if does_subcomponent_exist(d, PSY.Storage)]
     con_up = add_constraints_container!(
         container,
-        ReserveEnergyConstraint(),
+        ReserveEnergyCoverageConstraint(),
         T,
         names,
         time_steps,
@@ -1015,7 +1123,7 @@ function add_constraints!(
     )
     con_dn = add_constraints_container!(
         container,
-        ReserveEnergyConstraint(),
+        ReserveEnergyCoverageConstraint(),
         T,
         names,
         time_steps,
@@ -1028,11 +1136,11 @@ function add_constraints!(
         limits = PSY.get_state_of_charge_limits(PSY.get_storage(d))
         efficiency = PSY.get_efficiency(d)
         con_up[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             r_up[name, t] <= (var_e[name, t] - limits.min) * efficiency.out
         )
         con_dn[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             r_dn[name, t] <= (limits.max - var_e[name, t]) / efficiency.in
         )
     end
@@ -1074,11 +1182,11 @@ function add_constraints!(
         out_limits = PSY.get_output_active_power_limits(d)
         in_limits = PSY.get_input_active_power_limits(d)
         con_up[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             r_up[name, t] <= var_in[name, t] + (out_limits.max - var_out[name, t])
         )
         con_dn[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             r_dn[name, t] <= var_out[name, t] + (in_limits.max - var_in[name, t])
         )
     end
@@ -1107,7 +1215,7 @@ function add_constraints!(
     for d in devices, t in time_steps
         name = PSY.get_name(d)
         con_up[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             sub_expr_up[name, t] == sum(
                 sub_r_up[name, string(sub_comp_type), t] for
                 sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
@@ -1139,7 +1247,7 @@ function add_constraints!(
     for d in devices, t in time_steps
         name = PSY.get_name(d)
         con_dn[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             sub_expr_dn[name, t] == sum(
                 sub_r_dn[name, string(sub_comp_type), t] for
                 sub_comp_type in [PSY.ThermalGen, PSY.RenewableGen, PSY.Storage]
@@ -1148,7 +1256,7 @@ function add_constraints!(
     end
     return
 end
-
+=#
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(
     container::OptimizationContainer,

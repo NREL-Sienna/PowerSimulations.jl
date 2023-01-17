@@ -239,7 +239,7 @@ end
 ############################ reserve constraints ######################################
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{ReserveEnergyConstraint},
+    ::Type{ReserveEnergyCoverageConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     ::Type{<:PM.AbstractPowerModel},
@@ -251,7 +251,7 @@ function add_constraints!(
     names = [PSY.get_name(x) for x in devices]
     con_up = add_constraints_container!(
         container,
-        ReserveEnergyConstraint(),
+        ReserveEnergyCoverageConstraint(),
         T,
         names,
         time_steps,
@@ -259,7 +259,7 @@ function add_constraints!(
     )
     con_dn = add_constraints_container!(
         container,
-        ReserveEnergyConstraint(),
+        ReserveEnergyCoverageConstraint(),
         T,
         names,
         time_steps,

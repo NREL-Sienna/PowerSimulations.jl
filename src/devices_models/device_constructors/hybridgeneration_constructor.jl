@@ -13,7 +13,7 @@ function construct_device!(
     add_variables!(container, ComponentInputActivePowerVariable, devices, D())
     add_variables!(container, ComponentOutputActivePowerVariable, devices, D())
     add_variables!(container, ComponentReactivePowerVariable, devices, D())
-    add_variables!(container, EnergyVariable, devices, D())
+    add_variables!(container, ComponentEnergyVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, D())
@@ -66,6 +66,8 @@ function construct_device!(
     add_feedforward_arguments!(container, model, devices)
 
     if has_service_model(model)
+        error("Services are not supported by $D")
+        #=
         add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
         add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
         add_to_expression!(
@@ -86,6 +88,7 @@ function construct_device!(
         )
         add_expressions!(container, ComponentReserveDownBalanceExpression, devices, model)
         add_expressions!(container, ComponentReserveUpBalanceExpression, devices, model)
+        =#
     end
 end
 
@@ -154,12 +157,18 @@ function construct_device!(
     add_constraints!(container, DeviceNetActivePowerConstraint, devices, model, S)
     add_constraints!(container, DeviceNetReactivePowerConstraint, devices, model, S)
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    if get_attribute(model, "storage_reservation")
+        add_constraints!(container, ComponentReservationConstraint, devices, model, S)
+    end
     add_constraints!(container, InterConnectionLimitConstraint, devices, model, S)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        error("Services are not supported by $D")
+        #=
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
         add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
         add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
+        =#
     end
     add_feedforward_constraints!(container, model, devices)
 
@@ -168,7 +177,7 @@ function construct_device!(
 
     return
 end
-#=
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -183,12 +192,16 @@ function construct_device!(
     devices = get_available_components(T, sys)
 
     # Variables
-    add_variables!(container, ComponentOutputActivePowerVariable, devices, D())
     add_variables!(container, ActivePowerInVariable, devices, D())
     add_variables!(container, ActivePowerOutVariable, devices, D())
-    add_variables!(container, EnergyVariable, devices, D())
+    add_variables!(container, ComponentInputActivePowerVariable, devices, D())
+    add_variables!(container, ComponentOutputActivePowerVariable, devices, D())
+    add_variables!(container, ComponentEnergyVariable, devices, D())
     if get_attribute(model, "reservation")
         add_variables!(container, ReservationVariable, devices, D())
+    end
+    if get_attribute(model, "storage_reservation")
+        add_variables!(container, ComponentReservationVariable, devices, D())
     end
 
     # Parameters
@@ -215,27 +228,28 @@ function construct_device!(
         S,
     )
 
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionLB,
+        ComponentOutputActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+    add_to_expression!(
+        container,
+        ComponentActivePowerRangeExpressionUB,
+        ComponentOutputActivePowerVariable,
+        devices,
+        model,
+        S,
+    )
+
     add_feedforward_arguments!(container, model, devices)
 
     if has_service_model(model)
-
-        add_to_expression!(
-            container,
-            ComponentActivePowerRangeExpressionLB,
-            ComponentOutputActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-        add_to_expression!(
-            container,
-            ComponentActivePowerRangeExpressionUB,
-            ComponentOutputActivePowerVariable,
-            devices,
-            model,
-            S,
-        )
-
+        error("Services are not supported by $D")
+        #=
         add_variables!(container, ComponentActivePowerReserveUpVariable, devices, D())
         add_variables!(container, ComponentActivePowerReserveDownVariable, devices, D())
 
@@ -257,6 +271,7 @@ function construct_device!(
         )
         add_expressions!(container, ComponentReserveDownBalanceExpression, devices, model)
         add_expressions!(container, ComponentReserveUpBalanceExpression, devices, model)
+        =#
     end
     return
 end
@@ -274,17 +289,10 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
+    # Constraints
     add_constraints!(
         container,
-        OutputActivePowerConstraint,
-        ActivePowerOutVariable,
-        devices,
-        model,
-        S,
-    )
-    add_constraints!(
-        container,
-        InputActivePowerConstraint,
+        InputActivePowerVariableLimitsConstraint,
         ActivePowerInVariable,
         devices,
         model,
@@ -298,15 +306,6 @@ function construct_device!(
         model,
         S,
     )
-    add_constraints!(
-        container,
-        InputActivePowerVariableLimitsConstraint,
-        ActivePowerInVariable,
-        devices,
-        model,
-        S,
-    )
-
     add_constraints!(
         container,
         ComponentActivePowerVariableLimitsConstraint,
@@ -324,16 +323,22 @@ function construct_device!(
         S,
     )
 
+    # Constraints
+    add_constraints!(container, DeviceNetActivePowerConstraint, devices, model, S)
     add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, PowerOutputRangeConstraint, devices, model, S)
+    if get_attribute(model, "storage_reservation")
+        add_constraints!(container, ComponentReservationConstraint, devices, model, S)
+    end
 
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        error("Services are not supported by $D")
+        #=
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
         add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
         add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
+        =#
     end
-
     add_feedforward_constraints!(container, model, devices)
 
     # Cost Function
@@ -342,6 +347,7 @@ function construct_device!(
     return
 end
 
+#=
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -482,7 +488,7 @@ function construct_device!(
     add_constraints!(container, PowerOutputRangeConstraint, devices, model, S)
 
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
         add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
         add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
@@ -666,7 +672,7 @@ function construct_device!(
     add_constraints!(container, InterConnectionLimitConstraint, devices, model, S)
 
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyConstraint, devices, model, S)
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
         add_constraints!(container, RangeLimitConstraint, devices, model, S)
         add_constraints!(container, ComponentReserveUpBalance, devices, model, S)
         add_constraints!(container, ComponentReserveDownBalance, devices, model, S)
