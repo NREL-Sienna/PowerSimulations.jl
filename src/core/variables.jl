@@ -210,7 +210,7 @@ struct PhaseShifterAngle <: VariableType end
 struct ComponentInputActivePowerVariable <: SubComponentVariableType end
 struct ComponentOutputActivePowerVariable <: SubComponentVariableType end
 struct ComponentReservationVariable <: SubComponentVariableType end
-
+struct ComponentEnergyVariable <: SubComponentVariableType end
 struct ComponentReactivePowerVariable <: SubComponentVariableType end
 
 struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
