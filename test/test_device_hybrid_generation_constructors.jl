@@ -3,9 +3,10 @@
     sys = PSB.build_system(PSITestSystems, "c_sys5_hybrid")
 
     # Parameters Testing
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
+    model =
+        DecisionModel(MockOperationProblem, DCPPowerModel, sys; store_variable_names=true)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 672, 0, 384, 336, 192, true)
+    moi_tests(model, 816, 0, 384, 336, 192, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 

@@ -1,7 +1,8 @@
 #! format: off
 requires_initialization(::AbstractHybridFormulation) = false
 
-get_variable_multiplier(_, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = 1.0
+get_variable_multiplier(::ActivePowerOutVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = 1.0
+get_variable_multiplier(::ActivePowerInVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = -1.0
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HybridSystem}, ::Type{<:PSY.Reserve{PSY.ReserveUp}}) = ComponentReserveUpBalanceExpression
 get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.HybridSystem}, ::Type{<:PSY.Reserve{PSY.ReserveDown}}) = ComponentReserveDownBalanceExpression
 
@@ -12,9 +13,12 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractH
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractStandardHybridFormulation) = PSY.get_output_active_power_limits(d).min
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_output_active_power_limits(d).max
 
-############## ComponentActivePowerVariable, HybridSystem ####################
-get_variable_binary(::ComponentActivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
-get_variable_lower_bound(::ComponentActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
+############## ComponentOutputActivePowerVariable, HybridSystem ####################
+get_variable_binary(::ComponentInputActivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_lower_bound(::ComponentInputActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
+get_variable_binary(::ComponentOutputActivePowerVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
+get_variable_lower_bound(::ComponentOutputActivePowerVariable, d::PSY.HybridSystem, ::AbstractHybridFormulation) = 0.0
+
 
 ############## ActivePowerInVariable, HybridSystem ####################
 get_variable_binary(::ActivePowerInVariable, ::Type{PSY.HybridSystem}, ::AbstractHybridFormulation) = false
@@ -52,6 +56,7 @@ get_variable_lower_bound(::ComponentActivePowerReserveDownVariable, d::PSY.Hybri
 
 ############## ReservationVariable, HybridSystem ####################
 get_variable_binary(::ReservationVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = true
+get_variable_binary(::ComponentReservationVariable, ::Type{<:PSY.HybridSystem}, ::AbstractHybridFormulation) = true
 
 #################### Initial Conditions for models ###############
 
@@ -112,7 +117,7 @@ function get_default_attributes(
     ::Type{<:PSY.HybridSystem},
     ::Type{<:AbstractHybridFormulation},
 )
-    return Dict{String, Any}("reservation" => true)
+    return Dict{String, Any}("reservation" => true, "storage_reservation" => true)
 end
 
 ################################ output power constraints ###########################
@@ -185,7 +190,323 @@ get_min_max_limits(
     ::Type{<:AbstractHybridFormulation},
 ) = PSY.get_state_of_charge_limits(PSY.get_storage(device))
 
-function add_lower_bound_range_constraints_impl!(
+get_min_max_limits(
+    device::PSY.HybridSystem,
+    ::Type{PSY.ElectricLoad},
+    ::Type{ComponentReactivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractHybridFormulation},
+) = (min=0.0, max=PSY.get_max_reactive_power(device))
+
+########################## Add Variables Calls #############################################
+const SUB_COMPONENT_TYPES =
+    [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage]
+const SUB_COMPONENT_KEYS = ["ThermalGen", "RenewableGen", "ElectricLoad", "Storage"]
+const _INPUT_TYPES = [PSY.ElectricLoad, PSY.Storage]
+const _OUTPUT_TYPES = [PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad]
+const _INPUT_KEYS = ["ElectricLoad", "Storage"]
+const _OUTPUT_KEYS = ["ThermalGen", "RenewableGen", "ElectricLoad"]
+
+function _add_variable!(
+    container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation,
+) where {
+    T <: ComponentInputActivePowerVariable,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.HybridSystem}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    binary = get_variable_binary(T(), D, formulation)
+
+    variable = add_variable_container!(
+        container,
+        T(),
+        D,
+        [PSY.get_name(d) for d in devices],
+        _INPUT_KEYS,
+        time_steps;
+        sparse=true,
+    )
+
+    for d in devices, (ix, subcomp) in enumerate(_INPUT_TYPES)
+        !does_subcomponent_exist(d, subcomp) && continue
+        subcomp_key = _INPUT_KEYS[ix]
+        for t in time_steps
+            name = PSY.get_name(d)
+            variable[name, subcomp_key, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(D)_$(subcomp)_{$(name), $(t)}",
+                binary = binary
+            )
+
+            ub = get_variable_upper_bound(T(), d, formulation)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
+
+            lb = get_variable_lower_bound(T(), d, formulation)
+            lb !== nothing &&
+                !binary &&
+                JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
+
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(T(), d, formulation)
+                init !== nothing &&
+                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
+            end
+        end
+    end
+    # Workaround to remove invalid key combinations
+    filter!(x -> x.second !== nothing, variable.data)
+    return
+end
+
+function _add_variable!(
+    container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation,
+) where {
+    T <: ComponentOutputActivePowerVariable,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.HybridSystem}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    binary = get_variable_binary(T(), D, formulation)
+
+    variable = add_variable_container!(
+        container,
+        T(),
+        D,
+        [PSY.get_name(d) for d in devices],
+        _OUTPUT_KEYS,
+        time_steps;
+        sparse=true,
+    )
+
+    for d in devices, (ix, subcomp) in enumerate(_OUTPUT_TYPES)
+        !does_subcomponent_exist(d, subcomp) && continue
+        subcomp_key = SUB_COMPONENT_KEYS[ix]
+        for t in time_steps
+            name = PSY.get_name(d)
+            variable[name, subcomp_key, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(D)_$(subcomp)_{$(name), $(t)}",
+                binary = binary
+            )
+
+            ub = get_variable_upper_bound(T(), d, formulation)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
+
+            lb = get_variable_lower_bound(T(), d, formulation)
+            lb !== nothing &&
+                !binary &&
+                JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
+
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(T(), d, formulation)
+                init !== nothing &&
+                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
+            end
+        end
+    end
+    # Workaround to remove invalid key combinations
+    filter!(x -> x.second !== nothing, variable.data)
+    return
+end
+
+function _add_variable!(
+    container::OptimizationContainer,
+    ::T,
+    devices::U,
+    formulation,
+) where {
+    T <: ComponentReservationVariable,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.HybridSystem}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    binary = get_variable_binary(T(), D, formulation)
+
+    variable = add_variable_container!(
+        container,
+        T(),
+        D,
+        [PSY.get_name(d) for d in devices if does_subcomponent_exist(d, PSY.Storage)],
+        time_steps;
+        meta="storage",
+    )
+
+    for d in devices
+        !does_subcomponent_exist(d, PSY.Storage) && continue
+        for t in time_steps
+            name = PSY.get_name(d)
+            variable[name, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(D)_Storage_{$(name), $(t)}",
+                binary = binary
+            )
+
+            ub = get_variable_upper_bound(T(), d, formulation)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, subcomp_key, t], ub)
+
+            lb = get_variable_lower_bound(T(), d, formulation)
+            lb !== nothing &&
+                !binary &&
+                JuMP.set_lower_bound(variable[name, subcomp_key, t], lb)
+
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(T(), d, formulation)
+                init !== nothing &&
+                    JuMP.set_start_value(variable[name, subcomp_key, t], init)
+            end
+        end
+    end
+    return
+end
+
+"""
+Add variables to the OptimizationContainer for a Sub-Component of a hybrid systems.
+"""
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::AbstractDeviceFormulation,
+) where {
+    T <: Union{ComponentInputActivePowerVariable, ComponentOutputActivePowerVariable},
+    U <: PSY.HybridSystem,
+}
+    _add_variable!(container, T(), devices, formulation)
+    return
+end
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::AbstractDeviceFormulation,
+) where {T <: ComponentReservationVariable, U <: PSY.HybridSystem}
+    if !all(isnothing.(PSY.get_storage.(devices)))
+        _add_variable!(container, T(), devices, formulation)
+    end
+    return
+end
+
+################################## Add Expression Calls ####################################
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <:
+    Union{ComponentActivePowerRangeExpressionUB, ComponentActivePowerRangeExpressionLB},
+    U <: Union{ComponentInputActivePowerVariable, ComponentOutputActivePowerVariable},
+    V <: PSY.HybridSystem,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    time_steps = get_time_steps(container)
+    variables = get_variable(container, U(), V)
+    expressions = lazy_container_addition!(
+        container,
+        T(),
+        V,
+        [PSY.get_name(d) for d in devices],
+        SUB_COMPONENT_KEYS,
+        time_steps;
+        sparse=true,
+    )
+    for (key, variable) in variables.data
+        JuMP.add_to_expression!(expressions.data[key], variable)
+    end
+    return
+end
+
+########################## Add parameters calls ############################################
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: TimeSeriesParameter,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.HybridSystem}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    _devices = [d for d in devices if PSY.get_renewable_unit(d) !== nothing]
+    add_parameters!(container, T(), _devices, model)
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::T,
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: ActivePowerTimeSeriesParameter,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.HybridSystem}
+    ts_type = get_default_time_series_type(container)
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
+        error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
+    end
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    ts_name = get_time_series_names(model)[T]
+    time_series_mult_id = create_time_series_multiplier_index(model, T)
+    @debug "adding" T ts_name ts_type time_series_mult_id _group =
+        LOG_GROUP_OPTIMIZATION_CONTAINER
+    sub_comp_type = [PSY.RenewableGen, PSY.ElectricLoad]
+    parameter_container = add_param_container!(
+        container,
+        T(),
+        D,
+        ts_type,
+        ts_name,
+        names,
+        string.(sub_comp_type),
+        time_steps;
+        sparse=true,
+    )
+    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
+    jump_model = get_jump_model(container)
+    for d in devices, comp_type in sub_comp_type
+        name = PSY.get_name(d)
+        if does_subcomponent_exist(d, comp_type)
+            ts_vector = get_time_series(container, d, comp_type, T())
+            multiplier = get_multiplier_value(T(), d, comp_type, W())
+        else
+            ts_vector = zeros(time_steps[end])
+            multiplier = 0.0
+        end
+        for t in time_steps
+            set_parameter!(
+                parameter_container,
+                jump_model,
+                ts_vector[t],
+                multiplier,
+                name,
+                string(comp_type),
+                t,
+            )
+        end
+    end
+    return
+end
+
+########################## Add constraint Calls ############################################
+function _add_lower_bound_range_constraints!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
@@ -219,7 +540,7 @@ function add_lower_bound_range_constraints_impl!(
     end
 end
 
-function add_upper_bound_range_constraints_impl!(
+function _add_upper_bound_range_constraints!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
@@ -253,7 +574,7 @@ function add_upper_bound_range_constraints_impl!(
     end
 end
 
-function add_parameterized_upper_bound_range_constraints_impl!(
+function _add_parameterized_upper_bound_range_constraints!(
     container::OptimizationContainer,
     T::Type{ComponentActivePowerVariableLimitsConstraint},
     array,
@@ -290,6 +611,34 @@ function add_parameterized_upper_bound_range_constraints_impl!(
     end
 end
 
+function _add_range_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ComponentActivePowerVariableLimitsConstraint,
+    U <: VariableType,
+    V <: PSY.HybridSystem,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    array = get_variable(container, U(), V)
+    _add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_parameterized_upper_bound_range_constraints_impl!(
+        container,
+        T,
+        array,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+    )
+    return
+end
+
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
@@ -311,9 +660,9 @@ function add_constraints!(
     X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     array = get_variable(container, U(), V)
-    add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
-    add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    add_parameterized_upper_bound_range_constraints_impl!(
+    _add_lower_bound_range_constraints!(container, T, array, devices, model)
+    _add_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_parameterized_upper_bound_range_constraints!(
         container,
         T,
         array,
@@ -330,10 +679,10 @@ function add_constraints!(
     U::Type{<:RangeConstraintLBExpressions},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     array = get_expression(container, U(), V)
-    add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
@@ -343,11 +692,11 @@ function add_constraints!(
     U::Type{<:RangeConstraintUBExpressions},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     array = get_expression(container, U(), V)
-    add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    add_parameterized_upper_bound_range_constraints_impl!(
+    _add_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_parameterized_upper_bound_range_constraints!(
         container,
         T,
         array,
@@ -393,19 +742,19 @@ end
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{ComponentReactivePowerVariableLimitsConstraint},
-    U::Type{<:VariableType},
+    ::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    ::DeviceModel{V, W},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.HybridSystem, W <: AbstractHybridFormulation}
     time_steps = get_time_steps(container)
     var = get_variable(container, ComponentReactivePowerVariable(), V)
     device_names = [PSY.get_name(d) for d in devices]
-    subcomp_types = get_subcomponent_types(U)
+    subcomp_types = SUB_COMPONENT_TYPES
 
     constraint_ub = add_constraints_container!(
         container,
-        ReactiveRangeConstraint(),
+        ComponentReactivePowerVariableLimitsConstraint(),
         V,
         device_names,
         subcomp_types,
@@ -415,7 +764,7 @@ function add_constraints!(
     )
     constraint_lb = add_constraints_container!(
         container,
-        ReactiveRangeConstraint(),
+        ComponentReactivePowerVariableLimitsConstraint(),
         V,
         device_names,
         subcomp_types,
@@ -424,24 +773,24 @@ function add_constraints!(
         sparse=true,
     )
 
-    for t in time_steps, d in devices, subcomp in subcomp_types
+    for d in devices, (ix, subcomp) in enumerate(SUB_COMPONENT_TYPES)
         !does_subcomponent_exist(d, subcomp) && continue
         name = PSY.get_name(d)
         limits = get_min_max_limits(d, subcomp, T, W)
-        subcomp_key = string(subcomp)
-        constraint_ub[name, subcomp, t] =
-            JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] <= limits.max)
-        constraint_lb[name, subcomp, t] =
-            JuMP.@constraint(container.JuMPmodel, var[name, subcomp_key, t] >= limits.min)
-    end
-    for c in [constraint_ub, constraint_lb]
-        # Workaround to remove invalid key combinations
-        filter!(x -> x.second !== nothing, c.data)
+        for t in time_steps
+            constraint_ub[name, subcomp, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var[name, SUB_COMPONENT_KEYS[ix], t] <= limits.max
+            )
+            constraint_lb[name, subcomp, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var[name, SUB_COMPONENT_KEYS[ix], t] >= limits.min
+            )
+        end
     end
     return
 end
 ######################## Energy balance constraints ############################
-
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{EnergyBalanceConstraint},
@@ -499,7 +848,7 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{PowerOutputRangeConstraint},
+    ::Type{DeviceNetActivePowerConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, D},
     ::Type{X},
@@ -507,32 +856,54 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
 
-    var_p = get_variable(container, ActivePowerVariable(), V)
-    var_sub_p = get_variable(container, ComponentActivePowerVariable(), V)
+    var_sub_in = get_variable(container, ComponentInputActivePowerVariable(), V)
+    var_sub_out = get_variable(container, ComponentOutputActivePowerVariable(), V)
     var_out = get_variable(container, ActivePowerOutVariable(), V)
     var_in = get_variable(container, ActivePowerInVariable(), V)
 
-    constraint = add_constraints_container!(
+    constraint_in = add_constraints_container!(
         container,
-        PowerOutputRangeConstraint(),
+        DeviceNetActivePowerConstraint(),
         V,
         name_index,
         time_steps,
+        meta="in",
+    )
+    constraint_out = add_constraints_container!(
+        container,
+        DeviceNetActivePowerConstraint(),
+        V,
+        name_index,
+        time_steps,
+        meta="out",
     )
 
-    for d in devices, t in time_steps
+    for d in devices
         name = PSY.get_name(d)
-        if haskey(PSY.get_ext(d), "subtypes")
-            subtypes = PSY.get_ext(d)["subtypes"]
-            constraint[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                var_p[name, t] - sum(var_sub_p[name, s, t] for s in subtypes) -
-                var_out[name, t] + var_in[name, t] == 0.0
+        for t in time_steps
+            total_power_in = JuMP.AffExpr()
+            total_power_out = JuMP.AffExpr()
+            for subcomp in _OUTPUT_TYPES
+                !does_subcomponent_exist(d, subcomp) && continue
+                JuMP.add_to_expression!(
+                    total_power_in,
+                    var_sub_in[name, string(subcomp), t],
+                )
+            end
+            for subcomp in _INPUT_TYPES
+                !does_subcomponent_exist(d, subcomp) && continue
+                JuMP.add_to_expression!(
+                    total_power_out,
+                    var_sub_out[name, string(subcomp), t],
+                )
+            end
+            constraint_out[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_out[name, t] - total_power_out == 0.0
             )
-        else
-            constraint[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                var_p[name, t] - var_out[name, t] + var_in[name, t] == 0.0
+            constraint_in[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_in[name, t] - total_power_in == 0.0
             )
         end
     end
@@ -542,7 +913,7 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{ReactivePowerConstraint},
+    ::Type{DeviceNetReactivePowerConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, D},
     ::Type{X},
@@ -555,22 +926,36 @@ function add_constraints!(
 
     constraint = add_constraints_container!(
         container,
-        ReactivePowerConstraint(),
+        DeviceNetReactivePowerConstraint(),
         V,
         name_index,
         time_steps,
     )
 
-    for d in devices, t in time_steps
+    for d in devices
         name = PSY.get_name(d)
-
-        constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            var_q[name, t] ==
-            var_sub_q[name, string(PSY.RenewableGen), t] +
-            var_sub_q[name, string(PSY.ThermalGen), t] +
-            var_sub_q[name, string(PSY.Storage), t]
-        )
+        for t in time_steps
+            net_reactive_power = JuMP.AffExpr()
+            for subcomp in SUB_COMPONENT_TYPES
+                !does_subcomponent_exist(d, subcomp) && continue
+                if subcomp <: PSY.ElectricLoad
+                    JuMP.add_to_expression!(
+                        net_reactive_power,
+                        var_sub_q[name, string(subcomp), t],
+                        -1.0,
+                    )
+                else
+                    JuMP.add_to_expression!(
+                        net_reactive_power,
+                        var_sub_q[name, string(subcomp), t],
+                    )
+                end
+            end
+            constraint[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_q[name, t] - net_reactive_power == 0.0
+            )
+        end
     end
     return
 end
@@ -586,7 +971,8 @@ function add_constraints!(
     name_index = [PSY.get_name(d) for d in devices]
 
     var_q = get_variable(container, ReactivePowerVariable(), V)
-    var_p = get_variable(container, ActivePowerVariable(), V)
+    var_p_in = get_variable(container, ActivePowerInVariable(), V)
+    var_p_out = get_variable(container, ActivePowerOutVariable(), V)
 
     constraint = add_constraints_container!(
         container,
@@ -601,7 +987,7 @@ function add_constraints!(
         rating = PSY.get_interconnection_rating(d)
         constraint[name, t] = JuMP.@constraint(
             container.JuMPmodel,
-            rating^2 == var_q[name, t]^2 + var_p[name, t]^2
+            rating^2 == var_q[name, t]^2 + var_p_in[name, t]^2 + var_p_out[name, t]^2
         )
     end
     return
@@ -780,7 +1166,8 @@ function objective_function!(
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.HybridSystem, U <: AbstractHybridFormulation}
-    add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    add_variable_cost!(container, ActivePowerInVariable(), devices, U())
+    add_variable_cost!(container, ActivePowerOutVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
