@@ -261,7 +261,6 @@ export AbsoluteValueConstraint
 export ActiveConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerVariableTimeSeriesLimitsConstraint
-export ActiveRangeConstraint
 export ActiveRangeICConstraint
 export AreaDispatchBalanceConstraint
 export AreaParticipationAssignmentConstraint
@@ -306,7 +305,6 @@ export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
 export PieceWiseLinearCostConstraint
-export PowerOutputRangeConstraint
 export ParticipationAssignmentConstraint
 export PhaseAngleControlLimit
 export RampConstraint
@@ -316,7 +314,6 @@ export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
 export ReactivePowerVariableLimitsConstraint
-export ReactiveRangeConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
 export ReserveEnergyConstraint
@@ -350,10 +347,10 @@ export EmergencyDown
 export RawACE
 export ProductionCostExpression
 export ActivePowerRangeExpressionLB
-export ComponentActivePowerRangeExpressionLB
 export ReserveRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export ReserveRangeExpressionUB
+export ComponentActivePowerRangeExpressionLB
 export ComponentActivePowerRangeExpressionUB
 export ComponentReserveUpBalanceExpression
 export ComponentReserveDownBalanceExpression

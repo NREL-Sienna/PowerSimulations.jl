@@ -87,34 +87,6 @@ function add_range_constraints!(
     return
 end
 
-function add_range_constraints!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    ::Type{X},
-) where {
-    T <: ComponentActivePowerVariableLimitsConstraint,
-    U <: VariableType,
-    V <: PSY.Component,
-    W <: AbstractDeviceFormulation,
-    X <: PM.AbstractPowerModel,
-}
-    array = get_variable(container, U(), V)
-    _add_lower_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_parameterized_upper_bound_range_constraints_impl!(
-        container,
-        T,
-        array,
-        ActivePowerTimeSeriesParameter,
-        devices,
-        model,
-    )
-    return
-end
-
 function _add_lower_bound_range_constraints_impl!(
     container::OptimizationContainer,
     ::Type{T},
