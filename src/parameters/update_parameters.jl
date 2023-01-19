@@ -270,7 +270,7 @@ function _update_parameter_values!(
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
         val = round(state_values[state_data_index, name])
         @assert 0.0 <= val <= 1.0
-        _set_param_value!(get_jump_model(model), param_array, val, name, 1)
+        _set_param_value!(param_array, val, name, 1)
     end
     return
 end
