@@ -205,7 +205,7 @@ function add_constraints!(
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(network_model)
     # TODO: use getter when integrating NetworkMatrices
-    branches = ptdf.axes[2]
+    branches = ptdf.axes[1]
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(
         container,
