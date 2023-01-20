@@ -73,6 +73,8 @@ function generate_device_formulation_combinations()
         IS.get_all_concrete_subtypes(PSY.Device),
         IS.get_all_concrete_subtypes(AbstractDeviceFormulation),
     )
+        # DynamicBranches are not supported in PSI but they are still considered <: PSY.Device since in 
+        # PSY 1.0 we haven't introduced the notion of AbstractDynamicBranches. 
         if d <: PSY.DynamicBranch
             continue
         end
