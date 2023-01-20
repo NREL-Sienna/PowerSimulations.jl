@@ -6,7 +6,7 @@
     model =
         DecisionModel(MockOperationProblem, DCPPowerModel, sys; store_variable_names=true)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 816, 0, 384, 336, 192, true)
+    moi_tests(model, 816, 0, 480, 240, 192, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -17,7 +17,7 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, ACPPowerModel, sys)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 864, 0, 672, 624, 288, true)
+    moi_tests(model, 1152, 0, 816, 576, 288, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -28,7 +28,7 @@ end
     # Parameters Testing
     model = DecisionModel(MockOperationProblem, DCPPowerModel, sys)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 672, 0, 384, 336, 192, true)
+    moi_tests(model, 816, 0, 480, 240, 192, true)
     psi_checkobjfun_test(model, GAEVF)
 end
 
@@ -39,6 +39,6 @@ end
     # No Parameters Testing
     model = DecisionModel(MockOperationProblem, ACPPowerModel, sys)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 864, 0, 672, 624, 288, true)
+    moi_tests(model, 1152, 0, 816, 576, 288, true)
     psi_checkobjfun_test(model, GAEVF)
 end

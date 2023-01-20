@@ -1052,7 +1052,6 @@ function add_constraints!(
     return
 end
 
-#=
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{ComponentReservationConstraint},
@@ -1101,6 +1100,7 @@ function add_constraints!(
     return
 end
 
+#=
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{ReserveEnergyCoverageConstraint},
