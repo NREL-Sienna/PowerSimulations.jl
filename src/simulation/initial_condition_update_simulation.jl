@@ -160,7 +160,6 @@ function update_initial_conditions!(
     return
 end
 
-
 function update_initial_conditions!(
     ics::Vector{T},
     state::SimulationState,
