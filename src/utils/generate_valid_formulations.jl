@@ -73,6 +73,9 @@ function generate_device_formulation_combinations()
         IS.get_all_concrete_subtypes(PSY.Device),
         IS.get_all_concrete_subtypes(AbstractDeviceFormulation),
     )
+        if d <: PSY.DynamicBranch
+            continue
+        end
         if !isempty(methodswith(DeviceModel{d, f}, construct_device!, supertypes=true))
             push!(combos, Dict{String, Any}("device_type" => d, "formulation" => f))
         end
