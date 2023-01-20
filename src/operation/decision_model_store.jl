@@ -111,7 +111,9 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     index::DecisionModelIndexType,
 )
-    @assert !(index in keys(store.optimizer_stats))
+    if index in keys(store.optimizer_stats)
+        @warn "Overwriting optimizer stats"
+    end
     store.optimizer_stats[index] = stats
     return
 end
