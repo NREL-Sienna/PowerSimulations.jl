@@ -204,7 +204,8 @@ function add_constraints!(
     network_model::NetworkModel{StandardPTDFModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(network_model)
-    branches = PSY.get_name.(devices)
+    # TODO: use getter when integrating NetworkMatrices
+    branches = ptdf.axes[2]
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(
         container,
@@ -218,8 +219,7 @@ function add_constraints!(
 
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)
-    for br in devices
-        name = PSY.get_name(br)
+    for name in branches
         ptdf_col = ptdf[name, :]
         flow_variables_ = flow_variables[name, :]
         for t in time_steps
