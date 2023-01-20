@@ -114,8 +114,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
-
-    add_variables!(container, S, devices, StaticBranch())
+    add_variables!(container, network_model, devices, StaticBranch())
     return
 end
 
@@ -141,7 +140,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
-    add_variables!(container, S, devices, StaticBranchBounds())
+    add_variables!(container, network_model, devices, StaticBranchBounds())
     return
 end
 
@@ -153,9 +152,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
-
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
-
     branch_rate_bounds!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
     return
@@ -169,7 +166,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
-    add_variables!(container, S, devices, StaticBranchUnbounded())
+    add_variables!(container, network_model, devices, StaticBranchUnbounded())
     return
 end
 
