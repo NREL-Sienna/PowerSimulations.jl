@@ -60,8 +60,8 @@ get_variable_binary(::ComponentReservationVariable, ::Type{<:PSY.HybridSystem}, 
 
 #################### Initial Conditions for models ###############
 
-initial_condition_default(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
-initial_condition_variable(::InitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = EnergyVariable()
+initial_condition_default(::ComponentInitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = PSY.get_initial_energy(PSY.get_storage(d))
+initial_condition_variable(::ComponentInitialEnergyLevel, d::PSY.HybridSystem, ::AbstractHybridFormulation) = ComponentEnergyVariable()
 
 ########################Objective Function##################################################
 objective_function_multiplier(::VariableType, ::AbstractHybridFormulation)=OBJECTIVE_FUNCTION_POSITIVE
@@ -860,7 +860,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    initial_conditions = get_initial_condition(container, InitialEnergyLevel(), V)
+    initial_conditions = get_initial_condition(container, ComponentInitialEnergyLevel(), V)
     energy_var = get_variable(container, ComponentEnergyVariable(), V, "storage")
     names = axes(energy_var)[1]
     powerin_var = get_variable(container, ComponentInputActivePowerVariable(), V)
@@ -1263,7 +1263,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{D},
     formulation::AbstractHybridFormulation,
 ) where {D <: PSY.HybridSystem}
-    add_initial_condition!(container, devices, formulation, InitialEnergyLevel())
+    add_initial_condition!(container, devices, formulation, ComponentInitialEnergyLevel())
     return
 end
 
