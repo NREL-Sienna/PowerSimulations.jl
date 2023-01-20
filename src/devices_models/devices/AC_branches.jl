@@ -45,10 +45,58 @@ end
 
 add_variables!(
     container::OptimizationContainer,
-    ::Type{<:AbstractPTDFModel},
+    ::NetworkModel{<:AbstractPTDFModel},
     devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
     formulation::AbstractBranchFormulation,
 ) = add_variable!(container, FlowActivePowerVariable(), devices, formulation)
+
+add_variables!(
+    container::OptimizationContainer,
+    network_model::NetworkModel{StandardPTDFModel},
+    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
+    formulation::AbstractBranchFormulation,
+) = _add_variable!(
+    container,
+    FlowActivePowerVariable(),
+    network_model,
+    devices,
+    formulation,
+)
+
+function _add_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    network_model::NetworkModel{StandardPTDFModel},
+    devices::IS.FlattenIteratorWrapper{U},
+    formulation::AbstractBranchFormulation,
+) where {T <: VariableType, U <: PSY.ACBranch}
+    time_steps = get_time_steps(container)
+    ptdf = get_PTDF(network_model)
+    branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ ptdf.axes[1]]
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        U,
+        PSY.get_name.(branches_in_ptdf),
+        time_steps,
+    )
+
+    for d in branches_in_ptdf
+        name = PSY.get_name(d)
+        # Don't check if names are present when the PTDF has less branches than system
+        for t in time_steps
+            variable[name, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(U)_{$(name), $(t)}",
+            )
+            ub = get_variable_upper_bound(variable_type, d, formulation)
+            ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
+
+            lb = get_variable_lower_bound(variable_type, d, formulation)
+            lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+        end
+    end
+end
 
 function branch_rate_bounds!(
     container::OptimizationContainer,
@@ -96,15 +144,18 @@ function get_min_max_limits(
     device::PSY.ACBranch,
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
-)
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (min=-1 * PSY.get_rate(device), max=PSY.get_rate(device))
 end
 
+"""
+Min and max limits for Abstract Branch Formulation
+"""
 function get_min_max_limits(
     ::PSY.PhaseShiftingTransformer,
     ::Type{PhaseAngleControlLimit},
     ::Type{PhaseAngleControl},
-)
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (min=-π / 2, max=π / 2)
 end
 
@@ -201,7 +252,10 @@ function add_constraints!(
     network_model::NetworkModel{StandardPTDFModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF(network_model)
-    branches = PSY.get_name.(devices)
+    # This is a workaround to not call the same list comprehension to find
+    # The subset of branches of type B in the PTDF
+    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    branches = flow_variables.axes[1]
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(
         container,
@@ -215,8 +269,7 @@ function add_constraints!(
 
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)
-    for br in devices
-        name = PSY.get_name(br)
+    for name in branches
         ptdf_col = ptdf[name, :]
         flow_variables_ = flow_variables[name, :]
         for t in time_steps
