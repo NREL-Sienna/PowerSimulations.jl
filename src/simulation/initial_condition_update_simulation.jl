@@ -151,7 +151,10 @@ function update_initial_conditions!(
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
         # Not ideal to instantiate the key here
-        var_val = get_system_state_value(state, VariableKey(ComponentEnergyVariable, get_component_type(ic), "storage"))
+        var_val = get_system_state_value(
+            state,
+            VariableKey(ComponentEnergyVariable, get_component_type(ic), "storage"),
+        )
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
     end
     return
