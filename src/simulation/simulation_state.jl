@@ -451,7 +451,7 @@ end
 function get_system_state_value(
     state::SimulationState,
     ::T,
-    ::Type{U}
+    ::Type{U},
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     return get_system_state_value(state, VariableKey(T, U))
 end
