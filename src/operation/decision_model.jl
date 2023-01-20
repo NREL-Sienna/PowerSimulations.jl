@@ -333,7 +333,6 @@ function build_model!(model::DecisionModel)
 end
 
 function reset!(model::DecisionModel)
-    # TODO-PJ: This is needed until we remove the ParameterJuMP dependency
     was_built_for_recurrent_solves = built_for_recurrent_solves(model)
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
