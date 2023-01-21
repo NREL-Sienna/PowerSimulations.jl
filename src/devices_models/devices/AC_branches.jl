@@ -72,7 +72,7 @@ function _add_variable!(
 ) where {T <: VariableType, U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     ptdf = get_PTDF(network_model)
-    branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ ptdf.axes[1]]
+    branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ Set(ptdf.axes[1])]
     variable = add_variable_container!(
         container,
         variable_type,
