@@ -70,7 +70,6 @@ struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
-struct PowerOutputRangeConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
 struct PieceWiseLinearCostConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
@@ -79,11 +78,9 @@ struct RangeLimitConstraint <: ConstraintType end
 struct RateLimitConstraint <: ConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
-struct ReactivePowerConstraint <: ConstraintType end
-struct ReactiveRangeConstraint <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
 struct RequirementConstraint <: ConstraintType end
-struct ReserveEnergyConstraint <: ConstraintType end
+struct ReserveEnergyCoverageConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
 struct ComponentReserveUpBalance <: ConstraintType end
 struct ComponentReserveDownBalance <: ConstraintType end
@@ -94,10 +91,11 @@ struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
+struct ComponentReservationConstraint <: ConstraintType end
+struct DeviceNetActivePowerConstraint <: ConstraintType end
+struct DeviceNetReactivePowerConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
-struct EnergyVariableLimitUpConstraint <: ConstraintType end
-struct EnergyVariableLimitDownConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct OutputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
@@ -105,7 +103,6 @@ struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint en
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ComponentActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ComponentReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
-
 # These apply to the processing of constraint duals
 should_write_resulting_value(::Type{<:ConstraintType}) = true
 convert_result_to_natural_units(::Type{<:ConstraintType}) = false

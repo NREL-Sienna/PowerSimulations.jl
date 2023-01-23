@@ -738,8 +738,9 @@ function add_variable_container!(
     ::Type{U},
     axs...;
     sparse=false,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    var_key = VariableKey(T, U)
+    var_key = VariableKey(T, U, meta)
     return _add_variable_container!(container, var_key, sparse, axs...)
 end
 
@@ -763,9 +764,10 @@ end
 function add_variable_container!(
     container::OptimizationContainer,
     ::T,
-    ::Type{U},
+    ::Type{U};
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: PieceWiseLinearCostVariable, U <: Union{PSY.Component, PSY.System}}
-    var_key = VariableKey(T, U)
+    var_key = VariableKey(T, U, meta)
     _assign_container!(container.variables, var_key, _get_pwl_variables_container())
     return container.variables[var_key]
 end
@@ -800,8 +802,9 @@ function add_aux_variable_container!(
     ::Type{U},
     axs...;
     sparse=false,
+    meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: AuxVariableType, U <: PSY.Component}
-    var_key = AuxVarKey(T, U)
+    var_key = AuxVarKey(T, U, meta)
     if sparse
         aux_variable_container = sparse_container_spec(Float64, axs...)
     else
@@ -1584,10 +1587,11 @@ function lazy_container_addition!(
     container::OptimizationContainer,
     var::T,
     ::Type{U},
-    axs...,
+    axs...;
+    kwargs...,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if !has_container_key(container, T, U)
-        var_container = add_variable_container!(container, var, U, axs...)
+        var_container = add_variable_container!(container, var, U, axs...; kwargs...)
     else
         var_container = get_variable(container, var, U)
     end
@@ -1598,12 +1602,30 @@ function lazy_container_addition!(
     container::OptimizationContainer,
     constraint::T,
     ::Type{U},
-    axs...,
+    axs...;
+    kwargs...,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if !has_container_key(container, T, U)
-        cons_container = add_constraints_container!(container, constraint, U, axs...)
+        cons_container =
+            add_constraints_container!(container, constraint, U, axs...; kwargs...)
     else
         cons_container = get_constraint(container, constraint, U)
     end
     return cons_container
+end
+
+function lazy_container_addition!(
+    container::OptimizationContainer,
+    expression::T,
+    ::Type{U},
+    axs...;
+    kwargs...,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    if !has_container_key(container, T, U)
+        expr_container =
+            add_expression_container!(container, expression, U, axs...; kwargs...)
+    else
+        expr_container = get_expression(container, expression, U)
+    end
+    return expr_container
 end

@@ -18,32 +18,6 @@ function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     devices::U,
-    model::DeviceModel{D, W},
-) where {
-    T <:
-    Union{ComponentActivePowerRangeExpressionUB, ComponentActivePowerRangeExpressionLB},
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractDeviceFormulation,
-} where {D <: PSY.HybridSystem}
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    subcomp_keys = string.([PSY.ThermalGen, PSY.RenewableGen])
-    add_expression_container!(
-        container,
-        T(),
-        D,
-        names,
-        subcomp_keys,
-        time_steps;
-        sparse=true,
-    )
-    return
-end
-
-function add_expressions!(
-    container::OptimizationContainer,
-    ::Type{T},
-    devices::U,
     model::ServiceModel{V, W},
 ) where {
     T <: ExpressionType,
@@ -648,41 +622,6 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         _add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
-    end
-    return
-end
-
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    ::Type{X},
-) where {
-    T <:
-    Union{ComponentActivePowerRangeExpressionUB, ComponentActivePowerRangeExpressionLB},
-    U <: ComponentActivePowerVariable,
-    V <: PSY.HybridSystem,
-    W <: AbstractDeviceFormulation,
-    X <: PM.AbstractPowerModel,
-}
-    variable = get_variable(container, U(), V)
-    if !has_container_key(container, T, V)
-        add_expressions!(container, T, devices, model)
-    end
-    expression = get_expression(container, T(), V)
-
-    for d in devices
-        !haskey(PSY.get_ext(d), "subtypes") && continue
-        for sub_comp_key in PSY.get_ext(d)["subtypes"], t in get_time_steps(container)
-            name = PSY.get_name(d)
-            _add_to_jump_expression!(
-                expression[name, sub_comp_key, t],
-                variable[name, sub_comp_key, t],
-                1.0,
-            )
-        end
     end
     return
 end
