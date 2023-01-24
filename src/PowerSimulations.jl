@@ -239,7 +239,10 @@ export AdditionalDeltaActivePowerDownVariable
 export SmoothACE
 export SystemBalanceSlackUp
 export SystemBalanceSlackDown
+export BoundSlackUpperBound
+export BoundSlackLowerBound
 export ReserveRequirementSlack
+
 export VoltageMagnitude
 export VoltageAngle
 export FlowActivePowerVariable

@@ -87,7 +87,14 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
-) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel} end
+) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(B, sys)
+    if get_use_slacks(model)
+        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
+        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+    end
+    return
+end
 
 # For DC Power only. Implements constraints
 function construct_device!(
@@ -102,6 +109,9 @@ function construct_device!(
     devices = get_available_components(B, sys)
     add_constraints!(container, RateLimitConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    if get_use_slacks(model)
+        objective_function!(container, B, model, S)
+    end
     return
 end
 
@@ -115,6 +125,10 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
     devices = get_available_components(B, sys)
     add_variables!(container, network_model, devices, StaticBranch())
+    if get_use_slacks(model)
+        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
+        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+    end
     return
 end
 
@@ -129,6 +143,9 @@ function construct_device!(
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    if get_use_slacks(model)
+        objective_function!(container, B, model, S)
+    end
     return
 end
 
@@ -139,6 +156,9 @@ function construct_device!(
     model::DeviceModel{B, StaticBranchBounds},
     network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: StandardPTDFModel}
+    if get_use_slacks(model)
+        error()
+    end
     devices = get_available_components(B, sys)
     add_variables!(container, network_model, devices, StaticBranchBounds())
     return
@@ -191,7 +211,14 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
     ::NetworkModel{S},
-) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel} end
+) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    if get_use_slacks(model)
+        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
+        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+    end
+    return
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -206,6 +233,9 @@ function construct_device!(
     add_constraints!(container, RateLimitConstraintFromTo, devices, model, S)
     add_constraints!(container, RateLimitConstraintToFrom, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    if get_use_slacks(model)
+        objective_function!(container, B, model, S)
+    end
     return
 end
 
@@ -215,7 +245,14 @@ function construct_device!(
     ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranchBounds},
     ::NetworkModel{S},
-) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel} end
+) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    if get_use_slacks(model)
+        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
+        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+    end
+    return
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -227,6 +264,9 @@ function construct_device!(
     devices = get_available_components(B, sys)
     branch_rate_bounds!(container, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    if get_use_slacks(model)
+        objective_function!(container, B, model, S)
+    end
     return
 end
 
@@ -296,7 +336,14 @@ function construct_device!(
     ::ArgumentConstructStage,
     ::DeviceModel{B, F},
     ::NetworkModel{S},
-) where {B <: PSY.DCBranch, F <: HVDCP2PLossless, S <: PM.AbstractPowerModel} end
+) where {B <: PSY.DCBranch, F <: HVDCP2PLossless, S <: PM.AbstractPowerModel}
+    devices = get_available_components(B, sys)
+    if get_use_slacks(model)
+        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
+        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+    end
+    return
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -308,6 +355,9 @@ function construct_device!(
     devices = get_available_components(B, sys)
     add_constraints!(container, FlowRateConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    if get_use_slacks(model)
+        objective_function!(container, B, model, S)
+    end
     return
 end
 
@@ -333,6 +383,10 @@ function construct_device!(
         model,
         S,
     )
+    if get_use_slacks(model)
+        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
+        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+    end
     return
 end
 
@@ -351,6 +405,9 @@ function construct_device!(
     devices = get_available_components(B, sys)
     add_constraints!(container, FlowRateConstraint, devices, model, S)
     add_constraint_dual!(container, sys, model)
+    if get_use_slacks(model)
+        objective_function!(container, B, model, S)
+    end
     return
 end
 
