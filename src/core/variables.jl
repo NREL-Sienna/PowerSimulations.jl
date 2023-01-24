@@ -161,6 +161,10 @@ struct SystemBalanceSlackUp <: VariableType end
 
 struct SystemBalanceSlackDown <: VariableType end
 
+struct BoundSlackUpperBound <: VariableType end
+
+struct BoundSlackLowerBound <: VariableType end
+
 struct ReserveRequirementSlack <: VariableType end
 
 struct VoltageMagnitude <: VariableType end
