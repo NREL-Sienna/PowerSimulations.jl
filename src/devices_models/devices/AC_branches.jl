@@ -69,10 +69,7 @@ function add_variables!(
     ::NetworkModel{<:AbstractPTDFModel},
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractBranchFormulation,
-) where {
-    T <: PSY.ACBranch,
-    S <: Union{BoundSlackUpperBound, BoundSlackLowerBound}
-}
+) where {T <: PSY.ACBranch, S <: Union{BoundSlackUpperBound, BoundSlackLowerBound}}
     time_steps = get_time_steps(container)
     branch_names = PSY.get_name.(devices)
     variable = add_variable_container!(container, S(), T, branch_names, time_steps)
@@ -217,15 +214,38 @@ function add_range_constraints!(
         array_upper = array .- upper_bound_slack
         array_lower = array .+ lower_bound_slack
 
-        _add_lower_bound_range_constraints_impl!(container, RateLimitConstraint, array_lower, devices, model)
-        _add_upper_bound_range_constraints_impl!(container, RateLimitConstraint, array_upper, devices, model)
+        _add_lower_bound_range_constraints_impl!(
+            container,
+            RateLimitConstraint,
+            array_lower,
+            devices,
+            model,
+        )
+        _add_upper_bound_range_constraints_impl!(
+            container,
+            RateLimitConstraint,
+            array_upper,
+            devices,
+            model,
+        )
     else
-        _add_lower_bound_range_constraints_impl!(container, RateLimitConstraint, array, devices, model)
-        _add_upper_bound_range_constraints_impl!(container, RateLimitConstraint, array, devices, model)
+        _add_lower_bound_range_constraints_impl!(
+            container,
+            RateLimitConstraint,
+            array,
+            devices,
+            model,
+        )
+        _add_upper_bound_range_constraints_impl!(
+            container,
+            RateLimitConstraint,
+            array,
+            devices,
+            model,
+        )
     end
     return
 end
-
 
 """
 Add rate limit from to constraints for ACBranch with AbstractPowerModel
@@ -583,7 +603,6 @@ function add_constraints!(
     end
     return
 end
-
 
 function objective_function!(
     container::OptimizationContainer,
