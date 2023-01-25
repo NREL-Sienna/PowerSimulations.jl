@@ -63,6 +63,30 @@ add_variables!(
     formulation,
 )
 
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{S},
+    ::NetworkModel{<:AbstractPTDFModel},
+    devices::IS.FlattenIteratorWrapper{T},
+    formulation::AbstractBranchFormulation,
+) where {
+    T <: PSY.ACBranch,
+    S <: Union{BoundSlackUpperBound, BoundSlackLowerBound}
+}
+    time_steps = get_time_steps(container)
+    branch_names = PSY.get_name.(devices)
+    variable = add_variable_container!(container, S(), T, branch_names, time_steps)
+
+    for t in time_steps, n in branch_names
+        variable[n, t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "slack_{$(T), $n, $t}",
+            lower_bound = 0.0
+        )
+    end
+    return
+end
+
 function _add_variable!(
     container::OptimizationContainer,
     variable_type::T,
@@ -172,6 +196,36 @@ function add_constraints!(
     add_range_constraints!(container, cons_type, FlowActivePowerVariable, devices, model, X)
     return
 end
+
+function add_range_constraints!(
+    container::OptimizationContainer,
+    ::Type{RateLimitConstraint},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    U <: VariableType,
+    V <: PSY.ACBranch,
+    W <: AbstractBranchFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    array = get_variable(container, U(), V)
+    if get_use_slacks(model)
+        lower_bound_slack = get_variable(container, BoundSlackLowerBound(), V)
+        upper_bound_slack = get_variable(container, BoundSlackUpperBound(), V)
+        array_upper = array .- upper_bound_slack
+        array_lower = array .+ lower_bound_slack
+
+        _add_lower_bound_range_constraints_impl!(container, RateLimitConstraint, array_lower, devices, model)
+        _add_upper_bound_range_constraints_impl!(container, RateLimitConstraint, array_upper, devices, model)
+    else
+        _add_lower_bound_range_constraints_impl!(container, RateLimitConstraint, array, devices, model)
+        _add_upper_bound_range_constraints_impl!(container, RateLimitConstraint, array, devices, model)
+    end
+    return
+end
+
 
 """
 Add rate limit from to constraints for ACBranch with AbstractPowerModel
@@ -526,6 +580,26 @@ function add_constraints!(
                 inv_x * (bus_angle_from[t] - bus_angle_to[t] + angle_variables_[t])
             )
         end
+    end
+    return
+end
+
+
+function objective_function!(
+    container::OptimizationContainer,
+    ::Type{B},
+    model::DeviceModel{B, StaticBranch},
+    S::Type{T},
+) where {B <: PSY.ACBranch, T <: StandardPTDFModel}
+    variable_ub = get_variable(container, BoundSlackUpperBound(), B)
+    variable_lb = get_variable(container, BoundSlackLowerBound(), B)
+    branch_names = axes(variable_ub)[1]
+    @assert_op branch_names == axes(variable_lb)[1]
+    for t in get_time_steps(container), b in branch_names
+        add_to_objective_invariant_expression!(
+            container,
+            (variable_ub[b, t] + variable_lb[b, t]) * BALANCE_SLACK_COST,
+        )
     end
     return
 end
