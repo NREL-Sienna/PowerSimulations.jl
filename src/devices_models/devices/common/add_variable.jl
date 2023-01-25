@@ -8,7 +8,6 @@ function add_variables!(
     formulation::Union{AbstractServiceFormulation, AbstractDeviceFormulation},
 ) where {T <: VariableType, U <: PSY.Component}
     return add_variable!(container, T(), devices, formulation)
-    return
 end
 
 """
