@@ -90,8 +90,20 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(B, sys)
     if get_use_slacks(model)
-        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
-        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+        add_variables!(
+            container,
+            BoundSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            BoundSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
     end
     return
 end
@@ -126,8 +138,20 @@ function construct_device!(
     devices = get_available_components(B, sys)
     add_variables!(container, network_model, devices, StaticBranch())
     if get_use_slacks(model)
-        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
-        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+        add_variables!(
+            container,
+            BoundSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            BoundSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
     end
     return
 end
@@ -214,8 +238,20 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     if get_use_slacks(model)
-        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
-        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+        add_variables!(
+            container,
+            BoundSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            BoundSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
     end
     return
 end
@@ -248,8 +284,20 @@ function construct_device!(
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     if get_use_slacks(model)
-        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
-        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+        add_variables!(
+            container,
+            BoundSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            BoundSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
     end
     return
 end
@@ -339,8 +387,20 @@ function construct_device!(
 ) where {B <: PSY.DCBranch, F <: HVDCP2PLossless, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
     if get_use_slacks(model)
-        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
-        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+        add_variables!(
+            container,
+            BoundSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            BoundSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
     end
     return
 end
@@ -384,8 +444,20 @@ function construct_device!(
         S,
     )
     if get_use_slacks(model)
-        add_variables!(container, BoundSlackUpperBound, network_model, devices, StaticBranch())
-        add_variables!(container, BoundSlackLowerBound, network_model, devices, StaticBranch())
+        add_variables!(
+            container,
+            BoundSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            BoundSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
     end
     return
 end
