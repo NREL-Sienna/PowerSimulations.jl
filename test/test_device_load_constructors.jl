@@ -1,5 +1,5 @@
 @testset "StaticPowerLoad" begin
-    models = [StaticPowerLoad, DispatchablePowerLoad, InterruptiblePowerLoad]
+    models = [StaticPowerLoad, PowerLoadDispatch, PowerLoadInterruption]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel, ACPPowerModel]
     for m in models, n in networks
@@ -11,12 +11,12 @@
     end
 end
 
-@testset "DispatchablePowerLoad DC- PF" begin
-    models = [DispatchablePowerLoad]
+@testset "PowerLoadDispatch DC- PF" begin
+    models = [PowerLoadDispatch]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel]
     for m in models, n in networks
-        device_model = DeviceModel(InterruptibleLoad, m)
+        device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
         mock_construct_device!(model, device_model)
         moi_tests(model, 24, 0, 24, 0, 0, false)
@@ -24,12 +24,12 @@ end
     end
 end
 
-@testset "DispatchablePowerLoad AC- PF" begin
-    models = [DispatchablePowerLoad]
+@testset "PowerLoadDispatch AC- PF" begin
+    models = [PowerLoadDispatch]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [ACPPowerModel]
     for m in models, n in networks
-        device_model = DeviceModel(InterruptibleLoad, m)
+        device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
         mock_construct_device!(model, device_model)
         moi_tests(model, 48, 0, 24, 0, 24, false)
@@ -37,12 +37,12 @@ end
     end
 end
 
-@testset "InterruptiblePowerLoad DC- PF" begin
-    models = [InterruptiblePowerLoad]
+@testset "PowerLoadInterruption DC- PF" begin
+    models = [PowerLoadInterruption]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel]
     for m in models, n in networks
-        device_model = DeviceModel(InterruptibleLoad, m)
+        device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
         mock_construct_device!(model, device_model)
         moi_tests(model, 48, 0, 24, 0, 0, true)
@@ -50,12 +50,12 @@ end
     end
 end
 
-@testset "InterruptiblePowerLoad AC- PF" begin
-    models = [InterruptiblePowerLoad]
+@testset "PowerLoadInterruption AC- PF" begin
+    models = [PowerLoadInterruption]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [ACPPowerModel]
     for m in models, n in networks
-        device_model = DeviceModel(InterruptibleLoad, m)
+        device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
         mock_construct_device!(model, device_model)
         moi_tests(model, 72, 0, 24, 0, 24, true)

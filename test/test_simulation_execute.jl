@@ -34,7 +34,7 @@ end
 function test_2_stage_decision_models_with_feedforwards(in_memory)
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
-    set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
@@ -102,7 +102,7 @@ function test_2_stages_with_storage_ems(in_memory)
         get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel, use_slacks=true))
     template_ed =
         get_template_hydro_st_ed(NetworkModel(CopperPlatePowerModel, use_slacks=true))
-    set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
     models = SimulationModels(
@@ -167,7 +167,7 @@ end
             duals=[CopperPlateBalanceConstraint],
         ),
     )
-    set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
@@ -273,8 +273,8 @@ end
 end
 
 function test_3_stage_simulation_with_feedforwards(in_memory)
-    sys_rts_da = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
-    sys_rts_rt = PSB.build_system(PSITestSystems, "modified_RTS_GMLC_RT_sys")
+    sys_rts_da = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
     sys_rts_ha = deepcopy(sys_rts_rt)
 
     PSY.transform_single_time_series!(sys_rts_da, 36, Hour(24))

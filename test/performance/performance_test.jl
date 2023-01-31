@@ -14,8 +14,8 @@ open("precompile_time.txt", "a") do io
 end
 
 try
-    sys_rts_da = build_system(PSITestSystems, "modified_RTS_GMLC_DA_sys")
-    sys_rts_rt = build_system(PSITestSystems, "modified_RTS_GMLC_RT_sys")
+    sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    sys_rts_rt = build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
     sys_rts_realization = build_system(PSITestSystems, "modified_RTS_GMLC_realization_sys")
 
     for i in 1:2

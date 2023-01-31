@@ -80,7 +80,7 @@ NATURAL_UNITS_VALUES = [
     "ActivePowerTimeSeriesParameter__PowerLoad",
     "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
-    "ActivePowerTimeSeriesParameter__InterruptibleLoad",
+    "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
     "EnergyLimitParameter__HydroEnergyReservoir",
     "SystemBalanceSlackDown__System",
     "SystemBalanceSlackUp__System",
@@ -131,7 +131,7 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
     @testset "Test simulation results in_memory = $in_memory" begin
         template_uc = get_template_basic_uc_simulation()
         template_ed = get_template_nomin_ed_simulation()
-        set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
+        set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
         set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
         set_network_model!(
             template_uc,

@@ -43,7 +43,7 @@ end
 @testset "Test Simulation Print Methods" begin
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
-    set_device_model!(template_ed, InterruptibleLoad, StaticPowerLoad)
+    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
     set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,

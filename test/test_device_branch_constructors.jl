@@ -3,7 +3,7 @@
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF=PSY.PTDF(system)),
+            NetworkModel(model; PTDF=PTDF(system)),
         )
         model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -48,7 +48,7 @@ end
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF=PSY.PTDF(system)),
+            NetworkModel(model; PTDF=PTDF(system)),
         )
         set_device_model!(template, DeviceModel(Line, StaticBranch))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
@@ -66,7 +66,7 @@ end
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF=PSY.PTDF(system)),
+            NetworkModel(model; PTDF=PTDF(system)),
         )
         set_device_model!(template, DeviceModel(Line, StaticBranchBounds))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
@@ -104,7 +104,7 @@ end
 
     for model in [DCPPowerModel, StandardPTDFModel]
         template =
-            get_template_dispatch_with_network(NetworkModel(model; PTDF=PSY.PTDF(system)))
+            get_template_dispatch_with_network(NetworkModel(model; PTDF=PTDF(system)))
         set_device_model!(template, HVDCLine, HVDCP2PLossless)
         model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -159,7 +159,7 @@ end
 
     for model in [DCPPowerModel, StandardPTDFModel]
         template =
-            get_template_dispatch_with_network(NetworkModel(model; PTDF=PSY.PTDF(system)))
+            get_template_dispatch_with_network(NetworkModel(model; PTDF=PTDF(system)))
         set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
@@ -459,7 +459,7 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(StandardPTDFModel; PTDF=PSY.PTDF(system)),
+        NetworkModel(StandardPTDFModel; PTDF=PTDF(system)),
     )
     set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PLossless))
     model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
@@ -519,7 +519,7 @@ end
     add_component!(system, ps)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(StandardPTDFModel; PTDF=PSY.PTDF(system)),
+        NetworkModel(StandardPTDFModel; PTDF=PTDF(system)),
     )
     set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
     model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
