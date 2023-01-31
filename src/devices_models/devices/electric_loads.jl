@@ -95,7 +95,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.ControllableLoad, W <: DispatchablePowerLoad}
+) where {V <: PSY.ControllableLoad, W <: PowerLoadDispatch}
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -115,7 +115,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.ControllableLoad, W <: InterruptiblePowerLoad}
+) where {V <: PSY.ControllableLoad, W <: PowerLoadInterruption}
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -134,7 +134,7 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.ControllableLoad, U <: DispatchablePowerLoad}
+) where {T <: PSY.ControllableLoad, U <: PowerLoadDispatch}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     return
 end
@@ -144,7 +144,7 @@ function objective_function!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.ControllableLoad, U <: InterruptiblePowerLoad}
+) where {T <: PSY.ControllableLoad, U <: PowerLoadInterruption}
     add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end

@@ -65,12 +65,12 @@ struct StaticPowerLoad <: AbstractLoadFormulation end
 """
 Formulation type to enable (binary) load interruptions
 """
-struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
+struct PowerLoadInterruption <: AbstractControllablePowerLoadFormulation end
 
 """
 Formulation type to enable (continuous) load interruption dispatch
 """
-struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
+struct PowerLoadDispatch <: AbstractControllablePowerLoadFormulation end
 
 ########################### Hybrid Generation Formulations ################################
 abstract type AbstractHybridFormulation <: AbstractDeviceFormulation end

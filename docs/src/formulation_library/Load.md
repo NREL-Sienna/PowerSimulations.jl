@@ -54,10 +54,10 @@ No constraints are created
 
 ---
 
-## `InterruptiblePowerLoad`
+## `PowerLoadInterruption`
 
 ```@docs
-InterruptiblePowerLoad
+PowerLoadInterruption
 ```
 
 **Variables:**
@@ -79,7 +79,7 @@ using PowerSimulations
 using PowerSystems
 using DataFrames
 using Latexify
-combos = PowerSimulations.get_default_time_series_names(ElectricLoad, InterruptiblePowerLoad)
+combos = PowerSimulations.get_default_time_series_names(ElectricLoad, PowerLoadInterruption)
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
@@ -105,16 +105,16 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 &  Pg_t \le ActivePowerTimeSeriesParameter_t\\
 &  Pg_t - u_t ActivePowerTimeSeriesParameter_t \le 0 \\
 &  Qg_t \le ReactivePowerTimeSeriesParameter_t\\
-&  Qg_t - u_t ReactivePowerTimeSeriesParameter_t\le 0 
+&  Qg_t - u_t ReactivePowerTimeSeriesParameter_t\le 0
 \end{aligned}
 ```
 
 ---
 
-## `DispatchablePowerLoad`
+## `PowerLoadDispatch`
 
 ```@docs
-DispatchablePowerLoad
+PowerLoadDispatch
 ```
 
 **Variables:**
@@ -133,7 +133,7 @@ using PowerSimulations
 using PowerSystems
 using DataFrames
 using Latexify
-combos = PowerSimulations.get_default_time_series_names(ElectricLoad, DispatchablePowerLoad)
+combos = PowerSimulations.get_default_time_series_names(ElectricLoad, PowerLoadDispatch)
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),

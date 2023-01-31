@@ -46,8 +46,8 @@ export PhaseAngleControl
 # export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad
-export InterruptiblePowerLoad
-export DispatchablePowerLoad
+export PowerLoadInterruption
+export PowerLoadDispatch
 ######## Renewable Formulations ########
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
@@ -377,6 +377,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
+import PowerNetworkMatrices: PTDF
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
