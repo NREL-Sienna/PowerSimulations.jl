@@ -18,17 +18,17 @@ Establishes the model for a particular device specified by type.
 # Accepted Key Words
 
   - `use_slacks::Bool`: Adds slacks to the network modelings
-  - `PTDF::PSY.PTDF`: PTDF Array calculated using PowerSystems
+  - `PTDF::PTDF`: PTDF Array calculated using PowerSystems
   - `duals::Vector{DataType}`: Constraint types to calculate the duals
 
 # Example
 
-ptdf_array = PSY.PTDF(system)
+ptdf_array = PTDF(system)
 thermal_gens = NetworkModel(StandardPTDFModel, ptdf = ptdf_array),
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
-    PTDF::Union{Nothing, PSY.PTDF}
+    PTDF::Union{Nothing, PTDF}
     duals::Vector{DataType}
 
     function NetworkModel(
