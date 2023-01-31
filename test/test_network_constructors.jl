@@ -24,9 +24,8 @@
     ]
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(network; PTDF=PTDF(c_sys5)),
-        )
+        template =
+            get_thermal_dispatch_template_network(NetworkModel(network; PTDF=PTDF(c_sys5)))
         ps_model = DecisionModel(template, c_sys5; optimizer=solver)
         @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         @test ps_model.internal.container.pm !== nothing

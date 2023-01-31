@@ -2,9 +2,8 @@
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF=PTDF(system)),
-        )
+        template =
+            get_thermal_dispatch_template_network(NetworkModel(model; PTDF=PTDF(system)))
         model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
         @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
         @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
@@ -47,9 +46,8 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF=PTDF(system)),
-        )
+        template =
+            get_thermal_dispatch_template_network(NetworkModel(model; PTDF=PTDF(system)))
         set_device_model!(template, DeviceModel(Line, StaticBranch))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
         model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
@@ -65,9 +63,8 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF=PTDF(system)),
-        )
+        template =
+            get_thermal_dispatch_template_network(NetworkModel(model; PTDF=PTDF(system)))
         set_device_model!(template, DeviceModel(Line, StaticBranchBounds))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
         model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)

@@ -1,5 +1,5 @@
 function get_available_components(::Type{T}, sys::PSY.System) where {T <: PSY.Component}
-    return PSY.get_components(PSY.get_available, T, sys, )
+    return PSY.get_components(PSY.get_available, T, sys)
 end
 
 function get_available_components(
