@@ -114,7 +114,7 @@ function add_constraints!(
         frequency_response += PSY.get_load_response(area)
     end
 
-    for g in PSY.get_components(PSY.RegulationDevice, sys, x -> PSY.get_available(x))
+    for g in PSY.get_components(PSY.get_available, PSY.RegulationDevice, sys)
         d = PSY.get_droop(g)
         response = 1 / d
         frequency_response += response

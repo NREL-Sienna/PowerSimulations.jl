@@ -71,7 +71,7 @@ function _add_variable!(
     formulation::AbstractBranchFormulation,
 ) where {T <: VariableType, U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
-    ptdf = get_PTDF(network_model)
+    ptdf = get_PTDF_matrix(network_model)
     branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ Set(ptdf.axes[1])]
     variable = add_variable_container!(
         container,
@@ -251,7 +251,7 @@ function add_constraints!(
     model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{StandardPTDFModel},
 ) where {B <: PSY.ACBranch}
-    ptdf = get_PTDF(network_model)
+    ptdf = get_PTDF_matrix(network_model)
     # This is a workaround to not call the same list comprehension to find
     # The subset of branches of type B in the PTDF
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
@@ -294,7 +294,7 @@ function add_constraints!(
     model::DeviceModel{T, PhaseAngleControl},
     network_model::NetworkModel{StandardPTDFModel},
 ) where {T <: PSY.PhaseShiftingTransformer}
-    ptdf = get_PTDF(network_model)
+    ptdf = get_PTDF_matrix(network_model)
     branches = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(

@@ -650,8 +650,9 @@ end
     PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
     for net in networks, sys in systems, model in commitment_models
-        template =
-            get_thermal_dispatch_template_network(NetworkModel(net, PTDF=PTDF_ref[sys]))
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(net, PTDF_matrix=PTDF_ref[sys]),
+        )
         set_device_model!(template, ThermalStandard, model)
         UC = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
         @test build!(UC; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT

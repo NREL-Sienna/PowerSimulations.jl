@@ -418,8 +418,9 @@ function show_recorder_events(
         IS.show_recorder_events(io, T, filename, filter_func)
     else
         # This will not display the first column, 'timestamp'.
-        f_c(data, i) = i > 1
-        IS.show_recorder_events(io, T, filename, filter_func; filters_col=(f_c,), kwargs...)
+        # Passign filters_col No longer supported in PrettyTables
+        # f_c(data, i) = i > 1
+        IS.show_recorder_events(io, T, filename, filter_func; kwargs...)
     end
 end
 
@@ -434,7 +435,8 @@ function show_recorder_events(
         IS.show_recorder_events(io, events; kwargs...)
     else
         # This will not display the first column, 'timestamp'.
-        f_c(data, i) = i > 1
-        IS.show_recorder_events(io, events; filters_col=(f_c,), kwargs...)
+        # Passign filters_col No longer supported in PrettyTables
+        #f_c(data, i) = i > 1
+        IS.show_recorder_events(io, events; kwargs...)
     end
 end

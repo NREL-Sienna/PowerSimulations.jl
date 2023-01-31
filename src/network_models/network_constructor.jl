@@ -70,7 +70,7 @@ function construct_network!(
     model::NetworkModel{StandardPTDFModel},
     ::ProblemTemplate,
 )
-    ptdf = get_PTDF(model)
+    ptdf = get_PTDF_matrix(model)
 
     if ptdf === nothing
         throw(ArgumentError("no PTDF matrix supplied"))

@@ -16,14 +16,14 @@ end
 try
     sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     sys_rts_rt = build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
-    sys_rts_realization = build_system(PSITestSystems, "modified_RTS_GMLC_realization_sys")
+    sys_rts_realization = build_system(PSISystems, "modified_RTS_GMLC_realization_sys")
 
     for i in 1:2
         template_uc = ProblemTemplate(
             NetworkModel(
                 StandardPTDFModel,
                 use_slacks=true,
-                PTDF=PTDF(sys_rts_da),
+                PTDF_matrix=PTDF(sys_rts_da),
                 duals=[CopperPlateBalanceConstraint],
             ),
         )
