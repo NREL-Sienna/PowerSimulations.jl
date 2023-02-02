@@ -82,11 +82,11 @@ construct_device!(
 
 # For DC Power only. Implements constraints
 function construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{B, StaticBranch},
-    ::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(B, sys)
     if get_use_slacks(model)

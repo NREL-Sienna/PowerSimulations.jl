@@ -66,7 +66,7 @@ add_variables!(
 function add_variables!(
     container::OptimizationContainer,
     ::Type{S},
-    ::NetworkModel{<:AbstractPTDFModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractBranchFormulation,
 ) where {T <: PSY.ACBranch, S <: Union{BoundSlackUpperBound, BoundSlackLowerBound}}
@@ -208,11 +208,16 @@ function add_range_constraints!(
     X <: PM.AbstractPowerModel,
 }
     array = get_variable(container, U(), V)
+    array_lower = DenseAxisArray{JuMP.AffExpr}(undef, axes(array)...)
+    array_upper = DenseAxisArray{JuMP.AffExpr}(undef, axes(array)...)
     if get_use_slacks(model)
         lower_bound_slack = get_variable(container, BoundSlackLowerBound(), V)
         upper_bound_slack = get_variable(container, BoundSlackUpperBound(), V)
-        array_upper = array .- upper_bound_slack
-        array_lower = array .+ lower_bound_slack
+
+        for i in Base.Iterators.product(axes(array)...)
+            array_upper[i...] = array[i...] - upper_bound_slack[i...]
+            array_lower[i...] = array[i...] + lower_bound_slack[i...]
+        end
 
         _add_lower_bound_range_constraints_impl!(
             container,
@@ -609,7 +614,7 @@ function objective_function!(
     ::Type{B},
     model::DeviceModel{B, StaticBranch},
     S::Type{T},
-) where {B <: PSY.ACBranch, T <: StandardPTDFModel}
+) where {B <: PSY.ACBranch, T <: PM.AbstractActivePowerModel}
     variable_ub = get_variable(container, BoundSlackUpperBound(), B)
     variable_lb = get_variable(container, BoundSlackLowerBound(), B)
     branch_names = axes(variable_ub)[1]
