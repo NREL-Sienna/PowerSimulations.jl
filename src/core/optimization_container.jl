@@ -902,7 +902,7 @@ function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_constraint_keys(container))
-        throw(IS.InvalidValue("constraint $name is not stored"))
+        throw(IS.InvalidValue("constraint $name is not stored. $keys"))
     end
 
     return var
@@ -1057,7 +1057,7 @@ function get_parameter(container::OptimizationContainer, key::ParameterKey)
     if param_container === nothing
         name = encode_key(key)
         keys = encode_key.(get_parameter_keys(container))
-        throw(IS.InvalidValue("parameter $name is not stored"))
+        throw(IS.InvalidValue("parameter $name is not stored. $keys"))
     end
     return param_container
 end
