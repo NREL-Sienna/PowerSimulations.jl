@@ -618,3 +618,32 @@ end
         rate_limit2w,
     )
 end
+
+@testset "Test Line Flow Slacks" begin
+    system = PSB.build_system(PSITestSystems, "c_sys5_ml")
+    ml_line = PSY.get_component(MonitoredLine, system, "1")
+    set_flow_limits!(ml_line, (from_to=0.20, to_from=0.20))
+
+    static_line = PSY.get_component(Line, system, "3")
+    set_rate!(static_line, 0.01)
+
+    for model in [DCPPowerModel, StandardPTDFModel]
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(model; PTDF_matrix=PTDF(system)),
+        )
+        set_device_model!(
+            template,
+            DeviceModel(MonitoredLine, StaticBranch; use_slacks=true),
+        )
+        set_device_model!(template, DeviceModel(Line, StaticBranch; use_slacks=true))
+        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
+        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        ml_ub = PSI.get_variable(
+            model_m.internal.container,
+            BoundSlackUpperBound(),
+            MonitoredLine,
+        )
+        @test sum(JuMP.value.(ml_ub)) > 0
+    end
+end
