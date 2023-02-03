@@ -130,12 +130,12 @@ end
 end
 
 @testset "Multi-Stage Hydro Simulation Build" begin
-    sys_md = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_wk_sys")
+    sys_md = PSB.build_system(PSISystems, "5_bus_hydro_wk_sys")
 
-    sys_uc = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_uc_sys")
+    sys_uc = PSB.build_system(PSISystems, "5_bus_hydro_uc_sys")
     transform_single_time_series!(sys_uc, 48, Hour(24))
 
-    sys_ed = PSB.build_system(SIIPExampleSystems, "5_bus_hydro_ed_sys")
+    sys_ed = PSB.build_system(PSISystems, "5_bus_hydro_ed_sys")
 
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)

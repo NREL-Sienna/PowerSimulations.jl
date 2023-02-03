@@ -4,6 +4,7 @@ using PowerSystems
 using PowerSystemCaseBuilder
 using InfrastructureSystems
 import PowerSystemCaseBuilder: PSITestSystems
+using PowerNetworkMatrices
 
 # Test Packages
 using Test

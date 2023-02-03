@@ -140,14 +140,14 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{L, InterruptiblePowerLoad},
+    model::DeviceModel{L, PowerLoadInterruption},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
-    add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
-    add_variables!(container, ReactivePowerVariable, devices, InterruptiblePowerLoad())
-    add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+    add_variables!(container, ActivePowerVariable, devices, PowerLoadInterruption())
+    add_variables!(container, ReactivePowerVariable, devices, PowerLoadInterruption())
+    add_variables!(container, OnVariable, devices, PowerLoadInterruption())
 
     # Add Variables to expressions
     add_to_expression!(
@@ -178,7 +178,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{L, InterruptiblePowerLoad},
+    model::DeviceModel{L, PowerLoadInterruption},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
@@ -211,13 +211,13 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{L, InterruptiblePowerLoad},
+    model::DeviceModel{L, PowerLoadInterruption},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
-    add_variables!(container, ActivePowerVariable, devices, InterruptiblePowerLoad())
-    add_variables!(container, OnVariable, devices, InterruptiblePowerLoad())
+    add_variables!(container, ActivePowerVariable, devices, PowerLoadInterruption())
+    add_variables!(container, OnVariable, devices, PowerLoadInterruption())
 
     # Add Variables to expressions
     add_to_expression!(
@@ -239,7 +239,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{L, InterruptiblePowerLoad},
+    model::DeviceModel{L, PowerLoadInterruption},
     ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)

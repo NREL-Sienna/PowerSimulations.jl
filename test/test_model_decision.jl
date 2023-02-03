@@ -125,7 +125,7 @@ end
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
         template = get_thermal_dispatch_template_network(
-            NetworkModel(network; use_slacks=true, PTDF=PTDF(c_sys5_re)),
+            NetworkModel(network; use_slacks=true, PTDF_matrix=PTDF(c_sys5_re)),
         )
         model = DecisionModel(template, c_sys5_re; optimizer=ipopt_optimizer)
         @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
@@ -158,7 +158,7 @@ end
     LMPs = []
     for (ix, network) in enumerate(networks)
         template = get_template_dispatch_with_network(
-            NetworkModel(network; PTDF=ptdf, duals=dual_constraint[ix]),
+            NetworkModel(network; PTDF_matrix=ptdf, duals=dual_constraint[ix]),
         )
         if network == StandardPTDFModel
             set_device_model!(

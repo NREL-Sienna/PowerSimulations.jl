@@ -11,7 +11,7 @@ function _default_devices_uc()
         DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
         DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
         DeviceModel(PSY.PowerLoad, StaticPowerLoad),
-        DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
+        DeviceModel(PSY.InterruptiblePowerLoad, PowerLoadInterruption),
         DeviceModel(PSY.Line, StaticBranch),
         DeviceModel(PSY.Transformer2W, StaticBranch),
         DeviceModel(PSY.TapTransformer, StaticBranch),

@@ -392,7 +392,7 @@ function check_initialization_variable_count(
 ) where {S <: PSI.VariableType, T <: PSY.Component}
     container = PSI.get_optimization_container(model)
     initial_conditions_data = PSI.get_initial_conditions_data(container)
-    no_component = length(PSY.get_components(T, model.sys, x -> x.available))
+    no_component = length(PSY.get_components(PSY.get_available, T, model.sys))
     variable = PSI.get_initial_condition_value(initial_conditions_data, S(), T)
     rows, cols = size(variable)
     @test rows * cols == no_component * PSI.INITIALIZATION_PROBLEM_HORIZON
@@ -403,7 +403,7 @@ function check_variable_count(
     ::S,
     ::Type{T},
 ) where {S <: PSI.VariableType, T <: PSY.Component}
-    no_component = length(PSY.get_components(T, model.sys, x -> x.available))
+    no_component = length(PSY.get_components(PSY.get_available, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
     variable = PSI.get_variable(PSI.get_optimization_container(model), S(), T)
     @test length(variable) == no_component * time_steps
@@ -413,11 +413,11 @@ function check_initialization_constraint_count(
     model,
     ::S,
     ::Type{T};
-    filter_func=x -> x.available,
+    filter_func=PSY.get_available,
     meta=PSI.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     container = model.internal.ic_model_container
-    no_component = length(PSY.get_components(T, model.sys, filter_func))
+    no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
     constraint = PSI.get_constraint(container, S(), T, meta)
     @test length(constraint) == no_component * time_steps
@@ -427,10 +427,10 @@ function check_constraint_count(
     model,
     ::S,
     ::Type{T};
-    filter_func=x -> x.available,
+    filter_func=PSY.get_available,
     meta=PSI.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
-    no_component = length(PSY.get_components(T, model.sys, filter_func))
+    no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
     constraint = PSI.get_constraint(PSI.get_optimization_container(model), S(), T, meta)
     @test length(constraint) == no_component * time_steps
@@ -446,7 +446,7 @@ function check_constraint_count(
         PSY.get_name.(
             PSI._get_ramp_constraint_devices(
                 container,
-                get_components(T, model.sys, x -> x.available),
+                get_components(PSY.get_available, T, model.sys),
             ),
         )
     check_constraint_count(
@@ -480,7 +480,7 @@ function check_constraint_count(
             PSY.get_time_limits(x).up <= fraction_of_hour &&
             PSY.get_time_limits(x).down <= fraction_of_hour
         ),
-        collect(get_components(T, model.sys, x -> x.available)),
+        collect(get_components(PSY.get_available, T, model.sys)),
     )
     set_name = PSY.get_name.(duration_devices)
     check_constraint_count(
@@ -506,7 +506,7 @@ function check_constraint_count(
 ) where {T <: PSY.Component}
     container = PSI.get_optimization_container(model)
     _devices =
-        filter!(x -> x.must_run, collect(get_components(T, model.sys, x -> x.available)))
+        filter!(x -> x.must_run, collect(get_components(PSY.get_available, T, model.sys)))
     set_name = PSY.get_name.(_devices)
     return check_constraint_count(
         model,

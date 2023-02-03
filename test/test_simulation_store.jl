@@ -154,7 +154,7 @@ end
             Dict("keep_in_cache" => true),
         PSI.VariableKey(ActivePowerVariable, RenewableDispatch) =>
             Dict("keep_in_cache" => true),
-        PSI.VariableKey(ActivePowerVariable, InterruptibleLoad) =>
+        PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad) =>
             Dict("keep_in_cache" => false),
         PSI.VariableKey(ActivePowerVariable, RenewableFix) =>
             Dict("keep_in_cache" => false),
@@ -194,7 +194,7 @@ end
 @testset "Test OptimizationOutputCache" begin
     key = PSI.OptimizationResultCacheKey(
         :ED,
-        PSI.VariableKey(ActivePowerVariable, InterruptibleLoad),
+        PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad),
     )
     cache = PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true))
     @test !PSI.has_clean(cache)

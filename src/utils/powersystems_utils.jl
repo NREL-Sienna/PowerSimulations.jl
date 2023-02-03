@@ -1,5 +1,5 @@
 function get_available_components(::Type{T}, sys::PSY.System) where {T <: PSY.Component}
-    return PSY.get_components(T, sys, x -> PSY.get_available(x))
+    return PSY.get_components(PSY.get_available, T, sys)
 end
 
 function get_available_components(
@@ -7,9 +7,9 @@ function get_available_components(
     sys::PSY.System,
 ) where {T <: PSY.Component}
     return PSY.get_components(
+        x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
         PSY.RegulationDevice{T},
         sys,
-        x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
     )
 end
 

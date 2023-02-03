@@ -2,7 +2,7 @@ using PowerSimulations
 using PowerSystems
 using PowerSystemCaseBuilder
 using InfrastructureSystems
-import PowerSystemCaseBuilder: PSITestSystems
+using PowerNetworkMatrices
 using Logging
 using Test
 
@@ -47,9 +47,9 @@ function build_simulation(
     if !isnothing(partitions) && !isnothing(num_steps)
         error("num_steps and partitions cannot both be set")
     end
-    c_sys5_pjm_da = PSB.build_system(PSITestSystems, "c_sys5_pjm")
+    c_sys5_pjm_da = PSB.build_system(PSISystems, "c_sys5_pjm")
     PSY.transform_single_time_series!(c_sys5_pjm_da, 48, Hour(24))
-    c_sys5_pjm_rt = PSB.build_system(PSITestSystems, "c_sys5_pjm_rt")
+    c_sys5_pjm_rt = PSB.build_system(PSISystems, "c_sys5_pjm_rt")
     PSY.transform_single_time_series!(c_sys5_pjm_rt, 12, Hour(1))
 
     for sys in [c_sys5_pjm_da, c_sys5_pjm_rt]
@@ -114,7 +114,7 @@ function build_simulation(
         template_uc,
         NetworkModel(
             StandardPTDFModel;
-            PTDF=PTDF(c_sys5_pjm_da),
+            PTDF_matrix=PTDF(c_sys5_pjm_da),
             # duals = [CopperPlateBalanceConstraint]
         ),
     )
