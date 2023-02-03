@@ -89,7 +89,7 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
-    ::T,
+    param::T,
     devices::U,
     model::DeviceModel{D, W},
 ) where {
@@ -97,41 +97,74 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
+    _add_time_series_parameters!(container, param, devices, model)
+    return
+end
+
+function _add_time_series_parameters!(
+    container::OptimizationContainer,
+    param::T,
+    devices,
+    model::DeviceModel{D, W},
+) where {D <: PSY.Component, T <: TimeSeriesParameter, W <: AbstractDeviceFormulation}
     ts_type = get_default_time_series_type(container)
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
     ts_name = get_time_series_names(model)[T]
     time_series_mult_id = create_time_series_multiplier_index(model, T)
-    @debug "adding" T ts_name ts_type time_series_mult_id _group =
+
+    @debug "adding" T D ts_name ts_type time_series_mult_id _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
-    parameter_container =
-        add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
-    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
-    jump_model = get_jump_model(container)
-    for d in devices
-        name = PSY.get_name(d)
-        ts_vector = get_time_series(container, d, T())
-        multiplier = get_multiplier_value(T(), d, W())
-        for t in time_steps
-            set_parameter!(
-                parameter_container,
-                jump_model,
-                ts_vector[t],
-                multiplier,
-                name,
-                t,
-            )
+
+    device_names = []
+    initial_values = Dict{String, AbstractArray}()
+    for device in devices
+        push!(device_names, PSY.get_name(device))
+        ts_uuid = get_time_series_uuid(ts_type, device, ts_name)
+        if !(ts_uuid in keys(initial_values))
+            initial_values[ts_uuid] =
+                get_time_series_initial_values!(container, ts_type, device, ts_name)
         end
     end
-    return
+
+    param_container = add_param_container!(
+        container,
+        param,
+        D,
+        ts_type,
+        ts_name,
+        collect(keys(initial_values)),
+        device_names,
+        time_steps,
+    )
+    set_time_series_multiplier_id!(get_attributes(param_container), time_series_mult_id)
+    jump_model = get_jump_model(container)
+
+    for (ts_uuid, ts_values) in initial_values
+        for step in time_steps
+            set_parameter!(param_container, jump_model, ts_values[step], ts_uuid, step)
+        end
+    end
+
+    for device in devices
+        name = PSY.get_name(device)
+        multiplier = get_multiplier_value(T(), device, W())
+        for step in time_steps
+            set_multiplier!(param_container, multiplier, name, step)
+        end
+        add_component_name!(
+            get_attributes(param_container),
+            name,
+            get_time_series_uuid(ts_type, device, ts_name),
+        )
+    end
 end
 
 function add_parameters!(
     container::OptimizationContainer,
-    ::T,
+    param::T,
     devices::U,
     model::DeviceModel{D, W},
 ) where {
@@ -139,37 +172,7 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    ts_type = get_default_time_series_type(container)
-    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
-        error(
-            "add_parameters! for ObjectiveFunctionParameter is not compatible with $ts_type",
-        )
-    end
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    ts_name = get_time_series_names(model)[T]
-    time_series_mult_id = create_time_series_multiplier_index(model, T)
-    @debug "adding" T ts_name ts_type time_series_mult_id _group =
-        LOG_GROUP_OPTIMIZATION_CONTAINER
-    parameter_container =
-        add_param_container!(container, T(), D, ts_type, ts_name, names, time_steps)
-    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
-    jump_model = get_jump_model(container)
-    for d in devices
-        name = PSY.get_name(d)
-        ts_vector = get_time_series(container, d, T())
-        multiplier = get_multiplier_value(T(), d, W())
-        for t in time_steps
-            set_parameter!(
-                parameter_container,
-                jump_model,
-                ts_vector[t],
-                multiplier,
-                name,
-                t,
-            )
-        end
-    end
+    _add_time_series_parameters!(container, param, devices, model)
     return
 end
 
@@ -187,6 +190,7 @@ function add_parameters!(
     time_series_mult_id = create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
+    ts_uuid = get_time_series_uuid(ts_type, service, ts_name)
     @debug "adding" T U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container = add_param_container!(
         container,
@@ -194,6 +198,7 @@ function add_parameters!(
         U,
         ts_type,
         ts_name,
+        [ts_uuid],
         [name],
         time_steps;
         meta=name,
@@ -203,7 +208,8 @@ function add_parameters!(
     ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())
     for t in time_steps
-        set_parameter!(parameter_container, jump_model, ts_vector[t], multiplier, name, t)
+        set_multiplier!(parameter_container, multiplier, name, t)
+        set_parameter!(parameter_container, jump_model, ts_vector[t], ts_uuid, t)
     end
 
     return
@@ -233,11 +239,16 @@ function add_parameters!(
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
             set_parameter!(
                 parameter_container,
                 jump_model,
                 get_initial_parameter_value(T(), d, W()),
-                get_parameter_multiplier(T(), d, W()),
                 name,
                 t,
             )
@@ -270,11 +281,16 @@ function add_parameters!(
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
             set_parameter!(
                 parameter_container,
                 jump_model,
                 get_initial_parameter_value(T(), d, W()),
-                get_parameter_multiplier(T(), d, W()),
                 name,
                 t,
             )
@@ -314,11 +330,16 @@ function add_parameters!(
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
             set_parameter!(
                 parameter_container,
                 jump_model,
                 get_initial_parameter_value(T(), d, W()),
-                get_parameter_multiplier(T(), d, W()),
                 name,
                 t,
             )
@@ -349,11 +370,16 @@ function add_parameters!(
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), S, W()),
+                name,
+                t,
+            )
             set_parameter!(
                 parameter_container,
                 jump_model,
                 get_initial_parameter_value(T(), S, W()),
-                get_parameter_multiplier(T(), S, W()),
                 name,
                 t,
             )

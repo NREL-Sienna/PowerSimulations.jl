@@ -610,13 +610,16 @@ end
 
 # This function is re-used in SemiContinuousFeedforward
 function lower_bound_range_with_parameter!(
-    jump_model::JuMP.Model,
+    container::OptimizationContainer,
     constraint_container::JuMPConstraintArray,
     lhs_array,
-    param_multiplier::JuMPFloatArray,
-    param_array::Union{JuMPVariableArray, JuMPFloatArray},
+    ::Type{P},
     devices::IS.FlattenIteratorWrapper{V},
-) where {V <: PSY.Component}
+    model::DeviceModel{V, W},
+) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+    param_array = get_parameter_array(container, P(), V)
+    param_multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
     time_steps = axes(constraint_container)[2]
     for device in devices, t in time_steps
         name = PSY.get_name(device)
@@ -624,6 +627,27 @@ function lower_bound_range_with_parameter!(
             jump_model,
             lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
         )
+    end
+    return
+end
+
+function lower_bound_range_with_parameter!(
+    container::OptimizationContainer,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    ::Type{P},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {P <: TimeSeriesParameter, V <: PSY.Component, W <: AbstractDeviceFormulation}
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
+    jump_model = get_jump_model(container)
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        param = get_parameter_column_refs(param_container, name)[t]
+        constraint_container[name, t] =
+            JuMP.@constraint(jump_model, lhs_array[name, t] >= multiplier[name, t] * param)
     end
     return
 end
@@ -681,7 +705,7 @@ function add_parameterized_upper_bound_range_constraints(
         container,
         T,
         array,
-        P,
+        P(),
         devices,
         model,
     )
@@ -709,7 +733,7 @@ function add_parameterized_upper_bound_range_constraints(
         container,
         T,
         array,
-        P,
+        P(),
         devices,
         model,
     )
@@ -718,13 +742,16 @@ end
 
 # This function is re-used in SemiContinuousFeedforward
 function upper_bound_range_with_parameter!(
-    jump_model::JuMP.Model,
+    container::OptimizationContainer,
     constraint_container::JuMPConstraintArray,
     lhs_array,
-    param_multiplier::JuMPFloatArray,
-    param_array::Union{JuMPVariableArray, JuMPFloatArray},
+    param::P,
     devices::IS.FlattenIteratorWrapper{V},
-) where {V <: PSY.Component}
+    ::DeviceModel{V, W},
+) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+    param_array = get_parameter_array(container, param, V)
+    param_multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
     time_steps = axes(constraint_container)[2]
     for device in devices, t in time_steps
         name = PSY.get_name(device)
@@ -736,11 +763,32 @@ function upper_bound_range_with_parameter!(
     return
 end
 
+function upper_bound_range_with_parameter!(
+    container::OptimizationContainer,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param::P,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {P <: TimeSeriesParameter, V <: PSY.Component, W <: AbstractDeviceFormulation}
+    param_container = get_parameter(container, param, V)
+    multiplier = get_multiplier_array(param_container)
+    jump_model = get_jump_model(container)
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        param = get_parameter_column_refs(param_container, name)[t]
+        constraint_container[name, t] =
+            JuMP.@constraint(jump_model, lhs_array[name, t] <= multiplier[name, t] * param)
+    end
+    return
+end
+
 function _add_parameterized_upper_bound_range_constraints_impl!(
     container::OptimizationContainer,
     ::Type{T},
     array,
-    ::Type{P},
+    param::P,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
@@ -754,16 +802,6 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
 
     constraint = add_constraints_container!(container, T(), V, names, time_steps, meta="ub")
 
-    parameter = get_parameter_array(container, P(), V)
-    multiplier = get_parameter_multiplier_array(container, P(), V)
-    jump_model = get_jump_model(container)
-    upper_bound_range_with_parameter!(
-        jump_model,
-        constraint,
-        array,
-        multiplier,
-        parameter,
-        devices,
-    )
+    upper_bound_range_with_parameter!(container, constraint, array, param, devices, model)
     return
 end

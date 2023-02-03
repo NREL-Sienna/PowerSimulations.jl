@@ -301,7 +301,7 @@ function _get_model_store_requirements!(
 
     for (key, param_container) in get_parameters(container)
         !should_write_resulting_value(key) && continue
-        array = get_parameter_array(param_container)
+        array = get_multiplier_array(param_container)
         reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, false)
     end
@@ -772,6 +772,7 @@ function update_model!(model::OperationModel, sim::Simulation)
         reset_optimization_model!(container)
         build_impl!(container, get_template(model), get_system(model))
     end
+
     return
 end
 

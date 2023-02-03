@@ -958,7 +958,9 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::TimeSeriesAttributes{V},
-    axs...;
+    param_axs,
+    multiplier_axs,
+    time_steps;
     sparse=false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
@@ -968,11 +970,12 @@ function _add_param_container!(
     end
 
     if sparse
-        param_array = sparse_container_spec(param_type, axs...)
-        multiplier_array = sparse_container_spec(Float64, axs...)
+        param_array = sparse_container_spec(param_type, param_axs, time_steps)
+        multiplier_array = sparse_container_spec(Float64, multiplier_axs, time_steps)
     else
-        param_array = DenseAxisArray{param_type}(undef, axs...)
-        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+        multiplier_array =
+            fill!(DenseAxisArray{Float64}(undef, multiplier_axs, time_steps), NaN)
     end
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
@@ -1004,7 +1007,9 @@ function add_param_container!(
     ::Type{U},
     ::Type{V},
     name::String,
-    axs...;
+    param_axs,
+    multiplier_axs,
+    time_steps;
     sparse=false,
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
@@ -1013,7 +1018,15 @@ function add_param_container!(
         error("$V can't be abstract: $param_key")
     end
     attributes = TimeSeriesAttributes(V, name)
-    return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
+    return _add_param_container!(
+        container,
+        param_key,
+        attributes,
+        param_axs,
+        multiplier_axs,
+        time_steps;
+        sparse=sparse,
+    )
 end
 
 function add_param_container!(
@@ -1056,7 +1069,6 @@ function get_parameter(container::OptimizationContainer, key::ParameterKey)
     param_container = get(container.parameters, key, nothing)
     if param_container === nothing
         name = encode_key(key)
-        keys = encode_key.(get_parameter_keys(container))
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
     return param_container
@@ -1128,7 +1140,10 @@ function read_parameters(container::OptimizationContainer)
     parameters = get_parameters(container)
     (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
-        param_array = axis_array_to_dataframe(get_parameter_array(v), k)
+        # TODO: all functions similar to calculate_parameter_values should be in one
+        # place and be consistent in behavior.
+        #params_dict[k] = axis_array_to_dataframe(calculate_parameter_values(v))
+        param_array = axis_array_to_dataframe(get_parameter_values(v), k)
         multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)
     end
@@ -1628,4 +1643,29 @@ function lazy_container_addition!(
         expr_container = get_expression(container, expression, U)
     end
     return expr_container
+end
+
+function get_time_series_initial_values!(
+    container::OptimizationContainer,
+    ::Type{T},
+    component::PSY.Component,
+    time_series_name::AbstractString,
+) where {T <: PSY.TimeSeriesData}
+    initial_time = get_initial_time(container)
+    time_steps = get_time_steps(container)
+    forecast = PSY.get_time_series(
+        T,
+        component,
+        time_series_name;
+        start_time=initial_time,
+        count=1,
+    )
+    ts_values = IS.get_time_series_values(
+        component,
+        forecast,
+        initial_time;
+        len=length(time_steps),
+        ignore_scaling_factors=true,
+    )
+    return ts_values
 end

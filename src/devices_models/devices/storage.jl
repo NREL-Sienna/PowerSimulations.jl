@@ -345,9 +345,8 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
 
-    param = get_parameter_array(container, EnergyTargetTimeSeriesParameter(), V)
-    multiplier =
-        get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
+    param_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
+    multiplier = get_multiplier_array(param_container)
 
     constraint = add_constraints_container!(
         container,
@@ -370,7 +369,7 @@ function add_constraints!(
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 energy_var[name, t] + shortage_var[name, t] + surplus_var[name, t] ==
-                multiplier[name, t] * param[name, t]
+                multiplier[name, t] * get_parameter_column_refs(param_container, name)[t]
             )
         end
     end

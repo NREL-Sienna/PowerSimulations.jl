@@ -96,14 +96,6 @@ get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.RenewableGen}) = PSY.get_renewa
 get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.ElectricLoad}) = PSY.get_electric_load(v)
 get_subcomponent(v::PSY.HybridSystem, ::Type{PSY.Storage}) = PSY.get_storage(v)
 
-function make_subsystem_time_series_name(subcomponent::PSY.Component, label::String)
-    return make_subsystem_time_series_name(typeof(subcomponent), label)
-end
-
-function make_subsystem_time_series_name(subcomponent::Type{<:PSY.Component}, label::String)
-    return IS.strip_module_name(subcomponent) * "__" * label
-end
-
 function get_default_time_series_names(
     ::Type{<:PSY.HybridSystem},
     ::Type{<:Union{FixedOutput, AbstractHybridFormulation}},
@@ -508,7 +500,7 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
-    ::T,
+    param::T,
     devices::U,
     model::DeviceModel{D, W},
 ) where {
@@ -516,49 +508,68 @@ function add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.HybridSystem}
+    error("HybridSystem is currently unsupported")
     ts_type = get_default_time_series_type(container)
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    ts_name = get_time_series_names(model)[T]
+    base_ts_name = get_time_series_names(model)[T]
     time_series_mult_id = create_time_series_multiplier_index(model, T)
-    @debug "adding" T ts_name ts_type time_series_mult_id _group =
+    @debug "adding" T base_ts_name ts_type time_series_mult_id _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
     sub_comp_type = [PSY.RenewableGen, PSY.ElectricLoad]
+
+    device_names = [PSY.get_name(d) for d in devices]
+    initial_values = Dict{String, AbstractArray}()
+    for device in devices, comp_type in sub_comp_type
+        if does_subcomponent_exist(device, comp_type)
+            sub_comp = get_subcomponent(device, comp_type)
+            ts_name = PSY.make_subsystem_time_series_name(sub_comp, base_ts_name)
+            ts_uuid = get_time_series_uuid(ts_type, device, ts_name)
+            initial_values[ts_uuid] =
+                get_time_series_initial_values!(container, ts_type, device, ts_name)
+            multiplier = get_multiplier_value(T(), device, comp_type, W())
+        else
+            # TODO: what to do here?
+            #ts_vector = zeros(time_steps[end])
+            multiplier = 0.0
+        end
+    end
+
     parameter_container = add_param_container!(
         container,
-        T(),
+        param,
         D,
         ts_type,
-        ts_name,
-        names,
+        base_ts_name,
+        collect(keys(initial_values)),
+        device_names,
         string.(sub_comp_type),
-        time_steps;
-        sparse=true,
+        time_steps,
     )
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)
-    for d in devices, comp_type in sub_comp_type
-        name = PSY.get_name(d)
-        if does_subcomponent_exist(d, comp_type)
-            ts_vector = get_time_series(container, d, comp_type, T())
-            multiplier = get_multiplier_value(T(), d, comp_type, W())
+
+    for (ts_uuid, ts_values) in initial_values
+        for step in time_steps
+            set_parameter!(parameter_container, jump_model, ts_values[step], ts_uuid, step)
+        end
+    end
+
+    for device in devices, comp_type in sub_comp_type
+        name = PSY.get_name(device)
+        if does_subcomponent_exist(device, comp_type)
+            multiplier = get_multiplier_value(T(), device, comp_type, W())
+            sub_comp = get_subcomponent(device, comp_type)
+            ts_name = PSY.make_subsystem_time_series_name(sub_comp, base_ts_name)
+            ts_uuid = get_time_series_uuid(ts_type, device, ts_name)
+            add_component_name!(get_attributes(parameter_container), name, ts_uuid)
         else
-            ts_vector = zeros(time_steps[end])
             multiplier = 0.0
         end
-        for t in time_steps
-            set_parameter!(
-                parameter_container,
-                jump_model,
-                ts_vector[t],
-                multiplier,
-                name,
-                string(comp_type),
-                t,
-            )
+        for step in time_steps
+            set_multiplier!(parameter_container, multiplier, name, string(comp_type), step)
         end
     end
     return
@@ -656,7 +667,8 @@ function _add_parameterized_upper_bound_range_constraints!(
         meta="re ub",
     )
 
-    parameter = get_parameter_array(container, P(), V)
+    param_container = get_parameter(container, P(), V)
+    parameter_values = get_parameter_values(param_container)
     multiplier = get_parameter_multiplier_array(container, P(), V)
     for device in devices, t in time_steps
         !does_subcomponent_exist(device, PSY.RenewableGen) && continue
@@ -665,7 +677,7 @@ function _add_parameterized_upper_bound_range_constraints!(
         constraint[name, t] = JuMP.@constraint(
             get_jump_model(container),
             array[name, subcomp_key, t] <=
-            multiplier[name, subcomp_key, t] * parameter[name, subcomp_key, t]
+            multiplier[name, subcomp_key, t] * parameter_values[name, subcomp_key, t]
         )
     end
 end
@@ -691,7 +703,7 @@ function _add_range_constraints!(
         container,
         T,
         array,
-        ActivePowerTimeSeriesParameter,
+        ActivePowerTimeSeriesParameter(),
         devices,
         model,
     )

@@ -3,23 +3,12 @@ function _get_time_series(
     component::PSY.Component,
     attributes::TimeSeriesAttributes{T},
 ) where {T <: PSY.TimeSeriesData}
-    initial_time = get_initial_time(container)
-    time_steps = get_time_steps(container)
-    forecast = PSY.get_time_series(
+    return get_time_series_initial_values!(
+        container,
         T,
         component,
-        get_time_series_name(attributes);
-        start_time=initial_time,
-        count=1,
+        get_time_series_name(attributes),
     )
-    ts_vector = IS.get_time_series_values(
-        component,
-        forecast,
-        initial_time;
-        len=length(time_steps),
-        ignore_scaling_factors=true,
-    )
-    return ts_vector
 end
 
 function _get_time_series(
@@ -28,23 +17,12 @@ function _get_time_series(
     subcomponent::S,
     attributes::TimeSeriesAttributes{T},
 ) where {S <: PSY.Component, T <: PSY.TimeSeriesData}
-    initial_time = get_initial_time(container)
-    time_steps = get_time_steps(container)
-    forecast = PSY.get_time_series(
+    return get_time_series_initial_values!(
+        container,
         T,
         component,
-        make_subsystem_time_series_name(subcomponent, get_time_series_name(attributes));
-        start_time=initial_time,
-        count=1,
+        PSY.make_subsystem_time_series_name(subcomponent, get_time_series_name(attributes)),
     )
-    ts_vector = IS.get_time_series_values(
-        component,
-        forecast,
-        initial_time;
-        len=length(time_steps),
-        ignore_scaling_factors=true,
-    )
-    return ts_vector
 end
 
 function get_time_series(
