@@ -64,7 +64,7 @@ function add_component_name!(attr::TimeSeriesAttributes, name, uuid)
     return
 end
 
-get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[name]
+_get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[name]
 
 struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
@@ -93,7 +93,30 @@ function ParameterContainer(parameter_array, multiplier_array)
 end
 
 function calculate_parameter_values(container::ParameterContainer)
-    return get_parameter_values(container) .* container.multiplier_array
+    return calculate_parameter_values(
+        container.attributes,
+        container.parameter_array,
+        container.multiplier_array,
+    )
+end
+
+function calculate_parameter_values(
+    attributes::ParameterAttributes,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
+    return get_parameter_values(attributes, param_array, multiplier_array) .*
+           multiplier_array
+end
+
+function calculate_parameter_values(
+    ::ParameterAttributes,
+    param_array::SparseAxisArray,
+    multiplier_array::SparseAxisArray,
+)
+    p_array = jump_value.(to_matrix(param_array))
+    m_array = to_matrix(multiplier_array)
+    return p_array .* m_array
 end
 
 function get_parameter_column_refs(container::ParameterContainer, column::AbstractString)
@@ -110,10 +133,14 @@ end
 
 function get_parameter_column_refs(
     attributes::TimeSeriesAttributes{T},
-    param_array,
+    param_array::DenseAxisArray,
     column,
 ) where {T <: PSY.TimeSeriesData}
-    return param_array[get_ts_uuid(attributes, column), axes(param_array)[2:end]...]
+    return param_array[_get_ts_uuid(attributes, column), axes(param_array)[2:end]...]
+end
+
+function get_parameter_column_values(container::ParameterContainer, column::AbstractString)
+    return jump_value.(get_parameter_column_refs(container, column))
 end
 
 function get_parameter_values(container::ParameterContainer)
@@ -124,18 +151,24 @@ function get_parameter_values(container::ParameterContainer)
     )
 end
 
-function get_parameter_values(::ParameterAttributes, param_array, multiplier_array)
+# TODO: SparseAxisArray versions of these functions
+
+function get_parameter_values(
+    ::ParameterAttributes,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
     return jump_value.(param_array)
 end
 
 function get_parameter_values(
     attributes::TimeSeriesAttributes{T},
-    param_array,
-    multiplier_array,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
 ) where {T <: PSY.TimeSeriesData}
     exploded_param_array = DenseAxisArray{Float64}(undef, axes(multiplier_array)...)
     for name in axes(multiplier_array)[1]
-        param_col = param_array[get_ts_uuid(attributes, name), axes(param_array)[2:end]...]
+        param_col = param_array[_get_ts_uuid(attributes, name), axes(param_array)[2:end]...]
         device_axes = axes(multiplier_array)[2:end]
         exploded_param_array[name, device_axes...] = jump_value.(param_col)
     end
