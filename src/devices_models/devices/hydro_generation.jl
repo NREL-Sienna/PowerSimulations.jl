@@ -436,25 +436,24 @@ function add_constraints!(
         time_steps,
     )
     param_container = get_parameter(container, InflowTimeSeriesParameter(), V)
-    parameter_values = get_parameter_values(param_container)
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = get_component(ic)
         name = PSY.get_name(device)
+        param = get_parameter_column_values(param_container, name)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
             get_value(ic) - power_var[name, 1] * fraction_of_hour -
-            spillage_var[name, 1] * fraction_of_hour +
-            parameter_values[name, 1] * multiplier[name, 1]
+            spillage_var[name, 1] * fraction_of_hour + param[1] * multiplier[name, 1]
         )
 
         for t in time_steps[2:end]
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 energy_var[name, t] ==
-                energy_var[name, t - 1] + parameter_values[name, t] * multiplier[name, t] -
+                energy_var[name, t - 1] + param[t] * multiplier[name, t] -
                 power_var[name, t] * fraction_of_hour -
                 spillage_var[name, t] * fraction_of_hour
             )
@@ -620,7 +619,6 @@ function add_constraints!(
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
     param_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
-    parameter_values = get_parameter_values(param_container)
     multiplier =
         get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
 
@@ -641,11 +639,12 @@ function add_constraints!(
             JuMP.delete_upper_bound.(shortage_var[name, :])
             JuMP.set_upper_bound.(shortage_var[name, :], 0.0)
         end
+        param = get_parameter_column_values(param_container, name)
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 e_var[name, t] + shortage_var[name, t] + surplus_var[name, t] ==
-                multiplier[name, t] * parameter_values[name, t]
+                multiplier[name, t] * param[t]
             )
         end
     end
@@ -668,21 +667,20 @@ function add_constraints!(
     ::Type{X},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
-    resolution = get_resolution(container)
     set_name = [PSY.get_name(d) for d in devices]
     constraint =
         add_constraints_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
     param_container = get_parameter(container, EnergyBudgetTimeSeriesParameter(), V)
-    parameter_values = get_parameter_values(param_container)
     multiplier = get_multiplier_array(param_container)
 
     for d in devices
         name = PSY.get_name(d)
+        param = get_parameter_column_values(param_container, name)
         constraint[name] = JuMP.@constraint(
             container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * parameter_values[name, t] for t in time_steps])
+            sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[t] for t in time_steps])
         )
     end
     return
