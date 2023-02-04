@@ -69,38 +69,6 @@ function write_model_dual_results!(
     return
 end
 
-function calculate_parameter_values(
-    param_array::DenseAxisArray,
-    multiplier_array::DenseAxisArray,
-    ::ParameterAttributes,
-)
-    return jump_value.(param_array) .* multiplier_array
-end
-
-function calculate_parameter_values(
-    param_array::SparseAxisArray,
-    multiplier_array::SparseAxisArray,
-    ::ParameterAttributes,
-)
-    p_array = jump_value.(to_matrix(param_array))
-    m_array = to_matrix(multiplier_array)
-    return p_array .* m_array
-end
-
-function calculate_parameter_values(
-    param_array::DenseAxisArray,
-    multiplier_array::DenseAxisArray,
-    attributes::TimeSeriesAttributes{T},
-) where {T <: PSY.TimeSeriesData}
-    exploded_param_array = DenseAxisArray{Float64}(undef, axes(multiplier_array)...)
-    for name in axes(multiplier_array)[1]
-        exploded_param_array[name, :] =
-            jump_value.(param_array[get_ts_uuid(attributes, name), :]) .*
-            multiplier_array[name, :]
-    end
-    return exploded_param_array
-end
-
 function write_model_parameter_results!(
     store,
     model::T,
@@ -120,11 +88,7 @@ function write_model_parameter_results!(
     parameters = get_parameters(container)
     for (key, container) in parameters
         !should_write_resulting_value(key) && continue
-        param_array = get_parameter_array(container)
-        multiplier_array = get_multiplier_array(container)
-        # @assert_op length(axes(param_array)) == 2
-        attributes = get_attributes(container)
-        data = calculate_parameter_values(param_array, multiplier_array, attributes)
+        data = calculate_parameter_values(container)
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
