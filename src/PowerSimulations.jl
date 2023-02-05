@@ -343,6 +343,7 @@ export RangeConstraintLBExpressions
 export RangeConstraintUBExpressions
 export CostExpressions
 export ActivePowerBalanceAC
+export ActivePowerBalanceDC
 export ReactivePowerBalance
 export EmergencyUp
 export EmergencyDown
