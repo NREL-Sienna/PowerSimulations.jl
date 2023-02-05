@@ -1,10 +1,10 @@
 #################################### Branch Variables ##################################################
-get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = false
+get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractP2PDCLineFormulation) = false
 
 get_variable_binary(
     ::HVDCFlowDirectionVariable,
     ::Type{<:PSY.DCBranch},
-    ::AbstractDCLineFormulation,
+    ::AbstractP2PDCLineFormulation,
 ) = true
 
 get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}, _) = NaN
@@ -12,13 +12,13 @@ get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.DCBranch}, _) = 
 get_variable_multiplier(
     ::FlowActivePowerFromToVariable,
     ::Type{<:PSY.DCBranch},
-    ::AbstractDCLineFormulation,
+    ::AbstractP2PDCLineFormulation,
 ) = -1.0
 
 get_variable_multiplier(
     ::FlowActivePowerToFromVariable,
     ::Type{<:PSY.DCBranch},
-    ::AbstractDCLineFormulation,
+    ::AbstractP2PDCLineFormulation,
 ) = 1.0
 
 function get_variable_multiplier(::HVDCLosses, d::PSY.DCBranch, ::HVDCP2PDispatch)
@@ -40,13 +40,13 @@ get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.DCBranch, ::HVDCP2PUn
 get_variable_lower_bound(
     ::FlowActivePowerVariable,
     d::PSY.DCBranch,
-    ::AbstractDCLineFormulation,
+    ::AbstractP2PDCLineFormulation,
 ) = nothing
 
 get_variable_upper_bound(
     ::FlowActivePowerVariable,
     d::PSY.DCBranch,
-    ::AbstractDCLineFormulation,
+    ::AbstractP2PDCLineFormulation,
 ) = nothing
 
 get_variable_lower_bound(::HVDCLosses, d::PSY.DCBranch, ::HVDCP2PDispatch) = 0.0
@@ -64,21 +64,21 @@ end
 function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.DCBranch, V <: AbstractDCLineFormulation}
+) where {U <: PSY.DCBranch, V <: AbstractP2PDCLineFormulation}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
 function get_default_attributes(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.DCBranch, V <: AbstractDCLineFormulation}
+) where {U <: PSY.DCBranch, V <: AbstractP2PDCLineFormulation}
     return Dict{String, Any}()
 end
 
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, U},
-) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractDCLineFormulation} = DeviceModel(T, U)
+) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractP2PDCLineFormulation} = DeviceModel(T, U)
 
 #################################### Rate Limits Constraints ##################################################
 function _get_flow_bounds(d::PSY.TwoTerminalHVDCLine)
@@ -131,7 +131,7 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, <:AbstractDCLineFormulation},
+    ::DeviceModel{U, <:AbstractP2PDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: FlowRateConstraint, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
@@ -272,7 +272,7 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{HVDCPowerBalance},
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, <:AbstractDCLineFormulation},
+    ::DeviceModel{T, <:AbstractP2PDCLineFormulation},
     ::Type{<:PM.AbstractDCPModel},
 ) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)
@@ -355,7 +355,7 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{HVDCLossesAbsoluteValue},
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, <:AbstractDCLineFormulation},
+    ::DeviceModel{T, <:AbstractP2PDCLineFormulation},
     ::Type{<:PM.AbstractDCPModel},
 ) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)

@@ -396,7 +396,7 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -411,7 +411,7 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
     )
     return
@@ -424,7 +424,7 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.System) =>
+        ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
             _make_container_array(time_steps),
     )
     return
@@ -437,9 +437,9 @@ function _make_system_expressions!(
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.System) =>
+        ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
             _make_container_array(time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
     )
     return

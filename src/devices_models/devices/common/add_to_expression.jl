@@ -109,7 +109,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
@@ -171,7 +171,7 @@ function add_to_expression!(
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{StandardPTDFModel},
-) where {T <: ActivePowerBalance, U <: HVDCLosses, V <: PSY.TwoTerminalHVDCLine, W <: HVDCP2PDispatch}
+) where {T <: ActivePowerBalanceAC, U <: HVDCLosses, V <: PSY.TwoTerminalHVDCLine, W <: HVDCP2PDispatch}
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
     for d in devices
@@ -198,7 +198,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: FlowActivePowerFromToVariable,
     V <: PSY.Branch,
     W <: AbstractDeviceFormulation,
@@ -231,7 +231,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: FlowActivePowerToFromVariable,
     V <: PSY.Branch,
     W <: AbstractDeviceFormulation,
@@ -319,7 +319,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
@@ -349,7 +349,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
@@ -376,7 +376,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
@@ -437,7 +437,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
@@ -467,7 +467,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
@@ -501,7 +501,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
@@ -538,7 +538,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: FlowActivePowerVariable,
     V <: PSY.Branch,
     W <: AbstractBranchFormulation,
@@ -575,7 +575,7 @@ function add_to_expression!(
     ::DeviceModel{PSY.PhaseShiftingTransformer, V},
     ::Type{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: PhaseShifterAngle,
     V <: PhaseAngleControl,
     W <: StandardPTDFModel,
@@ -759,7 +759,7 @@ function add_to_expression!(
     ::NetworkModel{W},
     ::Type{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: Union{CopperPlatePowerModel, StandardPTDFModel},
 }
@@ -783,7 +783,7 @@ function add_to_expression!(
     ::NetworkModel{W},
     ::Type{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractActivePowerModel,
 }
@@ -808,7 +808,7 @@ function add_to_expression!(
     ::NetworkModel{W},
     ::Type{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractPowerModel,
 }
