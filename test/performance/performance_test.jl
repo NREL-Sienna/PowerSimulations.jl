@@ -6,6 +6,7 @@ using PowerSystems
 const PSY = PowerSystems
 using Logging
 using PowerSystemCaseBuilder
+using PowerNetworkMatrices
 using HiGHS
 using Dates
 

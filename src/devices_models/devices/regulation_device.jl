@@ -61,7 +61,6 @@ function add_constraints!(
     var_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
     base_points_param = get_parameter(container, ActivePowerTimeSeriesParameter(), T)
     multiplier = get_multiplier_array(base_points_param)
-    base_points = get_parameter_array(base_points_param)
 
     names = [PSY.get_name(g) for g in devices]
     time_steps = get_time_steps(container)
@@ -74,14 +73,15 @@ function add_constraints!(
     for d in devices
         name = PSY.get_name(d)
         limits = PSY.get_active_power_limits(d)
+        param = get_parameter_column_refs(base_points_param, name)
         for t in time_steps
             container_up[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                var_up[name, t] <= limits.max - base_points[name, t] * multiplier[name, t]
+                var_up[name, t] <= limits.max - param[t] * multiplier[name, t]
             )
             container_dn[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
-                var_dn[name, t] <= base_points[name, t] * multiplier[name, t] - limits.min
+                var_dn[name, t] <= param[t] * multiplier[name, t] - limits.min
             )
         end
     end

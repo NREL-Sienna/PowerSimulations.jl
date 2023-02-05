@@ -60,49 +60,26 @@ function _update_parameter_values!(
 }
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
+    ts_name = get_time_series_name(attributes)
+    multiplier_id = get_time_series_multiplier_id(attributes)
     components = get_available_components(V, get_system(model))
+    ts_uuids = Set{String}()
     for component in components
-        name = PSY.get_name(component)
-        ts_vector = get_time_series_values!(
-            U,
-            model,
-            component,
-            get_time_series_name(attributes),
-            get_time_series_multiplier_id(attributes),
-            initial_forecast_time,
-            horizon,
-        )
-        for (t, value) in enumerate(ts_vector)
-            _set_param_value!(param_array, value, name, t)
-        end
-    end
-end
-
-function _update_parameter_values!(
-    param_array::SparseAxisArray,
-    attributes::TimeSeriesAttributes{U},
-    ::Type{V},
-    model::DecisionModel,
-    ::DatasetContainer{DataFrameDataset},
-) where {U <: PSY.AbstractDeterministic, V <: PSY.HybridSystem}
-    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
-    horizon = get_time_steps(get_optimization_container(model))[end]
-    components = get_available_components(V, get_system(model))
-    for component in components, subcomp_type in [PSY.RenewableGen, PSY.ElectricLoad]
-        name = PSY.get_name(component)
-        !does_subcomponent_exist(component, subcomp_type) && continue
-        subcomponent = get_subcomponent(component, subcomp_type)
-        ts_vector = get_time_series_values!(
-            U,
-            model,
-            component,
-            make_subsystem_time_series_name(subcomponent, get_time_series_name(attributes)),
-            get_time_series_multiplier_id(attributes),
-            initial_forecast_time,
-            horizon,
-        )
-        for (t, value) in enumerate(ts_vector)
-            _set_param_value!(param_array, value, name, string(subcomp_type), t)
+        ts_uuid = get_time_series_uuid(U, component, ts_name)
+        if !(ts_uuid in ts_uuids)
+            ts_vector = get_time_series_values!(
+                U,
+                model,
+                component,
+                ts_name,
+                multiplier_id,
+                initial_forecast_time,
+                horizon,
+            )
+            for (t, value) in enumerate(ts_vector)
+                _set_param_value!(param_array, value, ts_uuid, t)
+            end
+            push!(ts_uuids, ts_uuid)
         end
     end
 end
@@ -144,17 +121,23 @@ function _update_parameter_values!(
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     components = get_available_components(V, get_system(model))
+    ts_name = get_time_series_name(attributes)
+    ts_uuids = Set{String}()
     for component in components
-        # Note: This interface reads one single value per component at a time.
-        ts_vector = get_time_series_values!(
-            U,
-            model,
-            component,
-            get_time_series_name(attributes),
-            get_time_series_multiplier_id(attributes),
-            initial_forecast_time,
-        )
-        _set_param_value!(param_array, ts_vector[1], PSY.get_name(component), 1)
+        ts_uuid = get_time_series_uuid(U, component, ts_name)
+        if !(ts_uuid in ts_uuids)
+            # Note: This interface reads one single value per component at a time.
+            ts_vector = get_time_series_values!(
+                U,
+                model,
+                component,
+                get_time_series_name(attributes),
+                get_time_series_multiplier_id(attributes),
+                initial_forecast_time,
+            )
+            _set_param_value!(param_array, ts_vector[1], ts_uuid, 1)
+            push!(ts_uuids, ts_uuid)
+        end
     end
     return
 end

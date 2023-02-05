@@ -78,7 +78,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
@@ -87,14 +87,14 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
-    parameter = get_parameter_array(container, U(), V)
-    multiplier = get_parameter_multiplier_array(container, U(), V)
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
     for d in devices, t in get_time_steps(container)
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = PSY.get_name(d)
         _add_to_jump_expression!(
             get_expression(container, T(), X)[bus_number, t],
-            parameter[name, t],
+            get_parameter_column_refs(param_container, name)[t],
             multiplier[name, t],
         )
     end
@@ -289,7 +289,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
@@ -298,13 +298,13 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: CopperPlatePowerModel,
 }
-    parameter = get_parameter_array(container, U(), V)
-    multiplier = get_parameter_multiplier_array(container, U(), V)
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         _add_to_jump_expression!(
             get_expression(container, T(), X)[t],
-            parameter[name, t],
+            get_parameter_column_refs(param_container, name)[t],
             multiplier[name, t],
         )
     end
@@ -403,7 +403,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
@@ -412,19 +412,16 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
-    parameter = get_parameter_array(container, U(), V)
-    multiplier = get_parameter_multiplier_array(container, U(), V)
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
-        _add_to_jump_expression!(sys_expr[t], parameter[name, t], multiplier[name, t])
-        _add_to_jump_expression!(
-            nodal_expr[bus_no, t],
-            parameter[name, t],
-            multiplier[name, t],
-        )
+        param = get_parameter_column_refs(param_container, name)[t]
+        _add_to_jump_expression!(sys_expr[t], param, multiplier[name, t])
+        _add_to_jump_expression!(nodal_expr[bus_no, t], param, multiplier[name, t])
     end
     return
 end

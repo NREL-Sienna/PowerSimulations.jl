@@ -325,7 +325,7 @@ end
                         }(
                             "",
                         )],
-                    )
+                    ),
                 ),
             )
             set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PDispatch))
@@ -366,7 +366,7 @@ end
                         }(
                             "",
                         )],
-                    )
+                    ),
                 ),
             )
 
@@ -419,7 +419,7 @@ end
                         }(
                             "",
                         )],
-                    )
+                    ),
                 ),
             )
             dispatch_objective = model_wl.internal.container.optimizer_stats.objective_value

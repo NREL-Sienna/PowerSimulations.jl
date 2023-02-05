@@ -72,12 +72,6 @@ Formulation type to enable (continuous) load interruption dispatch
 """
 struct PowerLoadDispatch <: AbstractControllablePowerLoadFormulation end
 
-########################### Hybrid Generation Formulations ################################
-abstract type AbstractHybridFormulation <: AbstractDeviceFormulation end
-abstract type AbstractStandardHybridFormulation <: AbstractHybridFormulation end
-struct BasicHybridDispatch <: AbstractHybridFormulation end
-struct StandardHybridDispatch <: AbstractStandardHybridFormulation end
-
 ############################ Hydro Generation Formulations #################################
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end

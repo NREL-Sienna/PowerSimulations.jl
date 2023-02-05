@@ -197,13 +197,19 @@ function _add_variable_cost_to_objective!(
         _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
     jump_model = get_jump_model(container)
     for t in time_steps
+        set_multiplier!(
+            parameter_container,
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
+            #  of base power times the time delta.
+            1.0,
+            component_name,
+            t,
+        )
+
         set_parameter!(
             parameter_container,
             jump_model,
             PSY.get_cost(variable_cost_forecast_values[t]),
-            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
-            #  of base power times the time delta.
-            1.0,
             component_name,
             t,
         )
@@ -235,7 +241,6 @@ function _add_variable_cost_to_objective!(
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     # If array is full of tuples with zeros return 0.0
     time_steps = get_time_steps(container)
-    initial_time = get_initial_time(container)
     variable_cost_forecast = get_time_series(container, component, "variable_cost")
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     variable_cost_forecast_values = map(PSY.VariableCost, variable_cost_forecast_values)
@@ -251,13 +256,18 @@ function _add_variable_cost_to_objective!(
         _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
     jump_model = get_jump_model(container)
     for t in time_steps
+        set_multiplier!(
+            parameter_container,
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
+            #  of base power times the time delta.
+            1.0,
+            component_name,
+            t,
+        )
         set_parameter!(
             parameter_container,
             jump_model,
             PSY.get_cost(variable_cost_forecast_values[t]),
-            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
-            #  of base power times the time delta.
-            1.0,
             component_name,
             t,
         )

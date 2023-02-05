@@ -105,19 +105,17 @@ function add_constraints!(
     requirement = PSY.get_requirement(service)
     jump_model = get_jump_model(container)
     if parameters
-        container =
+        param_container =
             get_parameter(container, RequirementTimeSeriesParameter(), SR, service_name)
-        param = get_parameter_array(container)
+        param = get_parameter_column_refs(param_container, service_name)
         for t in time_steps
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
                 resource_expression = sum(reserve_variable[:, t])
             end
-            constraint[service_name, t] = JuMP.@constraint(
-                jump_model,
-                resource_expression >= param[service_name, t] * requirement
-            )
+            constraint[service_name, t] =
+                JuMP.@constraint(jump_model, resource_expression >= param[t] * requirement)
         end
     else
         for t in time_steps

@@ -26,7 +26,7 @@ end
 function _add_feedforward_constraints!(
     container::OptimizationContainer,
     ::Type{T},
-    ::P,
+    param::P,
     ::VariableKey{U, V},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel,
@@ -38,24 +38,21 @@ function _add_feedforward_constraints!(
     constraint_ub =
         add_constraints_container!(container, T(), V, names, time_steps, meta="$(U)_ub")
     array = get_variable(container, U(), V)
-    parameter = get_parameter_array(container, P(), V)
-    multiplier = get_parameter_multiplier_array(container, P(), V)
-    jump_model = get_jump_model(container)
     upper_bound_range_with_parameter!(
-        jump_model,
+        container,
         constraint_ub,
         array,
-        multiplier,
-        parameter,
+        param,
         devices,
+        model,
     )
     lower_bound_range_with_parameter!(
-        jump_model,
+        container,
         constraint_lb,
         array,
-        multiplier,
-        parameter,
+        param,
         devices,
+        model,
     )
     return
 end
@@ -86,7 +83,7 @@ function _add_sc_feedforward_constraints!(
     mult_ub = DenseAxisArray(zeros(length(devices), time_steps[end]), names, time_steps)
     mult_lb = DenseAxisArray(zeros(length(devices), time_steps[end]), names, time_steps)
     jump_model = get_jump_model(container)
-    upper_bound_range_with_parameter!(
+    _upper_bound_range_with_parameter!(
         jump_model,
         constraint_ub,
         array_ub,
@@ -94,7 +91,7 @@ function _add_sc_feedforward_constraints!(
         parameter,
         devices,
     )
-    lower_bound_range_with_parameter!(
+    _lower_bound_range_with_parameter!(
         jump_model,
         constraint_lb,
         array_lb,
@@ -135,7 +132,7 @@ function _add_sc_feedforward_constraints!(
     mult_ub = DenseAxisArray(repeat(upper_bounds, 1, time_steps[end]), names, time_steps)
     mult_lb = DenseAxisArray(repeat(lower_bounds, 1, time_steps[end]), names, time_steps)
     jump_model = get_jump_model(container)
-    upper_bound_range_with_parameter!(
+    _upper_bound_range_with_parameter!(
         jump_model,
         constraint_ub,
         variable,
@@ -143,7 +140,7 @@ function _add_sc_feedforward_constraints!(
         parameter,
         devices,
     )
-    lower_bound_range_with_parameter!(
+    _lower_bound_range_with_parameter!(
         jump_model,
         constraint_lb,
         variable,
@@ -151,6 +148,44 @@ function _add_sc_feedforward_constraints!(
         parameter,
         devices,
     )
+    return
+end
+
+function _lower_bound_range_with_parameter!(
+    jump_model::JuMP.Model,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param_multiplier::JuMPFloatArray,
+    param_array::Union{JuMPVariableArray, JuMPFloatArray},
+    devices::IS.FlattenIteratorWrapper{V},
+) where {V <: PSY.Component}
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
+        )
+    end
+    return
+end
+
+function _upper_bound_range_with_parameter!(
+    jump_model::JuMP.Model,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param_multiplier::JuMPFloatArray,
+    param_array::Union{JuMPVariableArray, JuMPFloatArray},
+    devices::IS.FlattenIteratorWrapper{V},
+) where {V <: PSY.Component}
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            lhs_array[name, t] <= param_multiplier[name, t] * param_array[name, t]
+        )
+    end
     return
 end
 
