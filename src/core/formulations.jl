@@ -163,7 +163,7 @@ struct MyCustomBranchFormulation <: PSI.AbstractDeviceFormulation
 # Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 
-############################### AC Branch Formulations #####################################
+############################### AC/DC Branch Formulations #####################################
 """
 Branch type to add unbounded flow variables and use flow constraints
 """
@@ -182,21 +182,33 @@ Branch formulation for PhaseShiftingTransformer flow control
 struct PhaseAngleControl <: AbstractBranchFormulation end
 
 ############################### DC Branch Formulations #####################################
-abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
+abstract type AbstractTwoTerminalDCLineFormulation <: AbstractBranchFormulation end
 """
 Branch type to avoid flow constraints
 """
-struct HVDCP2PUnbounded <: AbstractDCLineFormulation end
+struct HVDCP2PUnbounded <: AbstractTwoTerminalDCLineFormulation end
 """
 Branch type to represent lossless power flow on DC lines
 """
-struct HVDCP2PLossless <: AbstractDCLineFormulation end
+struct HVDCP2PLossless <: AbstractTwoTerminalDCLineFormulation end
 """
 Branch type to represent lossy power flow on DC lines
 """
-struct HVDCP2PDispatch <: AbstractDCLineFormulation end
+struct HVDCP2PDispatch <: AbstractTwoTerminalDCLineFormulation end
 # Not Implemented
-# struct VoltageSourceDC <: AbstractDCLineFormulation end
+# struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
+
+############################### AC/DC Converter Formulations #####################################
+abstract type AbstractConverterFormulation <: AbstractDeviceFormulation end
+
+"""
+LossLess InterconnectingConverter Model
+"""
+struct LossLessConverter <: AbstractConverterFormulation end
+
+# TODO: Think if this an ok abstraction for future use cases
+struct LossLessLine <: AbstractBranchFormulation end
+
 
 ############################## Network Model Formulations ##################################
 # These formulations are taken directly from PowerModels
