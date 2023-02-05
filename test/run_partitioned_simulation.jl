@@ -3,7 +3,6 @@ using PowerSystems
 using PowerSystemCaseBuilder
 using InfrastructureSystems
 using PowerNetworkMatrices
-import PowerSystemCaseBuilder: PSITestSystems
 using Logging
 using Test
 
