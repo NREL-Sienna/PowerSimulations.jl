@@ -5,6 +5,12 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.InterconnectingConverter,
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power_limits(d).max
 get_variable_multiplier(_, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = 1.0
 
+get_variable_binary(::FlowActivePowerVariable, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = false
+get_variable_warm_start_value(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_active_power_flow(d)
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = nothing
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = nothing
+get_variable_multiplier(_, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = 1.0
+
 requires_initialization(::AbstractConverterFormulation) = false
 requires_initialization(::LossLessLine) = false
 
@@ -49,6 +55,43 @@ function get_default_attributes(
     ::Type{<:AbstractBranchFormulation},
 )
     return Dict{String, Any}()
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalanceDC,
+    U <: FlowActivePowerVariable,
+    V <: PSY.TModelHVDCLine,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), PSY.DCBus)
+    for d in devices
+        arc = PSY.get_arc(d)
+        to_bus_number = PSY.get_number(PSY.get_to(arc))
+        from_bus_number = PSY.get_number(PSY.get_from(arc))
+        for t in get_time_steps(container)
+            name = PSY.get_name(d)
+            _add_to_jump_expression!(
+                expression[to_bus_number, t],
+                variable[name, t],
+                1.0,
+            )
+            _add_to_jump_expression!(
+                expression[from_bus_number, t],
+                variable[name, t],
+                -1.0,
+            )
+        end
+    end
+    return
 end
 
 function add_to_expression!(
