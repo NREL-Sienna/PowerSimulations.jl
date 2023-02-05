@@ -55,7 +55,7 @@ function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
     return
 end
 
-function add_component_name!(attr::TimeSeriesAttributes, name, uuid)
+function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::String)
     if haskey(attr.component_name_to_ts_uuid, name)
         throw(ArgumentError("$name is already stored"))
     end

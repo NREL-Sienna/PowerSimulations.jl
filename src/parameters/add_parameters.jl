@@ -118,7 +118,7 @@ function _add_time_series_parameters!(
     @debug "adding" T D ts_name ts_type time_series_mult_id _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
-    device_names = []
+    device_names = String[]
     initial_values = Dict{String, AbstractArray}()
     for device in devices
         push!(device_names, PSY.get_name(device))
@@ -160,6 +160,7 @@ function _add_time_series_parameters!(
             get_time_series_uuid(ts_type, device, ts_name),
         )
     end
+    return
 end
 
 function add_parameters!(
@@ -203,6 +204,7 @@ function add_parameters!(
         time_steps;
         meta=name,
     )
+
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
@@ -211,7 +213,7 @@ function add_parameters!(
         set_multiplier!(parameter_container, multiplier, name, t)
         set_parameter!(parameter_container, jump_model, ts_vector[t], ts_uuid, t)
     end
-
+    add_component_name!(get_attributes(parameter_container), name, ts_uuid)
     return
 end
 
