@@ -78,10 +78,10 @@ end
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, U},
-) where {T <: PSY.HVDCLine, U <: AbstractDCLineFormulation} = DeviceModel(T, U)
+) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractDCLineFormulation} = DeviceModel(T, U)
 
 #################################### Rate Limits Constraints ##################################################
-function _get_flow_bounds(d::PSY.HVDCLine)
+function _get_flow_bounds(d::PSY.TwoTerminalHVDCLine)
     check_hvdc_line_limits_consistency(d)
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min

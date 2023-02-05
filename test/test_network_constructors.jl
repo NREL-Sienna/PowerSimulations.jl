@@ -202,7 +202,7 @@ end
     constraint_keys = [
         PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
@@ -248,8 +248,8 @@ end
     constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
         PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
-        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
-        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
@@ -291,7 +291,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
@@ -336,8 +336,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Voltages, etc.
     constraint_keys = [
-        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
-        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     ACR_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 240, 240, 264],
@@ -376,7 +376,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Bi-directional flows etc
-    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
         c_sys14 => 142000.0,

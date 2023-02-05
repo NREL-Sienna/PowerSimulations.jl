@@ -56,7 +56,7 @@ function construct_network!(
 
     area_balance(
         container,
-        ExpressionKey(ActivePowerBalance, PSY.Bus),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus),
         area_mapping,
         branches,
     )
@@ -160,7 +160,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.ACBus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -223,7 +223,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.ACBus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -286,7 +286,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.ACBus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -348,7 +348,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.ACBus, model, T)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
