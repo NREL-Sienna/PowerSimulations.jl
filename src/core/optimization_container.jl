@@ -551,6 +551,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         @debug "Building $(transmission) network formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         construct_network!(container, sys, transmission_model, template)
+        error("Here we build the constraints to connect the AC and DC networks")
         @debug "Problem size:" get_problem_size(container) _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     end
