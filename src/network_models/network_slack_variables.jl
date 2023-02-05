@@ -38,7 +38,7 @@ function add_variables!(
 }
     time_steps = get_time_steps(container)
     bus_numbers = PSY.get_number.(get_available_components(PSY.accessBus, sys))
-    variable = add_variable_container!(container, T(), PSY.Bus, bus_numbers, time_steps)
+    variable = add_variable_container!(container, T(), PSY.ACBus, bus_numbers, time_steps)
     for t in time_steps, n in bus_numbers
         variable[n, t] = JuMP.@variable(
             get_jump_model(container),
