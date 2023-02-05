@@ -208,7 +208,7 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = TwoTerminalHVDCLine (
+    hvdc = TwoTerminalHVDCLine(
         name=get_name(line),
         available=true,
         active_power_flow=0.0,
@@ -272,7 +272,7 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = TwoTerminalHVDCLine (
+    hvdc = TwoTerminalHVDCLine(
         name=get_name(line),
         available=true,
         active_power_flow=0.0,
