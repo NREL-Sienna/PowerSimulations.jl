@@ -33,10 +33,10 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
-    ::NetworkModel{S},
+    ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-
-    devices = get_available_components(T, sys)
+    devices = get_available_components(PSY.InterconnectingConverter, sys)
+    error("here")
     return
 end
 
