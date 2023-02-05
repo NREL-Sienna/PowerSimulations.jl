@@ -396,9 +396,9 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
-        ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
+        ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
     )
     return
@@ -411,7 +411,7 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
     )
     return
@@ -439,7 +439,7 @@ function _make_system_expressions!(
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(bus_numbers, time_steps),
     )
     return
@@ -450,7 +450,7 @@ function initialize_system_expressions!(
     ::Type{T},
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, system)])
+    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.ACBus, system)])
     _make_system_expressions!(container, bus_numbers, T)
     return
 end
@@ -1226,7 +1226,7 @@ function get_expression(
     ::Type{U},
     meta=CONTAINER_KEY_EMPTY_META,
 ) where {T <: SystemBalanceExpressions, U <: PM.AbstractPowerModel}
-    return get_expression(container, ExpressionKey(T, PSY.Bus, meta))
+    return get_expression(container, ExpressionKey(T, PSY.ACBus, meta))
 end
 
 function get_expression(

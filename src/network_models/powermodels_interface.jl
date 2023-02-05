@@ -287,13 +287,13 @@ function powermodels_network!(
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = PSY.get_components(PSY.Bus, sys)
+    buses = PSY.get_components(PSY.ACBus, sys)
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
-            container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)][bus.number, t]
+            container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][bus.number, t]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] =
-            container.expressions[ExpressionKey(ReactivePowerBalance, PSY.Bus)][
+            container.expressions[ExpressionKey(ReactivePowerBalance, PSY.ACBus)][
                 bus.number,
                 t,
             ]
@@ -315,11 +315,11 @@ function powermodels_network!(
 ) where {S <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = PSY.get_components(PSY.Bus, sys)
+    buses = PSY.get_components(PSY.ACBus, sys)
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
-            container.expressions[ExpressionKey(ActivePowerBalance, PSY.Bus)][
+            container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
                 PSY.get_number(bus),
                 t,
             ]
@@ -338,7 +338,7 @@ end
 function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_variable_map[PSY.Bus] = Dict(:va => VoltageAngle())
+    pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] =
         Dict(:p => (from_to=FlowActivePowerVariable(), to_from=nothing))
     pm_variable_map[PSY.DCBranch] =
@@ -350,7 +350,7 @@ end
 function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_variable_map[PSY.Bus] = Dict(:va => VoltageAngle())
+    pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
     pm_variable_map[PSY.DCBranch] = Dict(
         :p_dc => (
@@ -365,7 +365,7 @@ end
 function PMvarmap(::Type{PTDFPowerModel})
     pm_variable_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
-    pm_variable_map[PSY.Bus] = Dict()
+    pm_variable_map[PSY.ACBus] = Dict()
     pm_variable_map[PSY.ACBranch] = Dict()
     pm_variable_map[PSY.DCBranch] = Dict()
 
@@ -375,7 +375,7 @@ end
 function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
-    pm_variable_map[PSY.Bus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
+    pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
     pm_variable_map[PSY.ACBranch] = Dict(
         :p => (
             from_to=FlowActivePowerFromToVariable(),
@@ -400,14 +400,14 @@ end
 function PMconmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_constraint_map = Dict{Type, Dict{Symbol, <:ConstraintType}}()
 
-    pm_constraint_map[PSY.Bus] = Dict(:power_balance_p => NodalBalanceActiveConstraint())
+    pm_constraint_map[PSY.ACBus] = Dict(:power_balance_p => NodalBalanceActiveConstraint())
     return pm_constraint_map
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_constraint_map = Dict{Type, Dict{Symbol, ConstraintType}}()
 
-    pm_constraint_map[PSY.Bus] = Dict(
+    pm_constraint_map[PSY.ACBus] = Dict(
         :power_balance_p => NodalBalanceActiveConstraint(),
         :power_balance_q => NodalBalanceReactiveConstraint(),
     )
@@ -459,10 +459,10 @@ function add_pm_variable_refs!(
 
     pm_variable_map = PMvarmap(system_formulation)
     bus_names = [PSY.get_name(b) for b in values(bus_dict)]
-    for (pm_v, ps_v) in pm_variable_map[PSY.Bus]
+    for (pm_v, ps_v) in pm_variable_map[PSY.ACBus]
         if pm_v in pm_variable_types
             var_container =
-                add_variable_container!(container, ps_v, PSY.Bus, bus_names, time_steps)
+                add_variable_container!(container, ps_v, PSY.ACBus, bus_names, time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
                 var_container[name, t] = PM.var(container.pm, t, pm_v)[pm_bus] # pm_vars[pm_v][pm_bus]
@@ -536,12 +536,12 @@ function add_pm_constraint_refs!(
         [k for k in keys(PM.con(container.pm, 1)) if !isempty(PM.con(container.pm, 1, k))]
 
     pm_constraint_map = PMconmap(system_formulation)
-    for (pm_v, ps_v) in pm_constraint_map[PSY.Bus]
+    for (pm_v, ps_v) in pm_constraint_map[PSY.ACBus]
         if pm_v in pm_constraint_names
             cons_container = add_constraints_container!(
                 container,
                 ps_v,
-                PSY.Bus,
+                PSY.ACBus,
                 [PSY.get_name(b) for b in values(bus_dict)],
                 time_steps,
             )

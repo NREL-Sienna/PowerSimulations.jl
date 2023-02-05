@@ -2,7 +2,7 @@ const PM_MAP_TUPLE =
     NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
 struct PMmap
-    bus::Dict{Int, PSY.Bus}
+    bus::Dict{Int, PSY.ACBus}
     arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
     arcs_dc::Dict{PM_MAP_TUPLE, <:PSY.DCBranch}
 end
@@ -258,7 +258,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.HVDCLine,
+    branch::PSY.TwoTerminalHVDCLine,
     ::Type{HVDCP2PDispatch},
     ::Type{<:PM.AbstractDCPModel},
 )
@@ -296,7 +296,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.HVDCLine,
+    branch::PSY.TwoTerminalHVDCLine,
     ::Type{HVDCP2PDispatch},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -335,7 +335,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.HVDCLine,
+    branch::PSY.TwoTerminalHVDCLine,
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -411,16 +411,16 @@ function get_branches_to_pm(
     return PM_branches, PMmap_br
 end
 
-function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
+function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.ACBus})
     PM_buses = Dict{String, Any}()
-    PMmap_buses = Dict{Int, PSY.Bus}()
+    PMmap_buses = Dict{Int, PSY.ACBus}()
 
-    pm_bustypes = Dict{PSY.BusTypes, Int}(
-        PSY.BusTypes.ISOLATED => 4,
-        PSY.BusTypes.PQ => 1,
-        PSY.BusTypes.PV => 2,
-        PSY.BusTypes.REF => 3,
-        PSY.BusTypes.SLACK => 3,
+    pm_bustypes = Dict{PSY.ACBusTypes, Int}(
+        PSY.ACBusTypes.ISOLATED => 4,
+        PSY.ACBusTypes.PQ => 1,
+        PSY.ACBusTypes.PV => 2,
+        PSY.ACBusTypes.REF => 3,
+        PSY.ACBusTypes.SLACK => 3,
     )
 
     for bus in buses
@@ -441,7 +441,7 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
             "name" => PSY.get_name(bus),
         )
         PM_buses["$(number)"] = PM_bus
-        if PSY.get_bustype(bus) != PSY.BusTypes.ISOLATED::PSY.BusTypes
+        if PSY.get_bustype(bus) != PSY.ACBusTypes.ISOLATED::PSY.ACBusTypes
             PMmap_buses[number] = bus
         end
     end
@@ -462,7 +462,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         template.branches,
         length(ac_lines),
     )
-    buses = PSY.get_components(PSY.Bus, sys)
+    buses = PSY.get_components(PSY.ACBus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(
         "bus" => pm_buses,

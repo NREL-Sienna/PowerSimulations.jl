@@ -1,7 +1,7 @@
 function area_balance(
     container::OptimizationContainer,
     expression::ExpressionKey,
-    area_mapping::Dict{String, Array{PSY.Bus, 1}},
+    area_mapping::Dict{String, Array{PSY.ACBus, 1}},
     branches,
 )
     time_steps = get_time_steps(container)
