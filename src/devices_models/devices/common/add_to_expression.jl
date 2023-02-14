@@ -171,7 +171,12 @@ function add_to_expression!(
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::Type{StandardPTDFModel},
-) where {T <: ActivePowerBalanceAC, U <: HVDCLosses, V <: PSY.TwoTerminalHVDCLine, W <: HVDCP2PDispatch}
+) where {
+    T <: ActivePowerBalanceAC,
+    U <: HVDCLosses,
+    V <: PSY.TwoTerminalHVDCLine,
+    W <: HVDCP2PDispatch,
+}
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
     for d in devices

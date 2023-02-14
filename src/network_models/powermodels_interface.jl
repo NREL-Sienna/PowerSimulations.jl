@@ -291,7 +291,10 @@ function powermodels_network!(
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
-            container.expressions[ExpressionKey(ActivePowerBalanceAC, PSY.ACBus)][bus.number, t]
+            container.expressions[ExpressionKey(ActivePowerBalanceAC, PSY.ACBus)][
+                bus.number,
+                t,
+            ]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] =
             container.expressions[ExpressionKey(ReactivePowerBalance, PSY.ACBus)][
                 bus.number,

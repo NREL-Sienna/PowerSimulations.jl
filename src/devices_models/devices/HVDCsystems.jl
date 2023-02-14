@@ -7,8 +7,8 @@ get_variable_multiplier(_, ::Type{PSY.InterconnectingConverter}, ::AbstractConve
 
 get_variable_binary(::FlowActivePowerVariable, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = false
 get_variable_warm_start_value(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_active_power_flow(d)
-get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = nothing
-get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = -PSY.get_rate(d)
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_rate(d)
 get_variable_multiplier(_, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = 1.0
 
 requires_initialization(::AbstractConverterFormulation) = false
@@ -118,6 +118,36 @@ function add_to_expression!(
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
         )
+    end
+    return
+end
+
+
+# This method might need to be moved to support Meshed HVDC to the network constructor file
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{NodalBalanceActiveConstraint},
+    devices::IS.FlattenIteratorWrapper{PSY.InterconnectingConverter},
+    model::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
+    ::Type{<:PM.AbstractActivePowerModel},
+)
+    time_steps = get_time_steps(container)
+    dc_expr = get_expression(container,  ActivePowerBalanceDC(), PSY.DCBus)
+    balance_constraint = add_constraints_container!(
+        container,
+        NodalBalanceActiveConstraint(),
+        PSY.DCBus,
+        axes(dc_expr)[1],
+        time_steps,
+    )
+    for d in devices
+        dc_bus_no = PSY.get_number(PSY.get_dc_bus(d))
+        for t in time_steps
+            balance_constraint[dc_bus_no, t] = JuMP.@constraint(
+                get_jump_model(container),
+                dc_expr[dc_bus_no, t] == 0
+            )
+        end
     end
     return
 end

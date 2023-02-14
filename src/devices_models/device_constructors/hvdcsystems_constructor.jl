@@ -36,7 +36,7 @@ function construct_device!(
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = get_available_components(PSY.InterconnectingConverter, sys)
-    error("here")
+    add_constraints!(container, NodalBalanceActiveConstraint, devices, model, S)
     return
 end
 
@@ -66,9 +66,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
-    ::Type{S},
+    ::NetworkModel{S},
 ) where {S <: PM.AbstractActivePowerModel}
-
-    devices = get_available_components(T, sys)
     return
 end

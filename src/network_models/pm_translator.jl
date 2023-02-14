@@ -4,7 +4,7 @@ const PM_MAP_TUPLE =
 struct PMmap
     bus::Dict{Int, PSY.ACBus}
     arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
-    arcs_dc::Dict{PM_MAP_TUPLE, <:PSY.DCBranch}
+    arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalHVDCLine}
 end
 
 function get_branch_to_pm(
@@ -377,7 +377,7 @@ function get_branches_to_pm(
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx=0,
-) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
@@ -402,10 +402,10 @@ end
 function get_branches_to_pm(
     ::PSY.System,
     ::Type{PTDFPowerModel},
-    ::Type{T},
+    ::Type{PSY.TwoTerminalHVDCLine},
     branch_template::BranchModelContainer,
     start_idx=0,
-) where {T <: PSY.DCBranch}
+)
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
     return PM_branches, PMmap_br
@@ -455,10 +455,10 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         PSY.ACBranch,
         template.branches,
     )
-    dc_lines, PMmap_dc = get_branches_to_pm(
+    two_terminal_dc_lines, PMmap_dc = get_branches_to_pm(
         sys,
         get_network_formulation(template),
-        PSY.DCBranch,
+        PSY.TwoTerminalHVDCLine,
         template.branches,
         length(ac_lines),
     )
@@ -470,7 +470,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         "baseMVA" => PSY.get_base_power(sys),
         "per_unit" => true,
         "storage" => Dict{String, Any}(),
-        "dcline" => dc_lines,
+        "dcline" => two_terminal_dc_lines,
         "gen" => Dict{String, Any}(),
         "switch" => Dict{String, Any}(),
         "shunt" => Dict{String, Any}(),

@@ -1485,7 +1485,14 @@ function construct_device!(
         model,
         S,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalanceAC,
+        OnStatusParameter,
+        devices,
+        model,
+        S,
+    )
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1494,7 +1501,14 @@ function construct_device!(
         model,
         S,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalanceAC,
+        OnStatusParameter,
+        devices,
+        model,
+        S,
+    )
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -1583,7 +1597,14 @@ function construct_device!(
         S,
     )
 
-    add_to_expression!(container, ActivePowerBalanceAC, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalanceAC,
+        OnStatusParameter,
+        devices,
+        model,
+        S,
+    )
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
