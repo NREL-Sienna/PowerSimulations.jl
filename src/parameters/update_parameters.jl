@@ -97,6 +97,8 @@ function _update_parameter_values!(
 }
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
+    ts_name = get_time_series_name(attributes)
+    ts_uuid = get_time_series_uuid(U, service, ts_name)
     ts_vector = get_time_series_values!(
         U,
         model,
@@ -106,9 +108,8 @@ function _update_parameter_values!(
         initial_forecast_time,
         horizon,
     )
-    service_name = PSY.get_name(service)
     for (t, value) in enumerate(ts_vector)
-        _set_param_value!(param_array, value, service_name, t)
+        _set_param_value!(param_array, value, ts_uuid, t)
     end
 end
 
