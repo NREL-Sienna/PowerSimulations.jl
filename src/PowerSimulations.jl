@@ -346,8 +346,7 @@ export SystemBalanceExpressions
 export RangeConstraintLBExpressions
 export RangeConstraintUBExpressions
 export CostExpressions
-export ActivePowerBalanceAC
-export ActivePowerBalanceDC
+export ActivePowerBalance
 export ReactivePowerBalance
 export EmergencyUp
 export EmergencyDown
@@ -566,6 +565,7 @@ include("network_models/powermodels_interface.jl")
 include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
+include("network_models/hvdc_networks.jl")
 
 include("initial_conditions/initialization.jl")
 

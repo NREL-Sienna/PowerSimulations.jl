@@ -397,9 +397,9 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
@@ -415,9 +415,9 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
     )
     return
@@ -431,7 +431,7 @@ function _make_system_expressions!(
 )
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(time_steps),
     )
     return
@@ -445,11 +445,11 @@ function _make_system_expressions!(
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(time_steps),
-        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
     )
     return

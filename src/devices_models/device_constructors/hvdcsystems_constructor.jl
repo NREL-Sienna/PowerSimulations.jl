@@ -9,7 +9,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, LossLessConverter())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -17,7 +17,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalanceDC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -36,7 +36,6 @@ function construct_device!(
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = get_available_components(PSY.InterconnectingConverter, sys)
-    add_constraints!(container, NodalBalanceActiveConstraint, devices, model, S)
     return
 end
 
@@ -51,7 +50,7 @@ function construct_device!(
     add_variables!(container, FlowActivePowerVariable, devices, LossLessLine())
     add_to_expression!(
         container,
-        ActivePowerBalanceDC,
+        ActivePowerBalance,
         FlowActivePowerVariable,
         devices,
         model,
