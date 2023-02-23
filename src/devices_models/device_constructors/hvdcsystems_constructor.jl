@@ -36,6 +36,9 @@ function construct_device!(
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = get_available_components(PSY.InterconnectingConverter, sys)
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, S)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
