@@ -336,7 +336,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalHVDCLine,
-    ::Type{<:AbstractBranchFormulation},
+    ::Type{<:AbstractP2PDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
     PM_branch = Dict{String, Any}(
