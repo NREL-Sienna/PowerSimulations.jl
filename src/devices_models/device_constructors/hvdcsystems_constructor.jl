@@ -64,8 +64,8 @@ function construct_device!(
 end
 
 function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
+    ::OptimizationContainer,
+    ::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
     ::NetworkModel{S},
