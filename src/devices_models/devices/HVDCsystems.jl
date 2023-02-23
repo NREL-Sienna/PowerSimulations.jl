@@ -155,3 +155,12 @@ function add_to_expression!(
 }
     return
 end
+
+function objective_function!(
+    ::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{PSY.InterconnectingConverter},
+    ::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
+    ::Type{<:PM.AbstractPowerModel},
+)
+    return
+end
