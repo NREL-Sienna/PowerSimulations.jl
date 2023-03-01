@@ -123,6 +123,56 @@ function _get_num_executions_by_model(
     return executions_by_model
 end
 
+function _add_feedforward_to_model(
+    sim_model::OperationModel,
+    ff::T,
+    ::Type{U},
+) where {T <: AbstractAffectFeedforward, U <: PSY.Device}
+    device_model = get_model(get_template(sim_model), get_component_type(ff))
+    if device_model === nothing
+        throw(
+            IS.ConflictingInputsError(
+                "Device model $(get_component_type(ff)) not found in model $model_name",
+            ),
+        )
+    end
+    @debug "attaching $T to $(get_component_type(ff))"
+    attach_feedforward!(device_model, ff)
+    return
+end
+
+function _add_feedforward_to_model(
+    sim_model::OperationModel,
+    ff::T,
+    ::Type{U},
+) where {T <: AbstractAffectFeedforward, U <: PSY.Service}
+    if get_feedforward_meta(ff) != NO_SERVICE_NAME_PROVIDED
+        service_model = get_model(
+            get_template(sim_model),
+            get_component_type(ff),
+            get_feedforward_meta(ff),
+        )
+        if service_model === nothing
+            throw(
+                IS.ConflictingInputsError(
+                    "Service model $(get_component_type(ff)) not found in model $(get_name(sim_model))",
+                ),
+            )
+        end
+        attach_feedforward!(service_model, ff)
+    else
+        service_found = false
+        for (key, model) in get_service_models(get_template(sim_model))
+            if key[2] == Symbol(get_component_type(ff))
+                service_found = true
+                @debug "attaching $T to $(get_component_type(ff))"
+                attach_feedforward!(model, ff)
+            end
+        end
+    end
+    return
+end
+
 function _attach_feedforwards(models::SimulationModels, feedforwards)
     names = Set(string.(get_model_names(models)))
     ff_dict = Dict{Symbol, Vector}()
@@ -132,15 +182,7 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
             ff_dict[model_name_symbol] = model_feedforwards
             for ff in model_feedforwards
                 sim_model = get_simulation_model(models, model_name_symbol)
-                device_model = get_model(get_template(sim_model), get_component_type(ff))
-                if device_model === nothing
-                    throw(
-                        IS.ConflictingInputsError(
-                            "Device model $(get_component_type(ff)) not found in model $model_name",
-                        ),
-                    )
-                end
-                attach_feedforward!(device_model, ff)
+                _add_feedforward_to_model(sim_model, ff, get_component_type(ff))
             end
         else
             error("Model $model_name not present in the SimulationModels")

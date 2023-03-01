@@ -75,6 +75,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
+        finalize_template!(template, sys)
         return new{M}(
             name,
             template,
@@ -267,11 +268,6 @@ function build_pre_step!(model::DecisionModel)
         )
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-
-        @info "Mapping Service Models"
-        populate_aggregated_service_model!(get_template(model), get_system(model))
-        populate_contributing_devices!(get_template(model), get_system(model))
-        add_services_to_device_model!(get_template(model))
 
         handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)

@@ -17,6 +17,10 @@ function get_component_type(ff::AbstractAffectFeedforward)
     return get_component_type(get_optimization_container_key(ff))
 end
 
+function get_feedforward_meta(ff::AbstractAffectFeedforward)
+    return get_optimization_container_key(ff).meta
+end
+
 """
 Adds an upper bound constraint to a variable.
 """
