@@ -493,6 +493,28 @@ function add_feedforward_constraints!(
     return
 end
 
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    ::ServiceModel{T, U},
+    devices::Vector{V},
+    ff::FixValueFeedforward,
+) where {T, U, V <: PSY.Component}
+    time_steps = get_time_steps(container)
+    parameter_type = get_default_parameter_type(ff, T)
+    param = get_parameter_array(container, parameter_type, T)
+    multiplier = get_parameter_multiplier_array(container, parameter_type, T)
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        set_name, set_time = JuMP.axes(variable)
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
+        for t in time_steps, name in set_name
+            JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force=true)
+        end
+    end
+    return
+end
+
 @doc raw"""
         add_feedforward_constraints(
             container::OptimizationContainer,

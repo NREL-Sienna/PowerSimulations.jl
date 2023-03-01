@@ -366,9 +366,9 @@ function add_parameters!(
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
-    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
+    parameter_container = add_param_container!(container, T(), S, key, names, time_steps)
     jump_model = get_jump_model(container)
-
+    error("here pending")
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps

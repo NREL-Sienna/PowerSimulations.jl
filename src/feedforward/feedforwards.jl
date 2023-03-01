@@ -2,7 +2,10 @@ function get_affected_values(ff::AbstractAffectFeedforward)
     return ff.affected_values
 end
 
-function attach_feedforward!(model, ff::T) where {T <: AbstractAffectFeedforward}
+function attach_feedforward!(
+    model::DeviceModel,
+    ff::T,
+) where {T <: AbstractAffectFeedforward}
     if !isempty(model.feedforwards)
         ff_k = [get_optimization_container_key(v) for v in model.feedforwards if isa(v, T)]
         if get_optimization_container_key(ff) ∈ ff_k
@@ -10,6 +13,30 @@ function attach_feedforward!(model, ff::T) where {T <: AbstractAffectFeedforward
         end
     end
     push!(model.feedforwards, ff)
+    return
+end
+
+function attach_feedforward!(
+    model::ServiceModel,
+    ff::T,
+) where {T <: AbstractAffectFeedforward}
+    if get_feedforward_meta(ff) != NO_SERVICE_NAME_PROVIDED
+        ff_ = ff
+    else
+        ff_ = T(
+            component_type=get_component_type(ff),
+            source=get_entry_type(get_optimization_container_key(ff)),
+            affected_values=[get_entry_type(get_optimization_container_key(ff))],
+            meta=model.service_name,
+        )
+    end
+    if !isempty(model.feedforwards)
+        ff_k = [get_optimization_container_key(v) for v in model.feedforwards if isa(v, T)]
+        if get_optimization_container_key(ff_) ∈ ff_k
+            return
+        end
+    end
+    push!(model.feedforwards, ff_)
     return
 end
 
