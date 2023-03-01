@@ -96,9 +96,9 @@ function mock_construct_device!(
     model;
     built_for_recurrent_solves=false,
 )
-    PSI.finalize_template!(PSI.get_template(model), PSI.get_system(model))
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
+    PSI.finalize_template!(template, PSI.get_system(problem))
     PSI.init_optimization_container!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
