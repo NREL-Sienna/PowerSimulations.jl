@@ -163,19 +163,6 @@ function set_service_model!(
     return
 end
 
-function _clear_feedforwards!(template::ProblemTemplate)
-    for model in values(get_device_models(template))
-        model.feedforwards = Vector{AbstractAffectFeedforward}()
-    end
-    for model in values(get_branch_models(template))
-        model.feedforwards = Vector{AbstractAffectFeedforward}()
-    end
-    for model in values(get_service_models(template))
-        model.feedforwards = Vector{AbstractAffectFeedforward}()
-    end
-    return
-end
-
 function _add_contributing_device_by_type!(
     service_model::ServiceModel,
     contributing_device::T,
@@ -297,7 +284,6 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
 end
 
 function finalize_template!(template::ProblemTemplate, sys::PSY.System)
-    _clear_feedforwards!(template)
     _populate_aggregated_service_model!(template, sys)
     _populate_contributing_devices!(template, sys)
     _add_services_to_device_model!(template)
