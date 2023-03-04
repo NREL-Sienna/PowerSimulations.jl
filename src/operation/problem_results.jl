@@ -409,7 +409,7 @@ end
 Return the values for all variables.
 """
 function read_variables(res::IS.Results)
-    variables = Dict(x => read_variable(res, x) for x in list_variable_names(res))
+    return Dict(x => read_variable(res, x) for x in list_variable_names(res))
 end
 
 function read_variables_with_keys(

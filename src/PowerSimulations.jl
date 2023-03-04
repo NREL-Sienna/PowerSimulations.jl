@@ -336,6 +336,7 @@ export EnergyBudgetTimeSeriesParameter
 # Feedforward Parameters
 export OnStatusParameter
 export UpperBoundValueParameter
+export FixValueParameter
 
 # Expressions
 export SystemBalanceExpressions

@@ -634,6 +634,7 @@ function compute_conflict!(container::OptimizationContainer)
         for (key, field_container) in get_constraints(container)
             conflict_indices = check_conflict_status(jump_model, field_container)
             if isempty(conflict_indices)
+                @info "Conflict Index returned empty for $key"
                 continue
             else
                 conflict[encode_key(key)] = conflict_indices
@@ -934,14 +935,10 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::VariableValueAttributes{<:OptimizationContainerKey},
+    param_type::DataType,
     axs...;
     sparse=false,
 ) where {T <: VariableValueParameter, U <: PSY.Component}
-    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
-        param_type = JuMP.VariableRef
-    else
-        param_type = Float64
-    end
     if sparse
         param_array = sparse_container_spec(param_type, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -952,6 +949,28 @@ function _add_param_container!(
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
+end
+
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::VariableValueAttributes{<:OptimizationContainerKey},
+    axs...;
+    sparse=false,
+) where {T <: VariableValueParameter, U <: PSY.Component}
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
+    else
+        param_type = Float64
+    end
+    return _add_param_container!(
+        container,
+        key,
+        attribute,
+        param_type,
+        axs...;
+        sparse=sparse,
+    )
 end
 
 function _add_param_container!(
@@ -1059,6 +1078,32 @@ function add_param_container!(
     param_key = ParameterKey(T, U, meta)
     attributes = VariableValueAttributes(source_key)
     return _add_param_container!(container, param_key, attributes, axs...; sparse=sparse)
+end
+
+# FixValue parameters are created using Float64 since we employ JuMP.fix to fix the downstream
+# variables.
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    source_key::V,
+    axs...;
+    sparse=false,
+    meta=CONTAINER_KEY_EMPTY_META,
+) where {T <: FixValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
+    param_key = ParameterKey(T, U, meta)
+    if meta == CONTAINER_KEY_EMPTY_META
+        error()
+    end
+    attributes = VariableValueAttributes(source_key)
+    return _add_param_container!(
+        container,
+        param_key,
+        attributes,
+        Float64,
+        axs...;
+        sparse=sparse,
+    )
 end
 
 function get_parameter_keys(container::OptimizationContainer)
@@ -1494,7 +1539,7 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
     if JuMP.mode(jump_model) != JuMP.DIRECT
         JuMP.set_optimizer(jump_model, lp_optimizer)
     else
-        @warn("JuMP model set in direct mode")
+        @info("JuMP model set in direct mode")
     end
 
     JuMP.optimize!(jump_model)
