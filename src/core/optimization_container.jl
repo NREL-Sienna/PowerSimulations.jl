@@ -58,7 +58,7 @@ end
 
 get_invariant_terms(v::ObjectiveFunction) = v.invariant_terms
 get_variant_terms(v::ObjectiveFunction) = v.variant_terms
-get_objective_fuction(v::ObjectiveFunction) = v.variant_terms + v.invariant_terms
+get_objective_function(v::ObjectiveFunction) = v.variant_terms + v.invariant_terms
 is_synchronized(v::ObjectiveFunction) = v.synchronized
 set_synchronized_status(v::ObjectiveFunction, value) = v.synchronized = value
 reset_variant_terms(v::ObjectiveFunction) = v.variant_terms = zero(JuMP.AffExpr)
@@ -567,7 +567,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         JuMP.@objective(
             container.JuMPmodel,
             MOI.MIN_SENSE,
-            get_objective_fuction(container.objective_function)
+            get_objective_function(container.objective_function)
         )
     end
     @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
@@ -582,7 +582,7 @@ function update_objective_function!(container::OptimizationContainer)
     JuMP.@objective(
         container.JuMPmodel,
         MOI.MIN_SENSE,
-        get_objective_fuction(container.objective_function)
+        get_objective_function(container.objective_function)
     )
     return
 end
