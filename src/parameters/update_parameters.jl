@@ -78,10 +78,8 @@ function _update_parameter_values!(
             )
             for (t, value) in enumerate(ts_vector)
                 if !isfinite(value)
-                    error(
-                        "The value for the time series $(ts_name) is not finite. \
-                        Check that the data in the time series is valid." ,
-                    )
+                    error("The value for the time series $(ts_name) is not finite. \
+                          Check that the data in the time series is valid.")
                 end
                 _set_param_value!(parameter_array, value, ts_uuid, t)
             end
@@ -116,10 +114,8 @@ function _update_parameter_values!(
     )
     for (t, value) in enumerate(ts_vector)
         if !isfinite(value)
-            error(
-                "The value for the time series $(ts_name) is not finite. \
-                Check that the data in the time series is valid." ,
-            )
+            error("The value for the time series $(ts_name) is not finite. \
+                  Check that the data in the time series is valid.")
         end
         _set_param_value!(parameter_array, value, ts_uuid, t)
     end
@@ -149,10 +145,8 @@ function _update_parameter_values!(
                 initial_forecast_time,
             )[1]
             if !isfinite(value)
-                error(
-                    "The value for the time series $(ts_name) is not finite. \
-                    Check that the data in the time series is valid." ,
-                )
+                error("The value for the time series $(ts_name) is not finite. \
+                      Check that the data in the time series is valid.")
             end
             _set_param_value!(parameter_array, value, ts_uuid, 1)
             push!(ts_uuids, ts_uuid)
@@ -195,12 +189,7 @@ function _update_parameter_values!(
                      Consider reviewing your models' horizon and interval definitions",
                 )
             end
-            _set_param_value!(
-                parameter_array,
-                state_value,
-                name,
-                t,
-            )
+            _set_param_value!(parameter_array, state_value, name, t)
         end
     end
     return
