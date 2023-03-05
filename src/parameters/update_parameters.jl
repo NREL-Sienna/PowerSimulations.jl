@@ -390,7 +390,7 @@ function update_parameter_values!(
             # that are equal to the length of the interval i.e. the time periods that dont overlap between each solves.
             if execution_count == 0 || t > time[end] - interval_time_steps
                 # Pass indices in this way since JuMP DenseAxisArray don't support view()
-                state_value = state_values[state_data_index, name],
+                state_value = state_values[state_data_index, name]
                 if !isfinite(state_value)
                     error(
                         "The value for the system state used in $(encode_key_as_string(key)) is not a finite value $(state_value) \
@@ -403,7 +403,7 @@ function update_parameter_values!(
                 # Currently the update method relies on using older parameter values of the EnergyLimitParameter
                 # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
                 # in the model interval time periods.
-                state_value = state_values[state_data_index, name],
+                state_value = state_values[state_data_index, name]
                 if !isfinite(state_value)
                     error(
                         "The value for the system state used in $(encode_key_as_string(key)) is not a finite value $(state_value) \
