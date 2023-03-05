@@ -1114,7 +1114,11 @@ function get_parameter(container::OptimizationContainer, key::ParameterKey)
     param_container = get(container.parameters, key, nothing)
     if param_container === nothing
         name = encode_key(key)
-        throw(IS.InvalidValue("parameter $name is not stored"))
+        throw(
+            IS.InvalidValue(
+                "parameter $name is not stored. $(collect(keys(container.parameters)))",
+            ),
+        )
     end
     return param_container
 end
