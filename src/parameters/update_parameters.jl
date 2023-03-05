@@ -77,6 +77,12 @@ function _update_parameter_values!(
                 horizon,
             )
             for (t, value) in enumerate(ts_vector)
+                if !isfinite(value)
+                    error(
+                        "The value for the time series $(ts_name) is not finite. \
+                        Check that the data in the time series is valid." ,
+                    )
+                end
                 _set_param_value!(parameter_array, value, ts_uuid, t)
             end
             push!(ts_uuids, ts_uuid)
@@ -109,6 +115,12 @@ function _update_parameter_values!(
         horizon,
     )
     for (t, value) in enumerate(ts_vector)
+        if !isfinite(value)
+            error(
+                "The value for the time series $(ts_name) is not finite. \
+                Check that the data in the time series is valid." ,
+            )
+        end
         _set_param_value!(parameter_array, value, ts_uuid, t)
     end
 end
@@ -128,15 +140,21 @@ function _update_parameter_values!(
         ts_uuid = get_time_series_uuid(U, component, ts_name)
         if !(ts_uuid in ts_uuids)
             # Note: This interface reads one single value per component at a time.
-            ts_vector = get_time_series_values!(
+            value = get_time_series_values!(
                 U,
                 model,
                 component,
                 get_time_series_name(attributes),
                 get_time_series_multiplier_id(attributes),
                 initial_forecast_time,
-            )
-            _set_param_value!(parameter_array, ts_vector[1], ts_uuid, 1)
+            )[1]
+            if !isfinite(value)
+                error(
+                    "The value for the time series $(ts_name) is not finite. \
+                    Check that the data in the time series is valid." ,
+                )
+            end
+            _set_param_value!(parameter_array, value, ts_uuid, 1)
             push!(ts_uuids, ts_uuid)
         end
     end
@@ -169,9 +187,17 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
+            state_value = state_values[state_data_index, name]
+            if !isfinite(state_value)
+                error(
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(state_value) \
+                     This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                     Consider reviewing your models' horizon and interval definitions",
+                )
+            end
             _set_param_value!(
                 parameter_array,
-                state_values[state_data_index, name],
+                state_value,
                 name,
                 t,
             )
@@ -207,9 +233,16 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            val = round(state_values[state_data_index, name])
-            @assert 0.0 <= val <= 1.0
-            _set_param_value!(parameter_array, val, name, t)
+            value = round(state_values[state_data_index, name])
+            @assert 0.0 <= value <= 1.0
+            if !isfinite(value)
+                error(
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
+                     This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                     Consider reviewing your models' horizon and interval definitions",
+                )
+            end
+            _set_param_value!(parameter_array, value, name, t)
         end
     end
     return
@@ -250,9 +283,16 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        val = round(state_values[state_data_index, name])
-        @assert 0.0 <= val <= 1.0
-        _set_param_value!(parameter_array, val, name, 1)
+        value = round(state_values[state_data_index, name])
+        @assert 0.0 <= value <= 1.0
+        if !isfinite(value)
+            error(
+                "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
+                 This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                 Consider reviewing your models' horizon and interval definitions",
+            )
+        end
+        _set_param_value!(parameter_array, value, name, 1)
     end
     return
 end
