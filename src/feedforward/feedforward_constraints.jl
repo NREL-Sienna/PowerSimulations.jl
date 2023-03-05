@@ -342,14 +342,19 @@ end
 
 function add_feedforward_constraints!(
     container::OptimizationContainer,
-    ::ServiceModel,
-    contributing_devices::Vector{T},
+    model::ServiceModel{T, U},
+    contributing_devices::Vector{V},
     ff::LowerBoundFeedforward,
-) where {T <: PSY.Component}
+) where {T, U, V <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param_ub = get_parameter_array(container, parameter_type, T)
-    multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
+    param_ub = get_parameter_array(container, parameter_type, T, get_service_name(model))
+    multiplier_ub = get_parameter_multiplier_array(
+        container,
+        parameter_type,
+        T,
+        get_service_name(model),
+    )
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
@@ -486,6 +491,33 @@ function add_feedforward_constraints!(
         IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
         IS.@assert_op set_time == time_steps
 
+        for t in time_steps, name in set_name
+            JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force=true)
+        end
+    end
+    return
+end
+
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    model::ServiceModel{T, U},
+    devices::Vector{V},
+    ff::FixValueFeedforward,
+) where {T, U, V <: PSY.Component}
+    time_steps = get_time_steps(container)
+    parameter_type = get_default_parameter_type(ff, T)
+    param = get_parameter_array(container, parameter_type, T, get_service_name(model))
+    multiplier = get_parameter_multiplier_array(
+        container,
+        parameter_type,
+        T,
+        get_service_name(model),
+    )
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        set_name, set_time = JuMP.axes(variable)
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
         for t in time_steps, name in set_name
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force=true)
         end

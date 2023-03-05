@@ -48,7 +48,7 @@ function _set_param_value!(
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
@@ -77,7 +77,11 @@ function _update_parameter_values!(
                 horizon,
             )
             for (t, value) in enumerate(ts_vector)
-                _set_param_value!(param_array, value, ts_uuid, t)
+                if !isfinite(value)
+                    error("The value for the time series $(ts_name) is not finite. \
+                          Check that the data in the time series is valid.")
+                end
+                _set_param_value!(parameter_array, value, ts_uuid, t)
             end
             push!(ts_uuids, ts_uuid)
         end
@@ -85,7 +89,7 @@ function _update_parameter_values!(
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
@@ -109,12 +113,16 @@ function _update_parameter_values!(
         horizon,
     )
     for (t, value) in enumerate(ts_vector)
-        _set_param_value!(param_array, value, ts_uuid, t)
+        if !isfinite(value)
+            error("The value for the time series $(ts_name) is not finite. \
+                  Check that the data in the time series is valid.")
+        end
+        _set_param_value!(parameter_array, value, ts_uuid, t)
     end
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
@@ -128,15 +136,19 @@ function _update_parameter_values!(
         ts_uuid = get_time_series_uuid(U, component, ts_name)
         if !(ts_uuid in ts_uuids)
             # Note: This interface reads one single value per component at a time.
-            ts_vector = get_time_series_values!(
+            value = get_time_series_values!(
                 U,
                 model,
                 component,
                 get_time_series_name(attributes),
                 get_time_series_multiplier_id(attributes),
                 initial_forecast_time,
-            )
-            _set_param_value!(param_array, ts_vector[1], ts_uuid, 1)
+            )[1]
+            if !isfinite(value)
+                error("The value for the time series $(ts_name) is not finite. \
+                      Check that the data in the time series is valid.")
+            end
+            _set_param_value!(parameter_array, value, ts_uuid, 1)
             push!(ts_uuids, ts_uuid)
         end
     end
@@ -144,7 +156,7 @@ function _update_parameter_values!(
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::DecisionModel,
@@ -152,7 +164,7 @@ function _update_parameter_values!(
 ) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
-    component_names, time = axes(param_array)
+    component_names, time = axes(parameter_array)
     resolution = get_resolution(model)
 
     state_data = get_dataset(state, get_attribute_key(attributes))
@@ -160,7 +172,6 @@ function _update_parameter_values!(
     max_state_index = length(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
-
     sim_timestamps = range(current_time, step=resolution, length=time[end])
     for t in time
         timestamp_ix = min(max_state_index, state_data_index + 1)
@@ -170,20 +181,22 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            _set_param_value!(
-                get_jump_model(model),
-                param_array,
-                state_values[state_data_index, name],
-                name,
-                t,
-            )
+            state_value = state_values[state_data_index, name]
+            if !isfinite(state_value)
+                error(
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(state_value) \
+                     This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                     Consider reviewing your models' horizon and interval definitions",
+                )
+            end
+            _set_param_value!(parameter_array, state_value, name, t)
         end
     end
     return
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{U},
     model::DecisionModel,
@@ -191,7 +204,7 @@ function _update_parameter_values!(
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
-    component_names, time = axes(param_array)
+    component_names, time = axes(parameter_array)
     resolution = get_resolution(model)
 
     state_data = get_dataset(state, get_attribute_key(attributes))
@@ -209,16 +222,23 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            val = round(state_values[state_data_index, name])
-            @assert 0.0 <= val <= 1.0
-            _set_param_value!(param_array, val, name, t)
+            value = round(state_values[state_data_index, name])
+            @assert 0.0 <= value <= 1.0
+            if !isfinite(value)
+                error(
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
+                     This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                     Consider reviewing your models' horizon and interval definitions",
+                )
+            end
+            _set_param_value!(parameter_array, value, name, t)
         end
     end
     return
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::EmulationModel,
@@ -226,19 +246,19 @@ function _update_parameter_values!(
 ) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
-    component_names, _ = axes(param_array)
+    component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        _set_param_value!(param_array, state_values[state_data_index, name], name, 1)
+        _set_param_value!(parameter_array, state_values[state_data_index, name], name, 1)
     end
     return
 end
 
 function _update_parameter_values!(
-    param_array::AbstractArray{T},
+    parameter_array::AbstractArray{T},
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{<:PSY.Component},
     model::EmulationModel,
@@ -246,15 +266,22 @@ function _update_parameter_values!(
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
-    component_names, _ = axes(param_array)
+    component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        val = round(state_values[state_data_index, name])
-        @assert 0.0 <= val <= 1.0
-        _set_param_value!(param_array, val, name, 1)
+        value = round(state_values[state_data_index, name])
+        @assert 0.0 <= value <= 1.0
+        if !isfinite(value)
+            error(
+                "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
+                 This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                 Consider reviewing your models' horizon and interval definitions",
+            )
+        end
+        _set_param_value!(parameter_array, value, name, 1)
     end
     return
 end
@@ -289,6 +316,31 @@ function update_parameter_values!(
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    # end
+    return
+end
+
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{FixValueParameter, T},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
+    IS.@record :execution ParameterUpdateEvent(
+        FixValueParameter,
+        T,
         parameter_attributes,
         get_current_timestamp(model),
         get_name(model),
@@ -338,16 +390,27 @@ function update_parameter_values!(
             # that are equal to the length of the interval i.e. the time periods that dont overlap between each solves.
             if execution_count == 0 || t > time[end] - interval_time_steps
                 # Pass indices in this way since JuMP DenseAxisArray don't support view()
-                _set_param_value!(
-                    parameter_array,
-                    state_values[state_data_index, name],
-                    name,
-                    t,
-                )
+                state_value = state_values[state_data_index, name]
+                if !isfinite(state_value)
+                    error(
+                        "The value for the system state used in $(encode_key_as_string(key)) is not a finite value $(state_value) \
+                         This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                         Consider reviewing your models' horizon and interval definitions",
+                    )
+                end
+                _set_param_value!(parameter_array, state_value, name, t)
             else
                 # Currently the update method relies on using older parameter values of the EnergyLimitParameter
                 # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
                 # in the model interval time periods.
+                state_value = state_values[state_data_index, name]
+                if !isfinite(state_value)
+                    error(
+                        "The value for the system state used in $(encode_key_as_string(key)) is not a finite value $(state_value) \
+                         This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                         Consider reviewing your models' horizon and interval definitions",
+                    )
+                end
                 _set_param_value!(
                     parameter_array,
                     old_parameter_values[name, t + interval_time_steps],
@@ -381,10 +444,11 @@ function update_parameter_values!(
     optimization_container = get_optimization_container(model)
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
-    param_array = get_parameter_array(optimization_container, key)
+    parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     service = PSY.get_component(U, get_system(model), key.meta)
-    _update_parameter_values!(param_array, parameter_attributes, service, model, input)
+    @assert service !== nothing
+    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
@@ -396,8 +460,42 @@ function update_parameter_values!(
     return
 end
 
+function _fix_parameter_value!(container, parameter_array, parameter_attributes)
+    variable = get_variable(container, get_attribute_key(parameter_attributes))
+    component_names, time = axes(parameter_array)
+    for t in time, name in component_names
+        JuMP.fix(variable[name, t], parameter_array[name, t])
+    end
+    return
+end
+
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{FixValueParameter, T},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: PSY.Service}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
+    IS.@record :execution ParameterUpdateEvent(
+        FixValueParameter,
+        T,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    #end
+    return
+end
+
 function _update_parameter_values!(
-    param_array,
+    parameter_array,
     attributes::CostFunctionAttributes,
     ::Type{V},
     model::DecisionModel,
@@ -428,8 +526,8 @@ function _update_parameter_values!(
                 if attributes.uses_compact_power
                     value, _ = _convert_variable_cost(value)
                 end
-                _set_param_value!(param_array, PSY.get_cost(value), name, t)
-                update_variable_cost!(container, param_array, attributes, component, t)
+                _set_param_value!(parameter_array, PSY.get_cost(value), name, t)
+                update_variable_cost!(container, parameter_array, attributes, component, t)
             end
         end
     end
@@ -465,7 +563,7 @@ end
 
 function update_variable_cost!(
     container::OptimizationContainer,
-    param_array::JuMPFloatArray,
+    parameter_array::JuMPFloatArray,
     attributes::CostFunctionAttributes{Float64},
     component::T,
     time_period::Int,
@@ -474,7 +572,7 @@ function update_variable_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
-    cost_data = param_array[component_name, time_period]
+    cost_data = parameter_array[component_name, time_period]
     if iszero(cost_data)
         return
     end
@@ -489,13 +587,13 @@ end
 
 function update_variable_cost!(
     container::OptimizationContainer,
-    param_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    parameter_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
     ::CostFunctionAttributes{Vector{NTuple{2, Float64}}},
     component::T,
     time_period::Int,
 ) where {T <: PSY.Component}
     component_name = PSY.get_name(component)
-    cost_data = param_array[component_name, time_period]
+    cost_data = parameter_array[component_name, time_period]
     if all(iszero.(last.(cost_data)))
         return
     end

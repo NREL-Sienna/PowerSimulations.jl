@@ -49,15 +49,25 @@ function get_component_types(template::ProblemTemplate)::Vector{DataType}
     )
 end
 
-function get_model(template::ProblemTemplate, device_type)
-    if device_type <: PSY.Device
-        return get(template.devices, Symbol(device_type), nothing)
-    elseif device_type <: PSY.Branch
-        return get(template.branches, Symbol(device_type), nothing)
-    elseif device_type <: PSY.Service
-        return get(template.services, Symbol(device_type), nothing)
+function get_model(template::ProblemTemplate, ::Type{T}) where {T <: PSY.Device}
+    if T <: PSY.Branch
+        return get(template.branches, Symbol(T), nothing)
+    elseif T <: PSY.Device
+        return get(template.devices, Symbol(T), nothing)
     else
-        error("not supported: $device_type")
+        error("Component $T not present in the template")
+    end
+end
+
+function get_model(
+    template::ProblemTemplate,
+    ::Type{T},
+    name::String=NO_SERVICE_NAME_PROVIDED,
+) where {T <: PSY.Service}
+    if haskey(template.services, (name, Symbol(T)))
+        return template.services[(name, Symbol(T))]
+    else
+        error("Service $T $name not present in the template")
     end
 end
 
@@ -150,5 +160,132 @@ function set_service_model!(
     model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},
 )
     _set_model!(template.services, model)
+    return
+end
+
+function _add_contributing_device_by_type!(
+    service_model::ServiceModel,
+    contributing_device::T,
+    incompatible_device_types::Set{DataType},
+    modeled_devices::Set{DataType},
+) where {T <: PSY.Device}
+    !PSY.get_available(contributing_device) && return
+    if T ∈ incompatible_device_types || T ∉ modeled_devices
+        return
+    end
+    push!(get!(get_contributing_devices_map(service_model), T, T[]), contributing_device)
+    return
+end
+
+function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.System)
+    service_models = get_service_models(template)
+    isempty(service_models) && return
+
+    device_models = get_device_models(template)
+    modeled_devices = Set(get_component_type(m) for m in values(device_models))
+    incompatible_device_types = get_incompatible_devices(device_models)
+    services_mapping = PSY.get_contributing_device_mapping(sys)
+    for (service_key, service_model) in service_models
+        @debug "Populating service $(service_key)"
+        empty!(get_contributing_devices_map(service_model))
+        S = get_component_type(service_model)
+        service = PSY.get_component(S, sys, get_service_name(service_model))
+        if service === nothing
+            @info "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
+                LOG_GROUP_SERVICE_CONSTUCTORS
+            continue
+        end
+        contributing_devices_ =
+            services_mapping[(type=S, name=PSY.get_name(service))].contributing_devices
+
+        for d in contributing_devices_
+            _add_contributing_device_by_type!(
+                service_model,
+                d,
+                incompatible_device_types,
+                modeled_devices,
+            )
+        end
+        if isempty(get_contributing_devices_map(service_model))
+            @warn "The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system" _group =
+                LOG_GROUP_SERVICE_CONSTUCTORS
+            continue
+        end
+    end
+    return
+end
+
+function _modify_device_model!(
+    devices_template::Dict{Symbol, DeviceModel},
+    service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
+    contributing_devices::Vector{<:PSY.Component},
+)
+    for dt in Set(typeof.(contributing_devices))
+        for device_model in values(devices_template)
+            # add message here when it exists
+            get_component_type(device_model) != dt && continue
+            service_model in device_model.services && continue
+            push!(device_model.services, service_model)
+        end
+    end
+
+    return
+end
+
+function _modify_device_model!(
+    devices_template::Dict{Symbol, DeviceModel},
+    service_model::ServiceModel{<:PSY.ReserveNonSpinning, <:AbstractReservesFormulation},
+    contributing_devices::Vector{<:PSY.Component},
+)
+    return
+end
+
+function _add_services_to_device_model!(template::ProblemTemplate)
+    service_models = get_service_models(template)
+    devices_template = get_device_models(template)
+    for (service_key, service_model) in service_models
+        S = get_component_type(service_model)
+        (S <: PSY.AGC || S <: PSY.StaticReserveGroup) && continue
+        contributing_devices = get_contributing_devices(service_model)
+        isempty(contributing_devices) && continue
+        _modify_device_model!(devices_template, service_model, contributing_devices)
+    end
+    return
+end
+
+function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY.System)
+    services_template = get_service_models(template)
+    for (key, service_model) in services_template
+        attributes = get_attributes(service_model)
+        use_slacks = service_model.use_slacks
+        duals = service_model.duals
+        if get(attributes, "aggregated_service_model", false)
+            delete!(services_template, key)
+            D = get_component_type(service_model)
+            B = get_formulation(service_model)
+            for service in get_available_components(D, sys)
+                new_key = (PSY.get_name(service), Symbol(D))
+                if !haskey(services_template, new_key)
+                    set_service_model!(
+                        template,
+                        ServiceModel(
+                            D,
+                            B,
+                            PSY.get_name(service);
+                            use_slacks=use_slacks,
+                            duals=duals,
+                        ),
+                    )
+                end
+            end
+        end
+    end
+    return
+end
+
+function finalize_template!(template::ProblemTemplate, sys::PSY.System)
+    _populate_aggregated_service_model!(template, sys)
+    _populate_contributing_devices!(template, sys)
+    _add_services_to_device_model!(template)
     return
 end

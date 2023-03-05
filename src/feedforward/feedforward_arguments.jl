@@ -18,7 +18,7 @@ function add_feedforward_arguments!(
     for ff in get_feedforwards(model)
         @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         contributing_devices = get_contributing_devices(model)
-        add_feedforward_arguments!(container, model, contributing_devices, ff)
+        _add_feedforward_arguments!(container, model, contributing_devices, ff)
     end
     return
 end
@@ -35,7 +35,7 @@ function add_feedforward_arguments!(
     return
 end
 
-function add_feedforward_arguments!(
+function _add_feedforward_arguments!(
     container::OptimizationContainer,
     model::ServiceModel{SR},
     contributing_devices::Vector{T},

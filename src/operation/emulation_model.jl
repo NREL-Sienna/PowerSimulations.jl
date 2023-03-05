@@ -69,6 +69,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
                 "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
             )
         end
+        finalize_template!(template, sys)
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
@@ -254,11 +255,6 @@ function build_pre_step!(model::EmulationModel)
         )
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-
-        @info "Mapping Service Models"
-        populate_aggregated_service_model!(get_template(model), get_system(model))
-        populate_contributing_devices!(get_template(model), get_system(model))
-        add_services_to_device_model!(get_template(model))
 
         handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)

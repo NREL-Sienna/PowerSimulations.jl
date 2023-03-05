@@ -94,12 +94,17 @@ function _show_method(
 
     if !isempty(model.feedforwards)
         println(io)
-        table = string.(model.feedforwards)
-
+        header = ["Type", "Source", "Affected Values"]
+        table = Matrix{String}(undef, length(model.feedforwards), length(header))
+        for (ix, v) in enumerate(model.feedforwards)
+            table[ix, 1] = string(typeof(v))
+            table[ix, 2] = encode_key_as_string(get_optimization_container_key(v))
+            table[ix, 3] = first(encode_key_as_string.(get_affected_values(v)))
+        end
         PrettyTables.pretty_table(
             io,
             table;
-            noheader=true,
+            header=header,
             backend=Val(backend),
             title="Feedforwards",
             alignment=:l,

@@ -3,7 +3,7 @@ Function to create a unique index of time series names for each device model. Fo
 if two parameters each reference the same time series name, this function will return a
 different value for each parameter entry
 """
-function create_time_series_multiplier_index(
+function _create_time_series_multiplier_index(
     model,
     ::Type{T},
 ) where {T <: TimeSeriesParameter}
@@ -50,6 +50,7 @@ function add_parameters!(
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, S)
         return
     end
+    error("here2")
     add_parameters!(container, T(), key, model, devices)
     return
 end
@@ -113,7 +114,7 @@ function _add_time_series_parameters!(
     end
     time_steps = get_time_steps(container)
     ts_name = get_time_series_names(model)[T]
-    time_series_mult_id = create_time_series_multiplier_index(model, T)
+    time_series_mult_id = _create_time_series_multiplier_index(model, T)
 
     @debug "adding" T D ts_name ts_type time_series_mult_id _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -188,7 +189,7 @@ function add_parameters!(
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     ts_name = get_time_series_names(model)[T]
-    time_series_mult_id = create_time_series_multiplier_index(model, T)
+    time_series_mult_id = _create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     ts_uuid = get_time_series_uuid(ts_type, service, ts_name)
@@ -277,7 +278,15 @@ function add_parameters!(
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
-    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
+    parameter_container = add_param_container!(
+        container,
+        T(),
+        D,
+        key,
+        names,
+        time_steps;
+        meta=get_service_name(model),
+    )
     jump_model = get_jump_model(container)
 
     for d in devices
@@ -364,12 +373,20 @@ function add_parameters!(
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    names = [PSY.get_name(device) for device in devices]
+    contributing_devices = get_contributing_devices(model)
+    names = [PSY.get_name(device) for device in contributing_devices]
     time_steps = get_time_steps(container)
-    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
+    parameter_container = add_param_container!(
+        container,
+        T(),
+        S,
+        key,
+        names,
+        time_steps;
+        meta=get_service_name(model),
+    )
     jump_model = get_jump_model(container)
-
-    for d in devices
+    for d in contributing_devices
         name = PSY.get_name(d)
         for t in time_steps
             set_multiplier!(
