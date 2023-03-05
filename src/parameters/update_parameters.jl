@@ -170,13 +170,7 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            _set_param_value!(
-                get_jump_model(model),
-                param_array,
-                state_values[state_data_index, name],
-                name,
-                t,
-            )
+            _set_param_value!(param_array, state_values[state_data_index, name], name, t)
         end
     end
     return
