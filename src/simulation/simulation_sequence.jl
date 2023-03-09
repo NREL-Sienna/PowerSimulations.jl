@@ -130,6 +130,7 @@ function _add_feedforward_to_model(
 ) where {T <: AbstractAffectFeedforward, U <: PSY.Device}
     device_model = get_model(get_template(sim_model), get_component_type(ff))
     if device_model === nothing
+        model_name = get_name(sim_model)
         throw(
             IS.ConflictingInputsError(
                 "Device model $(get_component_type(ff)) not found in model $model_name",

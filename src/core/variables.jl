@@ -207,16 +207,6 @@ struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct PhaseShifterAngle <: VariableType end
 
-struct ComponentInputActivePowerVariable <: SubComponentVariableType end
-struct ComponentOutputActivePowerVariable <: SubComponentVariableType end
-struct ComponentReservationVariable <: SubComponentVariableType end
-struct ComponentEnergyVariable <: SubComponentVariableType end
-struct ComponentReactivePowerVariable <: SubComponentVariableType end
-
-struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
-
-struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
-
 # Necessary as a work around for HVDCP2P models with losses
 struct HVDCLosses <: VariableType end
 struct HVDCFlowDirectionVariable <: VariableType end
@@ -257,9 +247,4 @@ convert_result_to_natural_units(::Type{FlowActivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
-convert_result_to_natural_units(::Type{ComponentOutputActivePowerVariable}) = true
-convert_result_to_natural_units(::Type{ComponentInputActivePowerVariable}) = true
-convert_result_to_natural_units(::Type{ComponentReactivePowerVariable}) = true
-convert_result_to_natural_units(::Type{ComponentActivePowerReserveUpVariable}) = true
-convert_result_to_natural_units(::Type{ComponentActivePowerReserveDownVariable}) = true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true

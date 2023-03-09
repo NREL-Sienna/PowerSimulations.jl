@@ -262,12 +262,7 @@ export AreaDispatchBalanceConstraint
 export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
-export ComponentActivePowerVariableLimitsConstraint
-export ComponentReactivePowerVariableLimitsConstraint
 export CopperPlateBalanceConstraint
-export DeviceNetActivePowerConstraint
-export DeviceNetReactivePowerConstraint
-export ComponentReactivePowerVariableLimitsConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EnergyBudgetConstraint
@@ -353,10 +348,6 @@ export ActivePowerRangeExpressionLB
 export ReserveRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export ReserveRangeExpressionUB
-export ComponentActivePowerRangeExpressionLB
-export ComponentActivePowerRangeExpressionUB
-export ComponentReserveUpBalanceExpression
-export ComponentReserveDownBalanceExpression
 
 #################################################################################
 # Imports
