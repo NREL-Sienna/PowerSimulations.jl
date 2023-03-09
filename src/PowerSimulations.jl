@@ -263,8 +263,6 @@ export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
 export CopperPlateBalanceConstraint
-export DeviceNetActivePowerConstraint
-export DeviceNetReactivePowerConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EnergyBudgetConstraint
