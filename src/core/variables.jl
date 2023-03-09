@@ -207,16 +207,6 @@ struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct PhaseShifterAngle <: VariableType end
 
-struct ComponentInputActivePowerVariable <: SubComponentVariableType end
-struct ComponentOutputActivePowerVariable <: SubComponentVariableType end
-struct ComponentReservationVariable <: SubComponentVariableType end
-struct ComponentEnergyVariable <: SubComponentVariableType end
-struct ComponentReactivePowerVariable <: SubComponentVariableType end
-
-struct ComponentActivePowerReserveUpVariable <: SubComponentVariableType end
-
-struct ComponentActivePowerReserveDownVariable <: SubComponentVariableType end
-
 # Necessary as a work around for HVDCP2P models with losses
 struct HVDCLosses <: VariableType end
 struct HVDCFlowDirectionVariable <: VariableType end
