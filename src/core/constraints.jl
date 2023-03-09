@@ -82,8 +82,6 @@ struct RegulationLimitsConstraint <: ConstraintType end
 struct RequirementConstraint <: ConstraintType end
 struct ReserveEnergyCoverageConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
-struct ComponentReserveUpBalance <: ConstraintType end
-struct ComponentReserveDownBalance <: ConstraintType end
 struct SACEPIDAreaConstraint <: ConstraintType end
 struct StartTypeConstraint <: ConstraintType end
 struct StartupInitialConditionConstraint <: ConstraintType end
@@ -91,9 +89,6 @@ struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
-struct ComponentReservationConstraint <: ConstraintType end
-struct DeviceNetActivePowerConstraint <: ConstraintType end
-struct DeviceNetReactivePowerConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
@@ -101,8 +96,7 @@ struct OutputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstrain
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
-struct ComponentActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
-struct ComponentReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
 # These apply to the processing of constraint duals
 should_write_resulting_value(::Type{<:ConstraintType}) = true
 convert_result_to_natural_units(::Type{<:ConstraintType}) = false
