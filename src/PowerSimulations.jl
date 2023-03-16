@@ -365,7 +365,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
-import PowerNetworkMatrices: PTDF
+import PowerNetworkMatrices
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
@@ -420,6 +420,7 @@ const IS = InfrastructureSystems
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const MOPFM = MOI.FileFormats.Model
+const PNM = PowerNetworkMatrices
 const TS = TimeSeries
 
 ################################################################################
