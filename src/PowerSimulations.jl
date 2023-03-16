@@ -365,7 +365,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
-import PowerNetworkMatrices: PTDF
+import PowerNetworkMatrices: PTDF, VirtualPTDF
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 export get_name
 export get_model_base_power
