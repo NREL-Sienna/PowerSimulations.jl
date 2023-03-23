@@ -39,6 +39,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     services::Vector{ServiceModel}
     time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
     attributes::Dict{String, Any}
+    subnetworks_map::Dict{D, Int}
 
     function DeviceModel(
         ::Type{D},
@@ -58,6 +59,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
             Vector{ServiceModel}(),
             time_series_names,
             attributes,
+            Dict{D, Int}(),
         )
     end
 end
@@ -74,9 +76,14 @@ get_services(::Nothing) = nothing
 get_use_slacks(m::DeviceModel) = m.use_slacks
 get_duals(m::DeviceModel) = m.duals
 get_time_series_names(m::DeviceModel) = m.time_series_names
+get_subnetworks_map(m::DeviceModel) = m.subnetworks_map
 get_attributes(m::DeviceModel) = m.attributes
 get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
-DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
+
+
+function get_reference_bus(m::DeviceModel{T, U}, d::T) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+    return get_subnetworks_map(m)[d]
+end
 
 function _set_model!(
     dict::Dict,
@@ -91,3 +98,4 @@ function _set_model!(
 end
 
 has_service_model(model::DeviceModel) = !isempty(get_services(model))
+has_subnetworks(model::DeviceModel) = !isempty(get_subnetworks_map(model))
