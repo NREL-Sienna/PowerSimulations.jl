@@ -5,8 +5,8 @@ function construct_network!(
     ::ProblemTemplate,
 )
     if get_use_slacks(model)
-        add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
-        add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -23,7 +23,7 @@ function construct_network!(
             model,
             CopperPlatePowerModel,
         )
-        objective_function!(container, PSY.System, model, CopperPlatePowerModel)
+        objective_function!(container, PSY.System, model)
     end
 
     add_constraints!(
