@@ -4,10 +4,6 @@ function construct_network!(
     model::NetworkModel{CopperPlatePowerModel},
     ::ProblemTemplate,
 )
-    if isempty(model.subnetworks)
-        model.subnetworks = PNM.find_subnetworks(sys)
-    end
-
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
         add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
