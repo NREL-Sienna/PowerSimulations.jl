@@ -1,3 +1,4 @@
+const DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
 const DevicesModelContainer = Dict{Symbol, DeviceModel}
 const BranchModelContainer = Dict{Symbol, DeviceModelForBranches}
 const ServicesModelContainer = Dict{Tuple{String, Symbol}, ServiceModel}
