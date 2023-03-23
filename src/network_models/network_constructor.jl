@@ -4,6 +4,10 @@ function construct_network!(
     model::NetworkModel{CopperPlatePowerModel},
     ::ProblemTemplate,
 )
+    if isempty(model.subnetworks)
+        model.subnetworks = PNM.find_subnetworks(sys)
+    end
+
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
         add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
@@ -73,7 +77,9 @@ function construct_network!(
     ptdf = get_PTDF_matrix(model)
 
     if ptdf === nothing
-        throw(ArgumentError("no PTDF matrix supplied"))
+        @warn("no PTDF matrix supplied, building PTDF")
+        model.PTDF_matrix = PTDF(sys)
+        model.subnetworks = model.PTDF_matrix.subnetworks
     end
 
     if get_use_slacks(model)

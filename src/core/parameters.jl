@@ -254,7 +254,7 @@ function set_parameter!(
 end
 
 """
-Parameters implemented through ParameterJuMP
+Parameters implemented through VariableRef
 """
 abstract type RightHandSideParameter <: ParameterType end
 abstract type ObjectiveFunctionParameter <: ParameterType end

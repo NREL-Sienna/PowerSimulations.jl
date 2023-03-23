@@ -29,6 +29,7 @@ thermal_gens = NetworkModel(StandardPTDFModel, ptdf = ptdf_array),
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
     PTDF_matrix::Union{Nothing, PNM.PowerNetworkMatrix}
+    subnetworks::Dict{Int, Set{Int}}
     duals::Vector{DataType}
 
     function NetworkModel(
@@ -38,7 +39,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         duals=Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
-        new{T}(use_slacks, PTDF_matrix, duals)
+        new{T}(use_slacks, PTDF_matrix, Dict{Int, Set{Int}}(), duals)
     end
 end
 
