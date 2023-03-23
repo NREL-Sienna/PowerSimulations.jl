@@ -289,7 +289,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
@@ -300,13 +300,21 @@ function add_to_expression!(
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
+    expression = get_expression(container, T(), X)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        _add_to_jump_expression!(
-            get_expression(container, T(), X)[t],
-            get_parameter_column_refs(param_container, name)[t],
-            multiplier[name, t],
-        )
+        if has_subnetworks(device_model)
+            ref_bus = get_reference_bus(device_model, d)
+        else
+            ref_bus = axes(expression)[1][1]
+        end
+            for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[ref_bus, t],
+                get_parameter_column_refs(param_container, name)[t],
+                multiplier[name, t],
+            )
+        end
     end
     return
 end
@@ -346,7 +354,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: ActivePowerBalance,
@@ -357,13 +365,20 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), X)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
-        _add_to_jump_expression!(
-            expression[t],
-            variable[name, t],
-            get_variable_multiplier(U(), V, W()),
-        )
+        if has_subnetworks(device_model)
+            ref_bus = get_reference_bus(device_model, d)
+        else
+            ref_bus = axes(expression)[1][1]
+        end
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
     end
     return
 end
@@ -753,7 +768,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     ::PSY.System,
-    ::NetworkModel{W},
+    network_model::NetworkModel{W},
     ::Type{W},
 ) where {
     T <: ActivePowerBalance,
@@ -762,10 +777,11 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), PSY.System)
     expression = get_expression(container, T(), PSY.System)
-    for t in get_time_steps(container)
+    reference_buses = get_reference_buses(network_model)
+    for t in get_time_steps(container), n in reference_buses
         _add_to_jump_expression!(
-            expression[t],
-            variable[t],
+            expression[n, t],
+            variable[n, t],
             get_variable_multiplier(U(), PSY.System, W()),
         )
     end
