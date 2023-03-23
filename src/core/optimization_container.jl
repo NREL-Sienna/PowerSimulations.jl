@@ -458,6 +458,30 @@ function initialize_system_expressions!(
     return
 end
 
+function _assign_subnetworks(
+    model::DeviceModel{T, U},
+    sys::PSY.System,
+    subnetworks::Dict{Int, Set{Int}},
+) where {T <: PSY.StaticInjection, U <: AbstractDeviceFormulation}
+    temp_bus_map = Dict{Int, Int}()
+    for d in get_components(T, sys)
+        bus = PSY.get_bus(d)
+        bus_no = PSY.get_number(bus)
+        if haskey(temp_bus_map, bus_no)
+            model.subnetworks_map[d] = temp_bus_map[bus_no]
+        else
+            for (subnet, bus_set) in subnetworks
+                if bus_no ∈ bus_set
+                    temp_bus_map[bus_no] = subnet
+                    model.subnetworks_map[d] = subnet
+                    break
+                end
+            end
+        end
+    end
+    return
+end
+
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
@@ -466,16 +490,16 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     end
     initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
 
-    if length(transmission_model.subnetworks) > 1
-        error("here is where I left of")
-    end
-
     # Order is required
     for device_model in values(template.devices)
         @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             if validate_available_devices(device_model, sys)
+                if length(transmission_model.subnetworks) > 1
+                    @info "System Contains Multiple Subnetworks"
+                    _assign_subnetworks(device_model, sys, transmission_model.subnetworks)
+                end
                 construct_device!(
                     container,
                     sys,
