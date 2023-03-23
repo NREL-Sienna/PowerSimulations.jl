@@ -391,10 +391,11 @@ end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    bus_numbers::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{<:PM.AbstractPowerModel},
 )
     time_steps = get_time_steps(container)
+    bus_numbers = collect(Set(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -406,10 +407,11 @@ end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    bus_numbers::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{<:PM.AbstractActivePowerModel},
 )
     time_steps = get_time_steps(container)
+    bus_numbers = collect(Set(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -419,23 +421,25 @@ end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    ::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{CopperPlatePowerModel},
 )
     time_steps = get_time_steps(container)
+    subnetworks_ref_buses = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(time_steps),
+            _make_container_array(subnetworks_ref_buses, time_steps),
     )
     return
 end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    bus_numbers::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
+    bus_numbers = collect(Set(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(time_steps),
@@ -448,17 +452,23 @@ end
 function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
-    system::PSY.System,
+    subnetworks::Dict{Int, Set{Int}},
 ) where {T <: PM.AbstractPowerModel}
-    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, system)])
-    _make_system_expressions!(container, bus_numbers, T)
+    _make_system_expressions!(container, subnetworks, T)
     return
 end
 
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    initialize_system_expressions!(container, transmission, sys)
+    if isempty(transmission_model.subnetworks)
+        transmission_model.subnetworks = PNM.find_subnetworks(sys)
+    end
+    initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
+
+    if length(transmission_model.subnetworks) > 1
+        error("here is where I left of")
+    end
 
     # Order is required
     for device_model in values(template.devices)
