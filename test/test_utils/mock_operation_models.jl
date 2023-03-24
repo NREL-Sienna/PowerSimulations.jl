@@ -109,7 +109,7 @@ function mock_construct_device!(
     PSI.initialize_system_expressions!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
-        PSI.get_system(problem),
+        PNM.find_subnetworks(PSI.get_system(problem)),
     )
     if PSI.validate_available_devices(model, PSI.get_system(problem))
         PSI.construct_device!(
