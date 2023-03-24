@@ -459,29 +459,6 @@ function initialize_system_expressions!(
     return
 end
 
-function _assign_subnetworks(
-    model::DeviceModel{T, U},
-    sys::PSY.System,
-    subnetworks::Dict{Int, Set{Int}},
-) where {T <: PSY.StaticInjection, U <: AbstractDeviceFormulation}
-    temp_bus_map = Dict{Int, Int}()
-    for d in get_components(T, sys)
-        bus = PSY.get_bus(d)
-        bus_no = PSY.get_number(bus)
-        if haskey(temp_bus_map, bus_no)
-            model.subnetworks_map[d] = temp_bus_map[bus_no]
-        else
-            for (subnet, bus_set) in subnetworks
-                if bus_no ∈ bus_set
-                    temp_bus_map[bus_no] = subnet
-                    model.subnetworks_map[d] = subnet
-                    break
-                end
-            end
-        end
-    end
-    return
-end
 
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
@@ -499,14 +476,13 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             if validate_available_devices(device_model, sys)
                 if length(transmission_model.subnetworks) > 1
                     @info "System Contains Multiple Subnetworks"
-                    _assign_subnetworks(device_model, sys, transmission_model.subnetworks)
                 end
                 construct_device!(
                     container,
                     sys,
                     ArgumentConstructStage(),
                     device_model,
-                    transmission,
+                    transmission_model,
                 )
             end
             @debug "Problem size:" get_problem_size(container) _group =
@@ -562,7 +538,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     sys,
                     ModelConstructStage(),
                     device_model,
-                    transmission,
+                    transmission_model,
                 )
             end
             @debug "Problem size:" get_problem_size(container) _group =
