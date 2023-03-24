@@ -336,7 +336,8 @@ function check_conflict_status(
     conflict_indices = Vector()
     dims = axes(constraint_container)
     for index in Iterators.product(dims...)
-        if MOI.get(
+        if isassigned(constraint_container, index...) &&
+           MOI.get(
             jump_model,
             MOI.ConstraintConflictStatus(),
             constraint_container[index...],
@@ -353,7 +354,8 @@ function check_conflict_status(
 )
     conflict_indices = Vector()
     for (index, constraint) in constraint_container
-        if MOI.get(jump_model, MOI.ConstraintConflictStatus(), constraint) !=
+        if isassigned(constraint_container, index...) &&
+           MOI.get(jump_model, MOI.ConstraintConflictStatus(), constraint) !=
            MOI.NOT_IN_CONFLICT
             push!(conflict_indices, index)
         end
