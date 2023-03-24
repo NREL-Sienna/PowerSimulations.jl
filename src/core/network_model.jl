@@ -30,6 +30,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
     PTDF_matrix::Union{Nothing, PNM.PowerNetworkMatrix}
     subnetworks::Dict{Int, Set{Int}}
+    bus_area_map::Dict{PSY.Bus, Int}
     duals::Vector{DataType}
 
     function NetworkModel(
@@ -40,7 +41,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         duals=Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
-        new{T}(use_slacks, PTDF_matrix, subnetworks, duals)
+        new{T}(use_slacks, PTDF_matrix, subnetworks, Dict{PSY.Bus, Int}(), duals)
     end
 end
 
@@ -54,4 +55,40 @@ function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
     push!(model.duals, dual)
     @debug "Added dual" dual _group = LOG_GROUP_NETWORK_CONSTRUCTION
+end
+
+function assign_subnetworks_to_buses(
+    model::NetworkModel{T},
+    sys::PSY.System,
+    subnetworks::Dict{Int, Set{Int}},
+) where {T <: PM.AbstractPowerModel}
+    temp_bus_map = Dict{Int, Int}()
+    for d in PSY.get_components(T, sys)
+        arc = PSY.get_arc(d)
+        bus_from = PSY.get_from(arc)
+        bus_to = PSY.get_to(arc)
+        for bus in (bus_from, bus_to)
+            bus_no = PSY.get_number(bus)
+            if haskey(temp_bus_map, bus_no)
+                model.subnetworks_map[bus] = temp_bus_map[bus_no]
+            else
+                for (subnet, bus_set) in subnetworks
+                    if bus_no ∈ bus_set
+                        temp_bus_map[bus_no] = subnet
+                        model.bus_area_map[bus] = subnet
+                        break
+                    end
+                end
+            end
+        end
+    end
+    return
+end
+
+function get_reference_bus(model::NetworkModel{T}, b::PSY.Bus)::Int where {T <: PM.AbstractPowerModel}
+    if isempty(model.bus_area_map)
+        return first(keys(model.subnetworks))
+    else
+        return bus_area_map[b]
+    end
 end
