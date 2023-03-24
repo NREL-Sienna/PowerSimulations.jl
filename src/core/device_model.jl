@@ -39,7 +39,6 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     services::Vector{ServiceModel}
     time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
     attributes::Dict{String, Any}
-    subnetworks_map::Dict{D, Int}
 
     function DeviceModel(
         ::Type{D},
@@ -59,7 +58,6 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
             Vector{ServiceModel}(),
             time_series_names,
             attributes,
-            Dict{D, Int}(),
         )
     end
 end
