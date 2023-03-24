@@ -116,7 +116,7 @@ add_constraints!(
     ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom}},
     ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
     ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) = nothing
 
 add_constraints!(
@@ -124,7 +124,7 @@ add_constraints!(
     ::Type{FlowRateConstraint},
     ::IS.FlattenIteratorWrapper{<:PSY.DCBranch},
     ::DeviceModel{<:PSY.DCBranch, HVDCP2PUnbounded},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) = nothing
 
 function add_constraints!(
@@ -132,7 +132,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: FlowRateConstraint, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -163,7 +163,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCP2PDispatch},
-    ::Type{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: FlowRateConstraintFromTo, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -194,7 +194,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCP2PDispatch},
-    ::Type{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: FlowRateConstraintToFrom, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -225,7 +225,7 @@ function add_constraints!(
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCP2PDispatch},
-    ::Type{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: HVDCDirection, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -273,7 +273,7 @@ function add_constraints!(
     ::Type{HVDCPowerBalance},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -356,7 +356,7 @@ function add_constraints!(
     ::Type{HVDCLossesAbsoluteValue},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractDCLineFormulation},
-    ::Type{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: PSY.DCBranch}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]

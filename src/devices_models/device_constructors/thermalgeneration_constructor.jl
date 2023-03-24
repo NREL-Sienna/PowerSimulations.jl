@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     ::DeviceModel{T, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -13,7 +13,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model
     )
     return
 end
@@ -23,7 +23,7 @@ function construct_device!(
     ::PSY.System,
     ::ModelConstructStage,
     ::DeviceModel{T, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
@@ -38,7 +38,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractStandardUnitCommitment,
@@ -63,7 +63,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -71,7 +71,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -82,7 +82,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -90,7 +90,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -104,7 +104,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractStandardUnitCommitment,
@@ -118,7 +118,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -126,7 +126,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -134,7 +134,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, CommitmentConstraint, devices, model, S)
     add_constraints!(container, RampConstraint, devices, model, S)
@@ -155,7 +155,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractStandardUnitCommitment,
@@ -179,7 +179,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -190,7 +190,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -198,7 +198,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -213,7 +213,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractStandardUnitCommitment,
@@ -226,7 +226,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -234,7 +234,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, S)
@@ -257,7 +257,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -275,7 +275,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -283,7 +283,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -294,7 +294,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -302,7 +302,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -317,7 +317,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -327,7 +327,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -335,7 +335,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -344,7 +344,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, CommitmentConstraint, devices, model, S)
 
@@ -363,7 +363,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -380,7 +380,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -391,7 +391,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -399,7 +399,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -414,7 +414,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -424,7 +424,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -432,7 +432,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, S)
@@ -452,7 +452,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -467,7 +467,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -475,7 +475,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -486,7 +486,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -494,7 +494,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -509,7 +509,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -519,7 +519,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -527,7 +527,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -536,7 +536,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, RampConstraint, devices, model, S)
 
@@ -555,7 +555,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -569,7 +569,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -580,7 +580,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -588,7 +588,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -603,7 +603,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -613,7 +613,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -621,7 +621,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, RampConstraint, devices, model, S)
@@ -638,7 +638,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -655,7 +655,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -663,7 +663,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -674,7 +674,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -682,7 +682,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -694,7 +694,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -708,7 +708,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -716,7 +716,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -725,7 +725,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -740,7 +740,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -756,7 +756,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -767,7 +767,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -775,7 +775,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -787,7 +787,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -801,7 +801,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -809,7 +809,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -859,7 +859,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
     add_to_expression!(
@@ -868,7 +868,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -879,7 +879,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -887,7 +887,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -910,7 +910,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -918,7 +918,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -927,7 +927,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, CommitmentConstraint, devices, model, S)
     add_constraints!(container, RampConstraint, devices, model, S)
@@ -950,7 +950,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
@@ -977,7 +977,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 
@@ -989,7 +989,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -997,7 +997,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -1009,7 +1009,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
@@ -1021,7 +1021,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1029,7 +1029,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, S)
@@ -1053,7 +1053,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -1085,7 +1085,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 
@@ -1097,7 +1097,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -1105,7 +1105,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -1117,7 +1117,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -1127,7 +1127,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1135,7 +1135,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -1144,7 +1144,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, CommitmentConstraint, devices, model, S)
     add_constraints!(container, RampConstraint, devices, model, S)
@@ -1162,7 +1162,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -1188,7 +1188,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 
@@ -1200,7 +1200,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -1208,7 +1208,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1219,7 +1219,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -1229,7 +1229,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1237,7 +1237,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, S)
@@ -1256,7 +1256,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -1286,7 +1286,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 
@@ -1298,7 +1298,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -1306,7 +1306,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -1318,7 +1318,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -1328,7 +1328,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1336,7 +1336,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -1345,7 +1345,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, CommitmentConstraint, devices, model, S)
 
@@ -1361,7 +1361,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -1385,7 +1385,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
 
@@ -1397,7 +1397,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -1405,7 +1405,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1416,7 +1416,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -1426,7 +1426,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1434,7 +1434,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, S)
@@ -1451,7 +1451,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -1472,7 +1472,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1483,7 +1483,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
     add_to_expression!(
@@ -1492,7 +1492,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
     add_to_expression!(
@@ -1501,7 +1501,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -1509,7 +1509,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     return
 end
@@ -1519,7 +1519,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -1529,7 +1529,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1537,7 +1537,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(
@@ -1546,7 +1546,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(container, RampConstraint, devices, model, S)
 
@@ -1562,7 +1562,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -1580,7 +1580,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
@@ -1595,7 +1595,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     add_to_expression!(
         container,
@@ -1603,7 +1603,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        S,
+        network_model
     )
     return
 end
@@ -1613,7 +1613,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -1623,7 +1623,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model
     )
     add_constraints!(
         container,
@@ -1631,7 +1631,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model
     )
 
     add_constraints!(container, RampConstraint, devices, model, S)

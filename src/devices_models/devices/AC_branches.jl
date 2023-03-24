@@ -167,8 +167,8 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    X::Type{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
+    ::NetworkModel{X}
+) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation, X <:PM.AbstractActivePowerModel}
     add_range_constraints!(container, cons_type, FlowActivePowerVariable, devices, model, X)
     return
 end
@@ -181,7 +181,7 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{T},
+    ::NetworkModel{T}
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -215,7 +215,7 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraintToFrom},
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{T},
+    ::NetworkModel{T}
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -380,8 +380,8 @@ function add_constraints!(
     ::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{<:PM.AbstractDCPModel},
-) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
+    ::NetworkModel{V},
+) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded, V <: PM.AbstractActivePowerModel}
     return
 end
 
@@ -431,8 +431,8 @@ function add_constraints!(
     ::Type{FlowLimitFromToConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
+    ::NetworkModel{V},
+) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation, V <: PM.AbstractActivePowerModel}
     add_range_constraints!(
         container,
         FlowLimitFromToConstraint,
@@ -460,8 +460,8 @@ function add_constraints!(
     ::Type{FlowLimitToFromConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
+    ::NetworkModel{V},
+) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded, V <: PM.AbstractActivePowerModel}
     return
 end
 

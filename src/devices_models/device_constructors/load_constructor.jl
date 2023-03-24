@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -21,7 +21,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_to_expression!(
@@ -30,7 +30,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -44,7 +44,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -58,7 +58,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -66,7 +66,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -81,7 +81,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -98,7 +98,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -112,7 +112,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -126,7 +126,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -141,7 +141,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
@@ -156,7 +156,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_to_expression!(
@@ -165,7 +165,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -179,7 +179,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
@@ -189,7 +189,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -197,7 +197,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -212,7 +212,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
@@ -226,7 +226,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -240,7 +240,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
@@ -250,7 +250,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -265,7 +265,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
@@ -278,7 +278,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -286,7 +286,7 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -296,7 +296,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
@@ -308,7 +308,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -318,7 +318,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     # Static PowerLoad doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
@@ -330,7 +330,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -347,7 +347,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -355,7 +355,7 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -365,7 +365,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -380,7 +380,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -390,7 +390,7 @@ function construct_device!(
     sys::PSY.System,
     ccs::ModelConstructStage,
     model::DeviceModel{L, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -411,6 +411,6 @@ function construct_device!(
         time_series_names=model.time_series_names,
         attributes=model.attributes,
     )
-    construct_device!(container, sys, ccs, new_model, S)
+    construct_device!(container, sys, ccs, new_model, network_model)
     return
 end

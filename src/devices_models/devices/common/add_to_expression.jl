@@ -79,7 +79,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
+    ::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
     U <: TimeSeriesParameter,
@@ -107,7 +107,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    ::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: OnStatusParameter,
@@ -139,7 +139,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    ::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
     U <: VariableType,
@@ -170,7 +170,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{StandardPTDFModel},
+    network_model::NetworkModel{StandardPTDFModel},
 ) where {T <: ActivePowerBalance, U <: HVDCLosses, V <: PSY.HVDCLine, W <: HVDCP2PDispatch}
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -196,7 +196,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X}
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerFromToVariable,
@@ -229,7 +229,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    ::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
@@ -259,7 +259,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    ::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
     U <: OnVariable,
@@ -290,7 +290,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
     U <: TimeSeriesParameter,
@@ -302,13 +302,10 @@ function add_to_expression!(
     multiplier = get_multiplier_array(param_container)
     expression = get_expression(container, T(), X)
     for d in devices
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
         name = PSY.get_name(d)
-        if has_subnetworks(device_model)
-            ref_bus = get_reference_bus(device_model, d)
-        else
-            ref_bus = axes(expression)[1][1]
-        end
-            for t in get_time_steps(container)
+        for t in get_time_steps(container)
             _add_to_jump_expression!(
                 expression[ref_bus, t],
                 get_parameter_column_refs(param_container, name)[t],
@@ -325,7 +322,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: OnStatusParameter,
@@ -334,14 +331,19 @@ function add_to_expression!(
     X <: CopperPlatePowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
-    for d in devices, t in get_time_steps(container)
+    expression = get_expression(container, T(), X)
+    for d in devices
         name = PSY.get_name(d)
-        mult = get_expression_multiplier(U(), T(), d, W())
-        _add_to_jump_expression!(
-            get_expression(container, T(), X)[t],
-            parameter[name, t],
-            mult,
-        )
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
+        for t in get_time_steps(container)
+            mult = get_expression_multiplier(U(), T(), d, W())
+            _add_to_jump_expression!(
+                expression[ref_bus, t],
+                parameter[name, t],
+                mult,
+            )
+        end
     end
     return
 end
@@ -355,23 +357,19 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: CopperPlatePowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), CopperPlatePowerModel)
     for d in devices
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
         name = PSY.get_name(d)
-        if has_subnetworks(device_model)
-            ref_bus = get_reference_bus(device_model, d)
-        else
-            ref_bus = axes(expression)[1][1]
-        end
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 expression[ref_bus, t],
@@ -389,23 +387,19 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-    X <: CopperPlatePowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), CopperPlatePowerModel)
     for d in devices
         name = PSY.get_name(d)
-        if has_subnetworks(device_model)
-            ref_bus = get_reference_bus(device_model, d)
-        else
-            ref_bus = axes(expression)[1][1]
-        end
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 expression[ref_bus, t],
@@ -426,7 +420,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
     U <: TimeSeriesParameter,
@@ -440,12 +434,9 @@ function add_to_expression!(
     nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices
         name = PSY.get_name(d)
-        bus_no = PSY.get_number(PSY.get_bus(d))
-        if has_subnetworks(device_model)
-            ref_bus = get_reference_bus(device_model, d)
-        else
-            ref_bus = axes(sys_expr)[1][1]
-        end
+        device_bus = PSY.get_bus(d)
+        bus_no = PSY.get_number(device_bus)
+        ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             param = get_parameter_column_refs(param_container, name)[t]
             _add_to_jump_expression!(sys_expr[ref_bus, t], param, multiplier[name, t])
@@ -461,7 +452,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: OnStatusParameter,
@@ -491,7 +482,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: VariableType,
@@ -504,13 +495,9 @@ function add_to_expression!(
     nodal_expr = get_expression(container, T(), PSY.Bus)
     for d in devices
         name = PSY.get_name(d)
-        bus_no = PSY.get_number(PSY.get_bus(d))
-        name = PSY.get_name(d)
-        if has_subnetworks(device_model)
-            ref_bus = get_reference_bus(device_model, d)
-        else
-            ref_bus = axes(sys_expr)[1][1]
-        end
+        device_bus = PSY.get_bus(d)
+        bus_no = PSY.get_number(device_bus)
+        ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 sys_expr[ref_bus, t],
@@ -533,7 +520,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: OnVariable,
@@ -578,7 +565,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
@@ -615,12 +602,11 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{PSY.PhaseShiftingTransformer},
     ::DeviceModel{PSY.PhaseShiftingTransformer, V},
-    ::Type{W},
+    network_model::NetworkModel{StandardPTDFModel},
 ) where {
     T <: ActivePowerBalance,
     U <: PhaseShifterAngle,
     V <: PhaseAngleControl,
-    W <: StandardPTDFModel,
 }
     var = get_variable(container, U(), PSY.PhaseShiftingTransformer)
     expression = get_expression(container, T(), PSY.Bus)
@@ -648,7 +634,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB},
     U <: VariableType,
@@ -799,7 +785,6 @@ function add_to_expression!(
     ::Type{U},
     ::PSY.System,
     network_model::NetworkModel{W},
-    ::Type{W},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
@@ -824,7 +809,6 @@ function add_to_expression!(
     ::Type{U},
     sys::PSY.System,
     ::NetworkModel{W},
-    ::Type{W},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
@@ -849,7 +833,6 @@ function add_to_expression!(
     ::Type{U},
     sys::PSY.System,
     ::NetworkModel{W},
-    ::Type{W},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
@@ -874,7 +857,6 @@ function add_to_expression!(
     ::Type{U},
     sys::PSY.System,
     ::NetworkModel{W},
-    ::Type{W},
 ) where {
     T <: ReactivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},

@@ -165,7 +165,7 @@ function add_constraints!(
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
     add_range_constraints!(
         container,
@@ -173,7 +173,7 @@ function add_constraints!(
         EnergyVariable,
         devices,
         model,
-        X,
+        network_model,
     )
     return
 end
@@ -188,7 +188,7 @@ function add_constraints!(
     ::Type{EnergyBalanceConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -241,9 +241,9 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{ReserveEnergyCoverageConstraint},
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, D},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
+    model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {T <: PSY.Storage, U <: AbstractStorageFormulation, V <:PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     var_e = get_variable(container, EnergyVariable(), T)
     expr_up = get_expression(container, ReserveRangeExpressionUB(), T)
@@ -287,8 +287,8 @@ function add_constraints!(
     ::Type{RangeLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.Storage, D <: AbstractStorageFormulation}
+    network_model::NetworkModel{V},
+) where {T <: PSY.Storage, D <: AbstractStorageFormulation, V <:PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     var_in = get_variable(container, ActivePowerInVariable(), T)
     var_out = get_variable(container, ActivePowerOutVariable(), T)
@@ -337,7 +337,7 @@ function add_constraints!(
     ::Type{EnergyTargetConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {V <: PSY.Storage, W <: EnergyTarget, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     name_index = [PSY.get_name(d) for d in devices]
@@ -381,8 +381,8 @@ function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.Storage, U <: AbstractStorageFormulation}
+    network_model::NetworkModel{V},
+) where {T <: PSY.Storage, U <: AbstractStorageFormulation, V <: PM.AbstractPowerModel}
     add_proportional_cost!(container, ActivePowerOutVariable(), devices, U())
     add_proportional_cost!(container, ActivePowerInVariable(), devices, U())
     return
@@ -392,8 +392,8 @@ function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.BatteryEMS},
     ::DeviceModel{PSY.BatteryEMS, T},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: EnergyTarget}
+    network_model::NetworkModel{V},
+) where {T <: EnergyTarget, V <: PM.AbstractPowerModel}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, T())
     add_proportional_cost!(container, EnergySurplusVariable(), devices, T())
     add_proportional_cost!(container, EnergyShortageVariable(), devices, T())

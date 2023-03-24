@@ -3,7 +3,6 @@ function add_constraints!(
     ::Type{T},
     sys::U,
     model::NetworkModel{V},
-    S::Type{V},
 ) where {
     T <: CopperPlateBalanceConstraint,
     U <: PSY.System,

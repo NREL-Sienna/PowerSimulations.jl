@@ -52,7 +52,7 @@ function add_constraints!(
     ::Type{DeltaActivePowerUpVariable},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
-    ::Type{AreaBalancePowerModel},
+    ::NetworkModel{AreaBalancePowerModel},
 ) where {
     S <: RegulationLimitsConstraint,
     T <: PSY.RegulationDevice{U},
@@ -94,7 +94,7 @@ function add_constraints!(
     ::Type{DeltaActivePowerUpVariable},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, ReserveLimitedRegulation},
-    ::Type{AreaBalancePowerModel},
+    ::NetworkModel{AreaBalancePowerModel},
 ) where {
     S <: RegulationLimitsConstraint,
     T <: PSY.RegulationDevice{U},
@@ -129,7 +129,7 @@ function add_constraints!(
     ::Type{S},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, DeviceLimitedRegulation},
-    ::Type{AreaBalancePowerModel},
+    ::NetworkModel{AreaBalancePowerModel},
 ) where {
     S <: RampLimitConstraint,
     T <: PSY.RegulationDevice{U},
@@ -170,7 +170,7 @@ function add_constraints!(
     ::Type{S},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractRegulationFormulation},
-    ::Type{AreaBalancePowerModel},
+    ::NetworkModel{AreaBalancePowerModel},
 ) where {
     S <: ParticipationAssignmentConstraint,
     T <: PSY.RegulationDevice{U},

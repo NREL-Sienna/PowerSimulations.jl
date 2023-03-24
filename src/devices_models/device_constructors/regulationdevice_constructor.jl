@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, U},
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection, U <: DeviceLimitedRegulation}
     devices = get_available_components(get_component_type(model), sys)
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -14,7 +14,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        AreaBalancePowerModel,
+        network_model,
     )
 
     add_variables!(container, DeltaActivePowerUpVariable, devices, U())
@@ -29,7 +29,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection}
     devices = get_available_components(get_component_type(model), sys)
 
@@ -39,16 +39,16 @@ function construct_device!(
         DeltaActivePowerUpVariable,
         devices,
         model,
-        AreaBalancePowerModel,
+        network_model,
     )
 
-    add_constraints!(container, RampLimitConstraint, devices, model, AreaBalancePowerModel)
+    add_constraints!(container, RampLimitConstraint, devices, model, network_model)
     add_constraints!(
         container,
         ParticipationAssignmentConstraint,
         devices,
         model,
-        AreaBalancePowerModel,
+        network_model,
     )
     objective_function!(container, devices, model)
     return
@@ -59,7 +59,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, U},
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection, U <: ReserveLimitedRegulation}
     devices = get_available_components(get_component_type(model), sys)
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -70,7 +70,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        AreaBalancePowerModel,
+        network_model,
     )
 
     add_variables!(container, DeltaActivePowerUpVariable, devices, U())
@@ -85,7 +85,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection}
     devices = get_available_components(get_component_type(model), sys)
 
@@ -95,7 +95,7 @@ function construct_device!(
         DeltaActivePowerUpVariable,
         devices,
         model,
-        AreaBalancePowerModel,
+        network_model,
     )
 
     add_constraints!(container, ParticipationAssignmentConstraint, devices, model, S)
@@ -108,7 +108,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection}
     devices = get_available_components(get_component_type(model), sys)
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -119,7 +119,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -129,7 +129,7 @@ function construct_device!(
     ::PSY.System,
     ::ModelConstructStage,
     ::DeviceModel{PSY.RegulationDevice{T}, FixedOutput},
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection}
     # There is no-op under FixedOutput formulation
     return
