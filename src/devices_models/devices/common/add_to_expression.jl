@@ -388,7 +388,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: ActivePowerBalance,
@@ -399,13 +399,20 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), X)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
-        _add_to_jump_expression!(
-            expression[t],
-            variable[name, t],
-            get_variable_multiplier(U(), d, W()),
-        )
+        if has_subnetworks(device_model)
+            ref_bus = get_reference_bus(device_model, d)
+        else
+            ref_bus = axes(expression)[1][1]
+        end
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), d, W()),
+            )
+        end
     end
     return
 end
@@ -418,7 +425,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: SystemBalanceExpressions,
@@ -431,12 +438,19 @@ function add_to_expression!(
     multiplier = get_multiplier_array(param_container)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
-        param = get_parameter_column_refs(param_container, name)[t]
-        _add_to_jump_expression!(sys_expr[t], param, multiplier[name, t])
-        _add_to_jump_expression!(nodal_expr[bus_no, t], param, multiplier[name, t])
+        if has_subnetworks(device_model)
+            ref_bus = get_reference_bus(device_model, d)
+        else
+            ref_bus = axes(sys_expr)[1][1]
+        end
+        for t in get_time_steps(container)
+            param = get_parameter_column_refs(param_container, name)[t]
+            _add_to_jump_expression!(sys_expr[ref_bus, t], param, multiplier[name, t])
+            _add_to_jump_expression!(nodal_expr[bus_no, t], param, multiplier[name, t])
+        end
     end
     return
 end
@@ -476,7 +490,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: ActivePowerBalance,
@@ -488,19 +502,27 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
-        _add_to_jump_expression!(
-            sys_expr[t],
-            variable[name, t],
-            get_variable_multiplier(U(), V, W()),
-        )
-        _add_to_jump_expression!(
-            nodal_expr[bus_no, t],
-            variable[name, t],
-            get_variable_multiplier(U(), V, W()),
-        )
+        name = PSY.get_name(d)
+        if has_subnetworks(device_model)
+            ref_bus = get_reference_bus(device_model, d)
+        else
+            ref_bus = axes(sys_expr)[1][1]
+        end
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                sys_expr[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+            _add_to_jump_expression!(
+                nodal_expr[bus_no, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
     end
     return
 end
@@ -510,7 +532,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     ::Type{X},
 ) where {
     T <: ActivePowerBalance,
@@ -522,19 +544,27 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
-    for d in devices, t in get_time_steps(container)
+    for d in devices,
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
-        _add_to_jump_expression!(
-            sys_expr[t],
-            variable[name, t],
-            get_variable_multiplier(U(), d, W()),
-        )
-        _add_to_jump_expression!(
-            nodal_expr[bus_no, t],
-            variable[name, t],
-            get_variable_multiplier(U(), d, W()),
-        )
+        name = PSY.get_name(d)
+        if has_subnetworks(device_model)
+            ref_bus = get_reference_bus(device_model, d)
+        else
+            ref_bus = axes(sys_expr)[1][1]
+        end
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                sys_expr[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), d, W()),
+            )
+            _add_to_jump_expression!(
+                nodal_expr[bus_no, t],
+                variable[name, t],
+                get_variable_multiplier(U(), d, W()),
+            )
+        end
     end
     return
 end

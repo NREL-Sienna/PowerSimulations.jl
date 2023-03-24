@@ -376,7 +376,7 @@ function check_optimization_container(container::OptimizationContainer)
 end
 
 function get_problem_size(container::OptimizationContainer)
-    model = container.JuMPmodel
+    model = get_jump_model(container)
     vars = JuMP.num_variables(model)
     cons = 0
     for (exp, c_type) in JuMP.list_of_constraint_types(model)
@@ -395,7 +395,7 @@ function _make_system_expressions!(
     ::Type{<:PM.AbstractPowerModel},
 )
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Set(values(subnetworks)))
+    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -411,7 +411,7 @@ function _make_system_expressions!(
     ::Type{<:PM.AbstractActivePowerModel},
 )
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Set(values(subnetworks)))
+    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -439,10 +439,11 @@ function _make_system_expressions!(
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Set(values(subnetworks)))
+    bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
+    subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(time_steps),
+            _make_container_array(subnetworks, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
     )
