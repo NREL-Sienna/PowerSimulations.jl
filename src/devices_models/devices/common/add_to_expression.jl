@@ -301,7 +301,7 @@ function add_to_expression!(
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
     expression = get_expression(container, T(), X)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         if has_subnetworks(device_model)
             ref_bus = get_reference_bus(device_model, d)
