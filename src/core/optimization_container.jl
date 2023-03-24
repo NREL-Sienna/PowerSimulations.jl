@@ -1497,9 +1497,9 @@ function _calculate_dual_variable_value!(
     constraint_container = get_constraint(container, key)
     dual_variable_container = get_duals(container)[key]
 
-    for t in axes(constraint_container)[1]
+    for subnet in axes(constraint_container)[1], t in axes(constraint_container)[2]
         # See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
-        dual_variable_container[t] = jump_value(constraint_container[t])
+        dual_variable_container[subnet, t] = jump_value(constraint_container[subnet, t])
     end
     return
 end
