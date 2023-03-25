@@ -20,7 +20,7 @@ function add_constraint_dual!(
     if !isempty(get_duals(model))
         devices = PSY.get_components(PSY.Bus, sys)
         for constraint_type in get_duals(model)
-            assign_dual_variable!(container, constraint_type, devices, T)
+            assign_dual_variable!(container, constraint_type, devices, model)
         end
     end
     return
@@ -33,7 +33,7 @@ function add_constraint_dual!(
 ) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     if !isempty(get_duals(model))
         for constraint_type in get_duals(model)
-            assign_dual_variable!(container, constraint_type, sys, T)
+            assign_dual_variable!(container, constraint_type, sys, model)
         end
     end
     return
@@ -94,7 +94,7 @@ function assign_dual_variable!(
     container::OptimizationContainer,
     constraint_type::Type{<:ConstraintType},
     devices::U,
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<: PM.AbstractPowerModel},
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Bus}
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
@@ -110,11 +110,12 @@ end
 
 function assign_dual_variable!(
     container::OptimizationContainer,
-    constraint_type::Type{<:ConstraintType},
+    constraint_type::Type{CopperPlateBalanceConstraint},
     ::U,
-    formulation::Type{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<: PM.AbstractPowerModel},
 ) where {U <: PSY.System}
     time_steps = get_time_steps(container)
-    add_dual_container!(container, constraint_type, U, time_steps)
+    ref_buses = get_reference_buses(network_model)
+    add_dual_container!(container, constraint_type, U, ref_buses, time_steps)
     return
 end

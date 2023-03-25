@@ -133,8 +133,8 @@ function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
-    ::NetworkModel{X}
-) where {T <: PSY.ControllableLoad, U <: PowerLoadDispatch, X <: PM.AbstractPowerModel}
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ControllableLoad, U <: PowerLoadDispatch}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     return
 end
