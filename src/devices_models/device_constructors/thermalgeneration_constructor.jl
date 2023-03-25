@@ -136,9 +136,9 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
-    add_constraints!(container, RampConstraint, devices, model, S)
-    add_constraints!(container, DurationConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
+    add_constraints!(container, DurationConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -237,9 +237,9 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
-    add_constraints!(container, RampConstraint, devices, model, S)
-    add_constraints!(container, DurationConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
+    add_constraints!(container, DurationConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -346,7 +346,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -435,7 +435,7 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -538,7 +538,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -624,7 +624,7 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -823,8 +823,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    network_model::NetworkModel{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
@@ -861,7 +860,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -899,8 +898,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    network_model::NetworkModel{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
@@ -929,14 +927,14 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
-    add_constraints!(container, RampConstraint, devices, model, S)
-    add_constraints!(container, DurationConstraint, devices, model, S)
-    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, S)
-    add_constraints!(container, StartTypeConstraint, devices, model, S)
-    add_constraints!(container, StartupInitialConditionConstraint, devices, model, S)
-    add_constraints!(container, MustRunConstraint, devices, model, S)
-    add_constraints!(container, ActiveRangeICConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
+    add_constraints!(container, DurationConstraint, devices, model, network_model)
+    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, network_model)
+    add_constraints!(container, StartTypeConstraint, devices, model, network_model)
+    add_constraints!(container, StartupInitialConditionConstraint, devices, model, network_model)
+    add_constraints!(container, MustRunConstraint, devices, model, network_model)
+    add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -979,7 +977,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1032,14 +1030,14 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
-    add_constraints!(container, RampConstraint, devices, model, S)
-    add_constraints!(container, DurationConstraint, devices, model, S)
-    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, S)
-    add_constraints!(container, StartTypeConstraint, devices, model, S)
-    add_constraints!(container, StartupInitialConditionConstraint, devices, model, S)
-    add_constraints!(container, MustRunConstraint, devices, model, S)
-    add_constraints!(container, ActiveRangeICConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
+    add_constraints!(container, DurationConstraint, devices, model, network_model)
+    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, network_model)
+    add_constraints!(container, StartTypeConstraint, devices, model, network_model)
+    add_constraints!(container, StartupInitialConditionConstraint, devices, model, network_model)
+    add_constraints!(container, MustRunConstraint, devices, model, network_model)
+    add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1087,7 +1085,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1146,9 +1144,9 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
-    add_constraints!(container, RampConstraint, devices, model, S)
-    add_constraints!(container, DurationConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
+    add_constraints!(container, DurationConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1190,7 +1188,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1240,9 +1238,9 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
-    add_constraints!(container, RampConstraint, devices, model, S)
-    add_constraints!(container, DurationConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
+    add_constraints!(container, DurationConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1288,7 +1286,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1347,7 +1345,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1387,7 +1385,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1437,7 +1435,7 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, S)
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1485,7 +1483,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, network_model)
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1494,7 +1492,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, network_model)
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
@@ -1548,7 +1546,7 @@ function construct_device!(
         model,
         network_model
     )
-    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1583,7 +1581,7 @@ function construct_device!(
         network_model
     )
 
-    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, S)
+    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, network_model)
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
@@ -1634,7 +1632,7 @@ function construct_device!(
         network_model
     )
 
-    add_constraints!(container, RampConstraint, devices, model, S)
+    add_constraints!(container, RampConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
