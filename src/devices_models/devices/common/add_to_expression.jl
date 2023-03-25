@@ -176,9 +176,11 @@ function add_to_expression!(
     expression = get_expression(container, T(), PSY.System)
     for d in devices
         name = PSY.get_name(d)
+        device_bus_from = PSY.get_arc(d).from
+        ref_bus_from = get_reference_bus(network_model, device_bus_from)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
-                expression[t],
+                expression[ref_bus_from, t],
                 variable[name, t],
                 get_variable_multiplier(U(), d, W()),
             )

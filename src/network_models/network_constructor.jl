@@ -84,7 +84,6 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            StandardPTDFModel,
         )
         add_to_expression!(
             container,
@@ -92,9 +91,8 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            StandardPTDFModel,
         )
-        objective_function!(container, PSY.System, model, StandardPTDFModel)
+        objective_function!(container, PSY.System, model)
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
@@ -149,7 +147,6 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -157,7 +154,6 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
         objective_function!(container, PSY.Bus, model)
     end
@@ -218,7 +214,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -281,7 +277,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -343,7 +339,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =

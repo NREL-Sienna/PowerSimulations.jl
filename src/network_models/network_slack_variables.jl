@@ -101,7 +101,7 @@ end
 function objective_function!(
     container::OptimizationContainer,
     ::Type{PSY.Bus},
-    model::NetworkModel{T},
+    network_model::NetworkModel{T},
 ) where {T <: PM.AbstractActivePowerModel}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus)
@@ -119,7 +119,7 @@ end
 function objective_function!(
     container::OptimizationContainer,
     ::Type{PSY.Bus},
-    model::NetworkModel{T},
+    network_model::NetworkModel{T},
 ) where {T <: PM.AbstractPowerModel}
     variable_p_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus, "P")
     variable_p_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus, "P")
