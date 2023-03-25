@@ -38,5 +38,5 @@ get_initial_conditions_device_model(
     model::DeviceModel{T, FixedOutput},
 ) where {T <: PSY.Device} = model
 
-get_default_on_variable(component::T) where {T <: PSY.Component} = OnVariable
-get_default_on_parameter(component::T) where {T <: PSY.Component} = OnVariable
+get_default_on_variable(component::T) where {T <: PSY.Component} = OnVariable()
+get_default_on_parameter(component::T) where {T <: PSY.Component} = OnStatusParameter()

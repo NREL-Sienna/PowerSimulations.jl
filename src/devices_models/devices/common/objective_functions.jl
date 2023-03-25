@@ -861,13 +861,13 @@ function _add_pwl_constraint!(
             LOG_GROUP_COST_FUNCTIONS
 
     elseif sos_status == SOSStatusVariable.PARAMETER
-        P = get_default_on_parameter(component)
-        bin = get_parameter(container, P(), T).parameter_array[name, period]
+        param = get_default_on_parameter(component)
+        bin = get_parameter(container, param, T).parameter_array[name, period]
         @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
             LOG_GROUP_COST_FUNCTIONS
     elseif sos_status == SOSStatusVariable.VARIABLE
-        P = get_default_on_variable(component)
-        bin = get_variable(container, P(), T)[name, period]
+        var = get_default_on_variable(component)
+        bin = get_variable(container, var, T)[name, period]
         @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
             LOG_GROUP_COST_FUNCTIONS
     else
