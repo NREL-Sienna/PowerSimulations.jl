@@ -237,9 +237,12 @@ end
         name="UC",
         optimizer=HiGHS_optimizer,
         system_to_file=false,
+        initialize_model=false,
     )
+    build!(model; output_dir=mktempdir())
 
-    solve!(model; output_dir=mktempdir())
+    solve!(model)
+
     ptdf_vars = get_variable_values(ProblemResults(model))
     ptdf_values =
         ptdf_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]

@@ -104,12 +104,13 @@ function mock_construct_device!(
         PSI.get_network_formulation(template),
         PSI.get_system(problem),
     )
+    PSI.get_network_model(template).subnetworks = PNM.find_subnetworks(PSI.get_system(problem))
     PSI.get_optimization_container(problem).built_for_recurrent_solves =
         built_for_recurrent_solves
     PSI.initialize_system_expressions!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
-        PNM.find_subnetworks(PSI.get_system(problem)),
+        PSI.get_network_model(template).subnetworks,
     )
     if PSI.validate_available_devices(model, PSI.get_system(problem))
         PSI.construct_device!(
@@ -117,14 +118,14 @@ function mock_construct_device!(
             PSI.get_system(problem),
             PSI.ArgumentConstructStage(),
             model,
-            PSI.get_network_formulation(template),
+            PSI.get_network_model(template),
         )
         PSI.construct_device!(
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
             PSI.ModelConstructStage(),
             model,
-            PSI.get_network_formulation(template),
+            PSI.get_network_model(template),
         )
     end
 
