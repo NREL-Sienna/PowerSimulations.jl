@@ -74,7 +74,6 @@ get_services(::Nothing) = nothing
 get_use_slacks(m::DeviceModel) = m.use_slacks
 get_duals(m::DeviceModel) = m.duals
 get_time_series_names(m::DeviceModel) = m.time_series_names
-get_subnetworks_map(m::DeviceModel) = m.subnetworks_map
 get_attributes(m::DeviceModel) = m.attributes
 get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
 
