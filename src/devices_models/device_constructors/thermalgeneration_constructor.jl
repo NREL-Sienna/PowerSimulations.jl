@@ -13,7 +13,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        network_model
+        network_model,
     )
     return
 end
@@ -63,7 +63,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -71,7 +71,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -82,7 +82,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -90,7 +90,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -118,7 +118,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -126,7 +126,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -134,7 +134,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
@@ -179,7 +179,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -190,7 +190,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -198,7 +198,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -226,7 +226,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -234,7 +234,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
@@ -275,7 +275,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -283,7 +283,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -294,7 +294,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -302,7 +302,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -327,7 +327,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -335,7 +335,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -344,7 +344,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
@@ -380,7 +380,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -391,7 +391,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -399,7 +399,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -424,7 +424,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -432,7 +432,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
@@ -467,7 +467,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -475,7 +475,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -486,7 +486,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -494,7 +494,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -519,7 +519,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -527,7 +527,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -536,7 +536,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, RampConstraint, devices, model, network_model)
 
@@ -569,7 +569,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -580,7 +580,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -588,7 +588,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -613,7 +613,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -621,7 +621,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, RampConstraint, devices, model, network_model)
@@ -655,7 +655,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -663,7 +663,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -674,7 +674,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -682,7 +682,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -708,7 +708,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -716,7 +716,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -725,7 +725,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -756,7 +756,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -767,7 +767,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -775,7 +775,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -801,7 +801,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -809,7 +809,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -858,16 +858,23 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
     add_to_expression!(
         container,
         ReactivePowerBalance,
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -878,7 +885,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -886,7 +893,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -908,7 +915,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -916,7 +923,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -925,14 +932,26 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
-    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, network_model)
+    add_constraints!(
+        container,
+        StartupTimeLimitTemperatureConstraint,
+        devices,
+        model,
+        network_model,
+    )
     add_constraints!(container, StartTypeConstraint, devices, model, network_model)
-    add_constraints!(container, StartupInitialConditionConstraint, devices, model, network_model)
+    add_constraints!(
+        container,
+        StartupInitialConditionConstraint,
+        devices,
+        model,
+        network_model,
+    )
     add_constraints!(container, MustRunConstraint, devices, model, network_model)
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
 
@@ -975,9 +994,16 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -987,7 +1013,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -995,7 +1021,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -1019,7 +1045,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1027,15 +1053,27 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
-    add_constraints!(container, StartupTimeLimitTemperatureConstraint, devices, model, network_model)
+    add_constraints!(
+        container,
+        StartupTimeLimitTemperatureConstraint,
+        devices,
+        model,
+        network_model,
+    )
     add_constraints!(container, StartTypeConstraint, devices, model, network_model)
-    add_constraints!(container, StartupInitialConditionConstraint, devices, model, network_model)
+    add_constraints!(
+        container,
+        StartupInitialConditionConstraint,
+        devices,
+        model,
+        network_model,
+    )
     add_constraints!(container, MustRunConstraint, devices, model, network_model)
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
 
@@ -1083,9 +1121,16 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1095,7 +1140,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1103,7 +1148,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -1125,7 +1170,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1133,7 +1178,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -1142,7 +1187,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
@@ -1186,9 +1231,16 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1198,7 +1250,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1206,7 +1258,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1227,7 +1279,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1235,7 +1287,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
@@ -1284,9 +1336,16 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1296,7 +1355,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1304,7 +1363,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -1326,7 +1385,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1334,7 +1393,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -1343,7 +1402,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
@@ -1383,9 +1442,16 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnVariable, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1395,7 +1461,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1403,7 +1469,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1424,7 +1490,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1432,7 +1498,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
@@ -1470,7 +1536,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -1481,25 +1547,39 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnStatusParameter,
+        devices,
+        model,
+        network_model,
+    )
     add_to_expression!(
         container,
         ReactivePowerBalance,
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
-    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnStatusParameter,
+        devices,
+        model,
+        network_model,
+    )
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1507,7 +1587,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     return
 end
@@ -1527,7 +1607,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1535,7 +1615,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -1544,7 +1624,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(container, RampConstraint, devices, model, network_model)
 
@@ -1578,10 +1658,17 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
 
-    add_to_expression!(container, ActivePowerBalance, OnStatusParameter, devices, model, network_model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        OnStatusParameter,
+        devices,
+        model,
+        network_model,
+    )
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
@@ -1593,7 +1680,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1601,7 +1688,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     return
 end
@@ -1621,7 +1708,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_constraints!(
         container,
@@ -1629,7 +1716,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(container, RampConstraint, devices, model, network_model)

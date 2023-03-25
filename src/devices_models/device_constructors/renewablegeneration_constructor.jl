@@ -25,7 +25,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -33,7 +33,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     if has_service_model(model)
         add_to_expression!(
@@ -42,7 +42,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            network_model
+            network_model,
         )
         add_to_expression!(
             container,
@@ -50,7 +50,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            network_model
+            network_model,
         )
     end
 end
@@ -75,7 +75,7 @@ function construct_device!(
             ActivePowerRangeExpressionUB,
             devices,
             model,
-            network_model
+            network_model,
         )
     else
         add_constraints!(
@@ -84,7 +84,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            network_model
+            network_model,
         )
     end
 
@@ -94,7 +94,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -130,7 +130,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        network_model
+        network_model,
     )
     if has_service_model(model)
         add_to_expression!(
@@ -139,7 +139,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            network_model
+            network_model,
         )
         add_to_expression!(
             container,
@@ -147,7 +147,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            network_model
+            network_model,
         )
     end
 end
@@ -172,7 +172,7 @@ function construct_device!(
             ActivePowerRangeExpressionUB,
             devices,
             model,
-            network_model
+            network_model,
         )
     else
         add_constraints!(
@@ -181,7 +181,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            network_model
+            network_model,
         )
     end
     add_feedforward_constraints!(container, model, devices)
@@ -211,7 +211,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        network_model
+        network_model,
     )
     add_to_expression!(
         container,
@@ -219,7 +219,7 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
-        network_model
+        network_model,
     )
     return
 end
@@ -240,7 +240,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        network_model
+        network_model,
     )
     return
 end

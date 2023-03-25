@@ -7,13 +7,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-        )
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -24,12 +18,7 @@ function construct_network!(
         objective_function!(container, PSY.System, model)
     end
 
-    add_constraints!(
-        container,
-        CopperPlateBalanceConstraint,
-        sys,
-        model,
-    )
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -78,13 +67,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-        )
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -141,13 +124,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-        )
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -186,13 +163,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-        )
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,

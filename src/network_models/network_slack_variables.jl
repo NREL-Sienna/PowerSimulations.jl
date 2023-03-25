@@ -14,7 +14,8 @@ function add_variables!(
 }
     time_steps = get_time_steps(container)
     reference_buses = get_reference_buses(network_model)
-    variable = add_variable_container!(container, T(), PSY.System, reference_buses, time_steps)
+    variable =
+        add_variable_container!(container, T(), PSY.System, reference_buses, time_steps)
 
     for t in time_steps, bus in reference_buses
         variable[bus, t] = JuMP.@variable(

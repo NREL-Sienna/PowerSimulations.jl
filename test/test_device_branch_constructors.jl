@@ -224,7 +224,9 @@ end
 
     add_component!(sys_5, hvdc)
 
-    template_uc = ProblemTemplate(NetworkModel(StandardPTDFModel, PTDF_matrix=PTDF(sys_5; linear_solver="Dense")))
+    template_uc = ProblemTemplate(
+        NetworkModel(StandardPTDFModel, PTDF_matrix=PTDF(sys_5; linear_solver="Dense")),
+    )
 
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)

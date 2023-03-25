@@ -209,8 +209,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver, X <: PM.AbstractPowerModel}
     if !has_semicontinuous_feedforward(model, U)
         add_range_constraints!(container, T, U, devices, model, X)
     end
@@ -232,8 +232,8 @@ function add_constraints!(
     U::Type{<:RangeConstraintLBExpressions},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver, X <: PM.AbstractPowerModel}
     if !has_semicontinuous_feedforward(model, U)
         add_range_constraints!(container, T, U, devices, model, X)
     end
@@ -249,8 +249,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, <:RangeConstraintLBExpressions}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver, X <: PM.AbstractPowerModel}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     return
 end
@@ -261,8 +261,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver, X <: PM.AbstractPowerModel}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     add_parameterized_upper_bound_range_constraints(
         container,
@@ -315,8 +315,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment, X <: PM.AbstractPowerModel}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     return
 end
@@ -330,8 +330,12 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroGen, W <: AbstractHydroDispatchFormulation, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {
+    V <: PSY.HydroGen,
+    W <: AbstractHydroDispatchFormulation,
+    X <: PM.AbstractPowerModel,
+}
     if !has_semicontinuous_feedforward(model, U)
         add_range_constraints!(container, T, U, devices, model, X)
     end
@@ -347,8 +351,12 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {
+    V <: PSY.HydroPumpedStorage,
+    W <: AbstractHydroReservoirFormulation,
+    X <: PM.AbstractPowerModel,
+}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
@@ -368,8 +376,12 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
-) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation, X <:PM.AbstractPowerModel}
+    ::NetworkModel{X},
+) where {
+    V <: PSY.HydroPumpedStorage,
+    W <: AbstractHydroReservoirFormulation,
+    X <: PM.AbstractPowerModel,
+}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
@@ -413,7 +425,7 @@ function add_constraints!(
     ::Type{EnergyBalanceConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
+    ::NetworkModel{X},
 ) where {
     V <: PSY.HydroEnergyReservoir,
     W <: AbstractHydroFormulation,
@@ -471,7 +483,7 @@ function add_constraints!(
     ::Type{EnergyCapacityUpConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
+    ::NetworkModel{X},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -537,7 +549,7 @@ function add_constraints!(
     ::Type{EnergyCapacityDownConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
+    ::NetworkModel{X},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -603,7 +615,7 @@ function add_constraints!(
     ::Type{EnergyTargetConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
+    ::NetworkModel{X},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     set_name = [PSY.get_name(d) for d in devices]
@@ -664,7 +676,7 @@ function add_constraints!(
     ::Type{EnergyBudgetConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X}
+    ::NetworkModel{X},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     set_name = [PSY.get_name(d) for d in devices]

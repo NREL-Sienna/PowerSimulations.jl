@@ -198,7 +198,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{X}
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerFromToVariable,
@@ -340,11 +340,7 @@ function add_to_expression!(
         ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             mult = get_expression_multiplier(U(), T(), d, W())
-            _add_to_jump_expression!(
-                expression[ref_bus, t],
-                parameter[name, t],
-                mult,
-            )
+            _add_to_jump_expression!(expression[ref_bus, t], parameter[name, t], mult)
         end
     end
     return
@@ -601,11 +597,7 @@ function add_to_expression!(
     devices::IS.FlattenIteratorWrapper{PSY.PhaseShiftingTransformer},
     ::DeviceModel{PSY.PhaseShiftingTransformer, V},
     network_model::NetworkModel{StandardPTDFModel},
-) where {
-    T <: ActivePowerBalance,
-    U <: PhaseShifterAngle,
-    V <: PhaseAngleControl,
-}
+) where {T <: ActivePowerBalance, U <: PhaseShifterAngle, V <: PhaseAngleControl}
     var = get_variable(container, U(), PSY.PhaseShiftingTransformer)
     expression = get_expression(container, T(), PSY.Bus)
     for d in devices

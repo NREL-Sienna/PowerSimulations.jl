@@ -49,7 +49,8 @@ get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = T
-get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = collect(keys(m.subnetworks))
+get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
+    collect(keys(m.subnetworks))
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
@@ -85,7 +86,10 @@ function assign_subnetworks_to_buses(
     return
 end
 
-function get_reference_bus(model::NetworkModel{T}, b::PSY.Bus)::Int where {T <: PM.AbstractPowerModel}
+function get_reference_bus(
+    model::NetworkModel{T},
+    b::PSY.Bus,
+)::Int where {T <: PM.AbstractPowerModel}
     if isempty(model.bus_area_map)
         return first(keys(model.subnetworks))
     else

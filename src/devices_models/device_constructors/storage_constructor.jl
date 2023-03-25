@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{St, D},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -50,7 +50,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{St, D},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -78,10 +78,17 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -92,7 +99,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{St, D},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {
     St <: PSY.Storage,
     D <: AbstractStorageFormulation,
@@ -134,7 +141,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{St, D},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {
     St <: PSY.Storage,
     D <: AbstractStorageFormulation,
@@ -158,10 +165,17 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -174,7 +188,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -227,7 +241,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{St, EnergyTarget},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -255,11 +269,18 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
-    add_constraints!(container, EnergyTargetConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -272,7 +293,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{St, EnergyTarget},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
@@ -316,7 +337,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{St, EnergyTarget},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
@@ -336,11 +357,18 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
-    add_constraints!(container, EnergyTargetConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -353,7 +381,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -404,7 +432,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -432,13 +460,26 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyCoverageConstraint, devices,model, network_model)
-        add_constraints!(container, RangeLimitConstraint, devices,model, network_model)
+        add_constraints!(
+            container,
+            ReserveEnergyCoverageConstraint,
+            devices,
+            model,
+            network_model,
+        )
+        add_constraints!(container, RangeLimitConstraint, devices, model, network_model)
     end
     add_feedforward_constraints!(container, model, devices)
 
@@ -452,7 +493,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
@@ -494,7 +535,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{St, BatteryAncillaryServices},
-     network_model::NetworkModel{S},
+    network_model::NetworkModel{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
@@ -514,13 +555,26 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
+    add_constraints!(
+        container,
+        EnergyCapacityConstraint,
+        EnergyVariable,
+        devices,
+        model,
+        network_model,
+    )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyCoverageConstraint, devices,model, network_model)
-        add_constraints!(container, RangeLimitConstraint, devices,model, network_model)
+        add_constraints!(
+            container,
+            ReserveEnergyCoverageConstraint,
+            devices,
+            model,
+            network_model,
+        )
+        add_constraints!(container, RangeLimitConstraint, devices, model, network_model)
     end
 
     add_feedforward_constraints!(container, model, devices)

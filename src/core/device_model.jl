@@ -77,8 +77,10 @@ get_time_series_names(m::DeviceModel) = m.time_series_names
 get_attributes(m::DeviceModel) = m.attributes
 get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
 
-
-function get_reference_bus(m::DeviceModel{T, U}, d::T) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+function get_reference_bus(
+    m::DeviceModel{T, U},
+    d::T,
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     return get_subnetworks_map(m)[d]
 end
 

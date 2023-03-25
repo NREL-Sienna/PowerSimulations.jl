@@ -13,7 +13,8 @@ function add_constraints!(
     subnets = collect(keys(model.subnetworks))
     constraint = add_constraints_container!(container, T(), U, subnets, time_steps)
     for t in time_steps, k in keys(model.subnetworks)
-        constraint[k, t] = JuMP.@constraint(get_jump_model(container), expressions[k, t] == 0)
+        constraint[k, t] =
+            JuMP.@constraint(get_jump_model(container), expressions[k, t] == 0)
     end
 
     return

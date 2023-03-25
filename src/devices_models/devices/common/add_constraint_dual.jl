@@ -94,7 +94,7 @@ function assign_dual_variable!(
     container::OptimizationContainer,
     constraint_type::Type{<:ConstraintType},
     devices::U,
-    ::NetworkModel{<: PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Bus}
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
@@ -112,7 +112,7 @@ function assign_dual_variable!(
     container::OptimizationContainer,
     constraint_type::Type{CopperPlateBalanceConstraint},
     ::U,
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {U <: PSY.System}
     time_steps = get_time_steps(container)
     ref_buses = get_reference_buses(network_model)

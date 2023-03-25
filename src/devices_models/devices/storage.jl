@@ -126,7 +126,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::NetworkModel{X},
-) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <:PM.AbstractPowerModel}
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <: PM.AbstractPowerModel}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
@@ -243,7 +243,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     network_model::NetworkModel{V},
-) where {T <: PSY.Storage, U <: AbstractStorageFormulation, V <:PM.AbstractPowerModel}
+) where {T <: PSY.Storage, U <: AbstractStorageFormulation, V <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     var_e = get_variable(container, EnergyVariable(), T)
     expr_up = get_expression(container, ReserveRangeExpressionUB(), T)
@@ -288,7 +288,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, D},
     network_model::NetworkModel{V},
-) where {T <: PSY.Storage, D <: AbstractStorageFormulation, V <:PM.AbstractPowerModel}
+) where {T <: PSY.Storage, D <: AbstractStorageFormulation, V <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     var_in = get_variable(container, ActivePowerInVariable(), T)
     var_out = get_variable(container, ActivePowerOutVariable(), T)
