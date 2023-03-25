@@ -125,8 +125,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.Storage, W <: AbstractStorageFormulation}
+    ::NetworkModel{X},
+) where {V <: PSY.Storage, W <: AbstractStorageFormulation, X <:PM.AbstractPowerModel}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
@@ -161,8 +161,8 @@ Add Energy Capacity Constraints for AbstractStorageFormulation
 """
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{EnergyCapacityConstraint},
-    U::Type{<:VariableType},
+    ::Type{EnergyCapacityConstraint},
+    ::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     network_model::NetworkModel{X},
@@ -173,7 +173,7 @@ function add_constraints!(
         EnergyVariable,
         devices,
         model,
-        network_model,
+        X,
     )
     return
 end
@@ -381,7 +381,7 @@ function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, U},
-    network_model::NetworkModel{V},
+    ::Type{V},
 ) where {T <: PSY.Storage, U <: AbstractStorageFormulation, V <: PM.AbstractPowerModel}
     add_proportional_cost!(container, ActivePowerOutVariable(), devices, U())
     add_proportional_cost!(container, ActivePowerInVariable(), devices, U())
@@ -392,7 +392,7 @@ function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.BatteryEMS},
     ::DeviceModel{PSY.BatteryEMS, T},
-    network_model::NetworkModel{V},
+    ::Type{V},
 ) where {T <: EnergyTarget, V <: PM.AbstractPowerModel}
     add_variable_cost!(container, ActivePowerOutVariable(), devices, T())
     add_proportional_cost!(container, EnergySurplusVariable(), devices, T())

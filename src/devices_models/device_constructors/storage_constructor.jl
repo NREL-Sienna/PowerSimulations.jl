@@ -78,10 +78,10 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -158,10 +158,10 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -255,11 +255,11 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices,model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -336,11 +336,11 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices,model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -432,13 +432,13 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, S)
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, S)
-        add_constraints!(container, RangeLimitConstraint, devices, model, S)
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices,model, network_model)
+        add_constraints!(container, RangeLimitConstraint, devices,model, network_model)
     end
     add_feedforward_constraints!(container, model, devices)
 
@@ -514,13 +514,13 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices, model, network_model)
+    add_constraints!(container, EnergyCapacityConstraint, EnergyVariable, devices,model, network_model)
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyBalanceConstraint, devices,model, network_model)
     if has_service_model(model)
-        add_constraints!(container, ReserveEnergyCoverageConstraint, devices, model, network_model)
-        add_constraints!(container, RangeLimitConstraint, devices, model, network_model)
+        add_constraints!(container, ReserveEnergyCoverageConstraint, devices,model, network_model)
+        add_constraints!(container, RangeLimitConstraint, devices,model, network_model)
     end
 
     add_feedforward_constraints!(container, model, devices)

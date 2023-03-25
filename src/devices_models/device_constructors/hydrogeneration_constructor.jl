@@ -361,7 +361,7 @@ function construct_device!(
     )
 
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -446,7 +446,7 @@ function construct_device!(
     )
 
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -578,8 +578,8 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -691,8 +691,8 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -985,7 +985,7 @@ function construct_device!(
         network_model,
     )
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1079,7 +1079,7 @@ function construct_device!(
     )
 
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1218,8 +1218,8 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -1336,8 +1336,8 @@ function construct_device!(
     )
 
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -1443,8 +1443,8 @@ function construct_device!(
     )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyCapacityUpConstraint, devices, model, S)
-    add_constraints!(container, EnergyCapacityDownConstraint, devices, model, S)
+    add_constraints!(container, EnergyCapacityUpConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyCapacityDownConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
