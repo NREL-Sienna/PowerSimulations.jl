@@ -203,10 +203,10 @@ function add_constraints!(
     U::Type{<:Union{PowerAboveMinimumVariable, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    network_model::NetworkModel{<:PM.AbstractPowerModel},
-) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch}
+    network_model::NetworkModel{X},
+) where {V <: PSY.ThermalGen, W <: ThermalCompactDispatch, X <: PM.AbstractPowerModel}
     if !has_semicontinuous_feedforward(model, PowerAboveMinimumVariable)
-        add_range_constraints!(container, T, U, devices, model, network_model)
+        add_range_constraints!(container, T, U, devices, model, X)
     end
     return
 end
@@ -820,8 +820,8 @@ function add_constraints!(
     T::Type{RampConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
-    W::Type{<:PM.AbstractPowerModel},
-) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
+    ::NetworkModel{W},
+) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment, W<:PM.AbstractPowerModel}
     add_semicontinuous_ramp_constraints!(
         container,
         T,
@@ -838,8 +838,8 @@ function add_constraints!(
     T::Type{RampConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
-    W::Type{<:PM.AbstractPowerModel},
-) where {U <: PSY.ThermalGen, V <: AbstractCompactUnitCommitment}
+    ::NetworkModel{W},
+) where {U <: PSY.ThermalGen, V <: AbstractCompactUnitCommitment,  W<:PM.AbstractPowerModel}
     add_semicontinuous_ramp_constraints!(
         container,
         T,
@@ -856,9 +856,9 @@ function add_constraints!(
     T::Type{RampConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, ThermalCompactDispatch},
-    W::Type{<:PM.AbstractPowerModel},
-) where {U <: PSY.ThermalGen}
-    add_linear_ramp_constraints!(container, T, PowerAboveMinimumVariable, devices, model, W)
+    ::NetworkModel{V},
+) where {U <: PSY.ThermalGen, V <:PM.AbstractPowerModel}
+    add_linear_ramp_constraints!(container, T, PowerAboveMinimumVariable, devices, model, V)
     return
 end
 
@@ -867,8 +867,8 @@ function add_constraints!(
     T::Type{RampConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
-    W::Type{<:PM.AbstractPowerModel},
-) where {U <: PSY.ThermalGen, V <: AbstractThermalDispatchFormulation}
+    ::NetworkModel{W},
+) where {U <: PSY.ThermalGen, V <: AbstractThermalDispatchFormulation, W <: PM.AbstractPowerModel}
     add_linear_ramp_constraints!(container, T, ActivePowerVariable, devices, model, W)
     return
 end
@@ -878,9 +878,9 @@ function add_constraints!(
     T::Type{RampConstraint},
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    W::Type{<:PM.AbstractPowerModel},
-)
-    add_linear_ramp_constraints!(container, T, PowerAboveMinimumVariable, devices, model, W)
+    ::NetworkModel{U},
+) where U <: PM.AbstractPowerModel
+    add_linear_ramp_constraints!(container, T, PowerAboveMinimumVariable, devices, model, U)
     return
 end
 
@@ -915,7 +915,7 @@ function add_constraints!(
     ::Type{StartupTimeLimitTemperatureConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalMultiStart}
     resolution = get_resolution(container)
     time_steps = get_time_steps(container)
@@ -991,7 +991,7 @@ function add_constraints!(
     ::Type{StartTypeConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalMultiStart}
     time_steps = get_time_steps(container)
     varstart = get_variable(container, StartVariable(), T)
@@ -1042,7 +1042,7 @@ function add_constraints!(
     ::Type{StartupInitialConditionConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, ThermalMultiStartUnitCommitment},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalMultiStart}
     resolution = get_resolution(container)
     initial_conditions_offtime =
@@ -1117,7 +1117,7 @@ function add_constraints!(
     ::Type{MustRunConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, S},
-    W::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, S <: AbstractThermalUnitCommitment}
     time_steps = get_time_steps(container)
     varon = get_variable(container, OnVariable(), T)
@@ -1180,7 +1180,7 @@ function add_constraints!(
     ::Type{DurationConstraint},
     ::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, V},
-    ::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen, V <: AbstractThermalUnitCommitment}
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)
@@ -1220,7 +1220,7 @@ function add_constraints!(
     ::Type{DurationConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, ThermalMultiStartUnitCommitment},
-    W::Type{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {U <: PSY.ThermalGen}
     parameters = built_for_recurrent_solves(container)
     resolution = get_resolution(container)

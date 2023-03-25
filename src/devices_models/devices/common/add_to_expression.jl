@@ -531,15 +531,11 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.Bus)
-    for d in devices,
+    for d in devices
         name = PSY.get_name(d)
-        bus_no = PSY.get_number(PSY.get_bus(d))
-        name = PSY.get_name(d)
-        if has_subnetworks(device_model)
-            ref_bus = get_reference_bus(device_model, d)
-        else
-            ref_bus = axes(sys_expr)[1][1]
-        end
+        device_bus = PSY.get_bus(d)
+        bus_no = PSY.get_number(device_bus)
+        ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 sys_expr[ref_bus, t],
