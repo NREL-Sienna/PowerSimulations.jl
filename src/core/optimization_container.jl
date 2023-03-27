@@ -465,8 +465,13 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
     if isempty(transmission_model.subnetworks)
         transmission_model.subnetworks = PNM.find_subnetworks(sys)
     end
+
+    if length(transmission_model.subnetworks) > 1
+        @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
+        assign_subnetworks_to_buses(transmission_model, sys)
+    end
+
     initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
-    assign_subnetworks_to_buses(model, sys)
 
     # Order is required
     for device_model in values(template.devices)
@@ -920,20 +925,20 @@ function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     return var
 end
 
-function get_constraint(
-    container::OptimizationContainer,
-    constraint_type::ConstraintType,
-    meta=CONTAINER_KEY_EMPTY_META,
-)
-    return get_constraint(container, ConstraintKey(constraint_type, meta))
-end
+#function get_constraint(
+#    container::OptimizationContainer,
+#    constraint_type::ConstraintType,
+#    meta::String=CONTAINER_KEY_EMPTY_META,
+#)
+#    return get_constraint(container, ConstraintKey(constraint_type, meta))
+# end
 
 function get_constraint(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
-    meta=CONTAINER_KEY_EMPTY_META,
-) where {T <: ConstraintType, U <: PSY.Component}
+    meta::String=CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     return get_constraint(container, ConstraintKey(T, U, meta))
 end
 
