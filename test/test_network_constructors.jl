@@ -487,3 +487,30 @@ end
         ) == PSI.BuildStatus.FAILED
     end
 end
+
+@testset "2 Subnetworks DC-PF with PTDF Model" begin
+    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(StandardPTDFModel; PTDF_matrix=VirtualPTDF(c_sys5)),
+    )
+    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    psi_constraint_test(ps_model, constraint_keys)
+    moi_tests(
+        ps_model,
+        test_results[sys][1],
+        test_results[sys][2],
+        test_results[sys][3],
+        test_results[sys][4],
+        test_results[sys][5],
+        false,
+    )
+    psi_checkobjfun_test(ps_model, objfuncs[ix])
+    psi_checksolve_test(
+        ps_model,
+        [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+        test_obj_values[sys],
+        10000,
+    )
+end
