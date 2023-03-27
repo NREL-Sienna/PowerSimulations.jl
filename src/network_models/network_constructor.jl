@@ -56,14 +56,6 @@ function construct_network!(
     model::NetworkModel{StandardPTDFModel},
     ::ProblemTemplate,
 )
-    ptdf = get_PTDF_matrix(model)
-
-    if ptdf === nothing
-        @warn("no PTDF matrix supplied, building PTDF")
-        model.PTDF_matrix = PTDF(sys)
-        model.subnetworks = model.PTDF_matrix.subnetworks
-    end
-
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
