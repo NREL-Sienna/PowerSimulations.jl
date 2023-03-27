@@ -72,7 +72,7 @@ function assign_subnetworks_to_buses(
         for bus in (bus_from, bus_to)
             bus_no = PSY.get_number(bus)
             if haskey(temp_bus_map, bus_no)
-                model.subnetworks_map[bus] = temp_bus_map[bus_no]
+                model.bus_area_map[bus] = temp_bus_map[bus_no]
             else
                 for (subnet, bus_set) in subnetworks
                     if bus_no ∈ bus_set
