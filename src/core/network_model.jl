@@ -51,6 +51,8 @@ get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = T
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
     collect(keys(m.subnetworks))
+get_subnetworks(m::NetworkModel) = m.subnetworks
+get_bus_area_map(m::NetworkModel) = m.bus_area_map
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
@@ -59,7 +61,33 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-function assign_subnetworks_to_buses(
+function instantiate_network_model(model::NetworkModel, sys::PSY.System)
+    if isempty(model.subnetworks)
+        model.subnetworks = PNM.find_subnetworks(sys)
+    end
+
+    if length(model.subnetworks) > 1
+        @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
+        _assign_subnetworks_to_buses(model, sys)
+    end
+    return
+end
+
+function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::PSY.System)
+    if get_PTDF_matrix(model) === nothing
+        @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
+        model.PTDF_matrix = PNM.PTDF(sys)
+    end
+    get_PTDF_matrix(model).subnetworks
+    model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
+    if length(model.subnetworks) > 1
+        @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
+        _assign_subnetworks_to_buses(model, sys)
+    end
+    return
+end
+
+function _assign_subnetworks_to_buses(
     model::NetworkModel{StandardPTDFModel},
     sys::PSY.System,
 )
@@ -82,7 +110,7 @@ function assign_subnetworks_to_buses(
     return
 end
 
-assign_subnetworks_to_buses(
+_assign_subnetworks_to_buses(
     ::NetworkModel{T},
     ::PSY.System,
 ) where {T <: PM.AbstractPowerModel} = nothing

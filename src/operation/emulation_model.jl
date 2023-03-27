@@ -243,7 +243,6 @@ function build_pre_step!(model::EmulationModel)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
-        # TODO-PJ: Temporary while are able to switch from PJ to POI
         container = get_optimization_container(model)
         container.built_for_recurrent_solves = true
 
@@ -253,9 +252,11 @@ function build_pre_step!(model::EmulationModel)
             get_network_formulation(get_template(model)),
             get_system(model),
         )
+        @info "Instantiating Network Model"
+        instantiate_network_model(model)
+
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-
         handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
