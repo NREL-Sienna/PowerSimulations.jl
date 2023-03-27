@@ -490,16 +490,11 @@ end
 
 @testset "2 Subnetworks DC-PF with PTDF Model" begin
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System"; force_build=true)
+    # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(
         NetworkModel(StandardPTDFModel; PTDF_matrix=VirtualPTDF(c_sys5)),
     )
-    ps_model = DecisionModel(
-        template,
-        c_sys5;
-        optimizer=HiGHS_optimizer,
-        store_variable_names=true,
-        calculate_conflict=true,
-    )
+    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
 
     @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     solve!(ps_model)
@@ -521,13 +516,9 @@ end
     hvdc_link = get_component(PSY.HVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min=0.0, max=0.0))
     set_active_power_limits_to!(hvdc_link, (min=0.0, max=0.0))
-    ps_model = DecisionModel(
-        template,
-        c_sys5;
-        optimizer=HiGHS_optimizer,
-        store_variable_names=true,
-        calculate_conflict=true,
-    )
+    # Test not passing the PTDF
+    template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
+    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
     @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     solve!(ps_model)
 
@@ -547,7 +538,7 @@ end
     zone_1_gen = sum(
         eachcol(thermal_gen[!, ["Solitude", "Park City", "Sundance", "Brighton", "Alta"]]),
     )
-    @test all(isapprox.(sum(zone_1_gen .+ zone_1_load, dims =2), 0.0; atol=1e-3))
+    @test all(isapprox.(sum(zone_1_gen .+ zone_1_load, dims=2), 0.0; atol=1e-3))
 
     zone_2_load = sum(eachcol(load[!, ["Load-nodeC2", "Load-nodeD2", "Load-nodeB2"]]))
     zone_2_gen = sum(
@@ -558,5 +549,5 @@ end
             ],
         ),
     )
-    @test all(isapprox.(sum(zone_2_gen .+ zone_2_load, dims =2), 0.0; atol=1e-3))
+    @test all(isapprox.(sum(zone_2_gen .+ zone_2_load, dims=2), 0.0; atol=1e-3))
 end
