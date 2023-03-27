@@ -62,24 +62,19 @@ end
 function assign_subnetworks_to_buses(
     model::NetworkModel{StandardPTDFModel},
     sys::PSY.System,
-) where {T <: PM.AbstractPowerModel}
+)
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
-    for d in PSY.get_components(T, sys)
-        arc = PSY.get_arc(d)
-        bus_from = PSY.get_from(arc)
-        bus_to = PSY.get_to(arc)
-        for bus in (bus_from, bus_to)
-            bus_no = PSY.get_number(bus)
-            if haskey(temp_bus_map, bus_no)
-                model.bus_area_map[bus] = temp_bus_map[bus_no]
-            else
-                for (subnet, bus_set) in subnetworks
-                    if bus_no ∈ bus_set
-                        temp_bus_map[bus_no] = subnet
-                        model.bus_area_map[bus] = subnet
-                        break
-                    end
+    for bus in PSY.get_components(PSY.Bus, sys)
+        bus_no = PSY.get_number(bus)
+        if haskey(temp_bus_map, bus_no)
+            model.bus_area_map[bus] = temp_bus_map[bus_no]
+        else
+            for (subnet, bus_set) in subnetworks
+                if bus_no ∈ bus_set
+                    temp_bus_map[bus_no] = subnet
+                    model.bus_area_map[bus] = subnet
+                    break
                 end
             end
         end
@@ -99,6 +94,6 @@ function get_reference_bus(
     if isempty(model.bus_area_map)
         return first(keys(model.subnetworks))
     else
-        return bus_area_map[b]
+        return model.bus_area_map[b]
     end
 end
