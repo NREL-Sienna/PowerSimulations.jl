@@ -465,7 +465,9 @@ function add_to_expression!(
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
         mult = get_expression_multiplier(U(), T(), d, W())
-        _add_to_jump_expression!(sys_expr[t], parameter[name, t], mult)
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
+        _add_to_jump_expression!(sys_expr[ref_bus, t], parameter[name, t], mult)
         _add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
     end
     return
