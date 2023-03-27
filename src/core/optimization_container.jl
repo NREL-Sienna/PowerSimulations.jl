@@ -466,6 +466,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
         transmission_model.subnetworks = PNM.find_subnetworks(sys)
     end
     initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
+    assign_subnetworks_to_buses(model, sys)
 
     # Order is required
     for device_model in values(template.devices)
