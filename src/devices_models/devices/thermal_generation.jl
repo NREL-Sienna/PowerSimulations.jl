@@ -33,7 +33,7 @@ get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractT
 
 ############## OnVariable, ThermalGen ####################
 get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
-get_variable_warm_start_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
+get_variable_warm_start_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0    
 
 ############## StopVariable, ThermalGen ####################
 get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
@@ -267,6 +267,50 @@ function get_min_max_limits(
         max=PSY.get_active_power_limits(device).max -
             PSY.get_active_power_limits(device).min,
     )
+end
+
+"""
+Adds a variable to the optimization model for the OnVariable of Thermal Units
+"""
+function add_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    devices::U,
+    formulation,
+) where {
+    T <: OnVariable,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.ThermalGen}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    binary = get_variable_binary(variable_type, D, formulation)
+
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        D,
+        [PSY.get_name(d) for d in devices],
+        time_steps,
+    )
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        variable[name, t] = JuMP.@variable(
+            container.JuMPmodel,
+            base_name = "$(T)_$(D)_{$(name), $(t)}",
+            binary = binary
+        )
+        if get_warm_start(settings)
+            init = get_variable_warm_start_value(variable_type, d, formulation)
+            init !== nothing && JuMP.set_start_value(variable[name, t], init)
+        end
+        if PSY.get_must_run(d)
+            JuMP.fix(variable[name, t], 1.0)
+        end
+    end
+
+    return
 end
 
 """

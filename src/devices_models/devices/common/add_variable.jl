@@ -91,7 +91,7 @@ function add_variable!(
         ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
         lb = get_variable_lower_bound(variable_type, d, formulation)
-        lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+        lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
 
         if get_warm_start(settings)
             init = get_variable_warm_start_value(variable_type, d, formulation)

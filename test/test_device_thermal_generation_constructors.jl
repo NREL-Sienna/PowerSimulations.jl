@@ -791,3 +791,29 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves=true)
     moi_tests(model, 338, 0, 144, 96, 96, false)
 end
+
+@testset "Test Must Run ThermalGen" begin
+    sys_5 = build_system(PSITestSystems, "c_sys5_uc")
+    template_uc = ProblemTemplate(NetworkModel(StandardPTDFModel, PTDF_matrix=PTDF(sys_5)))
+    set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template_uc, RenewableDispatch, FixedOutput)
+    set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
+
+    # Set Must Run the most expensive one: Sundance
+    sundance = get_component(ThermalStandard, sys_5, "Sundance")
+    set_must_run!(sundance, true)
+    model = DecisionModel(
+        template_uc,
+        sys_5;
+        name="UC",
+        optimizer=HiGHS_optimizer,
+        system_to_file=false,
+    )
+
+    solve!(model; output_dir=mktempdir())
+    ptdf_vars = get_variable_values(ProblemResults(model))
+    on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
+    on_sundance = on[!, "Sundance"]
+    @test all(isapprox.(on_sundance, 1.0))
+end
