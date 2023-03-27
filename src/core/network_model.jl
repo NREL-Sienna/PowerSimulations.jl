@@ -18,7 +18,7 @@ Establishes the model for a particular device specified by type.
 # Accepted Key Words
 
   - `use_slacks::Bool`: Adds slacks to the network modelings
-  - `PTDF::PTDF`: PTDF Array calculated using PowerSystems
+  - `PTDF::PTDF`: PTDF Array calculated using PowerNetworkMatrices
   - `duals::Vector{DataType}`: Constraint types to calculate the duals
 
 # Example
@@ -56,13 +56,14 @@ function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
     push!(model.duals, dual)
     @debug "Added dual" dual _group = LOG_GROUP_NETWORK_CONSTRUCTION
+    return
 end
 
 function assign_subnetworks_to_buses(
-    model::NetworkModel{T},
+    model::NetworkModel{StandardPTDFModel},
     sys::PSY.System,
-    subnetworks::Dict{Int, Set{Int}},
 ) where {T <: PM.AbstractPowerModel}
+    subnetworks =  model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     for d in PSY.get_components(T, sys)
         arc = PSY.get_arc(d)
@@ -85,6 +86,8 @@ function assign_subnetworks_to_buses(
     end
     return
 end
+
+assign_subnetworks_to_buses(::NetworkModel{T}, ::PSY.System) where {T <: PM.AbstractPowerModel} = nothing
 
 function get_reference_bus(
     model::NetworkModel{T},
