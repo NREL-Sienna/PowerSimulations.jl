@@ -462,15 +462,6 @@ end
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    if isempty(transmission_model.subnetworks)
-        transmission_model.subnetworks = PNM.find_subnetworks(sys)
-    end
-
-    if length(transmission_model.subnetworks) > 1
-        @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
-        assign_subnetworks_to_buses(transmission_model, sys)
-    end
-
     initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
 
     # Order is required
@@ -479,9 +470,6 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             if validate_available_devices(device_model, sys)
-                if length(transmission_model.subnetworks) > 1
-                    @info "System Contains Multiple Subnetworks"
-                end
                 construct_device!(
                     container,
                     sys,
