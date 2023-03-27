@@ -63,7 +63,7 @@ function assign_subnetworks_to_buses(
     model::NetworkModel{StandardPTDFModel},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    subnetworks =  model.subnetworks
+    subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     for d in PSY.get_components(T, sys)
         arc = PSY.get_arc(d)
@@ -87,7 +87,10 @@ function assign_subnetworks_to_buses(
     return
 end
 
-assign_subnetworks_to_buses(::NetworkModel{T}, ::PSY.System) where {T <: PM.AbstractPowerModel} = nothing
+assign_subnetworks_to_buses(
+    ::NetworkModel{T},
+    ::PSY.System,
+) where {T <: PM.AbstractPowerModel} = nothing
 
 function get_reference_bus(
     model::NetworkModel{T},
