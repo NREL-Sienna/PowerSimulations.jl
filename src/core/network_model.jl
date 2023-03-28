@@ -53,6 +53,8 @@ get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
     collect(keys(m.subnetworks))
 get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
+has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
+
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
