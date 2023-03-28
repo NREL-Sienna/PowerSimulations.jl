@@ -97,4 +97,3 @@ function _set_model!(
 end
 
 has_service_model(model::DeviceModel) = !isempty(get_services(model))
-has_subnetworks(model::DeviceModel) = !isempty(get_subnetworks_map(model))
