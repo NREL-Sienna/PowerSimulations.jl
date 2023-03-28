@@ -62,18 +62,26 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-function instantiate_network_model(model::NetworkModel{T}, sys::PSY.System) where T <: PM.AbstractPowerModel
+function instantiate_network_model(
+    model::NetworkModel{T},
+    sys::PSY.System,
+) where {T <: PM.AbstractPowerModel}
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
 
     if length(model.subnetworks) > 1
-        error("System Contains Multiple Subnetworks. This is not compatible with network model $T")
+        error(
+            "System Contains Multiple Subnetworks. This is not compatible with network model $T",
+        )
     end
     return
 end
 
-function instantiate_network_model(model::NetworkModel{CopperPlatePowerModel}, sys::PSY.System)
+function instantiate_network_model(
+    model::NetworkModel{CopperPlatePowerModel},
+    sys::PSY.System,
+)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
