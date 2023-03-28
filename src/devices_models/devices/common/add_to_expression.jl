@@ -596,6 +596,87 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{StandardPTDFModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerVariable,
+    V <: PSY.Branch,
+    W <: AbstractBranchFormulation,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), StandardPTDFModel)
+    var = get_variable(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    for d in devices
+        bus_no_from = PSY.get_number(PSY.get_arc(d).from)
+        bus_no_to = PSY.get_number(PSY.get_arc(d).to)
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, 1.0)
+            if ref_bus_from != ref_bus_to
+                _add_to_jump_expression!(sys_expr[ref_bus_from, t], flow_variable, -1.0)
+                _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, 1.0)
+            end
+        end
+    end
+    return
+end
+
+"""
+Implementation of add_to_expression! for lossless branch/network models
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerVariable,
+    V <: PSY.Branch,
+    W <: AbstractBranchFormulation,
+}
+    inter_network_branches = V[]
+    for d in devices
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        if ref_bus_from != ref_bus_to
+            push!(inter_network_branches, d)
+        end
+    end
+    if !isempty(inter_network_branches)
+        var = get_variable(container, U(), V)
+        sys_expr = get_expression(container, T(), PSY.System)
+        for d in devices
+            ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+            ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+            if ref_bus_from == ref_bus_to
+                continue
+            end
+            for t in get_time_steps(container)
+                flow_variable = var[PSY.get_name(d), t]
+                _add_to_jump_expression!(sys_expr[ref_bus_from, t], flow_variable, -1.0)
+                _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, 1.0)
+            end
+        end
+    end
+    return
+end
+
+"""
+Implementation of add_to_expression! for lossless branch/network models
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{PSY.PhaseShiftingTransformer},
     ::DeviceModel{PSY.PhaseShiftingTransformer, V},
     network_model::NetworkModel{StandardPTDFModel},
