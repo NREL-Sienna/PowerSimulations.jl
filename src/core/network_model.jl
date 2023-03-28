@@ -55,7 +55,6 @@ get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
 
-
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
     push!(model.duals, dual)
@@ -63,7 +62,18 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-function instantiate_network_model(model::NetworkModel, sys::PSY.System)
+function instantiate_network_model(model::NetworkModel{T}, sys::PSY.System) where T <: PM.AbstractPowerModel
+    if isempty(model.subnetworks)
+        model.subnetworks = PNM.find_subnetworks(sys)
+    end
+
+    if length(model.subnetworks) > 1
+        error("System Contains Multiple Subnetworks. This is not compatible with network model $T")
+    end
+    return
+end
+
+function instantiate_network_model(model::NetworkModel{CopperPlatePowerModel}, sys::PSY.System)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
