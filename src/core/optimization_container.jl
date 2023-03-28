@@ -907,19 +907,11 @@ function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_constraint_keys(container))
-        throw(IS.InvalidValue("constraint $name is not stored"))
+        throw(IS.InvalidValue("constraint $name is not stored. $keys"))
     end
 
     return var
 end
-
-#function get_constraint(
-#    container::OptimizationContainer,
-#    constraint_type::ConstraintType,
-#    meta::String=CONTAINER_KEY_EMPTY_META,
-#)
-#    return get_constraint(container, ConstraintKey(constraint_type, meta))
-# end
 
 function get_constraint(
     container::OptimizationContainer,
@@ -1204,7 +1196,7 @@ function read_parameters(container::OptimizationContainer)
 end
 
 function _calculate_parameter_values(
-    key::ParameterKey{<:ParameterType, <:PSY.Component},
+    ::ParameterKey{<:ParameterType, <:PSY.Component},
     param_array,
     multiplier_array,
 )
@@ -1212,7 +1204,7 @@ function _calculate_parameter_values(
 end
 
 function _calculate_parameter_values(
-    key::ParameterKey{<:ObjectiveFunctionParameter, <:PSY.Component},
+    ::ParameterKey{<:ObjectiveFunctionParameter, <:PSY.Component},
     param_array,
     multiplier_array,
 )
