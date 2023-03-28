@@ -7,18 +7,20 @@ function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     ::PSY.System,
-    ::Type{U},
+    network_model::NetworkModel{U},
 ) where {
     T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     U <: Union{CopperPlatePowerModel, StandardPTDFModel},
 }
     time_steps = get_time_steps(container)
-    variable = add_variable_container!(container, T(), PSY.System, time_steps)
+    reference_buses = get_reference_buses(network_model)
+    variable =
+        add_variable_container!(container, T(), PSY.System, reference_buses, time_steps)
 
-    for t in time_steps
-        variable[t] = JuMP.@variable(
-            container.JuMPmodel,
-            base_name = "slack_{$(T), $t}",
+    for t in time_steps, bus in reference_buses
+        variable[bus, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "slack_{$(T), $(bus), $t}",
             lower_bound = 0.0
         )
     end
@@ -29,7 +31,7 @@ function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     sys::PSY.System,
-    ::Type{U},
+    network_model::NetworkModel{U},
 ) where {
     T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     U <: PM.AbstractActivePowerModel,
@@ -40,7 +42,7 @@ function add_variables!(
 
     for t in time_steps, n in bus_numbers
         variable[n, t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "slack_{$(T), $n, $t}",
             lower_bound = 0.0
         )
@@ -52,7 +54,7 @@ function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     sys::PSY.System,
-    ::Type{U},
+    network_model::NetworkModel{U},
 ) where {
     T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     U <: PM.AbstractPowerModel,
@@ -66,12 +68,12 @@ function add_variables!(
 
     for t in time_steps, n in bus_numbers
         variable_active[n, t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "slack_{p, $(T), $n, $t}",
             lower_bound = 0.0
         )
         variable_reactive[n, t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "slack_{q, $(T), $n, $t}",
             lower_bound = 0.0
         )
@@ -82,16 +84,16 @@ end
 function objective_function!(
     container::OptimizationContainer,
     ::Type{PSY.System},
-    model::NetworkModel{T},
-    S::Type{T},
+    network_model::NetworkModel{T},
 ) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.System)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
+    reference_buses = get_reference_buses(network_model)
 
-    for t in get_time_steps(container)
+    for t in get_time_steps(container), n in reference_buses
         add_to_objective_invariant_expression!(
             container,
-            (variable_dn[t] + variable_up[t]) * BALANCE_SLACK_COST,
+            (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
         )
     end
     return
@@ -100,8 +102,7 @@ end
 function objective_function!(
     container::OptimizationContainer,
     ::Type{PSY.Bus},
-    model::NetworkModel{T},
-    S::Type{T},
+    network_model::NetworkModel{T},
 ) where {T <: PM.AbstractActivePowerModel}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus)
@@ -119,8 +120,7 @@ end
 function objective_function!(
     container::OptimizationContainer,
     ::Type{PSY.Bus},
-    model::NetworkModel{T},
-    S::Type{T},
+    network_model::NetworkModel{T},
 ) where {T <: PM.AbstractPowerModel}
     variable_p_up = get_variable(container, SystemBalanceSlackUp(), PSY.Bus, "P")
     variable_p_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Bus, "P")

@@ -67,8 +67,8 @@ function add_constraints!(
     U::Type{<:ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation}
+    ::NetworkModel{X},
+) where {V <: PSY.RenewableGen, W <: AbstractDeviceFormulation, X <: PM.AbstractPowerModel}
     add_range_constraints!(container, T, U, devices, model, X)
     return
 end
@@ -82,8 +82,12 @@ function add_constraints!(
     ::Type{<:ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.RenewableGen, W <: RenewableConstantPowerFactor}
+    ::NetworkModel{X},
+) where {
+    V <: PSY.RenewableGen,
+    W <: RenewableConstantPowerFactor,
+    X <: PM.AbstractPowerModel,
+}
     names = [PSY.get_name(d) for d in devices]
     time_steps = get_time_steps(container)
     p_var = get_variable(container, ActivePowerVariable(), V)
@@ -105,8 +109,12 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.RenewableGen, W <: AbstractRenewableDispatchFormulation}
+    ::NetworkModel{X},
+) where {
+    V <: PSY.RenewableGen,
+    W <: AbstractRenewableDispatchFormulation,
+    X <: PM.AbstractPowerModel,
+}
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,

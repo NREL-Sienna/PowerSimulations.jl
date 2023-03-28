@@ -266,6 +266,8 @@ function build_pre_step!(model::DecisionModel)
             get_network_formulation(get_template(model)),
             get_system(model),
         )
+        @info "Instantiating Network Model"
+        instantiate_network_model(model)
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
 

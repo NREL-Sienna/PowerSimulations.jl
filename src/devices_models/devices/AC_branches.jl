@@ -42,41 +42,21 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 #################################### Flow Variable Bounds ##################################################
-
-add_variables!(
+# Additional Method to be able to filter the branches that are not in the PTDF matrix
+function add_variables!(
     container::OptimizationContainer,
-    ::NetworkModel{<:AbstractPTDFModel},
-    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
-    formulation::AbstractBranchFormulation,
-) = add_variable!(container, FlowActivePowerVariable(), devices, formulation)
-
-add_variables!(
-    container::OptimizationContainer,
+    ::Type{FlowActivePowerVariable},
     network_model::NetworkModel{StandardPTDFModel},
-    devices::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
+    devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractBranchFormulation,
-) = _add_variable!(
-    container,
-    FlowActivePowerVariable(),
-    network_model,
-    devices,
-    formulation,
-)
-
-function _add_variable!(
-    container::OptimizationContainer,
-    variable_type::T,
-    network_model::NetworkModel{StandardPTDFModel},
-    devices::IS.FlattenIteratorWrapper{U},
-    formulation::AbstractBranchFormulation,
-) where {T <: VariableType, U <: PSY.ACBranch}
+) where {T <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ Set(ptdf.axes[1])]
     variable = add_variable_container!(
         container,
-        variable_type,
-        U,
+        FlowActivePowerVariable(),
+        T,
         PSY.get_name.(branches_in_ptdf),
         time_steps,
     )
@@ -87,15 +67,36 @@ function _add_variable!(
         for t in time_steps
             variable[name, t] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "$(T)_$(U)_{$(name), $(t)}",
+                base_name = "FlowActivePowerVariable_$(U)_{$(name), $(t)}",
             )
-            ub = get_variable_upper_bound(variable_type, d, formulation)
+            ub = get_variable_upper_bound(FlowActivePowerVariable(), d, formulation)
             ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
-            lb = get_variable_lower_bound(variable_type, d, formulation)
-            lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
+            lb = get_variable_lower_bound(FlowActivePowerVariable(), d, formulation)
+            lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
         end
     end
+end
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{FlowActivePowerVariable},
+    network_model::NetworkModel{CopperPlatePowerModel},
+    devices::IS.FlattenIteratorWrapper{T},
+    formulation::U,
+) where {T <: PSY.Branch, U <: AbstractBranchFormulation}
+    inter_network_branches = T[]
+    for d in devices
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        if ref_bus_from != ref_bus_to
+            push!(inter_network_branches, d)
+        end
+    end
+    if !isempty(inter_network_branches)
+        add_variables!(container, FlowActivePowerVariable, inter_network_branches, U())
+    end
+    return
 end
 
 function branch_rate_bounds!(
@@ -167,9 +168,41 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    X::Type{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
+    ::NetworkModel{X},
+) where {
+    T <: PSY.ACBranch,
+    U <: AbstractBranchFormulation,
+    X <: PM.AbstractActivePowerModel,
+}
     add_range_constraints!(container, cons_type, FlowActivePowerVariable, devices, model, X)
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{RateLimitConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
+    inter_network_branches = T[]
+    for d in devices
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        if ref_bus_from != ref_bus_to
+            push!(inter_network_branches, d)
+        end
+    end
+    if !isempty(inter_network_branches)
+        add_range_constraints!(
+            container,
+            RateLimitConstraint,
+            FlowActivePowerVariable,
+            devices,
+            model,
+            CopperPlatePowerModel,
+        )
+    end
     return
 end
 
@@ -181,7 +214,7 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{T},
+    ::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -200,11 +233,12 @@ function add_constraints!(
     for r in rating_data
         for t in time_steps
             constraint[r[1], t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
             )
         end
     end
+    return
 end
 
 """
@@ -215,7 +249,7 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraintToFrom},
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{T},
+    ::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -234,7 +268,7 @@ function add_constraints!(
     for r in rating_data
         for t in time_steps
             constraint[r[1], t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
             )
         end
@@ -380,8 +414,12 @@ function add_constraints!(
     ::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{<:PM.AbstractDCPModel},
-) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
+    ::NetworkModel{V},
+) where {
+    T <: PSY.MonitoredLine,
+    U <: StaticBranchUnbounded,
+    V <: PM.AbstractActivePowerModel,
+}
     return
 end
 
@@ -431,8 +469,12 @@ function add_constraints!(
     ::Type{FlowLimitFromToConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.MonitoredLine, U <: AbstractBranchFormulation}
+    ::NetworkModel{V},
+) where {
+    T <: PSY.MonitoredLine,
+    U <: AbstractBranchFormulation,
+    V <: PM.AbstractActivePowerModel,
+}
     add_range_constraints!(
         container,
         FlowLimitFromToConstraint,
@@ -460,8 +502,12 @@ function add_constraints!(
     ::Type{FlowLimitToFromConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.MonitoredLine, U <: StaticBranchUnbounded}
+    ::NetworkModel{V},
+) where {
+    T <: PSY.MonitoredLine,
+    U <: StaticBranchUnbounded,
+    V <: PM.AbstractActivePowerModel,
+}
     return
 end
 

@@ -6,7 +6,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -20,7 +20,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -28,7 +28,7 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -38,7 +38,7 @@ function construct_device!(
     ::PSY.System,
     ::ModelConstructStage,
     ::DeviceModel{H, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
@@ -50,7 +50,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -63,7 +63,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -76,7 +76,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: AbstractHydroDispatchFormulation,
@@ -93,7 +93,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -101,7 +101,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -114,7 +114,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -122,7 +122,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -134,7 +134,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: AbstractHydroDispatchFormulation,
@@ -148,7 +148,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -156,7 +156,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_constraints!(
@@ -165,7 +165,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -184,7 +184,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: AbstractHydroDispatchFormulation,
@@ -200,7 +200,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -210,7 +210,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -218,7 +218,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -232,7 +232,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: AbstractHydroDispatchFormulation,
@@ -246,7 +246,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -254,7 +254,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -273,7 +273,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -295,7 +295,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -303,7 +303,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -311,7 +311,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -319,7 +319,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -330,7 +330,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -340,7 +340,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -348,7 +348,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_constraints!(
@@ -357,11 +357,11 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -380,7 +380,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -396,7 +396,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_to_expression!(
@@ -405,7 +405,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -413,7 +413,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -424,7 +424,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirBudget},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -434,7 +434,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -442,11 +442,11 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -464,7 +464,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -506,7 +506,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -514,7 +514,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -522,7 +522,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -530,7 +530,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -541,7 +541,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -551,7 +551,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -559,7 +559,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_constraints!(
@@ -568,7 +568,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_initial_condition!(
@@ -578,8 +578,8 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -597,7 +597,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -628,7 +628,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
@@ -642,7 +642,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -650,7 +650,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -663,7 +663,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroDispatchReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -673,7 +673,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -681,7 +681,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_initial_condition!(
@@ -691,8 +691,8 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -709,7 +709,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -723,7 +723,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_to_expression!(
@@ -732,7 +732,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
@@ -745,7 +745,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -753,7 +753,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -764,7 +764,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -774,7 +774,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -782,7 +782,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_constraints!(
@@ -791,7 +791,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -811,7 +811,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: HydroCommitmentRunOfRiver,
@@ -828,7 +828,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
@@ -840,7 +840,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -848,7 +848,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -860,7 +860,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: HydroCommitmentRunOfRiver,
@@ -874,7 +874,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -882,7 +882,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_feedforward_constraints!(container, model, devices)
@@ -901,7 +901,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -915,7 +915,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -923,7 +923,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
@@ -936,7 +936,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -944,7 +944,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -955,7 +955,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -965,7 +965,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -973,7 +973,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_constraints!(
@@ -982,10 +982,10 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1004,7 +1004,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: HydroCommitmentReservoirBudget,
@@ -1021,7 +1021,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, EnergyBudgetTimeSeriesParameter, devices, model)
@@ -1033,7 +1033,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1041,7 +1041,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
 
@@ -1053,7 +1053,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
     D <: HydroCommitmentReservoirBudget,
@@ -1067,7 +1067,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -1075,11 +1075,11 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     # Energy Budget Constraint
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1097,7 +1097,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -1140,7 +1140,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1148,7 +1148,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
@@ -1162,7 +1162,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1170,7 +1170,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1181,7 +1181,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
@@ -1191,7 +1191,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -1199,7 +1199,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_constraints!(
@@ -1208,7 +1208,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_initial_condition!(
@@ -1218,8 +1218,8 @@ function construct_device!(
         InitialEnergyLevel(),
     )
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -1237,7 +1237,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -1274,7 +1274,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_variables!(container, EnergyOutput, devices, HydroCommitmentReservoirStorage())
     add_parameters!(container, EnergyTargetTimeSeriesParameter, devices, model)
@@ -1288,7 +1288,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1296,7 +1296,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1307,7 +1307,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -1317,7 +1317,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -1325,7 +1325,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_initial_condition!(
@@ -1336,8 +1336,8 @@ function construct_device!(
     )
 
     # Energy Balance Constraint
-    add_constraints!(container, EnergyBalanceConstraint, devices, model, S)
-    add_constraints!(container, EnergyTargetConstraint, devices, model, S)
+    add_constraints!(container, EnergyBalanceConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyTargetConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)
@@ -1355,7 +1355,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -1385,7 +1385,7 @@ function construct_device!(
         ActivePowerInVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -1393,7 +1393,7 @@ function construct_device!(
         ActivePowerOutVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_expressions!(container, ReserveRangeExpressionLB, devices, model)
@@ -1408,7 +1408,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{H, HydroDispatchPumpedStorage},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
@@ -1418,7 +1418,7 @@ function construct_device!(
         ActivePowerOutVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_constraints!(
         container,
@@ -1426,7 +1426,7 @@ function construct_device!(
         ActivePowerInVariable,
         devices,
         model,
-        S,
+        network_model,
     )
 
     add_initial_condition!(
@@ -1443,8 +1443,8 @@ function construct_device!(
     )
 
     # Energy Balanace limits
-    add_constraints!(container, EnergyCapacityUpConstraint, devices, model, S)
-    add_constraints!(container, EnergyCapacityDownConstraint, devices, model, S)
+    add_constraints!(container, EnergyCapacityUpConstraint, devices, model, network_model)
+    add_constraints!(container, EnergyCapacityDownConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, S)

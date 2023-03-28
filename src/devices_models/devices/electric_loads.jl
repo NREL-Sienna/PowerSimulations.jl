@@ -68,8 +68,12 @@ function add_constraints!(
     U::Type{<:ReactivePowerVariable},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.ElectricLoad, W <: AbstractControllablePowerLoadFormulation}
+    network_model::NetworkModel{X},
+) where {
+    V <: PSY.ElectricLoad,
+    W <: AbstractControllablePowerLoadFormulation,
+    X <: PM.AbstractPowerModel,
+}
     time_steps = get_time_steps(container)
     constraint = add_constraints_container!(
         container,
@@ -90,12 +94,12 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{ActivePowerVariableLimitsConstraint},
+    ::Type{ActivePowerVariableLimitsConstraint},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.ControllableLoad, W <: PowerLoadDispatch}
+    ::NetworkModel{X},
+) where {V <: PSY.ControllableLoad, W <: PowerLoadDispatch, X <: PM.AbstractPowerModel}
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -114,8 +118,8 @@ function add_constraints!(
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
-) where {V <: PSY.ControllableLoad, W <: PowerLoadInterruption}
+    ::NetworkModel{X},
+) where {V <: PSY.ControllableLoad, W <: PowerLoadInterruption, X <: PM.AbstractPowerModel}
     add_parameterized_upper_bound_range_constraints(
         container,
         ActivePowerVariableTimeSeriesLimitsConstraint,

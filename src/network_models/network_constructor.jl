@@ -5,34 +5,20 @@ function construct_network!(
     ::ProblemTemplate,
 )
     if get_use_slacks(model)
-        add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
-        add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-            CopperPlatePowerModel,
-        )
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
-            CopperPlatePowerModel,
         )
-        objective_function!(container, PSY.System, model, CopperPlatePowerModel)
+        objective_function!(container, PSY.System, model)
     end
 
-    add_constraints!(
-        container,
-        CopperPlateBalanceConstraint,
-        sys,
-        model,
-        CopperPlatePowerModel,
-    )
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -70,35 +56,21 @@ function construct_network!(
     model::NetworkModel{StandardPTDFModel},
     ::ProblemTemplate,
 )
-    ptdf = get_PTDF_matrix(model)
-
-    if ptdf === nothing
-        throw(ArgumentError("no PTDF matrix supplied"))
-    end
-
     if get_use_slacks(model)
-        add_variables!(container, SystemBalanceSlackUp, sys, CopperPlatePowerModel)
-        add_variables!(container, SystemBalanceSlackDown, sys, CopperPlatePowerModel)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-            StandardPTDFModel,
-        )
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
-            StandardPTDFModel,
         )
-        objective_function!(container, PSY.System, model, StandardPTDFModel)
+        objective_function!(container, PSY.System, model)
     end
 
-    add_constraints!(container, CopperPlateBalanceConstraint, sys, model, StandardPTDFModel)
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
 
     add_constraint_dual!(container, sys, model)
     return
@@ -120,7 +92,7 @@ function construct_network!(
 
     add_pm_expr_refs!(container, T, sys)
 
-    add_constraints!(container, CopperPlateBalanceConstraint, sys, model, PTDFPowerModel)
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -142,25 +114,17 @@ function construct_network!(
     end
 
     if get_use_slacks(model)
-        add_variables!(container, SystemBalanceSlackUp, sys, T)
-        add_variables!(container, SystemBalanceSlackDown, sys, T)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-            T,
-        )
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -189,23 +153,15 @@ function construct_network!(
     end
 
     if get_use_slacks(model)
-        add_variables!(container, SystemBalanceSlackUp, sys, T)
-        add_variables!(container, SystemBalanceSlackDown, sys, T)
-        add_to_expression!(
-            container,
-            ActivePowerBalance,
-            SystemBalanceSlackUp,
-            sys,
-            model,
-            T,
-        )
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -213,7 +169,6 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -221,9 +176,8 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -286,7 +240,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -348,7 +302,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.Bus, model, T)
+        objective_function!(container, PSY.Bus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =

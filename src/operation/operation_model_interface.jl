@@ -378,6 +378,13 @@ function update_model!(model::OperationModel, source, ini_cond_chronology)
     return
 end
 
+function instantiate_network_model(model::OperationModel)
+    template = get_template(model)
+    network_model = get_network_model(template)
+    instantiate_network_model(network_model, get_system(model))
+    return
+end
+
 list_aux_variable_keys(x::OperationModel) =
     list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
 list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)

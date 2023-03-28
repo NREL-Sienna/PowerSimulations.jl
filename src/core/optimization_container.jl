@@ -376,7 +376,7 @@ function check_optimization_container(container::OptimizationContainer)
 end
 
 function get_problem_size(container::OptimizationContainer)
-    model = container.JuMPmodel
+    model = get_jump_model(container)
     vars = JuMP.num_variables(model)
     cons = 0
     for (exp, c_type) in JuMP.list_of_constraint_types(model)
@@ -391,10 +391,11 @@ end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    bus_numbers::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{<:PM.AbstractPowerModel},
 )
     time_steps = get_time_steps(container)
+    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -406,10 +407,11 @@ end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    bus_numbers::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{<:PM.AbstractActivePowerModel},
 )
     time_steps = get_time_steps(container)
+    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
@@ -419,26 +421,29 @@ end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    ::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{CopperPlatePowerModel},
 )
     time_steps = get_time_steps(container)
+    subnetworks_ref_buses = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(time_steps),
+            _make_container_array(subnetworks_ref_buses, time_steps),
     )
     return
 end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
-    bus_numbers::Vector{Int},
+    subnetworks::Dict{Int, Set{Int}},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
+    bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
+    subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(time_steps),
+            _make_container_array(subnetworks, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.Bus) =>
             _make_container_array(bus_numbers, time_steps),
     )
@@ -448,17 +453,16 @@ end
 function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
-    system::PSY.System,
+    subnetworks::Dict{Int, Set{Int}},
 ) where {T <: PM.AbstractPowerModel}
-    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, system)])
-    _make_system_expressions!(container, bus_numbers, T)
+    _make_system_expressions!(container, subnetworks, T)
     return
 end
 
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    initialize_system_expressions!(container, transmission, sys)
+    initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
 
     # Order is required
     for device_model in values(template.devices)
@@ -471,7 +475,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     sys,
                     ArgumentConstructStage(),
                     device_model,
-                    transmission,
+                    transmission_model,
                 )
             end
             @debug "Problem size:" get_problem_size(container) _group =
@@ -527,7 +531,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
                     sys,
                     ModelConstructStage(),
                     device_model,
-                    transmission,
+                    transmission_model,
                 )
             end
             @debug "Problem size:" get_problem_size(container) _group =
@@ -903,7 +907,7 @@ function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     if var === nothing
         name = encode_key(key)
         keys = encode_key.(get_constraint_keys(container))
-        throw(IS.InvalidValue("constraint $name is not stored"))
+        throw(IS.InvalidValue("constraint $name is not stored. $keys"))
     end
 
     return var
@@ -911,18 +915,10 @@ end
 
 function get_constraint(
     container::OptimizationContainer,
-    constraint_type::ConstraintType,
-    meta=CONTAINER_KEY_EMPTY_META,
-)
-    return get_constraint(container, ConstraintKey(constraint_type, meta))
-end
-
-function get_constraint(
-    container::OptimizationContainer,
     ::T,
     ::Type{U},
-    meta=CONTAINER_KEY_EMPTY_META,
-) where {T <: ConstraintType, U <: PSY.Component}
+    meta::String=CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     return get_constraint(container, ConstraintKey(T, U, meta))
 end
 
@@ -1200,7 +1196,7 @@ function read_parameters(container::OptimizationContainer)
 end
 
 function _calculate_parameter_values(
-    key::ParameterKey{<:ParameterType, <:PSY.Component},
+    ::ParameterKey{<:ParameterType, <:PSY.Component},
     param_array,
     multiplier_array,
 )
@@ -1208,7 +1204,7 @@ function _calculate_parameter_values(
 end
 
 function _calculate_parameter_values(
-    key::ParameterKey{<:ObjectiveFunctionParameter, <:PSY.Component},
+    ::ParameterKey{<:ObjectiveFunctionParameter, <:PSY.Component},
     param_array,
     multiplier_array,
 )
@@ -1462,9 +1458,9 @@ function _calculate_dual_variable_value!(
     constraint_container = get_constraint(container, key)
     dual_variable_container = get_duals(container)[key]
 
-    for t in axes(constraint_container)[1]
+    for subnet in axes(constraint_container)[1], t in axes(constraint_container)[2]
         # See https://jump.dev/JuMP.jl/stable/manual/solutions/#Dual-solution-values
-        dual_variable_container[t] = jump_value(constraint_container[t])
+        dual_variable_container[subnet, t] = jump_value(constraint_container[subnet, t])
     end
     return
 end

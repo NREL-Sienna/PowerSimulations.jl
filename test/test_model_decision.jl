@@ -211,9 +211,9 @@ end
               :,
               propertynames(realized_dual_results_string) .!= :DateTime,
           ]
-    for i in axes(constraints)[1]
-        dual = JuMP.dual(constraints[i])
-        @test isapprox(dual, dual_results[i, :CopperPlateBalanceConstraint__System])
+    for i in axes(constraints)[1], j in axes(constraints)[2]
+        dual = JuMP.dual(constraints[i, j])
+        @test isapprox(dual, dual_results[j, 1])
     end
 
     system = PSI.get_system(model)

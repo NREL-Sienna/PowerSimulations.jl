@@ -61,6 +61,7 @@ end
         @test check_flow_variable_values(model_m, FlowActivePowerVariable, Line, "2", 1.5)
     end
 end
+
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with Bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
@@ -223,7 +224,9 @@ end
 
     add_component!(sys_5, hvdc)
 
-    template_uc = ProblemTemplate(NetworkModel(StandardPTDFModel, PTDF_matrix=PTDF(sys_5)))
+    template_uc = ProblemTemplate(
+        NetworkModel(StandardPTDFModel, PTDF_matrix=PTDF(sys_5; linear_solver="Dense")),
+    )
 
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
@@ -238,8 +241,10 @@ end
         optimizer=HiGHS_optimizer,
         system_to_file=false,
     )
+    build!(model; output_dir=mktempdir())
 
-    solve!(model; output_dir=mktempdir())
+    solve!(model)
+
     ptdf_vars = get_variable_values(ProblemResults(model))
     ptdf_values =
         ptdf_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]

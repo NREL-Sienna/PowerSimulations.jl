@@ -50,7 +50,6 @@ function add_parameters!(
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, S)
         return
     end
-    error("here2")
     add_parameters!(container, T(), key, model, devices)
     return
 end

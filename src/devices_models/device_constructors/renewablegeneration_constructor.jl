@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -25,7 +25,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -33,7 +33,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     if has_service_model(model)
         add_to_expression!(
@@ -42,7 +42,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S,
+            network_model,
         )
         add_to_expression!(
             container,
@@ -50,7 +50,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S,
+            network_model,
         )
     end
 end
@@ -60,7 +60,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{R, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -75,7 +75,7 @@ function construct_device!(
             ActivePowerRangeExpressionUB,
             devices,
             model,
-            S,
+            network_model,
         )
     else
         add_constraints!(
@@ -84,7 +84,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S,
+            network_model,
         )
     end
 
@@ -94,7 +94,7 @@ function construct_device!(
         ReactivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     add_feedforward_constraints!(container, model, devices)
 
@@ -109,7 +109,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -130,7 +130,7 @@ function construct_device!(
         ActivePowerVariable,
         devices,
         model,
-        S,
+        network_model,
     )
     if has_service_model(model)
         add_to_expression!(
@@ -139,7 +139,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S,
+            network_model,
         )
         add_to_expression!(
             container,
@@ -147,7 +147,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S,
+            network_model,
         )
     end
 end
@@ -157,7 +157,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{R, D},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -172,7 +172,7 @@ function construct_device!(
             ActivePowerRangeExpressionUB,
             devices,
             model,
-            S,
+            network_model,
         )
     else
         add_constraints!(
@@ -181,7 +181,7 @@ function construct_device!(
             ActivePowerVariable,
             devices,
             model,
-            S,
+            network_model,
         )
     end
     add_feedforward_constraints!(container, model, devices)
@@ -198,7 +198,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
 
@@ -211,7 +211,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     add_to_expression!(
         container,
@@ -219,7 +219,7 @@ function construct_device!(
         ReactivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -229,7 +229,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(R, sys)
 
@@ -240,7 +240,7 @@ function construct_device!(
         ActivePowerTimeSeriesParameter,
         devices,
         model,
-        S,
+        network_model,
     )
     return
 end
@@ -250,7 +250,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{R, FixedOutput},
-    ::Type{S},
+    network_model::NetworkModel{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel

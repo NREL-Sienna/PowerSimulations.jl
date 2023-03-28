@@ -3,6 +3,7 @@ using PowerSimulations
 using PowerSystems
 using PowerSystemCaseBuilder
 using InfrastructureSystems
+using PowerNetworkMatrices
 import PowerSystemCaseBuilder: PSITestSystems
 using PowerNetworkMatrices
 
@@ -34,6 +35,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const PSB = PowerSystemCaseBuilder
+const PNM = PowerNetworkMatrices
 
 const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
