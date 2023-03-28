@@ -157,25 +157,25 @@ end
 
     models = SimulationModels([
         DecisionModel(
-            template;
+            template,
+            sys_md;
             name = "MD",
-            sys_md,
             initialize_model = false,
             system_to_file = false,
             optimizer = HiGHS_optimizer,
         ),
         DecisionModel(
-            template_uc;
+            template_uc,
+            sys_uc;
             name = "UC",
-            sys_uc,
             initialize_model = false,
             system_to_file = false,
             optimizer = HiGHS_optimizer,
         ),
         DecisionModel(
-            template_ed;
+            template_ed,
+            sys_ed;
             name = "ED",
-            sys_ed,
             initialize_model = false,
             system_to_file = false,
             optimizer = HiGHS_optimizer,
