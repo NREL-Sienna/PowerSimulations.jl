@@ -67,7 +67,7 @@ function assign_dual_variable!(
         D,
         [service_name],
         time_steps;
-        meta=service_name,
+        meta = service_name,
     )
     return
 end

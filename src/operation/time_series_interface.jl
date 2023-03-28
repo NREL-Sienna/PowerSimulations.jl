@@ -4,14 +4,14 @@ function make_time_series_cache(
     name,
     initial_time,
     len::Int;
-    ignore_scaling_factors=true,
+    ignore_scaling_factors = true,
 ) where {T <: PSY.StaticTimeSeries}
     return IS.StaticTimeSeriesCache(
         T,
         component,
-        name,
-        start_time=initial_time,
-        ignore_scaling_factors=ignore_scaling_factors,
+        name;
+        start_time = initial_time,
+        ignore_scaling_factors = ignore_scaling_factors,
     )
 end
 
@@ -21,15 +21,15 @@ function make_time_series_cache(
     name,
     initial_time,
     horizon::Int;
-    ignore_scaling_factors=true,
+    ignore_scaling_factors = true,
 ) where {T <: PSY.AbstractDeterministic}
     return IS.ForecastCache(
         T,
         component,
-        name,
-        start_time=initial_time,
-        horizon=horizon,
-        ignore_scaling_factors=ignore_scaling_factors,
+        name;
+        start_time = initial_time,
+        horizon = horizon,
+        ignore_scaling_factors = ignore_scaling_factors,
     )
 end
 
@@ -39,15 +39,15 @@ function make_time_series_cache(
     name,
     initial_time,
     horizon::Int;
-    ignore_scaling_factors=true,
+    ignore_scaling_factors = true,
 )
     return IS.ForecastCache(
         PSY.Probabilistic,
         component,
-        name,
-        start_time=initial_time,
-        horizon=horizon,
-        ignore_scaling_factors=ignore_scaling_factors,
+        name;
+        start_time = initial_time,
+        horizon = horizon,
+        ignore_scaling_factors = ignore_scaling_factors,
     )
 end
 
@@ -59,16 +59,16 @@ function get_time_series_values!(
     multiplier_id::Int,
     initial_time,
     horizon::Int;
-    ignore_scaling_factors=true,
+    ignore_scaling_factors = true,
 ) where {T <: PSY.Forecast}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
             T,
             component,
-            name,
-            start_time=initial_time,
-            len=horizon,
-            ignore_scaling_factors=ignore_scaling_factors,
+            name;
+            start_time = initial_time,
+            len = horizon,
+            ignore_scaling_factors = ignore_scaling_factors,
         )
     end
 
@@ -82,8 +82,8 @@ function get_time_series_values!(
             component,
             name,
             initial_time,
-            horizon,
-            ignore_scaling_factors=ignore_scaling_factors,
+            horizon;
+            ignore_scaling_factors = ignore_scaling_factors,
         )
         cache[key] = ts_cache
     end
@@ -99,17 +99,17 @@ function get_time_series_values!(
     name,
     multiplier_id::Int,
     initial_time,
-    len::Int=1;
-    ignore_scaling_factors=true,
+    len::Int = 1;
+    ignore_scaling_factors = true,
 ) where {T <: PSY.StaticTimeSeries, U <: PSY.Component}
     if !use_time_series_cache(get_settings(model))
         return IS.get_time_series_values(
             T,
             component,
-            name,
-            start_time=initial_time,
-            len=len,
-            ignore_scaling_factors=ignore_scaling_factors,
+            name;
+            start_time = initial_time,
+            len = len,
+            ignore_scaling_factors = ignore_scaling_factors,
         )
     end
 
@@ -123,8 +123,8 @@ function get_time_series_values!(
             component,
             name,
             initial_time,
-            len,
-            ignore_scaling_factors=ignore_scaling_factors,
+            len;
+            ignore_scaling_factors = ignore_scaling_factors,
         )
         cache[key] = ts_cache
     end

@@ -303,7 +303,7 @@ function get_min_max_limits(
     ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchRunOfRiver},
 )
-    return (min=0.0, max=PSY.get_max_active_power(x))
+    return (min = 0.0, max = PSY.get_max_active_power(x))
 end
 
 """
@@ -692,7 +692,8 @@ function add_constraints!(
         param = get_parameter_column_values(param_container, name)
         constraint[name] = JuMP.@constraint(
             container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[t] for t in time_steps])
+            sum([variable_out[name, t] for t in time_steps]) <=
+            sum([multiplier[name, t] * param[t] for t in time_steps])
         )
     end
     return

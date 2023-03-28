@@ -16,7 +16,7 @@ encode_keys_as_strings(container_keys) = [encode_key_as_string(k) for k in conta
 function encode_symbol(
     ::Type{T},
     ::Type{U},
-    meta::String=CONTAINER_KEY_EMPTY_META,
+    meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: Union{PSY.Component, PSY.System}, U}
     meta_ = isempty(meta) ? meta : _DELIMITER * meta
     T_ = replace(replace(IS.strip_module_name(T), "{" => _DELIMITER), "}" => "")

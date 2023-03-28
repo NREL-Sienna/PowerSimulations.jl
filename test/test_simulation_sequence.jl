@@ -2,24 +2,24 @@
     models_array = [
         DecisionModel(
             MockOperationProblem;
-            horizon=48,
-            interval=Hour(24),
-            steps=2,
-            name="DAUC",
+            horizon = 48,
+            interval = Hour(24),
+            steps = 2,
+            name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon=24,
-            interval=Hour(1),
-            steps=2 * 24,
-            name="HAUC",
+            horizon = 24,
+            interval = Hour(1),
+            steps = 2 * 24,
+            name = "HAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon=12,
-            interval=Minute(5),
-            steps=2 * 24 * 12,
-            name="ED",
+            horizon = 12,
+            interval = Minute(5),
+            steps = 2 * 24 * 12,
+            name = "ED",
         ),
     ]
     set_device_model!(
@@ -29,21 +29,21 @@
     )
     models = SimulationModels(
         models_array,
-        EmulationModel(MockEmulationProblem; resolution=Minute(1), name="AGC"),
+        EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
     )
 
-    test_sequence = SimulationSequence(
-        models=models,
-        feedforwards=Dict(
+    test_sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
             "ED" => [
-                SemiContinuousFeedforward(
-                    component_type=ThermalStandard,
-                    source=OnVariable,
-                    affected_values=[ActivePowerVariable],
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
                 ),
             ],
         ),
-        ini_cond_chronology=InterProblemChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     @test !isempty(
@@ -60,11 +60,11 @@
     end
 
     # Test single stage sequence
-    test_sequence = SimulationSequence(
-        models=SimulationModels(
+    test_sequence = SimulationSequence(;
+        models = SimulationModels(
         # TODO: support passing one model without making a vector
-            [DecisionModel(MockOperationProblem; horizon=48, name="DAUC")]),
-        ini_cond_chronology=InterProblemChronology(),
+            [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
     # Disabled temporarily
@@ -76,57 +76,57 @@ end
     models = SimulationModels([
         DecisionModel(
             MockOperationProblem;
-            horizon=48,
-            interval=Hour(24),
-            steps=2,
-            name="DAUC",
+            horizon = 48,
+            interval = Hour(24),
+            steps = 2,
+            name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon=24,
-            interval=Hour(5),
-            steps=2 * 24,
-            name="HAUC",
+            horizon = 24,
+            interval = Hour(5),
+            steps = 2 * 24,
+            name = "HAUC",
         ),
     ])
 
-    @test_throws IS.ConflictingInputsError SimulationSequence(models=models)
+    @test_throws IS.ConflictingInputsError SimulationSequence(models = models)
 
     models = SimulationModels([
         DecisionModel(
             MockOperationProblem;
-            horizon=2,
-            interval=Hour(1),
-            steps=2,
-            name="DAUC",
+            horizon = 2,
+            interval = Hour(1),
+            steps = 2,
+            name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon=24,
-            interval=Hour(1),
-            steps=2 * 24,
-            name="HAUC",
+            horizon = 24,
+            interval = Hour(1),
+            steps = 2 * 24,
+            name = "HAUC",
         ),
     ])
 
-    @test_throws IS.ConflictingInputsError SimulationSequence(models=models)
+    @test_throws IS.ConflictingInputsError SimulationSequence(models = models)
 
     models = SimulationModels([
         DecisionModel(
             MockOperationProblem;
-            horizon=24,
-            interval=Hour(1),
-            steps=2,
-            name="DAUC",
+            horizon = 24,
+            interval = Hour(1),
+            steps = 2,
+            name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon=24,
-            interval=Minute(22),
-            steps=2 * 24,
-            name="HAUC",
+            horizon = 24,
+            interval = Minute(22),
+            steps = 2 * 24,
+            name = "HAUC",
         ),
     ])
 
-    @test_throws IS.ConflictingInputsError SimulationSequence(models=models)
+    @test_throws IS.ConflictingInputsError SimulationSequence(models = models)
 end

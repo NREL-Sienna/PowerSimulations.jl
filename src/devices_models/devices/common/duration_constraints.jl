@@ -58,16 +58,16 @@ function device_duration_retrospective!(
         cons_type,
         T,
         set_names,
-        time_steps,
-        meta="up",
+        time_steps;
+        meta = "up",
     )
     con_down = add_constraints_container!(
         container,
         cons_type,
         T,
         set_names,
-        time_steps,
-        meta="dn",
+        time_steps;
+        meta = "dn",
     )
 
     for t in time_steps
@@ -264,16 +264,16 @@ function device_duration_parameters!(
         cons_type,
         T,
         set_names,
-        time_steps,
-        meta="up",
+        time_steps;
+        meta = "up",
     )
     con_down = add_constraints_container!(
         container,
         cons_type,
         T,
         set_names,
-        time_steps,
-        meta="dn",
+        time_steps;
+        meta = "dn",
     )
 
     for t in time_steps
@@ -379,18 +379,18 @@ function device_duration_compact_retrospective!(
         cons_type,
         T,
         set_names,
-        time_steps,
-        meta="up",
-        sparse=true,
+        time_steps;
+        meta = "up",
+        sparse = true,
     )
     con_down = add_constraints_container!(
         container,
         cons_type,
         T,
         set_names,
-        time_steps,
-        meta="dn",
-        sparse=true,
+        time_steps;
+        meta = "dn",
+        sparse = true,
     )
     total_time_steps = length(time_steps)
     for t in time_steps

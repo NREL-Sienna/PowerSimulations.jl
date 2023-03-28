@@ -38,17 +38,17 @@ end
 
 function ProblemResultsExport(
     name;
-    duals=Set{ConstraintKey}(),
-    expressions=Set{ExpressionKey}(),
-    parameters=Set{ParameterKey}(),
-    variables=Set{VariableKey}(),
-    aux_variables=Set{AuxVarKey}(),
-    optimizer_stats=true,
-    store_all_duals=false,
-    store_all_expressions=false,
-    store_all_parameters=false,
-    store_all_variables=false,
-    store_all_aux_variables=false,
+    duals = Set{ConstraintKey}(),
+    expressions = Set{ExpressionKey}(),
+    parameters = Set{ParameterKey}(),
+    variables = Set{VariableKey}(),
+    aux_variables = Set{AuxVarKey}(),
+    optimizer_stats = true,
+    store_all_duals = false,
+    store_all_expressions = false,
+    store_all_parameters = false,
+    store_all_variables = false,
+    store_all_aux_variables = false,
 )
     store_all_flags = Dict(
         :duals => store_all_duals,

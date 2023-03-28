@@ -22,9 +22,10 @@ end
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
 
-    dm_model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    @test build!(dm_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
-    @test solve!(dm_model; optimizer=GLPK_optimizer) == RunStatus.SUCCESSFUL
+    dm_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(dm_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.BuildStatus.BUILT
+    @test solve!(dm_model; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
     results = ProblemResults(dm_model)
     variables = read_variables(results)
 
@@ -53,55 +54,65 @@ end
     set_network_model!(
         template_ed,
         NetworkModel(
-            CopperPlatePowerModel,
-            duals=[CopperPlateBalanceConstraint],
-            use_slacks=true,
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+            use_slacks = true,
         ),
     )
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
 
-    models = SimulationModels(
-        decision_models=[
-            DecisionModel(template_uc, c_sys5_hy_uc; name="UC", optimizer=HiGHS_optimizer),
-            DecisionModel(template_ed, c_sys5_hy_ed; name="ED", optimizer=HiGHS_optimizer),
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+            ),
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = HiGHS_optimizer,
+            ),
         ],
     )
 
-    sequence = SimulationSequence(
-        models=models,
-        feedforwards=Dict(
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
             "ED" => [
-                SemiContinuousFeedforward(
-                    component_type=ThermalStandard,
-                    source=OnVariable,
-                    affected_values=[ActivePowerVariable],
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
                 ),
-                EnergyLimitFeedforward(
-                    component_type=HydroEnergyReservoir,
-                    source=ActivePowerVariable,
-                    affected_values=[ActivePowerVariable],
-                    number_of_periods=12,
+                EnergyLimitFeedforward(;
+                    component_type = HydroEnergyReservoir,
+                    source = ActivePowerVariable,
+                    affected_values = [ActivePowerVariable],
+                    number_of_periods = 12,
                 ),
             ],
         ),
-        ini_cond_chronology=InterProblemChronology(),
+        ini_cond_chronology = InterProblemChronology(),
     )
 
-    sim_not_built = Simulation(
-        name="printing_sim",
-        steps=2,
-        models=models,
-        sequence=sequence,
-        simulation_folder=mktempdir(cleanup=true),
+    sim_not_built = Simulation(;
+        name = "printing_sim",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
     )
 
-    sim = Simulation(
-        name="printing_sim",
-        steps=2,
-        models=models,
-        sequence=sequence,
-        simulation_folder=mktempdir(cleanup=true),
+    sim = Simulation(;
+        name = "printing_sim",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
     )
 
     build!(sim)

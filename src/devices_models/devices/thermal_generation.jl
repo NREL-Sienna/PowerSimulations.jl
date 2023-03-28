@@ -220,9 +220,9 @@ function get_min_max_limits(
     ::Type{ThermalCompactDispatch},
 )
     return (
-        min=0.0,
-        max=PSY.get_active_power_limits(device).max -
-            PSY.get_active_power_limits(device).min,
+        min = 0.0,
+        max = PSY.get_active_power_limits(device).max -
+              PSY.get_active_power_limits(device).min,
     )
 end
 
@@ -234,7 +234,7 @@ function get_min_max_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{ThermalDispatchNoMin},
 )
-    return (min=0.0, max=PSY.get_active_power_limits(device).max)
+    return (min = 0.0, max = PSY.get_active_power_limits(device).max)
 end
 
 """
@@ -267,9 +267,9 @@ function get_min_max_limits(
     ::Type{<:ThermalMultiStartUnitCommitment},
 ) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
     return (
-        min=0.0,
-        max=PSY.get_active_power_limits(device).max -
-            PSY.get_active_power_limits(device).min,
+        min = 0.0,
+        max = PSY.get_active_power_limits(device).max -
+              PSY.get_active_power_limits(device).min,
     )
 end
 
@@ -356,9 +356,9 @@ function get_min_max_limits(
     ::Type{<:AbstractCompactUnitCommitment},
 ) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
     return (
-        min=0,
-        max=PSY.get_active_power_limits(device).max -
-            PSY.get_active_power_limits(device).min,
+        min = 0,
+        max = PSY.get_active_power_limits(device).max -
+              PSY.get_active_power_limits(device).min,
     )
 end
 
@@ -371,8 +371,8 @@ function get_startup_shutdown_limits(
     ::Type{<:AbstractCompactUnitCommitment},
 )
     return (
-        startup=PSY.get_active_power_limits(device).max,
-        shutdown=PSY.get_active_power_limits(device).max,
+        startup = PSY.get_active_power_limits(device).max,
+        shutdown = PSY.get_active_power_limits(device).max,
     )
 end
 
@@ -425,24 +425,24 @@ function add_constraints!(
         constraint_type,
         component_type,
         names,
-        time_steps,
-        meta="on",
+        time_steps;
+        meta = "on",
     )
     con_off = add_constraints_container!(
         container,
         constraint_type,
         component_type,
         names,
-        time_steps[1:(end - 1)],
-        meta="off",
+        time_steps[1:(end - 1)];
+        meta = "off",
     )
     con_lb = add_constraints_container!(
         container,
         constraint_type,
         component_type,
         names,
-        time_steps,
-        meta="lb",
+        time_steps;
+        meta = "lb",
     )
 
     for device in devices, t in time_steps
@@ -502,8 +502,8 @@ function add_constraints!(
         constraint_type,
         component_type,
         names,
-        time_steps,
-        meta="lb",
+        time_steps;
+        meta = "lb",
     )
 
     for device in devices, t in time_steps
@@ -545,16 +545,16 @@ function add_constraints!(
         constraint_type,
         component_type,
         names,
-        time_steps,
-        meta="ubon",
+        time_steps;
+        meta = "ubon",
     )
     con_off = add_constraints_container!(
         container,
         constraint_type,
         component_type,
         names,
-        time_steps[1:(end - 1)],
-        meta="uboff",
+        time_steps[1:(end - 1)];
+        meta = "uboff",
     )
 
     for device in devices, t in time_steps
@@ -668,8 +668,8 @@ function add_constraints!(
         CommitmentConstraint(),
         U,
         names,
-        time_steps,
-        meta="aux",
+        time_steps;
+        meta = "aux",
     )
 
     for ic in initial_conditions
@@ -781,7 +781,7 @@ function calculate_aux_variable_value!(
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
                     time_value = 0.0
-                elseif isapprox(v, 1.0; atol=ABSOLUTE_TOLERANCE) # Unit is on
+                elseif isapprox(v, 1.0; atol = ABSOLUTE_TOLERANCE) # Unit is on
                     time_value = previous_condition + 1.0
                 else
                     error("Binary condition returned $v")
@@ -822,7 +822,7 @@ function calculate_aux_variable_value!(
             for (t, v) in enumerate(on_var)
                 if v < 0.99 # Unit turn off
                     time_value = previous_condition + 1.0
-                elseif isapprox(v, 1.0; atol=ABSOLUTE_TOLERANCE) # Unit is on
+                elseif isapprox(v, 1.0; atol = ABSOLUTE_TOLERANCE) # Unit is on
                     time_value = 0.0
                 else
                     error("Binary condition returned $v")
@@ -1018,8 +1018,8 @@ function add_constraints!(
             T,
             names,
             time_steps;
-            sparse=true,
-            meta="hot",
+            sparse = true,
+            meta = "hot",
         ),
         add_constraints_container!(
             container,
@@ -1027,8 +1027,8 @@ function add_constraints!(
             T,
             names,
             time_steps;
-            sparse=true,
-            meta="warm",
+            sparse = true,
+            meta = "warm",
         ),
     ]
 
@@ -1147,8 +1147,8 @@ function add_constraints!(
         set_name,
         time_steps,
         1:(MAX_START_STAGES - 1);
-        sparse=true,
-        meta="ub",
+        sparse = true,
+        meta = "ub",
     )
     con_lb = add_constraints_container!(
         container,
@@ -1157,8 +1157,8 @@ function add_constraints!(
         set_name,
         time_steps,
         1:(MAX_START_STAGES - 1);
-        sparse=true,
-        meta="lb",
+        sparse = true,
+        meta = "lb",
     )
 
     for t in time_steps, (ix, ic) in enumerate(initial_conditions_offtime)
@@ -1249,7 +1249,7 @@ function _get_data_for_tdc(
             ini_conds[idx, 2] = initial_conditions_off[ix]
             up_val = round(time_limits.up * steps_per_hour, RoundUp)
             down_val = round(time_limits.down * steps_per_hour, RoundUp)
-            time_params[idx] = time_params[idx] = (up=up_val, down=down_val)
+            time_params[idx] = time_params[idx] = (up = up_val, down = down_val)
         end
     end
     if idx < lenght_devices_on

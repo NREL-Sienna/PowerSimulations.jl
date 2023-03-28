@@ -32,7 +32,7 @@ struct ModelStoreParams
         resolution,
         base_power,
         system_uuid,
-        container_metadata=OptimizationContainerMetadata(),
+        container_metadata = OptimizationContainerMetadata(),
     )
         new(
             num_executions,

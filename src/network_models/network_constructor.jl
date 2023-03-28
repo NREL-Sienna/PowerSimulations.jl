@@ -87,7 +87,7 @@ function construct_network!(
         sys,
         model,
         template;
-        instantiate_model=instantiate_nip_ptdf_expr_model,
+        instantiate_model = instantiate_nip_ptdf_expr_model,
     )
 
     add_pm_expr_refs!(container, T, sys)
@@ -103,7 +103,7 @@ function construct_network!(
     sys::PSY.System,
     model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model=instantiate_nip_expr_model,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractActivePowerModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -142,7 +142,7 @@ function construct_network!(
     sys::PSY.System,
     model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model=instantiate_nip_expr_model,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -195,7 +195,7 @@ function construct_network!(
     sys::PSY.System,
     model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model=instantiate_bfp_expr_model,
+    instantiate_model = instantiate_bfp_expr_model,
 ) where {T <: PM.AbstractBFModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -257,7 +257,7 @@ function construct_network!(
     sys::PSY.System,
     model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model=instantiate_vip_expr_model,
+    instantiate_model = instantiate_vip_expr_model,
 ) where {T <: PM.AbstractIVRModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(

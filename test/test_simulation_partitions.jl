@@ -34,25 +34,25 @@ end
     partition_name = "partitioned"
     run_parallel_simulation(
         build_simulation,
-        execute_simulation,
-        script=script,
-        output_dir=sim_dir,
-        name=partition_name,
-        num_steps=3,
-        period=1,
-        num_overlap_steps=1,
+        execute_simulation;
+        script = script,
+        output_dir = sim_dir,
+        name = partition_name,
+        num_steps = 3,
+        period = 1,
+        num_overlap_steps = 1,
         # Running multiple processes in CI can kill the VM.
-        num_parallel_processes=haskey(ENV, "CI") ? 1 : 3,
-        exeflags="--project=test",
-        force=true,
+        num_parallel_processes = haskey(ENV, "CI") ? 1 : 3,
+        exeflags = "--project=test",
+        force = true,
     )
 
     regular_name = "regular"
     regular_sim = build_simulation(
         sim_dir,
-        regular_name,
-        initial_time=DateTime("2024-01-02T00:00:00"),
-        num_steps=1,
+        regular_name;
+        initial_time = DateTime("2024-01-02T00:00:00"),
+        num_steps = 1,
     )
     @test execute_simulation(regular_sim) == PSI.RunStatus.SUCCESSFUL
 
@@ -98,10 +98,10 @@ end
                     r_sum += sum(rdf[!, i])
                     p_sum += sum(pdf[!, i])
                 end
-                if !isapprox(r_sum, p_sum, atol=atol)
+                if !isapprox(r_sum, p_sum; atol = atol)
                     @error "Mismatch" r_sum p_sum key
                 end
-                @test isapprox(r_sum, p_sum, atol=atol)
+                @test isapprox(r_sum, p_sum, atol = atol)
             end
         end
     end

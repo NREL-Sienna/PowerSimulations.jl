@@ -96,7 +96,7 @@ function _get_store_value(
             if convert_result_to_natural_units(key)
                 out .*= base_power
             end
-            time_col = range(ts, length=horizon, step=resolution)
+            time_col = range(ts; length = horizon, step = resolution)
             DataFrames.insertcols!(out, 1, :DateTime => time_col)
             _results[ts] = out
         end
@@ -122,7 +122,7 @@ function _process_timestamps(
             requested_range = [v for v in res.timestamps if v >= initial_time]
         else
             requested_range =
-                collect(range(initial_time, length=count, step=get_interval(res)))
+                collect(range(initial_time; length = count, step = get_interval(res)))
         end
         invalid_timestamps = [v for v in requested_range if v ∉ res.timestamps]
     end
@@ -179,9 +179,9 @@ read_variable(results, "ActivePowerVariable__ThermalStandard")
 function read_variable(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     args...;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
-    count::Union{Int, Nothing}=nothing,
-    store=nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     key = _deserialize_key(VariableKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
@@ -222,9 +222,9 @@ Return the values for the requested dual. It keeps requests when performing mult
 function read_dual(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     args...;
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
-    count::Union{Int, Nothing}=nothing,
-    store=nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     key = _deserialize_key(ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
@@ -264,10 +264,10 @@ Return the values for the requested parameter. It keeps requests when performing
 function read_parameter(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     args...;
-    time_series_name=nothing,
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
-    count::Union{Int, Nothing}=nothing,
-    store=nothing,
+    time_series_name = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
@@ -312,10 +312,10 @@ Return the values for the requested auxillary variables. It keeps requests when 
 function read_aux_variable(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     args...;
-    time_series_name=nothing,
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
-    count::Union{Int, Nothing}=nothing,
-    store=nothing,
+    time_series_name = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     key = _deserialize_key(AuxVarKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
@@ -360,10 +360,10 @@ Return the values for the requested auxillary variables. It keeps requests when 
 function read_expression(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     args...;
-    time_series_name=nothing,
-    initial_time::Union{Nothing, Dates.DateTime}=nothing,
-    count::Union{Int, Nothing}=nothing,
-    store=nothing,
+    time_series_name = nothing,
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    count::Union{Int, Nothing} = nothing,
+    store = nothing,
 )
     key = _deserialize_key(ExpressionKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
@@ -372,8 +372,8 @@ end
 
 function get_realized_timestamps(
     res::IS.Results;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     timestamps = get_timestamps(res)
     interval = timestamps.step
@@ -381,8 +381,11 @@ function get_realized_timestamps(
     horizon = get_forecast_horizon(res)
     start_time = isnothing(start_time) ? first(timestamps) : start_time
     end_time =
-        isnothing(len) ? last(timestamps) + interval - resolution :
-        start_time + (len - 1) * resolution
+        if isnothing(len)
+            last(timestamps) + interval - resolution
+        else
+            start_time + (len - 1) * resolution
+        end
 
     requested_range = start_time:resolution:end_time
     available_range =
@@ -401,10 +404,10 @@ end
 function read_variables_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
-    meta = RealizedMeta(res, start_time=start_time, len=len)
+    meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values = _read_variables(res, variables, timestamps, nothing)
     return get_realization(result_values, meta)
@@ -413,10 +416,10 @@ end
 function read_parameters_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     parameters::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
-    meta = RealizedMeta(res, start_time=start_time, len=len)
+    meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values = _read_parameters(res, parameters, timestamps, nothing)
     return get_realization(result_values, meta)
@@ -425,10 +428,10 @@ end
 function read_duals_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     duals::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
-    meta = RealizedMeta(res, start_time=start_time, len=len)
+    meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values = _read_duals(res, duals, timestamps, nothing)
     return get_realization(result_values, meta)
@@ -437,10 +440,10 @@ end
 function read_aux_variables_with_keys(
     res::SimulationProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
-    meta = RealizedMeta(res, start_time=start_time, len=len)
+    meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values = _read_aux_variables(res, aux_variables, timestamps, nothing)
     return get_realization(result_values, meta)
@@ -449,10 +452,10 @@ end
 function read_expressions_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     expressions::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
-    meta = RealizedMeta(res, start_time=start_time, len=len)
+    meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values = _read_expressions(res, expressions, timestamps, nothing)
     return get_realization(result_values, meta)
@@ -480,12 +483,12 @@ like `"ActivePowerVariable__ThermalStandard"` or a Tuple with its constituent ty
 function load_results!(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     count::Int;
-    initial_time::Union{Dates.DateTime, Nothing}=nothing,
-    variables=Vector{Tuple}(),
-    duals=Vector{Tuple}(),
-    parameters=Vector{Tuple}(),
-    aux_variables=Vector{Tuple}(),
-    expressions=Vector{Tuple}(),
+    initial_time::Union{Dates.DateTime, Nothing} = nothing,
+    variables = Vector{Tuple}(),
+    duals = Vector{Tuple}(),
+    parameters = Vector{Tuple}(),
+    aux_variables = Vector{Tuple}(),
+    expressions = Vector{Tuple}(),
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
 

@@ -58,8 +58,8 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         template::ProblemTemplate,
         sys::PSY.System,
         settings::Settings,
-        jump_model::Union{Nothing, JuMP.Model}=nothing;
-        name=nothing,
+        jump_model::Union{Nothing, JuMP.Model} = nothing;
+        name = nothing,
     ) where {M <: DecisionProblem}
         if name === nothing
             name = Symbol(typeof(template))
@@ -90,49 +90,49 @@ end
 function DecisionModel{M}(
     template::ProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
-    name=nothing,
-    optimizer=nothing,
-    horizon=UNSET_HORIZON,
-    warm_start=true,
-    system_to_file=true,
-    initialize_model=true,
-    initialization_file="",
-    deserialize_initial_conditions=false,
-    export_pwl_vars=false,
-    allow_fails=false,
-    optimizer_solve_log_print=false,
-    detailed_optimizer_stats=false,
-    calculate_conflict=false,
-    direct_mode_optimizer=false,
-    store_variable_names=false,
-    rebuild_model=false,
-    check_numerical_bounds=true,
-    initial_time=UNSET_INI_TIME,
-    time_series_cache_size::Int=IS.TIME_SERIES_CACHE_SIZE_BYTES,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    name = nothing,
+    optimizer = nothing,
+    horizon = UNSET_HORIZON,
+    warm_start = true,
+    system_to_file = true,
+    initialize_model = true,
+    initialization_file = "",
+    deserialize_initial_conditions = false,
+    export_pwl_vars = false,
+    allow_fails = false,
+    optimizer_solve_log_print = false,
+    detailed_optimizer_stats = false,
+    calculate_conflict = false,
+    direct_mode_optimizer = false,
+    store_variable_names = false,
+    rebuild_model = false,
+    check_numerical_bounds = true,
+    initial_time = UNSET_INI_TIME,
+    time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
 ) where {M <: DecisionProblem}
     settings = Settings(
         sys;
-        horizon=horizon,
-        initial_time=initial_time,
-        optimizer=optimizer,
-        time_series_cache_size=time_series_cache_size,
-        warm_start=warm_start,
-        system_to_file=system_to_file,
-        initialize_model=initialize_model,
-        initialization_file=initialization_file,
-        deserialize_initial_conditions=deserialize_initial_conditions,
-        export_pwl_vars=export_pwl_vars,
-        allow_fails=allow_fails,
-        calculate_conflict=calculate_conflict,
-        optimizer_solve_log_print=optimizer_solve_log_print,
-        detailed_optimizer_stats=detailed_optimizer_stats,
-        direct_mode_optimizer=direct_mode_optimizer,
-        check_numerical_bounds=check_numerical_bounds,
-        store_variable_names=store_variable_names,
-        rebuild_model=rebuild_model,
+        horizon = horizon,
+        initial_time = initial_time,
+        optimizer = optimizer,
+        time_series_cache_size = time_series_cache_size,
+        warm_start = warm_start,
+        system_to_file = system_to_file,
+        initialize_model = initialize_model,
+        initialization_file = initialization_file,
+        deserialize_initial_conditions = deserialize_initial_conditions,
+        export_pwl_vars = export_pwl_vars,
+        allow_fails = allow_fails,
+        calculate_conflict = calculate_conflict,
+        optimizer_solve_log_print = optimizer_solve_log_print,
+        detailed_optimizer_stats = detailed_optimizer_stats,
+        direct_mode_optimizer = direct_mode_optimizer,
+        check_numerical_bounds = check_numerical_bounds,
+        store_variable_names = store_variable_names,
+        rebuild_model = rebuild_model,
     )
-    return DecisionModel{M}(template, sys, settings, jump_model, name=name)
+    return DecisionModel{M}(template, sys, settings, jump_model; name = name)
 end
 
 """
@@ -177,7 +177,7 @@ function DecisionModel(
     ::Type{M},
     template::ProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
 ) where {M <: DecisionProblem}
     return DecisionModel{M}(template, sys, jump_model; kwargs...)
@@ -186,7 +186,7 @@ end
 function DecisionModel(
     template::ProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
 )
     return DecisionModel{GenericOpProblem}(template, sys, jump_model; kwargs...)
@@ -211,15 +211,15 @@ Construct an DecisionProblem from a serialized file.
 function DecisionModel(
     directory::AbstractString,
     optimizer::MOI.OptimizerWithAttributes;
-    jump_model::Union{Nothing, JuMP.Model}=nothing,
-    system::Union{Nothing, PSY.System}=nothing,
+    jump_model::Union{Nothing, JuMP.Model} = nothing,
+    system::Union{Nothing, PSY.System} = nothing,
 )
     return deserialize_problem(
         DecisionModel,
         directory;
-        jump_model=jump_model,
-        optimizer=optimizer,
-        system=system,
+        jump_model = jump_model,
+        optimizer = optimizer,
+        system = system,
     )
 end
 
@@ -285,10 +285,10 @@ Implementation of build for any DecisionProblem
 function build!(
     model::DecisionModel{<:DecisionProblem};
     output_dir::String,
-    recorders=[],
-    console_level=Logging.Error,
-    file_level=Logging.Info,
-    disable_timer_outputs=false,
+    recorders = [],
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+    disable_timer_outputs = false,
 )
     mkpath(output_dir)
     set_output_dir!(model, output_dir)
@@ -372,18 +372,18 @@ results = solve!(OpModel, output_dir="output")
 """
 function solve!(
     model::DecisionModel{<:DecisionProblem};
-    export_problem_results=false,
-    console_level=Logging.Error,
-    file_level=Logging.Info,
-    disable_timer_outputs=false,
-    serialize=true,
+    export_problem_results = false,
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+    disable_timer_outputs = false,
+    serialize = true,
     kwargs...,
 )
     build_if_not_already_built!(
         model;
-        console_level=console_level,
-        file_level=file_level,
-        disable_timer_outputs=disable_timer_outputs,
+        console_level = console_level,
+        file_level = file_level,
+        disable_timer_outputs = disable_timer_outputs,
         kwargs...,
     )
     set_console_level!(model, console_level)
@@ -415,7 +415,7 @@ function solve!(
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                        serialize_problem(model, optimizer=optimizer)
+                        serialize_problem(model; optimizer = optimizer)
                         serialize_optimization_model(model)
                     end
                 end
@@ -459,14 +459,14 @@ function solve!(
     model::DecisionModel{<:DecisionProblem},
     start_time::Dates.DateTime,
     store::SimulationStore;
-    exports=nothing,
+    exports = nothing,
 )
     # Note, we don't call solve!(decision_model) here because the solve call includes a lot of
     # other logic used when solving the models separate from a simulation
     solve_impl!(model)
     IS.@assert_op get_current_time(model) == start_time
     if get_run_status(model) == RunStatus.SUCCESSFUL
-        write_results!(store, model, start_time, start_time; exports=exports)
+        write_results!(store, model, start_time, start_time; exports = exports)
         write_optimizer_stats!(store, model, start_time)
         advance_execution_count!(model)
     end

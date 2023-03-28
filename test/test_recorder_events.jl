@@ -3,13 +3,13 @@
     c_sys5_uc_re = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc_re";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer=GLPK_optimizer)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
 
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
 
@@ -22,8 +22,8 @@
         show_recorder_events(
             devnull,
             PSI.InitialConditionUpdateEvent,
-            recorder_log,
-            wall_time=wall_time,
+            recorder_log;
+            wall_time = wall_time,
         )
     end
 end

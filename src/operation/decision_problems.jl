@@ -33,7 +33,7 @@ function EconomicDispatchProblem(system::PSY.System; kwargs...)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_economic_dispatch(; kwargs...)
     model = DecisionModel(EconomicDispatchProblem, template, system; problem_kwargs...)
-    res = build!(model; output_dir=output_dir)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build successfully")
     end
@@ -64,7 +64,7 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_unit_commitment(; kwargs...)
     model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
-    res = build!(model; output_dir=output_dir)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build successfully")
     end
@@ -92,7 +92,7 @@ function AGCReserveDeployment(system::PSY.System; kwargs...)
     output_dir = pop!(problem_kwargs, :output_dir)
     template = template_agc_reserve_deployment(; kwargs...)
     model = DecisionModel(UnitCommitmentProblem, template, system; problem_kwargs...)
-    res = build!(model; output_dir=output_dir)
+    res = build!(model; output_dir = output_dir)
     if res != BuildStatus.BUILT
         error("The EconomicDispatch problem didn't build successfully")
     end

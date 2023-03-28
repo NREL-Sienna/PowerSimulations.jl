@@ -25,10 +25,11 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in networks
         template = get_thermal_dispatch_template_network(
-            NetworkModel(network; PTDF_matrix=PTDF(c_sys5)),
+            NetworkModel(network; PTDF_matrix = PTDF(c_sys5)),
         )
-        ps_model = DecisionModel(template, c_sys5; optimizer=solver)
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, c_sys5; optimizer = solver)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         @test ps_model.internal.container.pm !== nothing
         # TODO: Change test
         # @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
@@ -55,9 +56,10 @@ end
     )
 
     for (ix, sys) in enumerate(systems)
-        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -72,14 +74,15 @@ end
         psi_checksolve_test(ps_model, [MOI.OPTIMAL], test_obj_values[sys], 10000)
     end
     template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel; use_slacks=true),
+        NetworkModel(CopperPlatePowerModel; use_slacks = true),
     )
     ps_model_re = DecisionModel(
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
-        optimizer=GLPK_optimizer,
+        optimizer = GLPK_optimizer,
     )
-    @test build!(ps_model_re; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(ps_model_re; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
@@ -113,11 +116,12 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF_matrix=PTDF_ref[sys]),
+            NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
         )
-        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -137,11 +141,11 @@ end
         )
     end
     # PTDF input Error testing
-    ps_model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(
         ps_model;
-        console_level=Logging.AboveMaxLevel,  # Ignore expected errors.
-        output_dir=mktempdir(cleanup=true),
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
     ) == PSI.BuildStatus.FAILED
 end
 
@@ -175,11 +179,12 @@ end
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(StandardPTDFModel)
         template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF_matrix=PTDF_ref[sys]),
+            NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
         )
-        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -224,9 +229,10 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(PTDFPowerModel)
-        ps_model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -270,8 +276,9 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(DCPPowerModel)
-        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -317,8 +324,9 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(ACPPowerModel)
-        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -358,8 +366,9 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(NFAPowerModel)
-        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -407,8 +416,9 @@ end
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems
         template = get_thermal_dispatch_template_network(network)
-        ps_model = DecisionModel(template, sys; optimizer=fast_ipopt_optimizer)
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -450,8 +460,9 @@ end
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(network)
-        ps_model = DecisionModel(template, sys; optimizer=ipopt_optimizer)
-        @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -478,12 +489,12 @@ end
         ps_model = DecisionModel(
             template,
             PSB.build_system(PSITestSystems, "c_sys5");
-            optimizer=ipopt_optimizer,
+            optimizer = ipopt_optimizer,
         )
         @test build!(
             ps_model;
-            console_level=Logging.AboveMaxLevel,  # Ignore expected errors.
-            output_dir=mktempdir(cleanup=true),
+            console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+            output_dir = mktempdir(; cleanup = true),
         ) == PSI.BuildStatus.FAILED
     end
 end
@@ -492,9 +503,10 @@ end
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(NetworkModel(CopperPlatePowerModel))
-    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
-    @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 264, 0, 288, 240, 48, false)
@@ -520,9 +532,9 @@ end
     )
     @test all(
         isapprox.(
-            sum(zone_1_gen .+ zone_1_load .- hvdc_flow[!, "nodeC-nodeC2"], dims=2),
+            sum(zone_1_gen .+ zone_1_load .- hvdc_flow[!, "nodeC-nodeC2"]; dims = 2),
             0.0;
-            atol=1e-3,
+            atol = 1e-3,
         ),
     )
 
@@ -537,21 +549,22 @@ end
     )
     @test all(
         isapprox.(
-            sum(zone_2_gen .+ zone_2_load .+ hvdc_flow[!, "nodeC-nodeC2"], dims=2),
+            sum(zone_2_gen .+ zone_2_load .+ hvdc_flow[!, "nodeC-nodeC2"]; dims = 2),
             0.0;
-            atol=1e-3,
+            atol = 1e-3,
         ),
     )
 
     # Test forcing flows to 0.0
     hvdc_link = get_component(PSY.HVDCLine, c_sys5, "nodeC-nodeC2")
-    set_active_power_limits_from!(hvdc_link, (min=0.0, max=0.0))
-    set_active_power_limits_to!(hvdc_link, (min=0.0, max=0.0))
+    set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
+    set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
     # Test not passing the PTDF to the Template
     template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
-    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
-    @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
@@ -570,7 +583,7 @@ end
     zone_1_gen = sum(
         eachcol(thermal_gen[!, ["Solitude", "Park City", "Sundance", "Brighton", "Alta"]]),
     )
-    @test all(isapprox.(sum(zone_1_gen .+ zone_1_load, dims=2), 0.0; atol=1e-3))
+    @test all(isapprox.(sum(zone_1_gen .+ zone_1_load; dims = 2), 0.0; atol = 1e-3))
 
     zone_2_load = sum(eachcol(load[!, ["Load-nodeC2", "Load-nodeD2", "Load-nodeB2"]]))
     zone_2_gen = sum(
@@ -581,18 +594,19 @@ end
             ],
         ),
     )
-    @test all(isapprox.(sum(zone_2_gen .+ zone_2_load, dims=2), 0.0; atol=1e-3))
+    @test all(isapprox.(sum(zone_2_gen .+ zone_2_load; dims = 2), 0.0; atol = 1e-3))
 end
 
 @testset "2 Subnetworks DC-PF with PTDF Model" begin
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix=VirtualPTDF(c_sys5)),
+        NetworkModel(StandardPTDFModel; PTDF_matrix = VirtualPTDF(c_sys5)),
     )
-    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
-    @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 552, 0, 576, 528, 336, false)
@@ -618,9 +632,9 @@ end
     )
     @test all(
         isapprox.(
-            sum(zone_1_gen .+ zone_1_load .- hvdc_flow[!, "nodeC-nodeC2"], dims=2),
+            sum(zone_1_gen .+ zone_1_load .- hvdc_flow[!, "nodeC-nodeC2"]; dims = 2),
             0.0;
-            atol=1e-3,
+            atol = 1e-3,
         ),
     )
 
@@ -635,21 +649,22 @@ end
     )
     @test all(
         isapprox.(
-            sum(zone_2_gen .+ zone_2_load .+ hvdc_flow[!, "nodeC-nodeC2"], dims=2),
+            sum(zone_2_gen .+ zone_2_load .+ hvdc_flow[!, "nodeC-nodeC2"]; dims = 2),
             0.0;
-            atol=1e-3,
+            atol = 1e-3,
         ),
     )
 
     # Test forcing flows to 0.0
     hvdc_link = get_component(PSY.HVDCLine, c_sys5, "nodeC-nodeC2")
-    set_active_power_limits_from!(hvdc_link, (min=0.0, max=0.0))
-    set_active_power_limits_to!(hvdc_link, (min=0.0, max=0.0))
+    set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
+    set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
     # Test not passing the PTDF to the Template
     template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
-    ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
-    @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.BuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
@@ -668,7 +683,7 @@ end
     zone_1_gen = sum(
         eachcol(thermal_gen[!, ["Solitude", "Park City", "Sundance", "Brighton", "Alta"]]),
     )
-    @test all(isapprox.(sum(zone_1_gen .+ zone_1_load, dims=2), 0.0; atol=1e-3))
+    @test all(isapprox.(sum(zone_1_gen .+ zone_1_load; dims = 2), 0.0; atol = 1e-3))
 
     zone_2_load = sum(eachcol(load[!, ["Load-nodeC2", "Load-nodeD2", "Load-nodeB2"]]))
     zone_2_gen = sum(
@@ -679,5 +694,5 @@ end
             ],
         ),
     )
-    @test all(isapprox.(sum(zone_2_gen .+ zone_2_load, dims=2), 0.0; atol=1e-3))
+    @test all(isapprox.(sum(zone_2_gen .+ zone_2_load; dims = 2), 0.0; atol = 1e-3))
 end

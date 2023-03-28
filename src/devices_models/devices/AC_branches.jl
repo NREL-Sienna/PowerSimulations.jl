@@ -146,7 +146,7 @@ function get_min_max_limits(
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    return (min=-1 * PSY.get_rate(device), max=PSY.get_rate(device))
+    return (min = -1 * PSY.get_rate(device), max = PSY.get_rate(device))
 end
 
 """
@@ -157,7 +157,7 @@ function get_min_max_limits(
     ::Type{PhaseAngleControlLimit},
     ::Type{PhaseAngleControl},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    return (min=-π / 2, max=π / 2)
+    return (min = -π / 2, max = π / 2)
 end
 
 """
@@ -376,7 +376,7 @@ function get_min_max_limits(
         PSY.get_flow_limits(device).to_from,
         PSY.get_flow_limits(device).from_to,
     )
-    minmax = (min=-1 * limit, max=limit)
+    minmax = (min = -1 * limit, max = limit)
     return minmax
 end
 
@@ -437,8 +437,8 @@ function get_min_max_limits(
         )
     end
     return (
-        min=-1 * PSY.get_flow_limits(device).from_to,
-        max=PSY.get_flow_limits(device).from_to,
+        min = -1 * PSY.get_flow_limits(device).from_to,
+        max = PSY.get_flow_limits(device).from_to,
     )
 end
 
@@ -456,8 +456,8 @@ function get_min_max_limits(
         )
     end
     return (
-        min=-1 * PSY.get_flow_limits(device).to_from,
-        max=PSY.get_flow_limits(device).to_from,
+        min = -1 * PSY.get_flow_limits(device).to_from,
+        max = PSY.get_flow_limits(device).to_from,
     )
 end
 

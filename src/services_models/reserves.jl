@@ -93,7 +93,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta=service_name,
+        meta = service_name,
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
@@ -153,7 +153,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta=service_name,
+        meta = service_name,
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
@@ -202,7 +202,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta=service_name,
+        meta = service_name,
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
@@ -269,7 +269,7 @@ function add_constraints!(
             SR,
             set_name,
             time_steps;
-            meta=service_name,
+            meta = service_name,
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -310,7 +310,7 @@ function add_constraints!(
             SR,
             set_name,
             time_steps;
-            meta=service_name,
+            meta = service_name,
         )
         for d in ramp_devices, t in time_steps
             name = PSY.get_name(d)
@@ -352,7 +352,7 @@ function add_constraints!(
         SR,
         [PSY.get_name(d) for d in contributing_devices],
         time_steps;
-        meta=service_name,
+        meta = service_name,
     )
     var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     reserve_response_time = PSY.get_time_frame(service)

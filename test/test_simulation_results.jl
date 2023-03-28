@@ -118,16 +118,16 @@ end
 function make_export_all(problems)
     return [
         ProblemResultsExport(
-            x,
-            store_all_duals=true,
-            store_all_variables=true,
-            store_all_aux_variables=true,
-            store_all_parameters=true,
+            x;
+            store_all_duals = true,
+            store_all_variables = true,
+            store_all_aux_variables = true,
+            store_all_parameters = true,
         ) for x in problems
     ]
 end
 
-function test_simulation_results(file_path::String, export_path; in_memory=false)
+function test_simulation_results(file_path::String, export_path; in_memory = false)
     @testset "Test simulation results in_memory = $in_memory" begin
         template_uc = get_template_basic_uc_simulation()
         template_ed = get_template_nomin_ed_simulation()
@@ -135,63 +135,63 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
         set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
         set_network_model!(
             template_uc,
-            NetworkModel(CopperPlatePowerModel, duals=[CopperPlateBalanceConstraint]),
+            NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
         )
         set_network_model!(
             template_ed,
             NetworkModel(
-                CopperPlatePowerModel,
-                duals=[CopperPlateBalanceConstraint],
-                use_slacks=true,
+                CopperPlatePowerModel;
+                duals = [CopperPlateBalanceConstraint],
+                use_slacks = true,
             ),
         )
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-        models = SimulationModels(
-            decision_models=[
+        models = SimulationModels(;
+            decision_models = [
                 DecisionModel(
                     template_uc,
                     c_sys5_hy_uc;
-                    name="UC",
-                    optimizer=GLPK_optimizer,
+                    name = "UC",
+                    optimizer = GLPK_optimizer,
                 ),
                 DecisionModel(
                     template_ed,
                     c_sys5_hy_ed;
-                    name="ED",
-                    optimizer=ipopt_optimizer,
+                    name = "ED",
+                    optimizer = ipopt_optimizer,
                 ),
             ],
         )
 
-        sequence = SimulationSequence(
-            models=models,
-            feedforwards=Dict(
+        sequence = SimulationSequence(;
+            models = models,
+            feedforwards = Dict(
                 "ED" => [
-                    SemiContinuousFeedforward(
-                        component_type=ThermalStandard,
-                        source=OnVariable,
-                        affected_values=[ActivePowerVariable],
+                    SemiContinuousFeedforward(;
+                        component_type = ThermalStandard,
+                        source = OnVariable,
+                        affected_values = [ActivePowerVariable],
                     ),
-                    EnergyLimitFeedforward(
-                        component_type=HydroEnergyReservoir,
-                        source=ActivePowerVariable,
-                        affected_values=[ActivePowerVariable],
-                        number_of_periods=12,
+                    EnergyLimitFeedforward(;
+                        component_type = HydroEnergyReservoir,
+                        source = ActivePowerVariable,
+                        affected_values = [ActivePowerVariable],
+                        number_of_periods = 12,
                     ),
                 ],
             ),
-            ini_cond_chronology=InterProblemChronology(),
+            ini_cond_chronology = InterProblemChronology(),
         )
-        sim = Simulation(
-            name="no_cache",
-            steps=2,
-            models=models,
-            sequence=sequence,
-            simulation_folder=file_path,
+        sim = Simulation(;
+            name = "no_cache",
+            steps = 2,
+            models = models,
+            sequence = sequence,
+            simulation_folder = file_path,
         )
 
-        build_out = build!(sim; console_level=Logging.Error)
+        build_out = build!(sim; console_level = Logging.Error)
         @test build_out == PSI.BuildStatus.BUILT
 
         exports = Dict(
@@ -214,7 +214,7 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
             "path" => export_path,
             "optimizer_stats" => true,
         )
-        execute_out = execute!(sim, exports=exports, in_memory=in_memory)
+        execute_out = execute!(sim; exports = exports, in_memory = in_memory)
         @test execute_out == PSI.RunStatus.SUCCESSFUL
 
         results = SimulationResults(sim)
@@ -240,7 +240,7 @@ function test_simulation_results(file_path::String, export_path; in_memory=false
         @test_logs(
             match_mode = :any,
             (:warn, r"Results may not be valid"),
-            SimulationResults(sim, ignore_status=true),
+            SimulationResults(sim, ignore_status = true),
         )
 
         if in_memory
@@ -379,8 +379,8 @@ function test_decision_problem_results_values(
         @test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             [(ActivePowerVariable, ThermalStandard)];
-            start_time=DateTime("2024-01-01T02:12:00"),
-            len=3,
+            start_time = DateTime("2024-01-01T02:12:00"),
+            len = 3,
         )
     )
 
@@ -389,8 +389,8 @@ function test_decision_problem_results_values(
         read_realized_variables(
             results_ed,
             [(ActivePowerVariable, ThermalStandard)];
-            start_time=DateTime("2024-01-02T23:10:00"),
-            len=10,
+            start_time = DateTime("2024-01-02T23:10:00"),
+            len = 10,
         )["ActivePowerVariable__ThermalStandard"],
     )[1] == 10
 
@@ -400,8 +400,8 @@ function test_decision_problem_results_values(
         (@test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             [(ActivePowerVariable, ThermalStandard)];
-            start_time=DateTime("2024-01-02T23:10:00"),
-            len=11,
+            start_time = DateTime("2024-01-02T23:10:00"),
+            len = 11,
         ))
     )
 
@@ -411,16 +411,16 @@ function test_decision_problem_results_values(
         (@test_throws IS.InvalidValue read_realized_variables(
             results_ed,
             [(ActivePowerVariable, ThermalStandard)];
-            start_time=DateTime("2024-01-02T23:10:00"),
-            len=12,
+            start_time = DateTime("2024-01-02T23:10:00"),
+            len = 12,
         ))
     )
 
     load_results!(
         results_ed,
-        3,
-        initial_time=DateTime("2024-01-01T00:00:00"),
-        variables=[(ActivePowerVariable, ThermalStandard)],
+        3;
+        initial_time = DateTime("2024-01-01T00:00:00"),
+        variables = [(ActivePowerVariable, ThermalStandard)],
     )
 
     @test !isempty(
@@ -441,7 +441,7 @@ function test_decision_problem_results_values(
                 results_uc,
                 ActivePowerVariable,
                 ThermalStandard;
-                initial_time=now(),
+                initial_time = now(),
             )
         )
     )
@@ -449,7 +449,7 @@ function test_decision_problem_results_values(
         (:error, r"not stored"),
         @test_throws(
             IS.InvalidValue,
-            read_variable(results_uc, ActivePowerVariable, ThermalStandard; count=25)
+            read_variable(results_uc, ActivePowerVariable, ThermalStandard; count = 25)
         )
     )
 
@@ -461,11 +461,11 @@ function test_decision_problem_results_values(
     initial_time = DateTime("2024-01-01T00:00:00")
     load_results!(
         results_ed,
-        3,
-        initial_time=initial_time,
-        variables=[(ActivePowerVariable, ThermalStandard)],
-        duals=[(CopperPlateBalanceConstraint, System)],
-        parameters=[(ActivePowerTimeSeriesParameter, RenewableDispatch)],
+        3;
+        initial_time = initial_time,
+        variables = [(ActivePowerVariable, ThermalStandard)],
+        duals = [(CopperPlateBalanceConstraint, System)],
+        parameters = [(ActivePowerTimeSeriesParameter, RenewableDispatch)],
     )
 
     @test !isempty(
@@ -541,8 +541,8 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         read_realized_expression(
             results_em,
             ProductionCostExpression,
-            ThermalStandard,
-            len=10,
+            ThermalStandard;
+            len = 10,
         ),
     ) == 10
 
@@ -567,8 +567,8 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     @test DataFrames.nrow(
         read_realized_parameter(
             results_em,
-            "ActivePowerTimeSeriesParameter__RenewableDispatch",
-            len=10,
+            "ActivePowerTimeSeriesParameter__RenewableDispatch";
+            len = 10,
         ),
     ) == 10
 
@@ -599,17 +599,17 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         read_realized_variable(
             results_em,
             ActivePowerVariable,
-            ThermalStandard,
-            start_time=start_time,
-            len=len,
+            ThermalStandard;
+            start_time = start_time,
+            len = len,
         ),
     ) == len
 
     vars = read_realized_variables(
         results_em,
-        variables_inputs[1],
-        start_time=start_time,
-        len=len,
+        variables_inputs[1];
+        start_time = start_time,
+        len = len,
     )
     df = first(values(vars))
     @test DataFrames.nrow(df) == len
@@ -618,32 +618,32 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
-        start_time=start_time,
-        len=100000,
+        start_time = start_time,
+        len = 100000,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
-        start_time=start_time + Dates.Second(1),
+        start_time = start_time + Dates.Second(1),
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
-        start_time=start_time - Dates.Hour(1000),
+        start_time = start_time - Dates.Hour(1000),
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
-        len=100000,
+        len = 100000,
     )
 
     @test isempty(results_em)
     load_results!(
-        results_em,
-        duals=duals_inputs[2],
-        expressions=expressions_inputs[2],
-        parameters=parameters_inputs[2],
-        variables=variables_inputs[2],
+        results_em;
+        duals = duals_inputs[2],
+        expressions = expressions_inputs[2],
+        parameters = parameters_inputs[2],
+        variables = variables_inputs[2],
     )
     @test !isempty(results_em)
     @test length(results_em) ==
@@ -654,7 +654,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     empty!(results_em)
     @test isempty(results_em)
 
-    export_path = mktempdir(cleanup=true)
+    export_path = mktempdir(; cleanup = true)
     export_realized_results(results_em, export_path)
 
     var_name = "ActivePowerVariable__ThermalStandard"
@@ -684,8 +684,8 @@ end
 
 @testset "Test simulation results" begin
     for in_memory in (false, true)
-        file_path = mktempdir(cleanup=true)
-        export_path = mktempdir(cleanup=true)
-        test_simulation_results(file_path, export_path, in_memory=in_memory)
+        file_path = mktempdir(; cleanup = true)
+        export_path = mktempdir(; cleanup = true)
+        test_simulation_results(file_path, export_path; in_memory = in_memory)
     end
 end

@@ -13,30 +13,30 @@ end
 # replicates PM.build_mn_opf
 function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     for n in eachindex(PM.nws(pm))
-        @assert !PM.ismulticonductor(pm, nw=n)
-        PM.variable_bus_voltage(pm, nw=n)
-        PM.variable_branch_power(pm, nw=n; bounded=false)
-        PM.variable_dcline_power(pm, nw=n; bounded=false)
+        @assert !PM.ismulticonductor(pm; nw = n)
+        PM.variable_bus_voltage(pm; nw = n)
+        PM.variable_branch_power(pm; nw = n, bounded = false)
+        PM.variable_dcline_power(pm; nw = n, bounded = false)
 
-        PM.constraint_model_voltage(pm, nw=n)
+        PM.constraint_model_voltage(pm; nw = n)
 
-        for i in PM.ids(pm, :ref_buses, nw=n)
-            PM.constraint_theta_ref(pm, i, nw=n)
+        for i in PM.ids(pm, :ref_buses; nw = n)
+            PM.constraint_theta_ref(pm, i; nw = n)
         end
 
-        for i in PM.ids(pm, :bus, nw=n)
-            constraint_power_balance_ni_expr(pm, i, nw=n)
+        for i in PM.ids(pm, :bus; nw = n)
+            constraint_power_balance_ni_expr(pm, i; nw = n)
         end
 
-        for i in PM.ids(pm, :branch, nw=n)
-            PM.constraint_ohms_yt_from(pm, i, nw=n)
-            PM.constraint_ohms_yt_to(pm, i, nw=n)
+        for i in PM.ids(pm, :branch; nw = n)
+            PM.constraint_ohms_yt_from(pm, i; nw = n)
+            PM.constraint_ohms_yt_to(pm, i; nw = n)
 
-            PM.constraint_voltage_angle_difference(pm, i, nw=n)
+            PM.constraint_voltage_angle_difference(pm, i; nw = n)
         end
 
-        for i in PM.ids(pm, :dcline, nw=n)
-            PM.constraint_dcline_power_losses(pm, i, nw=n)
+        for i in PM.ids(pm, :dcline; nw = n)
+            PM.constraint_dcline_power_losses(pm, i; nw = n)
         end
     end
 
@@ -52,7 +52,7 @@ function instantiate_nip_ptdf_expr_model(
         data,
         PM.DCPPowerModel,
         instantiate_nip_ptdf_expr;
-        ref_extensions=[PM.ref_add_connected_components!, PM.ref_add_sm!],
+        ref_extensions = [PM.ref_add_connected_components!, PM.ref_add_sm!],
         kwargs...,
     )
 end
@@ -60,18 +60,18 @@ end
 # replicates PM.build_opf_ptdf
 function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
     for n in eachindex(PM.nws(pm))
-        @assert !PM.ismulticonductor(pm, nw=n)
+        @assert !PM.ismulticonductor(pm; nw = n)
 
         #PM.variable_gen_power(pm) #connect P__* with these
 
-        for i in PM.ids(pm, :bus, nw=n)
+        for i in PM.ids(pm, :bus; nw = n)
             if !haskey(PM.var(pm, n), :inj_p)
                 PM.var(pm, n)[:inj_p] = Dict{Int, Any}()
             end
-            PM.var(pm, n, :inj_p)[i] = PM.ref(pm, :bus, i, nw=n)["inj_p"] # use :nodal_balance_expr
+            PM.var(pm, n, :inj_p)[i] = PM.ref(pm, :bus, i; nw = n)["inj_p"] # use :nodal_balance_expr
         end
 
-        PM.constraint_model_voltage(pm, nw=n)
+        PM.constraint_model_voltage(pm; nw = n)
 
         # this constraint is implicit in this model
         #for i in PM.ids(pm, :ref_buses, nw = n)
@@ -82,10 +82,10 @@ function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
         #for i in PM.ids(pm, :bus, nw = n)
         #    constraint_power_balance_ni_expr(pm, i, nw = n)
         #end
-        for (i, branch) in PM.ref(pm, :branch, nw=n)
+        for (i, branch) in PM.ref(pm, :branch; nw = n)
             if haskey(branch, "rate_a")
-                PM.expression_branch_power_ohms_yt_from_ptdf(pm, i, nw=n)
-                PM.expression_branch_power_ohms_yt_to_ptdf(pm, i, nw=n)
+                PM.expression_branch_power_ohms_yt_from_ptdf(pm, i; nw = n)
+                PM.expression_branch_power_ohms_yt_to_ptdf(pm, i; nw = n)
             end
 
             # done in PSI construct_branch!
@@ -104,30 +104,30 @@ end
 # replicates PM.build_mn_opf_bf_strg
 function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
     for n in eachindex(PM.nws(pm))
-        @assert !PM.ismulticonductor(pm, nw=n)
-        PM.variable_bus_voltage(pm, nw=n)
-        PM.variable_branch_power(pm, nw=n; bounded=false)
-        PM.variable_dcline_power(pm, nw=n; bounded=false)
+        @assert !PM.ismulticonductor(pm; nw = n)
+        PM.variable_bus_voltage(pm; nw = n)
+        PM.variable_branch_power(pm; nw = n, bounded = false)
+        PM.variable_dcline_power(pm; nw = n, bounded = false)
 
-        PM.constraint_model_current(pm, nw=n)
+        PM.constraint_model_current(pm; nw = n)
 
-        for i in PM.ids(pm, :ref_buses, nw=n)
-            PM.constraint_theta_ref(pm, i, nw=n)
+        for i in PM.ids(pm, :ref_buses; nw = n)
+            PM.constraint_theta_ref(pm, i; nw = n)
         end
 
-        for i in PM.ids(pm, :bus, nw=n)
-            constraint_power_balance_ni_expr(pm, i, nw=n)
+        for i in PM.ids(pm, :bus; nw = n)
+            constraint_power_balance_ni_expr(pm, i; nw = n)
         end
 
-        for i in PM.ids(pm, :branch, nw=n)
-            PM.constraint_power_losses(pm, i, nw=n)
-            PM.constraint_voltage_magnitude_difference(pm, i, nw=n)
+        for i in PM.ids(pm, :branch; nw = n)
+            PM.constraint_power_losses(pm, i; nw = n)
+            PM.constraint_voltage_magnitude_difference(pm, i; nw = n)
 
-            PM.constraint_voltage_angle_difference(pm, i, nw=n)
+            PM.constraint_voltage_angle_difference(pm, i; nw = n)
         end
 
-        for i in PM.ids(pm, :dcline, nw=n)
-            PM.constraint_dcline_power_losses(pm, i, nw=n)
+        for i in PM.ids(pm, :dcline; nw = n)
+            PM.constraint_dcline_power_losses(pm, i; nw = n)
         end
     end
 
@@ -141,7 +141,11 @@ end
 #################################################################################
 # Model Extention Functions
 
-function constraint_power_balance_ni_expr(pm::PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw)
+function constraint_power_balance_ni_expr(
+    pm::PM.AbstractPowerModel,
+    i::Int;
+    nw::Int = pm.cnw,
+)
     if !haskey(PM.con(pm, nw), :power_balance_p)
         PM.con(pm, nw)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
@@ -197,7 +201,7 @@ end
 function constraint_current_balance_ni_expr(
     pm::PM.AbstractPowerModel,
     i::Int;
-    nw::Int=pm.cnw,
+    nw::Int = pm.cnw,
 )
     if !haskey(PM.con(pm, nw), :kcl_cr)
         PM.con(pm, nw)[:kcl_cr] = Dict{Int, JuMP.ConstraintRef}()
@@ -283,7 +287,7 @@ function powermodels_network!(
     system_formulation::Type{S},
     sys::PSY.System,
     template::ProblemTemplate,
-    instantiate_model=instantiate_nip_expr_model,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
@@ -300,7 +304,7 @@ function powermodels_network!(
     end
 
     container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model=container.JuMPmodel)
+        instantiate_model(pm_data, system_formulation; jump_model = container.JuMPmodel)
     container.pm.ext[:PMmap] = PM_map
 
     return
@@ -311,7 +315,7 @@ function powermodels_network!(
     system_formulation::Type{S},
     sys::PSY.System,
     template::ProblemTemplate,
-    instantiate_model=instantiate_nip_expr_model,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
@@ -327,7 +331,7 @@ function powermodels_network!(
     end
 
     container.pm =
-        instantiate_model(pm_data, system_formulation, jump_model=container.JuMPmodel)
+        instantiate_model(pm_data, system_formulation; jump_model = container.JuMPmodel)
     container.pm.ext[:PMmap] = PM_map
 
     return
@@ -340,9 +344,9 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
 
     pm_variable_map[PSY.Bus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] =
-        Dict(:p => (from_to=FlowActivePowerVariable(), to_from=nothing))
+        Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing))
     pm_variable_map[PSY.DCBranch] =
-        Dict(:p_dc => (from_to=FlowActivePowerVariable(), to_from=nothing))
+        Dict(:p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing))
 
     return pm_variable_map
 end
@@ -354,8 +358,8 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_variable_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
     pm_variable_map[PSY.DCBranch] = Dict(
         :p_dc => (
-            from_to=FlowActivePowerFromToVariable(),
-            to_from=FlowActivePowerToFromVariable(),
+            from_to = FlowActivePowerFromToVariable(),
+            to_from = FlowActivePowerToFromVariable(),
         ),
     )
 
@@ -378,19 +382,19 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_variable_map[PSY.Bus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
     pm_variable_map[PSY.ACBranch] = Dict(
         :p => (
-            from_to=FlowActivePowerFromToVariable(),
-            to_from=FlowActivePowerToFromVariable(),
+            from_to = FlowActivePowerFromToVariable(),
+            to_from = FlowActivePowerToFromVariable(),
         ),
         :q => (
-            from_to=FlowReactivePowerFromToVariable(),
-            to_from=FlowReactivePowerToFromVariable(),
+            from_to = FlowReactivePowerFromToVariable(),
+            to_from = FlowReactivePowerToFromVariable(),
         ),
     )
     pm_variable_map[PSY.DCBranch] = Dict(
-        :p_dc => (from_to=FlowActivePowerVariable(), to_from=nothing),
+        :p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing),
         :q_dc => (
-            from_to=FlowReactivePowerFromToVariable(),
-            to_from=FlowReactivePowerToFromVariable(),
+            from_to = FlowReactivePowerFromToVariable(),
+            to_from = FlowReactivePowerToFromVariable(),
         ),
     )
 
@@ -436,8 +440,8 @@ function PMexprmap(::Type{PTDFPowerModel})
     }()
 
     pm_expr_map[PSY.ACBranch] = (
-        pm_expr=Dict(:p => (from_to=FlowActivePowerVariable(), to_from=nothing)),
-        psi_con=NetworkFlowConstraint(),
+        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing)),
+        psi_con = NetworkFlowConstraint(),
     )
 
     return pm_expr_map
@@ -590,7 +594,7 @@ function add_pm_expr_refs!(
     for d_type in Set(device_types)
         for (pm_expr_var, ps_v) in pm_expr_map[d_class].pm_expr
             if pm_expr_var in pm_variable_types
-                pm_devices = keys(PM.var(container.pm, pm_expr_var, nw=1))
+                pm_devices = keys(PM.var(container.pm, pm_expr_var; nw = 1))
                 mapped_pm_devices = Vector()
                 mapped_ps_devices = Vector{d_type}()
                 for d in pm_map

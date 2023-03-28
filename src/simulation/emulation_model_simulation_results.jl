@@ -78,12 +78,12 @@ function _get_store_value(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
     ::Nothing;
-    start_time=nothing,
-    len=nothing,
+    start_time = nothing,
+    len = nothing,
 )
     simulation_store_path = joinpath(get_execution_path(res), "data_store")
     return open_store(HdfSimulationStore, simulation_store_path, "r") do store
-        _get_store_value(res, container_keys, store, start_time=start_time, len=len)
+        _get_store_value(res, container_keys, store; start_time = start_time, len = len)
     end
 end
 
@@ -91,19 +91,19 @@ function _get_store_value(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
     store::SimulationStore;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     base_power = res.base_power
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for key in container_keys
         start_time, _len, resolution = _check_offsets(res, key, store, start_time, len)
         start_index = (start_time - first(res.timestamps)) ÷ resolution + 1
-        df = read_results(store, key, index=start_index, len=_len)
+        df = read_results(store, key; index = start_index, len = _len)
         if convert_result_to_natural_units(key)
             df .*= base_power
         end
-        time_col = range(start_time, length=_len, step=res.resolution)
+        time_col = range(start_time; length = _len, step = res.resolution)
         DataFrames.insertcols!(df, 1, :DateTime => time_col)
         results[key] = df
     end
@@ -153,8 +153,8 @@ end
 function read_aux_variables_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     aux_variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     return _read_aux_variables(res, aux_variables, nothing, start_time, len)
 end
@@ -163,8 +163,8 @@ function _read_aux_variables(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     aux_variable_keys,
     store,
-    start_time=nothing,
-    len=nothing,
+    start_time = nothing,
+    len = nothing,
 )
     isempty(aux_variable_keys) &&
         return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
@@ -181,7 +181,13 @@ function _read_aux_variables(
     else
         @debug "reading aux_variables from data store"
         vals =
-            _get_store_value(res, aux_variable_keys, store, start_time=start_time, len=len)
+            _get_store_value(
+                res,
+                aux_variable_keys,
+                store;
+                start_time = start_time,
+                len = len,
+            )
     end
     return vals
 end
@@ -190,8 +196,8 @@ function _read_expressions(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     expression_keys,
     store,
-    start_time=nothing,
-    len=nothing,
+    start_time = nothing,
+    len = nothing,
 )
     isempty(expression_keys) &&
         return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
@@ -207,7 +213,13 @@ function _read_expressions(
         vals = filter(p -> (p.first ∈ expression_keys), get_expressions(res))
     else
         @debug "reading expressions from data store"
-        vals = _get_store_value(res, expression_keys, store, start_time=start_time, len=len)
+        vals = _get_store_value(
+            res,
+            expression_keys,
+            store;
+            start_time = start_time,
+            len = len,
+        )
     end
     return vals
 end
@@ -215,8 +227,8 @@ end
 function read_duals_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     duals::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     return _read_duals(res, duals, nothing, start_time, len)
 end
@@ -225,8 +237,8 @@ function _read_duals(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     dual_keys,
     store,
-    start_time=nothing,
-    len=nothing,
+    start_time = nothing,
+    len = nothing,
 )
     isempty(dual_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     if store === nothing && res.store !== nothing
@@ -241,7 +253,7 @@ function _read_duals(
         vals = filter(p -> (p.first ∈ dual_keys), get_duals(res))
     else
         @debug "reading duals from data store"
-        vals = _get_store_value(res, dual_keys, store, start_time=start_time, len=len)
+        vals = _get_store_value(res, dual_keys, store; start_time = start_time, len = len)
     end
     return vals
 end
@@ -249,8 +261,8 @@ end
 function read_expressions_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     expressions::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     return _read_expressions(res, expressions, nothing, start_time, len)
 end
@@ -258,8 +270,8 @@ end
 function read_parameters_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     parameters::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     return _read_parameters(res, parameters, nothing, start_time, len)
 end
@@ -268,8 +280,8 @@ function _read_parameters(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     parameter_keys,
     store,
-    start_time=nothing,
-    len=nothing,
+    start_time = nothing,
+    len = nothing,
 )
     isempty(parameter_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     if store === nothing && res.store !== nothing
@@ -284,7 +296,8 @@ function _read_parameters(
         vals = filter(p -> (p.first ∈ parameter_keys), get_parameters(res))
     else
         @debug "reading parameters from data store"
-        vals = _get_store_value(res, parameter_keys, store, start_time=start_time, len=len)
+        vals =
+            _get_store_value(res, parameter_keys, store; start_time = start_time, len = len)
     end
     return vals
 end
@@ -292,8 +305,8 @@ end
 function read_variables_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     return _read_variables(res, variables, nothing, start_time, len)
 end
@@ -302,8 +315,8 @@ function _read_variables(
     res::SimulationProblemResults{EmulationModelSimulationResults},
     variable_keys,
     store,
-    start_time=nothing,
-    len=nothing,
+    start_time = nothing,
+    len = nothing,
 )
     isempty(variable_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     if store === nothing && res.store !== nothing
@@ -319,7 +332,8 @@ function _read_variables(
         vals = filter(p -> (p.first ∈ variable_keys), get_variables(res))
     else
         @debug "reading variables from data store"
-        vals = _get_store_value(res, variable_keys, store, start_time=start_time, len=len)
+        vals =
+            _get_store_value(res, variable_keys, store; start_time = start_time, len = len)
     end
     return vals
 end
@@ -342,11 +356,11 @@ like `"ActivePowerVariable__ThermalStandard"`` or a Tuple with its constituent t
 """
 function load_results!(
     res::SimulationProblemResults{EmulationModelSimulationResults};
-    aux_variables=Vector{Tuple}(),
-    duals=Vector{Tuple}(),
-    expressions=Vector{Tuple}(),
-    parameters=Vector{Tuple}(),
-    variables=Vector{Tuple}(),
+    aux_variables = Vector{Tuple}(),
+    duals = Vector{Tuple}(),
+    expressions = Vector{Tuple}(),
+    parameters = Vector{Tuple}(),
+    variables = Vector{Tuple}(),
 )
     # TODO: consider extending this to support start_time and len
     aux_variable_keys = [_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]

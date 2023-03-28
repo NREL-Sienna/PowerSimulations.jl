@@ -79,9 +79,10 @@ function add_linear_ramp_constraints!(
     expr_up = get_expression(container, ActivePowerRangeExpressionUB(), V)
 
     set_name = [PSY.get_name(r) for r in ramp_devices]
-    con_up = add_constraints_container!(container, T(), V, set_name, time_steps, meta="up")
+    con_up =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps, meta="dn")
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
 
     for ic in initial_conditions_power
         name = get_component_name(ic)
@@ -132,9 +133,10 @@ function add_linear_ramp_constraints!(
     initial_conditions_power = get_initial_condition(container, IC(), V)
 
     set_name = [PSY.get_name(r) for r in ramp_devices]
-    con_up = add_constraints_container!(container, T(), V, set_name, time_steps, meta="up")
+    con_up =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps, meta="dn")
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
 
     for ic in initial_conditions_power
         name = get_component_name(ic)
@@ -216,9 +218,10 @@ function add_semicontinuous_ramp_constraints!(
     expr_up = get_expression(container, ActivePowerRangeExpressionUB(), V)
 
     set_name = [PSY.get_name(r) for r in ramp_devices]
-    con_up = add_constraints_container!(container, T(), V, set_name, time_steps, meta="up")
+    con_up =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps, meta="dn")
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
 
     for ic in initial_conditions_power
         name = get_component_name(ic)
@@ -276,9 +279,10 @@ function add_semicontinuous_ramp_constraints!(
     initial_conditions_power = get_initial_condition(container, IC(), V)
 
     set_name = [PSY.get_name(r) for r in ramp_devices]
-    con_up = add_constraints_container!(container, T(), V, set_name, time_steps, meta="up")
+    con_up =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps, meta="dn")
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
 
     for ic in initial_conditions_power
         name = get_component_name(ic)

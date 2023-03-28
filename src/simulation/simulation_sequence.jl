@@ -211,8 +211,8 @@ mutable struct SimulationSequence
 
     function SimulationSequence(;
         models::SimulationModels,
-        feedforwards=Dict{String, Vector{<:AbstractAffectFeedforward}}(),
-        ini_cond_chronology=InterProblemChronology(),
+        feedforwards = Dict{String, Vector{<:AbstractAffectFeedforward}}(),
+        ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
         intervals = determine_intervals(models)

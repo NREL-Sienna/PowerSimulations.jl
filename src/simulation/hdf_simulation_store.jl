@@ -89,8 +89,8 @@ df = PowerSimulations.read_result(DataFrame, store, model, :variables, var_name,
 function open_store(
     ::Type{HdfSimulationStore},
     directory::AbstractString,
-    mode="r";
-    filename=HDF_FILENAME,
+    mode = "r";
+    filename = HDF_FILENAME,
 )
     return HdfSimulationStore(joinpath(directory, filename), mode)
 end
@@ -99,8 +99,8 @@ function open_store(
     func::Function,
     ::Type{HdfSimulationStore},
     directory::AbstractString,
-    mode="r";
-    filename=HDF_FILENAME,
+    mode = "r";
+    filename = HDF_FILENAME,
 )
     store = nothing
     try
@@ -377,8 +377,8 @@ end
 function read_results(
     store::HdfSimulationStore,
     key::OptimizationContainerKey;
-    index::Union{Nothing, EmulationModelIndexType}=nothing,
-    len::Union{Nothing, Int}=nothing,
+    index::Union{Nothing, EmulationModelIndexType} = nothing,
+    len::Union{Nothing, Int} = nothing,
 )
     dataset = _get_em_dataset(store, key)
     @assert_op ndims(dataset.values) == 2
@@ -554,7 +554,7 @@ function _check_state(store::HdfSimulationStore)
     end
 end
 
-function _compute_chunk_count(dims, dtype; max_chunk_bytes=DEFAULT_MAX_CHUNK_BYTES)
+function _compute_chunk_count(dims, dtype; max_chunk_bytes = DEFAULT_MAX_CHUNK_BYTES)
     bytes_per_element = sizeof(dtype)
 
     if length(dims) == 2

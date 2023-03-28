@@ -406,10 +406,10 @@ function construct_device!(
     # slacks, services and duals are not applicable to StaticPowerLoad so those are ignored
     new_model = DeviceModel(
         L,
-        StaticPowerLoad,
-        feedforwards=model.feedforwards,
-        time_series_names=model.time_series_names,
-        attributes=model.attributes,
+        StaticPowerLoad;
+        feedforwards = model.feedforwards,
+        time_series_names = model.time_series_names,
+        attributes = model.attributes,
     )
     construct_device!(container, sys, ccs, new_model, network_model)
     return

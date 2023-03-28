@@ -22,10 +22,10 @@ try
     for i in 1:2
         template_uc = ProblemTemplate(
             NetworkModel(
-                StandardPTDFModel,
-                use_slacks=true,
-                PTDF_matrix=PTDF(sys_rts_da),
-                duals=[CopperPlateBalanceConstraint],
+                StandardPTDFModel;
+                use_slacks = true,
+                PTDF_matrix = PTDF(sys_rts_da),
+                duals = [CopperPlateBalanceConstraint],
             ),
         )
 
@@ -57,70 +57,70 @@ try
         set_device_model!(template_ed, Line, StaticBranchUnbounded)
         empty!(template_em.services)
 
-        models = SimulationModels(
-            decision_models=[
+        models = SimulationModels(;
+            decision_models = [
                 DecisionModel(
                     template_uc,
                     sys_rts_da;
-                    name="UC",
-                    optimizer=optimizer_with_attributes(HiGHS.Optimizer),
-                    system_to_file=false,
-                    initialize_model=true,
-                    optimizer_solve_log_print=true,
-                    direct_mode_optimizer=true,
-                    check_numerical_bounds=false,
+                    name = "UC",
+                    optimizer = optimizer_with_attributes(HiGHS.Optimizer),
+                    system_to_file = false,
+                    initialize_model = true,
+                    optimizer_solve_log_print = true,
+                    direct_mode_optimizer = true,
+                    check_numerical_bounds = false,
                 ),
                 DecisionModel(
                     template_ed,
                     sys_rts_rt;
-                    name="ED",
-                    optimizer=optimizer_with_attributes(HiGHS.Optimizer),
-                    system_to_file=false,
-                    initialize_model=true,
-                    check_numerical_bounds=false,
+                    name = "ED",
+                    optimizer = optimizer_with_attributes(HiGHS.Optimizer),
+                    system_to_file = false,
+                    initialize_model = true,
+                    check_numerical_bounds = false,
                     #export_pwl_vars = true,
                 ),
             ],
-            emulation_model=EmulationModel(
+            emulation_model = EmulationModel(
                 template_em,
                 sys_rts_realization;
-                name="PF",
-                optimizer=optimizer_with_attributes(HiGHS.Optimizer),
+                name = "PF",
+                optimizer = optimizer_with_attributes(HiGHS.Optimizer),
             ),
         )
 
-        sequence = SimulationSequence(
-            models=models,
-            feedforwards=Dict(
+        sequence = SimulationSequence(;
+            models = models,
+            feedforwards = Dict(
                 "ED" => [
-                    SemiContinuousFeedforward(
-                        component_type=ThermalStandard,
-                        source=OnVariable,
-                        affected_values=[ActivePowerVariable],
+                    SemiContinuousFeedforward(;
+                        component_type = ThermalStandard,
+                        source = OnVariable,
+                        affected_values = [ActivePowerVariable],
                     ),
                 ],
                 "PF" => [
-                    SemiContinuousFeedforward(
-                        component_type=ThermalStandard,
-                        source=OnVariable,
-                        affected_values=[ActivePowerVariable],
+                    SemiContinuousFeedforward(;
+                        component_type = ThermalStandard,
+                        source = OnVariable,
+                        affected_values = [ActivePowerVariable],
                     ),
                 ],
             ),
-            ini_cond_chronology=InterProblemChronology(),
+            ini_cond_chronology = InterProblemChronology(),
         )
 
-        sim = Simulation(
-            name="compact_sim",
-            steps=3,
-            models=models,
-            sequence=sequence,
-            initial_time=DateTime("2020-01-01T00:00:00"),
-            simulation_folder=mktempdir(cleanup=true),
+        sim = Simulation(;
+            name = "compact_sim",
+            steps = 3,
+            models = models,
+            sequence = sequence,
+            initial_time = DateTime("2020-01-01T00:00:00"),
+            simulation_folder = mktempdir(; cleanup = true),
         )
 
         build_out, time_build, _, _ =
-            @timed build!(sim; console_level=Logging.Error, serialize=false)
+            @timed build!(sim; console_level = Logging.Error, serialize = false)
 
         if build_out == PSI.BuildStatus.BUILT
             name = i > 1 ? "Postcompile" : "Precompile"
