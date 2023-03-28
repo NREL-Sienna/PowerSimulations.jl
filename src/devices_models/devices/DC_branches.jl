@@ -1,5 +1,10 @@
 #################################### Branch Variables ##################################################
 get_variable_binary(_, ::Type{<:PSY.DCBranch}, ::AbstractDCLineFormulation) = false
+get_variable_binary(
+    ::FlowActivePowerVariable,
+    ::Type{<:PSY.DCBranch},
+    ::AbstractDCLineFormulation,
+) = false
 
 get_variable_binary(
     ::HVDCFlowDirectionVariable,
@@ -130,8 +135,8 @@ add_constraints!(
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
-    devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, <:AbstractDCLineFormulation},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    ::DeviceModel{U, HVDCP2PLossless},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: FlowRateConstraint, U <: PSY.DCBranch}
     time_steps = get_time_steps(container)
@@ -154,6 +159,33 @@ function add_constraints!(
                 min_rate <= var[PSY.get_name(d), t]
             )
         end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{FlowRateConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, HVDCP2PLossless},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {T <: PSY.DCBranch}
+    inter_network_branches = T[]
+    for d in devices
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        if ref_bus_from != ref_bus_to
+            push!(inter_network_branches, d)
+        end
+    end
+    if !isempty(inter_network_branches)
+        add_constraints!(
+            container,
+            FlowRateConstraint,
+            inter_network_branches,
+            model,
+            network_model,
+        )
     end
     return
 end
