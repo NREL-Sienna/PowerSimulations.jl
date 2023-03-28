@@ -489,24 +489,22 @@ end
 end
 
 @testset "2 Subnetworks DC-PF with CopperPlatePowerModel" begin
-    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System"; force_build=true)
+    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
-    template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel),
-    )
+    template = get_thermal_dispatch_template_network(NetworkModel(CopperPlatePowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer=HiGHS_optimizer)
 
     @test build!(ps_model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
     solve!(ps_model)
 
-    moi_tests(ps_model, 552, 0, 576, 528, 336, false)
+    moi_tests(ps_model, 264, 0, 288, 240, 48, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
     results = ProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__HVDCLine")
@@ -587,7 +585,7 @@ end
 end
 
 @testset "2 Subnetworks DC-PF with PTDF Model" begin
-    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System"; force_build=true)
+    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(
         NetworkModel(StandardPTDFModel; PTDF_matrix=VirtualPTDF(c_sys5)),
