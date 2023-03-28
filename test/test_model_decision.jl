@@ -3,26 +3,26 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
 
-    @test_throws MethodError DecisionModel(template, c_sys5; bad_kwarg=10)
+    @test_throws MethodError DecisionModel(template, c_sys5; bad_kwarg = 10)
 
-    model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     model = DecisionModel(
         MockOperationProblem,
         get_thermal_dispatch_template_network(
-            NetworkModel(CopperPlatePowerModel; use_slacks=true),
+            NetworkModel(CopperPlatePowerModel; use_slacks = true),
         ),
         c_sys5_re;
-        optimizer=GLPK_optimizer,
+        optimizer = GLPK_optimizer,
     )
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     model = DecisionModel(
         get_thermal_dispatch_template_network(),
         c_sys5;
-        optimizer=GLPK_optimizer,
+        optimizer = GLPK_optimizer,
     )
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     #"Test passing custom JuMP model"
     my_model = JuMP.Model()
@@ -32,9 +32,9 @@
         get_thermal_dispatch_template_network(),
         c_sys5,
         my_model;
-        optimizer=GLPK_optimizer,
+        optimizer = GLPK_optimizer,
     )
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     @test haskey(PSI.get_optimization_container(model).JuMPmodel.ext, :PSI_Testing)
 end
 
@@ -45,12 +45,12 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    UC = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    output_dir = mktempdir(cleanup=true)
-    @test build!(UC; output_dir=output_dir) == PSI.BuildStatus.BUILT
-    @test solve!(UC; optimizer=GLPK_optimizer) == RunStatus.SUCCESSFUL
+    UC = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test solve!(UC; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
     res = ProblemResults(UC)
-    @test isapprox(get_objective_value(res), 340000.0; atol=100000.0)
+    @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
     @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 6)
@@ -94,8 +94,8 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     container = PSI.get_optimization_container(model)
     MOIU.attach_optimizer(container.JuMPmodel)
     constraint_indices = get_all_constraint_index(model)
@@ -125,10 +125,11 @@ end
     networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
     for network in networks
         template = get_thermal_dispatch_template_network(
-            NetworkModel(network; use_slacks=true, PTDF_matrix=PTDF(c_sys5_re)),
+            NetworkModel(network; use_slacks = true, PTDF_matrix = PTDF(c_sys5_re)),
         )
-        model = DecisionModel(template, c_sys5_re; optimizer=ipopt_optimizer)
-        @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model = DecisionModel(template, c_sys5_re; optimizer = ipopt_optimizer)
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
     end
 end
@@ -136,15 +137,19 @@ end
 @testset "Default Decisions Constructors" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model_ed =
-        EconomicDispatchProblem(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
+        EconomicDispatchProblem(
+            c_sys5;
+            output_dir = mktempdir(),
+            optimizer = HiGHS_optimizer,
+        )
     moi_tests(model_ed, 120, 0, 120, 120, 24, false)
     model_uc =
-        UnitCommitmentProblem(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
+        UnitCommitmentProblem(c_sys5; output_dir = mktempdir(), optimizer = HiGHS_optimizer)
     moi_tests(model_uc, 480, 0, 240, 120, 144, true)
     ED_output =
-        run_economic_dispatch(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
+        run_economic_dispatch(c_sys5; output_dir = mktempdir(), optimizer = HiGHS_optimizer)
     UC_output =
-        run_unit_commitment(c_sys5; output_dir=mktempdir(), optimizer=HiGHS_optimizer)
+        run_unit_commitment(c_sys5; output_dir = mktempdir(), optimizer = HiGHS_optimizer)
     @test ED_output == RunStatus.SUCCESSFUL
     @test UC_output == RunStatus.SUCCESSFUL
 end
@@ -158,16 +163,17 @@ end
     LMPs = []
     for (ix, network) in enumerate(networks)
         template = get_template_dispatch_with_network(
-            NetworkModel(network; PTDF_matrix=ptdf, duals=dual_constraint[ix]),
+            NetworkModel(network; PTDF_matrix = ptdf, duals = dual_constraint[ix]),
         )
         if network == StandardPTDFModel
             set_device_model!(
                 template,
-                DeviceModel(PSY.Line, PSI.StaticBranch; duals=[NetworkFlowConstraint]),
+                DeviceModel(PSY.Line, PSI.StaticBranch; duals = [NetworkFlowConstraint]),
             )
         end
-        model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
-        @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
         res = ProblemResults(model)
 
@@ -180,16 +186,16 @@ end
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
-    @test isapprox(LMPs[1], LMPs[2], atol=100.0)
+    @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
 end
 
 @testset "Test ProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(
-        NetworkModel(CopperPlatePowerModel; duals=[CopperPlateBalanceConstraint]),
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
     )
-    model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     res = ProblemResults(model)
@@ -251,21 +257,21 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    UC = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    output_dir = mktempdir(cleanup=true)
+    UC = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    output_dir = mktempdir(; cleanup = true)
     @test_throws ErrorException solve!(UC)
-    @test solve!(UC; optimizer=GLPK_optimizer, output_dir=output_dir) ==
+    @test solve!(UC; optimizer = GLPK_optimizer, output_dir = output_dir) ==
           RunStatus.SUCCESSFUL
 end
 
 @testset "Test Serialization, deserialization and write optimizer problem" begin
-    fpath = mktempdir(cleanup=true)
+    fpath = mktempdir(; cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(
-        NetworkModel(CopperPlatePowerModel; duals=[CopperPlateBalanceConstraint]),
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
     )
-    model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=fpath) == PSI.BuildStatus.BUILT
+    model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = fpath) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(fpath)))
@@ -273,25 +279,25 @@ end
     @test PSI._JUMP_MODEL_FILENAME in file_list
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
     ED2 = DecisionModel(fpath, HiGHS_optimizer)
-    @test build!(ED2, output_dir=fpath) == PSI.BuildStatus.BUILT
+    @test build!(ED2; output_dir = fpath) == PSI.BuildStatus.BUILT
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
 
-    path2 = mktempdir(cleanup=true)
+    path2 = mktempdir(; cleanup = true)
     model_no_sys =
-        DecisionModel(template, sys; optimizer=HiGHS_optimizer, system_to_file=false)
+        DecisionModel(template, sys; optimizer = HiGHS_optimizer, system_to_file = false)
 
-    @test build!(model_no_sys; output_dir=path2) == PSI.BuildStatus.BUILT
+    @test build!(model_no_sys; output_dir = path2) == PSI.BuildStatus.BUILT
     @test solve!(model_no_sys) == RunStatus.SUCCESSFUL
 
     file_list = sort!(collect(readdir(path2)))
     @test .!all(occursin.(r".h5", file_list))
-    ED3 = DecisionModel(path2, HiGHS_optimizer; system=sys)
-    build!(ED3, output_dir=path2)
+    ED3 = DecisionModel(path2, HiGHS_optimizer; system = sys)
+    build!(ED3; output_dir = path2)
     psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
 @testset "Test NonSpinning reseve model" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin", add_reserves=true)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves = true)
     template = get_thermal_standard_uc_template()
     set_device_model!(
         template,
@@ -302,12 +308,12 @@ end
         ServiceModel(VariableReserveNonSpinning, NonSpinningReserve, "NonSpinningReserve"),
     )
 
-    UC = DecisionModel(template, c_sys5, optimizer=HiGHS_optimizer)
-    output_dir = mktempdir(cleanup=true)
-    @test build!(UC; output_dir=output_dir) == PSI.BuildStatus.BUILT
+    UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC) == RunStatus.SUCCESSFUL
     res = ProblemResults(UC)
-    @test isapprox(get_objective_value(res), 247448.0; atol=10000.0)
+    @test isapprox(get_objective_value(res), 247448.0; atol = 10000.0)
     vars = res.variable_values
     service_key = PSI.VariableKey(
         ActivePowerReserveVariable,
@@ -318,14 +324,14 @@ end
 end
 
 @testset "Test serialization/deserialization of DecisionModel results" begin
-    path = mktempdir(cleanup=true)
+    path = mktempdir(; cleanup = true)
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(
-        NetworkModel(CopperPlatePowerModel; duals=[CopperPlateBalanceConstraint]),
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
     )
-    model = DecisionModel(template, sys; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=path) == PSI.BuildStatus.BUILT
-    @test solve!(model, export_problem_results=true) == RunStatus.SUCCESSFUL
+    model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
+    @test solve!(model; export_problem_results = true) == RunStatus.SUCCESSFUL
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
@@ -359,9 +365,10 @@ end
 @testset "Test Numerical Stability of Constraints" begin
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    valid_bounds = (coefficient=(min=1.0, max=1.0), rhs=(min=0.4, max=9.930296584))
-    model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    valid_bounds =
+        (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 9.930296584))
+    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     bounds = PSI.get_constraint_numerical_bounds(model)
     _check_constraint_bounds(bounds, valid_bounds)
@@ -369,13 +376,13 @@ end
     model_bounds = PSI.get_detailed_constraint_numerical_bounds(model)
     valid_model_bounds = Dict(
         :CopperPlateBalanceConstraint__System => (
-            coefficient=(min=1.0, max=1.0),
-            rhs=(min=6.434489705000001, max=9.930296584),
+            coefficient = (min = 1.0, max = 1.0),
+            rhs = (min = 6.434489705000001, max = 9.930296584),
         ),
         :ActivePowerVariableLimitsConstraint__ThermalStandard__lb =>
-            (coefficient=(min=1.0, max=1.0), rhs=(min=Inf, max=-Inf)),
+            (coefficient = (min = 1.0, max = 1.0), rhs = (min = Inf, max = -Inf)),
         :ActivePowerVariableLimitsConstraint__ThermalStandard__ub =>
-            (coefficient=(min=1.0, max=1.0), rhs=(min=0.4, max=6.0)),
+            (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 6.0)),
     )
     for (constraint_key, constraint_bounds) in model_bounds
         _check_constraint_bounds(
@@ -388,19 +395,19 @@ end
 @testset "Test Numerical Stability of Variables" begin
     template = get_template_basic_uc_simulation()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    valid_bounds = (min=0.0, max=6.0)
-    model = DecisionModel(template, c_sys5; optimizer=GLPK_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    valid_bounds = (min = 0.0, max = 6.0)
+    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     bounds = PSI.get_variable_numerical_bounds(model)
     _check_variable_bounds(bounds, valid_bounds)
 
     model_bounds = PSI.get_detailed_variable_numerical_bounds(model)
     valid_model_bounds = Dict(
-        :StopVariable__ThermalStandard => (min=0.0, max=1.0),
-        :StartVariable__ThermalStandard => (min=0.0, max=1.0),
-        :ActivePowerVariable__ThermalStandard => (min=0.4, max=6.0),
-        :OnVariable__ThermalStandard => (min=0.0, max=1.0),
+        :StopVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :StartVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :ActivePowerVariable__ThermalStandard => (min = 0.4, max = 6.0),
+        :OnVariable__ThermalStandard => (min = 0.0, max = 1.0),
     )
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(
@@ -413,20 +420,20 @@ end
 @testset "Decision Model initial_conditions test for ThermalGen" begin
     ######## Test with ThermalStandardUnitCommitment ########
     template = get_thermal_standard_uc_template()
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build=true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
     set_device_model!(template, ThermalMultiStart, ThermalStandardUnitCommitment)
-    model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     ######## Test with ThermalMultiStartUnitCommitment ########
     template = get_thermal_standard_uc_template()
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build=true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
     set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
 
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
@@ -436,11 +443,11 @@ end
 
     ######## Test with ThermalCompactUnitCommitment ########
     template = get_thermal_standard_uc_template()
-    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build=true)
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
     set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
     set_device_model!(template, ThermalStandard, ThermalCompactUnitCommitment)
-    model = DecisionModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
     check_duration_on_initial_conditions_values(model, ThermalMultiStart)
@@ -451,28 +458,28 @@ end
 @testset "Decision Model initial_conditions test for Storage" begin
     ######## Test with BookKeeping ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build=true)
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build = true)
     set_device_model!(template, GenericBattery, BookKeeping)
-    model = DecisionModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     check_energy_initial_conditions_values(model, GenericBattery)
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     ######## Test with BatteryAncillaryServices ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build=true)
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build = true)
     set_device_model!(template, GenericBattery, BatteryAncillaryServices)
-    model = DecisionModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     check_energy_initial_conditions_values(model, GenericBattery)
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     ######## Test with EnergyTarget ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems"; force_build=true)
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems"; force_build = true)
     set_device_model!(template, BatteryEMS, EnergyTarget)
-    model = DecisionModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     check_energy_initial_conditions_values(model, BatteryEMS)
     @test solve!(model) == RunStatus.SUCCESSFUL
 end
@@ -480,11 +487,11 @@ end
 @testset "Decision Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build=true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    model = DecisionModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test !PSI.has_initial_condition_value(
@@ -496,12 +503,12 @@ end
 
     ######## Test with HydroCommitmentRunOfRiver ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build=true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-    model = DecisionModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test PSI.has_initial_condition_value(
@@ -513,10 +520,10 @@ end
 
     ######## Test with HydroDispatchReservoirBudget ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build=true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    model = DecisionModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test !PSI.has_initial_condition_value(
@@ -528,10 +535,10 @@ end
 
     ######## Test with HydroCommitmentReservoirBudget ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build=true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirBudget)
-    model = DecisionModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test PSI.has_initial_condition_value(
@@ -543,10 +550,10 @@ end
 
     ######## Test with HydroDispatchReservoirStorage ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"; force_build=true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"; force_build = true)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    model = DecisionModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test !PSI.has_initial_condition_value(
@@ -559,10 +566,10 @@ end
 
     ######## Test with HydroCommitmentReservoirStorage ########
     template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"; force_build=true)
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"; force_build = true)
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    model = DecisionModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; output_dir=mktempdir(cleanup=true)) == BuildStatus.BUILT
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test PSI.has_initial_condition_value(
@@ -584,29 +591,29 @@ end
     optimizer = GLPK_optimizer
 
     # Construct and build with default behavior that builds initial conditions.
-    model = DecisionModel(template, sys; optimizer=optimizer)
-    output_dir = mktempdir(cleanup=true)
+    model = DecisionModel(template, sys; optimizer = optimizer)
+    output_dir = mktempdir(; cleanup = true)
 
-    @test build!(model; output_dir=output_dir) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
     ic_file = PSI.get_initial_conditions_file(model)
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="make")
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "make")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     # Build again. Initial conditions should be rebuilt.
     PSI.reset!(model)
-    @test build!(model; output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="make")
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "make")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     # Build again, use existing initial conditions.
     model = DecisionModel(
         template,
         sys;
-        optimizer=optimizer,
-        deserialize_initial_conditions=true,
+        optimizer = optimizer,
+        deserialize_initial_conditions = true,
     )
-    @test build!(model; output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="deserialize")
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "deserialize")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     # Construct and build again with custom initial conditions file.
@@ -616,39 +623,39 @@ end
     model = DecisionModel(
         template,
         sys;
-        optimizer=optimizer,
-        initialization_file=initialization_file,
-        deserialize_initial_conditions=true,
+        optimizer = optimizer,
+        initialization_file = initialization_file,
+        deserialize_initial_conditions = true,
     )
-    @test build!(model; output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="deserialize")
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "deserialize")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     # Construct and build again while skipping build of initial conditions.
     rm(ic_file)
-    model = DecisionModel(template, sys; optimizer=optimizer, initialize_model=false)
-    @test build!(model; output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=false, message="skip")
+    model = DecisionModel(template, sys; optimizer = optimizer, initialize_model = false)
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = false, message = "skip")
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     # Conflicting inputs
     model = DecisionModel(
         template,
         sys;
-        optimizer=optimizer,
-        initialize_model=false,
-        deserialize_initial_conditions=true,
+        optimizer = optimizer,
+        initialize_model = false,
+        deserialize_initial_conditions = true,
     )
-    @test build!(model; output_dir=output_dir, console_level=Logging.AboveMaxLevel) ==
+    @test build!(model; output_dir = output_dir, console_level = Logging.AboveMaxLevel) ==
           PSI.BuildStatus.FAILED
     model = DecisionModel(
         template,
         sys;
-        optimizer=optimizer,
-        initialize_model=false,
-        initialization_file="init_file.bin",
+        optimizer = optimizer,
+        initialize_model = false,
+        initialization_file = "init_file.bin",
     )
-    build!(model; output_dir=output_dir, console_level=Logging.AboveMaxLevel) ==
+    build!(model; output_dir = output_dir, console_level = Logging.AboveMaxLevel) ==
     PSI.BuildStatus.FAILED
 end
 
@@ -662,11 +669,11 @@ end
     UC = DecisionModel(
         template,
         c_sys5;
-        optimizer=GLPK_optimizer,
-        detailed_optimizer_stats=true,
+        optimizer = GLPK_optimizer,
+        detailed_optimizer_stats = true,
     )
-    output_dir = mktempdir(cleanup=true)
-    @test build!(UC; output_dir=output_dir) == PSI.BuildStatus.BUILT
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC) == RunStatus.SUCCESSFUL
     # We only test this field because most free solvers don't support detailed stats
     @test !ismissing(get_optimizer_stats(UC).objective_bound)

@@ -6,7 +6,7 @@ Return vectors of dictionaries with Julia types.
 
   - `sys::Union{Nothing, System}`: If set, only include component types present in the system.
 """
-function generate_formulation_combinations(sys=nothing)
+function generate_formulation_combinations(sys = nothing)
     combos = Dict(
         "device_formulations" => generate_device_formulation_combinations(),
         "service_formulations" => generate_service_formulation_combinations(),
@@ -34,7 +34,7 @@ Return vectors of dictionaries with Julia types encoded as strings.
 
   - `sys::Union{Nothing, System}`: If set, only include component types present in the system.
 """
-function serialize_formulation_combinations(sys=nothing)
+function serialize_formulation_combinations(sys = nothing)
     combos = generate_formulation_combinations(sys)
     for (i, combo) in enumerate(combos["device_formulations"])
         for key in keys(combo)
@@ -47,8 +47,8 @@ function serialize_formulation_combinations(sys=nothing)
         end
     end
 
-    sort!(combos["device_formulations"], by=x -> x["device_type"])
-    sort!(combos["service_formulations"], by=x -> x["service_type"])
+    sort!(combos["device_formulations"]; by = x -> x["device_type"])
+    sort!(combos["service_formulations"]; by = x -> x["service_type"])
     return combos
 end
 
@@ -60,7 +60,7 @@ the result to a JSON file.
 
   - `sys::Union{Nothing, System}`: If set, only include component types present in the system.
 """
-function write_formulation_combinations(filename::AbstractString, sys=nothing)
+function write_formulation_combinations(filename::AbstractString, sys = nothing)
     open(filename, "w") do io
         JSON3.pretty(io, serialize_formulation_combinations(sys))
     end
@@ -78,7 +78,7 @@ function generate_device_formulation_combinations()
         if d <: PSY.DynamicBranch
             continue
         end
-        if !isempty(methodswith(DeviceModel{d, f}, construct_device!, supertypes=true))
+        if !isempty(methodswith(DeviceModel{d, f}, construct_device!; supertypes = true))
             push!(combos, Dict{String, Any}("device_type" => d, "formulation" => f))
         end
     end
@@ -92,7 +92,7 @@ function generate_service_formulation_combinations()
         IS.get_all_concrete_subtypes(PSY.Service),
         IS.get_all_concrete_subtypes(AbstractServiceFormulation),
     )
-        if !isempty(methodswith(ServiceModel{d, f}, construct_service!, supertypes=true))
+        if !isempty(methodswith(ServiceModel{d, f}, construct_service!; supertypes = true))
             push!(combos, Dict{String, Any}("service_type" => d, "formulation" => f))
         end
     end

@@ -3,10 +3,11 @@
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF_matrix=PTDF(system)),
+            NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
-        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
-        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
         @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
 
@@ -25,8 +26,8 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
-    model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
-    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, MonitoredLine)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, MonitoredLine)
@@ -48,12 +49,13 @@ end
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF_matrix=PTDF(system)),
+            NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
         set_device_model!(template, DeviceModel(Line, StaticBranch))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
-        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
-        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
 
@@ -67,12 +69,13 @@ end
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF_matrix=PTDF(system)),
+            NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
         set_device_model!(template, DeviceModel(Line, StaticBranchBounds))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
-        model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
-        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, Line)
@@ -105,11 +108,12 @@ end
 
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_template_dispatch_with_network(
-            NetworkModel(model; PTDF_matrix=PTDF(system)),
+            NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
         set_device_model!(template, HVDCLine, HVDCP2PLossless)
-        model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
-        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer2W)
@@ -161,13 +165,14 @@ end
 
     for model in [DCPPowerModel, StandardPTDFModel]
         template = get_template_dispatch_with_network(
-            NetworkModel(model; PTDF_matrix=PTDF(system)),
+            NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
         set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
-        model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
-        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+        model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, HVDCLine)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
@@ -209,23 +214,23 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = HVDCLine(
-        name=get_name(line),
-        available=true,
-        active_power_flow=0.0,
+    hvdc = HVDCLine(;
+        name = get_name(line),
+        available = true,
+        active_power_flow = 0.0,
         # Force the flow in the opposite direction for testing purposes
-        active_power_limits_from=(min=-0.5, max=-0.5),
-        active_power_limits_to=(min=-3.0, max=2.0),
-        reactive_power_limits_from=(min=-1.0, max=1.0),
-        reactive_power_limits_to=(min=-1.0, max=1.0),
-        arc=get_arc(line),
-        loss=(l0=0.00, l1=0.00),
+        active_power_limits_from = (min = -0.5, max = -0.5),
+        active_power_limits_to = (min = -3.0, max = 2.0),
+        reactive_power_limits_from = (min = -1.0, max = 1.0),
+        reactive_power_limits_to = (min = -1.0, max = 1.0),
+        arc = get_arc(line),
+        loss = (l0 = 0.00, l1 = 0.00),
     )
 
     add_component!(sys_5, hvdc)
 
     template_uc = ProblemTemplate(
-        NetworkModel(StandardPTDFModel, PTDF_matrix=PTDF(sys_5; linear_solver="Dense")),
+        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(sys_5; linear_solver = "Dense")),
     )
 
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
@@ -237,11 +242,11 @@ end
     model = DecisionModel(
         template_uc,
         sys_5;
-        name="UC",
-        optimizer=HiGHS_optimizer,
-        system_to_file=false,
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
     )
-    build!(model; output_dir=mktempdir())
+    build!(model; output_dir = mktempdir())
 
     solve!(model)
 
@@ -255,19 +260,19 @@ end
     model = DecisionModel(
         template_uc,
         sys_5;
-        name="UC",
-        optimizer=HiGHS_optimizer,
-        system_to_file=false,
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
     )
 
-    solve!(model; output_dir=mktempdir())
+    solve!(model; output_dir = mktempdir())
     dcp_vars = get_variable_values(ProblemResults(model))
     dcp_values =
         dcp_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]
     dcp_objective = model.internal.container.optimizer_stats.objective_value
 
-    @test isapprox(dcp_objective, ptdf_objective; atol=0.1)
-    @test all(isapprox.(ptdf_values[!, "1"], dcp_values[!, "1"]; atol=0.1))
+    @test isapprox(dcp_objective, ptdf_objective; atol = 0.1)
+    @test all(isapprox.(ptdf_values[!, "1"], dcp_values[!, "1"]; atol = 0.1))
 end
 
 @testset "HVDCDispatch Model Tests" begin
@@ -277,25 +282,25 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = HVDCLine(
-        name=get_name(line),
-        available=true,
-        active_power_flow=0.0,
+    hvdc = HVDCLine(;
+        name = get_name(line),
+        available = true,
+        active_power_flow = 0.0,
         # Force the flow in the opposite direction for testing purposes
-        active_power_limits_from=(min=-2.0, max=-2.0),
-        active_power_limits_to=(min=-3.0, max=2.0),
-        reactive_power_limits_from=(min=-1.0, max=1.0),
-        reactive_power_limits_to=(min=-1.0, max=1.0),
-        arc=get_arc(line),
-        loss=(l0=0.00, l1=0.00),
+        active_power_limits_from = (min = -2.0, max = -2.0),
+        active_power_limits_to = (min = -3.0, max = 2.0),
+        reactive_power_limits_from = (min = -1.0, max = 1.0),
+        reactive_power_limits_to = (min = -1.0, max = 1.0),
+        arc = get_arc(line),
+        loss = (l0 = 0.00, l1 = 0.00),
     )
 
     add_component!(sys_5, hvdc)
     for net_model in [DCPPowerModel, StandardPTDFModel]
         @testset "$net_model" begin
-            PSY.set_loss!(hvdc, (l0=0.0, l1=0.0))
+            PSY.set_loss!(hvdc, (l0 = 0.0, l1 = 0.0))
             template_uc = ProblemTemplate(
-                NetworkModel(net_model, PTDF_matrix=PTDF(sys_5), use_slacks=true),
+                NetworkModel(net_model; PTDF_matrix = PTDF(sys_5), use_slacks = true),
             )
 
             set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
@@ -307,12 +312,12 @@ end
             model_ref = DecisionModel(
                 template_uc,
                 sys_5;
-                name="UC",
-                optimizer=HiGHS_optimizer,
-                system_to_file=false,
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
             )
 
-            solve!(model_ref; output_dir=mktempdir())
+            solve!(model_ref; output_dir = mktempdir())
             ref_vars = get_variable_values(ProblemResults(model_ref))
             ref_values =
                 ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
@@ -338,12 +343,12 @@ end
             model = DecisionModel(
                 template_uc,
                 sys_5;
-                name="UC",
-                optimizer=HiGHS_optimizer,
-                system_to_file=false,
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
             )
 
-            solve!(model; output_dir=mktempdir())
+            solve!(model; output_dir = mktempdir())
             no_loss_vars = get_variable_values(ProblemResults(model))
             no_loss_values =
                 no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}(
@@ -375,33 +380,33 @@ end
                 ),
             )
 
-            @test isapprox(no_loss_objective, ref_objective; atol=0.1)
+            @test isapprox(no_loss_objective, ref_objective; atol = 0.1)
 
             for col in names(ref_values)
-                @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol=0.1))
+                @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol = 0.1))
             end
 
             @test all(
                 isapprox.(
                     hvdc_ft_no_loss_values[!, "1"],
                     hvdc_tf_no_loss_values[!, "1"];
-                    atol=1e-3,
+                    atol = 1e-3,
                 ),
             )
 
-            @test isapprox(no_loss_total_gen, ref_total_gen; atol=0.1)
+            @test isapprox(no_loss_total_gen, ref_total_gen; atol = 0.1)
 
-            PSY.set_loss!(hvdc, (l0=0.1, l1=0.005))
+            PSY.set_loss!(hvdc, (l0 = 0.1, l1 = 0.005))
 
             model_wl = DecisionModel(
                 template_uc,
                 sys_5;
-                name="UC",
-                optimizer=HiGHS_optimizer,
-                system_to_file=false,
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
             )
 
-            solve!(model_wl; output_dir=mktempdir())
+            solve!(model_wl; output_dir = mktempdir())
             dispatch_vars = get_variable_values(ProblemResults(model_wl))
             dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
@@ -467,11 +472,11 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix=PTDF(system)),
+        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(system)),
     )
     set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PLossless))
-    model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
-    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, Transformer2W)
@@ -510,28 +515,28 @@ end
     line = get_component(Line, system, "1")
     remove_component!(system, line)
 
-    ps = PhaseShiftingTransformer(
-        name=get_name(line),
-        available=true,
-        active_power_flow=0.0,
-        reactive_power_flow=0.0,
-        r=get_r(line),
-        x=get_r(line),
-        primary_shunt=0.0,
-        tap=1.0,
-        α=0.0,
-        rate=get_rate(line),
-        arc=get_arc(line),
+    ps = PhaseShiftingTransformer(;
+        name = get_name(line),
+        available = true,
+        active_power_flow = 0.0,
+        reactive_power_flow = 0.0,
+        r = get_r(line),
+        x = get_r(line),
+        primary_shunt = 0.0,
+        tap = 1.0,
+        α = 0.0,
+        rate = get_rate(line),
+        arc = get_arc(line),
     )
 
     add_component!(system, ps)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix=PTDF(system)),
+        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(system)),
     )
     set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
-    model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
-    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
     @test check_variable_unbounded(
@@ -586,8 +591,8 @@ end
 
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PLossless))
-    model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
-    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
+    model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, TapTransformer)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, TapTransformer)

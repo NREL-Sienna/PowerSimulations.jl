@@ -54,12 +54,12 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         ::Type{D},
         ::Type{B},
         service_name::String;
-        use_slacks=false,
-        feedforwards=Vector{AbstractAffectFeedforward}(),
-        duals=Vector{DataType}(),
-        time_series_names=get_default_time_series_names(D, B),
-        attributes=get_default_attributes(D, B),
-        contributing_devices_map=Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
+        use_slacks = false,
+        feedforwards = Vector{AbstractAffectFeedforward}(),
+        duals = Vector{DataType}(),
+        time_series_names = get_default_time_series_names(D, B),
+        attributes = get_default_attributes(D, B),
+        contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
         _check_service_formulation(D)
         _check_service_formulation(B)
@@ -97,11 +97,11 @@ get_contributing_devices(m::ServiceModel) =
 function ServiceModel(
     service_type::Type{D},
     formulation_type::Type{B};
-    use_slacks=false,
-    feedforwards=Vector{AbstractAffectFeedforward}(),
-    duals=Vector{DataType}(),
-    time_series_names=get_default_time_series_names(D, B),
-    attributes=get_default_attributes(D, B),
+    use_slacks = false,
+    feedforwards = Vector{AbstractAffectFeedforward}(),
+    duals = Vector{DataType}(),
+    time_series_names = get_default_time_series_names(D, B),
+    attributes = get_default_attributes(D, B),
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     # If more attributes are used later, move free form string to const and organize
     # attributes

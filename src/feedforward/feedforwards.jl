@@ -23,11 +23,11 @@ function attach_feedforward!(
     if get_feedforward_meta(ff) != NO_SERVICE_NAME_PROVIDED
         ff_ = ff
     else
-        ff_ = T(
-            component_type=get_component_type(ff),
-            source=get_entry_type(get_optimization_container_key(ff)),
-            affected_values=[get_entry_type(get_optimization_container_key(ff))],
-            meta=model.service_name,
+        ff_ = T(;
+            component_type = get_component_type(ff),
+            source = get_entry_type(get_optimization_container_key(ff)),
+            affected_values = [get_entry_type(get_optimization_container_key(ff))],
+            meta = model.service_name,
         )
     end
     if !isempty(model.feedforwards)
@@ -58,7 +58,7 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta=CONTAINER_KEY_EMPTY_META,
+        meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -88,7 +88,7 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta=CONTAINER_KEY_EMPTY_META,
+        meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -118,7 +118,7 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta=CONTAINER_KEY_EMPTY_META,
+        meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -174,7 +174,7 @@ struct EnergyLimitFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         number_of_periods::Int,
-        meta=CONTAINER_KEY_EMPTY_META,
+        meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -210,7 +210,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta=CONTAINER_KEY_EMPTY_META,
+        meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -244,7 +244,7 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
         affected_values::Vector{DataType},
         target_period::Int,
         penalty_cost::Float64,
-        meta=CONTAINER_KEY_EMPTY_META,
+        meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)

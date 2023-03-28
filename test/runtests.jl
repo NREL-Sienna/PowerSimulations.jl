@@ -143,10 +143,10 @@ function run_tests()
     if logging_config_filename !== nothing
         config = IS.LoggingConfiguration(logging_config_filename)
     else
-        config = IS.LoggingConfiguration(
-            filename=LOG_FILE,
-            file_level=Logging.Info,
-            console_level=Logging.Error,
+        config = IS.LoggingConfiguration(;
+            filename = LOG_FILE,
+            file_level = Logging.Info,
+            console_level = Logging.Error,
         )
     end
     console_logger = ConsoleLogger(config.console_stream, config.console_level)

@@ -56,13 +56,13 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
                 !should_write_resulting_value(key) && continue
                 if !haskey(params, key)
                     params[key] = (
-                        horizon=max(simulation_step + time_residual, total_time),
-                        resolution=model_resolution,
+                        horizon = max(simulation_step + time_residual, total_time),
+                        resolution = model_resolution,
                     )
                 else
                     params[key] = (
-                        horizon=max(params[key].horizon, total_time),
-                        resolution=min(params[key].resolution, model_resolution),
+                        horizon = max(params[key].horizon, total_time),
+                        resolution = min(params[key].resolution, model_resolution),
                     )
                 end
                 @debug get_name(model) key params[key]
@@ -96,9 +96,9 @@ function _initialize_model_states!(
                     ),
                     collect(
                         range(
-                            simulation_initial_time,
-                            step=params[key].resolution,
-                            length=value_counts,
+                            simulation_initial_time;
+                            step = params[key].resolution,
+                            length = value_counts,
                         ),
                     ),
                     params[key].resolution,
@@ -221,7 +221,7 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time, step=state_resolution, length=length(state_data))
+            range(simulation_time; step = state_resolution, length = length(state_data))
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
@@ -258,7 +258,7 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time, step=state_resolution, length=length(state_data))
+            range(simulation_time; step = state_resolution, length = length(state_data))
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
@@ -294,7 +294,7 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time, step=state_resolution, length=length(state_data))
+            range(simulation_time; step = state_resolution, length = length(state_data))
     else
         state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
     end
@@ -319,8 +319,11 @@ function update_decision_state!(
                 state_data.values[i, name] = store_data[t, name] * resolution_ratio
             else
                 state_data.values[i, name] =
-                    store_data[t, name] > 0 ?
-                    state_data.values[i - 1, name] + increment_per_period : 0
+                    if store_data[t, name] > 0
+                        state_data.values[i - 1, name] + increment_per_period
+                    else
+                        0
+                    end
             end
         end
         set_last_recorded_row!(state_data, state_range[end])

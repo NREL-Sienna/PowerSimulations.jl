@@ -7,7 +7,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::Union{ServiceModel, Device
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::Union{ServiceModel, DeviceModel})
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(
@@ -27,10 +27,10 @@ function _show_method(
     PrettyTables.pretty_table(
         io,
         table;
-        header=header,
-        backend=Val(backend),
-        title="Device Model",
-        alignment=:l,
+        header = header,
+        backend = Val(backend),
+        title = "Device Model",
+        alignment = :l,
         kwargs...,
     )
 
@@ -47,10 +47,10 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Attributes",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Attributes",
+            alignment = :l,
             kwargs...,
         )
     end
@@ -68,10 +68,10 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Time Series Names",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Time Series Names",
+            alignment = :l,
             kwargs...,
         )
     end
@@ -84,10 +84,10 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            noheader=true,
-            backend=Val(backend),
-            title="Duals",
-            alignment=:l,
+            noheader = true,
+            backend = Val(backend),
+            title = "Duals",
+            alignment = :l,
             kwargs...,
         )
     end
@@ -104,10 +104,10 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Feedforwards",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Feedforwards",
+            alignment = :l,
             kwargs...,
         )
     else
@@ -121,7 +121,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::NetworkModel)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::NetworkModel)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(io::IO, network_model::NetworkModel, backend::Symbol; kwargs...)
@@ -135,10 +135,10 @@ function _show_method(io::IO, network_model::NetworkModel, backend::Symbol; kwar
     PrettyTables.pretty_table(
         io,
         table;
-        backend=Val(backend),
-        header=["Field", "Value"],
-        title="Network Model",
-        alignment=:l,
+        backend = Val(backend),
+        header = ["Field", "Value"],
+        title = "Network Model",
+        alignment = :l,
         kwargs...,
     )
     return
@@ -149,7 +149,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::OperationModel)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::OperationModel)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(io::IO, model::OperationModel, backend::Symbol; kwargs...)
@@ -161,7 +161,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::ProblemTemplate)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::ProblemTemplate)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs...)
@@ -175,10 +175,10 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
     PrettyTables.pretty_table(
         io,
         table;
-        backend=Val(backend),
-        noheader=true,
-        title="Network Model",
-        alignment=:l,
+        backend = Val(backend),
+        noheader = true,
+        title = "Network Model",
+        alignment = :l,
         kwargs...,
     )
 
@@ -195,10 +195,10 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
     PrettyTables.pretty_table(
         io,
         table;
-        backend=Val(backend),
-        header=header,
-        title="Device Models",
-        alignment=:l,
+        backend = Val(backend),
+        header = header,
+        title = "Device Models",
+        alignment = :l,
     )
 
     if !isempty(template.branches)
@@ -215,10 +215,10 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Branch Models",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Branch Models",
+            alignment = :l,
             kwargs...,
         )
     end
@@ -252,10 +252,10 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Service Models",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Service Models",
+            alignment = :l,
             kwargs...,
         )
     end
@@ -267,7 +267,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::SimulationModels)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationModels)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 _get_model_type(::DecisionModel{T}) where {T <: DecisionProblem} = T
@@ -288,10 +288,10 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
     PrettyTables.pretty_table(
         io,
         table;
-        header=header,
-        backend=Val(backend),
-        title="Decision Models",
-        alignment=:l,
+        header = header,
+        backend = Val(backend),
+        title = "Decision Models",
+        alignment = :l,
         kwargs...,
     )
 
@@ -307,10 +307,10 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Emulator Models",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Emulator Models",
+            alignment = :l,
             kwargs...,
         )
     else
@@ -324,7 +324,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::SimulationSequence)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationSequence)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwargs...)
@@ -337,10 +337,10 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
     PrettyTables.pretty_table(
         io,
         table;
-        backend=Val(backend),
-        noheader=true,
-        title="Simulation Sequence",
-        alignment=:l,
+        backend = Val(backend),
+        noheader = true,
+        title = "Simulation Sequence",
+        alignment = :l,
         kwargs...,
     )
 
@@ -358,10 +358,10 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
     PrettyTables.pretty_table(
         io,
         table;
-        header=header,
-        backend=Val(backend),
-        title="Simulation Problems",
-        alignment=:l,
+        header = header,
+        backend = Val(backend),
+        title = "Simulation Problems",
+        alignment = :l,
     )
 
     if !isempty(sequence.feedforwards)
@@ -375,10 +375,10 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
         PrettyTables.pretty_table(
             io,
             table;
-            header=header,
-            backend=Val(backend),
-            title="Feedforwards",
-            alignment=:l,
+            header = header,
+            backend = Val(backend),
+            title = "Feedforwards",
+            alignment = :l,
             kwargs...,
         )
     end
@@ -389,7 +389,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::Simulation)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::Simulation)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _get_initial_time_for_show(sim::Simulation)
@@ -431,10 +431,10 @@ function _show_method(io::IO, sim::Simulation, backend::Symbol; kwargs...)
     PrettyTables.pretty_table(
         io,
         table;
-        backend=Val(backend),
-        noheader=true,
-        title="Simulation",
-        alignment=:l,
+        backend = Val(backend),
+        noheader = true,
+        title = "Simulation",
+        alignment = :l,
         kwargs...,
     )
 
@@ -447,7 +447,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::SimulationResults)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationResults)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwargs...)
@@ -464,10 +464,10 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     PrettyTables.pretty_table(
         io,
         table;
-        header=header,
-        backend=Val(backend),
-        title="Decision Problem Results",
-        alignment=:l,
+        header = header,
+        backend = Val(backend),
+        title = "Decision Problem Results",
+        alignment = :l,
     )
 
     println(io)
@@ -479,10 +479,10 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     PrettyTables.pretty_table(
         io,
         table;
-        noheader=true,
-        backend=Val(backend),
-        title="Emulator Results",
-        alignment=:l,
+        noheader = true,
+        backend = Val(backend),
+        title = "Emulator Results",
+        alignment = :l,
         kwargs...,
     )
 end
@@ -493,7 +493,7 @@ function Base.show(io::IO, ::MIME"text/plain", input::ProblemResultsTypes)
 end
 
 function Base.show(io::IO, ::MIME"text/html", input::ProblemResultsTypes)
-    _show_method(io, input, :html; standalone=false, tf=PrettyTables.tf_html_simple)
+    _show_method(io, input, :html; standalone = false, tf = PrettyTables.tf_html_simple)
 end
 
 function _show_method(
@@ -534,10 +534,10 @@ function _show_method(
             PrettyTables.pretty_table(
                 io,
                 val;
-                noheader=true,
-                backend=Val(backend),
-                title="$name Problem $k Results",
-                alignment=:l,
+                noheader = true,
+                backend = Val(backend),
+                title = "$name Problem $k Results",
+                alignment = :l,
                 kwargs...,
             )
         end

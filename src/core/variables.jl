@@ -8,7 +8,7 @@ end
 function VariableKey(
     ::Type{T},
     ::Type{U},
-    meta=CONTAINER_KEY_EMPTY_META,
+    meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
     if isabstracttype(U)
         error("Type $U can't be abstract")
@@ -19,7 +19,7 @@ end
 
 function VariableKey(
     ::Type{T},
-    meta::String=CONTAINER_KEY_EMPTY_META,
+    meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableType}
     return VariableKey(T, PSY.Component, meta)
 end

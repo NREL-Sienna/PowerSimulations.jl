@@ -63,7 +63,7 @@ end
 function get_model(
     template::ProblemTemplate,
     ::Type{T},
-    name::String=NO_SERVICE_NAME_PROVIDED,
+    name::String = NO_SERVICE_NAME_PROVIDED,
 ) where {T <: PSY.Service}
     if haskey(template.services, (name, Symbol(T)))
         return template.services[(name, Symbol(T))]
@@ -130,7 +130,7 @@ function set_service_model!(
     set_service_model!(
         template,
         service_name,
-        ServiceModel(service_type, formulation, use_service_name=true),
+        ServiceModel(service_type, formulation; use_service_name = true),
     )
     return
 end
@@ -197,7 +197,7 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
             continue
         end
         contributing_devices_ =
-            services_mapping[(type=S, name=PSY.get_name(service))].contributing_devices
+            services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
 
         for d in contributing_devices_
             _add_contributing_device_by_type!(
@@ -273,8 +273,8 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
                             D,
                             B,
                             PSY.get_name(service);
-                            use_slacks=use_slacks,
-                            duals=duals,
+                            use_slacks = use_slacks,
+                            duals = duals,
                         ),
                     )
                 end

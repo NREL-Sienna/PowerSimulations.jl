@@ -9,7 +9,7 @@ struct SimulationPartitions <: IS.InfrastructureSystemsType
     "Number of steps that a partition overlaps with the previous partition"
     num_overlap_steps::Int
 
-    function SimulationPartitions(num_steps, period, num_overlap_steps=1)
+    function SimulationPartitions(num_steps, period, num_overlap_steps = 1)
         if num_overlap_steps > period
             error(
                 "period=$period must be greater than num_overlap_steps=$num_overlap_steps",
@@ -87,16 +87,16 @@ end
 function process_simulation_partition_cli_args(build_function, execute_function, args...)
     length(args) < 2 && error("Usage: setup|execute|join [options]")
     function config_logging(filename)
-        return IS.configure_logging(
-            console=true,
-            console_stream=stderr,
-            console_level=Logging.Warn,
-            file=true,
-            filename=filename,
-            file_level=Logging.Info,
-            file_mode="w",
-            tracker=nothing,
-            set_global=true,
+        return IS.configure_logging(;
+            console = true,
+            console_stream = stderr,
+            console_level = Logging.Warn,
+            file = true,
+            filename = filename,
+            file_level = Logging.Info,
+            file_mode = "w",
+            tracker = nothing,
+            set_global = true,
         )
     end
 
@@ -195,10 +195,10 @@ function run_parallel_simulation(
     name::AbstractString,
     num_steps::Integer,
     period::Integer,
-    num_overlap_steps::Integer=1,
-    num_parallel_processes=nothing,
-    exeflags=nothing,
-    force=false,
+    num_overlap_steps::Integer = 1,
+    num_parallel_processes = nothing,
+    exeflags = nothing,
+    force = false,
 )
     if isnothing(num_parallel_processes)
         num_parallel_processes = Sys.CPU_THREADS
@@ -212,7 +212,7 @@ function run_parallel_simulation(
                 "output_dir=$output_dir already exists. Choose a different name or set force=true.",
             )
         end
-        rm(output_dir, recursive=true)
+        rm(output_dir; recursive = true)
     end
     mkdir(output_dir)
     @info "Run parallel simulation" name script output_dir num_steps num_partitions num_parallel_processes
@@ -248,7 +248,7 @@ function run_parallel_simulation(
     if isnothing(exeflags)
         Distributed.addprocs(num_parallel_processes)
     else
-        Distributed.addprocs(num_parallel_processes, exeflags=exeflags)
+        Distributed.addprocs(num_parallel_processes; exeflags = exeflags)
     end
 
     Distributed.@everywhere include($script)

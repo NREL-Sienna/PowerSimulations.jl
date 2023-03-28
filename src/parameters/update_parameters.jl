@@ -172,7 +172,7 @@ function _update_parameter_values!(
     max_state_index = length(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
-    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    sim_timestamps = range(current_time; step = resolution, length = time[end])
     for t in time
         timestamp_ix = min(max_state_index, state_data_index + 1)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
@@ -213,7 +213,7 @@ function _update_parameter_values!(
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
 
-    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    sim_timestamps = range(current_time; step = resolution, length = time[end])
     for t in time
         timestamp_ix = min(max_state_index, state_data_index + 1)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
@@ -373,7 +373,7 @@ function update_parameter_values!(
     max_state_index = length(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
-    sim_timestamps = range(current_time, step=resolution, length=time[end])
+    sim_timestamps = range(current_time; step = resolution, length = time[end])
     old_parameter_values = jump_value.(parameter_array)
     # The current method uses older parameter values because when passing the energy output from one stage
     # to the next, the aux variable values gets over-written by the lower level model after its solve.
@@ -518,8 +518,8 @@ function _update_parameter_values!(
             ts_vector = PSY.get_variable_cost(
                 component,
                 PSY.get_operation_cost(component);
-                start_time=initial_forecast_time,
-                len=horizon,
+                start_time = initial_forecast_time,
+                len = horizon,
             )
             variable_cost_forecast_values = TimeSeries.values(ts_vector)
             for (t, value) in enumerate(variable_cost_forecast_values)

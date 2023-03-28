@@ -5,7 +5,7 @@ end
 function AuxVarKey(
     ::Type{T},
     ::Type{U},
-    meta=CONTAINER_KEY_EMPTY_META,
+    meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: AuxVariableType, U <: PSY.Component}
     if isabstracttype(U)
         error("Type $U can't be abstract")

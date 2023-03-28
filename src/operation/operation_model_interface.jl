@@ -64,7 +64,7 @@ function get_timestamps(model::OperationModel)
     start_time = get_initial_time(get_optimization_container(model))
     resolution = get_resolution(model)
     horizon = get_horizon(model)
-    return range(start_time, length=horizon, step=resolution)
+    return range(start_time; length = horizon, step = resolution)
 end
 
 function write_data(model::OperationModel, output_dir::AbstractString; kwargs...)
@@ -170,7 +170,7 @@ function handle_initial_conditions!(model::OperationModel)
             error("initialization_file = $custom_init_file does not exist")
         end
         if abspath(custom_init_file) != abspath(serialized_initial_conditions_file)
-            cp(custom_init_file, serialized_initial_conditions_file, force=true)
+            cp(custom_init_file, serialized_initial_conditions_file; force = true)
         end
     end
 
@@ -287,7 +287,7 @@ function _check_numerical_bounds(model::OperationModel)
     return
 end
 
-function _pre_solve_model_checks(model::OperationModel, optimizer=nothing)
+function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
     jump_model = get_jump_model(model)
     if optimizer !== nothing
         JuMP.set_optimizer(jump_model, optimizer)
@@ -348,7 +348,7 @@ function register_recorders!(model::OperationModel, file_mode)
     recorder_dir = get_recorder_dir(model)
     mkpath(recorder_dir)
     for name in get_recorders(get_internal(model))
-        IS.register_recorder!(name; mode=file_mode, directory=recorder_dir)
+        IS.register_recorder!(name; mode = file_mode, directory = recorder_dir)
     end
 end
 

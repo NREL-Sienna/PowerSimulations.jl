@@ -40,20 +40,20 @@ pages = OrderedDict(
     "API Reference" => "api/PowerSimulations.md",
 )
 
-makedocs(
-    modules=[PowerSimulations],
-    format=Documenter.HTML(prettyurls=haskey(ENV, "GITHUB_ACTIONS")),
-    sitename="PowerSimulations.jl",
-    authors="Jose Daniel Lara, Daniel Thom and Clayton Barrows",
-    pages=Any[p for p in pages],
+makedocs(;
+    modules = [PowerSimulations],
+    format = Documenter.HTML(; prettyurls = haskey(ENV, "GITHUB_ACTIONS")),
+    sitename = "PowerSimulations.jl",
+    authors = "Jose Daniel Lara, Daniel Thom and Clayton Barrows",
+    pages = Any[p for p in pages],
 )
 
-deploydocs(
-    repo="github.com/NREL-SIIP/PowerSimulations.jl.git",
-    target="build",
-    branch="gh-pages",
-    devbranch="master",
-    devurl="dev",
-    push_preview=true,
-    versions=["stable" => "v^", "v#.#"],
+deploydocs(;
+    repo = "github.com/NREL-SIIP/PowerSimulations.jl.git",
+    target = "build",
+    branch = "gh-pages",
+    devbranch = "master",
+    devurl = "dev",
+    push_preview = true,
+    versions = ["stable" => "v^", "v#.#"],
 )

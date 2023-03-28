@@ -23,7 +23,7 @@ mutable struct Simulation
         steps::Int,
         models::SimulationModels,
         simulation_folder::AbstractString,
-        initial_time=nothing,
+        initial_time = nothing,
     )
         for model in get_decision_models(models)
             if model.internal.simulation_info.sequence_uuid != sequence.uuid
@@ -167,7 +167,7 @@ Manually provided initial times have to be compatible with the specified interva
         ini_time, ts_length =
             PSY.check_time_series_consistency(system, PSY.SingleTimeSeries)
         resolution = PSY.get_time_series_resolution(system)
-        em_available_times = range(ini_time, step=resolution, length=ts_length)
+        em_available_times = range(ini_time; step = resolution, length = ts_length)
         if get_initial_time(sim) ∉ em_available_times
             throw(
                 IS.ConflictingInputsError(
@@ -380,9 +380,9 @@ function _initialize_problem_storage!(
     models = get_models(sim)
     decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
     dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
-    rules = CacheFlushRules(
-        max_size=cache_size_mib * MiB,
-        min_flush_size=trunc(min_cache_flush_size_mib * MiB),
+    rules = CacheFlushRules(;
+        max_size = cache_size_mib * MiB,
+        min_flush_size = trunc(min_cache_flush_size_mib * MiB),
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
@@ -435,10 +435,10 @@ end
 
 function _build!(
     sim::Simulation;
-    serialize=true,
-    setup_simulation_partitions=false,
-    partitions=nothing,
-    index=nothing,
+    serialize = true,
+    setup_simulation_partitions = false,
+    partitions = nothing,
+    index = nothing,
 )
     set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
@@ -526,8 +526,8 @@ function _set_simulation_internal!(
         get_name(sim),
         recorders,
         console_level,
-        file_level,
-        partitions=partitions,
+        file_level;
+        partitions = partitions,
     )
     return
 end
@@ -535,7 +535,7 @@ end
 function _setup_simulation_partitions(sim::Simulation)
     mkdir(sim.internal.partitions_dir)
     filename = joinpath(sim.internal.partitions_dir, "config.json")
-    IS.to_json(sim.internal.partitions, filename, pretty=true)
+    IS.to_json(sim.internal.partitions, filename; pretty = true)
     for i in 1:get_num_partitions(sim.internal.partitions)
         mkdir(joinpath(sim.internal.partitions_dir, string(i)))
     end
@@ -568,12 +568,12 @@ Throws an exception if name is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
-    recorders=[],
-    console_level=Logging.Error,
-    file_level=Logging.Info,
-    serialize=true,
-    partitions::Union{Nothing, SimulationPartitions}=nothing,
-    index=nothing,
+    recorders = [],
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+    serialize = true,
+    partitions::Union{Nothing, SimulationPartitions} = nothing,
+    index = nothing,
 )
     if !isnothing(partitions) && !isnothing(index) && serialize
         # This is build of a partition. No need to serialize again.
@@ -598,11 +598,11 @@ function build!(
             Logging.with_logger(logger) do
                 try
                     _build!(
-                        sim,
-                        serialize=serialize,
-                        setup_simulation_partitions=setup_simulation_partitions,
-                        partitions=partitions,
-                        index=index,
+                        sim;
+                        serialize = serialize,
+                        setup_simulation_partitions = setup_simulation_partitions,
+                        partitions = partitions,
+                        index = index,
                     )
                     set_simulation_build_status!(sim, BuildStatus.BUILT)
                     set_simulation_status!(sim, RunStatus.READY)
@@ -778,11 +778,11 @@ end
 
 function _execute!(
     sim::Simulation;
-    cache_size_mib=DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
-    min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
-    exports=nothing,
-    enable_progress_bar=progress_meter_enabled(),
-    disable_timer_outputs=false,
+    cache_size_mib = DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
+    min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
+    exports = nothing,
+    enable_progress_bar = progress_meter_enabled(),
+    disable_timer_outputs = false,
 )
     @assert sim.internal !== nothing
 
@@ -805,7 +805,7 @@ function _execute!(
     sequence = get_sequence(sim)
     models = get_models(sim)
 
-    prog_bar = ProgressMeter.Progress(num_executions; enabled=enable_progress_bar)
+    prog_bar = ProgressMeter.Progress(num_executions; enabled = enable_progress_bar)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
     store = get_simulation_store(sim)
     for step in 1:steps
@@ -830,7 +830,7 @@ function _execute!(
             ProgressMeter.update!(
                 prog_bar,
                 (step - 1) * length(execution_order) + ix;
-                showvalues=[
+                showvalues = [
                     (:Step, step),
                     (:Problem, model_name),
                     (:("Simulation Timestamp"), get_current_time(sim)),
@@ -849,7 +849,7 @@ function _execute!(
                 end
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Solve $(model_name)" begin
-                    status = solve!(step, model, current_time, store; exports=exports)
+                    status = solve!(step, model, current_time, store; exports = exports)
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
@@ -985,7 +985,7 @@ Return the serialized simulation directory name that is created.
   - `force = false`: If true, delete the directory if it already exists. Otherwise, it will
     throw an exception.
 """
-function serialize_simulation(sim::Simulation; path=nothing, force=false)
+function serialize_simulation(sim::Simulation; path = nothing, force = false)
     if path === nothing
         directory = get_simulation_files_dir(sim)
     else
@@ -1000,7 +1000,7 @@ function serialize_simulation(sim::Simulation; path=nothing, force=false)
             ),
         )
     end
-    rm(directory, recursive=true, force=true)
+    rm(directory; recursive = true, force = true)
     mkdir(directory)
 
     filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
@@ -1054,7 +1054,7 @@ function deserialize_model(
                     sys,
                     restore_from_copy(
                         wrapper.settings;
-                        optimizer=problem_info[key]["optimizer"],
+                        optimizer = problem_info[key]["optimizer"],
                     ),
                     get(problem_info[key], "jump_model", nothing),
                 ),
@@ -1062,11 +1062,11 @@ function deserialize_model(
         end
 
         sim = Simulation(;
-            name=obj.name,
-            steps=obj.steps,
-            models=SimulationModels(problems...),
-            problems_sequence=obj.sequence,
-            simulation_folder=obj.simulation_folder,
+            name = obj.name,
+            steps = obj.steps,
+            models = SimulationModels(problems...),
+            problems_sequence = obj.sequence,
+            simulation_folder = obj.simulation_folder,
         )
         return sim
     finally

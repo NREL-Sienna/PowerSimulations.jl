@@ -9,13 +9,16 @@ mutable struct SimulationModels
 
     function SimulationModels(
         decision_models::Vector,
-        emulation_model::Union{Nothing, EmulationModel}=nothing,
+        emulation_model::Union{Nothing, EmulationModel} = nothing,
     )
         all_names = [get_name(x) for x in decision_models]
         emulation_model !== nothing && push!(all_names, get_name(emulation_model))
         model_count =
-            emulation_model === nothing ? length(decision_models) :
-            length(decision_models) + 1
+            if emulation_model === nothing
+                length(decision_models)
+            else
+                length(decision_models) + 1
+            end
         if length(Set(all_names)) != model_count
             error("All model names must be unique: $all_names")
         end
@@ -26,14 +29,14 @@ end
 
 function SimulationModels(
     decision_models::DecisionModel,
-    emulation_model::Union{Nothing, EmulationModel}=nothing,
+    emulation_model::Union{Nothing, EmulationModel} = nothing,
 )
     return SimulationModels([decision_models], emulation_model)
 end
 
 function SimulationModels(;
     decision_models,
-    emulation_model::Union{Nothing, EmulationModel}=nothing,
+    emulation_model::Union{Nothing, EmulationModel} = nothing,
 )
     return SimulationModels(decision_models, emulation_model)
 end

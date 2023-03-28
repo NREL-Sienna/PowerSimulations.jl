@@ -37,7 +37,7 @@ function add_constraints!(
         SR,
         [service_name],
         time_steps;
-        meta=service_name,
+        meta = service_name,
     )
     constraint = get_constraint(container, RequirementConstraint(), SR, service_name)
     use_slacks = get_use_slacks(model)

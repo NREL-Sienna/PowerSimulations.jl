@@ -5,7 +5,7 @@ function get_thermal_standard_uc_template()
     return template
 end
 
-function get_thermal_dispatch_template_network(network=CopperPlatePowerModel)
+function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
@@ -33,7 +33,7 @@ function get_template_standard_uc_simulation()
     return template
 end
 
-function get_template_nomin_ed_simulation(network=CopperPlatePowerModel)
+function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
@@ -43,7 +43,7 @@ function get_template_nomin_ed_simulation(network=CopperPlatePowerModel)
     return template
 end
 
-function get_template_hydro_st_uc(network=CopperPlatePowerModel)
+function get_template_hydro_st_uc(network = CopperPlatePowerModel)
     template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment),
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch),
@@ -53,7 +53,7 @@ function get_template_hydro_st_uc(network=CopperPlatePowerModel)
     return template
 end
 
-function get_template_hydro_st_ed(network=CopperPlatePowerModel, duals=[])
+function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     template = ProblemTemplate(network)
     set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
@@ -63,7 +63,7 @@ function get_template_hydro_st_ed(network=CopperPlatePowerModel, duals=[])
     return template
 end
 
-function get_template_dispatch_with_network(network=StandardPTDFModel)
+function get_template_dispatch_with_network(network = StandardPTDFModel)
     template = ProblemTemplate(network)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalBasicDispatch)

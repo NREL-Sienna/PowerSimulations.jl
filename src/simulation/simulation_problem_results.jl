@@ -35,17 +35,17 @@ function SimulationProblemResults{T}(
     sim_params::SimulationStoreParams,
     path,
     vals::T;
-    results_output_path=nothing,
-    system=nothing,
+    results_output_path = nothing,
+    system = nothing,
 ) where {T <: OperationModelSimulationResults}
     if results_output_path === nothing
         results_output_path = joinpath(path, "results")
     end
 
     time_steps = range(
-        sim_params.initial_time,
-        length=problem_params.num_executions * sim_params.num_steps,
-        step=problem_params.interval,
+        sim_params.initial_time;
+        length = problem_params.num_executions * sim_params.num_steps,
+        step = problem_params.interval,
     )
     return SimulationProblemResults{T}(
         model_name,
@@ -150,7 +150,7 @@ function get_system!(results::SimulationProblemResults)
         results.problem,
         make_system_filename(results.system_uuid),
     )
-    results.system = PSY.System(file, time_series_read_only=true)
+    results.system = PSY.System(file; time_series_read_only = true)
     return results.system
 end
 
@@ -628,7 +628,7 @@ Return the optimizer stats for the problem as a DataFrame.
 
   - `store::SimulationStore`: a store that has been opened for reading
 """
-function read_optimizer_stats(res::SimulationProblemResults; store=nothing)
+function read_optimizer_stats(res::SimulationProblemResults; store = nothing)
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
         store = res.store
@@ -669,21 +669,21 @@ function export_realized_results(
     end
     write_data(read_variables_with_keys(res, list_variable_keys(res)), save_path)
     !isempty(list_dual_keys(res)) &&
-        write_data(read_duals_with_keys(res, list_dual_keys(res)), save_path; name="dual")
+        write_data(read_duals_with_keys(res, list_dual_keys(res)), save_path; name = "dual")
     !isempty(list_parameter_keys(res)) && write_data(
         read_parameters_with_keys(res, list_parameter_keys(res)),
         save_path;
-        name="parameter",
+        name = "parameter",
     )
     !isempty(list_aux_variable_keys(res)) && write_data(
         read_aux_variables_with_keys(res, list_aux_variable_keys(res)),
         save_path;
-        name="aux_variable",
+        name = "aux_variable",
     )
     !isempty(list_expression_keys(res)) && write_data(
         read_expressions_with_keys(res, list_expression_keys(res)),
         save_path;
-        name="expression",
+        name = "expression",
     )
     export_optimizer_stats(res, save_path)
     files = readdir(save_path)
@@ -704,7 +704,7 @@ Save the optimizer statistics to CSV or JSON
 function export_optimizer_stats(
     res::Union{ProblemResults, SimulationProblemResults},
     directory::AbstractString;
-    format="csv",
+    format = "csv",
 )
     data = read_optimizer_stats(res)
     isnothing(data) && return

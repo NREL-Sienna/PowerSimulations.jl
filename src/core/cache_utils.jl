@@ -25,8 +25,8 @@ struct CacheFlushRules
 end
 
 function CacheFlushRules(;
-    max_size=DEFAULT_SIMULATION_STORE_CACHE_SIZE,
-    min_flush_size=MIN_CACHE_FLUSH_SIZE,
+    max_size = DEFAULT_SIMULATION_STORE_CACHE_SIZE,
+    min_flush_size = MIN_CACHE_FLUSH_SIZE,
 )
     return CacheFlushRules(
         Dict{OptimizationResultCacheKey, CacheFlushRule}(),

@@ -1,7 +1,7 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
     param = JuMP.@variable(jump_model)
-    JuMP.fix(param, val; force=true)
+    JuMP.fix(param, val; force = true)
     return param
 end
 
@@ -37,7 +37,7 @@ function jump_value(input::Vector{Tuple{Float64, Float64}})::Vector{Tuple{Float6
 end
 
 function fix_parameter_value(input::JuMP.VariableRef, value::Float64)
-    JuMP.fix(input, value; force=true)
+    JuMP.fix(input, value; force = true)
     return
 end
 
@@ -249,7 +249,7 @@ Run this function only when getting detailed solver stats
 """
 function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
     # JuMP.solution_summary uses a lot of try-catch so it has a performance hit and should be opt-in
-    jump_summary = JuMP.solution_summary(jump_model, verbose=false)
+    jump_summary = JuMP.solution_summary(jump_model; verbose = false)
     # Note we don't grab all the fields from the summary because not all can be encoded as Float for HDF store
     fields = [
         :has_values, # Bool
@@ -282,14 +282,15 @@ end
 function _get_solver_time(jump_model::JuMP.Model)
     solver_solve_time = NaN
 
-    try_s = get!(jump_model.ext, :try_supports_solvetime, (trycatch=true, supports=true))
+    try_s =
+        get!(jump_model.ext, :try_supports_solvetime, (trycatch = true, supports = true))
     if try_s.trycatch
         try
             solver_solve_time = MOI.get(jump_model, MOI.SolveTimeSec())
-            jump_model.ext[:try_supports_solvetime] = (trycatch=false, supports=true)
+            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = true)
         catch
             @debug "SolveTimeSec() property not supported by the Solver"
-            jump_model.ext[:try_supports_solvetime] = (trycatch=false, supports=false)
+            jump_model.ext[:try_supports_solvetime] = (trycatch = false, supports = false)
         end
     else
         if try_s.supports
@@ -322,7 +323,7 @@ end
 Exports the JuMP object in MathOptFormat
 """
 function serialize_optimization_model(jump_model::JuMP.Model, save_path::String)
-    MOF_model = MOPFM(format=MOI.FileFormats.FORMAT_MOF)
+    MOF_model = MOPFM(; format = MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(jump_model))
     MOI.write_to_file(MOF_model, save_path)
     return

@@ -28,9 +28,9 @@ function SimulationInternal(
     recorders,
     console_level::Logging.LogLevel,
     file_level::Logging.LogLevel;
-    partitions::Union{Nothing, SimulationPartitions}=nothing,
-    cache_size_mib=1024,
-    min_cache_flush_size_mib=MIN_CACHE_FLUSH_SIZE_MiB,
+    partitions::Union{Nothing, SimulationPartitions} = nothing,
+    cache_size_mib = 1024,
+    min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
 )
     count_dict = OrderedDict{Int, OrderedDict{Int, Int}}()
 
@@ -121,22 +121,22 @@ function _get_most_recent_execution(path, sim_name)
 end
 
 function configure_logging(internal::SimulationInternal, file_mode)
-    return IS.configure_logging(
-        console=true,
-        console_stream=stderr,
-        console_level=internal.console_level,
-        file=true,
-        filename=joinpath(internal.logs_dir, SIMULATION_LOG_FILENAME),
-        file_level=internal.file_level,
-        file_mode=file_mode,
-        tracker=nothing,
-        set_global=false,
+    return IS.configure_logging(;
+        console = true,
+        console_stream = stderr,
+        console_level = internal.console_level,
+        file = true,
+        filename = joinpath(internal.logs_dir, SIMULATION_LOG_FILENAME),
+        file_level = internal.file_level,
+        file_mode = file_mode,
+        tracker = nothing,
+        set_global = false,
     )
 end
 
 function register_recorders!(internal::SimulationInternal, file_mode)
     for name in internal.recorders
-        IS.register_recorder!(name; mode=file_mode, directory=internal.recorder_dir)
+        IS.register_recorder!(name; mode = file_mode, directory = internal.recorder_dir)
     end
 end
 

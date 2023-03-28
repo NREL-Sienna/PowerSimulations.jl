@@ -80,9 +80,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     area_names = PSY.get_name.(areas)
     container_lb =
-        add_constraints_container!(container, T(), U, area_names, time_steps, meta="lb")
+        add_constraints_container!(container, T(), U, area_names, time_steps; meta = "lb")
     container_ub =
-        add_constraints_container!(container, T(), U, area_names, time_steps, meta="ub")
+        add_constraints_container!(container, T(), U, area_names, time_steps; meta = "ub")
     mismatch = get_variable(container, AreaMismatchVariable(), U)
     z = get_variable(container, LiftVariable(), U)
     jump_model = get_jump_model(container)

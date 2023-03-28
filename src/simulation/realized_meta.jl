@@ -10,14 +10,14 @@ end
 
 function RealizedMeta(
     res::SimulationProblemResults;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     existing_timestamps = get_timestamps(res)
     interval = existing_timestamps.step
     resolution = get_resolution(res)
     interval_len = Int(interval / resolution)
-    realized_timestamps = get_realized_timestamps(res, start_time=start_time, len=len)
+    realized_timestamps = get_realized_timestamps(res; start_time = start_time, len = len)
 
     result_start_time = existing_timestamps[findlast(
         x -> x .<= first(realized_timestamps),
@@ -70,7 +70,7 @@ function get_realization(
                 end
             end
         end
-        realized_values[key] = DataFrames.DataFrame(results_concat, copycols=false)
+        realized_values[key] = DataFrames.DataFrame(results_concat; copycols = false)
         DataFrames.insertcols!(
             realized_values[key],
             1,

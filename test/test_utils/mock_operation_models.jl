@@ -8,7 +8,7 @@ function PSI.DecisionModel(
     ::Type{MockOperationProblem},
     ::Type{T},
     sys::PSY.System;
-    name=nothing,
+    name = nothing,
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
@@ -16,8 +16,8 @@ function PSI.DecisionModel(
         ProblemTemplate(T),
         sys,
         settings,
-        nothing,
-        name=name,
+        nothing;
+        name = name,
     )
 end
 
@@ -28,17 +28,21 @@ function make_mock_forecast(horizon, resolution, interval, steps)
         forecast_timestamps = init_time + interval * i
         timeseries_data[forecast_timestamps] = rand(horizon)
     end
-    return Deterministic(name="mock_forecast", data=timeseries_data, resolution=resolution)
+    return Deterministic(;
+        name = "mock_forecast",
+        data = timeseries_data,
+        resolution = resolution,
+    )
 end
 
 function make_mock_singletimeseries(horizon, resolution)
     init_time = DateTime("2024-01-01")
-    tstamps = collect(range(init_time, length=horizon, step=resolution))
+    tstamps = collect(range(init_time; length = horizon, step = resolution))
     timeseries_data = TimeArray(tstamps, rand(horizon))
-    return SingleTimeSeries(name="mock_timeseries", data=timeseries_data)
+    return SingleTimeSeries(; name = "mock_timeseries", data = timeseries_data)
 end
 
-function PSI.DecisionModel(::Type{MockOperationProblem}; name=nothing, kwargs...)
+function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs...)
     sys = System(100.0)
     add_component!(sys, Bus(nothing))
     l = PowerLoad(nothing)
@@ -55,17 +59,17 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name=nothing, kwargs...
     )
     add_time_series!(sys, l, forecast)
 
-    settings = PSI.Settings(sys; horizon=get(kwargs, :horizon, 24))
+    settings = PSI.Settings(sys; horizon = get(kwargs, :horizon, 24))
     return DecisionModel{MockOperationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
         settings,
-        nothing,
-        name=name,
+        nothing;
+        name = name,
     )
 end
 
-function PSI.EmulationModel(::Type{MockEmulationProblem}; name=nothing, kwargs...)
+function PSI.EmulationModel(::Type{MockEmulationProblem}; name = nothing, kwargs...)
     sys = System(100.0)
     add_component!(sys, Bus(nothing))
     l = PowerLoad(nothing)
@@ -80,13 +84,13 @@ function PSI.EmulationModel(::Type{MockEmulationProblem}; name=nothing, kwargs..
     )
     add_time_series!(sys, l, single_ts)
 
-    settings = PSI.Settings(sys; horizon=get(kwargs, :horizon, 24))
+    settings = PSI.Settings(sys; horizon = get(kwargs, :horizon, 24))
     return EmulationModel{MockEmulationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
         settings,
-        nothing,
-        name=name,
+        nothing;
+        name = name,
     )
 end
 
@@ -94,7 +98,7 @@ end
 function mock_construct_device!(
     problem::PSI.DecisionModel{MockOperationProblem},
     model;
-    built_for_recurrent_solves=false,
+    built_for_recurrent_solves = false,
 )
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
@@ -155,26 +159,26 @@ end
 
 function mock_uc_ed_simulation_problems(uc_horizon, ed_horizon)
     return SimulationModels([
-        DecisionModel(MockOperationProblem; horizon=uc_horizon, name="UC"),
+        DecisionModel(MockOperationProblem; horizon = uc_horizon, name = "UC"),
         DecisionModel(
             MockOperationProblem;
-            horizon=ed_horizon,
-            resolution=Minute(5),
-            name="ED",
+            horizon = ed_horizon,
+            resolution = Minute(5),
+            name = "ED",
         ),
     ])
 end
 
 function create_simulation_build_test_problems(
-    template_uc=get_template_standard_uc_simulation(),
-    template_ed=get_template_nomin_ed_simulation(),
-    sys_uc=PSB.build_system(PSITestSystems, "c_sys5_uc"),
-    sys_ed=PSB.build_system(PSITestSystems, "c_sys5_ed"),
+    template_uc = get_template_standard_uc_simulation(),
+    template_ed = get_template_nomin_ed_simulation(),
+    sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"),
+    sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"),
 )
-    return SimulationModels(
-        decision_models=[
-            DecisionModel(template_uc, sys_uc; name="UC", optimizer=GLPK_optimizer),
-            DecisionModel(template_ed, sys_ed; name="ED", optimizer=GLPK_optimizer),
+    return SimulationModels(;
+        decision_models = [
+            DecisionModel(template_uc, sys_uc; name = "UC", optimizer = GLPK_optimizer),
+            DecisionModel(template_ed, sys_ed; name = "ED", optimizer = GLPK_optimizer),
         ],
     )
 end
@@ -203,7 +207,7 @@ function setup_ic_model_container!(model::DecisionModel)
     PSI.init_model_store_params!(model)
 
     @info "Make Initial Conditions Model"
-    PSI.set_output_dir!(model, mktempdir(cleanup=true))
+    PSI.set_output_dir!(model, mktempdir(; cleanup = true))
     PSI.build_initial_conditions!(model)
     PSI.initialize!(model)
     return

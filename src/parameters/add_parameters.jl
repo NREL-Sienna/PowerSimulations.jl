@@ -202,7 +202,7 @@ function add_parameters!(
         [ts_uuid],
         [name],
         time_steps;
-        meta=name,
+        meta = name,
     )
 
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
@@ -284,7 +284,7 @@ function add_parameters!(
         key,
         names,
         time_steps;
-        meta=get_service_name(model),
+        meta = get_service_name(model),
     )
     jump_model = get_jump_model(container)
 
@@ -382,7 +382,7 @@ function add_parameters!(
         key,
         names,
         time_steps;
-        meta=get_service_name(model),
+        meta = get_service_name(model),
     )
     jump_model = get_jump_model(container)
     for d in contributing_devices

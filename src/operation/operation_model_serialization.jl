@@ -35,7 +35,7 @@ struct ProblemSerializationWrapper
     optimizer::OptimizerAttributes
 end
 
-function serialize_problem(model::OperationModel; optimizer=nothing)
+function serialize_problem(model::OperationModel; optimizer = nothing)
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
     sys_to_file = get_system_to_file(get_settings(model))
@@ -95,8 +95,9 @@ function deserialize_problem(
         sys = PSY.System(obj.sys)
     end
     settings =
-        Settings(sys; restore_from_copy(obj.settings; optimizer=kwargs[:optimizer])...)
-    model = obj.model_type(obj.template, sys, settings, kwargs[:jump_model]; name=obj.name)
+        Settings(sys; restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])...)
+    model =
+        obj.model_type(obj.template, sys, settings, kwargs[:jump_model]; name = obj.name)
     jump_model = get_jump_model(model)
     if obj.optimizer.name == JuMP.solver_name(jump_model)
         orig_attrs = obj.optimizer.attributes
@@ -105,7 +106,7 @@ function deserialize_problem(
             @warn "Different optimizer attributes are set. Original: $orig_attrs New: $new_attrs"
         else
             for attrs in (orig_attrs, new_attrs)
-                sort!(attrs, by=x -> x.first.name)
+                sort!(attrs; by = x -> x.first.name)
             end
             for i in 1:length(orig_attrs)
                 name = orig_attrs[i].first.name

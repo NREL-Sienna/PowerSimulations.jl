@@ -181,8 +181,8 @@ function _add_variable_cost_to_objective!(
     variable_cost_forecast = PSY.get_variable_cost(
         component,
         op_cost;
-        start_time=initial_time,
-        len=length(time_steps),
+        start_time = initial_time,
+        len = length(time_steps),
     )
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     parameter_container = _get_cost_function_parameter_container(
@@ -377,8 +377,8 @@ function _add_service_bid_cost!(
         component,
         PSY.get_operation_cost(component),
         service;
-        start_time=initial_time,
-        len=length(time_steps),
+        start_time = initial_time,
+        len = length(time_steps),
     )
     forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
     reserve_variable = get_variable(container, U(), T, PSY.get_name(service))

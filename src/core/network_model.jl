@@ -35,10 +35,10 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
 
     function NetworkModel(
         ::Type{T};
-        use_slacks=false,
-        PTDF_matrix=nothing,
-        subnetworks=Dict{Int, Set{Int}}(),
-        duals=Vector{DataType}(),
+        use_slacks = false,
+        PTDF_matrix = nothing,
+        subnetworks = Dict{Int, Set{Int}}(),
+        duals = Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(use_slacks, PTDF_matrix, subnetworks, Dict{PSY.Bus, Int}(), duals)

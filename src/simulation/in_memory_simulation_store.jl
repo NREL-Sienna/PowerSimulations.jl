@@ -21,8 +21,8 @@ function open_store(
     func::Function,
     ::Type{InMemorySimulationStore},
     directory::AbstractString,  # Unused. Need to match the interface.
-    mode=nothing,
-    filename=nothing,
+    mode = nothing,
+    filename = nothing,
 )
     store = InMemorySimulationStore()
     return func(store)
@@ -162,7 +162,7 @@ function read_result(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
-    return read_results(get_dm_data(store)[model_name], key, index=index)
+    return read_results(get_dm_data(store)[model_name], key; index = index)
 end
 
 function read_result(
@@ -172,16 +172,16 @@ function read_result(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
-    return read_results(get_em_data(store), key, index=index)
+    return read_results(get_em_data(store), key; index = index)
 end
 
 function read_results(
     store::InMemorySimulationStore,
     key::OptimizationContainerKey;
-    index::EmulationModelIndexType=nothing,
-    len::Int=nothing,
+    index::EmulationModelIndexType = nothing,
+    len::Int = nothing,
 )
-    return read_results(get_em_data(store), key, index=index, len=len)
+    return read_results(get_em_data(store), key; index = index, len = len)
 end
 
 function get_emulation_model_dataset_size(

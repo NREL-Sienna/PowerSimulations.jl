@@ -27,7 +27,7 @@ struct SimulationResults
     store::Union{Nothing, SimulationStore}
 end
 
-function SimulationResults(path::AbstractString, execution=nothing; ignore_status=false)
+function SimulationResults(path::AbstractString, execution = nothing; ignore_status = false)
     # This method maintains compatibility with the old interface as long as there is only
     # one simulation name.
     unique_names = Set{String}()
@@ -42,7 +42,7 @@ function SimulationResults(path::AbstractString, execution=nothing; ignore_statu
 
     if length(unique_names) == 1
         name = first(unique_names)
-        return SimulationResults(path, name, execution; ignore_status=ignore_status)
+        return SimulationResults(path, name, execution; ignore_status = ignore_status)
     end
 
     if "data_store" in readdir(path)
@@ -50,7 +50,7 @@ function SimulationResults(path::AbstractString, execution=nothing; ignore_statu
             dirname(path),
             basename(path),
             execution;
-            ignore_status=ignore_status,
+            ignore_status = ignore_status,
         )
     end
 
@@ -72,8 +72,8 @@ Construct SimulationResults from a simulation output directory.
 function SimulationResults(
     path::AbstractString,
     name::AbstractString,
-    execution=nothing;
-    ignore_status=false,
+    execution = nothing;
+    ignore_status = false,
 )
     if isnothing(execution)
         execution = _get_most_recent_execution(path, name)
@@ -141,7 +141,7 @@ end
 """
 Construct SimulationResults from a simulation.
 """
-function SimulationResults(sim::Simulation; ignore_status=false, kwargs...)
+function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
     _check_status(get_simulation_status(sim), ignore_status)
     store = get_simulation_store(sim)
     execution_path = get_simulation_dir(sim)
@@ -160,8 +160,8 @@ function SimulationResults(sim::Simulation; ignore_status=false, kwargs...)
             problem_params,
             sim_params,
             execution_path,
-            container_key_lookup,
-            system=get_system(model),
+            container_key_lookup;
+            system = get_system(model),
         )
         decision_problem_results[name] = problem_result
     end
@@ -174,8 +174,8 @@ function SimulationResults(sim::Simulation; ignore_status=false, kwargs...)
         first(values(sim_params.emulation_model_params)),
         sim_params,
         execution_path,
-        container_key_lookup,
-        system=isnothing(emulation_model) ? nothing : get_system(emulation_model),
+        container_key_lookup;
+        system = isnothing(emulation_model) ? nothing : get_system(emulation_model),
     )
 
     return SimulationResults(
@@ -293,9 +293,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_variable(
                         problem_results,
                         name;
-                        initial_time=timestamp,
-                        count=1,
-                        store=store,
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -307,9 +307,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_aux_variable(
                         problem_results,
                         name;
-                        initial_time=timestamp,
-                        count=1,
-                        store=store,
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -321,9 +321,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_parameter(
                         problem_results,
                         name;
-                        initial_time=timestamp,
-                        count=1,
-                        store=store,
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -335,9 +335,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     dfs = read_dual(
                         problem_results,
                         name;
-                        initial_time=timestamp,
-                        count=1,
-                        store=store,
+                        initial_time = timestamp,
+                        count = 1,
+                        store = store,
                     )
                     export_result(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
@@ -350,9 +350,9 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                 dfs = read_expression(
                     problem_results,
                     name;
-                    initial_time=timestamp,
-                    count=1,
-                    store=store,
+                    initial_time = timestamp,
+                    count = 1,
+                    store = store,
                 )
                 export_result(file_type, export_path, name, timestamp, dfs[timestamp])
             end
@@ -360,7 +360,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
 
         if problem_exports.optimizer_stats
             export_path = joinpath(path, problem_results.problem, "optimizer_stats.csv")
-            df = read_optimizer_stats(problem_results, store=store)
+            df = read_optimizer_stats(problem_results; store = store)
             export_result(file_type, export_path, df)
         end
     end

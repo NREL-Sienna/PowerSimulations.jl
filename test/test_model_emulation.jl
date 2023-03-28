@@ -3,12 +3,12 @@
     c_sys5 = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=GLPK_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5; optimizer = GLPK_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
 
@@ -16,13 +16,13 @@
     c_sys5_uc_re = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc_re";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer=GLPK_optimizer)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
 
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
     @test !isempty(collect(readdir(PSI.get_recorder_dir(model))))
@@ -34,12 +34,12 @@ end
     c_sys5_uc_re = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc_re";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
@@ -50,12 +50,12 @@ end
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
         "c_sys5_pglib";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    model = EmulationModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=1, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 1, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
 
     check_duration_on_initial_conditions_values(model, ThermalStandard)
@@ -69,12 +69,12 @@ end
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
         "c_sys5_pglib";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
-    model = EmulationModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=1, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 1, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
@@ -87,13 +87,13 @@ end
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
         "c_sys5_pglib";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
     set_device_model!(template, device_model)
-    model = EmulationModel(template, c_sys5_uc; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
 end
 
@@ -103,12 +103,12 @@ end
     c_sys5_bat = PSB.build_system(
         PSITestSystems,
         "c_sys5_bat";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, GenericBattery, BookKeeping)
-    model = EmulationModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     ic_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
@@ -127,12 +127,12 @@ end
     c_sys5_bat = PSB.build_system(
         PSITestSystems,
         "c_sys5_bat";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, GenericBattery, BatteryAncillaryServices)
-    model = EmulationModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     ic_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
@@ -151,12 +151,12 @@ end
     c_sys5_bat = PSB.build_system(
         PSITestSystems,
         "c_sys5_bat_ems";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, BatteryEMS, EnergyTarget)
-    model = EmulationModel(template, c_sys5_bat; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     ic_data = PSI.get_initial_condition(
         PSI.get_optimization_container(model),
@@ -177,13 +177,13 @@ end
     c_sys5_hyd = PSB.build_system(
         PSITestSystems,
         "c_sys5_hyd";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
@@ -199,14 +199,14 @@ end
     c_sys5_hyd = PSB.build_system(
         PSITestSystems,
         "c_sys5_hyd";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
+    model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
@@ -222,12 +222,12 @@ end
     c_sys5_hyd = PSB.build_system(
         PSITestSystems,
         "c_sys5_hyd";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
@@ -243,12 +243,12 @@ end
     c_sys5_hyd = PSB.build_system(
         PSITestSystems,
         "c_sys5_hyd";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirBudget)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
@@ -264,12 +264,12 @@ end
     c_sys5_hyd = PSB.build_system(
         PSITestSystems,
         "c_sys5_hyd_ems";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
@@ -295,12 +295,12 @@ end
     c_sys5_hyd = PSB.build_system(
         PSITestSystems,
         "c_sys5_hyd_ems";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    model = EmulationModel(template, c_sys5_hyd; optimizer=HiGHS_optimizer)
-    @test build!(model; executions=10, output_dir=mktempdir(cleanup=true)) ==
+    model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           BuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
@@ -327,13 +327,17 @@ end
     c_sys5 = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
     executions = 10
-    @test build!(model; executions=executions, output_dir=mktempdir(cleanup=true)) ==
+    @test build!(
+        model;
+        executions = executions,
+        output_dir = mktempdir(; cleanup = true),
+    ) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
     results = ProblemResults(model)
@@ -384,35 +388,35 @@ end
         c_sys5 = PSB.build_system(
             PSITestSystems,
             "c_sys5_uc";
-            add_single_time_series=true,
-            force_build=true,
+            add_single_time_series = true,
+            force_build = true,
         )
 
-        model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
-        @test_throws ErrorException run!(model, executions=10)
+        model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
+        @test_throws ErrorException run!(model, executions = 10)
         @test run!(
-            model,
-            executions=10,
-            output_dir=mktempdir(cleanup=true),
-            serialize=serialize,
+            model;
+            executions = 10,
+            output_dir = mktempdir(; cleanup = true),
+            serialize = serialize,
         ) == RunStatus.SUCCESSFUL
     end
 end
 
 @testset "Test serialization/deserialization of EmulationModel results" begin
-    path = mktempdir(cleanup=true)
+    path = mktempdir(; cleanup = true)
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
     executions = 10
-    @test build!(model; executions=executions, output_dir=path) == BuildStatus.BUILT
-    @test run!(model, export_problem_results=true) == RunStatus.SUCCESSFUL
+    @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
+    @test run!(model; export_problem_results = true) == RunStatus.SUCCESSFUL
     results1 = ProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
@@ -444,18 +448,18 @@ end
 end
 
 @testset "Test deserialization and re-run of EmulationModel" begin
-    path = mktempdir(cleanup=true)
+    path = mktempdir(; cleanup = true)
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(
         PSITestSystems,
         "c_sys5_uc";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer=HiGHS_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
     executions = 10
-    @test build!(model; executions=executions, output_dir=path) == BuildStatus.BUILT
+    @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
     results = ProblemResults(model)
     var1 = read_variable(results, ActivePowerVariable, ThermalStandard)
@@ -465,7 +469,7 @@ end
     @test PSI._SERIALIZED_MODEL_FILENAME in file_list
     path2 = joinpath(path, "tmp")
     model2 = EmulationModel(path, HiGHS_optimizer)
-    build!(model2, output_dir=path2)
+    build!(model2; output_dir = path2)
     @test run!(model2) == RunStatus.SUCCESSFUL
     results2 = ProblemResults(model2)
     var2 = read_variable(results, ActivePowerVariable, ThermalStandard)
@@ -491,34 +495,34 @@ end
     sys = PSB.build_system(
         PSITestSystems,
         "c_sys5_pglib";
-        add_single_time_series=true,
-        force_build=true,
+        add_single_time_series = true,
+        force_build = true,
     )
     optimizer = HiGHS_optimizer
     set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    model = EmulationModel(template, sys; optimizer=HiGHS_optimizer)
-    output_dir = mktempdir(cleanup=true)
+    model = EmulationModel(template, sys; optimizer = HiGHS_optimizer)
+    output_dir = mktempdir(; cleanup = true)
 
-    @test build!(model; executions=1, output_dir=output_dir) == BuildStatus.BUILT
+    @test build!(model; executions = 1, output_dir = output_dir) == BuildStatus.BUILT
     ic_file = PSI.get_initial_conditions_file(model)
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="make")
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "make")
     @test run!(model) == RunStatus.SUCCESSFUL
 
     # Build again, use existing initial conditions.
     PSI.reset!(model)
-    @test build!(model; executions=1, output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="make")
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "make")
     @test run!(model) == RunStatus.SUCCESSFUL
 
     # Build again, use existing initial conditions.
     model = EmulationModel(
         template,
         sys;
-        optimizer=optimizer,
-        deserialize_initial_conditions=true,
+        optimizer = optimizer,
+        deserialize_initial_conditions = true,
     )
-    @test build!(model; executions=1, output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="deserialize")
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "deserialize")
     @test run!(model) == RunStatus.SUCCESSFUL
 
     # Construct and build again with custom initial conditions file.
@@ -528,17 +532,17 @@ end
     model = EmulationModel(
         template,
         sys;
-        optimizer=optimizer,
-        initialization_file=initialization_file,
-        deserialize_initial_conditions=true,
+        optimizer = optimizer,
+        initialization_file = initialization_file,
+        deserialize_initial_conditions = true,
     )
-    @test build!(model; executions=1, output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=true, message="deserialize")
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = true, message = "deserialize")
 
     # Construct and build again while skipping build of initial conditions.
-    model = EmulationModel(template, sys; optimizer=optimizer, initialize_model=false)
+    model = EmulationModel(template, sys; optimizer = optimizer, initialize_model = false)
     rm(ic_file)
-    @test build!(model; executions=1, output_dir=output_dir) == PSI.BuildStatus.BUILT
-    test_ic_serialization_outputs(model, ic_file_exists=false, message="skip")
+    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    test_ic_serialization_outputs(model; ic_file_exists = false, message = "skip")
     @test run!(model) == RunStatus.SUCCESSFUL
 end

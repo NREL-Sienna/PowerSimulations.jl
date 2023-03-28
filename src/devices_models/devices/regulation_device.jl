@@ -66,9 +66,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
 
     container_up =
-        add_constraints_container!(container, S(), U, names, time_steps, meta="up")
+        add_constraints_container!(container, S(), U, names, time_steps; meta = "up")
     container_dn =
-        add_constraints_container!(container, S(), U, names, time_steps, meta="dn")
+        add_constraints_container!(container, S(), U, names, time_steps; meta = "dn")
 
     for d in devices
         name = PSY.get_name(d)
@@ -106,9 +106,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
 
     container_up =
-        add_constraints_container!(container, S(), U, names, time_steps, meta="up")
+        add_constraints_container!(container, S(), U, names, time_steps; meta = "up")
     container_dn =
-        add_constraints_container!(container, S(), U, names, time_steps, meta="dn")
+        add_constraints_container!(container, S(), U, names, time_steps; meta = "dn")
 
     for d in devices
         name = PSY.get_name(d)
@@ -142,9 +142,9 @@ function add_constraints!(
     time_steps = get_time_steps(container)
 
     container_up =
-        add_constraints_container!(container, S(), U, names, time_steps, meta="up")
+        add_constraints_container!(container, S(), U, names, time_steps; meta = "up")
     container_dn =
-        add_constraints_container!(container, S(), U, names, time_steps, meta="dn")
+        add_constraints_container!(container, S(), U, names, time_steps; meta = "dn")
 
     for d in devices
         ramp_limits = PSY.get_ramp_limits(d)
@@ -189,16 +189,16 @@ function add_constraints!(
         S(),
         T,
         component_names,
-        time_steps,
-        meta="up",
+        time_steps;
+        meta = "up",
     )
     participation_assignment_dn = add_constraints_container!(
         container,
         S(),
         T,
         component_names,
-        time_steps,
-        meta="dn",
+        time_steps;
+        meta = "dn",
     )
 
     expr_up = get_expression(container, EmergencyUp(), PSY.Area)
