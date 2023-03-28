@@ -88,9 +88,9 @@ function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::
 end
 
 function _assign_subnetworks_to_buses(
-    model::NetworkModel{StandardPTDFModel},
+    model::NetworkModel{T},
     sys::PSY.System,
-)
+) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     for bus in PSY.get_components(PSY.Bus, sys)
