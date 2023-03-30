@@ -435,10 +435,10 @@ function add_to_expression!(
         device_bus = PSY.get_bus(d)
         bus_no = PSY.get_number(device_bus)
         ref_bus = get_reference_bus(network_model, device_bus)
+        param = get_parameter_column_refs(param_container, name)
         for t in get_time_steps(container)
-            param = get_parameter_column_refs(param_container, name)[t]
-            _add_to_jump_expression!(sys_expr[ref_bus, t], param, multiplier[name, t])
-            _add_to_jump_expression!(nodal_expr[bus_no, t], param, multiplier[name, t])
+            _add_to_jump_expression!(sys_expr[ref_bus, t], param[t], multiplier[name, t])
+            _add_to_jump_expression!(nodal_expr[bus_no, t], param[t], multiplier[name, t])
         end
     end
     return
