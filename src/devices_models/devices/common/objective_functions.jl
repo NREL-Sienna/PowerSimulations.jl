@@ -576,11 +576,21 @@ end
 
 function _check_pwl_compact_data(
     d::PSY.Component,
+    ::T,
+    ::U,
     data::Vector{Tuple{Float64, Float64}},
     base_power::Float64,
-)
-    min = PSY.get_active_power_limits(d).min
-    max = PSY.get_active_power_limits(d).max
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    min = get_variable_lower_bound(T(), d, U())
+    max = get_variable_upper_bound(T(), d, U())
+    if isnothing(min)
+        @warn "Lower bound not defined for variable $T, formulation $U. Can't check for convexity"
+        min = 0
+    end
+    if isnothing(max)
+        @warn "Upper bound not defined for variable $T, formulation $U. Can't check for convexity"
+        max = data[end][2] / base_power
+    end
     return _check_pwl_compact_data(min, max, data, base_power)
 end
 
@@ -648,7 +658,8 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         data = PSY.get_cost(cost_data[t])
-        is_power_data_compact = _check_pwl_compact_data(component, data, base_power)
+        is_power_data_compact =
+            _check_pwl_compact_data(component, U(), V(), data, base_power)
         if !uses_compact_power(component, V()) && is_power_data_compact
             error(
                 "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
@@ -726,7 +737,7 @@ function _add_pwl_term!(
     # Re-scale breakpoints by Basepower
     name = PSY.get_name(component)
 
-    is_power_data_compact = _check_pwl_compact_data(component, data, base_power)
+    is_power_data_compact = _check_pwl_compact_data(component, U(), V(), data, base_power)
 
     if !uses_compact_power(component, V()) && is_power_data_compact
         error(
@@ -782,7 +793,7 @@ function _add_pwl_term!(
         )
     end
 
-    if _check_pwl_compact_data(component, data, base_power)
+    if _check_pwl_compact_data(component, U(), V(), data, base_power)
         error("The data provided is not compatible with formulation $V. \\
               Use a formulation compatible with Compact Cost Functions")
     end
