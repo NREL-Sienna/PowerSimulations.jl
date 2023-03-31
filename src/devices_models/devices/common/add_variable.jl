@@ -83,7 +83,7 @@ function add_variable!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "$(T)_$(D)_{$(name), $(t)}",
             binary = binary
         )
@@ -130,7 +130,7 @@ function add_service_variable!(
     for t in time_steps, d in contributing_devices
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "$(T)_$(U)_$(PSY.get_name(service))_{$(name), $(t)}",
             binary = binary
         )

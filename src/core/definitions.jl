@@ -94,6 +94,8 @@ IS.@scoped_enum(
 )
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
+IS.@scoped_enum(COMPACT_PWL_STATUS, VALID = 1, INVALID = 2, UNDETERMINED = 3)
+
 const ENUMS = (BuildStatus, RunStatus, SOSStatusVariable)
 
 const ENUM_MAPPINGS = Dict()
