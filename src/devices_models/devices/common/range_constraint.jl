@@ -778,9 +778,9 @@ function upper_bound_range_with_parameter!(
     mult = get_multiplier_array(param_container)
     jump_model = get_jump_model(container)
     time_steps = axes(constraint_container)[2]
-    for device in devices,
+    for device in devices
         name = PSY.get_name(device)
-        param = get_parameter_column_refs(param_container, name)[t]
+        param = get_parameter_column_refs(param_container, name)
         for t in time_steps
             constraint_container[name, t] =
                 JuMP.@constraint(jump_model, lhs_array[name, t] <= mult[name, t] * param[t])
