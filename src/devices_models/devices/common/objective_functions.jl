@@ -565,35 +565,6 @@ function _slope_convexity_check(slopes::Vector{Float64})
     return flag
 end
 
-function _check_pwl_compact_data(
-    min::Float64,
-    max::Float64,
-    data::Vector{Tuple{Float64, Float64}},
-    base_power::Float64,
-)
-    return isapprox(max - min, data[end][2] / base_power) && iszero(data[1][2])
-end
-
-function _check_pwl_compact_data(
-    d::PSY.Component,
-    ::T,
-    ::U,
-    data::Vector{Tuple{Float64, Float64}},
-    base_power::Float64,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
-    min = get_variable_lower_bound(T(), d, U())
-    max = get_variable_upper_bound(T(), d, U())
-    if isnothing(min)
-        @warn "Lower bound not defined for variable $T, formulation $U. Can't check for convexity"
-        min = 0
-    end
-    if isnothing(max)
-        @warn "Upper bound not defined for variable $T, formulation $U. Can't check for convexity"
-        max = data[end][2] / base_power
-    end
-    return _check_pwl_compact_data(min, max, data, base_power)
-end
-
 function _get_sos_value(
     container::OptimizationContainer,
     ::Type{V},
@@ -657,19 +628,22 @@ function _add_pwl_term!(
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
+        # Run checks in every time step because each time step has a PWL cost function
         data = PSY.get_cost(cost_data[t])
-        is_power_data_compact =
-            _check_pwl_compact_data(component, U(), V(), data, base_power)
-        if !uses_compact_power(component, V()) && is_power_data_compact
+        compact_status = validate_compact_pwl_data(component, data, base_power)
+        if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
             error(
                 "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
             )
             # data = _convert_to_full_variable_cost(data, component)
-        elseif uses_compact_power(component, V()) && !is_power_data_compact
+        elseif uses_compact_power(component, V()) &&
+               compact_status != COMPACT_PWL_STATUS.VALID
+            @warn(
+                "The cost data provided is not in compact form. Will atempt to convert. Errors may occur."
+            )
             data = _convert_to_compact_variable_cost(data)
         else
-            @debug uses_compact_power(component, V()) name T V
-            @debug is_power_data_compact name T V
+            @debug uses_compact_power(component, V()) compact_status name T V
         end
         slopes = PSY.get_slopes(data)
         # First element of the return is the average cost at P_min.
@@ -705,7 +679,6 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         data = PSY.get_cost(cost_data[t])
-        slopes = PSY.get_slopes(data)
         # Shouldn't be passed for convexity check
         is_convex = false
         break_points = map(x -> last(x), data) ./ base_power
@@ -737,18 +710,19 @@ function _add_pwl_term!(
     # Re-scale breakpoints by Basepower
     name = PSY.get_name(component)
 
-    is_power_data_compact = _check_pwl_compact_data(component, U(), V(), data, base_power)
-
-    if !uses_compact_power(component, V()) && is_power_data_compact
+    compact_status = validate_compact_pwl_data(component, data, base_power)
+    if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
         error(
             "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
         )
         # data = _convert_to_full_variable_cost(data, component)
-    elseif uses_compact_power(component, V()) && !is_power_data_compact
+    elseif uses_compact_power(component, V()) && compact_status != COMPACT_PWL_STATUS.VALID
+        @warn(
+            "The cost data provided is not in compact form. Will atempt to convert. Errors may occur."
+        )
         data = _convert_to_compact_variable_cost(data)
     else
-        @debug uses_compact_power(component, V()) name T V
-        @debug is_power_data_compact name T V
+        @debug uses_compact_power(component, V()) compact_status name T V
     end
 
     slopes = PSY.get_slopes(data)
@@ -793,7 +767,7 @@ function _add_pwl_term!(
         )
     end
 
-    if _check_pwl_compact_data(component, U(), V(), data, base_power)
+    if validate_compact_pwl_data(component, data, base_power) == COMPACT_PWL_STATUS.VALID
         error("The data provided is not compatible with formulation $V. \\
               Use a formulation compatible with Compact Cost Functions")
     end
@@ -924,8 +898,6 @@ function _get_pwl_cost_expression(
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     gen_cost = JuMP.AffExpr(0.0)
-    slopes = PSY.get_slopes(cost_data)
-    upb = PSY.get_breakpoint_upperbounds(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,

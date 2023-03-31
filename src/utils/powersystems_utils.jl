@@ -54,3 +54,35 @@ function check_hvdc_line_limits_unidirectional(d::PSY.HVDCLine)
     end
     return
 end
+
+function _validate_compact_pwl_data(
+    min::Float64,
+    max::Float64,
+    data::Vector{Tuple{Float64, Float64}},
+    base_power::Float64,
+)
+    if isapprox(max - min, data[end][2] / base_power) && iszero(data[1][2])
+        return COMPACT_PWL_STATUS.VALID
+    else
+        return COMPACT_PWL_STATUS.INVALID
+    end
+end
+
+function validate_compact_pwl_data(
+    d::PSY.ThermalGen,
+    data::Vector{Tuple{Float64, Float64}},
+    base_power::Float64,
+)
+    min = PSY.get_active_power_limits(d).min
+    max = PSY.get_active_power_limits(d).max
+    return _validate_compact_pwl_data(min, max, data, base_power)
+end
+
+function validate_compact_pwl_data(
+    d::PSY.Component,
+    ::Vector{Tuple{Float64, Float64}},
+    ::Float64,
+)
+    @warn "Validation of compact pwl data is not implemented for $(typeof(d))."
+    return COMPACT_PWL_STATUS.UNDETERMINED
+end
