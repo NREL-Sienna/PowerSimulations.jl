@@ -1087,10 +1087,10 @@ function add_param_container!(
     sparse = false,
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: FixValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
-    param_key = ParameterKey(T, U, meta)
     if meta == CONTAINER_KEY_EMPTY_META
-        error()
+        error("$T parameters require passing the VariableType to the meta field")
     end
+    param_key = ParameterKey(T, U, meta)
     attributes = VariableValueAttributes(source_key)
     return _add_param_container!(
         container,
