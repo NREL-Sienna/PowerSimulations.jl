@@ -235,11 +235,15 @@ function add_parameters!(
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
-    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
+    parameter_container = add_param_container!(container, T(), D, key, names, time_steps; meta = "$U")
     jump_model = get_jump_model(container)
-
     for d in devices
         name = PSY.get_name(d)
+        if  get_variable_warm_start_value(U(), d, W()) === nothing
+            inital_parameter_value = 0.0
+        else
+            inital_parameter_value = get_variable_warm_start_value(U(), d, W())
+        end
         for t in time_steps
             set_multiplier!(
                 parameter_container,
@@ -250,7 +254,7 @@ function add_parameters!(
             set_parameter!(
                 parameter_container,
                 jump_model,
-                get_initial_parameter_value(T(), d, W()),
+                inital_parameter_value,
                 name,
                 t,
             )
