@@ -888,7 +888,13 @@ function _write_dataset!(dataset, array::Matrix{Float64}, row_range::UnitRange{I
 end
 
 function _write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
-    dataset[:, :, row_range] = array
+    if size(dataset[:, :, row_range]) == size(array)
+        dataset[:, :, row_range] = array
+    end
+
+    for i in size(array, 1), j in size(array, 2), k in row_range
+        dataset[i, j, k] = array[i, j, k]
+    end
     @debug "wrote dataset" dataset row_range
     return
 end
