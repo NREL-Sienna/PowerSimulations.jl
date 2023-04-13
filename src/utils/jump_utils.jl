@@ -220,12 +220,20 @@ function _calc_dimensions(
     # 2. Read data for one execution for all devices.
     # This will ensure that data on disk is contiguous in both cases.
     if length(ax) == 1
-        dims = (horizon, 1, num_rows)
+        if length(ax[1]) != horizon
+            @debug "$(encode_key_as_string(key)) has length $(length(ax[1])). Different than horizon $horizon."
+        end
+        dims = (length(ax[1]), 1, num_rows)
     elseif length(ax) == 2
-        dims = (horizon, length(columns), num_rows)
+        if length(ax[2]) != horizon
+            @debug "$(encode_key_as_string(key)) has length $(length(ax[1])). Different than horizon $horizon."
+        end
+        dims = (length(ax[2]), length(columns), num_rows)
     elseif length(ax) == 3
-        #     # TODO: untested
-        dims = (length(ax[2]), horizon, length(columns), num_rows)
+        if length(ax[3]) != horizon
+            @debug "$(encode_key_as_string(key)) has length $(length(ax[1])). Different than horizon $horizon."
+        end
+        dims = (length(ax[2]), length(ax[3]), length(columns), num_rows)
     else
         error("unsupported data size $(length(ax))")
     end
