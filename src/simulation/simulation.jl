@@ -308,6 +308,7 @@ function _get_model_store_requirements!(
 
     for (key, array) in get_variables(container)
         !should_write_resulting_value(key) && continue
+        horizon = size(array, 2)
         reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
         add_rule!(rules, model_name, key, true)
     end
