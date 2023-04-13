@@ -61,7 +61,7 @@ function get_realization(
             last_id =
                 step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
             if last_id - first_id > size(df, 1)
-                error("Variable $(encode_key_as_string(key)) has $(size(df, 1)) number of steps different than the default problem horizon. \
+                error("Variable $(encode_key_as_string(key)) has $(size(df, 1)) number of steps, that is different than the default problem horizon. \
                 Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation")
             end
             for colname in propertynames(df)
