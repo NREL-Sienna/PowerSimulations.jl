@@ -96,8 +96,12 @@ function _get_store_value(
             if convert_result_to_natural_units(key)
                 out .*= base_power
             end
-            time_col = range(ts; length = horizon, step = resolution)
-            DataFrames.insertcols!(out, 1, :DateTime => time_col)
+            if size(out, 2) == horizon
+                time_col = range(ts; length = horizon, step = resolution)
+                DataFrames.insertcols!(out, 1, :DateTime => time_col)
+            else
+                @warn("Variable $(key) has a different horizon than the problem specifictation. Can't assign Time Series")
+            end
             _results[ts] = out
         end
         results[key] = _results
