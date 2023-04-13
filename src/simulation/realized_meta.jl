@@ -60,8 +60,9 @@ function get_realization(
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
                 step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
-            if last_id - first_id > size(df, 2)
-                error("error")
+            if last_id - first_id > size(df, 1)
+                error("Variable $(encode_key_as_string(key)) has $(size(df, 1)) number of steps different than the default problem horizon. \
+                Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation")
             end
             for colname in propertynames(df)
                 colname == :DateTime && continue
