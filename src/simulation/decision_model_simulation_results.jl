@@ -100,7 +100,7 @@ function _get_store_value(
                 time_col = range(ts; length = horizon, step = resolution)
                 DataFrames.insertcols!(out, 1, :DateTime => time_col)
             else
-                @warn("Variable $(key) has a different horizon than the problem specifictation. Can't assign Time Series")
+                @warn("Variable $(key) has a different horizon than the problem specification. Can't assign TimeStamps to the resulting DataFrame.")
             end
             _results[ts] = out
         end
