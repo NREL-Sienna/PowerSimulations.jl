@@ -235,11 +235,58 @@ function add_parameters!(
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
-    parameter_container = add_param_container!(container, T(), D, key, names, time_steps; meta = "$U")
+    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
     jump_model = get_jump_model(container)
     for d in devices
         name = PSY.get_name(d)
-        if  get_variable_warm_start_value(U(), d, W()) === nothing
+        if get_variable_warm_start_value(U(), d, W()) === nothing
+            inital_parameter_value = 0.0
+        else
+            inital_parameter_value = get_variable_warm_start_value(U(), d, W())
+        end
+        for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
+            set_parameter!(
+                parameter_container,
+                jump_model,
+                inital_parameter_value,
+                name,
+                t,
+            )
+        end
+    end
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::T,
+    key::VariableKey{U, D},
+    model::DeviceModel{D, W},
+    devices::V,
+) where {
+    T <: FixValueParameter,
+    U <: VariableType,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    names = [PSY.get_name(device) for device in devices]
+    time_steps = get_time_steps(container)
+    parameter_container =
+        add_param_container!(container, T(), D, key, names, time_steps; meta = "$U")
+    jump_model = get_jump_model(container)
+    for d in devices
+        name = PSY.get_name(d)
+        if get_variable_warm_start_value(U(), d, W()) === nothing
             inital_parameter_value = 0.0
         else
             inital_parameter_value = get_variable_warm_start_value(U(), d, W())
