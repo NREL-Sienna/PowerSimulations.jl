@@ -96,7 +96,7 @@ function _get_store_value(
             if convert_result_to_natural_units(key)
                 out .*= base_power
             end
-            if size(out, 2) == horizon
+            if size(out, 1) == horizon
                 time_col = range(ts; length = horizon, step = resolution)
                 DataFrames.insertcols!(out, 1, :DateTime => time_col)
             else
