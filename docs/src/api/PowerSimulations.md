@@ -1,5 +1,3 @@
-# PowerSimulations
-
 ```@meta
 CurrentModule = PowerSimulations
 DocTestSetup  = quote
@@ -7,29 +5,22 @@ DocTestSetup  = quote
 end
 ```
 
-API documentation
+# Device Models
 
-```@contents
-Pages = ["PowerSimulations.md"]
+List of structures and methods for Device models
+
+```@docs
+DeviceModel
 ```
 
-## Index
+### Formulations
 
-```@index
-Pages = ["PowerSimulations.md"]
-```
+Refer to the Formulations Page for each Abstract Device Formulation.
 
-## Exported
+# Decision Models
 
-```@autodocs
-Modules = [PowerSimulations]
-Private = false
-Filter = t -> typeof(t) === DataType ? !(t <: Union{PowerSimulations.AbstractDeviceFormulation, PowerSimulations.AbstractServiceFormulation}) : true
-```
-
-## Internal
-
-```@autodocs
-Modules = [PowerSimulations]
-Public = false
+```@docs
+DecisionModel
+build!(::DecisionModel)
+solve!(::DecisionModel)
 ```
