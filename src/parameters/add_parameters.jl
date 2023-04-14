@@ -84,6 +84,25 @@ function add_parameters!(
     end
     source_key = get_optimization_container_key(ff)
     _add_parameters!(container, T(), source_key, model, devices)
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ff::FixValueFeedforward,
+    model::DeviceModel{D, W},
+    devices::V,
+) where {
+    T <: VariableValueParameter,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
     _set_affected_variables!(container, T(), D, ff)
     return
 end
