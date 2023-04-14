@@ -280,7 +280,19 @@ end
 get_horizon(model::DecisionModel) = get_horizon(get_settings(model))
 
 """
-Implementation of build for any DecisionProblem
+Build the Decision Model based on the specified DecisionProblem.
+
+# Arguments
+
+  - `model::DecisionModel{<:DecisionProblem}`: DecisionModel object
+  - `output_dir::String`: Output directory for results
+
+# Accepted Key Words
+
+  - `recorders::Vector{Symbol} = []`: recorder names to register
+  - `console_level = Logging.Error`: 
+  - `file_level = Logging.Info`:
+  - `disable_timer_outputs = false` : Enable/Disable timing outputs
 """
 function build!(
     model::DecisionModel{<:DecisionProblem};
@@ -359,15 +371,20 @@ keyword arguments to that function.
 # Arguments
 
   - `model::OperationModel = model`: operation model
-  - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
-  - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
-  - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
+
+# Accepted Key Words
+
+  - `export_problem_results::Bool = false`: If true, export ProblemResults DataFrames to CSV files.
+  - `console_level = Logging.Error`: 
+  - `file_level = Logging.Info`:
+  - `disable_timer_outputs = false` : Enable/Disable timing outputs
+  - `serialize::Bool = true`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
 
 ```julia
 results = solve!(OpModel)
-results = solve!(OpModel, output_dir="output")
+results = solve!(OpModel, export_problem_results = true)
 ```
 """
 function solve!(
