@@ -75,7 +75,7 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::UpperBoundFeedforward, _) = UpperBoundValueParameter()
+get_default_parameter_type(::UpperBoundFeedforward, _) = UpperBoundValueParameter
 get_optimization_container_key(ff::UpperBoundFeedforward) = ff.optimization_container_key
 
 """
@@ -105,7 +105,7 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::LowerBoundFeedforward, _) = LowerBoundValueParameter()
+get_default_parameter_type(::LowerBoundFeedforward, _) = LowerBoundValueParameter
 get_optimization_container_key(ff::LowerBoundFeedforward) = ff.optimization_container_key
 
 """
@@ -135,7 +135,7 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::SemiContinuousFeedforward, _) = OnStatusParameter()
+get_default_parameter_type(::SemiContinuousFeedforward, _) = OnStatusParameter
 get_optimization_container_key(f::SemiContinuousFeedforward) = f.optimization_container_key
 
 function has_semicontinuous_feedforward(
@@ -195,7 +195,7 @@ struct EnergyLimitFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::EnergyLimitFeedforward, _) = EnergyLimitParameter()
+get_default_parameter_type(::EnergyLimitFeedforward, _) = EnergyLimitParameter
 get_optimization_container_key(ff) = ff.optimization_container_key
 get_number_of_periods(ff) = ff.number_of_periods
 
@@ -227,7 +227,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::FixValueFeedforward, _) = FixValueParameter()
+get_default_parameter_type(::FixValueFeedforward, _) = FixValueParameter
 get_optimization_container_key(ff::FixValueFeedforward) = ff.optimization_container_key
 
 """
@@ -266,5 +266,5 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
     end
 end
 
-get_default_parameter_type(::EnergyTargetFeedforward, _) = EnergyTargetParameter()
+get_default_parameter_type(::EnergyTargetFeedforward, _) = EnergyTargetParameter
 get_optimization_container_key(ff::EnergyTargetFeedforward) = ff.optimization_container_key

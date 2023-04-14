@@ -1524,7 +1524,7 @@ function construct_device!(
 
     add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
-    add_parameters!(container, OnStatusParameter(), devices, model)
+    add_parameters!(container, OnStatusParameter, devices, model)
 
     add_feedforward_arguments!(container, model, devices)
 
@@ -1648,7 +1648,7 @@ function construct_device!(
 
     add_variables!(container, PowerOutput, devices, ThermalCompactDispatch())
 
-    add_parameters!(container, OnStatusParameter(), devices, model)
+    add_parameters!(container, OnStatusParameter, devices, model)
 
     add_feedforward_arguments!(container, model, devices)
 

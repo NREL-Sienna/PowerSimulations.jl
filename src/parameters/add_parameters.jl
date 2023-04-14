@@ -30,7 +30,7 @@ function add_parameters!(
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
     end
-    add_parameters!(container, T(), devices, model)
+    _add_parameters!(container, T(), devices, model)
     return
 end
 
@@ -50,7 +50,7 @@ function add_parameters!(
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, S)
         return
     end
-    add_parameters!(container, T(), key, model, devices)
+    _add_parameters!(container, T(), key, model, devices)
     return
 end
 
@@ -64,7 +64,7 @@ function add_parameters!(
        has_container_key(container, T, U, PSY.get_name(service))
         return
     end
-    add_parameters!(container, T(), service, model)
+    _add_parameters!(container, T(), service, model)
     return
 end
 
@@ -83,11 +83,11 @@ function add_parameters!(
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
     end
-    add_parameters!(container, T(), key, model, devices)
+    _add_parameters!(container, T(), key, model, devices)
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     param::T,
     devices::U,
@@ -163,7 +163,7 @@ function _add_time_series_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     param::T,
     devices::U,
@@ -177,7 +177,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     service::U,
@@ -217,7 +217,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::VariableKey{U, D},
@@ -263,7 +263,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::VariableKey{U, D},
@@ -275,9 +275,6 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
-        return
-    end
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
@@ -310,7 +307,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::AuxVarKey{U, D},
@@ -360,7 +357,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     devices::V,
@@ -409,7 +406,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::VariableKey{U, S},

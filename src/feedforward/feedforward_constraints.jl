@@ -213,7 +213,7 @@ function add_feedforward_constraints!(
         _add_sc_feedforward_constraints!(
             container,
             FeedforwardSemiContinousConstraint,
-            parameter_type,
+            parameter_type(),
             var,
             devices,
             model,
@@ -253,8 +253,8 @@ function add_feedforward_constraints!(
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param_ub = get_parameter_array(container, parameter_type, T)
-    multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
+    param_ub = get_parameter_array(container, parameter_type(), T)
+    multiplier_ub = get_parameter_multiplier_array(container, parameter_type(), T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
@@ -312,8 +312,8 @@ function add_feedforward_constraints!(
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param_ub = get_parameter_array(container, parameter_type, T)
-    multiplier_ub = get_parameter_multiplier_array(container, parameter_type, T)
+    param_ub = get_parameter_array(container, parameter_type(), T)
+    multiplier_ub = get_parameter_multiplier_array(container, parameter_type(), T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
@@ -348,10 +348,10 @@ function add_feedforward_constraints!(
 ) where {T, U, V <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param_ub = get_parameter_array(container, parameter_type, T, get_service_name(model))
+    param_ub = get_parameter_array(container, parameter_type(), T, get_service_name(model))
     multiplier_ub = get_parameter_multiplier_array(
         container,
-        parameter_type,
+        parameter_type(),
         T,
         get_service_name(model),
     )
@@ -411,8 +411,8 @@ function add_feedforward_constraints!(
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param = get_parameter_array(container, parameter_type, T)
-    multiplier = get_parameter_multiplier_array(container, parameter_type, T)
+    param = get_parameter_array(container, parameter_type(), T)
+    multiplier = get_parameter_multiplier_array(container, parameter_type(), T)
     affected_periods = get_number_of_periods(ff)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
@@ -483,8 +483,8 @@ function add_feedforward_constraints!(
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param = get_parameter_array(container, parameter_type, T)
-    multiplier = get_parameter_multiplier_array(container, parameter_type, T)
+    param = get_parameter_array(container, parameter_type(), T)
+    multiplier = get_parameter_multiplier_array(container, parameter_type(), T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
@@ -506,10 +506,10 @@ function add_feedforward_constraints!(
 ) where {T, U, V <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param = get_parameter_array(container, parameter_type, T, get_service_name(model))
+    param = get_parameter_array(container, parameter_type(), T, get_service_name(model))
     multiplier = get_parameter_multiplier_array(
         container,
-        parameter_type,
+        parameter_type(),
         T,
         get_service_name(model),
     )
@@ -556,8 +556,8 @@ function add_feedforward_constraints!(
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param = get_parameter_array(container, parameter_type, T)
-    multiplier = get_parameter_multiplier_array(container, parameter_type, T)
+    param = get_parameter_array(container, parameter_type(), T)
+    multiplier = get_parameter_multiplier_array(container, parameter_type(), T)
     target_period = ff.target_period
     penalty_cost = ff.penalty_cost
     for var in get_affected_values(ff)
