@@ -5,7 +5,7 @@ function add_feedforward_arguments!(
 ) where {V <: PSY.Component}
     for ff in get_feedforwards(model)
         @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
-        add_feedforward_arguments!(container, model, devices, ff)
+        _add_feedforward_arguments!(container, model, devices, ff)
     end
     return
 end
@@ -23,7 +23,7 @@ function add_feedforward_arguments!(
     return
 end
 
-function add_feedforward_arguments!(
+function _add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
@@ -47,7 +47,7 @@ function _add_feedforward_arguments!(
     return
 end
 
-function add_feedforward_arguments!(
+function _add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
