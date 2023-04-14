@@ -37,20 +37,20 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
-    key::VariableKey{U, S},
+    ff::AbstractAffectFeedforward,
     model::ServiceModel{S, W},
     devices::V,
 ) where {
     S <: PSY.AbstractReserve,
     T <: VariableValueParameter,
-    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, S)
         return
     end
-    _add_parameters!(container, T(), key, model, devices)
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
     return
 end
 
@@ -71,19 +71,19 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
-    key::VariableKey{U, D},
+    ff::AbstractAffectFeedforward,
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
     end
-    _add_parameters!(container, T(), key, model, devices)
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
     return
 end
 
