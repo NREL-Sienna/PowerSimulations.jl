@@ -1048,10 +1048,10 @@ function add_param_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
-    sos_variable::SOSStatusVariable,
     variable_type::Type{W},
-    uses_compact_power::Bool,
-    data_type::DataType,
+    sos_variable::SOSStatusVariable = NO_VARIABLE,
+    uses_compact_power::Bool = false,
+    data_type::DataType = Float64,
     axs...;
     sparse = false,
     meta = CONTAINER_KEY_EMPTY_META,
