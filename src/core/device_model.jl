@@ -27,6 +27,10 @@ feedforward to enable passing values between operation model at simulation time
 # Accepted Key Words
 
   - `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
+  - `use_slacks::Bool : Add slacks to the device model`
+  - `duals::Vector{DataType} : use to pass constraint type to calculate the duals`
+  - `time_series_names::Dict{Type{<:TimeSeriesParameter}, String} : use to specify time series names associated to the device`
+  - `attributes::Dict{String, Any} : use to specify attributes to the device`
 
 # Example
 
