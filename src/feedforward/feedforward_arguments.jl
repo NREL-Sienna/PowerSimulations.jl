@@ -73,7 +73,7 @@ function _add_feedforward_arguments!(
     return
 end
 
-function add_feedforward_arguments!(
+function _add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
