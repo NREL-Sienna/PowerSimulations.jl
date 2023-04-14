@@ -460,11 +460,18 @@ function update_parameter_values!(
     return
 end
 
-function _fix_parameter_value!(container, parameter_array, parameter_attributes)
-    variable = get_variable(container, get_attribute_key(parameter_attributes))
-    component_names, time = axes(parameter_array)
-    for t in time, name in component_names
-        JuMP.fix(variable[name, t], parameter_array[name, t])
+function _fix_parameter_value!(
+    container::OptimizationContainer,
+    parameter_array::JuMPFloatArray,
+    parameter_attributes::VariableValueAttributes,
+)
+    affected_variable_keys = parameter_attributes.affected_keys
+    for var_key in affected_variable_keys
+        variable = get_variable(container, var_key)
+        component_names, time = axes(parameter_array)
+        for t in time, name in component_names
+            JuMP.fix(variable[name, t], parameter_array[name, t]; force = true)
+        end
     end
     return
 end

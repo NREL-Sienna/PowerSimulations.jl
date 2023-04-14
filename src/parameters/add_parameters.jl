@@ -84,6 +84,25 @@ function add_parameters!(
     end
     source_key = get_optimization_container_key(ff)
     _add_parameters!(container, T(), source_key, model, devices)
+    _set_affected_variables!(container, T(), D, ff)
+    return
+end
+
+function _set_affected_variables!(
+    container::OptimizationContainer,
+    ::T,
+    device_type::Type{U},
+    ff::FixValueFeedforward,
+) where {
+    T <: VariableValueParameter,
+    U <: PSY.Component,
+}
+    source_key = get_optimization_container_key(ff)
+    var_type = get_entry_type(source_key)
+    parameter_container = get_parameter(container, T(), U, "$var_type")
+    param_attributes = get_attributes(parameter_container)
+    affected_variables = get_affected_values(ff)
+    push!(param_attributes.affected_keys, affected_variables...)
     return
 end
 
