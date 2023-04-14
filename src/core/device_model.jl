@@ -31,13 +31,16 @@ feedforward to enable passing values between operation model at simulation time
 
 # Arguments
 
-  - `::Type{D} where D<:PSY.Device`: Power System Device Type
-  - `::Type{B} where B<:AbstractDeviceFormulation`: Abstract Device Formulation
-  - `feedforward::Array{<:AbstractAffectFeedforward} = Vector{AbstractAffectFeedforward}()` : use to pass parameters between models
-  - `use_slacks::Bool = false` : Add slacks to the device model. Implementation is model dependent and not all models feature slacks
-  - `duals::Vector{DataType} = Vector{DataType}()`: use to pass constraint type to calculate the duals. The DataType needs to be a valid ConstraintType
-  - `time_series_names::Dict{Type{<:TimeSeriesParameter}, String} = get_default_time_series_names(D, B)` : use to specify time series names associated to the device`
-  - `attributes::Dict{String, Any} = get_default_attributes(D, B)` : use to specify attributes to the device
+-`::Type{D}`: Power System Device Type
+-`::Type{B}`: Abstract Device Formulation
+
+# Accepted Key Words
+
+  - `feedforward::Array{<:AbstractAffectFeedforward}` : use to pass parameters between models
+  - `use_slacks::Bool : Add slacks to the device model`
+  - `duals::Vector{DataType} : use to pass constraint type to calculate the duals`
+  - `time_series_names::Dict{Type{<:TimeSeriesParameter}, String} : use to specify time series names associated to the device`
+  - `attributes::Dict{String, Any} : use to specify attributes to the device`
 
 # Example
 ```julia
