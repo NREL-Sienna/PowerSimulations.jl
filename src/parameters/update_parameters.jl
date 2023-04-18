@@ -338,7 +338,14 @@ function update_parameter_values!(
     # Multiplier is only needed for the objective function since `_update_parameter_values!` also updates the objective function
     parameter_multiplier = get_parameter_multiplier_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_multiplier, parameter_attributes, U, model, input)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_multiplier,
+        parameter_attributes,
+        U,
+        model,
+        input,
+    )
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
@@ -587,7 +594,14 @@ function _update_parameter_values!(
                     value, _ = _convert_variable_cost(value)
                 end
                 _set_param_value!(parameter_array, PSY.get_cost(value), name, t)
-                update_variable_cost!(container, parameter_array, parameter_multiplier, attributes, component, t)
+                update_variable_cost!(
+                    container,
+                    parameter_array,
+                    parameter_multiplier,
+                    attributes,
+                    component,
+                    t,
+                )
             end
         end
     end
@@ -661,7 +675,7 @@ function update_variable_cost!(
     mult_ = parameter_multiplier[component_name, time_period]
     gen_cost =
         _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
-    add_to_objective_variant_expression!(container, mult_*gen_cost)
+    add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
 end
