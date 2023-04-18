@@ -62,7 +62,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         name = nothing,
     ) where {M <: DecisionProblem}
         if name === nothing
-            name = Symbol(typeof(template))
+            name = nameof(M)
         elseif name isa String
             name = Symbol(name)
         end
