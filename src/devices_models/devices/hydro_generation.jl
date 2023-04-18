@@ -77,7 +77,8 @@ get_variable_upper_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHyd
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroGen, ::AbstractHydroFormulation) = - PSY.get_storage_capacity(d)
 get_variable_lower_bound(::EnergySurplusVariable, d::PSY.HydroPumpedStorage, ::AbstractHydroFormulation) = - PSY.get_storage_capacity(d).up
 ########################### Parameter related set functions ################################
-get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
+get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_max_active_power(d)
+get_multiplier_value(::EnergyBudgetTimeSeriesParameter, d::PSY.HydroEnergyReservoir, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::EnergyTargetTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_storage_capacity(d)
 get_multiplier_value(::InflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_inflow(d) * PSY.get_conversion_factor(d)
 get_multiplier_value(::OutflowTimeSeriesParameter, d::PSY.HydroGen, ::AbstractHydroFormulation) = PSY.get_outflow(d) * PSY.get_conversion_factor(d)
@@ -209,8 +210,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver, X <: PM.AbstractPowerModel}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
     if !has_semicontinuous_feedforward(model, U)
         add_range_constraints!(container, T, U, devices, model, X)
     end
@@ -232,8 +233,8 @@ function add_constraints!(
     U::Type{<:RangeConstraintLBExpressions},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver, X <: PM.AbstractPowerModel}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: HydroDispatchRunOfRiver}
     if !has_semicontinuous_feedforward(model, U)
         add_range_constraints!(container, T, U, devices, model, X)
     end
@@ -249,8 +250,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, <:RangeConstraintLBExpressions}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver, X <: PM.AbstractPowerModel}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     return
 end
@@ -261,8 +262,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver, X <: PM.AbstractPowerModel}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: HydroCommitmentRunOfRiver}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     add_parameterized_upper_bound_range_constraints(
         container,
@@ -303,7 +304,7 @@ function get_min_max_limits(
     ::Type{<:ActivePowerVariableLimitsConstraint},
     ::Type{HydroDispatchRunOfRiver},
 )
-    return (min = 0.0, max = PSY.get_max_active_power(x))
+    return (min=0.0, max=PSY.get_max_active_power(x))
 end
 
 """
@@ -315,8 +316,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment, X <: PM.AbstractPowerModel}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: AbstractHydroUnitCommitment}
     add_semicontinuous_range_constraints!(container, T, U, devices, model, X)
     return
 end
@@ -330,12 +331,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {
-    V <: PSY.HydroGen,
-    W <: AbstractHydroDispatchFormulation,
-    X <: PM.AbstractPowerModel,
-}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroGen, W <: AbstractHydroDispatchFormulation}
     if !has_semicontinuous_feedforward(model, U)
         add_range_constraints!(container, T, U, devices, model, X)
     end
@@ -351,12 +348,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {
-    V <: PSY.HydroPumpedStorage,
-    W <: AbstractHydroReservoirFormulation,
-    X <: PM.AbstractPowerModel,
-}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
@@ -376,12 +369,8 @@ function add_constraints!(
     U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
-) where {
-    V <: PSY.HydroPumpedStorage,
-    W <: AbstractHydroReservoirFormulation,
-    X <: PM.AbstractPowerModel,
-}
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.HydroPumpedStorage, W <: AbstractHydroReservoirFormulation}
     if get_attribute(model, "reservation")
         add_reserve_range_constraints!(container, T, U, devices, model, X)
     else
@@ -425,7 +414,7 @@ function add_constraints!(
     ::Type{EnergyBalanceConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
+    ::Type{X},
 ) where {
     V <: PSY.HydroEnergyReservoir,
     W <: AbstractHydroFormulation,
@@ -447,25 +436,25 @@ function add_constraints!(
         names,
         time_steps,
     )
-    param_container = get_parameter(container, InflowTimeSeriesParameter(), V)
+    param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
     multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = get_component(ic)
         name = PSY.get_name(device)
-        param = get_parameter_column_values(param_container, name)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
             get_value(ic) - power_var[name, 1] * fraction_of_hour -
-            spillage_var[name, 1] * fraction_of_hour + param[1] * multiplier[name, 1]
+            spillage_var[name, 1] * fraction_of_hour +
+            param[name, 1] * multiplier[name, 1]
         )
 
         for t in time_steps[2:end]
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 energy_var[name, t] ==
-                energy_var[name, t - 1] + param[t] * multiplier[name, t] -
+                energy_var[name, t - 1] + param[name, t] * multiplier[name, t] -
                 power_var[name, t] * fraction_of_hour -
                 spillage_var[name, t] * fraction_of_hour
             )
@@ -483,7 +472,7 @@ function add_constraints!(
     ::Type{EnergyCapacityUpConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
+    ::Type{X},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -507,8 +496,8 @@ function add_constraints!(
         names,
         time_steps,
     )
-    param_container = get_parameter(container, InflowTimeSeriesParameter(), V)
-    multiplier = get_multiplier_array(param_container)
+    param = get_parameter_array(container, InflowTimeSeriesParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, InflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = get_component(ic)
@@ -519,10 +508,10 @@ function add_constraints!(
             energy_var[name, 1] ==
             get_value(ic) +
             (
-                powerin_var[name, 1] -
-                (spillage_var[name, 1] + powerout_var[name, 1]) / efficiency
+                powerin_var[name, 1] * efficiency - spillage_var[name, 1] -
+                powerout_var[name, 1]
             ) * fraction_of_hour +
-            get_parameter_column_refs(param_container, name)[1] * multiplier[name, 1]
+            param[name, 1] * multiplier[name, 1]
         )
 
         for t in time_steps[2:end]
@@ -530,11 +519,9 @@ function add_constraints!(
                 container.JuMPmodel,
                 energy_var[name, t] ==
                 energy_var[name, t - 1] +
-                get_parameter_column_refs(param_container, name)[t] * multiplier[name, t] +
-                (
-                    powerin_var[name, 1] -
-                    (powerout_var[name, t] + spillage_var[name, t]) / efficiency
-                ) * fraction_of_hour
+                param[name, t] * multiplier[name, t] +
+                (powerin_var[name, 1] - powerout_var[name, t] - spillage_var[name, t]) *
+                fraction_of_hour
             )
         end
     end
@@ -549,7 +536,7 @@ function add_constraints!(
     ::Type{EnergyCapacityDownConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
+    ::Type{X},
 ) where {
     V <: PSY.HydroPumpedStorage,
     W <: AbstractHydroFormulation,
@@ -574,14 +561,13 @@ function add_constraints!(
         time_steps,
     )
 
-    param_container = get_parameter(container, OutflowTimeSeriesParameter(), V)
-    multiplier = get_multiplier_array(param_container)
+    param = get_parameter_array(container, OutflowTimeSeriesParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, OutflowTimeSeriesParameter(), V)
 
     for ic in initial_conditions
         device = get_component(ic)
         efficiency = PSY.get_pump_efficiency(device)
         name = PSY.get_name(device)
-        param = get_parameter_column_refs(param_container, name)
         constraint[name, 1] = JuMP.@constraint(
             container.JuMPmodel,
             energy_var[name, 1] ==
@@ -589,16 +575,16 @@ function add_constraints!(
             (
                 spillage_var[name, 1] + powerout_var[name, 1] -
                 powerin_var[name, 1] / efficiency
-            ) * fraction_of_hour - param[1] * multiplier[name, 1]
+            ) * fraction_of_hour - param[name, 1] * multiplier[name, 1]
         )
 
         for t in time_steps[2:end]
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 energy_var[name, t] ==
-                energy_var[name, t - 1] - param[t] * multiplier[name, t] +
+                energy_var[name, t - 1] - param[name, t] * multiplier[name, t] +
                 (
-                    powerout_var[name, t] - powerin_var[name, t] / efficiency +
+                    powerout_var[name, 1] - powerin_var[name, t] / efficiency +
                     spillage_var[name, t]
                 ) * fraction_of_hour
             )
@@ -615,9 +601,10 @@ function add_constraints!(
     ::Type{EnergyTargetConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
+    ::Type{X},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
     set_name = [PSY.get_name(d) for d in devices]
     constraint = add_constraints_container!(
         container,
@@ -630,7 +617,7 @@ function add_constraints!(
     e_var = get_variable(container, EnergyVariable(), V)
     shortage_var = get_variable(container, EnergyShortageVariable(), V)
     surplus_var = get_variable(container, EnergySurplusVariable(), V)
-    param_container = get_parameter(container, EnergyTargetTimeSeriesParameter(), V)
+    param = get_parameter_array(container, EnergyTargetTimeSeriesParameter(), V)
     multiplier =
         get_parameter_multiplier_array(container, EnergyTargetTimeSeriesParameter(), V)
 
@@ -651,12 +638,11 @@ function add_constraints!(
             JuMP.delete_upper_bound.(shortage_var[name, :])
             JuMP.set_upper_bound.(shortage_var[name, :], 0.0)
         end
-        param = get_parameter_column_values(param_container, name)
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 e_var[name, t] + shortage_var[name, t] + surplus_var[name, t] ==
-                multiplier[name, t] * param[t]
+                multiplier[name, t] * param[name, t]
             )
         end
     end
@@ -676,24 +662,24 @@ function add_constraints!(
     ::Type{EnergyBudgetConstraint},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::NetworkModel{X},
+    ::Type{X},
 ) where {V <: PSY.HydroGen, W <: AbstractHydroFormulation, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
     set_name = [PSY.get_name(d) for d in devices]
     constraint =
         add_constraints_container!(container, EnergyBudgetConstraint(), V, set_name)
 
     variable_out = get_variable(container, ActivePowerVariable(), V)
-    param_container = get_parameter(container, EnergyBudgetTimeSeriesParameter(), V)
-    multiplier = get_multiplier_array(param_container)
+    param = get_parameter_array(container, EnergyBudgetTimeSeriesParameter(), V)
+    multiplier =
+        get_parameter_multiplier_array(container, EnergyBudgetTimeSeriesParameter(), V)
 
     for d in devices
         name = PSY.get_name(d)
-        param = get_parameter_column_values(param_container, name)
         constraint[name] = JuMP.@constraint(
             container.JuMPmodel,
-            sum([variable_out[name, t] for t in time_steps]) <=
-            sum([multiplier[name, t] * param[t] for t in time_steps])
+            sum([variable_out[name, t] for t in time_steps]) <= sum([multiplier[name, t] * param[name, t] for t in time_steps])
         )
     end
     return
@@ -708,34 +694,13 @@ function calculate_aux_variable_value!(
 ) where {T <: PSY.HydroGen}
     devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
-    resolution = get_resolution(container)
-    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+
     p_variable_results = get_variable(container, ActivePowerVariable(), T)
     aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
     for d in devices, t in time_steps
         name = PSY.get_name(d)
-        aux_variable_container[name, t] =
-            jump_value(p_variable_results[name, t]) * fraction_of_hour
-    end
-
-    return
-end
-
-function calculate_aux_variable_value!(
-    container::OptimizationContainer,
-    ::AuxVarKey{EnergyOutput, T},
-    system::PSY.System,
-) where {T <: PSY.HydroPumpedStorage}
-    devices = get_available_components(T, system)
-    time_steps = get_time_steps(container)
-    resolution = get_resolution(container)
-    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    p_variable_results = get_variable(container, ActivePowerOutVariable(), T)
-    aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
-    for d in devices, t in time_steps
-        name = PSY.get_name(d)
-        aux_variable_container[name, t] =
-            jump_value(p_variable_results[name, t]) * fraction_of_hour
+        min = PSY.get_active_power_limits(d).min
+        aux_variable_container[name, t] = jump_value(p_variable_results[name, t])
     end
 
     return
