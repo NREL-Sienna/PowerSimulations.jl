@@ -326,6 +326,32 @@ end
 
 function update_parameter_values!(
     model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    # Multiplier is only needed for the objective function since `_update_parameter_values!` also updates the objective function
+    parameter_multiplier = get_parameter_multiplier_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, parameter_multiplier, parameter_attributes, U, model, input)
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    # end
+    return
+end
+
+function update_parameter_values!(
+    model::OperationModel,
     key::ParameterKey{FixValueParameter, T},
     input::DatasetContainer{DataFrameDataset},
 ) where {T <: PSY.Component}
@@ -460,6 +486,32 @@ function update_parameter_values!(
     return
 end
 
+function update_parameter_values!(
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{DataFrameDataset},
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    service = PSY.get_component(U, get_system(model), key.meta)
+    @assert service !== nothing
+    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    #end
+    return
+end
+
 function _fix_parameter_value!(
     container::OptimizationContainer,
     parameter_array::JuMPFloatArray,
@@ -502,7 +554,8 @@ function update_parameter_values!(
 end
 
 function _update_parameter_values!(
-    parameter_array,
+    parameter_array::DenseAxisArray,
+    parameter_multiplier::JuMPFloatArray,
     attributes::CostFunctionAttributes,
     ::Type{V},
     model::DecisionModel,
@@ -534,7 +587,7 @@ function _update_parameter_values!(
                     value, _ = _convert_variable_cost(value)
                 end
                 _set_param_value!(parameter_array, PSY.get_cost(value), name, t)
-                update_variable_cost!(container, parameter_array, attributes, component, t)
+                update_variable_cost!(container, parameter_array, parameter_multiplier, attributes, component, t)
             end
         end
     end
@@ -571,6 +624,7 @@ end
 function update_variable_cost!(
     container::OptimizationContainer,
     parameter_array::JuMPFloatArray,
+    parameter_multiplier::JuMPFloatArray,
     attributes::CostFunctionAttributes{Float64},
     component::T,
     time_period::Int,
@@ -583,10 +637,9 @@ function update_variable_cost!(
     if iszero(cost_data)
         return
     end
+    mult_ = parameter_multiplier[component_name, time_period]
     variable = get_variable(container, get_variable_type(attributes)(), T)
-    gen_cost = variable[component_name, time_period] * cost_data * base_power * dt
-    # Attribute doesn't have multiplier
-    # gen_cost = attributes.multiplier * gen_cost_
+    gen_cost = variable[component_name, time_period] * mult_ * cost_data * base_power * dt
     add_to_objective_variant_expression!(container, gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
@@ -595,6 +648,7 @@ end
 function update_variable_cost!(
     container::OptimizationContainer,
     parameter_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    parameter_multiplier::JuMPFloatArray,
     ::CostFunctionAttributes{Vector{NTuple{2, Float64}}},
     component::T,
     time_period::Int,
@@ -604,12 +658,10 @@ function update_variable_cost!(
     if all(iszero.(last.(cost_data)))
         return
     end
-
+    mult_ = parameter_multiplier[component_name, time_period]
     gen_cost =
         _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
-    # Attribute doesn't have multiplier
-    # gen_cost = attributes.multiplier * gen_cost_
-    add_to_objective_variant_expression!(container, gen_cost)
+    add_to_objective_variant_expression!(container, mult_*gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
 end
