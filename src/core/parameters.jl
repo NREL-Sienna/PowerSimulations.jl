@@ -68,6 +68,11 @@ _get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[
 
 struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
+    affected_keys::Set
+end
+
+function VariableValueAttributes(key::T) where {T <: OptimizationContainerKey}
+    return VariableValueAttributes{T}(key, Set())
 end
 
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key

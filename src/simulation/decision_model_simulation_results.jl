@@ -96,8 +96,14 @@ function _get_store_value(
             if convert_result_to_natural_units(key)
                 out .*= base_power
             end
-            time_col = range(ts; length = horizon, step = resolution)
-            DataFrames.insertcols!(out, 1, :DateTime => time_col)
+            if size(out, 1) == horizon
+                time_col = range(ts; length = horizon, step = resolution)
+                DataFrames.insertcols!(out, 1, :DateTime => time_col)
+            else
+                @warn(
+                    "$(encode_key_as_string(key)) has a different horizon than the problem specification. Can't assign Time stamps to the resulting DataFrame."
+                )
+            end
             _results[ts] = out
         end
         results[key] = _results

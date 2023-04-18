@@ -491,12 +491,12 @@ include("initial_conditions/add_initial_condition.jl")
 include("initial_conditions/update_initial_conditions.jl")
 include("initial_conditions/calculate_initial_condition.jl")
 
-include("parameters/add_parameters.jl")
-include("parameters/update_parameters.jl")
-
 include("feedforward/feedforwards.jl")
 include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
+
+include("parameters/add_parameters.jl")
+include("parameters/update_parameters.jl")
 
 include("simulation/optimization_output_cache.jl")
 include("simulation/optimization_output_caches.jl")

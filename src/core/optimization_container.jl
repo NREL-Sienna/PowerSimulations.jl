@@ -1048,10 +1048,10 @@ function add_param_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
-    sos_variable::SOSStatusVariable,
     variable_type::Type{W},
-    uses_compact_power::Bool,
-    data_type::DataType,
+    sos_variable::SOSStatusVariable = NO_VARIABLE,
+    uses_compact_power::Bool = false,
+    data_type::DataType = Float64,
     axs...;
     sparse = false,
     meta = CONTAINER_KEY_EMPTY_META,
@@ -1087,10 +1087,10 @@ function add_param_container!(
     sparse = false,
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: FixValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
-    param_key = ParameterKey(T, U, meta)
     if meta == CONTAINER_KEY_EMPTY_META
-        error()
+        error("$T parameters require passing the VariableType to the meta field")
     end
+    param_key = ParameterKey(T, U, meta)
     attributes = VariableValueAttributes(source_key)
     return _add_param_container!(
         container,

@@ -30,27 +30,27 @@ function add_parameters!(
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
     end
-    add_parameters!(container, T(), devices, model)
+    _add_parameters!(container, T(), devices, model)
     return
 end
 
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
-    key::VariableKey{U, S},
+    ff::AbstractAffectFeedforward,
     model::ServiceModel{S, W},
     devices::V,
 ) where {
     S <: PSY.AbstractReserve,
     T <: VariableValueParameter,
-    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, S)
         return
     end
-    add_parameters!(container, T(), key, model, devices)
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
     return
 end
 
@@ -64,30 +64,68 @@ function add_parameters!(
        has_container_key(container, T, U, PSY.get_name(service))
         return
     end
-    add_parameters!(container, T(), service, model)
+    _add_parameters!(container, T(), service, model)
     return
 end
 
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
-    key::VariableKey{U, D},
+    ff::AbstractAffectFeedforward,
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
     end
-    add_parameters!(container, T(), key, model, devices)
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
     return
 end
 
 function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ff::FixValueFeedforward,
+    model::DeviceModel{D, W},
+    devices::V,
+) where {
+    T <: VariableValueParameter,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
+    _set_affected_variables!(container, T(), D, ff)
+    return
+end
+
+function _set_affected_variables!(
+    container::OptimizationContainer,
+    ::T,
+    device_type::Type{U},
+    ff::FixValueFeedforward,
+) where {
+    T <: VariableValueParameter,
+    U <: PSY.Component,
+}
+    source_key = get_optimization_container_key(ff)
+    var_type = get_entry_type(source_key)
+    parameter_container = get_parameter(container, T(), U, "$var_type")
+    param_attributes = get_attributes(parameter_container)
+    affected_variables = get_affected_values(ff)
+    push!(param_attributes.affected_keys, affected_variables...)
+    return
+end
+
+function _add_parameters!(
     container::OptimizationContainer,
     param::T,
     devices::U,
@@ -163,7 +201,7 @@ function _add_time_series_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     param::T,
     devices::U,
@@ -177,7 +215,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     service::U,
@@ -217,7 +255,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::VariableKey{U, D},
@@ -229,17 +267,18 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
-        return
-    end
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
     parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
     jump_model = get_jump_model(container)
-
     for d in devices
         name = PSY.get_name(d)
+        if get_variable_warm_start_value(U(), d, W()) === nothing
+            inital_parameter_value = 0.0
+        else
+            inital_parameter_value = get_variable_warm_start_value(U(), d, W())
+        end
         for t in time_steps
             set_multiplier!(
                 parameter_container,
@@ -250,7 +289,7 @@ function add_parameters!(
             set_parameter!(
                 parameter_container,
                 jump_model,
-                get_initial_parameter_value(T(), d, W()),
+                inital_parameter_value,
                 name,
                 t,
             )
@@ -259,7 +298,51 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
+    container::OptimizationContainer,
+    ::T,
+    key::VariableKey{U, D},
+    model::DeviceModel{D, W},
+    devices::V,
+) where {
+    T <: FixValueParameter,
+    U <: VariableType,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    names = [PSY.get_name(device) for device in devices]
+    time_steps = get_time_steps(container)
+    parameter_container =
+        add_param_container!(container, T(), D, key, names, time_steps; meta = "$U")
+    jump_model = get_jump_model(container)
+    for d in devices
+        name = PSY.get_name(d)
+        if get_variable_warm_start_value(U(), d, W()) === nothing
+            inital_parameter_value = 0.0
+        else
+            inital_parameter_value = get_variable_warm_start_value(U(), d, W())
+        end
+        for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
+            set_parameter!(
+                parameter_container,
+                jump_model,
+                inital_parameter_value,
+                name,
+                t,
+            )
+        end
+    end
+    return
+end
+
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::AuxVarKey{U, D},
@@ -271,9 +354,6 @@ function add_parameters!(
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, U)
-        return
-    end
     @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     names = [PSY.get_name(device) for device in devices]
     time_steps = get_time_steps(container)
@@ -309,7 +389,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     devices::V,
@@ -358,7 +438,7 @@ function add_parameters!(
     return
 end
 
-function add_parameters!(
+function _add_parameters!(
     container::OptimizationContainer,
     ::T,
     key::VariableKey{U, S},
