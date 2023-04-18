@@ -59,7 +59,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         name = nothing,
     ) where {M <: EmulationProblem}
         if name === nothing
-            name = Symbol("$M")
+            name = nameof(M)
         elseif name isa String
             name = Symbol(name)
         end
