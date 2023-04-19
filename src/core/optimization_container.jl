@@ -62,6 +62,16 @@ get_objective_function(v::ObjectiveFunction) = v.variant_terms + v.invariant_ter
 is_synchronized(v::ObjectiveFunction) = v.synchronized
 set_synchronized_status(v::ObjectiveFunction, value) = v.synchronized = value
 reset_variant_terms(v::ObjectiveFunction) = v.variant_terms = zero(JuMP.AffExpr)
+has_variant_terms(v::ObjectiveFunction) = !iszero(v.variant_terms)
+
+function cost_function_unsynch(container::PSI.OptimizationContainer)
+    obj_func = PSI.get_objective_function(container)
+    if has_variant_terms(obj_func) && PSI.is_synchronized(container)
+        PSI.set_synchronized_status(obj_func, false)
+        PSI.reset_variant_terms(obj_func)
+    end
+    return
+end
 
 function ObjectiveFunction()
     return ObjectiveFunction(

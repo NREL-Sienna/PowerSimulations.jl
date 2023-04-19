@@ -477,6 +477,7 @@ function update_parameters!(
     model::DecisionModel,
     decision_states::DatasetContainer{DataFrameDataset},
 )
+    cost_function_unsynch(get_optimization_container(model))
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, decision_states)
     end

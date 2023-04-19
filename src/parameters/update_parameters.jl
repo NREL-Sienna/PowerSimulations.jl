@@ -572,11 +572,7 @@ function _update_parameter_values!(
     time_steps = get_time_steps(get_optimization_container(model))
     horizon = time_steps[end]
     container = get_optimization_container(model)
-    if is_synchronized(container)
-        obj_func = get_objective_function(container)
-        set_synchronized_status(obj_func, false)
-        reset_variant_terms(obj_func)
-    end
+    @assert !is_synchronized(container)
     components = get_available_components(V, get_system(model))
 
     for component in components
