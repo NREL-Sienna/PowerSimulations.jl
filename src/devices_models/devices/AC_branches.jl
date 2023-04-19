@@ -52,7 +52,7 @@ function add_variables!(
 ) where {T <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
-    branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ Set(ptdf.axes[1])]
+    branches_in_ptdf = [b for b in devices if PSY.get_name(b) ∈ Set(ptdf.axes[2])]
     variable = add_variable_container!(
         container,
         FlowActivePowerVariable(),
