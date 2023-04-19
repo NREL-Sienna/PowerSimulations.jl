@@ -95,7 +95,7 @@ function psi_ptdf_lmps(res::ProblemResults, ptdf)
     λ = Matrix{Float64}(cp_duals[:, propertynames(cp_duals) .!= :DateTime])
 
     flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
-    μ = Matrix{Float64}(flow_duals[:, ptdf.axes[1]])
+    μ = Matrix{Float64}(flow_duals[:, ptdf.axes[2]])
 
     buses = get_components(Bus, get_system(res))
     lmps = OrderedDict()
