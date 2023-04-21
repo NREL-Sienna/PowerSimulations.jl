@@ -27,6 +27,10 @@ DeviceModel
 
 Refer to the [Formulations Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/formulation_library/General/) for each Abstract Device Formulation.
 
+### Problem Templates
+
+Refer to the [Problem Templates Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/modeler_guide/problem_templates/) for available `ProblemTemplate`s.
+
 ```@raw html
 &nbsp;
 &nbsp;
