@@ -8,8 +8,7 @@ struct GenericOpProblem <: DecisionProblem end
         template::ProblemTemplate,
         sys::PSY.System,
         jump_model::Union{Nothing, JuMP.Model}=nothing;
-        kwargs...) where {M<:DecisionProblem,
-                          T<:PM.AbstractPowerFormulation}
+        kwargs...) where {M<:DecisionProblem}
 
 This builds the optimization problem of type M with the specific system and template.
 

@@ -12,7 +12,7 @@ end
 
 1. [Device Models](#Device-Models)
 2. [Decision Models](#Decision-Models)
-
+3. [Emulation Models](#Emulation-Models)
 
 
 # Device Models
@@ -44,4 +44,19 @@ DecisionModel(::Type{M} where {M <: DecisionProblem}, ::ProblemTemplate, ::PSY.S
 DecisionModel(::AbstractString, ::MOI.OptimizerWithAttributes)
 build!(::DecisionModel)
 solve!(::DecisionModel)
+```
+
+```@raw html
+&nbsp;
+&nbsp;
+```
+
+# Emulation Models
+
+```@docs
+EmulationModel
+EmulationModel(::Type{M} where {M <: EmulationProblem}, ::ProblemTemplate, ::PSY.System, ::Union{Nothing, JuMP.Model})
+EmulationModel(::AbstractString, ::MOI.OptimizerWithAttributes)
+build!(::EmulationModel)
+run!(::EmulationModel)
 ```

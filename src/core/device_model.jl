@@ -31,8 +31,8 @@ feedforward to enable passing values between operation model at simulation time
 
 # Arguments
 
-  - `::Type{D}`: Power System Device Type
-  - `::Type{B}`: Abstract Device Formulation
+  - `::Type{D} where D<:PSY.Device`: Power System Device Type
+  - `::Type{B} where B<:AbstractDeviceFormulation`: Abstract Device Formulation
   - `feedforward::Array{<:AbstractAffectFeedforward} = Vector{AbstractAffectFeedforward}()` : use to pass parameters between models
   - `use_slacks::Bool = false` : Add slacks to the device model
   - `duals::Vector{DataType} = Vector{DataType}()`: use to pass constraint type to calculate the duals
