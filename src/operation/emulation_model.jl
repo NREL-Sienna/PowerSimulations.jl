@@ -4,44 +4,45 @@ Default PowerSimulations Emulation Problem Type
 struct GenericEmulationProblem <: EmulationProblem end
 
 """
-    EmulationModel(::Type{M},
-    template::ProblemTemplate,
-    sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
-    kwargs...) where {M<:EmulationProblem,
-                      T<:PM.AbstractPowerFormulation}
+    EmulationModel{M}(
+        template::ProblemTemplate,
+        sys::PSY.System,
+        jump_model::Union{Nothing, JuMP.Model}=nothing;
+        kwargs...) where {M<:EmulationProblem}
 
 This builds the optimization problem of type M with the specific system and template.
 
 # Arguments
 
   - `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices,
-    branches, and services.
+  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
-
-# Output
-
-  - `model::EmulationModel`: The Emulation model containing the model type, built JuMP model, Power
-    Systems system.
-
+  - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
+  - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes} = nothing` : The optimizer does
+    not get serialized. Callers should pass whatever they passed to the original problem.
+  - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+  - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
+  - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
+  - `initialization_file::String = ""`: TODO
+  - `deserialize_initial_conditions::Bool = false`: Option to deserialize conditions
+  - `export_pwl_vars::Bool = false`: True to export all the pwl intermediate variables. It can slow down significantly the solve time.
+  - `allow_fails::Bool = false`: True to allow the simulation to continue even if the optimization step fails. Use with care.
+  - `calculate_conflict::Bool = false`: True to use solver to calculate conflicts for infeasible problems. Only specific solvers are able to calculate conflicts.
+  - `optimizer_solve_log_print::Bool = false`: Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to MOI.Silent()
+  - `detailed_optimizer_stats::Bool = false`: True to save detailed optimizer stats log.
+  - `direct_mode_optimizer::Bool = false`: True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model).
+  - `store_variable_names::Bool = false`: True to store variable names in optimization model.
+  - `rebuild_model::Bool = false`: TODO
+  - `initial_time::Dates.DateTime = UNSET_INI_TIME`: Initial Time for the model solve.
+  - `time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
+  
 # Example
 
+```julia
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = EmulationModel(MockEmulationProblem, template, system)
-
-# Accepted Key Words
-
-  - `optimizer`: The optimizer that will be used in the optimization model.
-  - `warm_start::Bool`: True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-  - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
-  - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
-  - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
-  - `optimizer_solve_log_print::Bool`: True to print the optimizer solve log. Default is false.
-  - `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
-  - `initial_time::Dates.DateTime`: Initial Time for the model solve
-  - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
+```
 """
 mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
@@ -125,13 +126,6 @@ function EmulationModel{M}(
 end
 
 """
-    EmulationModel(::Type{M},
-    template::ProblemTemplate,
-    sys::PSY.System,
-    optimizer::MOI.OptimizerWithAttributes,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
-    kwargs...) where {M <: EmulationProblem}
-
 This builds the optimization problem of type M with the specific system and template
 
 # Arguments
@@ -142,24 +136,12 @@ This builds the optimization problem of type M with the specific system and temp
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
 
-# Output
-
-  - `Stage::EmulationProblem`: The Emulation model containing the model type, unbuilt JuMP model, Power
-    Systems system.
-
 # Example
 
+```julia
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-problem = EmulationModel(MyOpProblemType template, system, optimizer)
-
-# Accepted Key Words
-
-  - `initial_time::Dates.DateTime`: Initial Time for the model solve
-  - `warm_start::Bool` True will use the current Emulation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-  - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
-  - `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
-  - `optimizer_solve_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
-  - `name`: name of model, string or symbol; defaults to the type of template converted to a symbol
+problem = EmulationModel(MyEmProblemType, template, system, optimizer)
+```
 """
 function EmulationModel(
     ::Type{M},
@@ -181,8 +163,6 @@ function EmulationModel(
 end
 
 """
-EmulationModel(directory::AbstractString)
-
 Construct an EmulationProblem from a serialized file.
 
 # Arguments
@@ -432,8 +412,10 @@ keyword arguments to that function.
 
 # Examples
 
+```julia
 status = run!(model; optimizer = GLPK.Optimizer, executions = 10)
 status = run!(model; output_dir = ./model_output, optimizer = GLPK.Optimizer, executions = 10)
+```
 """
 function run!(
     model::EmulationModel{<:EmulationProblem};
@@ -504,10 +486,7 @@ Default solve method for an EmulationModel used inside of a Simulation. Solves p
   - `model::OperationModel`: operation model
   - `start_time::Dates.DateTime`: Initial Time of the simulation step in Simulation time.
   - `store::SimulationStore`: Simulation output store
-
-# Accepted Key Words
-
-  - `exports`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
+  - `exports = nothing`: realtime export of output. Use wisely, it can have negative impacts in the simulation times
 """
 function solve!(
     step::Int,
