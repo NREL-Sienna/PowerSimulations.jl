@@ -13,6 +13,8 @@ end
 1. [Device Models](#Device-Models)
 2. [Decision Models](#Decision-Models)
 3. [Emulation Models](#Emulation-Models)
+4. [Simulation Models](#Simulation-Models)
+5. [Variables](#Variables)
 
 
 # Device Models
@@ -60,3 +62,30 @@ EmulationModel(::AbstractString, ::MOI.OptimizerWithAttributes)
 build!(::EmulationModel)
 run!(::EmulationModel)
 ```
+
+```@raw html
+&nbsp;
+&nbsp;
+```
+
+# Simulation Models
+
+Refer to the [Simulations Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/modeler_guide/running_a_simulation/) to explanations on how to setup a Simulation, with Sequencing and Feedforwards.
+
+```@docs
+SimulationModels
+SimulationSequence
+Simulation
+Simulation(::AbstractString, ::Dict)
+build!(::Simulation)
+execute!(::Simulation)
+```
+
+```@raw html
+&nbsp;
+&nbsp;
+```
+
+# Variables
+
+## Common Variables

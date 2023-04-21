@@ -1,12 +1,60 @@
 """
     Simulation(
-        steps::Int
-        models::SimulationModels,
-        sequence::Union{Nothing, SimulationSequence},
-        simulation_folder::String,
+        sequence::SimulationSequence,
         name::String,
-        internal::Union{Nothing, SimulationInternal},
+        steps::Int
+        models::SimulationModels,        
+        simulation_folder::String,        
+        initial_time::Union{Nothing, Dates.DateTime}
     )
+
+Construct the Simulation structure to run the sequence of decision and emulation models specified.
+
+# Arguments
+
+  -`sequence::SimulationSequence`: Simulation sequence that specify how the decision and emulation models will be executed.
+  -`name::String`: Name of the Simulation
+  -`steps::Int`: Number of steps on which the sequence of models will be executed
+  -`models::SimulationModels`: List of Decision and Emulation Models
+  -`simulation_folder::String`: Folder on which results will be stored
+  -`initial_time::Union{Nothing, Dates.DateTime} = nothing`: Initial time of which the simulation starts. If nothing it will default to the first timestamp
+    of time series of the system.
+
+# Example
+
+```julia
+template_uc = template_unit_commitment()
+template_ed = template_economic_dispatch()
+my_decision_model_uc = DecisionModel(template_1, sys_uc, optimizer, name = "UC")
+my_decision_model_ed = DecisionModel(template_ed, sys_ed, optimizer, name = "ED")
+models = SimulationModels(
+    decision_models = [
+        my_decision_model_uc,
+        my_decision_model_ed
+    ]
+)
+# The following sequence set the commitment variables (`OnVariable`) for `ThermalStandard` units from UC to ED.
+sequence = SimulationSequence(;
+    models = models,
+    feedforwards = Dict(
+        "ED" => [
+            SemiContinuousFeedforward(;
+                component_type = ThermalStandard,
+                source = OnVariable,
+                affected_values = [ActivePowerVariable],
+            ),
+        ],
+    ),
+)
+
+sim = Simulation(
+    sequence = sequence,
+    name = "Sim",
+    steps = 5,
+    models = models,
+    simulation_folder = mktempdir(cleanup=true),
+)
+```
 """
 mutable struct Simulation
     steps::Int
@@ -51,8 +99,6 @@ mutable struct Simulation
 end
 
 """
-    Simulation(directory::AbstractString)
-
 Constructs Simulation from a serialized directory. Callers should pass any kwargs here that
 they passed to the original Simulation.
 
@@ -552,19 +598,15 @@ function _setup_simulation_partitions(sim::Simulation)
 end
 
 """
-    build!(sim::Simulation)
-
-Build the Simulation, problems and the related folder structure
+Build the Simulation, problems and the related folder structure.
 
 # Arguments
 
   - `sim::Simulation`: simulation object
-  - `serialize::Bool = true`: serializes the simulation objects in the simulation
   - `recorders::Vector{Symbol} = []`: recorder names to register
+  - `serialize::Bool = true`: serializes the simulation objects in the simulation
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
-
-Throws an exception if name is passed and the directory already exists.
 """
 function build!(
     sim::Simulation;
@@ -893,8 +935,6 @@ function _execute!(
 end
 
 """
-    execute!(sim::Simulation; kwargs...)
-
 Solves the simulation model for sequential Simulations.
 
 # Arguments
@@ -905,9 +945,10 @@ The optional keyword argument `exports` controls exporting of results to CSV fil
 the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
 
 # Example
-
+```julia
 sim = Simulation("Test", 7, problems, "/Users/folder")
 execute!(sim::Simulation; kwargs...)
+```
 """
 function execute!(sim::Simulation; kwargs...)
     file_mode = "a"
