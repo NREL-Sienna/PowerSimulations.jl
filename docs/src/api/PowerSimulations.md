@@ -102,14 +102,12 @@ execute!(::Simulation)
 # Variables
 
 For a list of variables for each device refer to its Formulations page.
-
 ### Common Variables
 
 ```@docs
 ActivePowerVariable
 ReactivePowerVariable
 PieceWiseLinearCostVariable
-
 ```
 
 ### Thermal Unit Variables
