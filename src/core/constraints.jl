@@ -61,12 +61,12 @@ struct FlowRateConstraintToFrom <: ConstraintType end
 struct FlowReactivePowerConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerFromToConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerToFromConstraint <: ConstraintType end #not being used
-struct HVDCPowerBalance <: ConstraintType end 
+struct HVDCPowerBalance <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
 struct InflowRangeConstraint <: ConstraintType end #not being used
 struct InputPowerRangeConstraint <: ConstraintType end #not being used
 struct InterConnectionLimitConstraint <: ConstraintType end #not being used
-struct MustRunConstraint <: ConstraintType end 
+struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
