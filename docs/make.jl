@@ -32,7 +32,6 @@ pages = OrderedDict(
         "Thermal Generation" => "formulation_library/ThermalGen.md",
         "Hydro Generation" => "formulation_library/HydroGen.md",
         "Renewable Generation" => "formulation_library/RenewableGen.md",
-        "Storage" => "formulation_library/Storage.md",
         "Load" => "formulation_library/Load.md",
         "Network" => "formulation_library/Network.md",
         "Branch" => "formulation_library/Branch.md",

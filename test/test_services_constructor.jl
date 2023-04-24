@@ -132,29 +132,6 @@ end
     moi_tests(model, 360, 0, 72, 48, 72, false)
 end
 
-@testset "Test Reserves from Storage" begin
-    template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
-    set_device_model!(template, DeviceModel(GenericBattery, BatteryAncillaryServices))
-    set_device_model!(template, RenewableDispatch, FixedOutput)
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve3"),
-    )
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve4"),
-    )
-    set_service_model!(
-        template,
-        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
-    )
-
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; add_reserves = true)
-    model = DecisionModel(template, c_sys5_bat)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, 432, 0, 288, 264, 96, true)
-end
-
 @testset "Test Reserves from Hydro" begin
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
