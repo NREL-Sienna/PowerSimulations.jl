@@ -96,8 +96,7 @@ For a list of variables for each device refer to its Formulations page.
 ActivePowerVariable
 ReactivePowerVariable
 PieceWiseLinearCostVariable
-EnergyShortageVariable
-EnergySurplusVariable
+
 ```
 
 ### Thermal Unit Variables
@@ -117,9 +116,6 @@ PowerAboveMinimumVariable
 ### Storage Unit Variables
 
 ```@docs
-ActivePowerOutVariable
-ActivePowerInVariable
-EnergyVariable
 ReservationVariable
 ```
 
@@ -127,6 +123,18 @@ ReservationVariable
 
 ```@docs
 WaterSpillageVariable
+EnergyVariableUp
+EnergyVariableDown
+```
+
+### Common for Hydro and Storage Variables
+
+```@docs
+ActivePowerOutVariable
+ActivePowerInVariable
+EnergyVariable
+EnergyShortageVariable
+EnergySurplusVariable
 ```
 
 ### Branches and Network Variables
