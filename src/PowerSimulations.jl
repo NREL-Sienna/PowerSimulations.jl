@@ -60,11 +60,6 @@ export HydroCommitmentReservoirBudget
 export HydroCommitmentReservoirStorage
 export HydroDispatchPumpedStorage
 
-######## Renewable Formulations ########
-export BookKeeping
-export BatteryAncillaryServices
-export EnergyTarget
-
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
@@ -536,7 +531,6 @@ include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/DC_branches.jl")
-include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
 
@@ -563,7 +557,6 @@ include("devices_models/device_constructors/hydrogeneration_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")
 include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
-include("devices_models/device_constructors/storage_constructor.jl")
 include("devices_models/device_constructors/regulationdevice_constructor.jl")
 
 # Network constructors

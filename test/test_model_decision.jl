@@ -455,35 +455,6 @@ end
     @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
-@testset "Decision Model initial_conditions test for Storage" begin
-    ######## Test with BookKeeping ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build = true)
-    set_device_model!(template, GenericBattery, BookKeeping)
-    model = DecisionModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    check_energy_initial_conditions_values(model, GenericBattery)
-    @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with BatteryAncillaryServices ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat"; force_build = true)
-    set_device_model!(template, GenericBattery, BatteryAncillaryServices)
-    model = DecisionModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    check_energy_initial_conditions_values(model, GenericBattery)
-    @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with EnergyTarget ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems"; force_build = true)
-    set_device_model!(template, BatteryEMS, EnergyTarget)
-    model = DecisionModel(template, c_sys5_bat; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    check_energy_initial_conditions_values(model, BatteryEMS)
-    @test solve!(model) == RunStatus.SUCCESSFUL
-end
-
 @testset "Decision Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
