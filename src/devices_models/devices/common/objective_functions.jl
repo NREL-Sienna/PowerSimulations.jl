@@ -82,25 +82,6 @@ function add_proportional_cost!(
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
 ) where {
-    T <: PSY.Storage,
-    U <: Union{ActivePowerInVariable, ActivePowerOutVariable},
-    V <: AbstractDeviceFormulation,
-}
-    multiplier = objective_function_multiplier(U(), V())
-    for d in devices
-        for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, COST_EPSILON * multiplier, t)
-        end
-    end
-    return
-end
-
-function add_proportional_cost!(
-    container::OptimizationContainer,
-    ::U,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::V,
-) where {
     T <: PSY.Component,
     U <: Union{EnergySurplusVariable, EnergyShortageVariable},
     V <: AbstractDeviceFormulation,
