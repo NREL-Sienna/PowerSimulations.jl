@@ -136,7 +136,6 @@ ReservationVariable
 WaterSpillageVariable
 EnergyVariableUp
 EnergyVariableDown
-EnergyOutput
 ```
 
 ### Common for Hydro and Storage Variables
