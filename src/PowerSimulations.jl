@@ -67,6 +67,9 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
+###### Hydro #######
+export HydroDispatchRunOfRiver
+
 # feedforward models
 export UpperBoundFeedforward
 export LowerBoundFeedforward
@@ -523,7 +526,6 @@ include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/DC_branches.jl")
-include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
 
 # Services Models
@@ -545,7 +547,6 @@ include("initial_conditions/initialization.jl")
 # Device constructors
 include("devices_models/device_constructors/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
-include("devices_models/device_constructors/hydrogeneration_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")
 include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
