@@ -78,7 +78,7 @@ abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 """
 Formulation type to add injection variables constrained by a maximum injection time series for `HydroGen`
 """
-struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
+struct HydroDispatchRunOfRiver <: AbstractHydroFormulation end
 
 ############################ Regulation Device Formulations ################################
 abstract type AbstractRegulationFormulation <: AbstractDeviceFormulation end
