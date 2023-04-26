@@ -68,7 +68,7 @@ function add_variables!(
         for t in time_steps
             variable[name, t] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "FlowActivePowerVariable_$(U)_{$(name), $(t)}",
+                base_name = "FlowActivePowerVariable_$(T)_{$(name), $(t)}",
             )
             ub = get_variable_upper_bound(FlowActivePowerVariable(), d, formulation)
             ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
