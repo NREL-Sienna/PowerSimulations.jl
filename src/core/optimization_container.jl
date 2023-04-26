@@ -1555,7 +1555,7 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
     if JuMP.mode(jump_model) != JuMP.DIRECT
         JuMP.set_optimizer(jump_model, lp_optimizer)
     else
-        @info("JuMP model set in direct mode")
+        @debug("JuMP model set in direct mode during dual calculation")
     end
 
     JuMP.optimize!(jump_model)
@@ -1565,7 +1565,7 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
         MOI.FEASIBLE_POINT::MOI.ResultStatusCode,
         MOI.NEARLY_FEASIBLE_POINT::MOI.ResultStatusCode,
     ]
-        @error "Optimizer returned $model_status"
+        @error "Optimizer returned $model_status during dual calculation"
         return RunStatus.FAILED
     end
 
