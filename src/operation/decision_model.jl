@@ -25,7 +25,7 @@ This builds the optimization problem of type M with the specific system and temp
   - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
   - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
   - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
-  - `initialization_file::String = ""`: TODO
+  - `initialization_file::String = ""`: This allows to pass pre-existing initialization values to avoid the solution of an optimization problem to find feasible initial conditions.
   - `deserialize_initial_conditions::Bool = false`: Option to deserialize conditions
   - `export_pwl_vars::Bool = false`: True to export all the pwl intermediate variables. It can slow down significantly the build and solve time.
   - `allow_fails::Bool = false`: True to allow the simulation to continue even if the optimization step fails. Use with care.
