@@ -49,7 +49,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo = "github.com/NREL-SIIP/PowerSimulations.jl.git",
+    repo = "github.com/NREL-Sienna/PowerSimulations.jl.git",
     target = "build",
     branch = "gh-pages",
     devbranch = "master",

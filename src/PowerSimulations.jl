@@ -436,7 +436,6 @@ using DocStringExtensions
 @template DEFAULT = """
                     $(TYPEDSIGNATURES)
                     $(DOCSTRING)
-                    $(METHODLIST)
                     """
 # Includes
 

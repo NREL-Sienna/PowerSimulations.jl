@@ -4,27 +4,39 @@ Default PowerSimulations Operation Problem Type
 struct GenericOpProblem <: DecisionProblem end
 
 """
-    DecisionModel(::Type{M},
-    template::ProblemTemplate,
-    sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
-    kwargs...) where {M<:DecisionProblem,
-                      T<:PM.AbstractPowerFormulation}
+    DecisionModel{M}(
+        template::ProblemTemplate,
+        sys::PSY.System,
+        jump_model::Union{Nothing, JuMP.Model}=nothing;
+        kwargs...) where {M<:DecisionProblem}
 
 This builds the optimization problem of type M with the specific system and template.
 
 # Arguments
 
   - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices,
-    branches, and services.
+  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
-
-# Output
-
-  - `model::DecisionModel`: The operation model containing the model type, built JuMP model, Power
-    Systems system.
+  - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
+  - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes} = nothing` : The optimizer does
+    not get serialized. Callers should pass whatever they passed to the original problem.
+  - `horizon::Int = UNSET_HORIZON`: Manually specify the length of the forecast Horizon
+  - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+  - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
+  - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
+  - `initialization_file::String = ""`: This allows to pass pre-existing initialization values to avoid the solution of an optimization problem to find feasible initial conditions.
+  - `deserialize_initial_conditions::Bool = false`: Option to deserialize conditions
+  - `export_pwl_vars::Bool = false`: True to export all the pwl intermediate variables. It can slow down significantly the build and solve time.
+  - `allow_fails::Bool = false`: True to allow the simulation to continue even if the optimization step fails. Use with care.
+  - `optimizer_solve_log_print::Bool = false`: Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to MOI.Silent()
+  - `detailed_optimizer_stats::Bool = false`: True to save detailed optimizer stats log.
+  - `calculate_conflict::Bool = false`: True to use solver to calculate conflicts for infeasible problems. Only specific solvers are able to calculate conflicts.
+  - `direct_mode_optimizer::Bool = false`: True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model).
+  - `store_variable_names::Bool = false`: to store variable names in optimization model. Decreases the build times.
+  - `rebuild_model::Bool = false`: It will force the rebuild of the underlying JuMP model with each call to update the model. It increases solution times, use only if the model can't be updated in memory.
+  - `initial_time::Dates.DateTime = UNSET_INI_TIME`: Initial Time for the model solve.
+  - `time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 
 # Example
 
@@ -32,19 +44,6 @@ This builds the optimization problem of type M with the specific system and temp
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = DecisionModel(MockOperationProblem, template, system)
 ```
-
-# Accepted Key Words
-
-  - `optimizer`: The optimizer that will be used in the optimization model.
-  - `horizon::Int`: Manually specify the length of the forecast Horizon
-  - `warm_start::Bool`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-  - `system_to_file::Bool:`: True to create a copy of the system used in the model. Default true.
-  - `export_pwl_vars::Bool`: True to export all the pwl intermediate variables. It can slow down significantly the solve time. Default is false.
-  - `allow_fails::Bool`: True to allow the simulation to continue even if the optimization step fails. Use with care, default to false.
-  - `optimizer_solve_log_print::Bool`: True to print the optimizer solve log. Default is false.
-  - `direct_mode_optimizer::Bool` True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model). Default is false.
-  - `initial_time::Dates.DateTime`: Initial Time for the model solve
-  - `time_series_cache_size::Int`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 """
 mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
@@ -136,41 +135,20 @@ function DecisionModel{M}(
 end
 
 """
-    DecisionModel(::Type{M},
-    template::ProblemTemplate,
-    sys::PSY.System,
-    optimizer::MOI.OptimizerWithAttributes,
-    jump_model::Union{Nothing, JuMP.Model}=nothing;
-    kwargs...) where {M <: DecisionProblem}
-
 This builds the optimization problem of type M with the specific system and template
 
 # Arguments
 
   - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices,
-    branches, and services.
+  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
-  - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
-
-# Output
-
-  - `Stage::DecisionProblem`: The operation model containing the model type, unbuilt JuMP model, Power
-    Systems system.
+  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
 
 # Example
 
+```julia
 template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-problem = DecisionModel(MyOpProblemType template, system, optimizer)
-
-```
-# Accepted Key Words
-- `initial_time::Dates.DateTime`: Initial Time for the model solve
-- `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
-- `allow_fails::Bool` True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
-- `optimizer_solve_log_print::Bool` Uses JuMP.unset_silent() to print the optimizer's log. By default all solvers are set to `MOI.Silent()`
-- `name`: name of model, string or symbol; defaults to the type of template converted to a symbol
+problem = DecisionModel(MyOpProblemType, template, system, optimizer)
 ```
 """
 function DecisionModel(
@@ -193,8 +171,6 @@ function DecisionModel(
 end
 
 """
-    DecisionModel(directory::AbstractString)
-
 Construct an DecisionProblem from a serialized file.
 
 # Arguments
@@ -280,7 +256,16 @@ end
 get_horizon(model::DecisionModel) = get_horizon(get_settings(model))
 
 """
-Implementation of build for any DecisionProblem
+Build the Decision Model based on the specified DecisionProblem.
+
+# Arguments
+
+  - `model::DecisionModel{<:DecisionProblem}`: DecisionModel object
+  - `output_dir::String`: Output directory for results
+  - `recorders::Vector{Symbol} = []`: recorder names to register
+  - `console_level = Logging.Error`:
+  - `file_level = Logging.Info`:
+  - `disable_timer_outputs = false` : Enable/Disable timing outputs
 """
 function build!(
     model::DecisionModel{<:DecisionProblem};
@@ -359,15 +344,17 @@ keyword arguments to that function.
 # Arguments
 
   - `model::OperationModel = model`: operation model
-  - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
-  - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
-  - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
+  - `export_problem_results::Bool = false`: If true, export ProblemResults DataFrames to CSV files. Reduces solution times during simulation.
+  - `console_level = Logging.Error`:
+  - `file_level = Logging.Info`:
+  - `disable_timer_outputs = false` : Enable/Disable timing outputs
+  - `serialize::Bool = true`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
 
 ```julia
 results = solve!(OpModel)
-results = solve!(OpModel, output_dir="output")
+results = solve!(OpModel, export_problem_results = true)
 ```
 """
 function solve!(

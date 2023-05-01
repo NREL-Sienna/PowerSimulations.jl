@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**If this is a question, something isn't working or an idea please start a Q&A discussion in the [Discussion tab](https://github.com/NREL-SIIP/PowerSimulations.jl/discussions)**
+**If this is a question, something isn't working or an idea please start a Q&A discussion in the [Discussion tab](https://github.com/NREL-Sienna/PowerSimulations.jl/discussions)**
 Open a bug report only if you can provide the details below
 
 
@@ -15,7 +15,7 @@ Open a bug report only if you can provide the details below
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior: 
+Steps to reproduce the behavior:
 Paste the code we can run to reproduce the error you are seeing
 
 **Expected behavior**
