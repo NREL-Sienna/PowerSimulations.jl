@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/NREL-Sienna/PowerSimulations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/NREL-Sienna/PowerSimulations.jl)
 [![Documentation](https://github.com/NREL-Sienna/PowerSimulations.jl/workflows/Documentation/badge.svg)](https://nrel-sienna.github.io/PowerSimulations.jl/latest)
 [![DOI](https://zenodo.org/badge/109443246.svg)](https://zenodo.org/badge/latestdoi/109443246)
-[<img src="https://img.shields.io/badge/slack-@SIENNA/PSI-blue.svg?logo=slack">](https://join.slack.com/t/nrel-sienna/shared_invite/zt-glam9vdu-o8A9TwZTZqqNTKHa7q3BpQ)
+[<img src="https://img.shields.io/badge/slack-@Sienna/PSI-sienna.svg?logo=slack">](https://join.slack.com/t/nrel-sienna/shared_invite/zt-glam9vdu-o8A9TwZTZqqNTKHa7q3BpQ)
 [![PowerSimulations Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/PowerSimulations)](https://pkgs.genieframework.com?packages=PowerSimulations)
 
 `PowerSimulations.jl` is a Julia package for power system modeling and simulation of Power Systems operations. The objectives of the package are:
