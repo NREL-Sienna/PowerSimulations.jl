@@ -4,7 +4,11 @@ In order to contribute to `PowerSystems.jl` repository please read the following
 [`InfrastructureSystems.jl`](https://github.com/NREL-Sienna/InfrastructureSystems.jl)
 documentation in detail:
 
+<<<<<<< HEAD
 1. [Style Guide](https://nrel-Sienna.github.io/InfrastructureSystems.jl/stable/style/)
+=======
+1. [Style Guide](https://nrel-siip.github.io/InfrastructureSystems.jl/stable/style/)
+>>>>>>> 6d7e8ae80 (rename branch)
 2. [Contributing Guidelines](https://github.com/NREL-Sienna/PowerSystems.jl/blob/main/CONTRIBUTING.md)
 
 Pull requests are always welcome to fix bugs or add additional modeling capabilities.
