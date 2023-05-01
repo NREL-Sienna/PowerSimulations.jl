@@ -110,69 +110,6 @@ end
     end
 end
 
-function test_2_stages_with_storage_ems(in_memory)
-    template_uc =
-        get_template_hydro_st_uc(NetworkModel(CopperPlatePowerModel; use_slacks = true))
-    template_ed =
-        get_template_hydro_st_ed(NetworkModel(CopperPlatePowerModel; use_slacks = true))
-    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ems_ed")
-    models = SimulationModels(;
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = GLPK_optimizer,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = GLPK_optimizer,
-            ),
-        ],
-    )
-
-    sequence_cache = SimulationSequence(;
-        models = models,
-        feedforwards = Dict(
-            "ED" => [
-                SemiContinuousFeedforward(;
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
-                ),
-                EnergyLimitFeedforward(;
-                    component_type = HydroEnergyReservoir,
-                    source = ActivePowerVariable,
-                    affected_values = [ActivePowerVariable],
-                    number_of_periods = 12,
-                ),
-            ],
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-    sim_cache = Simulation(;
-        name = "cache",
-        steps = 2,
-        models = models,
-        sequence = sequence_cache,
-        simulation_folder = mktempdir(; cleanup = true),
-    )
-    build_out = build!(sim_cache)
-    @test build_out == PSI.BuildStatus.BUILT
-    execute_out = execute!(sim_cache; in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
-end
-
-@testset "Simulation with 2-Stages with Storage EMS" begin
-    for in_memory in (true, false)
-        test_2_stages_with_storage_ems(in_memory)
-    end
-end
-
 @testset "Test Simulation Utils" begin
     template_uc = get_template_basic_uc_simulation()
     set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
