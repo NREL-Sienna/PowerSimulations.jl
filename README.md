@@ -1,7 +1,7 @@
 # PowerSimulations.jl
 
-[![Master - CI](https://github.com/NREL-Sienna/PowerSimulations.jl/actions/workflows/master-tests.yml/badge.svg)](https://github.com/NREL-Sienna/PowerSimulations.jl/actions/workflows/master-tests.yml)
-[![codecov](https://codecov.io/gh/NREL-Sienna/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL-Sienna/PowerSimulations.jl)
+[![Main - CI](https://github.com/NREL-Sienna/PowerSimulations.jl/actions/workflows/main-tests.yml/badge.svg)](https://github.com/NREL-Sienna/PowerSimulations.jl/actions/workflows/main-tests.yml)
+[![codecov](https://codecov.io/gh/NREL-Sienna/PowerSimulations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/NREL-Sienna/PowerSimulations.jl)
 [![Documentation](https://github.com/NREL-Sienna/PowerSimulations.jl/workflows/Documentation/badge.svg)](https://nrel-sienna.github.io/PowerSimulations.jl/latest)
 [![DOI](https://zenodo.org/badge/109443246.svg)](https://zenodo.org/badge/latestdoi/109443246)
 [<img src="https://img.shields.io/badge/slack-@SIIP/PSI-blue.svg?logo=slack">](https://join.slack.com/t/nrel-siip/shared_invite/zt-glam9vdu-o8A9TwZTZqqNTKHa7q3BpQ)
@@ -50,9 +50,9 @@ using PowerSystems
 
 ## Development
 
-Contributions to the development and enhancement of PowerSimulations is welcome. Please see [CONTRIBUTING.md](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/master/CONTRIBUTING.md) for code contribution guidelines.
+Contributions to the development and enhancement of PowerSimulations is welcome. Please see [CONTRIBUTING.md](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/CONTRIBUTING.md) for code contribution guidelines.
 
 ## License
 
-PowerSimulations is released under a BSD [license](https://github.com/NREL/PowerSimulations.jl/blob/master/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
+PowerSimulations is released under a BSD [license](https://github.com/NREL/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
 initiative at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/))
