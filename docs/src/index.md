@@ -43,7 +43,7 @@ The latest stable release of PowerModels can be installed using the Julia packag
 For the current development version, "checkout" this package with
 
 ```julia
-] add PowerSimulations#master
+] add PowerSimulations#main
 ```
 
 An appropriate optimization solver is required for running PowerSimulations models. Refer to [`JuMP.jl` solver's page](https://jump.dev/JuMP.jl/stable/installation/#Install-a-solver) to select the most appropriate for the application of interest.
