@@ -29,7 +29,7 @@ The most common Simulation Model is the solution of a Unit Commitment and Econom
 `PowerSimulations.jl` is an active project under development, and we welcome your feedback,
 suggestions, and bug reports.
 
-**Note**: `PowerSimulations.jl` uses the data model implemented in [`PowerSystems.jl`](https://github.com/NREL/PowerSystems.jl)
+**Note**: `PowerSimulations.jl` uses the data model implemented in [`PowerSystems.jl`](https://github.com/NREL-Sienna/PowerSystems.jl)
 to construct optimization models. In most cases, you need to add `PowerSystems.jl` to your scripts.
 
 ## Installation

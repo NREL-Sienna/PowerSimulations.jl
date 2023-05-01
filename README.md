@@ -41,7 +41,7 @@ julia> ]
 
 ## Usage
 
-`PowerSimulations.jl` uses [PowerSystems.jl](https://github.com/NREL/PowerSystems.jl) to handle the data used in the simulations.
+`PowerSimulations.jl` uses [PowerSystems.jl](https://github.com/NREL-Sienna/PowerSystems.jl) to handle the data used in the simulations.
 
 ```julia
 using PowerSimulations
@@ -54,5 +54,5 @@ Contributions to the development and enhancement of PowerSimulations is welcome.
 
 ## License
 
-PowerSimulations is released under a BSD [license](https://github.com/NREL/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
+PowerSimulations is released under a BSD [license](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
 initiative at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/))
