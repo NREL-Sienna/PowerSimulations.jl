@@ -3,8 +3,8 @@
         sequence::SimulationSequence,
         name::String,
         steps::Int
-        models::SimulationModels,        
-        simulation_folder::String,        
+        models::SimulationModels,
+        simulation_folder::String,
         initial_time::Union{Nothing, Dates.DateTime}
     )
 
@@ -910,7 +910,7 @@ function _execute!(
 
                 # _apply_warm_start! can only be called once all the operations that read solutions
                 # from the optimization container have been called.
-                # See https://github.com/NREL-SIIP/PowerSimulations.jl/pull/793#discussion_r761545526
+                # See https://github.com/NREL-Sienna/PowerSimulations.jl/pull/793#discussion_r761545526
                 # for reference
                 if warm_start_enabled(model)
                     _apply_warm_start!(model)

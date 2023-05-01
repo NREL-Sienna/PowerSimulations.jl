@@ -43,7 +43,7 @@ Refer to the [Problem Templates Page](https://nrel-siip.github.io/PowerSimulatio
 
 ```@docs
 DecisionModel
-DecisionModel(::Type{M} where {M <: DecisionProblem}, ::ProblemTemplate, ::PSY.System, ::Union{Nothing, JuMP.Model}) 
+DecisionModel(::Type{M} where {M <: DecisionProblem}, ::ProblemTemplate, ::PSY.System, ::Union{Nothing, JuMP.Model})
 DecisionModel(::AbstractString, ::MOI.OptimizerWithAttributes)
 build!(::DecisionModel)
 solve!(::DecisionModel)
@@ -200,7 +200,7 @@ NodalBalanceReactiveConstraint
 ### Power Variable Limit Constraints
 
 ```@docs
-ActivePowerVariableLimitsConstraint 
+ActivePowerVariableLimitsConstraint
 ReactivePowerVariableLimitsConstraint
 ActivePowerVariableTimeSeriesLimitsConstraint
 InputActivePowerVariableLimitsConstraint
@@ -244,7 +244,7 @@ EnergyBalanceConstraint
 EnergyBudgetConstraint
 EnergyCapacityConstraint
 EnergyCapacityDownConstraint
-EnergyCapacityUpConstraint 
+EnergyCapacityUpConstraint
 EnergyTargetConstraint
 RangeLimitConstraint
 ```
@@ -266,7 +266,7 @@ NetworkFlowConstraint
 RateLimitConstraint
 RateLimitConstraintFromTo
 RateLimitConstraintToFrom
-PhaseAngleControlLimit 
+PhaseAngleControlLimit
 ```
 
 ### Feedforward Constraints
