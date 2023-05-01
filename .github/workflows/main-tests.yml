@@ -1,9 +1,9 @@
-name: Master - CI
+name: Main - CI
 
 on:
   push:
     branches:
-      - master
+      - main
     schedule:
       - cron: 0 * * * *
 jobs:
