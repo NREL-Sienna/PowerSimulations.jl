@@ -33,8 +33,8 @@ This builds the optimization problem of type M with the specific system and temp
   - `detailed_optimizer_stats::Bool = false`: True to save detailed optimizer stats log.
   - `calculate_conflict::Bool = false`: True to use solver to calculate conflicts for infeasible problems. Only specific solvers are able to calculate conflicts.
   - `direct_mode_optimizer::Bool = false`: True to use the solver in direct mode. Creates a [JuMP.direct_model](https://jump.dev/JuMP.jl/dev/reference/models/#JuMP.direct_model).
-  - `store_variable_names::Bool = false`: True to store variable names in optimization model.
-  - `rebuild_model::Bool = false`: TODO
+  - `store_variable_names::Bool = false`: to store variable names in optimization model. Decreases the build times.
+  - `rebuild_model::Bool = false`: It will force the rebuild of the underlying JuMP model with each call to update the model. It increases solution times, use only if the model can't be updated in memory.
   - `initial_time::Dates.DateTime = UNSET_INI_TIME`: Initial Time for the model solve.
   - `time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES`: Size in bytes to cache for each time array. Default is 1 MiB. Set to 0 to disable.
 
