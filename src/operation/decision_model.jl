@@ -344,7 +344,7 @@ keyword arguments to that function.
 # Arguments
 
   - `model::OperationModel = model`: operation model
-  - `export_problem_results::Bool = false`: If true, export ProblemResults DataFrames to CSV files.
+  - `export_problem_results::Bool = false`: If true, export ProblemResults DataFrames to CSV files. Reduces solution times during simulation.
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
   - `disable_timer_outputs = false` : Enable/Disable timing outputs
