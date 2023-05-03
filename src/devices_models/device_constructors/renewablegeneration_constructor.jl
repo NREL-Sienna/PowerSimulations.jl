@@ -9,7 +9,8 @@ function construct_device!(
     D <: AbstractRenewableDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(R, sys)
+    devices =
+        get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -66,7 +67,8 @@ function construct_device!(
     D <: AbstractRenewableDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(R, sys)
+    devices =
+        get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     if has_service_model(model)
         add_constraints!(
@@ -115,7 +117,8 @@ function construct_device!(
     D <: AbstractRenewableDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(R, sys)
+    devices =
+        get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
@@ -163,7 +166,8 @@ function construct_device!(
     D <: AbstractRenewableDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(R, sys)
+    devices =
+        get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     if has_service_model(model)
         add_constraints!(
@@ -200,7 +204,8 @@ function construct_device!(
     model::DeviceModel{R, FixedOutput},
     network_model::NetworkModel{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
-    devices = get_available_components(R, sys)
+    devices =
+        get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
@@ -231,7 +236,8 @@ function construct_device!(
     model::DeviceModel{R, FixedOutput},
     network_model::NetworkModel{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(R, sys)
+    devices =
+        get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
