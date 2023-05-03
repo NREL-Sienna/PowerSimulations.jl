@@ -351,8 +351,7 @@ function init_optimization_container!(
 
     if variable_count_estimate > 10e6
         @warn(
-            "The lower estimate of total number of variables that will be created in the model is $(variable_count_estimate). \
-            The total number of variables might be larger than 10e6 and could lead to large build or solve times."
+            "The lower estimate of total number of variables that will be created in the model is $(variable_count_estimate). \The total number of variables might be larger than 10e6 and could lead to large build or solve times."
         )
     end
 
