@@ -382,10 +382,11 @@ function get_branches_to_pm(
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
     for (d, device_model) in branch_template
-        !(get_component_type(device_model) <: T) && continue
+        comp_type = get_component_type(device_model)
+        !(comp_type <: T) && continue
         start_idx += length(PM_branches)
-        for (i, branch) in
-            enumerate(get_available_components(get_component_type(device_model), sys))
+        filter_func = get_attribute(device_model, "filter_function")
+        for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
             ix = i + start_idx
             PM_branches["$(ix)"] =
                 get_branch_to_pm(ix, branch, get_formulation(device_model), S)
