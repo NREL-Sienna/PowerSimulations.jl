@@ -343,7 +343,6 @@ function init_optimization_container!(
         total_number_of_devices += length(get_available_components(PSY.ACBranch, sys))
     end
 
-
     # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
     # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
     # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
@@ -351,7 +350,8 @@ function init_optimization_container!(
 
     if variable_count_estimate > 10e6
         @warn(
-            "The lower estimate of total number of variables that will be created in the model is $(variable_count_estimate). \The total number of variables might be larger than 10e6 and could lead to large build or solve times."
+            "The lower estimate of total number of variables that will be created in the model is $(variable_count_estimate). \\
+            The total number of variables might be larger than 10e6 and could lead to large build or solve times."
         )
     end
 
