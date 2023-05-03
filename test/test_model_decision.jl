@@ -649,3 +649,34 @@ end
     # We only test this field because most free solvers don't support detailed stats
     @test !ismissing(get_optimizer_stats(UC).objective_bound)
 end
+
+@testset "Test filter function atttribute" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    new_model = DeviceModel(
+        ThermalStandard,
+        ThermalBasicUnitCommitment;
+        attributes = Dict("filter_function" => x -> PSY.get_name(x) != "Alta"),
+    )
+    set_device_model!(template, new_model)
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
+    )
+    UC = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = GLPK_optimizer,
+        detailed_optimizer_stats = true,
+    )
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test solve!(UC) == RunStatus.SUCCESSFUL
+    # We only test this field because most free solvers don't support detailed stats
+    p_variable = PSI.get_variable(
+        PSI.get_optimization_container(UC),
+        ActivePowerVariable(),
+        ThermalStandard,
+    )
+    @test "Alta" ∉ axes(p_variable, 1)
+end

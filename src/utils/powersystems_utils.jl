@@ -11,7 +11,7 @@ function get_available_components(
     sys::PSY.System,
     f::Function,
 ) where {T <: PSY.Component}
-    return f(PSY.get_components(PSY.get_available, T, sys))
+    return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys)
 end
 
 function get_available_components(
