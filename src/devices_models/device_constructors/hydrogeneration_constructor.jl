@@ -8,7 +8,8 @@ function construct_device!(
     model::DeviceModel{H, FixedOutput},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
@@ -52,7 +53,8 @@ function construct_device!(
     model::DeviceModel{H, FixedOutput},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
@@ -82,7 +84,8 @@ function construct_device!(
     D <: AbstractHydroDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -140,7 +143,8 @@ function construct_device!(
     D <: AbstractHydroDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -190,7 +194,8 @@ function construct_device!(
     D <: AbstractHydroDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, EnergyOutput, devices, D())
@@ -238,7 +243,8 @@ function construct_device!(
     D <: AbstractHydroDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -275,7 +281,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
     add_variables!(
@@ -332,7 +339,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -382,7 +390,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirBudget())
     add_variables!(container, EnergyOutput, devices, HydroDispatchReservoirBudget())
@@ -426,7 +435,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirBudget},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -466,7 +476,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(
@@ -543,7 +554,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -599,7 +611,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, HydroDispatchReservoirStorage())
     add_variables!(container, EnergyVariable, devices, HydroDispatchReservoirStorage())
@@ -665,7 +678,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -711,7 +725,8 @@ function construct_device!(
     model::DeviceModel{H, D},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -766,7 +781,8 @@ function construct_device!(
     model::DeviceModel{H, D},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentRunOfRiver, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -817,7 +833,8 @@ function construct_device!(
     D <: HydroCommitmentRunOfRiver,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
@@ -866,7 +883,8 @@ function construct_device!(
     D <: HydroCommitmentRunOfRiver,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -903,7 +921,8 @@ function construct_device!(
     model::DeviceModel{H, D},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -957,7 +976,8 @@ function construct_device!(
     model::DeviceModel{H, D},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroGen, D <: HydroCommitmentReservoirBudget, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -1010,7 +1030,8 @@ function construct_device!(
     D <: HydroCommitmentReservoirBudget,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
@@ -1059,7 +1080,8 @@ function construct_device!(
     D <: HydroCommitmentReservoirBudget,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -1099,7 +1121,8 @@ function construct_device!(
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(
         container,
@@ -1183,7 +1206,8 @@ function construct_device!(
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractPowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -1239,7 +1263,8 @@ function construct_device!(
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(
         container,
@@ -1309,7 +1334,8 @@ function construct_device!(
     model::DeviceModel{H, HydroCommitmentReservoirStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroEnergyReservoir, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -1357,7 +1383,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchPumpedStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerInVariable, devices, HydroDispatchPumpedStorage())
     add_variables!(container, ActivePowerOutVariable, devices, HydroDispatchPumpedStorage())
@@ -1410,7 +1437,8 @@ function construct_device!(
     model::DeviceModel{H, HydroDispatchPumpedStorage},
     network_model::NetworkModel{S},
 ) where {H <: PSY.HydroPumpedStorage, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(H, sys)
+    devices =
+        get_available_components(H, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,

@@ -9,7 +9,8 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -50,7 +51,8 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -87,7 +89,8 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
@@ -118,7 +121,8 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -143,7 +147,8 @@ function construct_device!(
     model::DeviceModel{L, PowerLoadInterruption},
     network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, PowerLoadInterruption())
     add_variables!(container, ReactivePowerVariable, devices, PowerLoadInterruption())
@@ -181,7 +186,8 @@ function construct_device!(
     model::DeviceModel{L, PowerLoadInterruption},
     network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -214,7 +220,8 @@ function construct_device!(
     model::DeviceModel{L, PowerLoadInterruption},
     network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_variables!(container, ActivePowerVariable, devices, PowerLoadInterruption())
     add_variables!(container, OnVariable, devices, PowerLoadInterruption())
@@ -242,7 +249,8 @@ function construct_device!(
     model::DeviceModel{L, PowerLoadInterruption},
     network_model::NetworkModel{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(
         container,
@@ -267,7 +275,8 @@ function construct_device!(
     model::DeviceModel{L, StaticPowerLoad},
     network_model::NetworkModel{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
@@ -298,7 +307,8 @@ function construct_device!(
     model::DeviceModel{L, StaticPowerLoad},
     network_model::NetworkModel{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerModel}
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
@@ -336,7 +346,8 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
@@ -371,7 +382,8 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = get_available_components(L, sys)
+    devices =
+        get_available_components(L, sys, get_attribute(model, "filter_function"))
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(

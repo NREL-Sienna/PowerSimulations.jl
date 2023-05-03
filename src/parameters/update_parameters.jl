@@ -62,7 +62,10 @@ function _update_parameter_values!(
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
     multiplier_id = get_time_series_multiplier_id(attributes)
-    components = get_available_components(V, get_system(model))
+    template = get_template(model)
+    device_model = get_model(template, V)
+    filter_func = get_attribute(device_model, "filter_function")
+    components = get_available_components(V, get_system(model), filter_func)
     ts_uuids = Set{String}()
     for component in components
         ts_uuid = get_time_series_uuid(U, component, ts_name)
@@ -129,7 +132,10 @@ function _update_parameter_values!(
     ::DatasetContainer{DataFrameDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
-    components = get_available_components(V, get_system(model))
+    template = get_template(model)
+    device_model = get_model(template, V)
+    filter_func = get_attribute(device_model, "filter_function")
+    components = get_available_components(V, get_system(model), filter_func)
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
@@ -573,7 +579,10 @@ function _update_parameter_values!(
     horizon = time_steps[end]
     container = get_optimization_container(model)
     @assert !is_synchronized(container)
-    components = get_available_components(V, get_system(model))
+    template = get_template(model)
+    device_model = get_model(template, V)
+    filter_func = get_attribute(device_model, "filter_function")
+    components = get_available_components(V, get_system(model), filter_func)
 
     for component in components
         if _has_variable_cost_parameter(component)

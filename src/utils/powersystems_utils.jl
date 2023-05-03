@@ -1,10 +1,23 @@
-function get_available_components(::Type{T}, sys::PSY.System) where {T <: PSY.Component}
+function get_available_components(
+    ::Type{T},
+    sys::PSY.System,
+    ::Nothing = nothing,
+) where {T <: PSY.Component}
     return PSY.get_components(PSY.get_available, T, sys)
+end
+
+function get_available_components(
+    ::Type{T},
+    sys::PSY.System,
+    f::Function,
+) where {T <: PSY.Component}
+    return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys)
 end
 
 function get_available_components(
     ::Type{PSY.RegulationDevice{T}},
     sys::PSY.System,
+    ::Nothing,
 ) where {T <: PSY.Component}
     return PSY.get_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
