@@ -11,7 +11,6 @@ function get_available_components(
     sys::PSY.System,
     f::Function,
 ) where {T <: PSY.Component}
-<<<<<<< HEAD
     return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys)
 end
 
@@ -25,9 +24,6 @@ function get_available_components(
         PSY.Bus,
         sys,
     )
-=======
-    return f(PSY.get_components(PSY.get_available, T, sys))
->>>>>>> 55415f84d (add option to pass a second filter function)
 end
 
 function get_available_components(
