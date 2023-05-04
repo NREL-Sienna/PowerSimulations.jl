@@ -701,11 +701,11 @@ function add_constraints!(
 end
 
 ##################################### Auxillary Variables ############################
-
-function calculate_aux_variable_value!(
+function _calculate_aux_variable_value!(
     container::OptimizationContainer,
     ::AuxVarKey{EnergyOutput, T},
     system::PSY.System,
+    p_variable_results::JuMPVariableArray,
 ) where {T <: PSY.HydroGen}
     p_variable_results = get_variable(container, ActivePowerVariable(), T)
     devices = axes(p_variable_results, 1)
@@ -719,6 +719,36 @@ function calculate_aux_variable_value!(
             jump_value(p_variable_results[name, t]) * fraction_of_hour
     end
 
+    return
+end
+
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{EnergyOutput, T},
+    system::PSY.System,
+) where {T <: PSY.HydroGen}
+    p_variable_results = get_variable(container, ActivePowerVariable(), T)
+    _calculate_aux_variable_value!(
+        container,
+        ::AuxVarKey{EnergyOutput, T},
+        system,
+        p_variable_results,
+    )
+    return
+end
+
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{EnergyOutput, T},
+    system::PSY.System,
+) where {T <: PSY.HydroPumpedStorage}
+    p_variable_results = get_variable(container, ActivePowerOutVariable(), T)
+    _calculate_aux_variable_value!(
+        container,
+        ::AuxVarKey{EnergyOutput, T},
+        system,
+        p_variable_results,
+    )
     return
 end
 
