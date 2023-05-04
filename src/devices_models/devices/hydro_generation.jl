@@ -707,7 +707,6 @@ function _calculate_aux_variable_value!(
     system::PSY.System,
     p_variable_results::JuMPVariableArray,
 ) where {T <: PSY.HydroGen}
-    p_variable_results = get_variable(container, ActivePowerVariable(), T)
     devices = axes(p_variable_results, 1)
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
