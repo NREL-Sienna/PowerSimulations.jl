@@ -74,6 +74,14 @@ function construct_device!(
         add_constraints!(
             container,
             ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            network_model,
+        )
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
             model,
@@ -170,6 +178,14 @@ function construct_device!(
         get_available_components(R, sys, get_attribute(model, "filter_function"))
 
     if has_service_model(model)
+        add_constraints!(
+            container,
+            ActivePowerVariableLimitsConstraint,
+            ActivePowerRangeExpressionLB,
+            devices,
+            model,
+            network_model,
+        )
         add_constraints!(
             container,
             ActivePowerVariableLimitsConstraint,

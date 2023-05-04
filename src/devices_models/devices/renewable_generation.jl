@@ -5,7 +5,7 @@ get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Renew
 ########################### ActivePowerVariable, RenewableGen #################################
 
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.RenewableGen}, ::AbstractRenewableFormulation) = false
-
+get_min_max_limits(d::PSY.RenewableGen, ::Type{ActivePowerVariableLimitsConstraint}, ::Type{<:AbstractRenewableFormulation}) = (min = 0.0, max = PSY.get_max_active_power(d))
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 
@@ -106,7 +106,7 @@ end
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{ActivePowerVariableLimitsConstraint},
-    U::Type{<:Union{VariableType, ExpressionType}},
+    U::Type{<:Union{VariableType, ActivePowerRangeExpressionUB}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::NetworkModel{X},
@@ -120,6 +120,29 @@ function add_constraints!(
         ActivePowerVariableTimeSeriesLimitsConstraint,
         U,
         ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{ActivePowerRangeExpressionLB},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {
+    V <: PSY.RenewableGen,
+    W <: AbstractRenewableDispatchFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    add_range_constraints!(
+        container,
+        T,
+        U,
         devices,
         model,
         X,
