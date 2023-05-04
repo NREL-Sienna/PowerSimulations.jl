@@ -707,12 +707,10 @@ function _calculate_aux_variable_value!(
     system::PSY.System,
     p_variable_results::JuMPVariableArray,
 ) where {T <: PSY.HydroGen}
-    p_variable_results = get_variable(container, ActivePowerVariable(), T)
     devices = axes(p_variable_results, 1)
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    p_variable_results = get_variable(container, ActivePowerVariable(), T)
     aux_variable_container = get_aux_variable(container, EnergyOutput(), T)
     for name in devices, t in time_steps
         aux_variable_container[name, t] =
