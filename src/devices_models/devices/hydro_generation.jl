@@ -721,6 +721,36 @@ function _calculate_aux_variable_value!(
     return
 end
 
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{EnergyOutput, T},
+    system::PSY.System,
+) where {T <: PSY.HydroGen}
+    p_variable_results = get_variable(container, ActivePowerVariable(), T)
+    _calculate_aux_variable_value!(
+        container,
+        ::AuxVarKey{EnergyOutput, T},
+        system,
+        p_variable_results,
+    )
+    return
+end
+
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{EnergyOutput, T},
+    system::PSY.System,
+) where {T <: PSY.HydroPumpedStorage}
+    p_variable_results = get_variable(container, ActivePowerOutVariable(), T)
+    _calculate_aux_variable_value!(
+        container,
+        ::AuxVarKey{EnergyOutput, T},
+        system,
+        p_variable_results,
+    )
+    return
+end
+
 ##################################### Hydro generation cost ############################
 function objective_function!(
     container::OptimizationContainer,
