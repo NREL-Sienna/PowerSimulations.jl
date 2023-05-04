@@ -723,13 +723,13 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::AuxVarKey{EnergyOutput, T},
+    aux_key::AuxVarKey{EnergyOutput, T},
     system::PSY.System,
 ) where {T <: PSY.HydroGen}
     p_variable_results = get_variable(container, ActivePowerVariable(), T)
     _calculate_aux_variable_value!(
         container,
-        ::AuxVarKey{EnergyOutput, T},
+        aux_key,
         system,
         p_variable_results,
     )
@@ -738,13 +738,13 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::AuxVarKey{EnergyOutput, T},
+    aux_key::AuxVarKey{EnergyOutput, T},
     system::PSY.System,
 ) where {T <: PSY.HydroPumpedStorage}
     p_variable_results = get_variable(container, ActivePowerOutVariable(), T)
     _calculate_aux_variable_value!(
         container,
-        ::AuxVarKey{EnergyOutput, T},
+        aux_key,
         system,
         p_variable_results,
     )
