@@ -889,7 +889,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), PSY.Bus)
     expression = get_expression(container, T(), PSY.Bus)
-    @assert axes(variable, 1) == axes(expression, 1)
+    @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
     for t in get_time_steps(container), n in axes(variable, 1)
         _add_to_jump_expression!(
             expression[n, t],
