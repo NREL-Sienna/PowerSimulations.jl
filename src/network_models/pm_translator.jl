@@ -1,6 +1,15 @@
 const PM_MAP_TUPLE =
     NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
+
+const PM_BUSTYPES = Dict{PSY.BusTypes, Int}(
+    PSY.BusTypes.ISOLATED => 4,
+    PSY.BusTypes.PQ => 1,
+    PSY.BusTypes.PV => 2,
+    PSY.BusTypes.REF => 3,
+    PSY.BusTypes.SLACK => 3,
+)
+
 struct PMmap
     bus::Dict{Int, PSY.Bus}
     arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
@@ -416,20 +425,15 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
     PM_buses = Dict{String, Any}()
     PMmap_buses = Dict{Int, PSY.Bus}()
 
-    pm_bustypes = Dict{PSY.BusTypes, Int}(
-        PSY.BusTypes.ISOLATED => 4,
-        PSY.BusTypes.PQ => 1,
-        PSY.BusTypes.PV => 2,
-        PSY.BusTypes.REF => 3,
-        PSY.BusTypes.SLACK => 3,
-    )
-
     for bus in buses
+        if PSY.get_bustype(bus) != PSY.BusTypes.ISOLATED::PSY.BusTypes
+            continue
+        end
         number = PSY.get_number(bus)
         PM_bus = Dict{String, Any}(
             "zone" => 1,
             "bus_i" => number,
-            "bus_type" => pm_bustypes[PSY.get_bustype(bus)],
+            "bus_type" => PM_BUSTYPES[PSY.get_bustype(bus)],
             "vmax" => PSY.get_voltage_limits(bus).max,
             "area" => 1,
             "vmin" => PSY.get_voltage_limits(bus).min,
@@ -442,9 +446,7 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
             "name" => PSY.get_name(bus),
         )
         PM_buses["$(number)"] = PM_bus
-        if PSY.get_bustype(bus) != PSY.BusTypes.ISOLATED::PSY.BusTypes
-            PMmap_buses[number] = bus
-        end
+        PMmap_buses[number] = bus
     end
     return PM_buses, PMmap_buses
 end
