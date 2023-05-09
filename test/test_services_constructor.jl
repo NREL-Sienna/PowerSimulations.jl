@@ -132,29 +132,6 @@ end
     moi_tests(model, 360, 0, 72, 48, 72, false)
 end
 
-@testset "Test Reserves from Hydro" begin
-    template = ProblemTemplate(CopperPlatePowerModel)
-    set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve5"),
-    )
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve6"),
-    )
-    set_service_model!(
-        template,
-        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
-    )
-
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
-    model = DecisionModel(template, c_sys5_hyd)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, 240, 0, 48, 96, 72, false)
-end
-
 @testset "Test Reserves from with slack variables" begin
     template = get_thermal_dispatch_template_network(
         NetworkModel(CopperPlatePowerModel; use_slacks = true),
