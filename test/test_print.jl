@@ -45,7 +45,6 @@ end
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
     set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-    set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
     set_network_model!(template_uc, NetworkModel(
         CopperPlatePowerModel,
         # MILP "duals" not supported with free solvers
@@ -87,12 +86,6 @@ end
                     component_type = ThermalStandard,
                     source = OnVariable,
                     affected_values = [ActivePowerVariable],
-                ),
-                EnergyLimitFeedforward(;
-                    component_type = HydroEnergyReservoir,
-                    source = ActivePowerVariable,
-                    affected_values = [ActivePowerVariable],
-                    number_of_periods = 12,
                 ),
             ],
         ),
