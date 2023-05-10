@@ -30,6 +30,7 @@ pages = OrderedDict(
     "Formulation Library" => Any[
         "General" => "formulation_library/General.md",
         "Thermal Generation" => "formulation_library/ThermalGen.md",
+        "Hydro Generation" => "formulation_library/HydroGen.md",
         "Renewable Generation" => "formulation_library/RenewableGen.md",
         "Load" => "formulation_library/Load.md",
         "Network" => "formulation_library/Network.md",
