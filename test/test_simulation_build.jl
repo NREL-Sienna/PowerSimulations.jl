@@ -132,7 +132,6 @@ end
     @test_throws IS.ConflictingInputsError PSI._check_folder(sim)
 end
 
-
 @testset "Test SemiContinuous Feedforward with Active and Reactive Power variables" begin
     template_uc = get_template_basic_uc_simulation()
     set_network_model!(template_uc, NetworkModel(DCPPowerModel; use_slacks = true))
