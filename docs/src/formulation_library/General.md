@@ -29,7 +29,7 @@ using PowerSystems
 using DataFrames
 using Latexify
 combo_tables = []
-for t in [RenewableGen, ThermalGen, ElectricLoad]
+for t in [RenewableGen, ThermalGen, HydroGen, ElectricLoad]
     combos = PowerSimulations.get_default_time_series_names(t, FixedOutput)
     combo_table = DataFrame(
         "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
