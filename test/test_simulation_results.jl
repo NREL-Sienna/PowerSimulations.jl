@@ -132,7 +132,6 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         template_uc = get_template_basic_uc_simulation()
         template_ed = get_template_nomin_ed_simulation()
         set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-        set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
         set_network_model!(
             template_uc,
             NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
@@ -172,12 +171,6 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                         component_type = ThermalStandard,
                         source = OnVariable,
                         affected_values = [ActivePowerVariable],
-                    ),
-                    EnergyLimitFeedforward(;
-                        component_type = HydroEnergyReservoir,
-                        source = ActivePowerVariable,
-                        affected_values = [ActivePowerVariable],
-                        number_of_periods = 12,
                     ),
                 ],
             ),
@@ -230,7 +223,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         verify_export_results(results, export_path)
 
-        @test length(readdir(export_realized_results(results_ed))) === 18
+        @test length(readdir(export_realized_results(results_ed))) === 17
 
         # Test that you can't read a failed simulation.
         PSI.set_simulation_status!(sim, RunStatus.FAILED)
@@ -547,7 +540,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     ) == 10
 
     parameters_keys = collect(keys(read_realized_parameters(results_em)))
-    @test length(parameters_keys) == 7
+    @test length(parameters_keys) == 5
     parameters_inputs = (
         [
             "ActivePowerTimeSeriesParameter__PowerLoad",
