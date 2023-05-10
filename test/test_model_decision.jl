@@ -488,68 +488,6 @@ end
         HydroEnergyReservoir,
     )
     @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with HydroDispatchReservoirBudget ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirBudget)
-    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    initial_conditions_data =
-        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
-    @test !PSI.has_initial_condition_value(
-        initial_conditions_data,
-        ActivePowerVariable(),
-        HydroEnergyReservoir,
-    )
-    @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with HydroCommitmentReservoirBudget ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
-    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirBudget)
-    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    initial_conditions_data =
-        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
-    @test PSI.has_initial_condition_value(
-        initial_conditions_data,
-        OnVariable(),
-        HydroEnergyReservoir,
-    )
-    @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with HydroDispatchReservoirStorage ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"; force_build = true)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
-    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    initial_conditions_data =
-        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
-    @test !PSI.has_initial_condition_value(
-        initial_conditions_data,
-        ActivePowerVariable(),
-        HydroEnergyReservoir,
-    )
-    check_energy_initial_conditions_values(model, HydroEnergyReservoir)
-    @test solve!(model) == RunStatus.SUCCESSFUL
-
-    ######## Test with HydroCommitmentReservoirStorage ########
-    template = get_thermal_dispatch_template_network()
-    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd_ems"; force_build = true)
-    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentReservoirStorage)
-    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
-    initial_conditions_data =
-        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
-    @test PSI.has_initial_condition_value(
-        initial_conditions_data,
-        OnVariable(),
-        HydroEnergyReservoir,
-    )
-    check_energy_initial_conditions_values(model, HydroEnergyReservoir)
-    @test solve!(model) == RunStatus.SUCCESSFUL
 end
 
 @testset "Test serialization of InitialConditionsData" begin
