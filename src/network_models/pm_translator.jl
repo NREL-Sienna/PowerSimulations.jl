@@ -1,7 +1,6 @@
 const PM_MAP_TUPLE =
     NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
-
 const PM_BUSTYPES = Dict{PSY.BusTypes, Int}(
     PSY.BusTypes.ISOLATED => 4,
     PSY.BusTypes.PQ => 1,
@@ -465,7 +464,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         template.branches,
         length(ac_lines),
     )
-    buses = PSY.get_available_components(PSY.Bus, sys)
+    buses = get_available_components(PSY.Bus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(
         "bus" => pm_buses,

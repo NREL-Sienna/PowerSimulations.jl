@@ -291,7 +291,7 @@ function powermodels_network!(
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = PSY.get_available_components(PSY.Bus, sys)
+    buses = get_available_components(PSY.Bus, sys)
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
@@ -319,7 +319,7 @@ function powermodels_network!(
 ) where {S <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = PSY.get_available_components(PSY.Bus, sys)
+    buses = get_available_components(PSY.Bus, sys)
 
     for t in time_steps, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
