@@ -680,3 +680,40 @@ end
     )
     @test "Alta" ∉ axes(p_variable, 1)
 end
+
+@testset "Test for isolated buses" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    add_component!(c_sys5,
+        Bus(
+            10,
+            "node_none",
+            "ISOLATED",
+            0,
+            1.0,
+            (min = 0.9, max = 1.05),
+            230,
+            nothing,
+            nothing,
+        ),
+    )
+
+    template = get_thermal_standard_uc_template()
+    new_model = DeviceModel(
+        ThermalStandard,
+        ThermalBasicUnitCommitment;
+    )
+    set_device_model!(template, new_model)
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
+    )
+    UC = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = GLPK_optimizer,
+        detailed_optimizer_stats = true,
+    )
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test solve!(UC) == RunStatus.SUCCESSFUL
+end
