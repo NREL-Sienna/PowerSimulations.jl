@@ -19,7 +19,7 @@ function add_constraint_dual!(
     model::NetworkModel{T},
 ) where {T <: PM.AbstractPowerModel}
     if !isempty(get_duals(model))
-        devices = PSY.get_available_components(PSY.Bus, sys)
+        devices = get_available_components(PSY.Bus, sys)
         for constraint_type in get_duals(model)
             assign_dual_variable!(container, constraint_type, devices, model)
         end
