@@ -113,7 +113,7 @@ function _assign_subnetworks_to_buses(
 ) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
-    for bus in PSY.get_components(PSY.Bus, sys)
+    for bus in get_available_components(PSY.Bus, sys)
         bus_no = PSY.get_number(bus)
         if haskey(temp_bus_map, bus_no)
             model.bus_area_map[bus] = temp_bus_map[bus_no]

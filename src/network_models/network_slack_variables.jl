@@ -37,7 +37,7 @@ function add_variables!(
     U <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
+    bus_numbers = PSY.get_number.(get_available_components(PSY.Bus, sys))
     variable = add_variable_container!(container, T(), PSY.Bus, bus_numbers, time_steps)
 
     for t in time_steps, n in bus_numbers
@@ -60,7 +60,7 @@ function add_variables!(
     U <: PM.AbstractPowerModel,
 }
     time_steps = get_time_steps(container)
-    bus_numbers = PSY.get_number.(PSY.get_components(PSY.Bus, sys))
+    bus_numbers = PSY.get_number.(get_available_components(PSY.Bus, sys))
     variable_active =
         add_variable_container!(container, T(), PSY.Bus, "P", bus_numbers, time_steps)
     variable_reactive =
