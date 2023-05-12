@@ -64,7 +64,11 @@ function _update_parameter_values!(
     multiplier_id = get_time_series_multiplier_id(attributes)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
+    if isnothing(device_model)
+        filter_func = nothing
+    else
+        filter_func = get_attribute(device_model, "filter_function")
+    end
     components = get_available_components(V, get_system(model), filter_func)
     ts_uuids = Set{String}()
     for component in components
