@@ -1050,15 +1050,15 @@ function add_to_expression!(
     V <: PSY.AGC,
     W <: AbstractServiceFormulation,
 }
-    names = [PSY.get_name(PSY.get_area(s)) for s in services]
+    names = PSY.get_name.(services)
     time_steps = get_time_steps(container)
     if !has_container_key(container, T, V)
-        expression = add_expression_container!(container, T(), PSY.Area, names, time_steps)
+        expression = add_expression_container!(container, T(), PSY.AGC, names, time_steps)
     end
-    expression = get_expression(container, T(), PSY.Area)
-    variable = get_variable(container, U(), PSY.Area)
+    expression = get_expression(container, T(), PSY.AGC)
+    variable = get_variable(container, U(), PSY.AGC)
     for s in services, t in time_steps
-        name = PSY.get_name(PSY.get_area(s))
+        name = PSY.get_name(s)
         _add_to_jump_expression!(
             expression[name, t],
             variable[t],
