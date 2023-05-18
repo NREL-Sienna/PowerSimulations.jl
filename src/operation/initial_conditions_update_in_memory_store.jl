@@ -113,3 +113,17 @@ function update_initial_conditions!(
     end
     return
 end
+
+function update_initial_conditions!(
+    ics::Vector{T},
+    store::EmulationModelStore,
+    ::Dates.Millisecond,
+) where {
+    T <: InitialCondition{AreaControlError, S},
+} where {S <: Union{Float64, JuMP.VariableRef}}
+    for ic in ics
+        var_val = get_variable_value(store, AreaMismatchVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
+    end
+    return
+end
