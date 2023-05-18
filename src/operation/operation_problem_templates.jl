@@ -130,6 +130,6 @@ function template_agc_reserve_deployment(; kwargs...)
             ReserveLimitedRegulation,
         ),
     )
-    set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE, "AGC_Area1"))
+    set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE))
     return template
 end
