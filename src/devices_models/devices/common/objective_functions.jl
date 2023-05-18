@@ -123,9 +123,9 @@ end
 function add_proportional_cost!(
     container::OptimizationContainer,
     ::U,
-    areas::IS.FlattenIteratorWrapper{T},
+    agcs::IS.FlattenIteratorWrapper{T},
     ::PIDSmoothACE,
-) where {T <: PSY.Area, U <: LiftVariable}
+) where {T <: PSY.AGC, U <: LiftVariable}
     lift_variable = get_variable(container, U(), T)
     for index in Iterators.product(axes(lift_variable)...)
         add_to_objective_invariant_expression!(
