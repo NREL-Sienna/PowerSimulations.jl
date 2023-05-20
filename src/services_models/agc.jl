@@ -110,7 +110,7 @@ function add_constraints!(
     agc_names = PSY.get_name.(agcs)
 
     frequency_response = 0.0
-    for agc in PSY.get_components(x -> x.available, PSY.AGC, sys)
+    for agc in agcs
         area = PSY.get_area(agc)
         frequency_response += PSY.get_load_response(area)
     end
