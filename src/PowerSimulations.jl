@@ -514,6 +514,7 @@ include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
+include("simulation/execution_control.jl")
 
 include("devices_models/devices/common/objective_functions.jl")
 include("devices_models/devices/common/range_constraint.jl")

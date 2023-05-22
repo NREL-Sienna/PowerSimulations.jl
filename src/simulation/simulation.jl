@@ -256,7 +256,7 @@ end
 
 function _check_folder(sim::Simulation)
     folder = get_simulation_folder(sim)
-    !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
+    !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder = $folder is not valid"))
     try
         mkdir(joinpath(folder, "fake"))
         rm(joinpath(folder, "fake"))
@@ -825,6 +825,8 @@ function _execute!(
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
+    commands_channel=nothing,
+    results_channel=nothing,
 )
     @assert sim.internal !== nothing
 
@@ -857,6 +859,9 @@ function _execute!(
             "start",
         )
         for (ix, model_number) in enumerate(execution_order)
+            if !isnothing(commands_channel)
+                _handle_parent_command!(sim, commands_channel)
+            end
             model = get_simulation_model(models, model_number)
             model_name = get_name(model)
             set_current_time!(sim, sim.internal.date_ref[model_number])
@@ -869,16 +874,25 @@ function _execute!(
                 "start",
             )
 
+            progress_event = SimulationProgressEvent(
+                model_name = string(model_name),
+                step = step,
+                index = (step - 1) * length(execution_order) + ix,
+                timestamp = get_current_time(sim),
+                wall_time = Dates.now(),
+                exec_time_s = 0.0,
+            )
             ProgressMeter.update!(
                 prog_bar,
-                (step - 1) * length(execution_order) + ix;
+                progress_event.index;
                 showvalues = [
-                    (:Step, step),
+                    (:Step, progress_event.step),
                     (:Problem, model_name),
-                    (:("Simulation Timestamp"), get_current_time(sim)),
+                    (:("Simulation Timestamp"), progress_event.timestamp),
                 ],
             )
 
+            start_time = time()
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
@@ -923,6 +937,8 @@ function _execute!(
                     "done",
                 )
             end #execution problem timer
+            progress_event.exec_time_s = time() - start_time
+            put!(results_channel, SimulationIntermediateResult(progress_event))
         end # execution order for loop
 
         IS.@record :simulation_status SimulationStepEvent(
@@ -932,6 +948,17 @@ function _execute!(
         )
     end # Steps for loop
     return
+end
+
+function _handle_parent_command!(simulation::Simulation, commands_channel)
+    command = nothing
+    while isready(commands_channel)
+        command = take!(commands_channel)
+    end
+    if !isnothing(command)
+        # TODO DT
+        @error "TODO: do something with" command
+    end
 end
 
 """
