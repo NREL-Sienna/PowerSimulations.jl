@@ -246,3 +246,5 @@ struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
 struct RampReserve <: AbstractReservesFormulation end
 struct NonSpinningReserve <: AbstractReservesFormulation end
+
+struct ConstantMaxInterfaceFlow <: AbstractServiceFormulation end
