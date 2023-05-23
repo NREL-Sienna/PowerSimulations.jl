@@ -30,7 +30,6 @@ function construct_services!(
             continue
         end
         isempty(get_contributing_devices(service_model)) && continue
-        get_contributing_devices(service_model)
         construct_service!(
             container,
             sys,
@@ -461,5 +460,50 @@ function construct_service!(
     add_feedforward_constraints!(container, model, service)
 
     add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.TransmissionInterface}
+    add_to_expression!(
+        container,
+        InterfaceTotalFlow,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {SR <: PSY.TransmissionInterface}
+    @error("here2")
+    error()
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+
+    objective_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
+
     return
 end
