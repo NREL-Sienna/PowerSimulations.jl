@@ -107,7 +107,7 @@ function add_service_variable!(
     variable_type::T,
     service::U,
     contributing_devices::V,
-    formulation::AbstractReservesFormulation,
+    formulation::AbstractServiceFormulation,
 ) where {
     T <: VariableType,
     U <: PSY.Service,
