@@ -89,6 +89,7 @@ struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
+struct InterfaceFlowLimit <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
