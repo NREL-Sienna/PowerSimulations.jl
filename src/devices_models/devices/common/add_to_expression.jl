@@ -755,6 +755,28 @@ end
 
 function add_to_expression!(
     container::OptimizationContainer,
+    ::Type{InterfaceTotalFlow},
+    ::Type{FlowActivePowerVariable},
+    devices::Vector{T},
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow}
+) where {T <: PSY.Component}
+    services = get_available_components(TransmissionInterface, sys)
+    if !has_container_key(container, InterfaceTotalFlow, TransmissionInterface)
+        add_expressions!(container, InterfaceTotalFlow, services, model)
+    end
+    variable = get_variable(container, FlowActivePowerVariable(), X, service_name)
+
+    expression = get_expression(container, T(), V)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        _add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
+    end
+    return
+end
+
+
+function add_to_expression!(
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
