@@ -471,13 +471,13 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
 ) where {SR <: PSY.TransmissionInterface}
+    contributing_devices = get_contributing_devices(model)
     add_to_expression!(
         container,
         InterfaceTotalFlow,
         FlowActivePowerVariable,
-        devices,
+        contributing_devices,
         model,
-        network_model,
     )
     add_feedforward_arguments!(container, model, service)
     return
