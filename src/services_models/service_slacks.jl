@@ -13,7 +13,7 @@ function reserve_slacks(
 
     for t in time_steps
         variable[t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "slack_{$(PSY.get_name(service)), $(t)}",
             lower_bound = 0.0
         )
