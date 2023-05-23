@@ -467,20 +467,19 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    model::ServiceModel{SR, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-) where {T <: PSY.TransmissionInterface}
-    # contributing_devices_map = get_contributing_devices_map(model)
-    interfaces = PSY.get_name.(get_available_components(T, sys))
-    lazy_container_addition!(
+) where {SR <: PSY.TransmissionInterface}
+    add_to_expression!(
         container,
-        InterfaceTotalFlow(),
-        T,
-        interfaces,
-        get_time_steps(container),
+        InterfaceTotalFlow,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        network_model,
     )
-    #add_feedforward_arguments!(container, model, service)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
