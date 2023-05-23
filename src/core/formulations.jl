@@ -233,13 +233,22 @@ import PowerModels: QCRMPowerModel
 
 import PowerModels: QCLSPowerModel
 
+"""
+Abstract type for Service Formulations (a.k.a Models)
+
+# Example
+
+import PowerSimulations
+const PSI = PowerSimulations
+struct MyServiceFormulation <: PSI.AbstractServiceFormulation
+"""
 abstract type AbstractServiceFormulation end
+
+abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
-
-abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
 struct GroupReserve <: AbstractReservesFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
