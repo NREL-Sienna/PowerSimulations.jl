@@ -66,7 +66,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        isempty(get_contributing_devices(service_model)) && continue
+        isempty(get_contributing_devices_map(service_model)) && continue
         construct_service!(
             container,
             sys,
@@ -467,19 +467,20 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::ServiceModel{SR, ConstantMaxInterfaceFlow},
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-) where {SR <: PSY.TransmissionInterface}
-    contributing_devices = get_contributing_devices(model)
-    add_to_expression!(
+) where {T <: PSY.TransmissionInterface}
+    # contributing_devices_map = get_contributing_devices_map(model)
+    interfaces = PSY.get_name.(get_available_components(T, sys))
+    lazy_container_addition!(
         container,
-        InterfaceTotalFlow,
-        FlowActivePowerVariable,
-        contributing_devices,
-        model,
+        InterfaceTotalFlow(),
+        T,
+        interfaces,
+        get_time_steps(container),
     )
-    add_feedforward_arguments!(container, model, service)
+    #add_feedforward_arguments!(container, model, service)
     return
 end
 
@@ -487,23 +488,22 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::ServiceModel{SR, ConstantMaxInterfaceFlow},
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-) where {SR <: PSY.TransmissionInterface}
-    @error("here2")
-    error()
+) where {T <: PSY.TransmissionInterface}
     name = get_service_name(model)
-    service = PSY.get_component(SR, sys, name)
-    contributing_devices = get_contributing_devices(model)
+    service = PSY.get_component(T, sys, name)
 
-    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-
-    objective_function!(container, service, model)
-
+    add_to_expression!(
+        container,
+        InterfaceTotalFlow,
+        FlowActivePowerVariable,
+        service,
+        model,
+    )
+    add_constraints!(container, InterfaceFlowLimit, service, model)
     add_feedforward_constraints!(container, model, service)
-
     add_constraint_dual!(container, sys, model)
-
     return
 end
