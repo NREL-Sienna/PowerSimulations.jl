@@ -178,6 +178,7 @@ for sys in [sys_DA, sys_RT, sys_RT_HourAhead]
     end
     =#
 
+    #=
     for g in get_components(HydroEnergyReservoir, sys)
         area_name = get_name(get_area(get_bus(g)))
         reg_up = get_component(VariableReserve, sys, area_maps_regup[area_name])
@@ -187,6 +188,7 @@ for sys in [sys_DA, sys_RT, sys_RT_HourAhead]
         add_service!(g, reg_dn, sys)
         add_service!(g, reg_spin, sys)
     end
+    =#
 
     #Remove units that make no sense to include
     names = [

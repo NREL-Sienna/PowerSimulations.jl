@@ -15,6 +15,7 @@ using JuMP
 using Logging
 using Dates
 using TimeSeries
+using PlotlyJS
 
 include("script_utils.jl")
 
@@ -22,7 +23,7 @@ sys_DA = System("data/sys_DA_1h.json")
 sys_RT = System("data/sys_RT_5min.json")
 
 mipgap = 1e-2 # 1%
-num_steps = 30
+num_steps = 2
 starttime = DateTime("2020-01-01T00:00:00")
 
 template_uc = get_uc_ptdf_template(sys_DA)
@@ -98,6 +99,22 @@ sim = Simulation(;
 build!(sim; console_level = Logging.Info, serialize = false)
 execute!(sim; enable_progress_bar = true);
 
+results_nrb = SimulationResults(sim; ignore_status = true)
+results_uc_nrb = get_decision_problem_results(results_nrb, "UC")
+results_ed_nrb = get_decision_problem_results(results_nrb, "ED")
+
+regup_uc = read_realized_variable(results_uc_nrb, "ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up_R1")
+dates_uc = regup_uc[!, "DateTime"]
+regup_uc_st4 = regup_uc[!, "123_STEAM_2"]
+
+regup_ed = read_realized_parameter(results_ed_nrb, "FixValueParameter__VariableReserve__ReserveUp__Reg_Up_R1")
+dates_ed = regup_ed[!, "DateTime"]
+regup_ed_st4 = regup_ed[!, "123_STEAM_2"]
+regup_ed_var = read_realized_variable(results_ed_nrb, "ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up_R1")
+regup_ed_var_st4 = regup_ed_var[!, "123_STEAM_2"]
+
+PlotlyJS.plot([PlotlyJS.scatter(x = dates_uc, y = regup_uc_st4 , name = "UC", line_shape = "hv"), PlotlyJS.scatter(x= dates_ed, y = regup_ed_st4 .* 100.0, name = "ED", line_shape = "hv"), PlotlyJS.scatter(x= dates_ed, y = regup_ed_var_st4, name = "ED Var", line_shape = "hv")])
+
 uc = sim.models.decision_models[1]
 ed = sim.models.decision_models[2]
 vars = ed.internal.container.variables
@@ -153,3 +170,5 @@ C1598       column  UP       .000000
 C10643      column  LO      1.000000
 C11317      column  LO      1.000000
 =#
+
+# ActivePowerVariable_ThermalStandard_{322_CT_6, 1} - 0.55 _[1465] + ActivePowerReserveVariable_VariableReserve{ReserveUp}_Reg_Up_R3_{322_CT_6, 1} - x[322_CT_6,1] ≤ 0.0     
