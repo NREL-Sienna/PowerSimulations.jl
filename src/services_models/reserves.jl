@@ -66,7 +66,10 @@ function get_default_time_series_names(
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
-function get_default_attributes(::Type{<:PSY.Reserve}, ::Type{<:AbstractReservesFormulation})
+function get_default_attributes(
+    ::Type{<:PSY.Reserve},
+    ::Type{<:AbstractReservesFormulation},
+)
     return Dict{String, Any}()
 end
 
