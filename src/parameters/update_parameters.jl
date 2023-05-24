@@ -531,6 +531,7 @@ function _fix_parameter_value!(
     parameter_attributes::VariableValueAttributes,
 )
     affected_variable_keys = parameter_attributes.affected_keys
+    @assert !isempty(affected_variable_keys)
     for var_key in affected_variable_keys
         variable = get_variable(container, var_key)
         component_names, time = axes(parameter_array)
