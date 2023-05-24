@@ -245,7 +245,7 @@ end
 function _modify_device_model!(
     ::Dict{Symbol, DeviceModel},
     ::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
-    ::Vector
+    ::Vector,
 )
     return
 end
@@ -269,7 +269,7 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
         attributes = get_attributes(service_model)
         use_slacks = service_model.use_slacks
         duals = service_model.duals
-        if get(attributes, "aggregated_service_model", false)
+        if pop!(attributes, "aggregated_service_model", false)
             delete!(services_template, key)
             D = get_component_type(service_model)
             B = get_formulation(service_model)
@@ -284,6 +284,7 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
                             PSY.get_name(service);
                             use_slacks = use_slacks,
                             duals = duals,
+                            attributes = attributes,
                         ),
                     )
                 end
