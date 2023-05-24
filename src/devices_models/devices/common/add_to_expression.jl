@@ -757,23 +757,27 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{InterfaceTotalFlow},
     ::Type{FlowActivePowerVariable},
-    devices::Vector{T},
-    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow}
-) where {T <: PSY.Component}
-    services = get_available_components(TransmissionInterface, sys)
-    if !has_container_key(container, InterfaceTotalFlow, TransmissionInterface)
-        add_expressions!(container, InterfaceTotalFlow, services, model)
-    end
-    variable = get_variable(container, FlowActivePowerVariable(), X, service_name)
-
-    expression = get_expression(container, T(), V)
-    for d in devices, t in get_time_steps(container)
-        name = PSY.get_name(d)
-        _add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
+    service::PSY.TransmissionInterface,
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
+)
+    expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
+    service_name = get_service_name(model)
+    for (device_type, devices) in get_contributing_devices_map(model)
+        variable = get_variable(container, FlowActivePowerVariable(), device_type)
+        for d in devices
+            name = PSY.get_name(d)
+            direction = get(PSY.get_direction_mapping(service), name, 1.0)
+            for t in get_time_steps(container)
+                _add_to_jump_expression!(
+                    expression[service_name, t],
+                    variable[name, t],
+                    direction,
+                )
+            end
+        end
     end
     return
 end
-
 
 function add_to_expression!(
     container::OptimizationContainer,
