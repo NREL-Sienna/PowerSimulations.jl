@@ -103,17 +103,40 @@ results_nrb = SimulationResults(sim; ignore_status = true)
 results_uc_nrb = get_decision_problem_results(results_nrb, "UC")
 results_ed_nrb = get_decision_problem_results(results_nrb, "ED")
 
-regup_uc = read_realized_variable(results_uc_nrb, "ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up_R1")
+regup_uc = read_realized_variable(
+    results_uc_nrb,
+    "ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up_R1",
+)
 dates_uc = regup_uc[!, "DateTime"]
 regup_uc_st4 = regup_uc[!, "123_STEAM_2"]
 
-regup_ed = read_realized_parameter(results_ed_nrb, "FixValueParameter__VariableReserve__ReserveUp__Reg_Up_R1")
+regup_ed = read_realized_parameter(
+    results_ed_nrb,
+    "FixValueParameter__VariableReserve__ReserveUp__Reg_Up_R1",
+)
 dates_ed = regup_ed[!, "DateTime"]
 regup_ed_st4 = regup_ed[!, "123_STEAM_2"]
-regup_ed_var = read_realized_variable(results_ed_nrb, "ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up_R1")
+regup_ed_var = read_realized_variable(
+    results_ed_nrb,
+    "ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up_R1",
+)
 regup_ed_var_st4 = regup_ed_var[!, "123_STEAM_2"]
 
-PlotlyJS.plot([PlotlyJS.scatter(x = dates_uc, y = regup_uc_st4 , name = "UC", line_shape = "hv"), PlotlyJS.scatter(x= dates_ed, y = regup_ed_st4 .* 100.0, name = "ED", line_shape = "hv"), PlotlyJS.scatter(x= dates_ed, y = regup_ed_var_st4, name = "ED Var", line_shape = "hv")])
+PlotlyJS.plot([
+    PlotlyJS.scatter(; x = dates_uc, y = regup_uc_st4, name = "UC", line_shape = "hv"),
+    PlotlyJS.scatter(;
+        x = dates_ed,
+        y = regup_ed_st4 .* 100.0,
+        name = "ED",
+        line_shape = "hv",
+    ),
+    PlotlyJS.scatter(;
+        x = dates_ed,
+        y = regup_ed_var_st4,
+        name = "ED Var",
+        line_shape = "hv",
+    ),
+])
 
 uc = sim.models.decision_models[1]
 ed = sim.models.decision_models[2]
