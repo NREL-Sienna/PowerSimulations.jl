@@ -777,8 +777,8 @@ end
 function read_expressions_with_keys(
     res::ProblemResults,
     expressions::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
