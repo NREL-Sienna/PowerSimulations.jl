@@ -419,8 +419,8 @@ end
 function read_variables_with_keys(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
