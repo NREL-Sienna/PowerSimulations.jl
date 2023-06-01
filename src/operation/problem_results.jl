@@ -759,8 +759,8 @@ end
 function read_expressions(
     res::ProblemResults,
     expressions::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     result_values =
         read_expressions_with_keys(res, expressions; start_time=start_time, len=len)
