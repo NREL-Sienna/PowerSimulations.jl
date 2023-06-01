@@ -363,6 +363,7 @@ function read_variable(res::ProblemResults, args...; kwargs...)
 end
 
 function read_variable(res::ProblemResults, key::AbstractString; kwargs...)
+    @show key
     return read_variable(res, _deserialize_key(VariableKey, res, key); kwargs...)
 end
 
@@ -386,11 +387,11 @@ loaded using the [`load_results!`](@ref) function it will read from memory.
   - `start_time::Dates.DateTime` : initial time of the requested results
   - `len::Int`: length of results
 """
-function read_variables(res::ProblemResults, variables; kwargs...)
+function read_variables(res::IS.Results, variables; kwargs...)
     return read_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
 end
 
-function read_variables(res::ProblemResults, variables::Vector{<:AbstractString}; kwargs...)
+function read_variables(res::IS.Results, variables::Vector{<:AbstractString}; kwargs...)
     return read_variables(
         res,
         [_deserialize_key(VariableKey, res, x) for x in variables];
@@ -399,7 +400,7 @@ function read_variables(res::ProblemResults, variables::Vector{<:AbstractString}
 end
 
 function read_variables(
-    res::ProblemResults,
+    res::IS.Results,
     variables::Vector{<:OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,

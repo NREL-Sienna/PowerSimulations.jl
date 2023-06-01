@@ -1,6 +1,6 @@
 # [Formulations](@id formulation_library)
 
-Modeling formulations are created by dispatching on abstract subtypes of [`PowerSimulations.AbstractDeviceFormulation`](@ref)
+Modeling formulations are created by dispatching on abstract subtypes of `PowerSimulations.AbstractDeviceFormulation`
 
 ## `FixedOutput`
 
@@ -29,7 +29,7 @@ using PowerSystems
 using DataFrames
 using Latexify
 combo_tables = []
-for t in [RenewableGen, ThermalGen, HydroGen, Storage, ElectricLoad]
+for t in [RenewableGen, ThermalGen, HydroGen, ElectricLoad]
     combos = PowerSimulations.get_default_time_series_names(t, FixedOutput)
     combo_table = DataFrame(
         "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
@@ -47,7 +47,7 @@ No objective terms are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 **Expressions:**
 
-Adds the active and reactive parameters listed for specific device types above to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds the active and reactive parameters listed for specific device types above to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -84,9 +84,9 @@ PowerSimulations can represent variable costs using a variety of different metho
 
 ### Piecewise Linear `VariableCost`
 
-`variable_cost <: Vector{Tuple{Float64, Float64}}`: creates a piecewise linear cost term in the objective function 
+`variable_cost <: Vector{Tuple{Float64, Float64}}`: creates a piecewise linear cost term in the objective function
 
-TODO: add formulation 
+TODO: add formulation
 
 ___
 
@@ -96,7 +96,7 @@ Adds an objective function cost term according to:
 
 ```math
 \begin{aligned}
-&  \text{min} \sum_{t} \quad [E^{surplus}_t * C^{penalty} - E^{shortage}_t * C^{value}] 
+&  \text{min} \sum_{t} \quad [E^{surplus}_t * C^{penalty} - E^{shortage}_t * C^{value}]
 \end{aligned}
 ```
 

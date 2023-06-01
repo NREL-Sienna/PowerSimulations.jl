@@ -398,7 +398,7 @@ end
 Default run method for problems that conform to the requirements of
 EmulationModel{<: EmulationProblem}
 
-This will call [`build!`](@ref) on the model if it is not already built. It will forward all
+This will call `build!` on the model if it is not already built. It will forward all
 keyword arguments to that function.
 
 # Arguments

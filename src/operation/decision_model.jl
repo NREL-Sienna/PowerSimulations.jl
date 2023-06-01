@@ -338,7 +338,7 @@ end
 Default solve method for models that conform to the requirements of
 DecisionModel{<: DecisionProblem}.
 
-This will call [`build!`](@ref) on the model if it is not already built. It will forward all
+This will call `build!` on the model if it is not already built. It will forward all
 keyword arguments to that function.
 
 # Arguments

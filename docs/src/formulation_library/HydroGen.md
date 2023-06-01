@@ -11,7 +11,7 @@ combos = PowerSimulations.generate_device_formulation_combinations()
 filter!(x -> x["device_type"] <: HydroGen, combos)
 combo_table = DataFrame(
     "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
-    "Device Type" => ["[$(c["device_type"])](https://nrel-siip.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
+    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
     "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
     )
 mdtable(combo_table, latex = false)
@@ -61,7 +61,7 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -133,7 +133,7 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 
 **Expressions:**
 
-Adds ``Pg`` term(s) to the active power balance expression(s) created by the selected [Network Formulations](@ref)
+Adds ``Pg`` term(s) to the active power balance expression(s) created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -197,7 +197,7 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -272,7 +272,7 @@ TODO: add slack terms
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -337,7 +337,7 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -417,7 +417,7 @@ and objective function terms for [StorageManagementCost](@ref).
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -479,7 +479,7 @@ Creates an objective function term based on the [`VariableCost` Options](@ref) w
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref)
+Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 

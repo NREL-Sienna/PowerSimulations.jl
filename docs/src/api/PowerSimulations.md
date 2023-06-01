@@ -7,16 +7,16 @@ end
 
 # API Reference
 
-
 ### Table of Contents
 
-1. [Device Models](#Device-Models)
-2. [Decision Models](#Decision-Models)
-3. [Emulation Models](#Emulation-Models)
-4. [Simulation Models](#Simulation-Models)
-5. [Variables](#Variables)
-6. [Constraints](#Constraints)
-7. [Parameters](#Parameters)
+1. [Device Models](#device-models)
+2. [Decision Models](#decision-models)
+3. [Emulation Models](#emulation-models)
+4. [Service Models](#service-models)
+5. [Simulation Models](#simulation-models)
+6. [Variables](#variables)
+7. [Constraints](#constraints)
+8. [Parameters](#parameters)
 
 # Device Models
 
@@ -28,15 +28,23 @@ DeviceModel
 
 ### Formulations
 
-Refer to the [Formulations Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/formulation_library/General/) for each Abstract Device Formulation.
+Refer to the [Formulations Page](@ref formulation_library) for each Abstract Device Formulation.
 
 ### Problem Templates
 
-Refer to the [Problem Templates Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/modeler_guide/problem_templates/) for available `ProblemTemplate`s.
+Refer to the [Problem Templates Page](@ref op_problem_template) for available `ProblemTemplate`s.
 
 ```@raw html
 &nbsp;
 &nbsp;
+```
+
+# Service Models
+
+List of structures and methods for Service models
+
+```@docs
+ServiceModel
 ```
 
 # Decision Models
@@ -71,7 +79,7 @@ run!(::EmulationModel)
 
 # Simulation Models
 
-Refer to the [Simulations Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/modeler_guide/running_a_simulation/) to explanations on how to setup a Simulation, with Sequencing and Feedforwards.
+Refer to the [Simulations Page](@ref running_a_simulation) to explanations on how to setup a Simulation, with Sequencing and Feedforwards.
 
 ```@docs
 SimulationModels
@@ -90,6 +98,7 @@ execute!(::Simulation)
 # Variables
 
 For a list of variables for each device refer to its Formulations page.
+
 ### Common Variables
 
 ```@docs
@@ -125,6 +134,7 @@ ReservationVariable
 WaterSpillageVariable
 EnergyVariableUp
 EnergyVariableDown
+EnergyOutput
 ```
 
 ### Common for Hydro and Storage Variables
@@ -168,7 +178,6 @@ SystemBalanceSlackUp
 SystemBalanceSlackDown
 ReserveRequirementSlack
 ```
-
 
 ```@raw html
 &nbsp;
@@ -248,7 +257,6 @@ EnergyCapacityUpConstraint
 EnergyTargetConstraint
 RangeLimitConstraint
 ```
-
 
 ### Branches Constraints
 
