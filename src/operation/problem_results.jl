@@ -41,7 +41,7 @@ get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
 get_forecast_horizon(res::ProblemResults) = length(get_timestamps(res))
 
-function get_objective_value(res::ProblemResults, execution=1)
+function get_objective_value(res::ProblemResults, execution = 1)
     return res.optimizer_stats[execution, :objective_value]
 end
 
