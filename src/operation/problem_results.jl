@@ -670,7 +670,7 @@ function read_aux_variables(
     len::Union{Int, Nothing}=nothing,
 )
     result_values =
-        read_aux_variables_with_keys(res, aux_variables; start_time=start_time, len=len)
+        read_aux_variables_with_keys(res, aux_variables; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
