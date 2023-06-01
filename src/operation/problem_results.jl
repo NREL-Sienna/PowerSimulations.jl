@@ -401,8 +401,8 @@ end
 function read_variables(
     res::ProblemResults,
     variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     result_values =
         read_variables_with_keys(res, variables; start_time = start_time, len = len)
