@@ -135,11 +135,11 @@ Exports all results from the operations problem.
 """
 function export_results(results::ProblemResults; kwargs...)
     exports = ProblemResultsExport(
-        "Problem",
-        store_all_duals=true,
-        store_all_parameters=true,
-        store_all_variables=true,
-        store_all_aux_variables=true,
+        "Problem";
+        store_all_duals = true,
+        store_all_parameters = true,
+        store_all_variables = true,
+        store_all_aux_variables = true,
     )
     return export_results(results, exports; kwargs...)
 end
