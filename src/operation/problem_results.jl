@@ -455,8 +455,8 @@ end
 function read_dual(
     res::ProblemResults,
     key::ConstraintKey;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     return read_duals_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
@@ -487,8 +487,8 @@ end
 function read_duals(
     res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     result_values = read_duals_with_keys(res, duals; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
@@ -504,8 +504,8 @@ end
 function read_duals_with_keys(
     res::ProblemResults,
     duals::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
@@ -540,8 +540,8 @@ end
 function read_parameter(
     res::ProblemResults,
     key::ParameterKey;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     return read_parameters_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
@@ -576,8 +576,8 @@ end
 function read_parameters(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     result_values =
         read_parameters_with_keys(res, parameters; start_time = start_time, len = len)
@@ -594,8 +594,8 @@ end
 function read_parameters_with_keys(
     res::ProblemResults,
     parameters::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
@@ -630,8 +630,8 @@ end
 function read_aux_variable(
     res::ProblemResults,
     key::AuxVarKey;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     return read_aux_variables_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
@@ -666,8 +666,8 @@ end
 function read_aux_variables(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     result_values =
         read_aux_variables_with_keys(res, aux_variables; start_time = start_time, len = len)
@@ -684,8 +684,8 @@ end
 function read_aux_variables_with_keys(
     res::ProblemResults,
     aux_variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
