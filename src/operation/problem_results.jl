@@ -719,8 +719,8 @@ end
 function read_expression(
     res::ProblemResults,
     key::ExpressionKey;
-    start_time::Union{Nothing, Dates.DateTime}=nothing,
-    len::Union{Int, Nothing}=nothing,
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
 )
     return read_expressions_with_keys(res, [key]; start_time=start_time, len=len)[key]
 end
