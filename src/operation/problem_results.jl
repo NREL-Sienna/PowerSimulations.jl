@@ -633,7 +633,7 @@ function read_aux_variable(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    return read_aux_variables_with_keys(res, [key]; start_time=start_time, len=len)[key]
+    return read_aux_variables_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
 
 """
