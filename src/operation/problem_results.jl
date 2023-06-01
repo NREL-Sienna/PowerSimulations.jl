@@ -306,8 +306,11 @@ function _read_results(
     for (k, v) in result_values
         if k in container_keys
             results[k] =
-                convert_result_to_natural_units(k) ? v[time_ids, :] .* base_power :
-                v[time_ids, :]
+                if convert_result_to_natural_units(k)
+                    v[time_ids, :] .* base_power
+                else
+                    v[time_ids, :]
+                end
             DataFrames.insertcols!(results[k], 1, :DateTime => timestamps)
         end
     end
