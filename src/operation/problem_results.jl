@@ -404,7 +404,8 @@ function read_variables(
     start_time::Union{Nothing, Dates.DateTime}=nothing,
     len::Union{Int, Nothing}=nothing,
 )
-    result_values = read_variables_with_keys(res, variables; start_time=start_time, len=len)
+    result_values =
+        read_variables_with_keys(res, variables; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
