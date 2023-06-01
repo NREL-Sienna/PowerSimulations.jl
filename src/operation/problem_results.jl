@@ -147,7 +147,7 @@ end
 function export_results(
     results::ProblemResults,
     exports::ProblemResultsExport;
-    file_type=CSV.File,
+    file_type = CSV.File,
 )
     file_type != CSV.File && error("only CSV.File is currently supported")
     export_path = mkpath(joinpath(results.output_dir, "variables"))
