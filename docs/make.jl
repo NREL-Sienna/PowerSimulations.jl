@@ -6,6 +6,10 @@ using DataStructures
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Quick Start Guide" => "quick_start_guide.md",
+    "Tutorials" => Any[
+        "Single-step Problem" => "tutorials/decision_problem.md",
+        "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
+    ],
     "Modeler Guide" => Any[
         "modeler_guide/definitions.md",
         "modeler_guide/psi_structure.md",

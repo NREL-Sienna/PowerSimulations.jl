@@ -1,4 +1,4 @@
-# [Operations [`ProblemTemplate`](@ref)s](@id op_problem_template)
+# [Operations `ProblemTemplate`s](@id op_problem_template)
 
 Templates are used to specify the modeling properties of the devices and network that are going to he used to specify a problem.
 A `ProblemTemplate` is just a collection of `DeviceModel`s that allows the user to specify the formulations
@@ -22,21 +22,27 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)
 `PowerSimulations.jl` provides default templates for common operation problems. You can retrieve a default template and modify it according
 to your requirements. Currently supported default templates are:
 
-[`template_economic_dispatch`](@ref)
+```@docs
+template_economic_dispatch
+```
 
 ```@example
 using PowerSimulations #hide
 template_economic_dispatch()
 ```
 
-[`template_unit_commitment`](@ref)
+```@docs
+template_unit_commitment
+```
 
 ```@example
 using PowerSimulations #hide
 template_unit_commitment()
 ```
 
-[`template_agc_reserve_deployment`](@ref)
+```@docs
+template_agc_reserve_deployment
+```
 
 ```@example
 using PowerSimulations #hide
