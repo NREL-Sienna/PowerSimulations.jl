@@ -825,7 +825,6 @@ function _execute!(
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
-    commands_channel=nothing,
     results_channel=nothing,
 )
     @assert sim.internal !== nothing
@@ -859,9 +858,6 @@ function _execute!(
             "start",
         )
         for (ix, model_number) in enumerate(execution_order)
-            if !isnothing(commands_channel)
-                _handle_parent_command!(sim, commands_channel)
-            end
             model = get_simulation_model(models, model_number)
             model_name = get_name(model)
             set_current_time!(sim, sim.internal.date_ref[model_number])
@@ -948,17 +944,6 @@ function _execute!(
         )
     end # Steps for loop
     return
-end
-
-function _handle_parent_command!(simulation::Simulation, commands_channel)
-    command = nothing
-    while isready(commands_channel)
-        command = take!(commands_channel)
-    end
-    if !isnothing(command)
-        # TODO DT
-        @error "TODO: do something with" command
-    end
 end
 
 """
@@ -1171,4 +1156,20 @@ function deserialize_status(results_path::AbstractString)
     end
 
     return get_enum_value(RunStatus, data["run_status"])
+end
+
+# The next two structs allow a parent process to monitor the simulation progress.
+# They may eventually be extended to pass result data back to the parent.
+
+@Base.kwdef mutable struct SimulationProgressEvent
+    model_name::String
+    step::Int
+    index::Int
+    timestamp::Dates.DateTime
+    wall_time::Dates.DateTime
+    exec_time_s::Float64
+end
+
+struct SimulationIntermediateResult
+    progress_event::SimulationProgressEvent
 end
