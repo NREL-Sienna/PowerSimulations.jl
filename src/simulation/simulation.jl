@@ -934,7 +934,9 @@ function _execute!(
                 )
             end #execution problem timer
             progress_event.exec_time_s = time() - start_time
-            put!(results_channel, SimulationIntermediateResult(progress_event))
+            if !isnothing(results_channel)
+                put!(results_channel, SimulationIntermediateResult(progress_event))
+            end
         end # execution order for loop
 
         IS.@record :simulation_status SimulationStepEvent(
