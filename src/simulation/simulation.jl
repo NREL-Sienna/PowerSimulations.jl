@@ -256,7 +256,8 @@ end
 
 function _check_folder(sim::Simulation)
     folder = get_simulation_folder(sim)
-    !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder = $folder is not valid"))
+    !isdir(folder) &&
+        throw(IS.ConflictingInputsError("Specified folder = $folder is not valid"))
     try
         mkdir(joinpath(folder, "fake"))
         rm(joinpath(folder, "fake"))
@@ -825,7 +826,7 @@ function _execute!(
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
-    results_channel=nothing,
+    results_channel = nothing,
 )
     @assert sim.internal !== nothing
 
@@ -870,7 +871,7 @@ function _execute!(
                 "start",
             )
 
-            progress_event = SimulationProgressEvent(
+            progress_event = SimulationProgressEvent(;
                 model_name = string(model_name),
                 step = step,
                 index = (step - 1) * length(execution_order) + ix,
@@ -1163,7 +1164,7 @@ end
 # The next two structs allow a parent process to monitor the simulation progress.
 # They may eventually be extended to pass result data back to the parent.
 
-@Base.kwdef mutable struct SimulationProgressEvent
+Base.@kwdef mutable struct SimulationProgressEvent
     model_name::String
     step::Int
     index::Int
