@@ -256,7 +256,8 @@ end
 
 function _check_folder(sim::Simulation)
     folder = get_simulation_folder(sim)
-    !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
+    !isdir(folder) &&
+        throw(IS.ConflictingInputsError("Specified folder = $folder is not valid"))
     try
         mkdir(joinpath(folder, "fake"))
         rm(joinpath(folder, "fake"))
@@ -825,6 +826,7 @@ function _execute!(
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
+    results_channel = nothing,
 )
     @assert sim.internal !== nothing
 
@@ -869,16 +871,25 @@ function _execute!(
                 "start",
             )
 
+            progress_event = SimulationProgressEvent(;
+                model_name = string(model_name),
+                step = step,
+                index = (step - 1) * length(execution_order) + ix,
+                timestamp = get_current_time(sim),
+                wall_time = Dates.now(),
+                exec_time_s = 0.0,
+            )
             ProgressMeter.update!(
                 prog_bar,
-                (step - 1) * length(execution_order) + ix;
+                progress_event.index;
                 showvalues = [
-                    (:Step, step),
+                    (:Step, progress_event.step),
                     (:Problem, model_name),
-                    (:("Simulation Timestamp"), get_current_time(sim)),
+                    (:("Simulation Timestamp"), progress_event.timestamp),
                 ],
             )
 
+            start_time = time()
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
                     error("$(model_name) status is not BuildStatus.BUILT")
@@ -923,6 +934,10 @@ function _execute!(
                     "done",
                 )
             end #execution problem timer
+            progress_event.exec_time_s = time() - start_time
+            if !isnothing(results_channel)
+                put!(results_channel, SimulationIntermediateResult(progress_event))
+            end
         end # execution order for loop
 
         IS.@record :simulation_status SimulationStepEvent(
@@ -1144,4 +1159,20 @@ function deserialize_status(results_path::AbstractString)
     end
 
     return get_enum_value(RunStatus, data["run_status"])
+end
+
+# The next two structs allow a parent process to monitor the simulation progress.
+# They may eventually be extended to pass result data back to the parent.
+
+Base.@kwdef mutable struct SimulationProgressEvent
+    model_name::String
+    step::Int
+    index::Int
+    timestamp::Dates.DateTime
+    wall_time::Dates.DateTime
+    exec_time_s::Float64
+end
+
+struct SimulationIntermediateResult
+    progress_event::SimulationProgressEvent
 end
