@@ -41,6 +41,13 @@ function get_initial_conditions_service_model(
     return ServiceModel(T, D)
 end
 
+function get_initial_conditions_service_model(
+    ::OperationModel,
+    ::ServiceModel{T, D},
+) where {T <: PSY.VariableReserveNonSpinning, D <: AbstractReservesFormulation}
+    return ServiceModel(T, D)
+end
+
 function get_default_time_series_names(
     ::Type{<:PSY.Reserve},
     ::Type{T},
@@ -60,14 +67,21 @@ function get_default_time_series_names(
 end
 
 function get_default_time_series_names(
-    ::Type{<:PSY.Reserve},
+    ::Type{T},
     ::Type{<:AbstractReservesFormulation},
-)
+) where {T <: PSY.Reserve}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
 function get_default_attributes(
     ::Type{<:PSY.Reserve},
+    ::Type{<:AbstractReservesFormulation},
+)
+    return Dict{String, Any}()
+end
+
+function get_default_attributes(
+    ::Type{<:PSY.ReserveNonSpinning},
     ::Type{<:AbstractReservesFormulation},
 )
     return Dict{String, Any}()

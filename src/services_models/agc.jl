@@ -45,6 +45,20 @@ get_variable_multiplier(::SteadyStateFrequencyDeviation, d::PSY.AGC, ::AbstractA
 
 #! format: on
 
+function get_default_time_series_names(
+    ::Type{PSY.AGC},
+    ::Type{<:AbstractAGCFormulation},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
+function get_default_attributes(
+    ::Type{PSY.AGC},
+    ::Type{<:AbstractAGCFormulation},
+)
+    return Dict{String, Any}()
+end
+
 """
 Steady State deviation of the frequency
 """
