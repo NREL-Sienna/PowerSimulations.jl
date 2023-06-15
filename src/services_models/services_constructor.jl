@@ -471,13 +471,28 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
 ) where {T <: PSY.TransmissionInterface}
-    # contributing_devices_map = get_contributing_devices_map(model)
-    interfaces = PSY.get_name.(get_available_components(T, sys))
+    interfaces = get_available_components(T, sys)
+    # Lazy container addition for the expressions.
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            InterfaceFlowSlackUp,
+            interfaces,
+            ConstantMaxInterfaceFlow()
+        )
+        add_variables!(
+            container,
+            InterfaceFlowSlackDown,
+            interfaces,
+            ConstantMaxInterfaceFlow()
+        )
+    end
+
     lazy_container_addition!(
         container,
         InterfaceTotalFlow(),
         T,
-        interfaces,
+        PSY.get_name.(interfaces),
         get_time_steps(container),
     )
     #add_feedforward_arguments!(container, model, service)
@@ -502,8 +517,27 @@ function construct_service!(
         service,
         model,
     )
+
+    if get_use_slacks(model)
+        add_to_expression!(
+            container,
+            InterfaceTotalFlow,
+            InterfaceFlowSlackUp,
+            service,
+            model,
+        )
+        add_to_expression!(
+            container,
+            InterfaceTotalFlow,
+            InterfaceFlowSlackDown,
+            service,
+            model,
+        )
+    end
+
     add_constraints!(container, InterfaceFlowLimit, service, model)
     add_feedforward_constraints!(container, model, service)
     add_constraint_dual!(container, sys, model)
+    objective_function!(container, service, model)
     return
 end

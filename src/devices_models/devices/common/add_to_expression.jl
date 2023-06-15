@@ -756,6 +756,26 @@ end
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{InterfaceTotalFlow},
+    ::Type{T},
+    service::PSY.TransmissionInterface,
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
+) where {T <: Union{InterfaceFlowSlackUp, InterfaceFlowSlackDown}}
+    expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
+    variable = get_variable(container, T(), PSY.TransmissionInterface)
+    service_name=PSY.get_name(service)
+    for t in get_time_steps(container)
+        _add_to_jump_expression!(
+            expression[service_name, t],
+            variable[service_name, t],
+            get_variable_multiplier(T(), service, ConstantMaxInterfaceFlow()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{InterfaceTotalFlow},
     ::Type{FlowActivePowerVariable},
     service::PSY.TransmissionInterface,
     model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
