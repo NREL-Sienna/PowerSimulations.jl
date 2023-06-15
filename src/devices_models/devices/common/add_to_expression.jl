@@ -762,7 +762,7 @@ function add_to_expression!(
 ) where {T <: Union{InterfaceFlowSlackUp, InterfaceFlowSlackDown}}
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     variable = get_variable(container, T(), PSY.TransmissionInterface)
-    service_name=PSY.get_name(service)
+    service_name = PSY.get_name(service)
     for t in get_time_steps(container)
         _add_to_jump_expression!(
             expression[service_name, t],

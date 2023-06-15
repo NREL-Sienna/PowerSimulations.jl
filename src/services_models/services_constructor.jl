@@ -478,13 +478,13 @@ function construct_service!(
             container,
             InterfaceFlowSlackUp,
             interfaces,
-            ConstantMaxInterfaceFlow()
+            ConstantMaxInterfaceFlow(),
         )
         add_variables!(
             container,
             InterfaceFlowSlackDown,
             interfaces,
-            ConstantMaxInterfaceFlow()
+            ConstantMaxInterfaceFlow(),
         )
     end
 
