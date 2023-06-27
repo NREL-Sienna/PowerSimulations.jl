@@ -424,10 +424,16 @@ function test_decision_problem_results_values(
     )
 
     @test !isempty(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
+            ActivePowerVariable,
+            ThermalStandard,
+        )].data,
     )
     @test length(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
+            ActivePowerVariable,
+            ThermalStandard,
+        )].data,
     ) == 3
     @test length(results_ed) == 3
 
@@ -454,8 +460,9 @@ function test_decision_problem_results_values(
     )
 
     empty!(results_ed)
-    @test isempty(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+    @test !haskey(
+        PSI.get_cached_variables(results_ed),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
 
     initial_time = DateTime("2024-01-01T00:00:00")
@@ -469,18 +476,24 @@ function test_decision_problem_results_values(
     )
 
     @test !isempty(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
+            ActivePowerVariable,
+            ThermalStandard,
+        )].data,
     )
     @test !isempty(
-        results_ed.values.duals[PSI.ConstraintKey(CopperPlateBalanceConstraint, System)],
+        PSI.get_cached_duals(results_ed)[PSI.ConstraintKey(
+            CopperPlateBalanceConstraint,
+            System,
+        )].data,
     )
     @test !isempty(
-        results_ed.values.parameters[PSI.ParameterKey{
+        PSI.get_cached_parameters(results_ed)[PSI.ParameterKey{
             ActivePowerTimeSeriesParameter,
             RenewableDispatch,
         }(
             "",
-        )],
+        )].data,
     )
 end
 

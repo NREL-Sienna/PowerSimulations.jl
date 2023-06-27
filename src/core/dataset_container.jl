@@ -27,23 +27,23 @@ function Base.empty!(container::DatasetContainer)
     return
 end
 
-function get_duals_values(container::DatasetContainer{DataFrameDataset})
+function get_duals_values(container::DatasetContainer{InMemoryDataset})
     return container.duals
 end
 
-function get_aux_variables_values(container::DatasetContainer{DataFrameDataset})
+function get_aux_variables_values(container::DatasetContainer{InMemoryDataset})
     return container.aux_variables
 end
 
-function get_variables_values(container::DatasetContainer{DataFrameDataset})
+function get_variables_values(container::DatasetContainer{InMemoryDataset})
     return container.variables
 end
 
-function get_parameters_values(container::DatasetContainer{DataFrameDataset})
+function get_parameters_values(container::DatasetContainer{InMemoryDataset})
     return container.parameters
 end
 
-function get_expression_values(container::DatasetContainer{DataFrameDataset})
+function get_expression_values(container::DatasetContainer{InMemoryDataset})
     return container.expressions
 end
 
@@ -133,7 +133,6 @@ function get_dataset(
     return get_dataset(container, ExpressionKey(T, U))
 end
 
-# Get dataset values is currently type unstable since the values field could be a DF
 function get_dataset_values(container::DatasetContainer, key::OptimizationContainerKey)
     return get_dataset(container, key).values
 end

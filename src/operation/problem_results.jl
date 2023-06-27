@@ -41,6 +41,12 @@ get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
 get_forecast_horizon(res::ProblemResults) = length(get_timestamps(res))
 
+get_result_values(x::ProblemResults, ::AuxVarKey) = x.aux_variable_values
+get_result_values(x::ProblemResults, ::ConstraintKey) = x.dual_values
+get_result_values(x::ProblemResults, ::ExpressionKey) = x.expression_values
+get_result_values(x::ProblemResults, ::ParameterKey) = x.parameter_values
+get_result_values(x::ProblemResults, ::VariableKey) = x.variable_values
+
 function get_objective_value(res::ProblemResults, execution = 1)
     return res.optimizer_stats[execution, :objective_value]
 end
@@ -297,7 +303,7 @@ function _read_results(
     container_keys,
     timestamps,
     time_ids,
-    base_power,
+    base_power::Number,
 )
     existing_keys = keys(result_values)
     container_keys = container_keys === nothing ? existing_keys : container_keys
@@ -372,7 +378,7 @@ function read_variable(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
-    return read_variables_with_keys(res, [key]; start_time = start_time, len = len)[key]
+    return read_results_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
 
 """
@@ -405,7 +411,7 @@ function read_variables(
     len::Union{Int, Nothing} = nothing,
 )
     result_values =
-        read_variables_with_keys(res, variables; start_time = start_time, len = len)
+        read_results_with_keys(res, variables; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -413,23 +419,7 @@ end
 Return the values for all variables.
 """
 function read_variables(res::IS.Results)
-    variables = Dict(x => read_variable(res, x) for x in list_variable_names(res))
-end
-
-function read_variables_with_keys(
-    res::ProblemResults,
-    variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
-)
-    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
-    return _read_results(
-        res.variable_values,
-        variables,
-        timestamps,
-        timestamp_ids,
-        get_model_base_power(res),
-    )
+    return Dict(x => read_variable(res, x) for x in list_variable_names(res))
 end
 
 """
@@ -458,7 +448,7 @@ function read_dual(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
-    return read_duals_with_keys(res, [key]; start_time = start_time, len = len)[key]
+    return read_results_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
 
 """
@@ -490,7 +480,7 @@ function read_duals(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
-    result_values = read_duals_with_keys(res, duals; start_time = start_time, len = len)
+    result_values = read_results_with_keys(res, duals; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -499,22 +489,6 @@ Return the values for all duals.
 """
 function read_duals(res::IS.Results)
     duals = Dict(x => read_dual(res, x) for x in list_dual_names(res))
-end
-
-function read_duals_with_keys(
-    res::ProblemResults,
-    duals::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
-)
-    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
-    return _read_results(
-        res.dual_values,
-        duals,
-        timestamps,
-        timestamp_ids,
-        get_model_base_power(res),
-    )
 end
 
 """
@@ -543,7 +517,7 @@ function read_parameter(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
-    return read_parameters_with_keys(res, [key]; start_time = start_time, len = len)[key]
+    return read_results_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
 
 """
@@ -580,7 +554,7 @@ function read_parameters(
     len::Union{Int, Nothing} = nothing,
 )
     result_values =
-        read_parameters_with_keys(res, parameters; start_time = start_time, len = len)
+        read_results_with_keys(res, parameters; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -589,22 +563,6 @@ Return the values for all parameters.
 """
 function read_parameters(res::IS.Results)
     parameters = Dict(x => read_parameter(res, x) for x in list_parameter_names(res))
-end
-
-function read_parameters_with_keys(
-    res::ProblemResults,
-    parameters::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
-)
-    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
-    return _read_results(
-        res.parameter_values,
-        parameters,
-        timestamps,
-        timestamp_ids,
-        get_model_base_power(res),
-    )
 end
 
 """
@@ -633,7 +591,7 @@ function read_aux_variable(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
-    return read_aux_variables_with_keys(res, [key]; start_time = start_time, len = len)[key]
+    return read_results_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
 
 """
@@ -670,7 +628,7 @@ function read_aux_variables(
     len::Union{Int, Nothing} = nothing,
 )
     result_values =
-        read_aux_variables_with_keys(res, aux_variables; start_time = start_time, len = len)
+        read_results_with_keys(res, aux_variables; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -678,23 +636,7 @@ end
 Return the values for all auxiliary variables.
 """
 function read_aux_variables(res::IS.Results)
-    variables = Dict(x => read_aux_variable(res, x) for x in list_aux_variable_names(res))
-end
-
-function read_aux_variables_with_keys(
-    res::ProblemResults,
-    aux_variables::Vector{<:OptimizationContainerKey};
-    start_time::Union{Nothing, Dates.DateTime} = nothing,
-    len::Union{Int, Nothing} = nothing,
-)
-    (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
-    return _read_results(
-        res.aux_variable_values,
-        aux_variables,
-        timestamps,
-        timestamp_ids,
-        get_model_base_power(res),
-    )
+    return Dict(x => read_aux_variable(res, x) for x in list_aux_variable_names(res))
 end
 
 """
@@ -723,7 +665,7 @@ function read_expression(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
-    return read_expressions_with_keys(res, [key]; start_time = start_time, len = len)[key]
+    return read_results_with_keys(res, [key]; start_time = start_time, len = len)[key]
 end
 
 """
@@ -764,7 +706,7 @@ function read_expressions(
     len::Union{Int, Nothing} = nothing,
 )
     result_values =
-        read_expressions_with_keys(res, expressions; start_time = start_time, len = len)
+        read_results_with_keys(res, expressions; start_time = start_time, len = len)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -772,19 +714,20 @@ end
 Return the values for all expressions.
 """
 function read_expressions(res::IS.Results)
-    expressions = Dict(x => read_expression(res, x) for x in list_expression_names(res))
+    return Dict(x => read_expression(res, x) for x in list_expression_names(res))
 end
 
-function read_expressions_with_keys(
+function read_results_with_keys(
     res::ProblemResults,
-    expressions::Vector{<:OptimizationContainerKey};
+    result_keys::Vector{<:OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
+    isempty(result_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     (timestamp_ids, timestamps) = _process_timestamps(res, start_time, len)
     return _read_results(
-        res.expression_values,
-        expressions,
+        get_result_values(res, first(result_keys)),
+        result_keys,
         timestamps,
         timestamp_ids,
         get_model_base_power(res),
