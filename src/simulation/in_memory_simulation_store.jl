@@ -129,10 +129,9 @@ function initialize_problem_storage!(
     for problem in keys(store.params.decision_models_params)
         get_dm_data(store)[problem] = DecisionModelStore()
         for type in STORE_CONTAINERS
-            for (key, reqs) in getfield(dm_problem_reqs[problem], type)
+            for (key, _) in getfield(dm_problem_reqs[problem], type)
                 container = getfield(get_dm_data(store)[problem], type)
-                container[key] =
-                    OrderedDict{Dates.DateTime, DatasetContainer{DataFrameDataset}}()
+                container[key] = OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}()
                 store.container_key_lookup[encode_key_as_string(key)] = key
                 @debug "Added $type $key in $problem" _group = LOG_GROUP_SIMULATION_STORE
             end
@@ -142,9 +141,10 @@ function initialize_problem_storage!(
     for type in STORE_CONTAINERS
         for (key, reqs) in getfield(em_problem_reqs, type)
             container = get_data_field(get_em_data(store), type)
-            container[key] = DataFrameDataset(
-                DataFrames.DataFrame(
-                    OrderedDict(c => fill(NaN, reqs["dims"][1]) for c in reqs["columns"]),
+            container[key] = InMemoryDataset(
+                fill!(
+                    DenseAxisArray{Float64}(undef, reqs["columns"], 1:reqs["dims"][1]),
+                    NaN,
                 ),
             )
             store.container_key_lookup[encode_key_as_string(key)] = key
@@ -155,8 +155,26 @@ function initialize_problem_storage!(
     return
 end
 
+function get_column_names(
+    store::InMemorySimulationStore,
+    ::Type{DecisionModelIndexType},
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+)
+    return get_column_names(get_dm_data(store)[model_name], key)
+end
+
+function get_column_names(
+    store::InMemorySimulationStore,
+    ::Type{EmulationModelIndexType},
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+)
+    return get_column_names(get_em_data(store)[model_name], key)
+end
+
 function read_result(
-    ::Type{DataFrames.DataFrame},
+    ::Type{DenseAxisArray},
     store::InMemorySimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
@@ -166,7 +184,19 @@ function read_result(
 end
 
 function read_result(
-    ::Type{DataFrames.DataFrame},
+    ::Type{Array},
+    store::InMemorySimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+)
+    return permutedims(
+        read_results(get_dm_data(store)[model_name], key; index = index).data,
+    )
+end
+
+function read_result(
+    ::Type{DenseAxisArray},
     store::InMemorySimulationStore,
     ::Symbol,
     key::OptimizationContainerKey,
@@ -188,7 +218,7 @@ function get_emulation_model_dataset_size(
     store::InMemorySimulationStore,
     key::OptimizationContainerKey,
 )
-    return get_dataset_size(get_em_data(store), key)
+    return get_dataset_size(get_em_data(store), key)[2]
 end
 
 # Note that this function is not type-stable.

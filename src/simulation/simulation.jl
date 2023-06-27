@@ -771,7 +771,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     for field in fieldnames(DatasetContainer)
         for key in list_decision_model_keys(store, model_name, field)
             !has_dataset(get_decision_states(state), key) && continue
-            res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
+            res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
             update_decision_state!(state, key, res, simulation_time, model_params)
         end
     end

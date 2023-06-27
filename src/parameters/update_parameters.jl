@@ -52,7 +52,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    ::DatasetContainer{DataFrameDataset},
+    ::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -96,7 +96,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
-    ::DatasetContainer{DataFrameDataset},
+    ::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -129,7 +129,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::DatasetContainer{DataFrameDataset},
+    ::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
@@ -166,7 +166,7 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::DecisionModel,
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
@@ -187,7 +187,7 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            state_value = state_values[state_data_index, name]
+            state_value = state_values[name, state_data_index]
             if !isfinite(state_value)
                 error(
                     "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(state_value) \
@@ -206,7 +206,7 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{U},
     model::DecisionModel,
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
@@ -228,7 +228,7 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            value = round(state_values[state_data_index, name])
+            value = round(state_values[name, state_data_index])
             @assert 0.0 <= value <= 1.0
             if !isfinite(value)
                 error(
@@ -248,7 +248,7 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::EmulationModel,
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
@@ -258,7 +258,7 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        _set_param_value!(parameter_array, state_values[state_data_index, name], name, 1)
+        _set_param_value!(parameter_array, state_values[name, state_data_index], name, 1)
     end
     return
 end
@@ -268,7 +268,7 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{<:PSY.Component},
     model::EmulationModel,
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
@@ -278,7 +278,7 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        value = round(state_values[state_data_index, name])
+        value = round(state_values[name, state_data_index])
         @assert 0.0 <= value <= 1.0
         if !isfinite(value)
             error(
@@ -309,7 +309,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -333,7 +333,7 @@ end
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -366,7 +366,7 @@ end
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{FixValueParameter, T},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -391,7 +391,7 @@ end
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: EnergyLimitParameter, U <: PSY.Generator}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -429,7 +429,7 @@ function update_parameter_values!(
             # that are equal to the length of the interval i.e. the time periods that dont overlap between each solves.
             if execution_count == 0 || t > time[end] - interval_time_steps
                 # Pass indices in this way since JuMP DenseAxisArray don't support view()
-                state_value = state_values[state_data_index, name]
+                state_value = state_values[name, state_data_index]
                 if !isfinite(state_value)
                     error(
                         "The value for the system state used in $(encode_key_as_string(key)) is not a finite value $(state_value) \
@@ -442,7 +442,7 @@ function update_parameter_values!(
                 # Currently the update method relies on using older parameter values of the EnergyLimitParameter
                 # to update the parameter for overlapping periods between solves i.e. we ingoring the parameter values
                 # in the model interval time periods.
-                state_value = state_values[state_data_index, name]
+                state_value = state_values[name, state_data_index]
                 if !isfinite(state_value)
                     error(
                         "The value for the system state used in $(encode_key_as_string(key)) is not a finite value $(state_value) \
@@ -476,7 +476,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -502,7 +502,7 @@ end
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -544,7 +544,7 @@ end
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{FixValueParameter, T},
-    input::DatasetContainer{DataFrameDataset},
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -572,7 +572,7 @@ function _update_parameter_values!(
     attributes::CostFunctionAttributes,
     ::Type{V},
     model::DecisionModel,
-    ::DatasetContainer{DataFrameDataset},
+    ::DatasetContainer{InMemoryDataset},
 ) where {V <: PSY.Component}
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     time_steps = get_time_steps(get_optimization_container(model))

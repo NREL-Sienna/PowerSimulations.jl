@@ -28,7 +28,7 @@ function jump_value(input::JuMP.ConstraintRef)::Float64
     return JuMP.dual(input)
 end
 
-function jump_value(input::Float64)::Float64
+function jump_value(input::Float64)
     return input
 end
 
@@ -42,41 +42,11 @@ function fix_parameter_value(input::JuMP.VariableRef, value::Float64)
 end
 
 function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}}
-    data = jump_value.(array.data)
-    data = reshape(data, length(data), 1)
-    return data
+    data = array.data[:]
+    return reshape(data, length(data), 1)
 end
 
-function to_matrix(array::DenseAxisArray{T, 1, K}) where {T <: Real, K <: NTuple{1, Any}}
-    data = reshape(deepcopy(array.data), length(array.data), 1)
-    return data
-end
-
-function to_matrix(array::DenseAxisArray{T, 2, K}) where {T, K <: NTuple{2, Any}}
-    ax = axes(array)
-    data = Matrix{Float64}(undef, length(ax[2]), length(ax[1]))
-    for t in ax[2], (ix, name) in enumerate(ax[1])
-        data[t, ix] = jump_value(array[name, t])
-    end
-    return data
-end
-
-function to_matrix(
-    array::DenseAxisArray{T, 2, K},
-) where {T <: Vector{Tuple{Float64, Float64}}, K <: NTuple{2, Any}}
-    ax = axes(array)
-    data = Matrix{Vector{Tuple{Float64, Float64}}}(undef, length(ax[2]), length(ax[1]))
-    for t in ax[2], (ix, name) in enumerate(ax[1])
-        data[t, ix] = jump_value(array[name, t])
-    end
-    return data
-end
-
-# to_matrix functions are used to convert JuMP.Containers to matrices that can be written into
-# HDF5 Store.
-function to_matrix(array::DenseAxisArray{T, 2, K}) where {T <: Real, K <: NTuple{2, Any}}
-    return deepcopy(permutedims(array.data))
-end
+to_matrix(array::DenseAxisArray{T, 2} where {T}) = permutedims(array.data)
 
 function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     error(
@@ -132,7 +102,7 @@ function _to_matrix(
     timesteps = Set{Int}(k[N] for k in keys(array.data))
     data = Matrix{Float64}(undef, length(timesteps), length(columns))
     for (ix, col) in enumerate(columns), t in timesteps
-        data[t, ix] = jump_value(array.data[(col..., t)])
+        data[t, ix] = array.data[(col..., t)]
     end
     return data
 end
@@ -148,7 +118,7 @@ function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{
     return DataFrames.DataFrame(_to_matrix(array, columns), columns)
 end
 
-to_matrix(array::Array) = array
+to_matrix(array::Matrix) = array
 
 """
 Returns the correct container specification for the selected type of JuMP Model

@@ -2,7 +2,7 @@
 Stores results data for one EmulationModel
 """
 mutable struct EmulationModelStore <: AbstractModelStore
-    data_container::DatasetContainer{DataFrameDataset}
+    data_container::DatasetContainer{InMemoryDataset}
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
@@ -11,7 +11,7 @@ get_data_field(store::EmulationModelStore, type::Symbol) =
 
 function EmulationModelStore()
     return EmulationModelStore(
-        DatasetContainer{DataFrameDataset}(),
+        DatasetContainer{InMemoryDataset}(),
         OrderedDict{Int, OptimizerStats}(),
     )
 end
@@ -55,7 +55,7 @@ function Base.isempty(store::EmulationModelStore)
         elseif name == :update_timestamp
             store.update_timestamp != UNSET_INI_TIME && return false
         else
-            val = get_data_fieldd(store, name)
+            val = get_data_field(store, name)
             iszero(val) && return false
         end
     end
@@ -75,9 +75,10 @@ function initialize_storage!(
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             column_names = get_column_names(key, field_container)
-            results_container[key] = DataFrameDataset(
-                DataFrames.DataFrame(
-                    OrderedDict(c => fill(NaN, num_of_executions) for c in column_names),
+            results_container[key] = InMemoryDataset(
+                fill!(
+                    DenseAxisArray{Float64}(undef, column_names, 1:num_of_executions),
+                    NaN,
                 ),
             )
         end
@@ -91,23 +92,10 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::AbstractArray,
+    array::DenseAxisArray{<:Any, 2},
 )
-    df = axis_array_to_dataframe(array, key)
-    write_result!(store, name, key, index, update_timestamp, df)
-    return
-end
-
-function write_result!(
-    store::EmulationModelStore,
-    name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    update_timestamp::Dates.DateTime,
-    df::DataFrames.DataFrame,
-)
-    @assert_op size(df)[1] == 1
-    write_result!(store, name, key, index, update_timestamp, df[1, :])
+    @assert_op size(array)[2] == 1
+    write_result!(store, name, key, index, update_timestamp, array[:, 1])
     return
 end
 
@@ -117,10 +105,14 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
-    df_row::DataFrames.DataFrameRow,
+    array::DenseAxisArray{<:Any, 1},
 )
     container = get_data_field(store, get_store_container_type(key))
-    set_value!(container[key], df_row, index)
+    set_value!(
+        container[key],
+        array,
+        index,
+    )
     set_last_recorded_row!(container[key], index)
     set_update_timestamp!(container[key], update_timestamp)
     return
@@ -133,16 +125,21 @@ function read_results(
     len::Union{Int, Nothing} = nothing,
 )
     container = get_data_field(store, get_store_container_type(key))
-    df = container[key].values
+    data = container[key].values
     # Return a copy because callers may mutate it.
     if isnothing(index)
         @assert_op len === nothing
-        return copy(df; copycols = true)
+        return data[:, :]
     elseif isnothing(len)
-        return copy(df; copycols = true)[index:end, :]
+        return data[:, index:end]
     else
-        return copy(df; copycols = true)[index:(index + len - 1), :]
+        return data[:, index:(index + len - 1)]
     end
+end
+
+function get_column_names(store::EmulationModelStore, key::OptimizationContainerKey)
+    container = get_data_field(store, get_store_container_type(key))
+    return axes(container[key].values)[1]
 end
 
 function get_dataset_size(store::EmulationModelStore, key::OptimizationContainerKey)

@@ -1,13 +1,11 @@
-const ResultsByTime = SortedDict{Dates.DateTime, DataFrames.DataFrame}
-const FieldResultsByTime = Dict{OptimizationContainerKey, ResultsByTime}
-
 abstract type OperationModelSimulationResults end
 # Subtypes need to implement the following methods for SimulationProblemResults{T}
-# - read_aux_variables_with_keys
-# - read_variables_with_keys
-# - read_parameters_with_keys
-# - read_duals_with_keys
-# - read_expressions_with_keys
+# - read_results_with_keys
+# - list_aux_variable_keys
+# - list_dual_keys
+# - list_expression_keys
+# - list_parameter_keys
+# - list_variable_keys
 # - load_results!
 
 """
@@ -71,68 +69,41 @@ IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
 
-# Subtypes can override if they don't have these fields.
-get_aux_variables(res::SimulationProblemResults) = res.values.aux_variables
-get_duals(res::SimulationProblemResults) = res.values.duals
-get_expressions(res::SimulationProblemResults) = res.values.expressions
-get_parameters(res::SimulationProblemResults) = res.values.parameters
-get_variables(res::SimulationProblemResults) = res.values.variables
+list_result_keys(res::SimulationProblemResults, ::AuxVarKey) = list_aux_variable_keys(res)
+list_result_keys(res::SimulationProblemResults, ::ConstraintKey) = list_dual_keys(res)
+list_result_keys(res::SimulationProblemResults, ::ExpressionKey) = list_expression_keys(res)
+list_result_keys(res::SimulationProblemResults, ::ParameterKey) = list_parameter_keys(res)
+list_result_keys(res::SimulationProblemResults, ::VariableKey) = list_variable_keys(res)
 
 """
 Return an array of variable names (strings) that are available for reads.
 """
 list_variable_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(get_variables(res)))
+    encode_keys_as_strings(list_variable_keys(res))
 
 """
 Return an array of dual names (strings) that are available for reads.
 """
 list_dual_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(get_duals(res)))
+    encode_keys_as_strings(list_dual_keys(res))
 
 """
 Return an array of parmater names (strings) that are available for reads.
 """
 list_parameter_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(get_parameters(res)))
+    encode_keys_as_strings(list_parameter_keys(res))
 
 """
 Return an array of auxillary variable names (strings) that are available for reads.
 """
 list_aux_variable_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(get_aux_variables(res)))
+    encode_keys_as_strings(list_aux_variable_keys(res))
 
 """
 Return an array of expression names (strings) that are available for reads.
 """
 list_expression_names(res::SimulationProblemResults) =
-    encode_keys_as_strings(keys(get_expressions(res)))
-
-"""
-Return an array of VariableKeys that are available for reads.
-"""
-list_variable_keys(res::SimulationProblemResults) = collect(keys(get_variables(res)))
-
-"""
-Return an array of ConstraintKeys that are available for reading duals.
-"""
-list_dual_keys(res::SimulationProblemResults) = collect(keys(get_duals(res)))
-
-"""
-Return an array of ParameterKeys that are available for reads.
-"""
-list_parameter_keys(res::SimulationProblemResults) = collect(keys(get_parameters(res)))
-
-"""
-Return an array of AuxVarKeys that are available for reads.
-"""
-list_aux_variable_keys(res::SimulationProblemResults) =
-    collect(keys(get_aux_variables(res)))
-
-"""
-Return an array of ExpressionKeys that are available for reads.
-"""
-list_expression_keys(res::SimulationProblemResults) = collect(keys(get_expressions(res)))
+    encode_keys_as_strings(list_expression_keys(res))
 
 """
 Return a reference to a StepRange of available timestamps.
@@ -205,23 +176,13 @@ function _deserialize_key(
     return make_key(T, args...)
 end
 
-function _get_containers(x::SimulationProblemResults)
-    return (
-        get_aux_variables(x),
-        get_duals(x),
-        get_expressions(x),
-        get_parameters(x),
-        get_variables(x),
-    )
-end
+get_container_fields(x::SimulationProblemResults) =
+    (:aux_variables, :duals, :expressions, :parameters, :variables)
 
-function _validate_keys(existing_keys, container_keys)
-    existing = Set(existing_keys)
-    for key in container_keys
-        if key ∉ existing
-            @error "$key is not stored", existing_keys
-            throw(IS.InvalidValue("$key is not stored"))
-        end
+function _validate_keys(existing_keys, result_keys)
+    diff = setdiff(result_keys, existing_keys)
+    if !isempty(diff)
+        throw(IS.InvalidValue("These keys are not stored: $diff"))
     end
     return
 end
@@ -235,6 +196,9 @@ Emulation problem results are returned in a Dict{String, DataFrame}.
 
 Limit the data sizes returned by specifying `initial_time` and `count` for decision problems
 or `start_time` and `len` for emulation problems.
+
+If the Julia process is started with multiple threads, the code will read the variables in
+parallel.
 
 See also [`load_results!`](@ref) to preload data into memory.
 
@@ -251,7 +215,7 @@ See also [`load_results!`](@ref) to preload data into memory.
 
 # Examples
 
-```julia-repl
+```julia
 julia > variables_as_strings =
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"]
 julia > variables_as_types =
@@ -261,7 +225,7 @@ julia > read_realized_variables(results, variables_as_types)
 ```
 """
 function read_realized_variables(res::SimulationProblemResults; kwargs...)
-    return read_realized_variables(res, collect(keys(get_variables(res))); kwargs...)
+    return read_realized_variables(res, list_variable_keys(res); kwargs...)
 end
 
 function read_realized_variables(
@@ -289,7 +253,7 @@ function read_realized_variables(
     variables::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
-    result_values = read_variables_with_keys(res, variables; kwargs...)
+    result_values = read_results_with_keys(res, variables; kwargs...)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -318,7 +282,7 @@ See also [`load_results!`](@ref) to preload data into memory.
 
 # Examples
 
-```julia-repl
+```julia
 julia > read_realized_variable(results, "ActivePowerVariable__ThermalStandard")
 julia > read_realized_variable(results, (ActivePowerVariable, ThermalStandard))
 ```
@@ -348,12 +312,12 @@ end
 """
 Return the final values for the requested auxiliary variables for each time step for a problem.
 
-Refer to [`read_realized_variables`](@ref) for help and examples.
+Refer to [`read_realized_aux_variables`](@ref) for help and examples.
 """
 function read_realized_aux_variables(res::SimulationProblemResults; kwargs...)
     return read_realized_aux_variables(
         res,
-        collect(keys(get_aux_variables(res)));
+        list_aux_variable_keys(res);
         kwargs...,
     )
 end
@@ -387,7 +351,7 @@ function read_realized_aux_variables(
     aux_variables::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
-    result_values = read_aux_variables_with_keys(res, aux_variables; kwargs...)
+    result_values = read_results_with_keys(res, aux_variables; kwargs...)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -419,7 +383,7 @@ function read_realized_aux_variable(
 )
     return first(
         values(
-            read_realized_aux_variables(res, [aux_variableKey(aux_variable...)]; kwargs...),
+            read_realized_aux_variables(res, [AuxVarKey(aux_variable...)]; kwargs...),
         ),
     )
 end
@@ -427,10 +391,10 @@ end
 """
 Return the final values for the requested parameters for each time step for a problem.
 
-Refer to [`read_realized_variables`](@ref) for help and examples.
+Refer to [`read_realized_parameters`](@ref) for help and examples.
 """
 function read_realized_parameters(res::SimulationProblemResults; kwargs...)
-    return read_realized_parameters(res, collect(keys(get_parameters(res))); kwargs...)
+    return read_realized_parameters(res, list_parameter_keys(res); kwargs...)
 end
 
 function read_realized_parameters(
@@ -462,7 +426,7 @@ function read_realized_parameters(
     parameters::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
-    result_values = read_parameters_with_keys(res, parameters; kwargs...)
+    result_values = read_results_with_keys(res, parameters; kwargs...)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -496,10 +460,10 @@ end
 """
 Return the final values for the requested duals for each time step for a problem.
 
-Refer to [`read_realized_variables`](@ref) for help and examples.
+Refer to [`read_realized_duals`](@ref) for help and examples.
 """
 function read_realized_duals(res::SimulationProblemResults; kwargs...)
-    return read_realized_duals(res, collect(keys(get_duals(res))); kwargs...)
+    return read_realized_duals(res, list_dual_keys(res); kwargs...)
 end
 
 function read_realized_duals(
@@ -527,7 +491,7 @@ function read_realized_duals(
     duals::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
-    result_values = read_duals_with_keys(res, duals; kwargs...)
+    result_values = read_results_with_keys(res, duals; kwargs...)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -555,10 +519,10 @@ end
 """
 Return the final values for the requested expressions for each time step for a problem.
 
-Refer to [`read_realized_variables`](@ref) for help and examples.
+Refer to [`read_realized_expressions`](@ref) for help and examples.
 """
 function read_realized_expressions(res::SimulationProblemResults; kwargs...)
-    return read_realized_expressions(res, collect(keys(get_expressions(res))); kwargs...)
+    return read_realized_expressions(res, list_expression_keys(res); kwargs...)
 end
 
 function read_realized_expressions(
@@ -590,7 +554,7 @@ function read_realized_expressions(
     expressions::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
-    result_values = read_expressions_with_keys(res, expressions; kwargs...)
+    result_values = read_results_with_keys(res, expressions; kwargs...)
     return Dict(encode_key_as_string(k) => v for (k, v) in result_values)
 end
 
@@ -667,21 +631,25 @@ function export_realized_results(
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid."))
     end
-    write_data(read_variables_with_keys(res, list_variable_keys(res)), save_path)
+    write_data(read_results_with_keys(res, list_variable_keys(res)), save_path)
     !isempty(list_dual_keys(res)) &&
-        write_data(read_duals_with_keys(res, list_dual_keys(res)), save_path; name = "dual")
+        write_data(
+            read_results_with_keys(res, list_dual_keys(res)),
+            save_path;
+            name = "dual",
+        )
     !isempty(list_parameter_keys(res)) && write_data(
-        read_parameters_with_keys(res, list_parameter_keys(res)),
+        read_results_with_keys(res, list_parameter_keys(res)),
         save_path;
         name = "parameter",
     )
     !isempty(list_aux_variable_keys(res)) && write_data(
-        read_aux_variables_with_keys(res, list_aux_variable_keys(res)),
+        read_results_with_keys(res, list_aux_variable_keys(res)),
         save_path;
         name = "aux_variable",
     )
     !isempty(list_expression_keys(res)) && write_data(
-        read_expressions_with_keys(res, list_expression_keys(res)),
+        read_results_with_keys(res, list_expression_keys(res)),
         save_path;
         name = "expression",
     )
