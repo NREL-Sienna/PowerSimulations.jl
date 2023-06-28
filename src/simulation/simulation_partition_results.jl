@@ -44,8 +44,17 @@ function join_simulation(results::SimulationPartitionResults)
     return
 end
 
-_partition_path(x::SimulationPartitionResults, i) =
-    joinpath(x.path, "simulation_partitions", string(i), x.simulation_name)
+function _partition_path(x::SimulationPartitionResults, i)
+    partition_path = joinpath(x.path, "simulation_partitions", string(i))
+    execution_no = _get_most_recent_execution(partition_path, x.simulation_name)
+    if execution_no == 1
+        execution_path = joinpath(partition_path, x.simulation_name)
+    else
+        execution_path = joinpath(partition_path, "$(x.simulation_name)-$execution_no")
+    end
+    return execution_path
+end
+
 _store_subpath() = joinpath("data_store", "simulation_store.h5")
 _store_path(x::SimulationPartitionResults) = joinpath(x.path, _store_subpath())
 
