@@ -15,15 +15,6 @@ function construct_device!(
         model,
         S,
     )
-    add_to_expression!(
-        container,
-        ActivePowerBalance,
-        ActivePowerVariable,
-        devices,
-        model,
-        S,
-    )
-
     add_feedforward_arguments!(container, model, devices)
     return
 end
