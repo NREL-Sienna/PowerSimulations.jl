@@ -425,7 +425,7 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.ACBus})
     PMmap_buses = Dict{Int, PSY.ACBus}()
 
     for bus in buses
-        if PSY.get_bustype(bus) == PSY.BusTypes.ISOLATED
+        if PSY.get_bustype(bus) == PSY.ACBusTypes.ISOLATED
             continue
         end
         number = PSY.get_number(bus)

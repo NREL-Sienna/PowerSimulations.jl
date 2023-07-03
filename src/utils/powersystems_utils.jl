@@ -20,7 +20,7 @@ function get_available_components(
     ::Nothing = nothing,
 )
     return PSY.get_components(
-        x -> PSY.get_bustype(x) != PSY.BusTypes.ISOLATED,
+        x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
         PSY.Bus,
         sys,
     )
