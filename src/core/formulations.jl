@@ -162,21 +162,21 @@ Branch formulation for PhaseShiftingTransformer flow control
 struct PhaseAngleControl <: AbstractBranchFormulation end
 
 ############################### DC Branch Formulations #####################################
-abstract type AbstractTwoTerminalDCLineFormulation <: AbstractBranchFormulation end
+abstract type AbstractP2PDCLineFormulation <: AbstractBranchFormulation end
 """
 Branch type to avoid flow constraints
 """
-struct HVDCP2PUnbounded <: AbstractTwoTerminalDCLineFormulation end
+struct HVDCP2PUnbounded <: AbstractP2PDCLineFormulation end
 """
 Branch type to represent lossless power flow on DC lines
 """
-struct HVDCP2PLossless <: AbstractTwoTerminalDCLineFormulation end
+struct HVDCP2PLossless <: AbstractP2PDCLineFormulation end
 """
 Branch type to represent lossy power flow on DC lines
 """
-struct HVDCP2PDispatch <: AbstractTwoTerminalDCLineFormulation end
+struct HVDCP2PDispatch <: AbstractP2PDCLineFormulation end
 # Not Implemented
-# struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
+# struct VoltageSourceDC <: AbstractP2PDCLineFormulation end
 
 ############################### AC/DC Converter Formulations #####################################
 abstract type AbstractConverterFormulation <: AbstractDeviceFormulation end

@@ -109,7 +109,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
@@ -170,8 +170,8 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{StandardPTDFModel},
-) where {T <: ActivePowerBalance, U <: HVDCLosses, V <: PSY.TwoTerminalHVDCLine, W <: HVDCP2PDispatch}
+    ::Type{StandardPTDFModel},
+) where {T <: ActivePowerBalanceAC, U <: HVDCLosses, V <: PSY.TwoTerminalHVDCLine, W <: HVDCP2PDispatch}
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
     for d in devices
@@ -200,7 +200,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: FlowActivePowerFromToVariable,
     V <: PSY.Branch,
     W <: AbstractDeviceFormulation,
@@ -233,7 +233,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     ::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: FlowActivePowerToFromVariable,
     V <: PSY.Branch,
     W <: AbstractDeviceFormulation,
@@ -326,7 +326,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
@@ -357,7 +357,7 @@ function add_to_expression!(
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
@@ -387,7 +387,7 @@ function add_to_expression!(
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
@@ -452,7 +452,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
@@ -484,7 +484,7 @@ function add_to_expression!(
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
@@ -522,7 +522,7 @@ function add_to_expression!(
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
@@ -563,7 +563,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: FlowActivePowerVariable,
     V <: PSY.Branch,
     W <: AbstractBranchFormulation,
@@ -600,10 +600,10 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{StandardPTDFModel},
 ) where {
-    T <: ActivePowerBalance,
-    U <: FlowActivePowerVariable,
-    V <: PSY.Branch,
-    W <: AbstractBranchFormulation,
+    T <: ActivePowerBalanceAC,
+    U <: PhaseShifterAngle,
+    V <: PhaseAngleControl,
+    W <: StandardPTDFModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), StandardPTDFModel)
@@ -859,7 +859,7 @@ function add_to_expression!(
     ::PSY.System,
     network_model::NetworkModel{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: Union{CopperPlatePowerModel, StandardPTDFModel},
 }
@@ -883,7 +883,7 @@ function add_to_expression!(
     sys::PSY.System,
     ::NetworkModel{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractActivePowerModel,
 }
@@ -907,7 +907,7 @@ function add_to_expression!(
     sys::PSY.System,
     ::NetworkModel{W},
 ) where {
-    T <: ActivePowerBalance,
+    T <: ActivePowerBalanceAC,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractPowerModel,
 }

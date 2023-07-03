@@ -10,7 +10,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         ActivePowerTimeSeriesParameter,
         devices,
         model,
@@ -66,7 +66,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         ActivePowerTimeSeriesParameter,
         devices,
         model,
@@ -115,7 +115,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         ActivePowerTimeSeriesParameter,
         devices,
         model,
