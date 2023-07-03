@@ -34,6 +34,7 @@ abstract type RangeConstraintLBExpressions <: ExpressionType end
 abstract type RangeConstraintUBExpressions <: ExpressionType end
 abstract type CostExpressions <: ExpressionType end
 struct ActivePowerBalanceAC <: SystemBalanceExpressions end
+struct ActivePowerBalanceDC <: SystemBalanceExpressions end
 struct ReactivePowerBalance <: SystemBalanceExpressions end
 struct EmergencyUp <: ExpressionType end
 struct EmergencyDown <: ExpressionType end

@@ -408,15 +408,18 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
-            _make_container_array(bus_numbers, time_steps),
+            _make_container_array(ac_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
-            _make_container_array(bus_numbers, time_steps),
+            _make_container_array(ac_bus_numbers, time_steps),
     )
     return
 end
@@ -424,13 +427,16 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
-            _make_container_array(bus_numbers, time_steps),
+            _make_container_array(ac_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
     )
     return
 end
@@ -452,16 +458,16 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
-    bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
     subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
             _make_container_array(subnetworks, time_steps),
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
-            _make_container_array(bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
     )
     return
 end
@@ -471,7 +477,8 @@ function initialize_system_expressions!(
     ::Type{T},
     subnetworks::Dict{Int, Set{Int}},
 ) where {T <: PM.AbstractPowerModel}
-    _make_system_expressions!(container, subnetworks, T)
+    dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
+    _make_system_expressions!(container, subnetworks, dc_bus_numbers, T)
     return
 end
 
