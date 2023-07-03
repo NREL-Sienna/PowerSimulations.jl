@@ -2,11 +2,11 @@ const PM_MAP_TUPLE =
     NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
 const PM_BUSTYPES = Dict{PSY.ACBusTypes, Int}(
-    PSY.BusTypes.ISOLATED => 4,
-    PSY.BusTypes.PQ => 1,
-    PSY.BusTypes.PV => 2,
-    PSY.BusTypes.REF => 3,
-    PSY.BusTypes.SLACK => 3,
+    PSY.ACBusTypes.ISOLATED => 4,
+    PSY.ACBusTypes.PQ => 1,
+    PSY.ACBusTypes.PV => 2,
+    PSY.ACBusTypes.REF => 3,
+    PSY.ACBusTypes.SLACK => 3,
 )
 
 struct PMmap

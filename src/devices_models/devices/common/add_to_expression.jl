@@ -645,7 +645,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.Branch,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
 }
     inter_network_branches = V[]
