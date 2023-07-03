@@ -432,7 +432,7 @@ function construct_device!(
     add_variables!(container, FlowActivePowerVariable, devices, U())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerVariable,
         devices,
         model,
@@ -492,7 +492,7 @@ function construct_device!(
     add_variables!(container, FlowActivePowerVariable, devices, U())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerVariable,
         devices,
         model,
@@ -534,7 +534,7 @@ function construct_device!(
     add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCP2PDispatch())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerToFromVariable,
         devices,
         model,
@@ -542,7 +542,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerFromToVariable,
         devices,
         model,
@@ -550,7 +550,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         HVDCLosses,
         devices,
         model,
@@ -589,7 +589,7 @@ function construct_device!(
     add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCP2PDispatch())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerToFromVariable,
         devices,
         model,
@@ -597,7 +597,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerFromToVariable,
         devices,
         model,
@@ -661,7 +661,7 @@ function construct_device!(
     add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         FlowActivePowerVariable,
         devices,
         model,
@@ -686,7 +686,7 @@ function construct_device!(
     add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PhaseShifterAngle,
         devices,
         model,

@@ -10,7 +10,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerTimeSeriesParameter,
         devices,
         model,
@@ -61,7 +61,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -179,7 +179,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -277,7 +277,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -384,7 +384,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -473,7 +473,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -577,7 +577,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -665,7 +665,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -768,7 +768,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         ActivePowerVariable,
         devices,
         model,
@@ -871,7 +871,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
@@ -1008,12 +1008,13 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
         network_model,
     )
+
     add_to_expression!(
         container,
         ActivePowerBalanceAC,
@@ -1022,7 +1023,6 @@ function construct_device!(
         model,
         network_model,
     )
-
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1137,7 +1137,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
@@ -1249,7 +1249,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
@@ -1364,7 +1364,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         OnVariable,
         devices,
         model,
@@ -1464,7 +1464,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
@@ -1560,7 +1560,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
@@ -1579,7 +1579,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         OnStatusParameter,
         devices,
         model,
@@ -1595,7 +1595,7 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         OnStatusParameter,
         devices,
         model,
@@ -1685,7 +1685,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         PowerAboveMinimumVariable,
         devices,
         model,
@@ -1694,7 +1694,7 @@ function construct_device!(
 
     add_to_expression!(
         container,
-        ActivePowerBalanceAC,
+        ActivePowerBalance,
         OnStatusParameter,
         devices,
         model,

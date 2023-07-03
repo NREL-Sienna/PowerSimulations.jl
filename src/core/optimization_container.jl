@@ -414,9 +414,9 @@ function _make_system_expressions!(
     time_steps = get_time_steps(container)
     ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
@@ -433,9 +433,9 @@ function _make_system_expressions!(
     time_steps = get_time_steps(container)
     ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
     )
     return

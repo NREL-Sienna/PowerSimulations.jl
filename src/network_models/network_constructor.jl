@@ -10,7 +10,7 @@ function construct_network!(
         add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -42,7 +42,7 @@ function construct_network!(
 
     area_balance(
         container,
-        ExpressionKey(ActivePowerBalanceAC, PSY.ACBus),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus),
         area_mapping,
         branches,
     )
@@ -62,7 +62,7 @@ function construct_network!(
         add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -71,7 +71,6 @@ function construct_network!(
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
-
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -94,7 +93,6 @@ function construct_network!(
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
-
     return
 end
 
@@ -119,7 +117,7 @@ function construct_network!(
         add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -130,6 +128,8 @@ function construct_network!(
     @debug "Building the $T network with $instantiate_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
     powermodels_network!(container, T, sys, template, instantiate_model)
+    #Constraints in case the model has DC Buses
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)
 
@@ -158,7 +158,7 @@ function construct_network!(
         add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -182,6 +182,8 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
+    #Constraints in case the model has DC Buses
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)
@@ -210,7 +212,7 @@ function construct_network!(
         add_variables!(container, SystemBalanceSlackDown, sys, T)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackUp,
             sys,
             model,
@@ -218,7 +220,7 @@ function construct_network!(
         )
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -245,6 +247,8 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
+    #Constraints in case the model has DC Buses
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)
@@ -272,7 +276,7 @@ function construct_network!(
         add_variables!(container, SystemBalanceSlackDown, sys, T)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackUp,
             sys,
             model,
@@ -280,7 +284,7 @@ function construct_network!(
         )
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -307,6 +311,8 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
+    #Constraints in case the model has DC Buses
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)

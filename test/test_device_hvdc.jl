@@ -7,7 +7,6 @@
         #duals=[CopperPlateBalanceConstraint],
     ))
 
-    #set_device_model!(template_uc, ThermalMultiStart, ThermalCompactUnitCommitment)
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
@@ -23,4 +22,5 @@
         direct_mode_optimizer=true,
     )
     @test build!(model; output_dir=mktempdir()) == PSI.BuildStatus.BUILT
+
 end
