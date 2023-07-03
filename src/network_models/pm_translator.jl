@@ -384,8 +384,8 @@ function get_branches_to_pm(
     ::Type{S},
     ::Type{T},
     branch_template::BranchModelContainer,
-    start_idx = 0,
-) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
+    start_idx=0,
+) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
@@ -413,8 +413,8 @@ function get_branches_to_pm(
     ::Type{PTDFPowerModel},
     ::Type{PSY.TwoTerminalHVDCLine},
     branch_template::BranchModelContainer,
-    start_idx = 0,
-) where {T <: PSY.DCBranch}
+    start_idx=0,
+)
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
     return PM_branches, PMmap_br

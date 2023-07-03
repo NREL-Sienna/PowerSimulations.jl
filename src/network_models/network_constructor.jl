@@ -158,7 +158,7 @@ function construct_network!(
         add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
-            ActivePowerBalance,
+            ActivePowerBalanceAC,
             SystemBalanceSlackDown,
             sys,
             model,
@@ -167,13 +167,6 @@ function construct_network!(
             container,
             ReactivePowerBalance,
             SystemBalanceSlackUp,
-            sys,
-            model,
-        )
-        add_to_expression!(
-            container,
-            ReactivePowerBalance,
-            SystemBalanceSlackDown,
             sys,
             model,
         )
