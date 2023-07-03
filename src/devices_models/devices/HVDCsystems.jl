@@ -105,7 +105,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: ActivePowerVariable,
     V <: PSY.InterconnectingConverter,
-    W <: AbstractDeviceFormulation,
+    W <: AbstractConverterFormulation,
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
@@ -119,5 +119,39 @@ function add_to_expression!(
             get_variable_multiplier(U(), V, W()),
         )
     end
+    return
+end
+
+function add_to_expression!(
+    ::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
+    X <: CopperPlatePowerModel,
+}
+    return
+end
+
+function add_to_expression!(
+    ::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
+}
     return
 end
