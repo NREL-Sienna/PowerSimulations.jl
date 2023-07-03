@@ -885,7 +885,7 @@ function construct_device!(
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnVariable, devices, model, S)
+
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1016,13 +1016,13 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         OnVariable,
         devices,
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnVariable, devices, model, S)
+
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1145,13 +1145,12 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         OnVariable,
         devices,
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnVariable, devices, model, S)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1258,13 +1257,12 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         OnVariable,
         devices,
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnVariable, devices, model, S)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1372,7 +1370,6 @@ function construct_device!(
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnVariable, devices, model, S)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1481,7 +1478,6 @@ function construct_device!(
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnVariable, devices, model, S)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
 
@@ -1583,13 +1579,12 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         OnStatusParameter,
         devices,
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnStatusParameter, devices, model, S)
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1600,13 +1595,13 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ActivePowerBalance,
+        ActivePowerBalanceAC,
         OnStatusParameter,
         devices,
         model,
         network_model,
     )
-    add_to_expression!(container, ActivePowerBalanceAC, OnStatusParameter, devices, model, S)
+
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,
