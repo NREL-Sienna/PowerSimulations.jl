@@ -85,7 +85,7 @@ end
     end
 end
 
-@testset "DC Power Flow Models for HVDCLine with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
+@testset "DC Power Flow Models for TwoTerminalHVDCLine  with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
@@ -94,7 +94,7 @@ end
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    hvdc_line = PSY.get_component(HVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalHVDCLine , system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -110,10 +110,9 @@ end
         template = get_template_dispatch_with_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
-        set_device_model!(template, HVDCLine, HVDCP2PLossless)
-        model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
-        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+        set_device_model!(template, TwoTerminalHVDCLine , HVDCP2PLossless)
+        model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
+        @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer2W)
@@ -125,7 +124,7 @@ end
         @test check_flow_variable_values(
             model_m,
             FlowActivePowerVariable,
-            HVDCLine,
+            TwoTerminalHVDCLine ,
             "DCLine3",
             limits_min,
             limits_max,
@@ -149,9 +148,9 @@ end
     end
 end
 
-@testset "DC Power Flow Models for Unbounded HVDCLine, and StaticBranchBounds for TapTransformer & Transformer2W" begin
+@testset "DC Power Flow Models for Unbounded TwoTerminalHVDCLine , and StaticBranchBounds for TapTransformer & Transformer2W" begin
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    hvdc_line = PSY.get_component(HVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalHVDCLine , system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -167,14 +166,14 @@ end
         template = get_template_dispatch_with_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
-        set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PUnbounded))
+        set_device_model!(template, DeviceModel(TwoTerminalHVDCLine , HVDCP2PUnbounded))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
 
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, HVDCLine)
+        @test check_variable_unbounded(model_m, FlowActivePowerVariable, TwoTerminalHVDCLine )
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
 
@@ -183,7 +182,7 @@ end
         @test check_flow_variable_values(
             model_m,
             FlowActivePowerVariable,
-            HVDCLine,
+            TwoTerminalHVDCLine ,
             "DCLine3",
             limits_min,
             limits_max,
@@ -214,10 +213,10 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = HVDCLine(;
-        name = get_name(line),
-        available = true,
-        active_power_flow = 0.0,
+    hvdc = TwoTerminalHVDCLine(
+        name=get_name(line),
+        available=true,
+        active_power_flow=0.0,
         # Force the flow in the opposite direction for testing purposes
         active_power_limits_from = (min = -0.5, max = -0.5),
         active_power_limits_to = (min = -3.0, max = 2.0),
@@ -237,7 +236,7 @@ end
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
-    set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PLossless))
+    set_device_model!(template_uc, DeviceModel(TwoTerminalHVDCLine , HVDCP2PLossless))
 
     model = DecisionModel(
         template_uc,
@@ -252,7 +251,7 @@ end
 
     ptdf_vars = get_variable_values(ProblemResults(model))
     ptdf_values =
-        ptdf_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]
+        ptdf_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine }("")]
     ptdf_objective = model.internal.container.optimizer_stats.objective_value
 
     set_network_model!(template_uc, NetworkModel(DCPPowerModel))
@@ -268,7 +267,7 @@ end
     solve!(model; output_dir = mktempdir())
     dcp_vars = get_variable_values(ProblemResults(model))
     dcp_values =
-        dcp_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}("")]
+        dcp_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine }("")]
     dcp_objective = model.internal.container.optimizer_stats.objective_value
 
     @test isapprox(dcp_objective, ptdf_objective; atol = 0.1)
@@ -282,10 +281,10 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = HVDCLine(;
-        name = get_name(line),
-        available = true,
-        active_power_flow = 0.0,
+    hvdc = TwoTerminalHVDCLine(
+        name=get_name(line),
+        available=true,
+        active_power_flow=0.0,
         # Force the flow in the opposite direction for testing purposes
         active_power_limits_from = (min = -2.0, max = -2.0),
         active_power_limits_to = (min = -3.0, max = 2.0),
@@ -307,7 +306,7 @@ end
             set_device_model!(template_uc, RenewableDispatch, FixedOutput)
             set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
             set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
-            set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PLossless))
+            set_device_model!(template_uc, DeviceModel(TwoTerminalHVDCLine , HVDCP2PLossless))
 
             model_ref = DecisionModel(
                 template_uc,
@@ -322,7 +321,7 @@ end
             ref_values =
                 ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
             hvdc_ref_values =
-                ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, HVDCLine}(
+                ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine }(
                     "",
                 )]
             ref_objective = model_ref.internal.container.optimizer_stats.objective_value
@@ -338,7 +337,7 @@ end
                     ),
                 ),
             )
-            set_device_model!(template_uc, DeviceModel(HVDCLine, HVDCP2PDispatch))
+            set_device_model!(template_uc, DeviceModel(TwoTerminalHVDCLine , HVDCP2PDispatch))
 
             model = DecisionModel(
                 template_uc,
@@ -356,13 +355,13 @@ end
                 )]
             hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
-                HVDCLine,
+                TwoTerminalHVDCLine ,
             }(
                 "",
             )]
             hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
                 FlowActivePowerToFromVariable,
-                HVDCLine,
+                TwoTerminalHVDCLine ,
             }(
                 "",
             )]
@@ -410,13 +409,13 @@ end
             dispatch_vars = get_variable_values(ProblemResults(model_wl))
             dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
-                HVDCLine,
+                TwoTerminalHVDCLine ,
             }(
                 "",
             )]
             dispatch_values_tf = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerToFromVariable,
-                HVDCLine,
+                TwoTerminalHVDCLine ,
             }(
                 "",
             )]
@@ -445,7 +444,7 @@ end
     end
 end
 
-@testset "DC Power Flow Models for HVDCLine Dispatch and TapTransformer & Transformer2W Unbounded" begin
+@testset "DC Power Flow Models for TwoTerminalHVDCLine  Dispatch and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Line, "ub"),
@@ -453,8 +452,8 @@ end
         PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
         PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
-        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "ub"),
-        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine , "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine , "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -474,9 +473,9 @@ end
     template = get_template_dispatch_with_network(
         NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(system)),
     )
-    set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PLossless))
-    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine , HVDCP2PLossless))
+    model_m = DecisionModel(template, system; optimizer=HiGHS_optimizer)
+    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, Transformer2W)
@@ -489,7 +488,7 @@ end
     @test check_flow_variable_values(
         model_m,
         FlowActivePowerVariable,
-        HVDCLine,
+        TwoTerminalHVDCLine ,
         "DCLine3",
         limits_max,
     )
@@ -565,14 +564,14 @@ end
     )
 end
 
-@testset "AC Power Flow Models for HVDCLine Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
+@testset "AC Power Flow Models for TwoTerminalHVDCLine  Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
         PSI.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
         PSI.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
         PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
-        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "ub"),
-        PSI.ConstraintKey(FlowRateConstraint, HVDCLine, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine , "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine , "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -590,9 +589,9 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
-    set_device_model!(template, DeviceModel(HVDCLine, HVDCP2PLossless))
-    model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine , HVDCP2PLossless))
+    model_m = DecisionModel(template, system; optimizer=ipopt_optimizer)
+    @test build!(model_m; output_dir=mktempdir(cleanup=true)) == PSI.BuildStatus.BUILT
 
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, TapTransformer)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, TapTransformer)
@@ -607,7 +606,7 @@ end
         model_m,
         FlowActivePowerVariable,
         FlowReactivePowerToFromVariable,
-        HVDCLine,
+        TwoTerminalHVDCLine ,
         "DCLine3",
         limits_max,
     )
