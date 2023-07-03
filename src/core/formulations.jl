@@ -189,7 +189,6 @@ struct LossLessConverter <: AbstractConverterFormulation end
 # TODO: Think if this an ok abstraction for future use cases
 struct LossLessLine <: AbstractBranchFormulation end
 
-
 ############################## Network Model Formulations ##################################
 # These formulations are taken directly from PowerModels
 

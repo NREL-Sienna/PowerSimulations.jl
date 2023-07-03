@@ -44,6 +44,10 @@ export HVDCP2PDispatch
 export HVDCP2PUnbounded
 export PhaseAngleControl
 # export VoltageSourceDC
+
+######## HVDC models ########
+export LossLessConverter
+export LossLessLine
 ######## Load Models ########
 export StaticPowerLoad
 export PowerLoadInterruption

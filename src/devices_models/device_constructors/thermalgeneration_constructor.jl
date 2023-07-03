@@ -1692,7 +1692,14 @@ function construct_device!(
         network_model,
     )
 
-    add_to_expression!(container, ActivePowerBalanceAC, OnStatusParameter, devices, model, S)
+    add_to_expression!(
+        container,
+        ActivePowerBalanceAC,
+        OnStatusParameter,
+        devices,
+        model,
+        S,
+    )
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
 

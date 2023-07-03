@@ -83,7 +83,8 @@ end
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, U},
-) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractP2PDCLineFormulation} = DeviceModel(T, U)
+) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractP2PDCLineFormulation} =
+    DeviceModel(T, U)
 
 #################################### Rate Limits Constraints ##################################################
 function _get_flow_bounds(d::PSY.TwoTerminalHVDCLine)
