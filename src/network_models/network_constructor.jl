@@ -7,7 +7,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -59,7 +59,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -114,7 +114,7 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
@@ -155,10 +155,10 @@ function construct_network!(
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
         add_variables!(container, SystemBalanceSlackDown, sys, model)
-        add_to_expression!(container, ActivePowerBalanceAC, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
         add_to_expression!(
             container,
-            ActivePowerBalanceAC,
+            ActivePowerBalance,
             SystemBalanceSlackDown,
             sys,
             model,

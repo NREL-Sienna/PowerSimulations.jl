@@ -77,7 +77,7 @@ function construct_device!(
     add_variables!(container, FlowActivePowerVariable, devices, LossLessLine())
     add_to_expression!(
         container,
-        ActivePowerBalanceDC,
+        ActivePowerBalance,
         FlowActivePowerVariable,
         devices,
         model,

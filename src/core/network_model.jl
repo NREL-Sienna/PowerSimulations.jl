@@ -30,7 +30,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
     PTDF_matrix::Union{Nothing, PNM.PowerNetworkMatrix}
     subnetworks::Dict{Int, Set{Int}}
-    bus_area_map::Dict{PSY.Bus, Int}
+    bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
 
     function NetworkModel(
@@ -41,7 +41,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         duals = Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
-        new{T}(use_slacks, PTDF_matrix, subnetworks, Dict{PSY.Bus, Int}(), duals)
+        new{T}(use_slacks, PTDF_matrix, subnetworks, Dict{PSY.ACBus, Int}(), duals)
     end
 end
 
@@ -113,7 +113,7 @@ function _assign_subnetworks_to_buses(
 ) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
-    for bus in get_available_components(PSY.Bus, sys)
+    for bus in get_available_components(PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
         if haskey(temp_bus_map, bus_no)
             model.bus_area_map[bus] = temp_bus_map[bus_no]
@@ -137,7 +137,7 @@ _assign_subnetworks_to_buses(
 
 function get_reference_bus(
     model::NetworkModel{T},
-    b::PSY.Bus,
+    b::PSY.ACBus,
 )::Int where {T <: PM.AbstractPowerModel}
     if isempty(model.bus_area_map)
         return first(keys(model.subnetworks))

@@ -449,7 +449,7 @@ function _make_system_expressions!(
     time_steps = get_time_steps(container)
     subnetworks_ref_buses = collect(keys(subnetworks))
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(subnetworks_ref_buses, time_steps),
     )
     return
@@ -464,9 +464,9 @@ function _make_system_expressions!(
     time_steps = get_time_steps(container)
     subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalanceAC, PSY.System) =>
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(subnetworks, time_steps),
-        ExpressionKey(ActivePowerBalanceDC, PSY.DCBus) =>
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
     )
     return
@@ -476,6 +476,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     subnetworks::Dict{Int, Set{Int}},
+    system::PSY.System
 ) where {T <: PM.AbstractPowerModel}
     dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
     _make_system_expressions!(container, subnetworks, dc_bus_numbers, T)
@@ -485,7 +486,7 @@ end
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
+    initialize_system_expressions!(container, transmission, transmission_model.subnetworks, sys)
 
     # Order is required
     for device_model in values(template.devices)

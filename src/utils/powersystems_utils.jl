@@ -15,13 +15,13 @@ function get_available_components(
 end
 
 function get_available_components(
-    ::Type{PSY.Bus},
+    ::Type{PSY.ACBus},
     sys::PSY.System,
     ::Nothing = nothing,
 )
     return PSY.get_components(
         x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
-        PSY.Bus,
+        PSY.ACBus,
         sys,
     )
 end

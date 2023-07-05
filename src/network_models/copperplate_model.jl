@@ -9,7 +9,7 @@ function add_constraints!(
     V <: Union{CopperPlatePowerModel, StandardPTDFModel, PTDFPowerModel},
 }
     time_steps = get_time_steps(container)
-    expressions = get_expression(container, ActivePowerBalanceAC(), U)
+    expressions = get_expression(container, ActivePowerBalance(), U)
     subnets = collect(keys(model.subnetworks))
     constraint = add_constraints_container!(container, T(), U, subnets, time_steps)
     for t in time_steps, k in keys(model.subnetworks)
