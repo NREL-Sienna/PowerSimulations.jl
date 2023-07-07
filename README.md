@@ -54,13 +54,4 @@ Contributions to the development and enhancement of PowerSimulations is welcome.
 
 ## License
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-PowerSimulations is released under a BSD [license](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
-=======
-PowerSimulations is released under a BSD [license](https://github.com/NREL/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
->>>>>>> 6d7e8ae80 (rename branch)
-=======
-PowerSimulations is released under a BSD [license](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP)
->>>>>>> 055e20d2b (more readme corrections)
-initiative at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/))
+PowerSimulations is released under a BSD [license](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP) initiative at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/))
