@@ -63,7 +63,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
@@ -100,7 +100,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerVariable,
@@ -134,8 +134,8 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     ::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
-    ::Type{X},
+    devices::DeviceModel{V, W},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerVariable,
@@ -143,16 +143,38 @@ function add_to_expression!(
     W <: AbstractConverterFormulation,
     X <: CopperPlatePowerModel,
 }
+
+    variable = get_variable(container, U(), V)
+    expression_dc = get_expression(container, T(), PSY.DCBus)
+    sys_expr = get_expression(container, T(), PSY.System)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
+        bus_number_dc = PSY.get_number(PSY.get_dc_bus(d))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                sys_expr[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+            _add_to_jump_expression!(
+                expression_dc[bus_number_dc, t],
+                variable[name, t],
+                -1.0,
+        )
+        end
+    end
     return
 end
 
 function add_to_expression!(
-    ::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    ::IS.FlattenIteratorWrapper{V},
+    devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerVariable,
@@ -160,6 +182,35 @@ function add_to_expression!(
     W <: AbstractConverterFormulation,
     X <: Union{PTDFPowerModel, StandardPTDFModel},
 }
+    variable = get_variable(container, U(), V)
+    expression_dc = get_expression(container, T(), PSY.DCBus)
+    expression_ac = get_expression(container, T(), PSY.ACBus)
+    sys_expr = get_expression(container, T(), PSY.System)
+    for d in devices
+        name = PSY.get_name(d)
+        device_bus = PSY.get_bus(d)
+        bus_number_ac = PSY.get_number(device_bus)
+        ref_bus = get_reference_bus(network_model, device_bus)
+        bus_number_dc = PSY.get_number(PSY.get_dc_bus(d))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                sys_expr[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+            _add_to_jump_expression!(
+                expression_ac[bus_number_ac, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+            _add_to_jump_expression!(
+                expression_dc[bus_number_dc, t],
+                variable[name, t],
+                -1.0,
+        )
+        end
+    end
+
     return
 end
 

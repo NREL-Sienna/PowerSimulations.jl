@@ -462,12 +462,15 @@ function _make_system_expressions!(
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
+    ac_bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
     subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(subnetworks, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+            _make_container_array(ac_bus_numbers, time_steps),
     )
     return
 end
@@ -476,7 +479,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     subnetworks::Dict{Int, Set{Int}},
-    system::PSY.System
+    system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
     dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
     _make_system_expressions!(container, subnetworks, dc_bus_numbers, T)
@@ -486,7 +489,12 @@ end
 function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    initialize_system_expressions!(container, transmission, transmission_model.subnetworks, sys)
+    initialize_system_expressions!(
+        container,
+        transmission,
+        transmission_model.subnetworks,
+        sys,
+    )
 
     # Order is required
     for device_model in values(template.devices)

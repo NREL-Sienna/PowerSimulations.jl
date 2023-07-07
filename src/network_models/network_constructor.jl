@@ -69,8 +69,8 @@ function construct_network!(
         )
         objective_function!(container, PSY.System, model)
     end
-
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -92,6 +92,7 @@ function construct_network!(
     add_pm_expr_refs!(container, T, sys)
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end

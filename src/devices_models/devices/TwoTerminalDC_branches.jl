@@ -1,5 +1,6 @@
 #################################### Branch Variables ##################################################
-get_variable_binary(_, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractP2PDCLineFormulation) = false
+get_variable_binary(_, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractP2PDCLineFormulation) =
+    false
 get_variable_binary(
     ::FlowActivePowerVariable,
     ::Type{<:PSY.TwoTerminalHVDCLine},
