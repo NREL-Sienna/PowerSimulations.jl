@@ -1,11 +1,7 @@
 name = "PowerSimulations"
 uuid = "e690365d-45e2-57bb-ac84-44ba829e73c4"
 authors = ["Jose Daniel Lara", "Clayton Barrows", "Daniel Thom", "Dheepak Krishnamurthy", "Sourabh Dalvi"]
-<<<<<<< HEAD
 version = "0.20.3"
-=======
-version = "0.20.2"
->>>>>>> bebcf0d56 (Bump version to v0.20.2)
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
