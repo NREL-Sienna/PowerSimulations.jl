@@ -129,7 +129,7 @@ end
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     model = DecisionModel(template, c_sys5_re)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(model, 360, 0, 72, 48, 72, false)
+    moi_tests(model, 360, 0, 72, 120, 72, false)
 end
 
 @testset "Test Reserves from Hydro" begin
