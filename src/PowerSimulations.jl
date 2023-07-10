@@ -369,6 +369,7 @@ import Distributed
 
 # Base Imports
 import Base.getindex
+import Base.isempty
 import Base.length
 import Base.first
 import InteractiveUtils: methodswith
@@ -454,13 +455,11 @@ include("core/dataset.jl")
 include("core/dataset_container.jl")
 include("core/results_by_time.jl")
 
+# Order Required
+include("operation/problem_template.jl")
 include("core/optimization_container.jl")
 include("core/store_common.jl")
-
-# Order Required
 include("initial_conditions/initial_condition_chronologies.jl")
-
-include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
 include("operation/model_store_params.jl")
 include("operation/abstract_model_store.jl")

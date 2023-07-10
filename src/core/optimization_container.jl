@@ -475,7 +475,11 @@ function initialize_system_expressions!(
     return
 end
 
-function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
+function build_impl!(
+    container::OptimizationContainer,
+    template::ProblemTemplate,
+    sys::PSY.System,
+)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
     initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
