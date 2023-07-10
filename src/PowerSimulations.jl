@@ -51,14 +51,6 @@ export PowerLoadDispatch
 ######## Renewable Formulations ########
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
-######## Hydro Formulations ########
-export HydroDispatchRunOfRiver
-export HydroDispatchReservoirBudget
-export HydroDispatchReservoirStorage
-export HydroCommitmentRunOfRiver
-export HydroCommitmentReservoirBudget
-export HydroCommitmentReservoirStorage
-export HydroDispatchPumpedStorage
 
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
@@ -74,6 +66,10 @@ export ThermalCompactDispatch
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
+
+###### Hydro #######
+export HydroDispatchRunOfRiver
+export HydroCommitmentRunOfRiver
 
 # feedforward models
 export UpperBoundFeedforward

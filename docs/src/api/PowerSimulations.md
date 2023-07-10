@@ -34,6 +34,10 @@ Refer to the [Formulations Page](@ref formulation_library) for each Abstract Dev
 
 Refer to the [Problem Templates Page](@ref op_problem_template) for available `ProblemTemplate`s.
 
+### Problem Templates
+
+Refer to the [Problem Templates Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/modeler_guide/problem_templates/) for available `ProblemTemplate`s.
+
 ```@raw html
 &nbsp;
 &nbsp;
@@ -98,14 +102,12 @@ execute!(::Simulation)
 # Variables
 
 For a list of variables for each device refer to its Formulations page.
-
 ### Common Variables
 
 ```@docs
 ActivePowerVariable
 ReactivePowerVariable
 PieceWiseLinearCostVariable
-
 ```
 
 ### Thermal Unit Variables
@@ -134,7 +136,6 @@ ReservationVariable
 WaterSpillageVariable
 EnergyVariableUp
 EnergyVariableDown
-EnergyOutput
 ```
 
 ### Common for Hydro and Storage Variables
