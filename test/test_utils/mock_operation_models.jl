@@ -1,8 +1,8 @@
 # NOTE: None of the models and function in this file are functional. All of these are used for testing purposes and do not represent valid examples either to develop custom
 # models. Please refer to the documentation.
 
-struct MockOperationProblem <: PSI.DecisionProblem end
-struct MockEmulationProblem <: PSI.EmulationProblem end
+struct MockOperationProblem <: PSI.DefaultDecisionProblem end
+struct MockEmulationProblem <: PSI.DefaultEmulationProblem end
 
 function PSI.DecisionModel(
     ::Type{MockOperationProblem},
@@ -194,7 +194,7 @@ end
 
 function setup_ic_model_container!(model::DecisionModel)
     # This function is only for testing purposes.
-    if !PSI.is_empty(model)
+    if !PSI.isempty(model)
         PSI.reset!(model)
     end
 

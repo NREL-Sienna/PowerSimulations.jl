@@ -1,7 +1,13 @@
 """
-Default PowerSimulations Operation Problem Type
+Abstract type for models than employ PowerSimulations methods. For custom decision problems
+    use DecisionProblem as the super type.
 """
-struct GenericOpProblem <: DecisionProblem end
+abstract type DefaultDecisionProblem <: DecisionProblem end
+
+"""
+Generic PowerSimulations Operation Problem Type for unspecified models
+"""
+struct GenericOpProblem <: DefaultDecisionProblem end
 
 """
     DecisionModel{M}(
@@ -10,7 +16,7 @@ struct GenericOpProblem <: DecisionProblem end
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:DecisionProblem}
 
-This builds the optimization problem of type M with the specific system and template.
+Builds the optimization problem of type M with the specific system and template.
 
 # Arguments
 
@@ -135,7 +141,7 @@ function DecisionModel{M}(
 end
 
 """
-This builds the optimization problem of type M with the specific system and template
+Builds the optimization problem of type M with the specific system and template
 
 # Arguments
 
@@ -171,6 +177,30 @@ function DecisionModel(
 end
 
 """
+Builds an empty decision model. This constructor is used for the implementation of custom
+decision models that do not require a template.
+
+# Arguments
+
+  - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
+  - `sys::PSY.System`: the system created using Power Systems
+  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
+
+# Example
+
+```julia
+problem = DecisionModel(system, optimizer)
+```
+"""
+function DecisionModel{M}(
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    kwargs...,
+) where {M <: DecisionProblem}
+    return DecisionModel{M}(ProblemTemplate(), sys, jump_model; kwargs...)
+end
+
+"""
 Construct an DecisionProblem from a serialized file.
 
 # Arguments
@@ -198,6 +228,9 @@ function DecisionModel(
         system = system,
     )
 end
+
+get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
+validate_template(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
@@ -227,9 +260,9 @@ function init_model_store_params!(model::DecisionModel)
     return
 end
 
-function build_pre_step!(model::DecisionModel)
+function build_pre_step!(model::DecisionModel{<:DefaultDecisionProblem})
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
-        if !is_empty(model)
+        if !isempty(model)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
@@ -250,6 +283,15 @@ function build_pre_step!(model::DecisionModel)
         handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
+    return
+end
+
+function build_impl!(model::DecisionModel{<:DefaultDecisionProblem})
+    validate_template(model)
+    build_pre_step!(model)
+    build_model!(model)
+    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+    log_values(get_settings(model))
     return
 end
 

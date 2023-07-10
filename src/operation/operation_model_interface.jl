@@ -1,6 +1,6 @@
 # Default implementations of getter/setter functions for OperationModel.
 is_built(model::OperationModel) = model.internal.status == BuildStatus.BUILT
-is_empty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
+isempty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
@@ -213,6 +213,9 @@ end
 
 function validate_template(model::OperationModel)
     template = get_template(model)
+    if isempty(template)
+        error("Template can't be empty for models $(get_problem_type(model))")
+    end
     modeled_types = get_component_types(template)
     system = get_system(model)
     system_component_types = PSY.get_existing_component_types(system)
@@ -225,15 +228,6 @@ function validate_template(model::OperationModel)
         @warn "The template doesn't include models for components of type $(m), consider changing the template" _group =
             LOG_GROUP_MODELS_VALIDATION
     end
-    return
-end
-
-function build_impl!(model::OperationModel)
-    validate_template(model)
-    build_pre_step!(model)
-    build_model!(model)
-    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
-    log_values(get_settings(model))
     return
 end
 

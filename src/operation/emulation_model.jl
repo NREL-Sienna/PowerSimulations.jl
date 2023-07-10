@@ -1,7 +1,13 @@
 """
-Default PowerSimulations Emulation Problem Type
+Abstract type for models than employ PowerSimulations methods. For custom emulation problems
+    use EmulationProblem as the super type.
 """
-struct GenericEmulationProblem <: EmulationProblem end
+abstract type DefaultEmulationProblem <: EmulationProblem end
+
+"""
+Default PowerSimulations Emulation Problem Type for unspecified problems
+"""
+struct GenericEmulationProblem <: DefaultEmulationProblem end
 
 """
     EmulationModel{M}(
@@ -10,7 +16,7 @@ struct GenericEmulationProblem <: EmulationProblem end
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:EmulationProblem}
 
-This builds the optimization problem of type M with the specific system and template.
+Builds the optimization problem of type M with the specific system and template.
 
 # Arguments
 
@@ -126,7 +132,7 @@ function EmulationModel{M}(
 end
 
 """
-This builds the optimization problem of type M with the specific system and template
+Builds the optimization problem of type M with the specific system and template
 
 # Arguments
 
@@ -163,6 +169,30 @@ function EmulationModel(
 end
 
 """
+Builds an empty emulation model. This constructor is used for the implementation of custom
+emulation models that do not require a template.
+
+# Arguments
+
+  - `::Type{M} where M<:EmulationProblem`: The abstract operation model type
+  - `sys::PSY.System`: the system created using Power Systems
+  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
+
+# Example
+
+```julia
+problem = EmulationModel(system, optimizer)
+```
+"""
+function EmulationModel{M}(
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    kwargs...,
+) where {M <: EmulationProblem}
+    return EmulationModel{M}(template, sys, jump_model; kwargs...)
+end
+
+"""
 Construct an EmulationProblem from a serialized file.
 
 # Arguments
@@ -192,6 +222,9 @@ function EmulationModel(
     )
 end
 
+get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
+validate_template(::EmulationModel{<:EmulationProblem}) = nothing
+
 function get_current_time(model::EmulationModel)
     execution_count = get_internal(model).execution_count
     initial_time = get_initial_time(model)
@@ -219,7 +252,7 @@ end
 
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
-        if !is_empty(model)
+        if !isempty(model)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
@@ -240,6 +273,15 @@ function build_pre_step!(model::EmulationModel)
         handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
+    return
+end
+
+function build_impl!(model::EmulationModel{<:DefaultEmulationProblem})
+    validate_template(model)
+    build_pre_step!(model)
+    build_model!(model)
+    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+    log_values(get_settings(model))
     return
 end
 
