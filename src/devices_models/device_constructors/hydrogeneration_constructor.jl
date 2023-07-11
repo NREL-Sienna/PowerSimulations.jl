@@ -70,6 +70,7 @@ function construct_device!(
     return
 end
 
+#=
 """
 Construct model for HydroGen with RunOfRiver (default Hydro model) Dispatch Formulation
 """
@@ -132,6 +133,7 @@ function construct_device!(
     return
 end
 
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -178,6 +180,7 @@ function construct_device!(
 
     return
 end
+=#
 
 """
 Construct model for HydroGen with RunOfRiver (default Hydro model) Dispatch Formulation
@@ -232,6 +235,7 @@ function construct_device!(
     return
 end
 
+#=
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -270,6 +274,7 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
+=#
 
 """
 Construct model for HydroGen with RunOfRiver Commitment Formulation
