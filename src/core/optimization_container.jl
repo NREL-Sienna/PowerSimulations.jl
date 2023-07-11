@@ -201,7 +201,8 @@ set_initial_conditions_data!(container::OptimizationContainer, data) =
 get_objective_expression(container::OptimizationContainer) = container.objective_function
 is_synchronized(container::OptimizationContainer) =
     container.objective_function.synchronized
-set_time_steps!(container::OptimizationContainer, time_steps::UnitRange{Int64}) = container.time_steps = time_steps
+set_time_steps!(container::OptimizationContainer, time_steps::UnitRange{Int64}) =
+    container.time_steps = time_steps
 
 function has_container_key(
     container::OptimizationContainer,
