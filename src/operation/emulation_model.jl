@@ -70,12 +70,6 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         elseif name isa String
             name = Symbol(name)
         end
-        _, ts_count, _ = PSY.get_time_series_counts(sys)
-        if ts_count < 1
-            error(
-                "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
-            )
-        end
         finalize_template!(template, sys)
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
@@ -224,6 +218,7 @@ end
 
 get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
 validate_template(::EmulationModel{<:EmulationProblem}) = nothing
+validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
 
 function get_current_time(model::EmulationModel)
     execution_count = get_internal(model).execution_count
@@ -250,8 +245,21 @@ function init_model_store_params!(model::EmulationModel)
     return
 end
 
+function validate_time_series(model::EmulationModel{<:DefaultEmulationProblem})
+    sys = get_system(model)
+    _, ts_count, _ = PSY.get_time_series_counts(sys)
+    if ts_count < 1
+        error(
+            "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
+        )
+    end
+    return
+end
+
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
+        validate_template(model)
+        validate_time_series(model)
         if !isempty(model)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
@@ -265,20 +273,19 @@ function build_pre_step!(model::EmulationModel)
             get_network_formulation(get_template(model)),
             get_system(model),
         )
-        @info "Instantiating Network Model"
-        instantiate_network_model(model)
 
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-        handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
     return
 end
 
-function build_impl!(model::EmulationModel{<:DefaultEmulationProblem})
-    validate_template(model)
+function build_impl!(model::EmulationModel{<:EmulationProblem})
     build_pre_step!(model)
+    @info "Instantiating Network Model"
+    instantiate_network_model(model)
+    handle_initial_conditions!(model)
     build_model!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))
     log_values(get_settings(model))
