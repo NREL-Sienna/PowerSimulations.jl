@@ -133,7 +133,6 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
