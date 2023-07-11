@@ -81,10 +81,8 @@ NATURAL_UNITS_VALUES = [
     "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
     "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
-    "EnergyLimitParameter__HydroEnergyReservoir",
     "SystemBalanceSlackDown__System",
     "SystemBalanceSlackUp__System",
-    "EnergyBudgetTimeSeriesParameter__HydroEnergyReservoir",
 ]
 
 function compare_results(rpath, epath, model, field, name, timestamp)

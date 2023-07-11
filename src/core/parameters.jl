@@ -281,26 +281,6 @@ Paramter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
-"""
-Parameter to define energy storage target level time series
-"""
-struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
-
-"""
-Parameter to define energy budget time series
-"""
-struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
-
-"""
-Parameter to define energy inflow to storage or reservoir time series
-"""
-struct InflowTimeSeriesParameter <: TimeSeriesParameter end
-
-"""
-Parameter to define energy outflow from storage or reservoir time series
-"""
-struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
-
 abstract type VariableValueParameter <: RightHandSideParameter end
 
 struct UpperBoundValueParameter <: VariableValueParameter end
@@ -308,7 +288,6 @@ struct LowerBoundValueParameter <: VariableValueParameter end
 struct OnStatusParameter <: VariableValueParameter end
 struct EnergyLimitParameter <: VariableValueParameter end
 struct FixValueParameter <: VariableValueParameter end
-struct EnergyTargetParameter <: VariableValueParameter end
 
 struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
@@ -322,11 +301,5 @@ convert_result_to_natural_units(::Type{<:ParameterType}) = false
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
-convert_result_to_natural_units(::Type{EnergyTargetTimeSeriesParameter}) = true
-convert_result_to_natural_units(::Type{EnergyBudgetTimeSeriesParameter}) = true
-#convert_result_to_natural_units(::Type{InflowTimeSeriesParameter}) = true # TODO: is this pu?
-#convert_result_to_natural_units(::Type{OutflowTimeSeriesParameter}) = true # TODO: is this pu?
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
-convert_result_to_natural_units(::Type{EnergyLimitParameter}) = true
-convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true

@@ -260,19 +260,15 @@ FeedforwardEnergyTargetConstraint
 
 # Parameters
 
-### Time Series Parameters
+## Time Series Parameters
 
 ```@docs
 ActivePowerTimeSeriesParameter
 ReactivePowerTimeSeriesParameter
 RequirementTimeSeriesParameter
-EnergyTargetTimeSeriesParameter
-EnergyBudgetTimeSeriesParameter
-InflowTimeSeriesParameter
-OutflowTimeSeriesParameter
 ```
 
-### Variable Value Parameters
+## Variable Value Parameters
 
 ```@docs
 UpperBoundValueParameter

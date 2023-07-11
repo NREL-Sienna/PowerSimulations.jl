@@ -304,8 +304,6 @@ export StartupTimeLimitTemperatureConstraint
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
-export EnergyTargetTimeSeriesParameter
-export EnergyBudgetTimeSeriesParameter
 
 # Feedforward Parameters
 export OnStatusParameter
