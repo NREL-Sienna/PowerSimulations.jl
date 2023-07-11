@@ -130,14 +130,6 @@ PowerAboveMinimumVariable
 ReservationVariable
 ```
 
-### Common for Hydro and Storage Variables
-
-```@docs
-ActivePowerOutVariable
-ActivePowerInVariable
-EnergyVariable
-```
-
 ### Branches and Network Variables
 
 ```@docs
@@ -234,18 +226,6 @@ StartupTimeLimitTemperatureConstraint
 ```@docs
 EqualityConstraint
 
-```
-
-### Hydro and Storage Constraints
-
-```@docs
-EnergyBalanceConstraint
-EnergyBudgetConstraint
-EnergyCapacityConstraint
-EnergyCapacityDownConstraint
-EnergyCapacityUpConstraint
-EnergyTargetConstraint
-RangeLimitConstraint
 ```
 
 ### Branches Constraints

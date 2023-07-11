@@ -212,7 +212,6 @@ export ReactivePowerVariable
 export ReservationVariable
 export ActivePowerReserveVariable
 export ServiceRequirementVariable
-export WaterSpillageVariable
 export StartVariable
 export StopVariable
 export SteadyStateFrequencyDeviation
@@ -254,12 +253,6 @@ export CommitmentConstraint
 export CopperPlateBalanceConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
-export EnergyBudgetConstraint
-export EnergyCapacityConstraint
-export EnergyCapacityDownConstraint
-export EnergyCapacityUpConstraint
-export EnergyLimitConstraint
-export EnergyTargetConstraint
 export EqualityConstraint
 export FeedforwardSemiContinousConstraint
 export FeedforwardUpperBoundConstraint
