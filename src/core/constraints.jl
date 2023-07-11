@@ -36,12 +36,6 @@ struct CommitmentConstraint <: ConstraintType end
 struct CopperPlateBalanceConstraint <: ConstraintType end
 struct DurationConstraint <: ConstraintType end
 struct EnergyBalanceConstraint <: ConstraintType end
-struct EnergyBudgetConstraint <: ConstraintType end
-struct EnergyCapacityConstraint <: ConstraintType end
-struct EnergyCapacityDownConstraint <: ConstraintType end
-struct EnergyCapacityUpConstraint <: ConstraintType end
-struct EnergyLimitConstraint <: ConstraintType end # not being used
-struct EnergyTargetConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end

@@ -104,13 +104,6 @@ struct ActivePowerReserveVariable <: VariableType end
 
 struct ServiceRequirementVariable <: VariableType end
 
-"""
-Struct to dispatch the creation of energy (water) spillage variable representing energy released from a storage/reservoir not injected into the network
-
-Docs abbreviation: ``S``
-"""
-struct WaterSpillageVariable <: VariableType end
-
 struct StartVariable <: VariableType end
 
 struct StopVariable <: VariableType end
@@ -208,7 +201,6 @@ convert_result_to_natural_units(::Type{EnergyVariable}) = true
 convert_result_to_natural_units(::Type{ReactivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerReserveVariable}) = true
 convert_result_to_natural_units(::Type{ServiceRequirementVariable}) = true
-# convert_result_to_natural_units(::Type{WaterSpillageVariable }) = true # TODO: is this pu?
 convert_result_to_natural_units(::Type{AreaMismatchVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerUpVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerDownVariable}) = true
