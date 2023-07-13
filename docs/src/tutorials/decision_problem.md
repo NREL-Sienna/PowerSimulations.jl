@@ -64,7 +64,7 @@ set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
 set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
 set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
 set_device_model!(template_uc, HydroDispatch, FixedOutput)
-set_device_model!(template_uc, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+set_device_model!(template_uc, HydroDispatchRunOfRiver, HydroDispatchRunOfRiver)
 set_device_model!(template_uc, RenewableFix, FixedOutput)
 ```
 

@@ -70,7 +70,6 @@ function construct_device!(
     return
 end
 
-#=
 """
 Construct model for HydroGen with RunOfRiver (default Hydro model) Dispatch Formulation
 """
@@ -82,7 +81,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: Union{HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver},
     S <: PM.AbstractPowerModel,
 }
     devices =
@@ -141,7 +140,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: Union{HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver},
     S <: PM.AbstractPowerModel,
 }
     devices =
@@ -179,7 +178,6 @@ function construct_device!(
 
     return
 end
-=#
 
 """
 Construct model for HydroGen with RunOfRiver (default Hydro model) Dispatch Formulation
@@ -234,7 +232,7 @@ function construct_device!(
     return
 end
 
-#=
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -243,7 +241,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: HydroDispatchRunOfRiver,
     S <: PM.AbstractActivePowerModel,
 }
     devices =
@@ -273,7 +271,7 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
-=#
+
 
 """
 Construct model for HydroGen with RunOfRiver Commitment Formulation
