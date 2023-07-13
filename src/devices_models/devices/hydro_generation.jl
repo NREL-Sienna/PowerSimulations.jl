@@ -82,7 +82,10 @@ end
 function get_default_attributes(
     ::Type{T},
     ::Type{D},
-) where {T <: PSY.HydroGen, D <:Union{FixedOutput, HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver}}
+) where {
+    T <: PSY.HydroGen,
+    D <: Union{FixedOutput, HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver},
+}
     return Dict{String, Any}("reservation" => false)
 end
 
