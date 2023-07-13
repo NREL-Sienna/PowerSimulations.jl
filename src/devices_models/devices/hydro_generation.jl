@@ -64,13 +64,6 @@ variable_cost(cost::PSY.OperationalCost, ::ActivePowerOutVariable, ::PSY.HydroGe
 
 function get_initial_conditions_device_model(
     ::OperationModel,
-    model::DeviceModel{T, <:AbstractHydroFormulation},
-) where {T <: PSY.HydroEnergyReservoir}
-    return model
-end
-
-function get_initial_conditions_device_model(
-    ::OperationModel,
     ::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroDispatch}
     return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
@@ -89,7 +82,7 @@ end
 function get_default_attributes(
     ::Type{T},
     ::Type{D},
-) where {T <: PSY.HydroGen, D <: Union{FixedOutput, AbstractHydroFormulation}}
+) where {T <: PSY.HydroGen, D <:Union{FixedOutput, HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver}}
     return Dict{String, Any}("reservation" => false)
 end
 
