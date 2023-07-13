@@ -65,8 +65,8 @@ variable_cost(cost::PSY.OperationalCost, ::ActivePowerOutVariable, ::PSY.HydroGe
 function get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, <:AbstractHydroFormulation},
-) where {T <: PSY.HydroDispatch}
-    return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
+) where {T <: PSY.HydroGen}
+    return DeviceModel(T, HydroDispatchRunOfRiver)
 end
 
 function get_default_time_series_names(
