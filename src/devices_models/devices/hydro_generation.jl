@@ -66,7 +66,7 @@ function get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, <:AbstractHydroFormulation},
 ) where {T <: PSY.HydroGen}
-    return DeviceModel(T, HydroDispatchRunOfRiver)
+    return DeviceModel(T, HydroCommitmentRunOfRiver)
 end
 
 function get_default_time_series_names(
