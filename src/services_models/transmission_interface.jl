@@ -27,8 +27,6 @@ function get_initial_conditions_service_model(
     return ServiceModel(T, D)
 end
 
-
-
 function add_constraints!(container::OptimizationContainer,
     ::Type{InterfaceFlowLimit},
     interface::T,
@@ -70,7 +68,7 @@ function objective_function!(
 ) where {T <: PSY.TransmissionInterface, U <: ConstantMaxInterfaceFlow}
     # At the moment the interfaces have no costs associated with them
     if get_use_slacks(model)
-        variable_up = get_variable(container, InterfaceFlowSlackDown(), T)
+        variable_up = get_variable(container, InterfaceFlowSlackUp(), T)
         variable_dn = get_variable(container, InterfaceFlowSlackDown(), T)
         penalty = PSY.get_violation_penalty(service)
         name = PSY.get_name(service)
