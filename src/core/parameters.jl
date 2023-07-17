@@ -287,6 +287,9 @@ struct UpperBoundValueParameter <: VariableValueParameter end
 struct LowerBoundValueParameter <: VariableValueParameter end
 struct OnStatusParameter <: VariableValueParameter end
 struct EnergyLimitParameter <: VariableValueParameter end
+# TODO: Check if EnergyTargetParameter and EnergyLimitParameter should be removed
+# This affects feedforwards that can break if not defined
+struct EnergyTargetParameter <: VariableValueParameter end
 struct FixValueParameter <: VariableValueParameter end
 
 struct CostFunctionParameter <: ObjectiveFunctionParameter end
@@ -303,3 +306,6 @@ convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
+# TODO: Check if EnergyLimitParameter and EnergyTargetParameter should be removed
+convert_result_to_natural_units(::Type{EnergyLimitParameter}) = true
+convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true
