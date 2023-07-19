@@ -283,15 +283,41 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 
+"""
+Parameter to define variable upper bound
+"""
 struct UpperBoundValueParameter <: VariableValueParameter end
+
+"""
+Parameter to define variable lower bound
+"""
 struct LowerBoundValueParameter <: VariableValueParameter end
+
+"""
+Parameter to define unit commitment status
+"""
 struct OnStatusParameter <: VariableValueParameter end
+
+"""
+Parameter to define energy limit
+"""
 struct EnergyLimitParameter <: VariableValueParameter end
+
 # TODO: Check if EnergyTargetParameter and EnergyLimitParameter should be removed
 # This affects feedforwards that can break if not defined
+"""
+Parameter to define energy storage target
+"""
 struct EnergyTargetParameter <: VariableValueParameter end
+
+"""
+Parameter to define fixed value
+"""
 struct FixValueParameter <: VariableValueParameter end
 
+"""
+Parameter to define cost function coefficient
+"""
 struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
