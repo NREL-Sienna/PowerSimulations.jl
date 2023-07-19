@@ -328,7 +328,6 @@ Parameter to define fixed output values
 """
 struct FixValueParameter <: VariableValueParameter end
 
-
 """
 Parameter to define energy storage target
 """
