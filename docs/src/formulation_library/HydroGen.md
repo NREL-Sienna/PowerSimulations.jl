@@ -125,7 +125,7 @@ Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance
 
 ```math
 \begin{aligned}
-&  Pg_t \le Pg^\text{max}\\
+&  Pg^\text{min} \le Pg_t \le ActivePowerTimeSeriesParameter_t \\
 &  Pg_t - u_t Pg^\text{max} \le 0 \\
 &  Pg_t - u_t Pg^\text{min} \ge 0 \\
 &  Qg_t - u_t Qg^\text{max} \le 0 \\
