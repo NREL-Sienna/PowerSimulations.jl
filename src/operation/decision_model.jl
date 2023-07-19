@@ -1,7 +1,13 @@
 """
-Default PowerSimulations Operation Problem Type
+Abstract type for models than employ PowerSimulations methods. For custom decision problems
+    use DecisionProblem as the super type.
 """
-struct GenericOpProblem <: DecisionProblem end
+abstract type DefaultDecisionProblem <: DecisionProblem end
+
+"""
+Generic PowerSimulations Operation Problem Type for unspecified models
+"""
+struct GenericOpProblem <: DefaultDecisionProblem end
 
 """
     DecisionModel{M}(
@@ -10,7 +16,7 @@ struct GenericOpProblem <: DecisionProblem end
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:DecisionProblem}
 
-This builds the optimization problem of type M with the specific system and template.
+Builds the optimization problem of type M with the specific system and template.
 
 # Arguments
 
@@ -64,12 +70,6 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
             name = nameof(M)
         elseif name isa String
             name = Symbol(name)
-        end
-        _, _, forecast_count = PSY.get_time_series_counts(sys)
-        if forecast_count < 1
-            error(
-                "The system does not contain forecast data. A DecisionModel can't be built.",
-            )
         end
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
@@ -135,7 +135,7 @@ function DecisionModel{M}(
 end
 
 """
-This builds the optimization problem of type M with the specific system and template
+Builds the optimization problem of type M with the specific system and template
 
 # Arguments
 
@@ -171,6 +171,40 @@ function DecisionModel(
 end
 
 """
+Builds an empty decision model. This constructor is used for the implementation of custom
+decision models that do not require a template.
+
+# Arguments
+
+  - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
+  - `sys::PSY.System`: the system created using Power Systems
+  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
+
+# Example
+
+```julia
+problem = DecisionModel(system, optimizer)
+```
+"""
+function DecisionModel{M}(
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    kwargs...,
+) where {M <: DecisionProblem}
+    return DecisionModel{M}(ProblemTemplate(), sys, jump_model; kwargs...)
+end
+
+function DecisionModel{M}(
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    kwargs...,
+) where {M <: DefaultDecisionProblem}
+    IS.ArgumentError(
+        "DefaultDecisionProblem subtypes require a template. Use DecisionModel subtyping instead.",
+    )
+end
+
+"""
 Construct an DecisionProblem from a serialized file.
 
 # Arguments
@@ -198,6 +232,10 @@ function DecisionModel(
         system = system,
     )
 end
+
+get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
+validate_template(::DecisionModel{<:DecisionProblem}) = nothing
+validate_time_series(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
@@ -227,29 +265,48 @@ function init_model_store_params!(model::DecisionModel)
     return
 end
 
-function build_pre_step!(model::DecisionModel)
+function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
+    sys = get_system(model)
+    _, _, forecast_count = PSY.get_time_series_counts(sys)
+    if forecast_count < 1
+        error(
+            "The system does not contain forecast data. A DecisionModel can't be built.",
+        )
+    end
+    return
+end
+
+function build_pre_step!(model::DecisionModel{<:DecisionProblem})
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
-        if !is_empty(model)
+        validate_template(model)
+        validate_time_series(model)
+        if !isempty(model)
             @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         # Initial time are set here because the information is specified in the
         # Simulation Sequence object and not at the problem creation.
-
         @info "Initializing Optimization Container For a DecisionModel"
         init_optimization_container!(
             get_optimization_container(model),
             get_network_formulation(get_template(model)),
             get_system(model),
         )
-        @info "Instantiating Network Model"
-        instantiate_network_model(model)
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-
-        handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
+    return
+end
+
+function build_impl!(model::DecisionModel{<:DecisionProblem})
+    build_pre_step!(model)
+    @info "Instantiating Network Model"
+    instantiate_network_model(model)
+    handle_initial_conditions!(model)
+    build_model!(model)
+    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+    log_values(get_settings(model))
     return
 end
 
@@ -310,12 +367,12 @@ end
 Default implementation of build method for Operational Problems for models conforming with
 DecisionProblem specification. Overload this function to implement a custom build method
 """
-function build_model!(model::DecisionModel)
+function build_model!(model::DecisionModel{<:DefaultDecisionProblem})
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
     return
 end
 
-function reset!(model::DecisionModel)
+function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     was_built_for_recurrent_solves = built_for_recurrent_solves(model)
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
@@ -470,7 +527,7 @@ function update_parameters!(
     end
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
-        obj_func = get_objective_function(get_optimization_container(model))
+        obj_func = get_objective_expression(get_optimization_container(model))
         set_synchronized_status(obj_func, true)
     end
     return

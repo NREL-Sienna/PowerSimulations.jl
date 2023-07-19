@@ -48,14 +48,10 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.HydroGen, ::Abstract
 ########################Objective Function##################################################
 proportional_cost(cost::Nothing, ::PSY.HydroGen, ::ActivePowerVariable, ::AbstractHydroFormulation)=0.0
 proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_fixed(cost)
-proportional_cost(cost::PSY.StorageManagementCost, ::EnergySurplusVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_energy_surplus_cost(cost)
-proportional_cost(cost::PSY.StorageManagementCost, ::EnergyShortageVariable, ::PSY.HydroGen, ::AbstractHydroFormulation)=PSY.get_energy_shortage_cost(cost)
 
 objective_function_multiplier(::ActivePowerVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 objective_function_multiplier(::ActivePowerOutVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 objective_function_multiplier(::OnVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
-objective_function_multiplier(::EnergySurplusVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
-objective_function_multiplier(::EnergyShortageVariable, ::AbstractHydroFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
 sos_status(::PSY.HydroGen, ::AbstractHydroFormulation)=SOSStatusVariable.NO_VARIABLE
 sos_status(::PSY.HydroGen, ::AbstractHydroUnitCommitment)=SOSStatusVariable.VARIABLE
@@ -68,16 +64,9 @@ variable_cost(cost::PSY.OperationalCost, ::ActivePowerOutVariable, ::PSY.HydroGe
 
 function get_initial_conditions_device_model(
     ::OperationModel,
-    model::DeviceModel{T, <:AbstractHydroFormulation},
-) where {T <: PSY.HydroEnergyReservoir}
-    return model
-end
-
-function get_initial_conditions_device_model(
-    ::OperationModel,
     ::DeviceModel{T, <:AbstractHydroFormulation},
-) where {T <: PSY.HydroDispatch}
-    return DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver)
+) where {T <: PSY.HydroGen}
+    return DeviceModel(T, HydroCommitmentRunOfRiver)
 end
 
 function get_default_time_series_names(
@@ -93,7 +82,10 @@ end
 function get_default_attributes(
     ::Type{T},
     ::Type{D},
-) where {T <: PSY.HydroGen, D <: Union{FixedOutput, AbstractHydroFormulation}}
+) where {
+    T <: PSY.HydroGen,
+    D <: Union{FixedOutput, HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver},
+}
     return Dict{String, Any}("reservation" => false)
 end
 

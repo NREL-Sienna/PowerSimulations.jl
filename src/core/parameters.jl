@@ -281,26 +281,6 @@ Paramter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
-"""
-Parameter to define energy storage target level time series
-"""
-struct EnergyTargetTimeSeriesParameter <: TimeSeriesParameter end
-
-"""
-Parameter to define energy budget time series
-"""
-struct EnergyBudgetTimeSeriesParameter <: TimeSeriesParameter end
-
-"""
-Parameter to define energy inflow to storage or reservoir time series
-"""
-struct InflowTimeSeriesParameter <: TimeSeriesParameter end
-
-"""
-Parameter to define energy outflow from storage or reservoir time series
-"""
-struct OutflowTimeSeriesParameter <: TimeSeriesParameter end
-
 abstract type VariableValueParameter <: RightHandSideParameter end
 
 """
@@ -323,15 +303,17 @@ Parameter to define energy limit
 """
 struct EnergyLimitParameter <: VariableValueParameter end
 
-"""
-Parameter to define fixed output values
-"""
-struct FixValueParameter <: VariableValueParameter end
-
+# TODO: Check if EnergyTargetParameter and EnergyLimitParameter should be removed
+# This affects feedforwards that can break if not defined
 """
 Parameter to define energy storage target
 """
 struct EnergyTargetParameter <: VariableValueParameter end
+
+"""
+Parameter to define fixed value
+"""
+struct FixValueParameter <: VariableValueParameter end
 
 """
 Parameter to define cost function coefficient
@@ -348,11 +330,8 @@ convert_result_to_natural_units(::Type{<:ParameterType}) = false
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
-convert_result_to_natural_units(::Type{EnergyTargetTimeSeriesParameter}) = true
-convert_result_to_natural_units(::Type{EnergyBudgetTimeSeriesParameter}) = true
-#convert_result_to_natural_units(::Type{InflowTimeSeriesParameter}) = true # TODO: is this pu?
-#convert_result_to_natural_units(::Type{OutflowTimeSeriesParameter}) = true # TODO: is this pu?
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
+# TODO: Check if EnergyLimitParameter and EnergyTargetParameter should be removed
 convert_result_to_natural_units(::Type{EnergyLimitParameter}) = true
 convert_result_to_natural_units(::Type{EnergyTargetParameter}) = true

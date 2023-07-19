@@ -81,7 +81,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: Union{HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver},
     S <: PM.AbstractPowerModel,
 }
     devices =
@@ -140,7 +140,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: Union{HydroDispatchRunOfRiver, HydroCommitmentRunOfRiver},
     S <: PM.AbstractPowerModel,
 }
     devices =
@@ -191,7 +191,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: HydroDispatchRunOfRiver,
     S <: PM.AbstractActivePowerModel,
 }
     devices =
@@ -240,7 +240,7 @@ function construct_device!(
     network_model::NetworkModel{S},
 ) where {
     H <: PSY.HydroGen,
-    D <: AbstractHydroDispatchFormulation,
+    D <: HydroDispatchRunOfRiver,
     S <: PM.AbstractActivePowerModel,
 }
     devices =

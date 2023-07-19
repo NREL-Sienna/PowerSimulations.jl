@@ -130,24 +130,6 @@ PowerAboveMinimumVariable
 ReservationVariable
 ```
 
-### Hydro Variables
-
-```@docs
-WaterSpillageVariable
-EnergyVariableUp
-EnergyVariableDown
-```
-
-### Common for Hydro and Storage Variables
-
-```@docs
-ActivePowerOutVariable
-ActivePowerInVariable
-EnergyVariable
-EnergyShortageVariable
-EnergySurplusVariable
-```
-
 ### Branches and Network Variables
 
 ```@docs
@@ -247,18 +229,6 @@ EqualityConstraint
 
 ```
 
-### Hydro and Storage Constraints
-
-```@docs
-EnergyBalanceConstraint
-EnergyBudgetConstraint
-EnergyCapacityConstraint
-EnergyCapacityDownConstraint
-EnergyCapacityUpConstraint
-EnergyTargetConstraint
-RangeLimitConstraint
-```
-
 ### Branches Constraints
 
 ```@docs
@@ -290,19 +260,15 @@ FeedforwardEnergyTargetConstraint
 
 # Parameters
 
-### Time Series Parameters
+## Time Series Parameters
 
 ```@docs
 ActivePowerTimeSeriesParameter
 ReactivePowerTimeSeriesParameter
 RequirementTimeSeriesParameter
-EnergyTargetTimeSeriesParameter
-EnergyBudgetTimeSeriesParameter
-InflowTimeSeriesParameter
-OutflowTimeSeriesParameter
 ```
 
-### Variable Value Parameters
+## Variable Value Parameters
 
 ```@docs
 UpperBoundValueParameter

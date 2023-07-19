@@ -42,6 +42,9 @@ function initialize_storage!(
     params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
+    if length(get_time_steps(container)) < 1
+        error("The time step count in the optimization container is not defined")
+    end
     time_steps_count = get_time_steps(container)[end]
     initial_time = get_initial_time(container)
     model_interval = get_interval(params)
@@ -62,6 +65,7 @@ function initialize_storage!(
             end
         end
     end
+    return
 end
 
 function write_result!(
