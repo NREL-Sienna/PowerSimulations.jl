@@ -206,10 +206,6 @@ export HotStartVariable
 export WarmStartVariable
 export ColdStartVariable
 export EnergyVariable
-export EnergyVariableUp
-export EnergyVariableDown
-export EnergyShortageVariable
-export EnergySurplusVariable
 export LiftVariable
 export OnVariable
 export ReactivePowerVariable

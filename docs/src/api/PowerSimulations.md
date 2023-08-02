@@ -130,14 +130,6 @@ PowerAboveMinimumVariable
 ReservationVariable
 ```
 
-### Hydro Variables
-
-```@docs
-WaterSpillageVariable
-EnergyVariableUp
-EnergyVariableDown
-```
-
 ### Common for Hydro and Storage Variables
 
 ```@docs
