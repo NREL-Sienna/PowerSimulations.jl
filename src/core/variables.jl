@@ -72,34 +72,6 @@ Docs abbreviation: ``E``
 """
 struct EnergyVariable <: VariableType end
 
-"""
-Struct to dispatch the creation of a variable for energy storage level (state of charge) of upper reservoir
-
-Docs abbreviation: ``E^{up}``
-"""
-struct EnergyVariableUp <: VariableType end
-
-"""
-Struct to dispatch the creation of a variable for energy storage level (state of charge) of lower reservoir
-
-Docs abbreviation: ``E^{down}``
-"""
-struct EnergyVariableDown <: VariableType end
-
-"""
-Struct to dispatch the creation of a slack variable for energy storage levels < target storage levels
-
-Docs abbreviation: ``E^{shortage}``
-"""
-struct EnergyShortageVariable <: VariableType end
-
-"""
-Struct to dispatch the creation of a slack variable for energy storage levels > target storage levels
-
-Docs abbreviation: ``E^{surplus}``
-"""
-struct EnergySurplusVariable <: VariableType end
-
 struct LiftVariable <: VariableType end
 
 """
