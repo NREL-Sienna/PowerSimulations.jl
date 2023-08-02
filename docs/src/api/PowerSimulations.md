@@ -136,8 +136,6 @@ ReservationVariable
 ActivePowerOutVariable
 ActivePowerInVariable
 EnergyVariable
-EnergyShortageVariable
-EnergySurplusVariable
 ```
 
 ### Branches and Network Variables
