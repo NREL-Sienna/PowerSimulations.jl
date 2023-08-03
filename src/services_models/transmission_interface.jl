@@ -67,17 +67,5 @@ function objective_function!(
     model::ServiceModel{T, U},
 ) where {T <: PSY.TransmissionInterface, U <: ConstantMaxInterfaceFlow}
     # At the moment the interfaces have no costs associated with them
-    if get_use_slacks(model)
-        variable_up = get_variable(container, InterfaceFlowSlackUp(), T)
-        variable_dn = get_variable(container, InterfaceFlowSlackDown(), T)
-        penalty = PSY.get_violation_penalty(service)
-        name = PSY.get_name(service)
-        for t in get_time_steps(container)
-            add_to_objective_invariant_expression!(
-                container,
-                (variable_dn[name, t] + variable_up[name, t]) * penalty,
-            )
-        end
-    end
     return
 end

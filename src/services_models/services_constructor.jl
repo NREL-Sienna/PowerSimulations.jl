@@ -472,22 +472,13 @@ function construct_service!(
     incompatible_device_types::Set{<:DataType},
 ) where {T <: PSY.TransmissionInterface}
     interfaces = get_available_components(T, sys)
-    # Lazy container addition for the expressions.
     if get_use_slacks(model)
-        add_variables!(
-            container,
-            InterfaceFlowSlackUp,
-            interfaces,
-            ConstantMaxInterfaceFlow(),
-        )
-        add_variables!(
-            container,
-            InterfaceFlowSlackDown,
-            interfaces,
-            ConstantMaxInterfaceFlow(),
-        )
+        # Adding the slacks can be done in a cleaner fashion
+        interface = PSY.get_component(T, sys, get_service_name(model))
+        @assert PSY.get_available(interface)
+        transmission_interface_slacks!(container, interface)
     end
-
+    # Lazy container addition for the expressions.
     lazy_container_addition!(
         container,
         InterfaceTotalFlow(),

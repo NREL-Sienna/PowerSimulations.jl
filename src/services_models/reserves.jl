@@ -118,7 +118,7 @@ function add_constraints!(
 
     ts_vector = get_time_series(container, service, "requirement")
 
-    use_slacks && (slack_vars = reserve_slacks(container, service))
+    use_slacks && (slack_vars = reserve_slacks!(container, service))
     requirement = PSY.get_requirement(service)
     jump_model = get_jump_model(container)
     if parameters
@@ -175,7 +175,7 @@ function add_constraints!(
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     use_slacks = get_use_slacks(model)
-    use_slacks && (slack_vars = reserve_slacks(container, service))
+    use_slacks && (slack_vars = reserve_slacks!(container, service))
 
     requirement = PSY.get_requirement(service)
     jump_model = get_jump_model(container)
