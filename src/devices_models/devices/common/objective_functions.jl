@@ -79,29 +79,6 @@ end
 function add_proportional_cost!(
     container::OptimizationContainer,
     ::U,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::V,
-) where {
-    T <: PSY.Component,
-    U <: Union{EnergySurplusVariable, EnergyShortageVariable},
-    V <: AbstractDeviceFormulation,
-}
-    base_p = get_base_power(container)
-    multiplier = objective_function_multiplier(U(), V())
-    for d in devices
-        op_cost_data = PSY.get_operation_cost(d)
-        cost_term = proportional_cost(op_cost_data, U(), d, V())
-        iszero(cost_term) && continue
-        for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier * base_p, t)
-        end
-    end
-    return
-end
-
-function add_proportional_cost!(
-    container::OptimizationContainer,
-    ::U,
     service::T,
     ::V,
 ) where {

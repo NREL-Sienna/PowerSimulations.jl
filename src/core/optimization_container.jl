@@ -1687,11 +1687,12 @@ function lazy_container_addition!(
     axs...;
     kwargs...,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    if !has_container_key(container, T, U)
+    meta = get(kwargs, :meta, CONTAINER_KEY_EMPTY_META)
+    if !has_container_key(container, T, U, meta)
         cons_container =
             add_constraints_container!(container, constraint, U, axs...; kwargs...)
     else
-        cons_container = get_constraint(container, constraint, U)
+        cons_container = get_constraint(container, constraint, U, meta)
     end
     return cons_container
 end

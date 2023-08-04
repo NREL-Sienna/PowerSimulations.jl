@@ -858,6 +858,16 @@ function _execute!(
             step,
             "start",
         )
+        # This progress print is required to show the progress bar upfront
+        ProgressMeter.update!(
+            prog_bar,
+            1;
+            showvalues = [
+                (:Step, 1),
+                (:Problem, get_name(get_simulation_model(models, 1))),
+                (:("Simulation Timestamp"), get_current_time(sim)),
+            ],
+        )
         for (ix, model_number) in enumerate(execution_order)
             model = get_simulation_model(models, model_number)
             model_name = get_name(model)

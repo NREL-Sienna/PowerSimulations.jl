@@ -183,7 +183,9 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
     isempty(service_models) && return
 
     device_models = get_device_models(template)
+    branch_models = get_branch_models(template)
     modeled_devices = Set(get_component_type(m) for m in values(device_models))
+    union!(modeled_devices, Set(get_component_type(m) for m in values(branch_models)))
     incompatible_device_types = get_incompatible_devices(device_models)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     for (service_key, service_model) in service_models
@@ -198,7 +200,6 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
         end
         contributing_devices_ =
             services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
-
         for d in contributing_devices_
             _add_contributing_device_by_type!(
                 service_model,
@@ -234,9 +235,17 @@ function _modify_device_model!(
 end
 
 function _modify_device_model!(
-    devices_template::Dict{Symbol, DeviceModel},
-    service_model::ServiceModel{<:PSY.ReserveNonSpinning, <:AbstractReservesFormulation},
-    contributing_devices::Vector{<:PSY.Component},
+    ::Dict{Symbol, DeviceModel},
+    ::ServiceModel{<:PSY.ReserveNonSpinning, <:AbstractReservesFormulation},
+    ::Vector{<:PSY.Component},
+)
+    return
+end
+
+function _modify_device_model!(
+    ::Dict{Symbol, DeviceModel},
+    ::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
+    ::Vector,
 )
     return
 end
@@ -260,7 +269,7 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
         attributes = get_attributes(service_model)
         use_slacks = service_model.use_slacks
         duals = service_model.duals
-        if get(attributes, "aggregated_service_model", false)
+        if pop!(attributes, "aggregated_service_model", false)
             delete!(services_template, key)
             D = get_component_type(service_model)
             B = get_formulation(service_model)
@@ -275,6 +284,7 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
                             PSY.get_name(service);
                             use_slacks = use_slacks,
                             duals = duals,
+                            attributes = attributes,
                         ),
                     )
                 end

@@ -30,7 +30,6 @@ function construct_services!(
             continue
         end
         isempty(get_contributing_devices(service_model)) && continue
-        get_contributing_devices(service_model)
         construct_service!(
             container,
             sys,
@@ -67,7 +66,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        isempty(get_contributing_devices(service_model)) && continue
+        isempty(get_contributing_devices_map(service_model)) && continue
         construct_service!(
             container,
             sys,
@@ -461,5 +460,75 @@ function construct_service!(
     add_feedforward_constraints!(container, model, service)
 
     add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {T <: PSY.TransmissionInterface}
+    interfaces = get_available_components(T, sys)
+    if get_use_slacks(model)
+        # Adding the slacks can be done in a cleaner fashion
+        interface = PSY.get_component(T, sys, get_service_name(model))
+        @assert PSY.get_available(interface)
+        transmission_interface_slacks!(container, interface)
+    end
+    # Lazy container addition for the expressions.
+    lazy_container_addition!(
+        container,
+        InterfaceTotalFlow(),
+        T,
+        PSY.get_name.(interfaces),
+        get_time_steps(container),
+    )
+    #add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {T <: PSY.TransmissionInterface}
+    name = get_service_name(model)
+    service = PSY.get_component(T, sys, name)
+
+    add_to_expression!(
+        container,
+        InterfaceTotalFlow,
+        FlowActivePowerVariable,
+        service,
+        model,
+    )
+
+    if get_use_slacks(model)
+        add_to_expression!(
+            container,
+            InterfaceTotalFlow,
+            InterfaceFlowSlackUp,
+            service,
+            model,
+        )
+        add_to_expression!(
+            container,
+            InterfaceTotalFlow,
+            InterfaceFlowSlackDown,
+            service,
+            model,
+        )
+    end
+
+    add_constraints!(container, InterfaceFlowLimit, service, model)
+    add_feedforward_constraints!(container, model, service)
+    add_constraint_dual!(container, sys, model)
+    objective_function!(container, service, model)
     return
 end

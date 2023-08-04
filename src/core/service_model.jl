@@ -1,15 +1,3 @@
-"""
-Abstract type for Service Formulations (a.k.a Models)
-
-# Example
-
-import PowerSimulations
-const PSI = PowerSimulations
-struct MyServiceFormulation <: PSI.AbstractServiceFormulation
-"""
-abstract type AbstractServiceFormulation end
-abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
-
 function _check_service_formulation(
     ::Type{D},
 ) where {D <: Union{AbstractServiceFormulation, PSY.Service}}
