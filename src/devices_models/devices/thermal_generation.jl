@@ -265,7 +265,7 @@ Min and max active power limits for multi-start unit commitment formulations
 function get_min_max_limits(
     device,
     ::Type{ActivePowerVariableLimitsConstraint},
-    ::Type{<:ThermalMultiStartUnitCommitment},
+    ::Type{ThermalMultiStartUnitCommitment},
 ) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
     return (
         min = 0.0,
@@ -281,7 +281,7 @@ function add_variable!(
     container::OptimizationContainer,
     variable_type::T,
     devices::U,
-    formulation,
+    formulation::AbstractThermalFormulation,
 ) where {
     T <: OnVariable,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
