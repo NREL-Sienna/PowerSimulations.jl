@@ -1194,28 +1194,6 @@ function add_constraints!(
     return
 end
 
-"""
-This function creates constraints that keep must run devices online
-"""
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{MustRunConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, S},
-    ::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: PSY.ThermalGen, S <: AbstractThermalUnitCommitment}
-    time_steps = get_time_steps(container)
-    varon = get_variable(container, OnVariable(), T)
-    names = [PSY.get_name(d) for d in devices if PSY.get_must_run(d)]
-    constraint =
-        add_constraints_container!(container, MustRunConstraint(), T, names, time_steps)
-
-    for name in names, t in time_steps
-        constraint[name, t] = JuMP.@constraint(container.JuMPmodel, varon[name, t] >= 1.0)
-    end
-    return
-end
-
 ########################### time duration constraints ######################################
 """
 If the fraction of hours that a generator has a duration constraint is less than

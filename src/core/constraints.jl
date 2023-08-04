@@ -66,7 +66,6 @@ struct FrequencyResponseConstraint <: ConstraintType end
 struct InflowRangeConstraint <: ConstraintType end #not being used
 struct InputPowerRangeConstraint <: ConstraintType end #not being used
 struct InterConnectionLimitConstraint <: ConstraintType end #not being used
-struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end

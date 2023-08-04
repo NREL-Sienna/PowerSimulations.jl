@@ -498,20 +498,3 @@ function check_constraint_count(
         filter_func = x -> x.name in set_name,
     )
 end
-
-function check_constraint_count(
-    model,
-    ::PSI.MustRunConstraint,
-    ::Type{T},
-) where {T <: PSY.Component}
-    container = PSI.get_optimization_container(model)
-    _devices =
-        filter!(x -> x.must_run, collect(get_components(PSY.get_available, T, model.sys)))
-    set_name = PSY.get_name.(_devices)
-    return check_constraint_count(
-        model,
-        PSI.MustRunConstraint(),
-        T;
-        filter_func = x -> x.name in set_name,
-    )
-end

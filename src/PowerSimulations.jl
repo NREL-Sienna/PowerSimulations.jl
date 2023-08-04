@@ -285,7 +285,6 @@ export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint
 export InterConnectionLimitConstraint
-export MustRunConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
