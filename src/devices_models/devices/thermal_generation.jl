@@ -311,7 +311,7 @@ function add_variable!(
             init !== nothing && JuMP.set_start_value(variable[name, t], init)
         end
         if PSY.get_must_run(d)
-            JuMP.fix(variable[name, t], 1.0)
+            JuMP.fix(variable[name, t], 1.0; force=true)
         end
     end
 
