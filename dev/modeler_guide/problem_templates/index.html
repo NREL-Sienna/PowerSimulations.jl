@@ -8,7 +8,7 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)</code></p
 # Accepted Key Words
 - `network::Type{&lt;:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
-- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/edd4a80d7351d0c60b9ba6a7235566a9ef3a9201/src/operation/operation_problem_templates.jl#L66">source</a></section></article><pre><code class="language-julia hljs">template_economic_dispatch()</code></pre><table>
+- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/9cabf51b4a5fcfcd134a40addeb97b819e71e07c/src/operation/operation_problem_templates.jl#L66">source</a></section></article><pre><code class="language-julia hljs">template_economic_dispatch()</code></pre><table>
   <caption style = "text-align: left;">Network Model</caption>
   <tbody>
     <tr>
@@ -141,7 +141,7 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)</code></p
 # Accepted Key Words
 - `network::Type{&lt;:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
-- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/edd4a80d7351d0c60b9ba6a7235566a9ef3a9201/src/operation/operation_problem_templates.jl#L35">source</a></section></article><pre><code class="language-julia hljs">template_unit_commitment()</code></pre><table>
+- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/9cabf51b4a5fcfcd134a40addeb97b819e71e07c/src/operation/operation_problem_templates.jl#L35">source</a></section></article><pre><code class="language-julia hljs">template_unit_commitment()</code></pre><table>
   <caption style = "text-align: left;">Network Model</caption>
   <tbody>
     <tr>
@@ -273,7 +273,7 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)</code></p
 ;
     kwargs...
 ) -&gt; ProblemTemplate
-</code></pre><pre><code class="nohighlight hljs">template_agc_reserve_deployment(; kwargs...)</code></pre><p>Creates a <code>ProblemTemplate</code> with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn&#39;t support customization</p><p><strong>Example</strong></p><p>template = agc<em>reserve</em>deployment()</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/edd4a80d7351d0c60b9ba6a7235566a9ef3a9201/src/operation/operation_problem_templates.jl#L98">source</a></section></article><pre><code class="language-julia hljs">template_agc_reserve_deployment()</code></pre><table>
+</code></pre><pre><code class="nohighlight hljs">template_agc_reserve_deployment(; kwargs...)</code></pre><p>Creates a <code>ProblemTemplate</code> with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn&#39;t support customization</p><p><strong>Example</strong></p><p>template = agc<em>reserve</em>deployment()</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/9cabf51b4a5fcfcd134a40addeb97b819e71e07c/src/operation/operation_problem_templates.jl#L98">source</a></section></article><pre><code class="language-julia hljs">template_agc_reserve_deployment()</code></pre><table>
   <caption style = "text-align: left;">Network Model</caption>
   <tbody>
     <tr>
