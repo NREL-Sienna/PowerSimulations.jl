@@ -59,7 +59,7 @@ function InMemoryDataset(values::DenseAxisArray{Float64, 2})
     )
 end
 
-Base.length(s::InMemoryDataset) = size(s.values)[2]
+get_num_rows(s::InMemoryDataset) = size(s.values)[2]
 
 function make_system_state(
     values::DenseAxisArray{Float64, 2},
@@ -140,10 +140,6 @@ mutable struct HDF5Dataset <: AbstractDataset
             update_timestamp, column_names)
     end
 end
-
-#Base.length(s::HDF5Dataset) = size(s.values)[1]  # TODO DT: what about the 3-dim case?
-# Not getting called by tests
-Base.length(s::HDF5Dataset) = error("die")
 
 HDF5Dataset(values, column_dataset, resolution, initial_time) =
     HDF5Dataset(

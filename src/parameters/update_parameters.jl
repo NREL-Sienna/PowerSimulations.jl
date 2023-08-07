@@ -175,7 +175,7 @@ function _update_parameter_values!(
 
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
-    max_state_index = length(state_data)
+    max_state_index = get_num_rows(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     sim_timestamps = range(current_time; step = resolution, length = time[end])
@@ -215,7 +215,7 @@ function _update_parameter_values!(
 
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
-    max_state_index = length(state_data)
+    max_state_index = get_num_rows(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
 
@@ -409,7 +409,7 @@ function update_parameter_values!(
     interval_time_steps = Int(get_interval(model.internal.store_parameters) / resolution)
     state_data = get_dataset(input, get_attribute_key(parameter_attributes))
     state_timestamps = state_data.timestamps
-    max_state_index = length(state_data)
+    max_state_index = get_num_rows(state_data)
 
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     sim_timestamps = range(current_time; step = resolution, length = time[end])
