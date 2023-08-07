@@ -519,10 +519,9 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     ::Dates.DateTime,
-    data,
-)
+    data::DenseAxisArray{Float64, N, K},
+) where {N, K <: NTuple{N, Any}}
     output_cache = get_output_cache(store.cache, model_name, key)
-
     cur_size = get_size(store.cache)
     add_result!(output_cache, index, to_matrix(data), is_full(store.cache, cur_size))
 
