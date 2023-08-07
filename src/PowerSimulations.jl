@@ -259,7 +259,6 @@ export EnergyCapacityConstraint
 export EnergyCapacityDownConstraint
 export EnergyCapacityUpConstraint
 export EnergyLimitConstraint
-export EnergyShortageVariableLimitsConstraint
 export EnergyTargetConstraint
 export EqualityConstraint
 export FeedforwardSemiContinousConstraint

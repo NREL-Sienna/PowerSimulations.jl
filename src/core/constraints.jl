@@ -42,7 +42,6 @@ struct EnergyCapacityDownConstraint <: ConstraintType end
 struct EnergyCapacityUpConstraint <: ConstraintType end
 struct EnergyLimitConstraint <: ConstraintType end # not being used
 struct EnergyTargetConstraint <: ConstraintType end
-struct EnergyShortageVariableLimitsConstraint <: ConstraintType end # not being used
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
