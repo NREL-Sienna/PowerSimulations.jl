@@ -397,7 +397,6 @@ end
     constraint_keys = [
         PSI.ConstraintKey(ActiveRangeICConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(StartTypeConstraint, PSY.ThermalMultiStart),
-        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(
             StartupTimeLimitTemperatureConstraint,
             PSY.ThermalMultiStart,
@@ -425,7 +424,6 @@ end
     constraint_keys = [
         PSI.ConstraintKey(ActiveRangeICConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(StartTypeConstraint, PSY.ThermalMultiStart),
-        PSI.ConstraintKey(MustRunConstraint, PSY.ThermalMultiStart),
         PSI.ConstraintKey(
             StartupTimeLimitTemperatureConstraint,
             PSY.ThermalMultiStart,

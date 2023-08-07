@@ -42,7 +42,6 @@ struct EnergyCapacityDownConstraint <: ConstraintType end
 struct EnergyCapacityUpConstraint <: ConstraintType end
 struct EnergyLimitConstraint <: ConstraintType end # not being used
 struct EnergyTargetConstraint <: ConstraintType end
-struct EnergyShortageVariableLimitsConstraint <: ConstraintType end # not being used
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
@@ -66,7 +65,6 @@ struct FrequencyResponseConstraint <: ConstraintType end
 struct InflowRangeConstraint <: ConstraintType end #not being used
 struct InputPowerRangeConstraint <: ConstraintType end #not being used
 struct InterConnectionLimitConstraint <: ConstraintType end #not being used
-struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end

@@ -259,7 +259,6 @@ export EnergyCapacityConstraint
 export EnergyCapacityDownConstraint
 export EnergyCapacityUpConstraint
 export EnergyLimitConstraint
-export EnergyShortageVariableLimitsConstraint
 export EnergyTargetConstraint
 export EqualityConstraint
 export FeedforwardSemiContinousConstraint
@@ -285,7 +284,6 @@ export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
 export InputPowerRangeConstraint
 export InterConnectionLimitConstraint
-export MustRunConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
