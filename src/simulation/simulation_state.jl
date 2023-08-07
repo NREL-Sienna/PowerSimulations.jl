@@ -88,7 +88,7 @@ function _initialize_model_states!(
             !should_write_resulting_value(key) && continue
             value_counts = params[key].horizon ÷ params[key].resolution
             column_names = get_column_names(key, value)
-            if !haskey(field_states, key) || length(field_states[key]) < value_counts
+            if !haskey(field_states, key) || get_num_rows(field_states[key]) < value_counts
                 field_states[key] = InMemoryDataset(
                     fill!(
                         DenseAxisArray{Float64}(undef, column_names, 1:value_counts),
@@ -222,7 +222,11 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time; step = state_resolution, length = length(state_data))
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
@@ -259,7 +263,11 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time; step = state_resolution, length = length(state_data))
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
@@ -296,7 +304,11 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time; step = state_resolution, length = length(state_data))
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
     else
         state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
     end
@@ -316,7 +328,7 @@ function update_decision_state!(
     column_names = axes(state_data.values)[1]
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        @assert_op state_range[end] <= length(state_data)
+        @assert_op state_range[end] <= get_num_rows(state_data)
         for name in column_names, i in state_range
             if t == 1 && i == 1
                 state_data.values[name, i] = store_data[name, t] * resolution_ratio

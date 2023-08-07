@@ -96,11 +96,7 @@ function write_model_parameter_results!(
            should_export_parameter(export_params[:exports], index, model_name, key)
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
-            # TODO DT: why was jump_value being called again?
-            # (first time was in calculate_parameter_values)
-            # Was it always a noop?
             df = to_dataframe(data, key)
-            #df = to_dataframe(jump_value.(data), key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
