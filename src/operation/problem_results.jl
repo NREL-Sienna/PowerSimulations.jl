@@ -301,9 +301,9 @@ end
 function _read_results(
     result_values::Dict{<:OptimizationContainerKey, DataFrames.DataFrame},
     container_keys,
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     time_ids,
-    base_power::Number,
+    base_power::Float64,
 )
     existing_keys = keys(result_values)
     container_keys = container_keys === nothing ? existing_keys : container_keys
