@@ -345,7 +345,7 @@ function read_result(
     if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
         data = reshape(data, length(data), 1)
     end
-    return DataFrames.DataFrame(data, collect(columns); copycols = false)
+    return DataFrames.DataFrame(data, columns; copycols = false)
 end
 
 function read_result(
@@ -519,8 +519,8 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     ::Dates.DateTime,
-    data::DenseAxisArray{Float64, N, K},
-) where {N, K <: NTuple{N, Any}}
+    data::DenseAxisArray{Float64, N, <: NTuple{N, Any}},
+) where N
     output_cache = get_output_cache(store.cache, model_name, key)
     cur_size = get_size(store.cache)
     add_result!(output_cache, index, to_matrix(data), is_full(store.cache, cur_size))

@@ -12,7 +12,7 @@ end
 
 function _check_column_consistency(
     data::SortedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    cols,
+    cols::Vector{String},
 )
     for val in values(data)
         if axes(val)[1] != cols
@@ -21,7 +21,10 @@ function _check_column_consistency(
     end
 end
 
-function _check_column_consistency(data::SortedDict{Dates.DateTime, Matrix{Float64}}, cols)
+function _check_column_consistency(
+    data::SortedDict{Dates.DateTime, Matrix{Float64}},
+    cols::Vector{String},
+)
     for val in values(data)
         if size(val)[2] != length(cols)
             error("Mismatch in length of Matrix columns: $(size(val)[2]) $(length(cols))")
@@ -42,7 +45,12 @@ get_column_names(x::ResultsByTime) = x.column_names
 get_num_rows(::ResultsByTime{DenseAxisArray{Float64, 2}}, data) = length(axes(data)[2])
 get_num_rows(::ResultsByTime{Matrix{Float64}}, data) = size(data)[1]
 
-function _add_timestamps!(df::DataFrames.DataFrame, results::ResultsByTime, timestamp, data)
+function _add_timestamps!(
+    df::DataFrames.DataFrame,
+    results::ResultsByTime,
+    timestamp::Dates.DateTime,
+    data,
+)
     time_col =
         range(timestamp; length = get_num_rows(results, data), step = results.resolution)
     DataFrames.insertcols!(df, 1, :DateTime => time_col)
