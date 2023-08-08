@@ -7,20 +7,16 @@ Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
   - `array`: JuMP DenseAxisArray or SparseAxisArray to convert
   - `key::OptimizationContainerKey`:
 """
-function axis_array_to_dataframe(array::DenseAxisArray, key::OptimizationContainerKey)
+function to_dataframe(array::DenseAxisArray, key::OptimizationContainerKey)
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array))
 end
 
-function axis_array_to_dataframe(array::SparseAxisArray, key::OptimizationContainerKey)
+function to_dataframe(array::SparseAxisArray, key::OptimizationContainerKey)
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array))
-end
-
-function axis_array_to_dataframe(array::Matrix{Float64}, key::OptimizationContainerKey)
-    return DataFrames.DataFrame(array, get_column_names(key, array))
 end
 
 function to_matrix(df::DataFrames.DataFrame)
-    return Matrix{Float64}(vals)
+    return Matrix{Float64}(df)
 end
 
 function to_matrix(df_row::DataFrames.DataFrameRow{DataFrames.DataFrame, DataFrames.Index})
