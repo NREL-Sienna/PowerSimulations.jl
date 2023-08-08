@@ -53,14 +53,15 @@ function write_model_dual_results!(
 
     for (key, constraint) in get_duals(container)
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, update_timestamp, constraint)
+        data = jump_value.(constraint)
+        write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
            should_export_dual(export_params[:exports], index, model_name, key)
             horizon = export_params[:horizon]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
-            df = axis_array_to_dataframe(constraint, key)
+            df = to_dataframe(jump_value.(constraint), key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
@@ -95,7 +96,7 @@ function write_model_parameter_results!(
            should_export_parameter(export_params[:exports], index, model_name, key)
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
-            df = axis_array_to_dataframe(data, key)
+            df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
@@ -126,14 +127,15 @@ function write_model_variable_results!(
 
     for (key, variable) in variables
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, update_timestamp, variable)
+        data = jump_value.(variable)
+        write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
            should_export_variable(export_params[:exports], index, model_name, key)
             horizon = export_params[:horizon]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
-            df = axis_array_to_dataframe(variable, key)
+            df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
@@ -158,14 +160,15 @@ function write_model_aux_variable_results!(
 
     for (key, variable) in get_aux_variables(container)
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, update_timestamp, variable)
+        data = jump_value.(variable)
+        write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
            should_export_aux_variable(export_params[:exports], index, model_name, key)
             horizon = export_params[:horizon]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
-            df = axis_array_to_dataframe(variable, key)
+            df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)
@@ -196,14 +199,15 @@ function write_model_expression_results!(
 
     for (key, expression) in expressions
         !should_write_resulting_value(key) && continue
-        write_result!(store, model_name, key, index, update_timestamp, expression)
+        data = jump_value.(expression)
+        write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
            should_export_expression(export_params[:exports], index, model_name, key)
             horizon = export_params[:horizon]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
-            df = axis_array_to_dataframe(expression, key)
+            df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
             export_result(file_type, exports_path, key, index, df)

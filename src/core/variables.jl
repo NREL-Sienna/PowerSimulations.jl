@@ -178,6 +178,10 @@ struct HVDCFlowDirectionVariable <: VariableType end
 
 struct PieceWiseLinearCostVariable <: VariableType end
 
+struct InterfaceFlowSlackUp <: VariableType end
+
+struct InterfaceFlowSlackDown <: VariableType end
+
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{<:VariableType}) = true
@@ -208,3 +212,5 @@ convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true
+convert_result_to_natural_units(::Type{InterfaceFlowSlackUp}) = true
+convert_result_to_natural_units(::Type{InterfaceFlowSlackDown}) = true

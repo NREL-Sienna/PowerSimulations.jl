@@ -59,7 +59,6 @@ struct FrequencyResponseConstraint <: ConstraintType end
 struct InflowRangeConstraint <: ConstraintType end #not being used
 struct InputPowerRangeConstraint <: ConstraintType end #not being used
 struct InterConnectionLimitConstraint <: ConstraintType end #not being used
-struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
@@ -82,6 +81,7 @@ struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
+struct InterfaceFlowLimit <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end

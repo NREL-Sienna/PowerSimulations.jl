@@ -368,7 +368,7 @@ function update_parameters!(model::EmulationModel, store::EmulationModelStore)
     return
 end
 
-function update_parameters!(model::EmulationModel, data::DatasetContainer{DataFrameDataset})
+function update_parameters!(model::EmulationModel, data::DatasetContainer{InMemoryDataset})
     cost_function_unsynch(get_optimization_container(model))
     for key in keys(get_parameters(model))
         update_parameter_values!(model, key, data)

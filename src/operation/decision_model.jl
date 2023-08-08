@@ -74,10 +74,11 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
         internal = ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
         )
-        finalize_template!(template, sys)
+        template_ = deepcopy(template)
+        finalize_template!(template_, sys)
         return new{M}(
             name,
-            template,
+            template_,
             sys,
             internal,
             DecisionModelStore(),
@@ -519,7 +520,7 @@ end
 
 function update_parameters!(
     model::DecisionModel,
-    decision_states::DatasetContainer{DataFrameDataset},
+    decision_states::DatasetContainer{InMemoryDataset},
 )
     cost_function_unsynch(get_optimization_container(model))
     for key in keys(get_parameters(model))

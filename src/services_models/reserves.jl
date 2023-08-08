@@ -37,7 +37,14 @@ uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 function get_initial_conditions_service_model(
     ::OperationModel,
     ::ServiceModel{T, D},
-) where {T <: PSY.Service, D <: AbstractServiceFormulation}
+) where {T <: PSY.Reserve, D <: AbstractReservesFormulation}
+    return ServiceModel(T, D)
+end
+
+function get_initial_conditions_service_model(
+    ::OperationModel,
+    ::ServiceModel{T, D},
+) where {T <: PSY.VariableReserveNonSpinning, D <: AbstractReservesFormulation}
     return ServiceModel(T, D)
 end
 
@@ -60,13 +67,23 @@ function get_default_time_series_names(
 end
 
 function get_default_time_series_names(
-    ::Type{<:PSY.Service},
-    ::Type{<:AbstractServiceFormulation},
-)
+    ::Type{T},
+    ::Type{<:AbstractReservesFormulation},
+) where {T <: PSY.Reserve}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
-function get_default_attributes(::Type{<:PSY.Service}, ::Type{<:AbstractServiceFormulation})
+function get_default_attributes(
+    ::Type{<:PSY.Reserve},
+    ::Type{<:AbstractReservesFormulation},
+)
+    return Dict{String, Any}()
+end
+
+function get_default_attributes(
+    ::Type{<:PSY.ReserveNonSpinning},
+    ::Type{<:AbstractReservesFormulation},
+)
     return Dict{String, Any}()
 end
 
@@ -101,7 +118,7 @@ function add_constraints!(
 
     ts_vector = get_time_series(container, service, "requirement")
 
-    use_slacks && (slack_vars = reserve_slacks(container, service))
+    use_slacks && (slack_vars = reserve_slacks!(container, service))
     requirement = PSY.get_requirement(service)
     jump_model = get_jump_model(container)
     if parameters
@@ -158,7 +175,7 @@ function add_constraints!(
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
     use_slacks = get_use_slacks(model)
-    use_slacks && (slack_vars = reserve_slacks(container, service))
+    use_slacks && (slack_vars = reserve_slacks!(container, service))
 
     requirement = PSY.get_requirement(service)
     jump_model = get_jump_model(container)

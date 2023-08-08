@@ -12,9 +12,22 @@ end
 
 function add_feedforward_constraints!(
     container::OptimizationContainer,
-    model::ServiceModel,
+    model::ServiceModel{V, <:AbstractReservesFormulation},
     ::V,
 ) where {V <: PSY.AbstractReserve}
+    for ff in get_feedforwards(model)
+        @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
+        contributing_devices = get_contributing_devices(model)
+        add_feedforward_constraints!(container, model, contributing_devices, ff)
+    end
+    return
+end
+
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    model::ServiceModel,
+    ::V,
+) where {V <: PSY.Service}
     for ff in get_feedforwards(model)
         @debug "constraints" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         contributing_devices = get_contributing_devices(model)

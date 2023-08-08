@@ -956,7 +956,7 @@ function get_constraint(
 end
 
 function read_duals(container::OptimizationContainer)
-    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_duals(container))
+    return Dict(k => to_dataframe(jump_value.(v), k) for (k, v) in get_duals(container))
 end
 
 ##################################### Parameter Container ##################################
@@ -1220,9 +1220,9 @@ function read_parameters(container::OptimizationContainer)
     for (k, v) in parameters
         # TODO: all functions similar to calculate_parameter_values should be in one
         # place and be consistent in behavior.
-        #params_dict[k] = axis_array_to_dataframe(calculate_parameter_values(v))
-        param_array = axis_array_to_dataframe(get_parameter_values(v), k)
-        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
+        #params_dict[k] = to_dataframe(calculate_parameter_values(v))
+        param_array = to_dataframe(get_parameter_values(v), k)
+        multiplier_array = to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)
     end
     return params_dict
@@ -1339,7 +1339,7 @@ end
 
 function read_expressions(container::OptimizationContainer)
     return Dict(
-        k => axis_array_to_dataframe(v, k) for (k, v) in get_expressions(container) if
+        k => to_dataframe(jump_value.(v), k) for (k, v) in get_expressions(container) if
         !(get_entry_type(k) <: SystemBalanceExpressions)
     )
 end
@@ -1412,7 +1412,7 @@ function write_initial_conditions_data!(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, key)
+                ic_data_dict[key] = to_dataframe(jump_value.(field_container), key)
             end
         end
     end
@@ -1704,11 +1704,12 @@ function lazy_container_addition!(
     axs...;
     kwargs...,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    if !has_container_key(container, T, U)
+    meta = get(kwargs, :meta, CONTAINER_KEY_EMPTY_META)
+    if !has_container_key(container, T, U, meta)
         cons_container =
             add_constraints_container!(container, constraint, U, axs...; kwargs...)
     else
-        cons_container = get_constraint(container, constraint, U)
+        cons_container = get_constraint(container, constraint, U, meta)
     end
     return cons_container
 end
