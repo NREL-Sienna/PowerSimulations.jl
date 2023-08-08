@@ -39,10 +39,10 @@
     ed_vars = [ActivePowerVariable]
     for (key, data) in state.decision_states.variables
         if PSI.get_entry_type(key) ∈ uc_vars
-            count, _ = size(data.values)
+            _, count = size(data.values)
             @test count == 24
         elseif PSI.get_entry_type(key) ∈ ed_vars
-            count, _ = size(data.values)
+            _, count = size(data.values)
             @test count == 288
         end
     end

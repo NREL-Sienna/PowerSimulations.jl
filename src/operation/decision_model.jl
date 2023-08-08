@@ -463,7 +463,7 @@ end
 
 function update_parameters!(
     model::DecisionModel,
-    decision_states::DatasetContainer{DataFrameDataset},
+    decision_states::DatasetContainer{InMemoryDataset},
 )
     cost_function_unsynch(get_optimization_container(model))
     for key in keys(get_parameters(model))

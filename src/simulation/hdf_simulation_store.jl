@@ -175,12 +175,12 @@ function list_decision_model_keys(
     container_type::Symbol,
 )
     container = getfield(get_dm_data(store)[model], container_type)
-    return keys(container)
+    return collect(keys(container))
 end
 
 function list_emulation_model_keys(store::HdfSimulationStore, container_type::Symbol)
     container = getfield(get_em_data(store), container_type)
-    return keys(container)
+    return collect(keys(container))
 end
 
 function write_optimizer_stats!(
@@ -345,7 +345,7 @@ function read_result(
     if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
         data = reshape(data, length(data), 1)
     end
-    return DataFrames.DataFrame(data, columns)
+    return DataFrames.DataFrame(data, columns; copycols = false)
 end
 
 function read_result(
@@ -355,23 +355,29 @@ function read_result(
     key::OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
-    data, columns = _read_data_columns(store, model_name, key, index)
+    if is_cached(store.cache, model_name, key, index)
+        data = read_result(store.cache, model_name, key, index)
+        columns = get_column_names(store, DecisionModelIndexType, model_name, key)
+    else
+        data, columns = _read_result(store, model_name, key, index)
+    end
     return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
 end
 
 function read_result(
-    ::Type{<:Array},
+    ::Type{Array},
     store::HdfSimulationStore,
     model_name::Symbol,
     key::OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     if is_cached(store.cache, model_name, key, index)
-        data = _read_result(store.cache, model_name, key, index)
+        data = read_result(store.cache, model_name, key, index)
     else
-        # PERF: If this will be commonly used then we need to remove reading of columns.
         data, _ = _read_result(store, model_name, key, index)
     end
+
+    return data
 end
 
 function read_results(
@@ -392,7 +398,28 @@ function read_results(
     end
     columns = get_column_names(key, dataset)
     @assert_op size(data)[2] == length(columns)
-    return DataFrames.DataFrame(data, columns)
+    return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
+end
+
+function get_column_names(
+    store::HdfSimulationStore,
+    ::Type{DecisionModelIndexType},
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+)
+    !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
+    dataset = _get_dm_dataset(store, model_name, key)
+    return get_column_names(key, dataset)
+end
+
+function get_column_names(
+    store::HdfSimulationStore,
+    ::Type{EmulationModelIndexType},
+    key::OptimizationContainerKey,
+)
+    !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
+    dataset = _get_em_dataset(store, key)
+    return get_column_names(key, dataset)
 end
 
 function get_emulation_model_dataset_size(
@@ -400,12 +427,12 @@ function get_emulation_model_dataset_size(
     key::OptimizationContainerKey,
 )
     dataset = _get_em_dataset(store, key)
-    return size(dataset.values)
+    return size(dataset.values)[1]
 end
 
 function _read_result(
     store::HdfSimulationStore,
-    model_name::Symbol,
+    ::Symbol,
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
@@ -492,10 +519,9 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     ::Dates.DateTime,
-    data,
-)
+    data::DenseAxisArray{Float64, N, <:NTuple{N, Any}},
+) where {N}
     output_cache = get_output_cache(store.cache, model_name, key)
-
     cur_size = get_size(store.cache)
     add_result!(output_cache, index, to_matrix(data), is_full(store.cache, cur_size))
 

@@ -1,16 +1,16 @@
 struct SimulationState
     current_time::Base.RefValue{Dates.DateTime}
     last_decision_model::Base.RefValue{Symbol}
-    decision_states::DatasetContainer{DataFrameDataset}
-    system_states::DatasetContainer{DataFrameDataset}
+    decision_states::DatasetContainer{InMemoryDataset}
+    system_states::DatasetContainer{InMemoryDataset}
 end
 
 function SimulationState()
     return SimulationState(
         Ref(UNSET_INI_TIME),
         Ref(:None),
-        DatasetContainer{DataFrameDataset}(),
-        DatasetContainer{DataFrameDataset}(),
+        DatasetContainer{InMemoryDataset}(),
+        DatasetContainer{InMemoryDataset}(),
     )
 end
 
@@ -88,11 +88,11 @@ function _initialize_model_states!(
             !should_write_resulting_value(key) && continue
             value_counts = params[key].horizon ÷ params[key].resolution
             column_names = get_column_names(key, value)
-            if !haskey(field_states, key) || length(field_states[key]) < value_counts
-                field_states[key] = DataFrameDataset(
-                    DataFrames.DataFrame(
-                        fill(NaN, value_counts, length(column_names)),
-                        column_names,
+            if !haskey(field_states, key) || get_num_rows(field_states[key]) < value_counts
+                field_states[key] = InMemoryDataset(
+                    fill!(
+                        DenseAxisArray{Float64}(undef, column_names, 1:value_counts),
+                        NaN,
                     ),
                     collect(
                         range(
@@ -125,7 +125,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                DataFrames.DataFrame(cols .=> NaN),
+                fill!(DenseAxisArray{Float64}(undef, cols, 1:1), NaN),
                 simulation_initial_time,
                 min_res,
             ),
@@ -153,7 +153,7 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 make_system_state(
-                    DataFrames.DataFrame(column_names .=> NaN),
+                    fill!(DenseAxisArray{Float64}(undef, column_names, 1:1), NaN),
                     simulation_initial_time,
                     get_resolution(emulation_model),
                 ),
@@ -173,7 +173,7 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                DataFrames.DataFrame(cols .=> NaN),
+                fill!(DenseAxisArray{Float64}(undef, cols, 1:1), NaN),
                 simulation_initial_time,
                 get_resolution(emulation_model),
             ),
@@ -207,11 +207,12 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::OptimizationContainerKey,
-    store_data::DataFrames.DataFrame,
+    store_data::DenseAxisArray{Float64},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
+    column_names = get_column_names(state_data)
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
@@ -221,19 +222,23 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time; step = state_resolution, length = length(state_data))
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
 
     offset = resolution_ratio - 1
-    result_time_index = axes(store_data)[1]
+    result_time_index = axes(store_data)[2]
     set_update_timestamp!(state_data, simulation_time)
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for name in DataFrames.names(store_data), i in state_range
+        for name in column_names, i in state_range
             # TODO: We could also interpolate here
-            state_data.values[i, name] = store_data[t, name]
+            state_data.values[name, i] = store_data[name, t]
         end
         set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
@@ -244,7 +249,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::AuxVarKey{EnergyOutput, T},
-    store_data::DataFrames.DataFrame,
+    store_data::DenseAxisArray{Float64},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -258,18 +263,23 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time; step = state_resolution, length = length(state_data))
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
 
     offset = resolution_ratio - 1
-    result_time_index = axes(store_data)[1]
+    result_time_index = axes(store_data)[2]
     set_update_timestamp!(state_data, simulation_time)
+    column_names = axes(state_data.values)[1]
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for name in DataFrames.names(store_data), i in state_range
-            state_data.values[i, name] = store_data[t, name] / resolution_ratio
+        for name in column_names, i in state_range
+            state_data.values[name, i] = store_data[name, t] / resolution_ratio
         end
         set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
@@ -281,7 +291,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::AuxVarKey{S, T},
-    store_data::DataFrames.DataFrame,
+    store_data::DenseAxisArray{Float64},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}
@@ -294,13 +304,17 @@ function update_decision_state!(
     if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
-            range(simulation_time; step = state_resolution, length = length(state_data))
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
     else
         state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
     end
 
     offset = resolution_ratio - 1
-    result_time_index = axes(store_data)[1]
+    result_time_index = axes(store_data)[2]
     set_update_timestamp!(state_data, simulation_time)
 
     if resolution_ratio == 1.0
@@ -311,16 +325,17 @@ function update_decision_state!(
         error("Incorrect Problem Resolution specification")
     end
 
+    column_names = axes(state_data.values)[1]
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        @assert_op state_range[end] <= length(state_data)
-        for name in DataFrames.names(store_data), i in state_range
+        @assert_op state_range[end] <= get_num_rows(state_data)
+        for name in column_names, i in state_range
             if t == 1 && i == 1
-                state_data.values[i, name] = store_data[t, name] * resolution_ratio
+                state_data.values[name, i] = store_data[name, t] * resolution_ratio
             else
-                state_data.values[i, name] =
-                    if store_data[t, name] > 0
-                        state_data.values[i - 1, name] + increment_per_period
+                state_data.values[name, i] =
+                    if store_data[name, t] > 0
+                        state_data.values[name, i - 1] + increment_per_period
                     else
                         0
                     end
@@ -354,11 +369,11 @@ function get_system_state_data(state::SimulationState, key::OptimizationContaine
 end
 
 function get_system_state_value(state::SimulationState, key::OptimizationContainerKey)
-    return get_dataset_values(get_system_states(state), key)[1, :]
+    return get_dataset_values(get_system_states(state), key)[:, 1]
 end
 
 function update_system_state!(
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
     key::OptimizationContainerKey,
     store::SimulationStore,
     model_name::Symbol,
@@ -366,7 +381,7 @@ function update_system_state!(
 )
     em_data = get_em_data(store)
     ix = get_last_recorded_row(em_data, key)
-    res = read_result(DataFrames.DataFrame, store, model_name, key, ix)
+    res = read_result(DenseAxisArray, store, model_name, key, ix)
     dataset = get_dataset(state, key)
     set_update_timestamp!(dataset, simulation_time)
     set_dataset_values!(state, key, 1, res)
@@ -375,9 +390,9 @@ function update_system_state!(
 end
 
 function update_system_state!(
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
     key::OptimizationContainerKey,
-    decision_state::DatasetContainer{DataFrameDataset},
+    decision_state::DatasetContainer{InMemoryDataset},
     simulation_time::Dates.DateTime,
 )
     decision_dataset = get_dataset(decision_state, key)
@@ -409,9 +424,9 @@ function update_system_state!(
 end
 
 function update_system_state!(
-    state::DatasetContainer{DataFrameDataset},
+    state::DatasetContainer{InMemoryDataset},
     key::AuxVarKey{T, PSY.ThermalStandard},
-    decision_state::DatasetContainer{DataFrameDataset},
+    decision_state::DatasetContainer{InMemoryDataset},
     simulation_time::Dates.DateTime,
 ) where {T <: Union{TimeDurationOn, TimeDurationOff}}
     decision_dataset = get_dataset(decision_state, key)

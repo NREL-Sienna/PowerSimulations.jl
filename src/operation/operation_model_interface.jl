@@ -315,24 +315,15 @@ function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
 end
 
-function read_dual(model::OperationModel, key::ConstraintKey)
-    return read_results(get_store(model), key)
-end
+read_dual(model::OperationModel, key::ConstraintKey) = _read_results(model, key)
+read_parameter(model::OperationModel, key::ParameterKey) = _read_results(model, key)
+read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, key)
+read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
+read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
 
-function read_parameter(model::OperationModel, key::ParameterKey)
-    return read_results(get_store(model), key)
-end
-
-function read_aux_variable(model::OperationModel, key::AuxVarKey)
-    return read_results(get_store(model), key)
-end
-
-function read_variable(model::OperationModel, key::VariableKey)
-    return read_results(get_store(model), key)
-end
-
-function read_expression(model::OperationModel, key::ExpressionKey)
-    return read_results(get_store(model), key)
+function _read_results(model::OperationModel, key::OptimizationContainerKey)
+    res = read_results(get_store(model), key)
+    return DataFrames.DataFrame(permutedims(res.data), axes(res)[1])
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))
