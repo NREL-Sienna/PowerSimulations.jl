@@ -458,10 +458,13 @@ function load_results!(
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
     res.results_timestamps = _process_timestamps(res, initial_time, count)
     dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
-    parameter_keys = ParameterKey[_deserialize_key(ParameterKey, res, x...) for x in parameters]
+    parameter_keys =
+        ParameterKey[_deserialize_key(ParameterKey, res, x...) for x in parameters]
     variable_keys = VariableKey[_deserialize_key(VariableKey, res, x...) for x in variables]
-    aux_variable_keys = AuxVarKey[_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
-    expression_keys = ExpressionKey[_deserialize_key(ExpressionKey, res, x...) for x in expressions]
+    aux_variable_keys =
+        AuxVarKey[_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
+    expression_keys =
+        ExpressionKey[_deserialize_key(ExpressionKey, res, x...) for x in expressions]
     function merge_results(store)
         merge!(
             get_cached_variables(res),
