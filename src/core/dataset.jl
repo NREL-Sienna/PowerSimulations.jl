@@ -167,13 +167,13 @@ function get_last_updated_timestamp(s::HDF5Dataset)
 end
 
 function get_value_timestamp(s::HDF5Dataset, date::Dates.DateTime)
+    error("Not implemented for HDF5Dataset. Required if it is used for simulation state.")
     # TODO: This code is broken because timestamps is not a field.
-    # The function is called for InMemoryDataset but not HDF5Dataset.
-    s_index = find_timestamp_index(s.timestamps, date)
-    if isnothing(s_index)
-        error("Request time stamp $date not in the state")
-    end
-    return s.initial_timestamp + s.resolution * (s_index - 1)
+    #s_index = find_timestamp_index(s.timestamps, date)
+    #if isnothing(s_index)
+    #    error("Request time stamp $date not in the state")
+    #end
+    #return s.initial_timestamp + s.resolution * (s_index - 1)
 end
 
 function set_value!(s::HDF5Dataset, vals, index::Int)
