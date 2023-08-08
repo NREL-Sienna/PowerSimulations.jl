@@ -15,10 +15,6 @@ function to_dataframe(array::SparseAxisArray, key::OptimizationContainerKey)
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array))
 end
 
-function to_dataframe(array::Matrix{Float64}, key::OptimizationContainerKey)
-    return DataFrames.DataFrame(array, get_column_names(key, array))
-end
-
 function to_matrix(df::DataFrames.DataFrame)
     return Matrix{Float64}(df)
 end
