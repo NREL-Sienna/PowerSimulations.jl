@@ -393,3 +393,11 @@ function list_all_keys(x::OperationModel)
         keys(get_data_field(get_store(x), f)) for f in STORE_CONTAINERS
     )
 end
+
+function serialize_optimization_model(model::OperationModel, save_path::String)
+    serialize_jump_optimization_model(
+        get_optimization_container(model),
+        save_path,
+    )
+    return
+end

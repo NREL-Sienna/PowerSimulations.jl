@@ -181,6 +181,7 @@ export get_realized_timestamps
 export get_problem_base_power
 export get_objective_value
 export read_optimizer_stats
+export serialize_optimization_model
 
 ## Utils Exports
 export get_all_constraint_index
