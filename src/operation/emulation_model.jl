@@ -16,7 +16,7 @@ struct GenericEmulationProblem <: DefaultEmulationProblem end
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:EmulationProblem}
 
-Builds the optimization problem of type M with the specific system and template.
+Build the optimization problem of type M with the specific system and template.
 
 # Arguments
 
@@ -126,7 +126,7 @@ function EmulationModel{M}(
 end
 
 """
-Builds the optimization problem of type M with the specific system and template
+Build the optimization problem of type M with the specific system and template
 
 # Arguments
 
