@@ -311,6 +311,17 @@ function test_decision_problem_results_values(
         @test size(var)[1] == 48
     end
 
+    # Test custom indexing.
+    realized_variable_uc2 =
+        read_realized_variables(
+            results_uc,
+            [(ActivePowerVariable, ThermalStandard)];
+            start_time = Dates.DateTime("2024-01-01T01:00:00"),
+            len = 47,
+        )
+    @test realized_variable_uc["ActivePowerVariable__ThermalStandard"][2:end, :] ==
+          realized_variable_uc2["ActivePowerVariable__ThermalStandard"]
+
     realized_param_uc = read_realized_parameters(results_uc)
     @test length(keys(realized_param_uc)) == 3
     for param in values(realized_param_uc)
