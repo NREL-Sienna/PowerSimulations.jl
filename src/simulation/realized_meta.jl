@@ -59,6 +59,7 @@ function get_realization(
         columns = get_column_names(results_by_time)
         num_cols = length(columns)
         matrix = Matrix{Float64}(undef, num_rows, num_cols)
+        row_index = 1
         for (step, (_, array)) in enumerate(results_by_time)
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
@@ -69,9 +70,9 @@ function get_realization(
               Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
                 )
             end
-            row_start = (step - 1) * meta.interval_len + 1
-            row_end = row_start + last_id - first_id
-            matrix[row_start:row_end, :] = array[first_id:last_id, :]
+            row_end = row_index + last_id - first_id
+            matrix[row_index:row_end, :] = array[first_id:last_id, :]
+            row_index += last_id - first_id + 1
         end
         df = DataFrames.DataFrame(matrix, collect(columns); copycols = false)
         DataFrames.insertcols!(
