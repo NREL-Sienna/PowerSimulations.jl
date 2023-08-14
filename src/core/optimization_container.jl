@@ -699,7 +699,7 @@ end
 Exports the OpModel JuMP object in MathOptFormat
 """
 function serialize_optimization_model(container::OptimizationContainer, save_path::String)
-    serialize_optimization_model(get_jump_model(container), save_path)
+    serialize_jump_optimization_model(get_jump_model(container), save_path)
     return
 end
 

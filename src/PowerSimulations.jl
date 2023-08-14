@@ -276,10 +276,7 @@ export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCLosses
-export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
-export InputPowerRangeConstraint
-export InterConnectionLimitConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
