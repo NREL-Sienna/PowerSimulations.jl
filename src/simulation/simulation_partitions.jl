@@ -129,7 +129,7 @@ function process_simulation_partition_cli_args(build_function, execute_function,
     base_dir = _get_output_dir_name(output_dir, sim_name)
 
     if operation == "setup"
-        required = Set(("num-steps", "num-period-steps"))
+        required = Set(("simulation-name", "num-steps", "num-period-steps"))
         throw_if_missing(keys(options), required, operation)
         if !haskey(options, "num-overlap-steps")
             options["num-overlap-steps"] = "0"
@@ -142,7 +142,7 @@ function process_simulation_partition_cli_args(build_function, execute_function,
         config_logging(joinpath(output_dir, "setup_partition_simulation.log"))
         build_function(output_dir, sim_name, partitions)
     elseif operation == "execute"
-        throw_if_missing(keys(options), Set(("index")), operation)
+        throw_if_missing(keys(options), Set(("simulation-name", "index")), operation)
         index = parse(Int, options["index"])
         partition_output_dir = joinpath(base_dir, "simulation_partitions", string(index))
         config_file = joinpath(base_dir, "simulation_partitions", "config.json")
