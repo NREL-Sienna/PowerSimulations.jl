@@ -245,7 +245,6 @@ export EnergyOutput
 
 # Constraints
 export AbsoluteValueConstraint
-export ActiveConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint

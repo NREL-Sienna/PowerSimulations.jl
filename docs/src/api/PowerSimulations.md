@@ -179,7 +179,6 @@ PieceWiseLinearCostConstraint
 ### Network Constraints
 
 ```@docs
-ActiveConstraint
 AreaDispatchBalanceConstraint
 AreaParticipationAssignmentConstraint
 BalanceAuxConstraint
