@@ -68,18 +68,93 @@ These methods can be defined optionally for your problem. By default for problem
 
 ### How to develop your `build_model!` function
 
+#### Registering a variable in the model
 
+To register a variable in the model, the developer must first allocate the container into the
+optimization container and then populate it. For example, it require start the build function as follows:
+
+!!! info
+    We recommend calling `import PowerSimulations` and defining the constant `CONST PSI = PowerSimulations` to
+    make it easier to read the code and determine which package is responsible for defining the functions.
 
 ```julia
-function PSI.build_model!(model::PSI.DecisionModel{MyCustomDecisionProblem})
-    container = PSI.get_optimization_container(model)
-    PSI.set_time_steps!(container, 1:24) # <- Mandatory
-    system = PSI.get_system(model)
+    function PSI.build_model!(model::PSI.DecisionModel{MyCustomDecisionProblem})
+        container = PSI.get_optimization_container(model)
+        time_steps = 1:24
+        PSI.set_time_steps!(container, time_steps)
+        system = PSI.get_system(model)
 
+        thermal_gens = PSY.get_components(PSY.ThermalStandard, system)
+        thermal_gens_names = PSY.get_name.(thermal_gens)
 
+        # Create the container for the variable
+        variable = PSI.add_variable_container!(
+            container,
+            PSI.ActivePowerVariable(), # <- This variable is defined in PowerSimulations but the user can define their own
+            PSY.ThermalGeneration, # <- Device type for the variable. Can be from PSY or custom defined
+            thermal_gens_names, # <- First container dimension
+            time_steps, # <- Second container dimension
+        )
 
-    update_objective_function!(container) # <- Mandatory
-end
+        # Iterate over the devices and time to store the JuMP variables into the container.
+        for t in time_steps, d in thermal_gens_names
+            name = PSY.get_name(d)
+            variable[name, t] = JuMP.@variable(get_jump_model(container))
+            # It is possible to use PSY getter functions to retrieve data from the generators
+            JuMP.set_upper_bound(variable[name, t], UB_DATA) # <- Optional
+            JuMP.set_lower_bound(variable[name, t], LB_DATA) # <- Optional
+        end
+
+        # Add More Variables.....
+
+        return
+    end
 ```
 
-## Emulation Problem
+#### Registering a constraint in the model
+
+A similar pattern is used to add constraints to the model, in this example the field `meta` is used
+to avoid creating unnecessary duplicate constraint types. For instance to reflect upper_bound and lower_bound or upwards and downwards constraints. Meta can take any string value except for the `_` character.
+
+```julia
+    function PSI.build_model!(model::PSI.DecisionModel{MyCustomDecisionProblem})
+        container = PSI.get_optimization_container(model)
+        time_steps = 1:24
+        PSI.set_time_steps!(container, time_steps)
+        system = PSI.get_system(model)
+
+        # VARIABLE ADDITION CODE
+
+        # Constraint additions
+        con_ub = PSI.add_constraints_container!(
+            container,
+            PSI.RangeLimitConstraint(), # <- Constraint Type defined by PSI or your own
+            PSY.ThermalGeneration, # <- Device type for variable. Can be PSY or custom
+            thermal_gens_names, # <- First container dimension
+            time_steps; # <- Second container dimension
+            meta = "ub" # <- meta allows to reuse a constraint definition for similar constraints. It only requires to be a string
+            )
+
+        con_lb = PSI.add_constraints_container!(
+            container,
+            PSI.RangeLimitConstraint(),
+            PSY.ThermalGeneration,
+            thermal_gens_names, # <- First container dimension
+            time_steps; # <- Second container dimension
+            meta = "lb" # <- meta allows to reuse a constraint definition for similar constraints. It only requires to be a string
+            )
+
+        # Retrieve a relevant variable from the container if not defined in
+        variable = PSI.get_variable(container, PSI.ActivePowerVariable(), PSY.ThermalGeneration)
+        for device in devices, t in time_steps
+            ci_name = PSY.get_name(device)
+            limits = get_min_max_limits(device) # depends on constraint type and formulation type
+            con_ub[ci_name, t] =
+                JuMP.@constraint(get_jump_model(container), variable[ci_name, t] >= limits.min)
+            con_lb[ci_name, t] =
+                JuMP.@constraint(get_jump_model(container), variable[ci_name, t] >= limits.min)
+        end
+
+        return
+    end
+```
