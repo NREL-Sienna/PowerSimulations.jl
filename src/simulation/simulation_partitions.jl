@@ -126,12 +126,7 @@ function process_simulation_partition_cli_args(build_function, execute_function,
     sim_name = options["simulation-name"]
 
     # increment output_dir for new executions
-    execution_no = _get_most_recent_execution(output_dir, sim_name)
-    if execution_no == 1
-        base_dir = joinpath(output_dir, sim_name)
-    else
-        base_dir = joinpath(output_dir, "$(sim_name)-$execution_no")
-    end
+    base_dir = _get_output_dir_name(output_dir, sim_name)
 
     if operation == "setup"
         required = Set(("num-steps", "num-period-steps"))
