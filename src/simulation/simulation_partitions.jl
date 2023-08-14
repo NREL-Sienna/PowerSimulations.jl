@@ -130,7 +130,7 @@ function process_simulation_partition_cli_args(build_function, execute_function,
         base_dir = joinpath(output_dir, sim_name)
     else
         id = _get_most_recent_execution(output_dir, sim_name)
-        base_dir = joinpath(path, "$sim_name-$id")
+        base_dir = joinpath(output_dir, "$sim_name-$id")
     end
 
     if operation == "setup"
