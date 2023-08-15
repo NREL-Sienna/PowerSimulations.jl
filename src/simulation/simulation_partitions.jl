@@ -126,7 +126,7 @@ function process_simulation_partition_cli_args(build_function, execute_function,
     sim_name = options["simulation-name"]
 
     # increment output_dir for new executions
-    if isempty(readdir(output_dir))
+    if !isdir(joinpath(output_dir, sim_name))
         base_dir = joinpath(output_dir, sim_name)
     else
         id = _get_most_recent_execution(output_dir, sim_name)
