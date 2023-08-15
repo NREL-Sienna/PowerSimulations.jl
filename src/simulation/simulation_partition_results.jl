@@ -14,7 +14,10 @@ struct SimulationPartitionResults
     datasets::Dict{String, HDF5.Dataset}
 end
 
-function SimulationPartitionResults(path::AbstractString, simulation_name::String = basename(path))
+function SimulationPartitionResults(
+    path::AbstractString,
+    simulation_name::String = basename(path),
+)
     config_file = joinpath(path, "simulation_partitions", "config.json")
     config = open(config_file, "r") do io
         JSON3.read(io, Dict)
