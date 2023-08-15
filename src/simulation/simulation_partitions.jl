@@ -170,7 +170,7 @@ function process_simulation_partition_cli_args(build_function, execute_function,
         end
         partitions = IS.deserialize(SimulationPartitions, config)
         config_logging(joinpath(base_dir, "logs", "join_partitioned_simulation.log"))
-        join_simulation(base_dir)
+        join_simulation(base_dir, sim_name)
     else
         error("Unsupported operation=$operation")
     end
