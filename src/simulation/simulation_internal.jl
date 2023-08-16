@@ -93,6 +93,7 @@ function make_dirs(internal::SimulationInternal)
 end
 
 function _get_output_dir_name(path, sim_name)
+    isempty(readdir(path)) && return joinpath(path, sim_name)
     index = _get_most_recent_execution(path, sim_name) + 1
     return joinpath(path, "$sim_name-$index")
 end

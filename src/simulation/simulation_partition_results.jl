@@ -14,7 +14,10 @@ struct SimulationPartitionResults
     datasets::Dict{String, HDF5.Dataset}
 end
 
-function SimulationPartitionResults(path::AbstractString)
+function SimulationPartitionResults(
+    path::AbstractString,
+    simulation_name::String = basename(path),
+)
     config_file = joinpath(path, "simulation_partitions", "config.json")
     config = open(config_file, "r") do io
         JSON3.read(io, Dict)
@@ -22,7 +25,7 @@ function SimulationPartitionResults(path::AbstractString)
     partitions = IS.deserialize(SimulationPartitions, config)
     return SimulationPartitionResults(
         path,
-        basename(path),
+        simulation_name,
         partitions,
         Dict{String, HDF5.Dataset}(),
     )
@@ -31,8 +34,8 @@ end
 """
 Combine all partition simulation files.
 """
-function join_simulation(path::AbstractString)
-    results = SimulationPartitionResults(path)
+function join_simulation(path::AbstractString, simulation_name::String)
+    results = SimulationPartitionResults(path, simulation_name)
     join_simulation(results)
     return
 end

@@ -122,6 +122,18 @@ function process_simulation_partition_cli_args(build_function, execute_function,
         error("output-dir must be specified as a CLI option or environment variable")
     end
 
+    throw_if_missing(keys(options), Set(("simulation-name",)), operation)
+    sim_name = options["simulation-name"]
+
+    # increment output_dir for new executions
+    if !isdir(joinpath(output_dir, sim_name))
+        base_dir = joinpath(output_dir, sim_name)
+    else
+        id = _get_most_recent_execution(output_dir, sim_name)
+        sim_folder = id > 1 ? "$sim_name-$id" : sim_name
+        base_dir = joinpath(output_dir, sim_folder)
+    end
+
     if operation == "setup"
         required = Set(("simulation-name", "num-steps", "num-period-steps"))
         throw_if_missing(keys(options), required, operation)
@@ -134,11 +146,10 @@ function process_simulation_partition_cli_args(build_function, execute_function,
         num_overlap_steps = parse(Int, options["num-overlap-steps"])
         partitions = SimulationPartitions(num_steps, num_period_steps, num_overlap_steps)
         config_logging(joinpath(output_dir, "setup_partition_simulation.log"))
-        build_function(output_dir, options["simulation-name"], partitions)
+        build_function(output_dir, sim_name, partitions)
     elseif operation == "execute"
         throw_if_missing(keys(options), Set(("simulation-name", "index")), operation)
         index = parse(Int, options["index"])
-        base_dir = joinpath(output_dir, options["simulation-name"])
         partition_output_dir = joinpath(base_dir, "simulation_partitions", string(index))
         config_file = joinpath(base_dir, "simulation_partitions", "config.json")
         config = open(config_file, "r") do io
@@ -154,15 +165,13 @@ function process_simulation_partition_cli_args(build_function, execute_function,
         )
         execute_function(sim)
     elseif operation == "join"
-        throw_if_missing(keys(options), Set(("simulation-name",)), operation)
-        base_dir = joinpath(output_dir, options["simulation-name"])
         config_file = joinpath(base_dir, "simulation_partitions", "config.json")
         config = open(config_file, "r") do io
             JSON3.read(io, Dict)
         end
         partitions = IS.deserialize(SimulationPartitions, config)
         config_logging(joinpath(base_dir, "logs", "join_partitioned_simulation.log"))
-        join_simulation(base_dir)
+        join_simulation(base_dir, sim_name)
     else
         error("Unsupported operation=$operation")
     end
