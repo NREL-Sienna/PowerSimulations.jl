@@ -70,7 +70,7 @@ export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
 ###### Hydro #######
-export HydroDispatchRunOfRiver
+# export HydroDispatchRunOfRiver
 export HydroCommitmentRunOfRiver
 
 # feedforward models

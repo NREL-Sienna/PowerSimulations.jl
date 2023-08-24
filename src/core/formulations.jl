@@ -73,19 +73,19 @@ Formulation type to enable (continuous) load interruption dispatch
 struct PowerLoadDispatch <: AbstractControllablePowerLoadFormulation end
 
 ############################ Hydro Generation Formulations #################################
-abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
-abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
-abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
+# abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
+# abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
+# abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
 
-"""
-Formulation type to add injection variables constrained by a maximum injection time series for `HydroGen`
-"""
-struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
+# """
+# Formulation type to add injection variables constrained by a maximum injection time series for `HydroGen`
+# """
+# struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 
-"""
-Formulation type to add commitment and injection variables constrained by a maximum injection time series for `HydroGen`
-"""
-struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
+# """
+# Formulation type to add commitment and injection variables constrained by a maximum injection time series for `HydroGen`
+# """
+# struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 
 ############################ Regulation Device Formulations ################################
 abstract type AbstractRegulationFormulation <: AbstractDeviceFormulation end
