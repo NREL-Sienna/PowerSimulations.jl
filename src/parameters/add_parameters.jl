@@ -34,11 +34,10 @@ function add_parameters!(
     return
 end
 
-#=
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
-    ff::AbstractAffectFeedforward,
+    ff::LowerBoundFeedforward,
     model::ServiceModel{S, W},
     devices::V,
 ) where {
@@ -54,7 +53,6 @@ function add_parameters!(
     _add_parameters!(container, T(), source_key, model, devices)
     return
 end
-=#
 
 function add_parameters!(
     container::OptimizationContainer,
