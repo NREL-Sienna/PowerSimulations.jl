@@ -34,6 +34,7 @@ function add_parameters!(
     return
 end
 
+#=
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -53,6 +54,7 @@ function add_parameters!(
     _add_parameters!(container, T(), source_key, model, devices)
     return
 end
+=#
 
 function add_parameters!(
     container::OptimizationContainer,
@@ -107,6 +109,27 @@ function add_parameters!(
     return
 end
 
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ff::FixValueFeedforward,
+    model::ServiceModel{K, W},
+    devices::V,
+) where {
+    T <: VariableValueParameter,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractServiceFormulation,
+    K <: PSY.Reserve,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    source_key = get_optimization_container_key(ff)
+    _add_parameters!(container, T(), source_key, model, devices)
+    _set_affected_variables!(container, T(), K, ff)
+    return
+end
+
 function _set_affected_variables!(
     container::OptimizationContainer,
     ::T,
@@ -119,6 +142,23 @@ function _set_affected_variables!(
     source_key = get_optimization_container_key(ff)
     var_type = get_entry_type(source_key)
     parameter_container = get_parameter(container, T(), U, "$var_type")
+    param_attributes = get_attributes(parameter_container)
+    affected_variables = get_affected_values(ff)
+    push!(param_attributes.affected_keys, affected_variables...)
+    return
+end
+
+function _set_affected_variables!(
+    container::OptimizationContainer,
+    ::T,
+    device_type::Type{U},
+    ff::FixValueFeedforward,
+) where {
+    T <: VariableValueParameter,
+    U <: PSY.Service,
+}
+    meta = ff.optimization_container_key.meta
+    parameter_container = get_parameter(container, T(), U, meta)
     param_attributes = get_attributes(parameter_container)
     affected_variables = get_affected_values(ff)
     push!(param_attributes.affected_keys, affected_variables...)

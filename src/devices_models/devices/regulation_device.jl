@@ -180,8 +180,8 @@ function add_constraints!(
     R_dn = get_variable(container, DeltaActivePowerDownVariable(), T)
     R_up_emergency = get_variable(container, AdditionalDeltaActivePowerUpVariable(), T)
     R_dn_emergency = get_variable(container, AdditionalDeltaActivePowerUpVariable(), T)
-    area_reserve_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.Area)
-    area_reserve_dn = get_variable(container, DeltaActivePowerDownVariable(), PSY.Area)
+    area_reserve_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.AGC)
+    area_reserve_dn = get_variable(container, DeltaActivePowerDownVariable(), PSY.AGC)
 
     component_names = [PSY.get_name(d) for d in devices]
     participation_assignment_up = add_constraints_container!(
@@ -208,9 +208,11 @@ function add_constraints!(
         services = PSY.get_services(d)
         if length(services) > 1
             device_agc = (a for a in PSY.get_services(d) if isa(a, PSY.AGC))
+            agc_name = PSY.get_name.(device_agc)[1]
             area_name = PSY.get_name.(PSY.get_area.(device_agc))[1]
         else
             device_agc = first(services)
+            agc_name = PSY.get_name(device_agc)
             area_name = PSY.get_name(PSY.get_area(device_agc))
         end
         p_factor = PSY.get_participation_factor(d)
@@ -218,12 +220,12 @@ function add_constraints!(
             participation_assignment_up[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 R_up[name, t] ==
-                (p_factor.up * area_reserve_up[area_name, t]) + R_up_emergency[name, t]
+                (p_factor.up * area_reserve_up[agc_name, t]) + R_up_emergency[name, t]
             )
             participation_assignment_dn[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 R_dn[name, t] ==
-                (p_factor.dn * area_reserve_dn[area_name, t]) + R_dn_emergency[name, t]
+                (p_factor.dn * area_reserve_dn[agc_name, t]) + R_dn_emergency[name, t]
             )
             JuMP.add_to_expression!(expr_up[area_name, t], -1 * R_up_emergency[name, t])
             JuMP.add_to_expression!(expr_dn[area_name, t], -1 * R_dn_emergency[name, t])
