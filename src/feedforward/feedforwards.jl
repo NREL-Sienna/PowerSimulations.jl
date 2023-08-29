@@ -54,10 +54,12 @@ Adds an upper bound constraint to a variable.
 struct UpperBoundFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector
+    add_slacks::Bool
     function UpperBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType},
+        affected_values::Vector{DataType};
+        add_slacks::Bool = false,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
@@ -71,7 +73,7 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values_vector)
+        new(get_optimization_container_key(T(), component_type, meta), values_vector, add_slacks)
     end
 end
 
@@ -84,10 +86,12 @@ Adds a lower bound constraint to a variable.
 struct LowerBoundFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
+    add_slacks::Bool
     function LowerBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType},
+        affected_values::Vector{DataType};
+        add_slacks::Bool = false,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
@@ -101,7 +105,7 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values_vector)
+        new(get_optimization_container_key(T(), component_type, meta), values_vector, add_slacks)
     end
 end
 
@@ -117,7 +121,7 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
     function SemiContinuousFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType},
+        affected_values::Vector{DataType};
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
@@ -173,7 +177,7 @@ struct EnergyLimitFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        number_of_periods::Int,
+        number_of_periods::Int;
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
@@ -209,7 +213,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
     function FixValueFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType},
+        affected_values::Vector{DataType};
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
@@ -243,7 +247,7 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         target_period::Int,
-        penalty_cost::Float64,
+        penalty_cost::Float64;
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
