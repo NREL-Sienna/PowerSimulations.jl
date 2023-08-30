@@ -58,7 +58,7 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
     function UpperBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType};
+        affected_values::Vector{DataType},
         add_slacks::Bool = false,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
@@ -90,7 +90,7 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
     function LowerBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType};
+        affected_values::Vector{DataType},
         add_slacks::Bool = false,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
@@ -121,7 +121,7 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
     function SemiContinuousFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType};
+        affected_values::Vector{DataType},
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
@@ -177,7 +177,7 @@ struct EnergyLimitFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        number_of_periods::Int;
+        number_of_periods::Int,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
@@ -213,7 +213,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
     function FixValueFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
-        affected_values::Vector{DataType};
+        affected_values::Vector{DataType},
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
@@ -247,7 +247,7 @@ struct EnergyTargetFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         target_period::Int,
-        penalty_cost::Float64;
+        penalty_cost::Float64,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
