@@ -73,7 +73,11 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values_vector, add_slacks)
+        new(
+            get_optimization_container_key(T(), component_type, meta),
+            values_vector,
+            add_slacks,
+        )
     end
 end
 
@@ -105,7 +109,11 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values_vector, add_slacks)
+        new(
+            get_optimization_container_key(T(), component_type, meta),
+            values_vector,
+            add_slacks,
+        )
     end
 end
 
