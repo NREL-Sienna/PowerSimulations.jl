@@ -10,7 +10,6 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 
-
 ############################### Reserve Variables` #########################################
 """
 This function checks if the variables for reserves were created

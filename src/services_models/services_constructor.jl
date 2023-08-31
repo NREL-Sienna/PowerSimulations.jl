@@ -358,6 +358,14 @@ function construct_service!(
         model,
     )
 
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_services,
+        model,
+    )
+
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -401,6 +409,13 @@ function construct_service!(
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     add_constraints!(container, RampConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_services,
+        model,
+    )
 
     objective_function!(container, service, model)
 
@@ -452,6 +467,14 @@ function construct_service!(
         ReservePowerConstraint,
         service,
         contributing_devices,
+        model,
+    )
+
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_services,
         model,
     )
 
@@ -526,6 +549,13 @@ function construct_service!(
         )
     end
 
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_services,
+        model,
+    )
     add_constraints!(container, InterfaceFlowLimit, service, model)
     add_feedforward_constraints!(container, model, service)
     add_constraint_dual!(container, sys, model)

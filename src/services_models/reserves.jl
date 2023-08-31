@@ -151,6 +151,53 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
+    T::Type{ParticipationFractionConstraint},
+    service::SR,
+    contributing_devices::U,
+    ::ServiceModel{SR, V},
+) where {
+    SR <: PSY.AbstractReserve,
+    V <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Device}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    cons = add_constraints_container!(
+        container,
+        T(),
+        SR,
+        [PSY.get_name(d) for d in contributing_devices],
+        time_steps;
+        meta = service_name,
+    )
+    var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
+    max_participation_factor = PSY.max_participation_factor(service)
+    jump_model = get_jump_model(container)
+    requirement = PSY.get_requirement(service)
+    ts_vector = get_time_series(container, service, "requirement")
+    param_container =
+        get_parameter(container, RequirementTimeSeriesParameter(), SR, service_name)
+    param = get_parameter_column_refs(param_container, service_name)
+    for t in time_steps, d in contributing_devices
+        if parameters
+            cons[service_name, t] =
+                JuMP.@constraint(
+                    jump_model,
+                    var_r[name, t] <= param[t] * requirement * max_participation_factor
+                )
+        else
+            cons[service_name, t] = JuMP.@constraint(
+                jump_model,
+                var_r[name, t] <= ts_vector[t] * requirement * max_participation_factor
+            )
+        end
+    end
+
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
     T::Type{RequirementConstraint},
     service::SR,
     ::U,
