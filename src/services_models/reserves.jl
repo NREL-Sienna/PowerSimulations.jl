@@ -16,7 +16,6 @@ get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning,
 get_variable_upper_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning, d::PSY.Storage, _) =  PSY.get_output_active_power_limits(d).max
 get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning, ::PSY.Component, _) = 0.0
 
-
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
 get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}, ::AbstractReservesFormulation) = false

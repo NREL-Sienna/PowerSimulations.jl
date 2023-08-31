@@ -534,7 +534,6 @@ include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/reserve_group.jl")
 include("services_models/transmission_interface.jl")
-include("services_models/group_reserve.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
 
