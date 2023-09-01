@@ -234,6 +234,8 @@ export FlowReactivePowerFromToVariable
 export FlowReactivePowerToFromVariable
 export PowerAboveMinimumVariable
 export PhaseShifterAngle
+export UpperBoundFeedForwardSlack
+export LowerBoundFeedForwardSlack
 
 # Auxiliary variables
 export TimeDurationOn

@@ -364,7 +364,6 @@ end
     ]
     found_vars = 0
     for (k, var_array) in model.internal.container.variables
-        @show PSI.encode_key(k)
         if PSI.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)

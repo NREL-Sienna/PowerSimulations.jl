@@ -83,6 +83,7 @@ end
 
 get_default_parameter_type(::UpperBoundFeedforward, _) = UpperBoundValueParameter
 get_optimization_container_key(ff::UpperBoundFeedforward) = ff.optimization_container_key
+get_slacks(ff::UpperBoundFeedforward) = ff.add_slacks
 
 """
 Adds a lower bound constraint to a variable.
@@ -119,6 +120,7 @@ end
 
 get_default_parameter_type(::LowerBoundFeedforward, _) = LowerBoundValueParameter
 get_optimization_container_key(ff::LowerBoundFeedforward) = ff.optimization_container_key
+get_slacks(ff::LowerBoundFeedforward) = ff.add_slacks
 
 """
 Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.

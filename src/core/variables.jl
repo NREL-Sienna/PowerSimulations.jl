@@ -189,6 +189,10 @@ struct InterfaceFlowSlackUp <: VariableType end
 
 struct InterfaceFlowSlackDown <: VariableType end
 
+struct UpperBoundFeedForwardSlack <: VariableType end
+
+struct LowerBoundFeedForwardSlack <: VariableType end
+
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{<:VariableType}) = true
