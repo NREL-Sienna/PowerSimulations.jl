@@ -160,6 +160,12 @@ function add_constraints!(
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Device}
+    max_participation_factor = PSY.max_participation_factor(service)
+
+    if max_participation_factor >= 1.0
+        return
+    end
+
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
     cons = add_constraints_container!(
@@ -171,7 +177,6 @@ function add_constraints!(
         meta = service_name,
     )
     var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-    max_participation_factor = PSY.max_participation_factor(service)
     jump_model = get_jump_model(container)
     requirement = PSY.get_requirement(service)
     ts_vector = get_time_series(container, service, "requirement")
