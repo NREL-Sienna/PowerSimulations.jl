@@ -290,6 +290,7 @@ export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
 export PieceWiseLinearCostConstraint
 export ParticipationAssignmentConstraint
+export ParticipationFractionConstraint
 export PhaseAngleControlLimit
 export RampConstraint
 export RampLimitConstraint
