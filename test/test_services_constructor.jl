@@ -353,7 +353,6 @@ end
         ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
     )
 
-
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, 648, 0, 384, 216, 72, false)
@@ -378,7 +377,7 @@ end
 
     participation_constraints = [
         :ParticipationFractionConstraint__VariableReserve__ReserveUp__Reserve11,
-        :ParticipationFractionConstraint__VariableReserve__ReserveDown__Reserve2
+        :ParticipationFractionConstraint__VariableReserve__ReserveDown__Reserve2,
     ]
 
     found_constraints = 0
