@@ -121,7 +121,7 @@ function add_constraints!(
     use_slacks && (slack_vars = reserve_slacks!(container, service))
     requirement = PSY.get_requirement(service)
     jump_model = get_jump_model(container)
-    if parameters
+    if built_for_recurrent_solves(container)
         param_container =
             get_parameter(container, RequirementTimeSeriesParameter(), SR, service_name)
         param = get_parameter_column_refs(param_container, service_name)
@@ -185,14 +185,15 @@ function add_constraints!(
         get_parameter(container, RequirementTimeSeriesParameter(), SR, service_name)
     param = get_parameter_column_refs(param_container, service_name)
     for t in time_steps, d in contributing_devices
-        if parameters
-            cons[service_name, t] =
+        name = PSY.get_name(d)
+        if built_for_recurrent_solves(container)
+            cons[name, t] =
                 JuMP.@constraint(
                     jump_model,
                     var_r[name, t] <= param[t] * requirement * max_participation_factor
                 )
         else
-            cons[service_name, t] = JuMP.@constraint(
+            cons[name, t] = JuMP.@constraint(
                 jump_model,
                 var_r[name, t] <= ts_vector[t] * requirement * max_participation_factor
             )
