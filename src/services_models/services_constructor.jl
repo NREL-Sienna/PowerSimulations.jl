@@ -358,14 +358,6 @@ function construct_service!(
         model,
     )
 
-    add_constraints!(
-        container,
-        ParticipationFractionConstraint,
-        service,
-        contributing_services,
-        model,
-    )
-
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -413,7 +405,7 @@ function construct_service!(
         container,
         ParticipationFractionConstraint,
         service,
-        contributing_services,
+        contributing_devices,
         model,
     )
 
@@ -474,7 +466,7 @@ function construct_service!(
         container,
         ParticipationFractionConstraint,
         service,
-        contributing_services,
+        contributing_devices,
         model,
     )
 

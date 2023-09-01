@@ -7,6 +7,7 @@ get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::Abstr
 function get_variable_upper_bound(::ActivePowerReserveVariable, r::PSY.Reserve, d::PSY.Device, _)
     return PSY.get_max_output_fraction(r) * PSY.get_max_active_power(d)
 end
+get_variable_upper_bound(::ActivePowerReserveVariable, r::PSY.ReserveDemandCurve, d::PSY.Device, _) = PSY.get_max_active_power(d)
 get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.Reserve, ::PSY.Device, _) = 0.0
 
 ############################### ActivePowerReserveVariable, ReserveNonSpinning #########################################
@@ -160,7 +161,7 @@ function add_constraints!(
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Device}
-    max_participation_factor = PSY.max_participation_factor(service)
+    max_participation_factor = PSY.get_max_participation_factor(service)
 
     if max_participation_factor >= 1.0
         return
