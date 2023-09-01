@@ -319,10 +319,10 @@ The Parameters are initialized using the uppper boundary values of the provided 
 """
 function add_feedforward_constraints!(
     container::OptimizationContainer,
-    ::DeviceModel,
+    ::DeviceModel{T, U},
     devices::IS.FlattenIteratorWrapper{T},
     ff::LowerBoundFeedforward,
-) where {T <: PSY.Component}
+) where {T <: PSY.Component, U <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
     param_ub = get_parameter_array(container, parameter_type(), T)
@@ -344,10 +344,20 @@ function add_feedforward_constraints!(
         )
 
         for t in time_steps, name in set_name
-            con_ub[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                variable[name, t] >= param_ub[name, t] * multiplier_ub[name, t]
-            )
+            if use_slacks
+                slack_var =
+                    get_variable(container, LowerBoundFeedForwardSlack(), T, "$(var_type)")
+                con_ub[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name, t] >=
+                    param_ub[name, t] * multiplier_ub[name, t] + slack_var[name, t]
+                )
+            else
+                con_ub[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name, t] >= param_ub[name, t] * multiplier_ub[name, t]
+                )
+            end
         end
     end
     return
@@ -358,16 +368,18 @@ function add_feedforward_constraints!(
     model::ServiceModel{T, U},
     contributing_devices::Vector{V},
     ff::LowerBoundFeedforward,
-) where {T, U, V <: PSY.Component}
+) where {T <: PSY.Service, U <: AbstractServiceFormulation, V <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
     param_ub = get_parameter_array(container, parameter_type(), T, get_service_name(model))
+    service_name = get_service_name(model)
     multiplier_ub = get_parameter_multiplier_array(
         container,
         parameter_type(),
         T,
-        get_service_name(model),
+        service_name,
     )
+    use_slacks = get_slacks(ff)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
@@ -375,20 +387,35 @@ function add_feedforward_constraints!(
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
-        con_ub = add_constraints_container!(
+        con_lb = add_constraints_container!(
             container,
             FeedforwardLowerBoundConstraint(),
             T,
             set_name,
             time_steps;
-            meta = "$(var_type)lb",
+            meta = "$(var_type)_$(service_name)",
         )
 
         for t in time_steps, name in set_name
-            con_ub[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                variable[name, t] >= param_ub[name, t] * multiplier_ub[name, t]
-            )
+            if use_slacks
+                slack_var = get_variable(
+                    container,
+                    LowerBoundFeedForwardSlack(),
+                    T,
+                    "$(var_type)_$(service_name)",
+                )
+                slack_var[name, t]
+                con_lb[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name, t] >=
+                    param_ub[name, t] * multiplier_ub[name, t] + slack_var[name, t]
+                )
+            else
+                con_lb[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name, t] >= param_ub[name, t] * multiplier_ub[name, t]
+                )
+            end
         end
     end
     return
