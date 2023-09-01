@@ -22,19 +22,22 @@
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, 648, 0, 120, 216, 72, false)
     reserve_variables = [
-        :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1
-        :ActivePowerReserveVariable__ReserveDemandCurve_ReserveUp_ORDC1
-        :ActivePowerReserveVariable__VariableReserve_ReserveDown_Reserve2
-        :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11
+        :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
+        :ActivePowerReserveVariable__ReserveDemandCurve__ReserveUp__ORDC1
+        :ActivePowerReserveVariable__VariableReserve__ReserveDown__Reserve2
+        :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve11
     ]
+    found_vars = 0
     for (k, var_array) in model.internal.container.variables
         if PSI.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
             end
+            found_vars += 1
         end
     end
+    @test found_vars == 4
 end
 
 @testset "Test Ramp Reserves from Thermal Dispatch" begin
@@ -324,4 +327,67 @@ end
     model.internal.container.built_for_recurrent_solves = true
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, 456, 0, 120, 264, 24, false)
+end
+
+@testset "Test Reserves with Participation factor limits" begin
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    for service in get_components(Reserve, c_sys5_uc)
+        set_max_participation_factor!(service, 0.8)
+    end
+
+    template = get_thermal_dispatch_template_network(CopperPlatePowerModel)
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
+    )
+
+
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, 648, 0, 384, 216, 72, false)
+    reserve_variables = [
+        :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
+        :ActivePowerReserveVariable__ReserveDemandCurve__ReserveUp__ORDC1
+        :ActivePowerReserveVariable__VariableReserve__ReserveDown__Reserve2
+        :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve11
+    ]
+    found_vars = 0
+    for (k, var_array) in model.internal.container.variables
+        @show PSI.encode_key(k)
+        if PSI.encode_key(k) in reserve_variables
+            for var in var_array
+                @test JuMP.has_lower_bound(var)
+                @test JuMP.lower_bound(var) == 0.0
+            end
+            found_vars += 1
+        end
+    end
+    @test found_vars == 4
+
+    participation_constraints = [
+        :ParticipationFractionConstraint__VariableReserve__ReserveUp__Reserve11,
+        :ParticipationFractionConstraint__VariableReserve__ReserveDown__Reserve2
+    ]
+
+    found_constraints = 0
+
+    for (k, _) in model.internal.container.constraints
+        if PSI.encode_key(k) in participation_constraints
+            found_constraints += 1
+        end
+    end
+
+    @test found_constraints == 2
 end
