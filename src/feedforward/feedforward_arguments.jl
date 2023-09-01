@@ -47,6 +47,34 @@ end
 
 function _add_feedforward_arguments!(
     container::OptimizationContainer,
+    model::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::V,
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: Union{LowerBoundFeedforward, UpperBoundFeedforward}}
+    parameter_type = get_default_parameter_type(ff, T)
+    add_parameters!(container, parameter_type, ff, model, devices)
+    if get_slacks(ff)
+        _add_slack_variable!(container, FeedForwardSlack(), ff, devices, U)
+    end
+    return
+end
+
+function _add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::ServiceModel{SR},
+    contributing_devices::Vector{T},
+    ff::U,
+) where {T <: PSY.Component, SR <: PSY.AbstractReserve, U <: Union{LowerBoundFeedforward, UpperBoundFeedforward}}
+    parameter_type = get_default_parameter_type(ff, SR)
+    add_parameters!(container, parameter_type, ff, model, contributing_devices)
+    if get_slacks(ff)
+        _add_slack_variable!(container, FeedForwardSlack(), ff, model, contributing_devices)
+    end
+    return
+end
+
+function _add_feedforward_arguments!(
+    container::OptimizationContainer,
     model::DeviceModel,
     devices::IS.FlattenIteratorWrapper{T},
     ff::SemiContinuousFeedforward,
