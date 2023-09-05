@@ -234,6 +234,8 @@ export FlowReactivePowerFromToVariable
 export FlowReactivePowerToFromVariable
 export PowerAboveMinimumVariable
 export PhaseShifterAngle
+export UpperBoundFeedForwardSlack
+export LowerBoundFeedForwardSlack
 
 # Auxiliary variables
 export TimeDurationOn
@@ -290,6 +292,7 @@ export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
 export PieceWiseLinearCostConstraint
 export ParticipationAssignmentConstraint
+export ParticipationFractionConstraint
 export PhaseAngleControlLimit
 export RampConstraint
 export RampLimitConstraint
@@ -534,7 +537,6 @@ include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/reserve_group.jl")
 include("services_models/transmission_interface.jl")
-include("services_models/group_reserve.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
 

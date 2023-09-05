@@ -69,6 +69,7 @@ struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
+struct ParticipationFractionConstraint <: ConstraintType end
 struct PieceWiseLinearCostConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end

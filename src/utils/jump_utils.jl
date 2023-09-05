@@ -1,6 +1,6 @@
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
-    param = JuMP.@variable(jump_model)
+    param = JuMP.@variable(jump_model, base_name = "param")
     JuMP.fix(param, val; force = true)
     return param
 end

@@ -125,7 +125,13 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
@@ -172,7 +178,13 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
@@ -241,18 +253,18 @@ function construct_service!(
     if !isempty(setdiff(areas, agc_areas))
         throw(
             IS.ConflictingInputsError(
-                "All area most have an AGC service assigned in order to model the System's Frequency regulation",
+                "All area must have an AGC service assigned in order to model the System's Frequency regulation",
             ),
         )
     end
 
     add_variables!(container, SteadyStateFrequencyDeviation)
-    add_variables!(container, AreaMismatchVariable, areas, T())
-    add_variables!(container, SmoothACE, areas, T())
-    add_variables!(container, LiftVariable, areas, T())
+    add_variables!(container, AreaMismatchVariable, services, T())
+    add_variables!(container, SmoothACE, services, T())
+    add_variables!(container, LiftVariable, services, T())
     add_variables!(container, ActivePowerVariable, areas, T())
-    add_variables!(container, DeltaActivePowerUpVariable, areas, T())
-    add_variables!(container, DeltaActivePowerDownVariable, areas, T())
+    add_variables!(container, DeltaActivePowerUpVariable, services, T())
+    add_variables!(container, DeltaActivePowerDownVariable, services, T())
     add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas, T())
     add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas, T())
 
@@ -291,12 +303,12 @@ function construct_service!(
     areas = PSY.get_components(PSY.Area, sys)
     services = get_available_components(S, sys)
 
-    add_constraints!(container, AbsoluteValueConstraint, LiftVariable, areas, model)
+    add_constraints!(container, AbsoluteValueConstraint, LiftVariable, services, model)
     add_constraints!(
         container,
         FrequencyResponseConstraint,
         SteadyStateFrequencyDeviation,
-        areas,
+        services,
         model,
         sys,
     )
@@ -304,17 +316,17 @@ function construct_service!(
         container,
         SACEPIDAreaConstraint,
         SteadyStateFrequencyDeviation,
-        areas,
+        services,
         model,
         sys,
     )
-    add_constraints!(container, BalanceAuxConstraint, SmoothACE, areas, model, sys)
+    add_constraints!(container, BalanceAuxConstraint, SmoothACE, services, model, sys)
 
     add_feedforward_constraints!(container, model, services)
 
     add_constraint_dual!(container, sys, model)
 
-    objective_function!(container, areas, model)
+    objective_function!(container, services, model)
     return
 end
 
@@ -401,6 +413,13 @@ function construct_service!(
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     add_constraints!(container, RampConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
 
     objective_function!(container, service, model)
 
@@ -450,6 +469,14 @@ function construct_service!(
     add_constraints!(
         container,
         ReservePowerConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
         service,
         contributing_devices,
         model,
@@ -526,6 +553,13 @@ function construct_service!(
         )
     end
 
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_services,
+        model,
+    )
     add_constraints!(container, InterfaceFlowLimit, service, model)
     add_feedforward_constraints!(container, model, service)
     add_constraint_dual!(container, sys, model)

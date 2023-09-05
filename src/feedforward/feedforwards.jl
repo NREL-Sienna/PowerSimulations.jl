@@ -54,10 +54,12 @@ Adds an upper bound constraint to a variable.
 struct UpperBoundFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector
+    add_slacks::Bool
     function UpperBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
+        add_slacks::Bool = false,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
@@ -71,12 +73,17 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values_vector)
+        new(
+            get_optimization_container_key(T(), component_type, meta),
+            values_vector,
+            add_slacks,
+        )
     end
 end
 
 get_default_parameter_type(::UpperBoundFeedforward, _) = UpperBoundValueParameter
 get_optimization_container_key(ff::UpperBoundFeedforward) = ff.optimization_container_key
+get_slacks(ff::UpperBoundFeedforward) = ff.add_slacks
 
 """
 Adds a lower bound constraint to a variable.
@@ -84,10 +91,12 @@ Adds a lower bound constraint to a variable.
 struct LowerBoundFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
     affected_values::Vector{<:OptimizationContainerKey}
+    add_slacks::Bool
     function LowerBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
+        add_slacks::Bool = false,
         meta = CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
@@ -101,12 +110,42 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
                 )
             end
         end
-        new(get_optimization_container_key(T(), component_type, meta), values_vector)
+        new(
+            get_optimization_container_key(T(), component_type, meta),
+            values_vector,
+            add_slacks,
+        )
     end
 end
 
 get_default_parameter_type(::LowerBoundFeedforward, _) = LowerBoundValueParameter
 get_optimization_container_key(ff::LowerBoundFeedforward) = ff.optimization_container_key
+get_slacks(ff::LowerBoundFeedforward) = ff.add_slacks
+
+function attach_feedforward!(
+    model::ServiceModel,
+    ff::T,
+) where {T <: Union{LowerBoundFeedforward, UpperBoundFeedforward}}
+    if get_feedforward_meta(ff) != NO_SERVICE_NAME_PROVIDED
+        ff_ = ff
+    else
+        ff_ = T(;
+            component_type = get_component_type(ff),
+            source = get_entry_type(get_optimization_container_key(ff)),
+            affected_values = [get_entry_type(get_optimization_container_key(ff))],
+            meta = model.service_name,
+            add_slacks = ff.add_slacks,
+        )
+    end
+    if !isempty(model.feedforwards)
+        ff_k = [get_optimization_container_key(v) for v in model.feedforwards if isa(v, T)]
+        if get_optimization_container_key(ff_) ∈ ff_k
+            return
+        end
+    end
+    push!(model.feedforwards, ff_)
+    return
+end
 
 """
 Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.
