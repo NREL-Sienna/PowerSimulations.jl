@@ -69,12 +69,14 @@ end
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
+        use_slacks = true,
     )
 
     @test_throws ErrorException LowerBoundFeedforward(
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
+        use_slacks = true,
     )
 
     @test_throws ErrorException SemiContinuousFeedforward(
