@@ -80,11 +80,10 @@ function _add_feedforward_slack_variables!(container::OptimizationContainer,
                 lower_bound = 0.0
             )
             add_to_objective_invariant_expression!(
-            container,
-            variable_container[name, t] * BALANCE_SLACK_COST,
-        )
+                container,
+                variable_container[name, t] * BALANCE_SLACK_COST,
+            )
         end
-
     end
     return
 end
