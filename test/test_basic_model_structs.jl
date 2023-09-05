@@ -23,11 +23,13 @@ end
             component_type = RenewableDispatch,
             source = ActivePowerVariable,
             affected_values = [ActivePowerVariable],
+            add_slacks = true,
         ),
         LowerBoundFeedforward(;
             component_type = RenewableDispatch,
             source = ActivePowerVariable,
             affected_values = [ActivePowerVariable],
+            add_slacks = true,
         ),
         SemiContinuousFeedforward(;
             component_type = ThermalMultiStart,
@@ -69,14 +71,14 @@ end
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
-        use_slacks = true,
+        add_slacks = true,
     )
 
     @test_throws ErrorException LowerBoundFeedforward(
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
-        use_slacks = true,
+        add_slacks = true,
     )
 
     @test_throws ErrorException SemiContinuousFeedforward(
