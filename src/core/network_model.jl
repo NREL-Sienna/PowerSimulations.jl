@@ -69,12 +69,6 @@ function instantiate_network_model(
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
-
-    if length(model.subnetworks) > 1
-        error(
-            "System Contains Multiple Subnetworks. This is not compatible with network model $T",
-        )
-    end
     return
 end
 
