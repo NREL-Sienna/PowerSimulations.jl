@@ -349,8 +349,8 @@ function add_feedforward_constraints!(
                     get_variable(container, LowerBoundFeedForwardSlack(), T, "$(var_type)")
                 con_ub[name, t] = JuMP.@constraint(
                     get_jump_model(container),
-                    variable[name, t] >=
-                    param_ub[name, t] * multiplier_ub[name, t] + slack_var[name, t]
+                    variable[name, t] + slack_var[name, t] >=
+                    param_ub[name, t] * multiplier_ub[name, t]
                 )
             else
                 con_ub[name, t] = JuMP.@constraint(
@@ -407,8 +407,8 @@ function add_feedforward_constraints!(
                 slack_var[name, t]
                 con_lb[name, t] = JuMP.@constraint(
                     get_jump_model(container),
-                    variable[name, t] >=
-                    param_ub[name, t] * multiplier_ub[name, t] + slack_var[name, t]
+                    variable[name, t] + slack_var[name, t] >=
+                    param_ub[name, t] * multiplier_ub[name, t]
                 )
             else
                 con_lb[name, t] = JuMP.@constraint(
