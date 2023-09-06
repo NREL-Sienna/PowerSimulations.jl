@@ -8,8 +8,6 @@ function _default_devices_uc()
         DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
         DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
         DeviceModel(PSY.RenewableFix, FixedOutput),
-        DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
-        DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
         DeviceModel(PSY.PowerLoad, StaticPowerLoad),
         DeviceModel(PSY.InterruptiblePowerLoad, PowerLoadInterruption),
         DeviceModel(PSY.Line, StaticBranch),
