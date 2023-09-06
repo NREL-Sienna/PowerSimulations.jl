@@ -343,6 +343,7 @@ function add_feedforward_constraints!(
             meta = "$(var_type)lb",
         )
 
+        use_slacks = get_slacks(ff)
         for t in time_steps, name in set_name
             if use_slacks
                 slack_var =

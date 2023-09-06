@@ -26,8 +26,6 @@ end
 Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
 
 struct AbsoluteValueConstraint <: ConstraintType end
-struct ActiveConstraint <: ConstraintType end
-struct ActiveRangeConstraint <: ConstraintType end #not being used
 struct ActiveRangeICConstraint <: ConstraintType end
 struct AreaDispatchBalanceConstraint <: ConstraintType end
 struct AreaParticipationAssignmentConstraint <: ConstraintType end
@@ -36,12 +34,6 @@ struct CommitmentConstraint <: ConstraintType end
 struct CopperPlateBalanceConstraint <: ConstraintType end
 struct DurationConstraint <: ConstraintType end
 struct EnergyBalanceConstraint <: ConstraintType end
-struct EnergyBudgetConstraint <: ConstraintType end
-struct EnergyCapacityConstraint <: ConstraintType end
-struct EnergyCapacityDownConstraint <: ConstraintType end
-struct EnergyCapacityUpConstraint <: ConstraintType end
-struct EnergyLimitConstraint <: ConstraintType end # not being used
-struct EnergyTargetConstraint <: ConstraintType end
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
@@ -62,9 +54,6 @@ struct FlowReactivePowerFromToConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerToFromConstraint <: ConstraintType end #not being used
 struct HVDCPowerBalance <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
-struct InflowRangeConstraint <: ConstraintType end #not being used
-struct InputPowerRangeConstraint <: ConstraintType end #not being used
-struct InterConnectionLimitConstraint <: ConstraintType end #not being used
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
@@ -81,8 +70,8 @@ struct RegulationLimitsConstraint <: ConstraintType end
 struct RequirementConstraint <: ConstraintType end
 struct ReserveEnergyCoverageConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
-struct SACEPIDAreaConstraint <: ConstraintType end #not being used
-struct StartTypeConstraint <: ConstraintType end #not being used
+struct SACEPIDAreaConstraint <: ConstraintType end
+struct StartTypeConstraint <: ConstraintType end
 struct StartupInitialConditionConstraint <: ConstraintType end
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end

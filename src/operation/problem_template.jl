@@ -31,6 +31,18 @@ mutable struct ProblemTemplate
     end
 end
 
+function Base.isempty(template::ProblemTemplate)
+    if !isempty(template.devices)
+        return false
+    elseif !isempty(template.branches)
+        return false
+    elseif !isempty(template.services)
+        return false
+    else
+        return true
+    end
+end
+
 ProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel} =
     ProblemTemplate(NetworkModel(T))
 ProblemTemplate() = ProblemTemplate(CopperPlatePowerModel)

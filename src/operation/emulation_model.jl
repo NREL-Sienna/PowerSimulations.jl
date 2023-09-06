@@ -1,7 +1,13 @@
 """
-Default PowerSimulations Emulation Problem Type
+Abstract type for models than employ PowerSimulations methods. For custom emulation problems
+    use EmulationProblem as the super type.
 """
-struct GenericEmulationProblem <: EmulationProblem end
+abstract type DefaultEmulationProblem <: EmulationProblem end
+
+"""
+Default PowerSimulations Emulation Problem Type for unspecified problems
+"""
+struct GenericEmulationProblem <: DefaultEmulationProblem end
 
 """
     EmulationModel{M}(
@@ -10,7 +16,7 @@ struct GenericEmulationProblem <: EmulationProblem end
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:EmulationProblem}
 
-This builds the optimization problem of type M with the specific system and template.
+Build the optimization problem of type M with the specific system and template.
 
 # Arguments
 
@@ -63,12 +69,6 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
             name = nameof(M)
         elseif name isa String
             name = Symbol(name)
-        end
-        _, ts_count, _ = PSY.get_time_series_counts(sys)
-        if ts_count < 1
-            error(
-                "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
-            )
         end
         finalize_template!(template, sys)
         internal = ModelInternal(
@@ -126,7 +126,7 @@ function EmulationModel{M}(
 end
 
 """
-This builds the optimization problem of type M with the specific system and template
+Build the optimization problem of type M with the specific system and template
 
 # Arguments
 
@@ -163,6 +163,30 @@ function EmulationModel(
 end
 
 """
+Builds an empty emulation model. This constructor is used for the implementation of custom
+emulation models that do not require a template.
+
+# Arguments
+
+  - `::Type{M} where M<:EmulationProblem`: The abstract operation model type
+  - `sys::PSY.System`: the system created using Power Systems
+  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
+
+# Example
+
+```julia
+problem = EmulationModel(system, optimizer)
+```
+"""
+function EmulationModel{M}(
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    kwargs...,
+) where {M <: EmulationProblem}
+    return EmulationModel{M}(template, sys, jump_model; kwargs...)
+end
+
+"""
 Construct an EmulationProblem from a serialized file.
 
 # Arguments
@@ -192,6 +216,10 @@ function EmulationModel(
     )
 end
 
+get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
+validate_template(::EmulationModel{<:EmulationProblem}) = nothing
+validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
+
 function get_current_time(model::EmulationModel)
     execution_count = get_internal(model).execution_count
     initial_time = get_initial_time(model)
@@ -217,9 +245,22 @@ function init_model_store_params!(model::EmulationModel)
     return
 end
 
+function validate_time_series(model::EmulationModel{<:DefaultEmulationProblem})
+    sys = get_system(model)
+    _, ts_count, _ = PSY.get_time_series_counts(sys)
+    if ts_count < 1
+        error(
+            "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
+        )
+    end
+    return
+end
+
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
-        if !is_empty(model)
+        validate_template(model)
+        validate_time_series(model)
+        if !isempty(model)
             @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
             reset!(model)
         end
@@ -232,14 +273,22 @@ function build_pre_step!(model::EmulationModel)
             get_network_formulation(get_template(model)),
             get_system(model),
         )
-        @info "Instantiating Network Model"
-        instantiate_network_model(model)
 
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-        handle_initial_conditions!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
+    return
+end
+
+function build_impl!(model::EmulationModel{<:EmulationProblem})
+    build_pre_step!(model)
+    @info "Instantiating Network Model"
+    instantiate_network_model(model)
+    handle_initial_conditions!(model)
+    build_model!(model)
+    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
+    log_values(get_settings(model))
     return
 end
 
@@ -326,7 +375,7 @@ function update_parameters!(model::EmulationModel, data::DatasetContainer{InMemo
     end
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
-        obj_func = get_objective_function(get_optimization_container(model))
+        obj_func = get_objective_expression(get_optimization_container(model))
         set_synchronized_status(obj_func, true)
     end
     return

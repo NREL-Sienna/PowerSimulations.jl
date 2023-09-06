@@ -2,7 +2,9 @@
 
 ## D
 
-* *Decision Problem*: A decision problem calculates the desired system operation based on forecasts of uncertain inputs and information about the state of the system. The output of a decision problem represents the policies used to drive the set-points of the system's devices, like generators or switches, and depends on the purpose of the problem.
+* *Decision Problem*: A decision problem calculates the desired system operation based on forecasts of uncertain inputs and information about the state of the system. The output of a decision problem represents the policies used to drive the set-points of the system's devices, like generators or switches, and depends on the purpose of the problem. See the [Decision Model Tutorial](op_problem_tutorial) to learn more about solving individual problems.
+
+* *Device Formulation*: The model of a device that is incorporated into a large system optimization models. For instance, the storage device model used inside of a Unit Commitment (UC) problem. A device model needs to follow some requirements to be integrated into operation problems.
 
 ## E
 
@@ -10,12 +12,12 @@
 
 ## H
 
-* *Horizon*: The number of steps in the look-ahead of a decision problem. For instance, a Day-ahead problem usually has a 48 step horizon.
+* *Horizon*: The number of steps in the look-ahead of a decision problem. For instance, a Day-Ahead problem usually has a 48 step horizon. Check the time [Time Series Data Section in PowerSystems.jl](https://nrel-sienna.github.io/PowerSystems.jl/stable/modeler_guide/time_series/)
 
 ## I
 
-* *Interval*:
+* *Interval*: The amount of time between updates to the decision problem. For instance, Day-Ahead problems usually have a 24-hour intervals and Real-Time problems have 5-minute intervals. Check the time [Time Series Data Section in PowerSystems.jl](https://nrel-sienna.github.io/PowerSystems.jl/stable/modeler_guide/time_series/)
 
 ## R
 
-* *Resolution*: The amount of time between timesteps in a simulation. For instance 1-hour or 5-minutes. In Julia these are defined using the syntax `Hour(1)` and `Minute(5)`
+* *Resolution*: The amount of time between timesteps in a simulation. For instance 1-hour or 5-minutes. In Julia these are defined using the syntax `Hour(1)` and `Minute(5)`. Check the time [Time Series Data Section in PowerSystems.jl](https://nrel-sienna.github.io/PowerSystems.jl/stable/modeler_guide/time_series/)

@@ -19,8 +19,9 @@ using HiGHS # solver
 
 ## Data
 
-This data depends upon the [RTS-GMLC](https://github.com/gridmod/rts-gmlc) dataset. Let's
-use [PowerSystemCaseBuilder.jl](https://github.com/nrel-sienna/powersystemcasebuilder.jl) to download and build a `System`.
+!!! note
+    `PowerSystemCaseBuilder.jl` is a helper library that makes it easier to reproduce examples in the documentation and tutorials. Normally you would pass your local files to create the system data instead of calling the function `build_system`.
+    For more details visit [PowerSystemCaseBuilder Documentation](https://nrel-sienna.github.io/PowerSystems.jl/stable/tutorials/powersystembuilder/)
 
 ```@example op_problem
 sys = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
@@ -40,8 +41,8 @@ and the subtypes of `AbstractDeviceFormulation`. PowerSimulations has a variety 
 each dispatching to different methods for populating optimization problem objectives, variables,
 and constraints. Documentation on the formulation options for various devices can be found in the [formulation library docs](https://nrel-sienna.github.io/PowerSimulations.jl/latest/formulation_library/General/#formulation_library)
 
-
 ### Branch Formulations
+
 Here is an example of relatively standard branch formulations. Other formulations allow
 for selective enforcement of transmission limits and greater control on transformer settings.
 
@@ -64,7 +65,7 @@ set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
 set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
 set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
 set_device_model!(template_uc, HydroDispatch, FixedOutput)
-set_device_model!(template_uc, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+set_device_model!(template_uc, HydroDispatchRunOfRiver, HydroDispatchRunOfRiver)
 set_device_model!(template_uc, RenewableFix, FixedOutput)
 ```
 
@@ -117,14 +118,11 @@ build!(problem, output_dir = mktempdir())
 ```
 
 !!! tip
-    The principal component of the `DecisionModel` is the JuMP model. For small problems, you can inspect it by simply printing it to the screen:
-    ```julia jump_model
-    print(PowerSimulations.get_jump_model(problem))
-    ```
-    For anything of reasonable size, that will be unmanageable. But you can print to a file:
+    The principal component of the `DecisionModel` is the JuMP model. But you can serialize to a file using the following command:
     ```julia
-    f = open("testmodel.txt","w"); print(f,PowerSimulations.get_jump_model(problem)); close(f)
+        serialize_optimization_model(problem, save_path)
     ```
+    Keep in mind that if the setting "store_variable_names" is set to `False` then the file won't show the model's names.
 
 ### Solve an `DecisionModel`
 

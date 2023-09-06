@@ -69,10 +69,6 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
-###### Hydro #######
-export HydroDispatchRunOfRiver
-export HydroCommitmentRunOfRiver
-
 # feedforward models
 export UpperBoundFeedforward
 export LowerBoundFeedforward
@@ -181,6 +177,7 @@ export get_realized_timestamps
 export get_problem_base_power
 export get_objective_value
 export read_optimizer_stats
+export serialize_optimization_model
 
 ## Utils Exports
 export get_all_constraint_index
@@ -212,7 +209,6 @@ export ReactivePowerVariable
 export ReservationVariable
 export ActivePowerReserveVariable
 export ServiceRequirementVariable
-export WaterSpillageVariable
 export StartVariable
 export StopVariable
 export SteadyStateFrequencyDeviation
@@ -245,7 +241,6 @@ export EnergyOutput
 
 # Constraints
 export AbsoluteValueConstraint
-export ActiveConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint
@@ -256,12 +251,6 @@ export CommitmentConstraint
 export CopperPlateBalanceConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
-export EnergyBudgetConstraint
-export EnergyCapacityConstraint
-export EnergyCapacityDownConstraint
-export EnergyCapacityUpConstraint
-export EnergyLimitConstraint
-export EnergyTargetConstraint
 export EqualityConstraint
 export FeedforwardSemiContinousConstraint
 export FeedforwardUpperBoundConstraint
@@ -282,10 +271,7 @@ export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCLosses
-export InflowRangeConstraint
 export InputActivePowerVariableLimitsConstraint
-export InputPowerRangeConstraint
-export InterConnectionLimitConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
@@ -315,8 +301,6 @@ export StartupTimeLimitTemperatureConstraint
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
-export EnergyTargetTimeSeriesParameter
-export EnergyBudgetTimeSeriesParameter
 
 # Feedforward Parameters
 export OnStatusParameter
@@ -372,6 +356,7 @@ import Distributed
 
 # Base Imports
 import Base.getindex
+import Base.isempty
 import Base.length
 import Base.first
 import InteractiveUtils: methodswith
@@ -457,13 +442,11 @@ include("core/dataset.jl")
 include("core/dataset_container.jl")
 include("core/results_by_time.jl")
 
+# Order Required
+include("operation/problem_template.jl")
 include("core/optimization_container.jl")
 include("core/store_common.jl")
-
-# Order Required
 include("initial_conditions/initial_condition_chronologies.jl")
-
-include("operation/problem_template.jl")
 include("operation/operation_model_interface.jl")
 include("operation/model_store_params.jl")
 include("operation/abstract_model_store.jl")
@@ -529,7 +512,6 @@ include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/DC_branches.jl")
-include("devices_models/devices/hydro_generation.jl")
 include("devices_models/devices/regulation_device.jl")
 
 # Services Models
@@ -552,7 +534,6 @@ include("initial_conditions/initialization.jl")
 # Device constructors
 include("devices_models/device_constructors/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
-include("devices_models/device_constructors/hydrogeneration_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")
 include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")

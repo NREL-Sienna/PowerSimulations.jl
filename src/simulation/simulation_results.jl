@@ -230,7 +230,6 @@ An example JSON file demonstrating possible options is below. Note that `start_t
       "name": "ED",
       "variables": [
         "P__ThermalStandard",
-        "E__HydroEnergyReservoir"
       ],
       "parameters": [
         "all"
