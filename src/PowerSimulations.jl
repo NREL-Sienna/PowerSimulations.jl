@@ -517,7 +517,6 @@ include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/TwoTerminalDC_branches.jl")
 include("devices_models/devices/HVDCsystems.jl")
-include("devices_models/devices/DC_branches.jl")
 include("devices_models/devices/regulation_device.jl")
 
 # Services Models
