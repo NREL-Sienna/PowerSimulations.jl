@@ -7,6 +7,7 @@ const PSY = PowerSystems
 using Logging
 using PowerSystemCaseBuilder
 using PowerNetworkMatrices
+using HydroPowerSimulations
 using HiGHS
 using Dates
 

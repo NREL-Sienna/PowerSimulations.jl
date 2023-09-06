@@ -9,10 +9,10 @@ end
 end
 
 @testset "ServiceModel Tests" begin
-    @test_throws ArgumentError ServiceModel(AGC, PSI.AbstractServiceFormulation, "TestName")
+    @test_throws ArgumentError ServiceModel(AGC, PSI.AbstractAGCFormulation, "TestName")
     @test_throws ArgumentError ServiceModel(
         VariableReserve{PSY.ReserveUp},
-        PSI.AbstractServiceFormulation,
+        PSI.AbstractReservesFormulation,
         "TestName2",
     )
 end
@@ -23,11 +23,13 @@ end
             component_type = RenewableDispatch,
             source = ActivePowerVariable,
             affected_values = [ActivePowerVariable],
+            add_slacks = true,
         ),
         LowerBoundFeedforward(;
             component_type = RenewableDispatch,
             source = ActivePowerVariable,
             affected_values = [ActivePowerVariable],
+            add_slacks = true,
         ),
         SemiContinuousFeedforward(;
             component_type = ThermalMultiStart,
@@ -69,12 +71,14 @@ end
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
+        add_slacks = true,
     )
 
     @test_throws ErrorException LowerBoundFeedforward(
         component_type = RenewableDispatch,
         source = ActivePowerVariable,
         affected_values = [OnStatusParameter],
+        add_slacks = true,
     )
 
     @test_throws ErrorException SemiContinuousFeedforward(

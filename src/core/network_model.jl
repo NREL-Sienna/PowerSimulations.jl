@@ -48,7 +48,7 @@ end
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
 get_duals(m::NetworkModel) = m.duals
-get_network_formulation(::NetworkModel{T}) where {T <: PM.AbstractPowerModel} = T
+get_network_formulation(::NetworkModel{T}) where {T} = T
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
     collect(keys(m.subnetworks))
 get_subnetworks(m::NetworkModel) = m.subnetworks
@@ -68,12 +68,6 @@ function instantiate_network_model(
 ) where {T <: PM.AbstractPowerModel}
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
-    end
-
-    if length(model.subnetworks) > 1
-        error(
-            "System Contains Multiple Subnetworks. This is not compatible with network model $T",
-        )
     end
     return
 end

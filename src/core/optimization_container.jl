@@ -54,15 +54,30 @@ mutable struct ObjectiveFunction
     invariant_terms::JuMP.AbstractJuMPScalar
     variant_terms::GAE
     synchronized::Bool
+    sense::MOI.OptimizationSense
+    function ObjectiveFunction(invariant_terms::JuMP.AbstractJuMPScalar,
+        variant_terms::GAE,
+        synchronized::Bool,
+        sense::MOI.OptimizationSense = MOI.MIN_SENSE)
+        new(invariant_terms, variant_terms, synchronized, sense)
+    end
 end
 
 get_invariant_terms(v::ObjectiveFunction) = v.invariant_terms
 get_variant_terms(v::ObjectiveFunction) = v.variant_terms
-get_objective_function(v::ObjectiveFunction) = v.variant_terms + v.invariant_terms
+function get_objective_expression(v::ObjectiveFunction)
+    if iszero(v.variant_terms)
+        return v.invariant_terms
+    else
+        return JuMP.add_to_expression!(v.variant_terms, v.invariant_terms)
+    end
+end
+get_sense(v::ObjectiveFunction) = v.sense
 is_synchronized(v::ObjectiveFunction) = v.synchronized
 set_synchronized_status(v::ObjectiveFunction, value) = v.synchronized = value
 reset_variant_terms(v::ObjectiveFunction) = v.variant_terms = zero(JuMP.AffExpr)
 has_variant_terms(v::ObjectiveFunction) = !iszero(v.variant_terms)
+set_sense!(v::ObjectiveFunction, sense::MOI.OptimizationSense) = v.sense = sense
 
 function ObjectiveFunction()
     return ObjectiveFunction(
@@ -150,7 +165,7 @@ get_base_power(container::OptimizationContainer) = container.base_power
 get_constraints(container::OptimizationContainer) = container.constraints
 
 function cost_function_unsynch(container::OptimizationContainer)
-    obj_func = PSI.get_objective_function(container)
+    obj_func = PSI.get_objective_expression(container)
     if has_variant_terms(obj_func) && PSI.is_synchronized(container)
         PSI.set_synchronized_status(obj_func, false)
         PSI.reset_variant_terms(obj_func)
@@ -183,9 +198,11 @@ get_variables(container::OptimizationContainer) = container.variables
 
 set_initial_conditions_data!(container::OptimizationContainer, data) =
     container.initial_conditions_data = data
-get_objective_function(container::OptimizationContainer) = container.objective_function
+get_objective_expression(container::OptimizationContainer) = container.objective_function
 is_synchronized(container::OptimizationContainer) =
     container.objective_function.synchronized
+set_time_steps!(container::OptimizationContainer, time_steps::UnitRange{Int64}) =
+    container.time_steps = time_steps
 
 function has_container_key(
     container::OptimizationContainer,
@@ -486,7 +503,11 @@ function initialize_system_expressions!(
     return
 end
 
-function build_impl!(container::OptimizationContainer, template, sys::PSY.System)
+function build_impl!(
+    container::OptimizationContainer,
+    template::ProblemTemplate,
+    sys::PSY.System,
+)
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
     initialize_system_expressions!(
@@ -600,11 +621,7 @@ function build_impl!(container::OptimizationContainer, template, sys::PSY.System
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
         @debug "Building Objective" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-        JuMP.@objective(
-            container.JuMPmodel,
-            MOI.MIN_SENSE,
-            get_objective_function(container.objective_function)
-        )
+        update_objective_function!(container)
     end
     @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -616,9 +633,9 @@ end
 
 function update_objective_function!(container::OptimizationContainer)
     JuMP.@objective(
-        container.JuMPmodel,
-        MOI.MIN_SENSE,
-        get_objective_function(container.objective_function)
+        get_jump_model(container),
+        get_sense(container.objective_function),
+        get_objective_expression(container.objective_function)
     )
     return
 end
@@ -698,7 +715,7 @@ end
 Exports the OpModel JuMP object in MathOptFormat
 """
 function serialize_optimization_model(container::OptimizationContainer, save_path::String)
-    serialize_optimization_model(get_jump_model(container), save_path)
+    serialize_jump_optimization_model(get_jump_model(container), save_path)
     return
 end
 
@@ -955,7 +972,7 @@ function get_constraint(
 end
 
 function read_duals(container::OptimizationContainer)
-    return Dict(k => axis_array_to_dataframe(v, k) for (k, v) in get_duals(container))
+    return Dict(k => to_dataframe(jump_value.(v), k) for (k, v) in get_duals(container))
 end
 
 ##################################### Parameter Container ##################################
@@ -1219,9 +1236,9 @@ function read_parameters(container::OptimizationContainer)
     for (k, v) in parameters
         # TODO: all functions similar to calculate_parameter_values should be in one
         # place and be consistent in behavior.
-        #params_dict[k] = axis_array_to_dataframe(calculate_parameter_values(v))
-        param_array = axis_array_to_dataframe(get_parameter_values(v), k)
-        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v), k)
+        #params_dict[k] = to_dataframe(calculate_parameter_values(v))
+        param_array = to_dataframe(get_parameter_values(v), k)
+        multiplier_array = to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)
     end
     return params_dict
@@ -1338,7 +1355,7 @@ end
 
 function read_expressions(container::OptimizationContainer)
     return Dict(
-        k => axis_array_to_dataframe(v, k) for (k, v) in get_expressions(container) if
+        k => to_dataframe(jump_value.(v), k) for (k, v) in get_expressions(container) if
         !(get_entry_type(k) <: SystemBalanceExpressions)
     )
 end
@@ -1411,7 +1428,7 @@ function write_initial_conditions_data!(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = axis_array_to_dataframe(field_container, key)
+                ic_data_dict[key] = to_dataframe(jump_value.(field_container), key)
             end
         end
     end
@@ -1703,11 +1720,12 @@ function lazy_container_addition!(
     axs...;
     kwargs...,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    if !has_container_key(container, T, U)
+    meta = get(kwargs, :meta, CONTAINER_KEY_EMPTY_META)
+    if !has_container_key(container, T, U, meta)
         cons_container =
             add_constraints_container!(container, constraint, U, axs...; kwargs...)
     else
-        cons_container = get_constraint(container, constraint, U)
+        cons_container = get_constraint(container, constraint, U, meta)
     end
     return cons_container
 end

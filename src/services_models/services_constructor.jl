@@ -30,7 +30,6 @@ function construct_services!(
             continue
         end
         isempty(get_contributing_devices(service_model)) && continue
-        get_contributing_devices(service_model)
         construct_service!(
             container,
             sys,
@@ -67,7 +66,7 @@ function construct_services!(
             groupservice = key
             continue
         end
-        isempty(get_contributing_devices(service_model)) && continue
+        isempty(get_contributing_devices_map(service_model)) && continue
         construct_service!(
             container,
             sys,
@@ -126,7 +125,13 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
@@ -173,7 +178,13 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
@@ -242,18 +253,18 @@ function construct_service!(
     if !isempty(setdiff(areas, agc_areas))
         throw(
             IS.ConflictingInputsError(
-                "All area most have an AGC service assigned in order to model the System's Frequency regulation",
+                "All area must have an AGC service assigned in order to model the System's Frequency regulation",
             ),
         )
     end
 
     add_variables!(container, SteadyStateFrequencyDeviation)
-    add_variables!(container, AreaMismatchVariable, areas, T())
-    add_variables!(container, SmoothACE, areas, T())
-    add_variables!(container, LiftVariable, areas, T())
+    add_variables!(container, AreaMismatchVariable, services, T())
+    add_variables!(container, SmoothACE, services, T())
+    add_variables!(container, LiftVariable, services, T())
     add_variables!(container, ActivePowerVariable, areas, T())
-    add_variables!(container, DeltaActivePowerUpVariable, areas, T())
-    add_variables!(container, DeltaActivePowerDownVariable, areas, T())
+    add_variables!(container, DeltaActivePowerUpVariable, services, T())
+    add_variables!(container, DeltaActivePowerDownVariable, services, T())
     add_variables!(container, AdditionalDeltaActivePowerUpVariable, areas, T())
     add_variables!(container, AdditionalDeltaActivePowerDownVariable, areas, T())
 
@@ -292,12 +303,12 @@ function construct_service!(
     areas = PSY.get_components(PSY.Area, sys)
     services = get_available_components(S, sys)
 
-    add_constraints!(container, AbsoluteValueConstraint, LiftVariable, areas, model)
+    add_constraints!(container, AbsoluteValueConstraint, LiftVariable, services, model)
     add_constraints!(
         container,
         FrequencyResponseConstraint,
         SteadyStateFrequencyDeviation,
-        areas,
+        services,
         model,
         sys,
     )
@@ -305,17 +316,17 @@ function construct_service!(
         container,
         SACEPIDAreaConstraint,
         SteadyStateFrequencyDeviation,
-        areas,
+        services,
         model,
         sys,
     )
-    add_constraints!(container, BalanceAuxConstraint, SmoothACE, areas, model, sys)
+    add_constraints!(container, BalanceAuxConstraint, SmoothACE, services, model, sys)
 
     add_feedforward_constraints!(container, model, services)
 
     add_constraint_dual!(container, sys, model)
 
-    objective_function!(container, areas, model)
+    objective_function!(container, services, model)
     return
 end
 
@@ -402,6 +413,13 @@ function construct_service!(
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
     add_constraints!(container, RampConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
 
     objective_function!(container, service, model)
 
@@ -456,10 +474,95 @@ function construct_service!(
         model,
     )
 
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
 
     add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {T <: PSY.TransmissionInterface}
+    interfaces = get_available_components(T, sys)
+    if get_use_slacks(model)
+        # Adding the slacks can be done in a cleaner fashion
+        interface = PSY.get_component(T, sys, get_service_name(model))
+        @assert PSY.get_available(interface)
+        transmission_interface_slacks!(container, interface)
+    end
+    # Lazy container addition for the expressions.
+    lazy_container_addition!(
+        container,
+        InterfaceTotalFlow(),
+        T,
+        PSY.get_name.(interfaces),
+        get_time_steps(container),
+    )
+    #add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+) where {T <: PSY.TransmissionInterface}
+    name = get_service_name(model)
+    service = PSY.get_component(T, sys, name)
+
+    add_to_expression!(
+        container,
+        InterfaceTotalFlow,
+        FlowActivePowerVariable,
+        service,
+        model,
+    )
+
+    if get_use_slacks(model)
+        add_to_expression!(
+            container,
+            InterfaceTotalFlow,
+            InterfaceFlowSlackUp,
+            service,
+            model,
+        )
+        add_to_expression!(
+            container,
+            InterfaceTotalFlow,
+            InterfaceFlowSlackDown,
+            service,
+            model,
+        )
+    end
+
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_services,
+        model,
+    )
+    add_constraints!(container, InterfaceFlowLimit, service, model)
+    add_feedforward_constraints!(container, model, service)
+    add_constraint_dual!(container, sys, model)
+    objective_function!(container, service, model)
     return
 end

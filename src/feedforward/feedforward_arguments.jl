@@ -25,10 +25,10 @@ end
 
 function _add_feedforward_arguments!(
     container::OptimizationContainer,
-    model::DeviceModel,
+    model::DeviceModel{T, U},
     devices::IS.FlattenIteratorWrapper{T},
     ff::AbstractAffectFeedforward,
-) where {T <: PSY.Component}
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     parameter_type = get_default_parameter_type(ff, T)
     add_parameters!(container, parameter_type, ff, model, devices)
     return
@@ -36,21 +36,180 @@ end
 
 function _add_feedforward_arguments!(
     container::OptimizationContainer,
-    model::ServiceModel{SR},
-    contributing_devices::Vector{T},
+    model::ServiceModel{T, U},
+    contributing_devices::Vector,
     ff::AbstractAffectFeedforward,
-) where {T <: PSY.Component, SR <: PSY.AbstractReserve}
+) where {T <: PSY.AbstractReserve, U <: AbstractServiceFormulation}
     parameter_type = get_default_parameter_type(ff, SR)
     add_parameters!(container, parameter_type, ff, model, contributing_devices)
     return
 end
 
+function _add_feedforward_slack_variables!(container::OptimizationContainer,
+    ::T,
+    ff::Union{LowerBoundFeedforward, UpperBoundFeedforward},
+    model::ServiceModel{U, V},
+    devices::Vector,
+) where {
+    T <: Union{LowerBoundFeedForwardSlack, UpperBoundFeedForwardSlack},
+    U <: PSY.AbstractReserve,
+    V <: AbstractReservesFormulation,
+}
+    time_steps = get_time_steps(container)
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        set_name, set_time = JuMP.axes(variable)
+        device_names = [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_name == device_names
+        IS.@assert_op set_time == time_steps
+        service_name = get_service_name(model)
+        var_type = get_entry_type(var)
+        variable_container = add_variable_container!(
+            container,
+            T(),
+            U,
+            device_names,
+            time_steps;
+            meta = "$(var_type)_$(service_name)",
+        )
+
+        for t in time_steps, name in set_name
+            variable_container[name, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(U)_{$(name), $(t)}",
+                lower_bound = 0.0
+            )
+            add_to_objective_invariant_expression!(
+                container,
+                variable_container[name, t] * BALANCE_SLACK_COST,
+            )
+        end
+    end
+    return
+end
+
+function _add_feedforward_slack_variables!(
+    container::OptimizationContainer,
+    ::T,
+    ff::Union{LowerBoundFeedforward, UpperBoundFeedforward},
+    model::DeviceModel{U, V},
+    devices::IS.FlattenIteratorWrapper{U},
+) where {
+    T <: Union{LowerBoundFeedForwardSlack, UpperBoundFeedForwardSlack},
+    U <: PSY.Device,
+    V <: AbstractDeviceFormulation,
+}
+    time_steps = get_time_steps(container)
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        set_name, set_time = JuMP.axes(variable)
+        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        IS.@assert_op set_time == time_steps
+
+        var_type = get_entry_type(var)
+        variable = add_variable_container!(
+            container,
+            T,
+            U,
+            [PSY.get_name(d) for d in devices];
+            meta = "$(var_type)",
+        )
+
+        for t in time_steps, name in set_name
+            variable[name, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(U)_{$(name), $(t)}",
+                lower_bound = 0.0
+            )
+        end
+    end
+    return
+end
+
 function _add_feedforward_arguments!(
     container::OptimizationContainer,
-    model::DeviceModel,
+    model::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::UpperBoundFeedforward,
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+    parameter_type = get_default_parameter_type(ff, T)
+    add_parameters!(container, parameter_type, ff, model, devices)
+    if get_slacks(ff)
+        add_feedforward_slack_variables!(
+            container,
+            UpperBoundFeedForwardSlack,
+            devices,
+            model,
+        )
+    end
+    return
+end
+
+function _add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::ServiceModel{T, U},
+    contributing_devices::Vector,
+    ff::UpperBoundFeedforward,
+) where {T <: PSY.AbstractReserve, U <: AbstractServiceFormulation}
+    parameter_type = get_default_parameter_type(ff, SR)
+    add_parameters!(container, parameter_type, ff, model, contributing_devices)
+    if get_slacks(ff)
+        add_feedforward_slack_variables!(
+            container,
+            UpperBoundFeedForwardSlack,
+            contributing_devices,
+            model,
+        )
+    end
+    return
+end
+
+function _add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::LowerBoundFeedforward,
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+    parameter_type = get_default_parameter_type(ff, T)
+    add_parameters!(container, parameter_type, ff, model, devices)
+    if get_slacks(ff)
+        _add_feedforward_slack_variables!(
+            container,
+            LowerBoundFeedForwardSlack,
+            ff,
+            model,
+            devices,
+        )
+    end
+    return
+end
+
+function _add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::ServiceModel{T, U},
+    contributing_devices::Vector{V},
+    ff::LowerBoundFeedforward,
+) where {T <: PSY.AbstractReserve, U <: AbstractReservesFormulation, V <: PSY.Component}
+    parameter_type = get_default_parameter_type(ff, T)
+    add_parameters!(container, parameter_type, ff, model, contributing_devices)
+    if get_slacks(ff)
+        _add_feedforward_slack_variables!(
+            container,
+            LowerBoundFeedForwardSlack(),
+            ff,
+            model,
+            contributing_devices,
+        )
+    end
+    return
+end
+
+function _add_feedforward_arguments!(
+    container::OptimizationContainer,
+    model::DeviceModel{T, U},
     devices::IS.FlattenIteratorWrapper{T},
     ff::SemiContinuousFeedforward,
-) where {T <: PSY.Component}
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     parameter_type = get_default_parameter_type(ff, T)
     add_parameters!(container, parameter_type, ff, model, devices)
     add_to_expression!(
@@ -67,18 +226,5 @@ function _add_feedforward_arguments!(
         devices,
         model,
     )
-    return
-end
-
-function _add_feedforward_arguments!(
-    container::OptimizationContainer,
-    model::DeviceModel,
-    devices::IS.FlattenIteratorWrapper{T},
-    ff::EnergyTargetFeedforward,
-) where {T <: PSY.Component}
-    parameter_type = get_default_parameter_type(ff, T)
-    add_parameters!(container, parameter_type, ff, model, devices)
-    # Enabling this FF requires the addition of an extra variable
-    add_variables!(container, EnergyShortageVariable, devices, get_formulation(model)())
     return
 end

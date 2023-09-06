@@ -74,18 +74,28 @@ end
 
 function _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)
     rng = MersenneTwister(seed)
-    type = STORE_CONTAINER_VARIABLES
     open_store(HdfSimulationStore, path, "w") do store
         sim_time = sim["initial_time"]
         _initialize!(store, sim, variables, model_defs, cache_rules)
-        for step in 1:sim["num_steps"]
+        for _ in 1:sim["num_steps"]
             for model in keys(model_defs)
                 model_time = sim_time
                 for i in 1:model_defs[model]["execution_count"]
                     for key in keys(variables)
                         data = rand(rng, size(model_defs[model]["variables"][key])...)
-                        write_result!(store, model, key, model_time, model_time, data)
                         columns = model_defs[model]["names"]
+                        write_result!(
+                            store,
+                            model,
+                            key,
+                            model_time,
+                            model_time,
+                            Containers.DenseAxisArray(
+                                permutedims(data),
+                                columns,
+                                1:size(data)[1],
+                            ),
+                        )
                         _verify_data(data, store, model, key, model_time, columns)
                     end
 
@@ -111,10 +121,9 @@ end
 
 function _verify_read_results(path, sim, variables, model_defs, seed)
     rng = MersenneTwister(seed)
-    type = STORE_CONTAINER_VARIABLES
     open_store(HdfSimulationStore, path, "r") do store
         sim_time = sim["initial_time"]
-        for step in 1:sim["num_steps"]
+        for _ in 1:sim["num_steps"]
             for model in keys(model_defs)
                 model_time = sim_time
                 for i in 1:model_defs[model]["execution_count"]

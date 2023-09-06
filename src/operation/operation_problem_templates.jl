@@ -1,15 +1,13 @@
 
-struct EconomicDispatchProblem <: DecisionProblem end
-struct UnitCommitmentProblem <: DecisionProblem end
-struct AGCReserveDeployment <: DecisionProblem end
+struct EconomicDispatchProblem <: DefaultDecisionProblem end
+struct UnitCommitmentProblem <: DefaultDecisionProblem end
+struct AGCReserveDeployment <: DefaultDecisionProblem end
 
 function _default_devices_uc()
     return [
         DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
         DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
         DeviceModel(PSY.RenewableFix, FixedOutput),
-        DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchRunOfRiver),
-        DeviceModel(PSY.HydroDispatch, HydroDispatchRunOfRiver),
         DeviceModel(PSY.PowerLoad, StaticPowerLoad),
         DeviceModel(PSY.InterruptiblePowerLoad, PowerLoadInterruption),
         DeviceModel(PSY.Line, StaticBranch),

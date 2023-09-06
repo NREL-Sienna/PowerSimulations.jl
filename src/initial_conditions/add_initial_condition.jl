@@ -162,7 +162,7 @@ function _get_initial_conditions_value(
     T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
-} where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
+} where {U <: InitialEnergyLevel}
     var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =
@@ -180,7 +180,7 @@ function _get_initial_conditions_value(
     T <: InitialCondition{U, Float64},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
-} where {U <: Union{InitialEnergyLevel, InitialEnergyLevelUp, InitialEnergyLevelDown}}
+} where {U <: InitialEnergyLevel}
     var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
     @debug "Device $(PSY.get_name(component)) initialized DeviceStatus as $var_type" _group =

@@ -1,6 +1,6 @@
 # Default implementations of getter/setter functions for OperationModel.
 is_built(model::OperationModel) = model.internal.status == BuildStatus.BUILT
-is_empty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
+isempty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
@@ -144,48 +144,53 @@ function write_initial_conditions_data!(model::OperationModel)
 end
 
 function handle_initial_conditions!(model::OperationModel)
-    settings = get_settings(model)
-    initialize_model = get_initialize_model(settings)
-    deserialize_initial_conditions = get_deserialize_initial_conditions(settings)
-    serialized_initial_conditions_file = get_initial_conditions_file(model)
-    custom_init_file = get_initialization_file(settings)
-
-    if !initialize_model && deserialize_initial_conditions
-        throw(
-            IS.ConflictingInputsError(
-                "!initialize_model && deserialize_initial_conditions",
-            ),
-        )
-    elseif !initialize_model && !isempty(custom_init_file)
-        throw(IS.ConflictingInputsError("!initialize_model && initialization_file"))
-    end
-
-    if !initialize_model
-        @info "Skip build of initial conditions"
-        return
-    end
-
-    if !isempty(custom_init_file)
-        if !isfile(custom_init_file)
-            error("initialization_file = $custom_init_file does not exist")
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Model Initialization" begin
+        if isempty(get_template(model))
+            return
         end
-        if abspath(custom_init_file) != abspath(serialized_initial_conditions_file)
-            cp(custom_init_file, serialized_initial_conditions_file; force = true)
-        end
-    end
+        settings = get_settings(model)
+        initialize_model = get_initialize_model(settings)
+        deserialize_initial_conditions = get_deserialize_initial_conditions(settings)
+        serialized_initial_conditions_file = get_initial_conditions_file(model)
+        custom_init_file = get_initialization_file(settings)
 
-    if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
-        set_initial_conditions_data!(
-            model.internal.container,
-            Serialization.deserialize(serialized_initial_conditions_file),
-        )
-        @info "Deserialized initial_conditions_data"
-    else
-        @info "Make Initial Conditions Model"
-        build_initial_conditions!(model)
-        initialize!(model)
+        if !initialize_model && deserialize_initial_conditions
+            throw(
+                IS.ConflictingInputsError(
+                    "!initialize_model && deserialize_initial_conditions",
+                ),
+            )
+        elseif !initialize_model && !isempty(custom_init_file)
+            throw(IS.ConflictingInputsError("!initialize_model && initialization_file"))
+        end
+
+        if !initialize_model
+            @info "Skip build of initial conditions"
+            return
+        end
+
+        if !isempty(custom_init_file)
+            if !isfile(custom_init_file)
+                error("initialization_file = $custom_init_file does not exist")
+            end
+            if abspath(custom_init_file) != abspath(serialized_initial_conditions_file)
+                cp(custom_init_file, serialized_initial_conditions_file; force = true)
+            end
+        end
+
+        if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
+            set_initial_conditions_data!(
+                model.internal.container,
+                Serialization.deserialize(serialized_initial_conditions_file),
+            )
+            @info "Deserialized initial_conditions_data"
+        else
+            @info "Make Initial Conditions Model"
+            build_initial_conditions!(model)
+            initialize!(model)
+        end
+        model.internal.ic_model_container = nothing
     end
-    model.internal.ic_model_container = nothing
     return
 end
 
@@ -213,6 +218,9 @@ end
 
 function validate_template(model::OperationModel)
     template = get_template(model)
+    if isempty(template)
+        error("Template can't be empty for models $(get_problem_type(model))")
+    end
     modeled_types = get_component_types(template)
     system = get_system(model)
     system_component_types = PSY.get_existing_component_types(system)
@@ -225,15 +233,6 @@ function validate_template(model::OperationModel)
         @warn "The template doesn't include models for components of type $(m), consider changing the template" _group =
             LOG_GROUP_MODELS_VALIDATION
     end
-    return
-end
-
-function build_impl!(model::OperationModel)
-    validate_template(model)
-    build_pre_step!(model)
-    build_model!(model)
-    serialize_metadata!(get_optimization_container(model), get_output_dir(model))
-    log_values(get_settings(model))
     return
 end
 
@@ -315,24 +314,15 @@ function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
 end
 
-function read_dual(model::OperationModel, key::ConstraintKey)
-    return read_results(get_store(model), key)
-end
+read_dual(model::OperationModel, key::ConstraintKey) = _read_results(model, key)
+read_parameter(model::OperationModel, key::ParameterKey) = _read_results(model, key)
+read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, key)
+read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
+read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
 
-function read_parameter(model::OperationModel, key::ParameterKey)
-    return read_results(get_store(model), key)
-end
-
-function read_aux_variable(model::OperationModel, key::AuxVarKey)
-    return read_results(get_store(model), key)
-end
-
-function read_variable(model::OperationModel, key::VariableKey)
-    return read_results(get_store(model), key)
-end
-
-function read_expression(model::OperationModel, key::ExpressionKey)
-    return read_results(get_store(model), key)
+function _read_results(model::OperationModel, key::OptimizationContainerKey)
+    res = read_results(get_store(model), key)
+    return DataFrames.DataFrame(permutedims(res.data), axes(res)[1])
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))
@@ -402,4 +392,12 @@ function list_all_keys(x::OperationModel)
     return Iterators.flatten(
         keys(get_data_field(get_store(x), f)) for f in STORE_CONTAINERS
     )
+end
+
+function serialize_optimization_model(model::OperationModel, save_path::String)
+    serialize_jump_optimization_model(
+        get_optimization_container(model),
+        save_path,
+    )
+    return
 end

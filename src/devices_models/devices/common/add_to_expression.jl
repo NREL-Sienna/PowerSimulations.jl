@@ -760,6 +760,52 @@ end
 
 function add_to_expression!(
     container::OptimizationContainer,
+    ::Type{InterfaceTotalFlow},
+    ::Type{T},
+    service::PSY.TransmissionInterface,
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
+) where {T <: Union{InterfaceFlowSlackUp, InterfaceFlowSlackDown}}
+    expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
+    service_name = PSY.get_name(service)
+    variable = get_variable(container, T(), PSY.TransmissionInterface, service_name)
+    for t in get_time_steps(container)
+        _add_to_jump_expression!(
+            expression[service_name, t],
+            variable[t],
+            get_variable_multiplier(T(), service, ConstantMaxInterfaceFlow()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{InterfaceTotalFlow},
+    ::Type{FlowActivePowerVariable},
+    service::PSY.TransmissionInterface,
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
+)
+    expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
+    service_name = get_service_name(model)
+    for (device_type, devices) in get_contributing_devices_map(model)
+        variable = get_variable(container, FlowActivePowerVariable(), device_type)
+        for d in devices
+            name = PSY.get_name(d)
+            direction = get(PSY.get_direction_mapping(service), name, 1.0)
+            for t in get_time_steps(container)
+                _add_to_jump_expression!(
+                    expression[service_name, t],
+                    variable[name, t],
+                    direction,
+                )
+            end
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
@@ -1009,15 +1055,15 @@ function add_to_expression!(
     V <: PSY.AGC,
     W <: AbstractServiceFormulation,
 }
-    names = [PSY.get_name(PSY.get_area(s)) for s in services]
+    names = PSY.get_name.(services)
     time_steps = get_time_steps(container)
     if !has_container_key(container, T, V)
-        expression = add_expression_container!(container, T(), PSY.Area, names, time_steps)
+        expression = add_expression_container!(container, T(), PSY.AGC, names, time_steps)
     end
-    expression = get_expression(container, T(), PSY.Area)
-    variable = get_variable(container, U(), PSY.Area)
+    expression = get_expression(container, T(), PSY.AGC)
+    variable = get_variable(container, U(), PSY.AGC)
     for s in services, t in time_steps
-        name = PSY.get_name(PSY.get_area(s))
+        name = PSY.get_name(s)
         _add_to_jump_expression!(
             expression[name, t],
             variable[t],

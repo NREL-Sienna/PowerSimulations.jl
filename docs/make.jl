@@ -23,8 +23,7 @@ pages = OrderedDict(
         "modeler_guide/modeling_faq.md",
     ],
     "Model Developer Guide" => Any[
-        "Adding Formulations" => "model_developer_guide/adding_new_device_formulation.md"
-        "Adding Problems" => "model_developer_guide/adding_new_problem_model.md"
+        "Operation Problem Structure" => "model_developer_guide/structure_of_operation_problem.md"
         "Troubleshooting" => "model_developer_guide/troubleshooting.md"
     ],
     "Code Base Developer Guide" => Any[
@@ -34,7 +33,6 @@ pages = OrderedDict(
     "Formulation Library" => Any[
         "General" => "formulation_library/General.md",
         "Thermal Generation" => "formulation_library/ThermalGen.md",
-        "Hydro Generation" => "formulation_library/HydroGen.md",
         "Renewable Generation" => "formulation_library/RenewableGen.md",
         "Load" => "formulation_library/Load.md",
         "Network" => "formulation_library/Network.md",

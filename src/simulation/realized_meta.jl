@@ -47,41 +47,49 @@ function RealizedMeta(
 end
 
 function get_realization(
-    result_values::Dict{
-        OptimizationContainerKey,
-        SortedDict{Dates.DateTime, DataFrames.DataFrame},
-    },
+    results::Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}},
     meta::RealizedMeta,
 )
     realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
-    for (key, result_value) in result_values
-        results_concat = Dict{Symbol, Vector{Float64}}()
-        for (step, (t, df)) in enumerate(result_value)
+    lk = ReentrantLock()
+    num_rows = length(meta.realized_timestamps)
+    start = time()
+    Threads.@threads for key in collect(keys(results))
+        results_by_time = results[key]
+        columns = get_column_names(results_by_time)
+        num_cols = length(columns)
+        matrix = Matrix{Float64}(undef, num_rows, num_cols)
+        row_index = 1
+        for (step, (_, array)) in enumerate(results_by_time)
             first_id = step > 1 ? 1 : meta.start_offset
             last_id =
                 step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
-            if last_id - first_id > size(df, 1)
+            if last_id - first_id > size(array, 1)
                 error(
-                    "Variable $(encode_key_as_string(key)) has $(size(df, 1)) number of steps, that is different than the default problem horizon. \
+                    "Variable $(encode_key_as_string(key)) has $(size(array, 1)) number of steps, that is different than the default problem horizon. \
               Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
                 )
             end
-            for colname in propertynames(df)
-                colname == :DateTime && continue
-                col = df[!, colname][first_id:last_id]
-                if !haskey(results_concat, colname)
-                    results_concat[colname] = col
-                else
-                    results_concat[colname] = vcat(results_concat[colname], col)
-                end
-            end
+            row_end = row_index + last_id - first_id
+            matrix[row_index:row_end, :] = array[first_id:last_id, :]
+            row_index += last_id - first_id + 1
         end
-        realized_values[key] = DataFrames.DataFrame(results_concat; copycols = false)
+        df = DataFrames.DataFrame(matrix, collect(columns); copycols = false)
         DataFrames.insertcols!(
-            realized_values[key],
+            df,
             1,
             :DateTime => meta.realized_timestamps,
         )
+        lock(lk) do
+            realized_values[key] = df
+        end
     end
+
+    duration = time() - start
+    if Threads.nthreads() == 1 && duration > 10.0
+        @info "Time to read results: $duration seconds. You will likely get faster " *
+              "results by starting Julia with multiple threads."
+    end
+
     return realized_values
 end

@@ -81,10 +81,8 @@ NATURAL_UNITS_VALUES = [
     "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
     "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
-    "EnergyLimitParameter__HydroEnergyReservoir",
     "SystemBalanceSlackDown__System",
     "SystemBalanceSlackUp__System",
-    "EnergyBudgetTimeSeriesParameter__HydroEnergyReservoir",
 ]
 
 function compare_results(rpath, epath, model, field, name, timestamp)
@@ -132,7 +130,6 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         template_uc = get_template_basic_uc_simulation()
         template_ed = get_template_nomin_ed_simulation()
         set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-        set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchReservoirBudget)
         set_network_model!(
             template_uc,
             NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
@@ -172,12 +169,6 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
                         component_type = ThermalStandard,
                         source = OnVariable,
                         affected_values = [ActivePowerVariable],
-                    ),
-                    EnergyLimitFeedforward(;
-                        component_type = HydroEnergyReservoir,
-                        source = ActivePowerVariable,
-                        affected_values = [ActivePowerVariable],
-                        number_of_periods = 12,
                     ),
                 ],
             ),
@@ -230,7 +221,7 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
 
         verify_export_results(results, export_path)
 
-        @test length(readdir(export_realized_results(results_ed))) === 18
+        @test length(readdir(export_realized_results(results_ed))) === 17
 
         # Test that you can't read a failed simulation.
         PSI.set_simulation_status!(sim, RunStatus.FAILED)
@@ -317,6 +308,17 @@ function test_decision_problem_results_values(
     for var in values(realized_variable_uc)
         @test size(var)[1] == 48
     end
+
+    # Test custom indexing.
+    realized_variable_uc2 =
+        read_realized_variables(
+            results_uc,
+            [(ActivePowerVariable, ThermalStandard)];
+            start_time = Dates.DateTime("2024-01-01T01:00:00"),
+            len = 47,
+        )
+    @test realized_variable_uc["ActivePowerVariable__ThermalStandard"][2:end, :] ==
+          realized_variable_uc2["ActivePowerVariable__ThermalStandard"]
 
     realized_param_uc = read_realized_parameters(results_uc)
     @test length(keys(realized_param_uc)) == 3
@@ -424,10 +426,16 @@ function test_decision_problem_results_values(
     )
 
     @test !isempty(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
+            ActivePowerVariable,
+            ThermalStandard,
+        )].data,
     )
     @test length(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
+            ActivePowerVariable,
+            ThermalStandard,
+        )].data,
     ) == 3
     @test length(results_ed) == 3
 
@@ -454,8 +462,9 @@ function test_decision_problem_results_values(
     )
 
     empty!(results_ed)
-    @test isempty(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+    @test !haskey(
+        PSI.get_cached_variables(results_ed),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
 
     initial_time = DateTime("2024-01-01T00:00:00")
@@ -469,18 +478,24 @@ function test_decision_problem_results_values(
     )
 
     @test !isempty(
-        results_ed.values.variables[PSI.VariableKey(ActivePowerVariable, ThermalStandard)],
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
+            ActivePowerVariable,
+            ThermalStandard,
+        )].data,
     )
     @test !isempty(
-        results_ed.values.duals[PSI.ConstraintKey(CopperPlateBalanceConstraint, System)],
+        PSI.get_cached_duals(results_ed)[PSI.ConstraintKey(
+            CopperPlateBalanceConstraint,
+            System,
+        )].data,
     )
     @test !isempty(
-        results_ed.values.parameters[PSI.ParameterKey{
+        PSI.get_cached_parameters(results_ed)[PSI.ParameterKey{
             ActivePowerTimeSeriesParameter,
             RenewableDispatch,
         }(
             "",
-        )],
+        )].data,
     )
 end
 
@@ -547,7 +562,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     ) == 10
 
     parameters_keys = collect(keys(read_realized_parameters(results_em)))
-    @test length(parameters_keys) == 7
+    @test length(parameters_keys) == 5
     parameters_inputs = (
         [
             "ActivePowerTimeSeriesParameter__PowerLoad",

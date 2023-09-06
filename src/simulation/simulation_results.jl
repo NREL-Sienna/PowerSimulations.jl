@@ -12,10 +12,6 @@ function check_folder_integrity(folder::String)
     return false
 end
 
-function _fill_result_value_container(fields)
-    return FieldResultsByTime(x => ResultsByTime() for x in fields)
-end
-
 struct SimulationResults
     path::String
     params::SimulationStoreParams
@@ -234,7 +230,6 @@ An example JSON file demonstrating possible options is below. Note that `start_t
       "name": "ED",
       "variables": [
         "P__ThermalStandard",
-        "E__HydroEnergyReservoir"
       ],
       "parameters": [
         "all"

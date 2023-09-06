@@ -33,7 +33,8 @@ get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractT
 
 ############## OnVariable, ThermalGen ####################
 get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
-get_variable_warm_start_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0    
+get_variable_warm_start_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
+get_variable_lower_bound(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = PSY.get_must_run(d) ? 1.0 : 0.0
 
 ############## StopVariable, ThermalGen ####################
 get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
@@ -264,7 +265,7 @@ Min and max active power limits for multi-start unit commitment formulations
 function get_min_max_limits(
     device,
     ::Type{ActivePowerVariableLimitsConstraint},
-    ::Type{<:ThermalMultiStartUnitCommitment},
+    ::Type{ThermalMultiStartUnitCommitment},
 ) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
     return (
         min = 0.0,
@@ -280,7 +281,7 @@ function add_variable!(
     container::OptimizationContainer,
     variable_type::T,
     devices::U,
-    formulation,
+    formulation::AbstractThermalFormulation,
 ) where {
     T <: OnVariable,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -310,7 +311,7 @@ function add_variable!(
             init !== nothing && JuMP.set_start_value(variable[name, t], init)
         end
         if PSY.get_must_run(d)
-            JuMP.fix(variable[name, t], 1.0)
+            JuMP.fix(variable[name, t], 1.0; force = true)
         end
     end
 
@@ -1189,28 +1190,6 @@ function add_constraints!(
     for c in [con_ub, con_lb]
         # Workaround to remove invalid key combinations
         filter!(x -> x.second !== nothing, c.data)
-    end
-    return
-end
-
-"""
-This function creates constraints that keep must run devices online
-"""
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{MustRunConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, S},
-    ::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: PSY.ThermalGen, S <: AbstractThermalUnitCommitment}
-    time_steps = get_time_steps(container)
-    varon = get_variable(container, OnVariable(), T)
-    names = [PSY.get_name(d) for d in devices if PSY.get_must_run(d)]
-    constraint =
-        add_constraints_container!(container, MustRunConstraint(), T, names, time_steps)
-
-    for name in names, t in time_steps
-        constraint[name, t] = JuMP.@constraint(container.JuMPmodel, varon[name, t] >= 1.0)
     end
     return
 end

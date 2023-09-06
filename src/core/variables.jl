@@ -72,34 +72,6 @@ Docs abbreviation: ``E``
 """
 struct EnergyVariable <: VariableType end
 
-"""
-Struct to dispatch the creation of a variable for energy storage level (state of charge) of upper reservoir
-
-Docs abbreviation: ``E^{up}``
-"""
-struct EnergyVariableUp <: VariableType end
-
-"""
-Struct to dispatch the creation of a variable for energy storage level (state of charge) of lower reservoir
-
-Docs abbreviation: ``E^{down}``
-"""
-struct EnergyVariableDown <: VariableType end
-
-"""
-Struct to dispatch the creation of a slack variable for energy storage levels < target storage levels
-
-Docs abbreviation: ``E^{shortage}``
-"""
-struct EnergyShortageVariable <: VariableType end
-
-"""
-Struct to dispatch the creation of a slack variable for energy storage levels > target storage levels
-
-Docs abbreviation: ``E^{surplus}``
-"""
-struct EnergySurplusVariable <: VariableType end
-
 struct LiftVariable <: VariableType end
 
 """
@@ -131,13 +103,6 @@ Docs abbreviation: ``Pr``
 struct ActivePowerReserveVariable <: VariableType end
 
 struct ServiceRequirementVariable <: VariableType end
-
-"""
-Struct to dispatch the creation of energy (water) spillage variable representing energy released from a storage/reservoir not injected into the network
-
-Docs abbreviation: ``S``
-"""
-struct WaterSpillageVariable <: VariableType end
 
 struct StartVariable <: VariableType end
 
@@ -213,6 +178,14 @@ struct HVDCFlowDirectionVariable <: VariableType end
 
 struct PieceWiseLinearCostVariable <: VariableType end
 
+struct InterfaceFlowSlackUp <: VariableType end
+
+struct InterfaceFlowSlackDown <: VariableType end
+
+struct UpperBoundFeedForwardSlack <: VariableType end
+
+struct LowerBoundFeedForwardSlack <: VariableType end
+
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{<:VariableType}) = true
@@ -225,14 +198,9 @@ convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerOutVariable}) = true
 convert_result_to_natural_units(::Type{EnergyVariable}) = true
-convert_result_to_natural_units(::Type{EnergyVariableUp}) = true
-convert_result_to_natural_units(::Type{EnergyVariableDown}) = true
-convert_result_to_natural_units(::Type{EnergyShortageVariable}) = true
-convert_result_to_natural_units(::Type{EnergySurplusVariable}) = true
 convert_result_to_natural_units(::Type{ReactivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerReserveVariable}) = true
 convert_result_to_natural_units(::Type{ServiceRequirementVariable}) = true
-# convert_result_to_natural_units(::Type{WaterSpillageVariable }) = true # TODO: is this pu?
 convert_result_to_natural_units(::Type{AreaMismatchVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerUpVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerDownVariable}) = true
@@ -248,3 +216,5 @@ convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true
+convert_result_to_natural_units(::Type{InterfaceFlowSlackUp}) = true
+convert_result_to_natural_units(::Type{InterfaceFlowSlackDown}) = true

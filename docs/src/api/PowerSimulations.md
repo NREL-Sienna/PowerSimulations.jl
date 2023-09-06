@@ -34,6 +34,10 @@ Refer to the [Formulations Page](@ref formulation_library) for each Abstract Dev
 
 Refer to the [Problem Templates Page](@ref op_problem_template) for available `ProblemTemplate`s.
 
+### Problem Templates
+
+Refer to the [Problem Templates Page](https://nrel-siip.github.io/PowerSimulations.jl/latest/modeler_guide/problem_templates/) for available `ProblemTemplate`s.
+
 ```@raw html
 &nbsp;
 &nbsp;
@@ -98,14 +102,12 @@ execute!(::Simulation)
 # Variables
 
 For a list of variables for each device refer to its Formulations page.
-
 ### Common Variables
 
 ```@docs
 ActivePowerVariable
 ReactivePowerVariable
 PieceWiseLinearCostVariable
-
 ```
 
 ### Thermal Unit Variables
@@ -126,25 +128,6 @@ PowerAboveMinimumVariable
 
 ```@docs
 ReservationVariable
-```
-
-### Hydro Variables
-
-```@docs
-WaterSpillageVariable
-EnergyVariableUp
-EnergyVariableDown
-EnergyOutput
-```
-
-### Common for Hydro and Storage Variables
-
-```@docs
-ActivePowerOutVariable
-ActivePowerInVariable
-EnergyVariable
-EnergyShortageVariable
-EnergySurplusVariable
 ```
 
 ### Branches and Network Variables
@@ -196,7 +179,6 @@ PieceWiseLinearCostConstraint
 ### Network Constraints
 
 ```@docs
-ActiveConstraint
 AreaDispatchBalanceConstraint
 AreaParticipationAssignmentConstraint
 BalanceAuxConstraint
@@ -232,7 +214,6 @@ ReservePowerConstraint
 ActiveRangeICConstraint
 CommitmentConstraint
 DurationConstraint
-MustRunConstraint
 RampConstraint
 RampLimitConstraint
 StartupInitialConditionConstraint
@@ -244,18 +225,6 @@ StartupTimeLimitTemperatureConstraint
 ```@docs
 EqualityConstraint
 
-```
-
-### Hydro and Storage Constraints
-
-```@docs
-EnergyBalanceConstraint
-EnergyBudgetConstraint
-EnergyCapacityConstraint
-EnergyCapacityDownConstraint
-EnergyCapacityUpConstraint
-EnergyTargetConstraint
-RangeLimitConstraint
 ```
 
 ### Branches Constraints
@@ -289,19 +258,15 @@ FeedforwardEnergyTargetConstraint
 
 # Parameters
 
-### Time Series Parameters
+## Time Series Parameters
 
 ```@docs
 ActivePowerTimeSeriesParameter
 ReactivePowerTimeSeriesParameter
 RequirementTimeSeriesParameter
-EnergyTargetTimeSeriesParameter
-EnergyBudgetTimeSeriesParameter
-InflowTimeSeriesParameter
-OutflowTimeSeriesParameter
 ```
 
-### Variable Value Parameters
+## Variable Value Parameters
 
 ```@docs
 UpperBoundValueParameter

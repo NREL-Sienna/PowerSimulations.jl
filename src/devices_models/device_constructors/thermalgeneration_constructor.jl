@@ -970,7 +970,6 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, MustRunConstraint, devices, model, network_model)
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
@@ -1093,7 +1092,6 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, MustRunConstraint, devices, model, network_model)
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)

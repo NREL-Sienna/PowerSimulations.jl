@@ -10,10 +10,6 @@
            item["formulation"] == PSI.ThermalBasicCompactUnitCommitment
             found_valid_device = true
         end
-        if item["device_type"] == PSY.ThermalStandard &&
-           item["formulation"] == PSI.HydroDispatchRunOfRiver
-            found_invalid_device = true
-        end
     end
 
     for item in res["service_formulations"]

@@ -771,7 +771,7 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     for field in fieldnames(DatasetContainer)
         for key in list_decision_model_keys(store, model_name, field)
             !has_dataset(get_decision_states(state), key) && continue
-            res = read_result(DataFrames.DataFrame, store, model_name, key, simulation_time)
+            res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
             update_decision_state!(state, key, res, simulation_time, model_params)
         end
     end
@@ -857,6 +857,16 @@ function _execute!(
             get_current_time(sim),
             step,
             "start",
+        )
+        # This progress print is required to show the progress bar upfront
+        ProgressMeter.update!(
+            prog_bar,
+            1;
+            showvalues = [
+                (:Step, 1),
+                (:Problem, get_name(get_simulation_model(models, 1))),
+                (:("Simulation Timestamp"), get_current_time(sim)),
+            ],
         )
         for (ix, model_number) in enumerate(execution_order)
             model = get_simulation_model(models, model_number)

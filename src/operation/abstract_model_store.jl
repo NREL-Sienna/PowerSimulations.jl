@@ -53,15 +53,6 @@ function read_results(store::AbstractModelStore, key; index = nothing)
     return read_results(store, field, key; index = index)
 end
 
-function read_results(
-    ::Type{DataFrames.DataFrame},
-    store::AbstractModelStore,
-    key;
-    index = nothing,
-)
-    return read_results(store, key; index = index)
-end
-
 function list_keys(store::AbstractModelStore, container_type)
     container = get_data_field(store, container_type)
     return collect(keys(container))

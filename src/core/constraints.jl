@@ -26,8 +26,6 @@ end
 Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
 
 struct AbsoluteValueConstraint <: ConstraintType end
-struct ActiveConstraint <: ConstraintType end
-struct ActiveRangeConstraint <: ConstraintType end #not being used
 struct ActiveRangeICConstraint <: ConstraintType end
 struct AreaDispatchBalanceConstraint <: ConstraintType end
 struct AreaParticipationAssignmentConstraint <: ConstraintType end
@@ -36,13 +34,6 @@ struct CommitmentConstraint <: ConstraintType end
 struct CopperPlateBalanceConstraint <: ConstraintType end
 struct DurationConstraint <: ConstraintType end
 struct EnergyBalanceConstraint <: ConstraintType end
-struct EnergyBudgetConstraint <: ConstraintType end
-struct EnergyCapacityConstraint <: ConstraintType end
-struct EnergyCapacityDownConstraint <: ConstraintType end
-struct EnergyCapacityUpConstraint <: ConstraintType end
-struct EnergyLimitConstraint <: ConstraintType end # not being used
-struct EnergyTargetConstraint <: ConstraintType end
-struct EnergyShortageVariableLimitsConstraint <: ConstraintType end # not being used
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
@@ -63,14 +54,11 @@ struct FlowReactivePowerFromToConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerToFromConstraint <: ConstraintType end #not being used
 struct HVDCPowerBalance <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
-struct InflowRangeConstraint <: ConstraintType end #not being used
-struct InputPowerRangeConstraint <: ConstraintType end #not being used
-struct InterConnectionLimitConstraint <: ConstraintType end #not being used
-struct MustRunConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
 struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
+struct ParticipationFractionConstraint <: ConstraintType end
 struct PieceWiseLinearCostConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
@@ -82,13 +70,14 @@ struct RegulationLimitsConstraint <: ConstraintType end
 struct RequirementConstraint <: ConstraintType end
 struct ReserveEnergyCoverageConstraint <: ConstraintType end
 struct ReservePowerConstraint <: ConstraintType end
-struct SACEPIDAreaConstraint <: ConstraintType end #not being used
-struct StartTypeConstraint <: ConstraintType end #not being used
+struct SACEPIDAreaConstraint <: ConstraintType end
+struct StartTypeConstraint <: ConstraintType end
 struct StartupInitialConditionConstraint <: ConstraintType end
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
+struct InterfaceFlowLimit <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
