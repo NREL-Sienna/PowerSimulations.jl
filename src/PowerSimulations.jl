@@ -69,10 +69,6 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
-###### Hydro #######
-# export HydroDispatchRunOfRiver
-export HydroCommitmentRunOfRiver
-
 # feedforward models
 export UpperBoundFeedforward
 export LowerBoundFeedforward
