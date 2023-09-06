@@ -4,6 +4,7 @@ using PowerSystems
 using PowerSystemCaseBuilder
 using InfrastructureSystems
 using PowerNetworkMatrices
+using HydroPowerSimulations
 import PowerSystemCaseBuilder: PSITestSystems
 using PowerNetworkMatrices
 
