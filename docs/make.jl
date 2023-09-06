@@ -23,8 +23,7 @@ pages = OrderedDict(
         "modeler_guide/modeling_faq.md",
     ],
     "Model Developer Guide" => Any[
-        "Adding Formulations" => "model_developer_guide/adding_new_device_formulation.md"
-        "Adding Problems" => "model_developer_guide/adding_new_problem_model.md"
+        "Operation Problem Structure" => "model_developer_guide/structure_of_operation_problem.md"
         "Troubleshooting" => "model_developer_guide/troubleshooting.md"
     ],
     "Code Base Developer Guide" => Any[
