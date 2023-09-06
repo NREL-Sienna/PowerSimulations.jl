@@ -9,7 +9,7 @@ const PSY = PowerSystems
 
 include("../../../test/test_utils/get_test_data.jl")
 
-abstract type TestOpProblem <: PSI.DecisionProblem end
+abstract type TestOpProblem <: PSI.DefaultDecisionProblem end
 
 system = build_c_sys5_re(; add_reserves = true)
 solver = optimizer_with_attributes(Cbc.Optimizer)
