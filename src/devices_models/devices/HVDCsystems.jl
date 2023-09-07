@@ -5,10 +5,42 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.InterconnectingConverter,
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power_limits(d).max
 get_variable_multiplier(_, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = 1.0
 
+
+function _get_flow_bounds(d::PSY.TModelHVDCLine)
+    check_hvdc_line_limits_consistency(d)
+    from_min = PSY.get_active_power_limits_from(d).min
+    to_min = PSY.get_active_power_limits_to(d).min
+    from_max = PSY.get_active_power_limits_from(d).max
+    to_max = PSY.get_active_power_limits_to(d).max
+
+    if from_min >= 0.0 && to_min >= 0.0
+        min_rate = min(from_min, to_min)
+    elseif from_min <= 0.0 && to_min <= 0.0
+        min_rate = max(from_min, to_min)
+    elseif from_min <= 0.0 && to_min >= 0.0
+        min_rate = from_min
+    elseif to_min <= 0.0 && from_min >= 0.0
+        min_rate = to_min
+    end
+
+    if from_max >= 0.0 && to_max >= 0.0
+        max_rate = min(from_max, to_max)
+    elseif from_max <= 0.0 && to_max <= 0.0
+        max_rate = max(from_max, to_max)
+    elseif from_max <= 0.0 && to_max >= 0.0
+        max_rate = from_max
+    elseif from_max >= 0.0 && to_max <= 0.0
+        max_rate = to_max
+    end
+
+    return min_rate, max_rate
+end
+
+
 get_variable_binary(::FlowActivePowerVariable, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = false
 get_variable_warm_start_value(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_active_power_flow(d)
-get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = -PSY.get_rate(d)
-get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_rate(d)
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[1]
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[2]
 get_variable_multiplier(_, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = 1.0
 
 requires_initialization(::AbstractConverterFormulation) = false
