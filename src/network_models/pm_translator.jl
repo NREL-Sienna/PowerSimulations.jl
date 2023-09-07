@@ -492,7 +492,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
     two_terminal_dc_lines, PMmap_dc = get_branches_to_pm(
         sys,
         get_network_formulation(template),
-        PSY.TwoTerminalHVDCLine,
+        TwoTerminalHVDCTypes,
         template.branches,
         length(ac_lines),
     )
