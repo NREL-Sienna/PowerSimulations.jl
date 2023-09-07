@@ -267,7 +267,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalHVDCLine,
-    ::Type{HVDCP2PDispatch},
+    ::Type{HVDCTwoTerminalDispatch},
     ::Type{<:PM.AbstractDCPModel},
 )
     PM_branch = Dict{String, Any}(
@@ -305,7 +305,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalHVDCLine,
-    ::Type{HVDCP2PDispatch},
+    ::Type{HVDCTwoTerminalDispatch},
     ::Type{<:PM.AbstractPowerModel},
 )
     check_hvdc_line_limits_unidirectional(branch)
@@ -344,7 +344,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalHVDCLine,
-    ::Type{<:AbstractP2PDCLineFormulation},
+    ::Type{<:AbstractTwoTerminalDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
     PM_branch = Dict{String, Any}(
@@ -391,6 +391,38 @@ function get_branches_to_pm(
 
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
+        if comp_type <: TwoTerminalHVDCTypes
+            continue
+        end
+        !(comp_type <: T) && continue
+        start_idx += length(PM_branches)
+        filter_func = get_attribute(device_model, "filter_function")
+        for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
+            ix = i + start_idx
+            PM_branches["$(ix)"] =
+                get_branch_to_pm(ix, branch, get_formulation(device_model), S)
+            if PM_branches["$(ix)"]["br_status"] == true
+                f = PM_branches["$(ix)"]["f_bus"]
+                t = PM_branches["$(ix)"]["t_bus"]
+                PMmap_br[(from_to = (ix, f, t), to_from = (ix, t, f))] = branch
+            end
+        end
+    end
+    return PM_branches, PMmap_br
+end
+
+function get_branches_to_pm(
+    sys::PSY.System,
+    ::Type{S},
+    ::Type{T},
+    branch_template::BranchModelContainer,
+    start_idx = 0,
+) where {T <: TwoTerminalHVDCTypes, S <: PM.AbstractPowerModel}
+    PM_branches = Dict{String, Any}()
+    PMmap_br = Dict{PM_MAP_TUPLE, T}()
+
+    for (d, device_model) in branch_template
+        comp_type = get_component_type(device_model)
         !(comp_type <: T) && continue
         start_idx += length(PM_branches)
         filter_func = get_attribute(device_model, "filter_function")
@@ -411,10 +443,10 @@ end
 function get_branches_to_pm(
     ::PSY.System,
     ::Type{PTDFPowerModel},
-    ::Type{PSY.TwoTerminalHVDCLine},
+    ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
-)
+) where {T <: TwoTerminalHVDCTypes}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
     return PM_branches, PMmap_br

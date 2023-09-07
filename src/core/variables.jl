@@ -172,7 +172,7 @@ struct FlowReactivePowerToFromVariable <: VariableType end
 
 struct PhaseShifterAngle <: VariableType end
 
-# Necessary as a work around for HVDCP2P models with losses
+# Necessary as a work around for HVDCTwoTerminal models with losses
 struct HVDCLosses <: VariableType end
 struct HVDCFlowDirectionVariable <: VariableType end
 

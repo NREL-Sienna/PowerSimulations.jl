@@ -110,7 +110,7 @@ end
         template = get_template_dispatch_with_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
-        set_device_model!(template, TwoTerminalHVDCLine, HVDCP2PLossless)
+        set_device_model!(template, TwoTerminalHVDCLine, HVDCTwoTerminalLossless)
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -167,7 +167,10 @@ end
         template = get_template_dispatch_with_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
-        set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCP2PUnbounded))
+        set_device_model!(
+            template,
+            DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalUnbounded),
+        )
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
@@ -211,7 +214,7 @@ end
     end
 end
 
-@testset "HVDCP2PLossless values check between network models" begin
+@testset "HVDCTwoTerminalLossless values check between network models" begin
     # Test to compare lossless models with lossless formulation
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
 
@@ -241,7 +244,10 @@ end
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
-    set_device_model!(template_uc, DeviceModel(TwoTerminalHVDCLine, HVDCP2PLossless))
+    set_device_model!(
+        template_uc,
+        DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless),
+    )
 
     model = DecisionModel(
         template_uc,
@@ -317,7 +323,7 @@ end
             set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
             set_device_model!(
                 template_uc,
-                DeviceModel(TwoTerminalHVDCLine, HVDCP2PLossless),
+                DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless),
             )
 
             model_ref = DecisionModel(
@@ -353,7 +359,7 @@ end
             )
             set_device_model!(
                 template_uc,
-                DeviceModel(TwoTerminalHVDCLine, HVDCP2PDispatch),
+                DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalDispatch),
             )
 
             model = DecisionModel(
@@ -475,7 +481,7 @@ end
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
 
-    hvdc_line = PSY.get_component(HVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalHVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -490,7 +496,7 @@ end
     template = get_template_dispatch_with_network(
         NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(system)),
     )
-    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCP2PLossless))
+    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 
@@ -593,7 +599,7 @@ end
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
 
-    hvdc_line = PSY.get_component(HVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalHVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -606,7 +612,7 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
-    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCP2PLossless))
+    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
 

@@ -37,7 +37,7 @@ function add_variables!(
     U <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    bus_numbers = PSY.get_number.(get_available_components(PSY.accessBus, sys))
+    bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     variable = add_variable_container!(container, T(), PSY.ACBus, bus_numbers, time_steps)
     for t in time_steps, n in bus_numbers
         variable[n, t] = JuMP.@variable(

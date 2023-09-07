@@ -41,9 +41,9 @@ export ConstantMaxInterfaceFlow
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
-export HVDCP2PLossless
-export HVDCP2PDispatch
-export HVDCP2PUnbounded
+export HVDCTwoTerminalLossless
+export HVDCTwoTerminalDispatch
+export HVDCTwoTerminalUnbounded
 export PhaseAngleControl
 # export VoltageSourceDC
 

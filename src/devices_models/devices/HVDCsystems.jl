@@ -135,13 +135,12 @@ function add_to_expression!(
     ::Type{U},
     ::IS.FlattenIteratorWrapper{V},
     devices::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerVariable,
     V <: PSY.InterconnectingConverter,
     W <: AbstractConverterFormulation,
-    X <: CopperPlatePowerModel,
 }
 
     variable = get_variable(container, U(), V)

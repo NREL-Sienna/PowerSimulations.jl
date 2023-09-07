@@ -44,7 +44,7 @@ end
 
 function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs...)
     sys = System(100.0)
-    add_component!(sys, Bus(nothing))
+    add_component!(sys, ACBus(nothing))
     l = PowerLoad(nothing)
     gen = ThermalStandard(nothing)
     set_bus!(l, get_component(Bus, sys, "init"))
@@ -71,7 +71,7 @@ end
 
 function PSI.EmulationModel(::Type{MockEmulationProblem}; name = nothing, kwargs...)
     sys = System(100.0)
-    add_component!(sys, Bus(nothing))
+    add_component!(sys, ACBus(nothing))
     l = PowerLoad(nothing)
     gen = ThermalStandard(nothing)
     set_bus!(l, get_component(Bus, sys, "init"))
@@ -116,6 +116,7 @@ function mock_construct_device!(
         PSI.get_optimization_container(problem),
         PSI.get_network_formulation(template),
         PSI.get_network_model(template).subnetworks,
+        PSI.get_system(problem),
     )
     if PSI.validate_available_devices(model, PSI.get_system(problem))
         PSI.construct_device!(

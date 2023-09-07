@@ -461,6 +461,7 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    ::Vector{Int},
     ::Type{CopperPlatePowerModel},
 )
     time_steps = get_time_steps(container)

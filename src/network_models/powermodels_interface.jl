@@ -334,7 +334,11 @@ function powermodels_network!(
     end
 
     container.pm =
-        instantiate_model(pm_data, system_formulation; jump_model = container.JuMPmodel)
+        instantiate_model(
+            pm_data,
+            system_formulation;
+            jump_model = get_jump_model(container),
+        )
     container.pm.ext[:PMmap] = PM_map
 
     return
@@ -348,7 +352,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] =
         Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing))
-    pm_variable_map[PSY.DCBranch] =
+    pm_variable_map[TwoTerminalHVDCTypes] =
         Dict(:p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing))
 
     return pm_variable_map
@@ -359,7 +363,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
-    pm_variable_map[PSY.DCBranch] = Dict(
+    pm_variable_map[TwoTerminalHVDCTypes] = Dict(
         :p_dc => (
             from_to = FlowActivePowerFromToVariable(),
             to_from = FlowActivePowerToFromVariable(),
@@ -374,7 +378,7 @@ function PMvarmap(::Type{PTDFPowerModel})
 
     pm_variable_map[PSY.ACBus] = Dict()
     pm_variable_map[PSY.ACBranch] = Dict()
-    pm_variable_map[PSY.DCBranch] = Dict()
+    pm_variable_map[TwoTerminalHVDCTypes] = Dict()
 
     return pm_variable_map
 end
@@ -393,7 +397,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
             to_from = FlowReactivePowerToFromVariable(),
         ),
     )
-    pm_variable_map[PSY.DCBranch] = Dict(
+    pm_variable_map[TwoTerminalHVDCTypes] = Dict(
         :p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing),
         :q_dc => (
             from_to = FlowReactivePowerFromToVariable(),
@@ -488,7 +492,7 @@ function add_pm_variable_refs!(
     )
     add_pm_variable_refs!(
         container,
-        PSY.DCBranch,
+        TwoTerminalHVDCTypes,
         DCbranch_types,
         DCbranch_dict,
         pm_variable_map,
@@ -529,6 +533,7 @@ function add_pm_variable_refs!(
             end
         end
     end
+    return
 end
 
 function add_pm_constraint_refs!(

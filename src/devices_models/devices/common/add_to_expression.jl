@@ -170,12 +170,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::Type{StandardPTDFModel},
+    network_model::NetworkModel{StandardPTDFModel},
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCLosses,
-    V <: PSY.TwoTerminalHVDCLine,
-    W <: HVDCP2PDispatch,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalDispatch,
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -368,7 +368,7 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), CopperPlatePowerModel)
+    expression = get_expression(container, T(), PSY.System)
     for d in devices
         device_bus = PSY.get_bus(d)
         ref_bus = get_reference_bus(network_model, device_bus)
@@ -398,7 +398,7 @@ function add_to_expression!(
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), CopperPlatePowerModel)
+    expression = get_expression(container, T(), PSY.System)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)

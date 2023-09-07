@@ -181,7 +181,7 @@ end
         if network == StandardPTDFModel
             push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
-            duals = read_dual(res, NodalBalanceActiveConstraint, Bus)
+            duals = read_dual(res, NodalBalanceActiveConstraint, ACBus)
             duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
@@ -622,7 +622,7 @@ end
 @testset "Test for isolated buses" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     add_component!(c_sys5,
-        Bus(
+        ACBus(
             10,
             "node_none",
             "ISOLATED",

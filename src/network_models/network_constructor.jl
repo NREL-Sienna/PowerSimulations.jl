@@ -123,7 +123,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model, T)
+        objective_function!(container, PSY.ACBus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -171,7 +171,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model, T)
+        objective_function!(container, PSY.ACBus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -236,7 +236,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.ACBus, model, T)
+        objective_function!(container, PSY.ACBus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
@@ -300,7 +300,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.ACBus, model, T)
+        objective_function!(container, PSY.ACBus, model)
     end
 
     @debug "Building the $T network with $instantiate_model method" _group =
