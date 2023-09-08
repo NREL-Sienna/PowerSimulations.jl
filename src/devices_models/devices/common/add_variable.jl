@@ -135,13 +135,13 @@ function add_service_variable!(
             binary = binary
         )
 
-        ub = get_variable_upper_bound(variable_type, service, d, container.settings)
+        ub = get_variable_upper_bound(variable_type, service, d, formulation)
         ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
-        lb = get_variable_lower_bound(variable_type, service, d, container.settings)
+        lb = get_variable_lower_bound(variable_type, service, d, formulation)
         lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, t], lb)
 
-        init = get_variable_warm_start_value(variable_type, d, container.settings)
+        init = get_variable_warm_start_value(variable_type, d, formulation)
         init !== nothing && JuMP.set_start_value(variable[name, t], init)
     end
 
