@@ -21,6 +21,8 @@ function _get_flow_bounds(d::PSY.TModelHVDCLine)
         min_rate = from_min
     elseif to_min <= 0.0 && from_min >= 0.0
         min_rate = to_min
+    else
+        @assert false
     end
 
     if from_max >= 0.0 && to_max >= 0.0
@@ -31,6 +33,8 @@ function _get_flow_bounds(d::PSY.TModelHVDCLine)
         max_rate = from_max
     elseif from_max >= 0.0 && to_max <= 0.0
         max_rate = to_max
+    else
+        @assert false
     end
 
     return min_rate, max_rate
