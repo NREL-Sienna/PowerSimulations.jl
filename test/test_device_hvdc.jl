@@ -19,9 +19,9 @@
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     template_uc = ProblemTemplate(NetworkModel(
-        StandardPTDFModel,
+        StandardPTDFModel;
         #use_slacks=true,
-        PTDF_matrix=PTDF(sys_5),
+        PTDF_matrix = PTDF(sys_5),
         #duals=[CopperPlateBalanceConstraint],
     ))
 

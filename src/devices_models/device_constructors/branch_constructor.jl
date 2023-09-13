@@ -408,7 +408,7 @@ function construct_device!(
     F <: HVDCTwoTerminalUnbounded,
     S <: PM.AbstractPowerModel,
 }
-return
+    return
 end
 
 function construct_device!(
@@ -478,7 +478,7 @@ function construct_device!(
     F <: HVDCTwoTerminalLossless,
     S <: PM.AbstractPowerModel,
 }
-return
+    return
 end
 
 function construct_device!(

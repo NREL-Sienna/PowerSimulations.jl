@@ -267,7 +267,11 @@ end
 function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
     if !isempty(
-        JuMP.all_constraints(PSI.get_jump_model(container), JuMP.VariableRef, JuMP.MOI.ZeroOne),
+        JuMP.all_constraints(
+            PSI.get_jump_model(container),
+            JuMP.VariableRef,
+            JuMP.MOI.ZeroOne,
+        ),
     )
         return true
     end
