@@ -606,13 +606,12 @@ function add_to_expression!(
     network_model::NetworkModel{StandardPTDFModel},
 ) where {
     T <: ActivePowerBalance,
-    U <: PhaseShifterAngle,
-    V <: PhaseAngleControl,
-    W <: StandardPTDFModel,
+    U <: FlowActivePowerVariable,
+    V <: PSY.ACBranch,
+    W <: AbstractBranchFormulation,
 }
     var = get_variable(container, U(), V)
-    nodal_expr = get_expression(container, T(), StandardPTDFModel)
-    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
     sys_expr = get_expression(container, T(), PSY.System)
     for d in devices
         bus_no_from = PSY.get_number(PSY.get_arc(d).from)

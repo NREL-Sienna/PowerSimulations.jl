@@ -407,7 +407,9 @@ function construct_device!(
     T <: TwoTerminalHVDCTypes,
     F <: HVDCTwoTerminalUnbounded,
     S <: PM.AbstractPowerModel,
-} end
+}
+return
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -475,7 +477,9 @@ function construct_device!(
     T <: TwoTerminalHVDCTypes,
     F <: HVDCTwoTerminalLossless,
     S <: PM.AbstractPowerModel,
-} end
+}
+return
+end
 
 function construct_device!(
     container::OptimizationContainer,
