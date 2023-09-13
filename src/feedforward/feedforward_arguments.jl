@@ -40,7 +40,7 @@ function _add_feedforward_arguments!(
     contributing_devices::Vector,
     ff::AbstractAffectFeedforward,
 ) where {T <: PSY.AbstractReserve, U <: AbstractServiceFormulation}
-    parameter_type = get_default_parameter_type(ff, SR)
+    parameter_type = get_default_parameter_type(ff, U)
     add_parameters!(container, parameter_type, ff, model, contributing_devices)
     return
 end
