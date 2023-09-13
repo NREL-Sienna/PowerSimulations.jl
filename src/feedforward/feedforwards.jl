@@ -26,7 +26,8 @@ function attach_feedforward!(
         ff_ = T(;
             component_type = get_component_type(ff),
             source = get_entry_type(get_optimization_container_key(ff)),
-            affected_values = affected_values = get_entry_type.(get_affected_values(ff)),
+            affected_values = affected_values =
+                get_entry_type.(get_affected_values(ff)),
             meta = model.service_name,
         )
     end
