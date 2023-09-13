@@ -77,6 +77,25 @@ function write_result!(
     return
 end
 
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{<:Any, 1},
+)
+    columns = axes(array)[1]
+    if eltype(columns) !== String
+        # TODO: This happens because buses are stored by indexes instead of name.
+        columns = string.(columns)
+    end
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] =
+        DenseAxisArray(reshape(array.data, 1, length(columns)), ["1"], columns)
+    return
+end
+
 function read_results(
     store::DecisionModelStore,
     key::OptimizationContainerKey;
