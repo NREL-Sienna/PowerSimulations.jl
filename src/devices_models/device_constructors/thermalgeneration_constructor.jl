@@ -885,6 +885,7 @@ function construct_device!(
         model,
         network_model,
     )
+
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1012,6 +1013,7 @@ function construct_device!(
         model,
         network_model,
     )
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1597,6 +1599,7 @@ function construct_device!(
         model,
         network_model,
     )
+
     add_to_expression!(
         container,
         ActivePowerRangeExpressionLB,

@@ -171,7 +171,12 @@ function add_to_expression!(
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{StandardPTDFModel},
-) where {T <: ActivePowerBalance, U <: HVDCLosses, V <: PSY.HVDCLine, W <: HVDCP2PDispatch}
+) where {
+    T <: ActivePowerBalance,
+    U <: HVDCLosses,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalDispatch,
+}
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
     for d in devices
@@ -363,7 +368,7 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), CopperPlatePowerModel)
+    expression = get_expression(container, T(), PSY.System)
     for d in devices
         device_bus = PSY.get_bus(d)
         ref_bus = get_reference_bus(network_model, device_bus)
@@ -393,7 +398,7 @@ function add_to_expression!(
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), CopperPlatePowerModel)
+    expression = get_expression(container, T(), PSY.System)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -429,7 +434,7 @@ function add_to_expression!(
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
     sys_expr = get_expression(container, T(), PSY.System)
-    nodal_expr = get_expression(container, T(), PSY.Bus)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -460,7 +465,7 @@ function add_to_expression!(
 }
     parameter = get_parameter_array(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
-    nodal_expr = get_expression(container, T(), PSY.Bus)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no = PSY.get_number(PSY.get_bus(d))
@@ -492,7 +497,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
-    nodal_expr = get_expression(container, T(), PSY.Bus)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -530,7 +535,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
-    nodal_expr = get_expression(container, T(), PSY.Bus)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -565,7 +570,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.Branch,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
@@ -602,12 +607,11 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.Branch,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
 }
     var = get_variable(container, U(), V)
-    nodal_expr = get_expression(container, T(), StandardPTDFModel)
-    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
     sys_expr = get_expression(container, T(), PSY.System)
     for d in devices
         bus_no_from = PSY.get_number(PSY.get_arc(d).from)
@@ -640,7 +644,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.Branch,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
 }
     inter_network_branches = V[]
@@ -682,7 +686,7 @@ function add_to_expression!(
     network_model::NetworkModel{StandardPTDFModel},
 ) where {T <: ActivePowerBalance, U <: PhaseShifterAngle, V <: PhaseAngleControl}
     var = get_variable(container, U(), PSY.PhaseShiftingTransformer)
-    expression = get_expression(container, T(), PSY.Bus)
+    expression = get_expression(container, T(), PSY.ACBus)
     for d in devices
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
@@ -933,14 +937,14 @@ function add_to_expression!(
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractActivePowerModel,
 }
-    variable = get_variable(container, U(), PSY.Bus)
-    expression = get_expression(container, T(), PSY.Bus)
+    variable = get_variable(container, U(), PSY.ACBus)
+    expression = get_expression(container, T(), PSY.ACBus)
     @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
     for t in get_time_steps(container), n in axes(variable, 1)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Bus, W),
+            get_variable_multiplier(U(), PSY.ACBus, W),
         )
     end
     return
@@ -957,14 +961,14 @@ function add_to_expression!(
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractPowerModel,
 }
-    variable = get_variable(container, U(), PSY.Bus, "P")
-    expression = get_expression(container, T(), PSY.Bus)
-    bus_numbers = PSY.get_number.(get_available_components(PSY.Bus, sys))
+    variable = get_variable(container, U(), PSY.ACBus, "P")
+    expression = get_expression(container, T(), PSY.ACBus)
+    bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     for t in get_time_steps(container), n in bus_numbers
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Bus, W),
+            get_variable_multiplier(U(), PSY.ACBus, W),
         )
     end
     return
@@ -981,14 +985,14 @@ function add_to_expression!(
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractPowerModel,
 }
-    variable = get_variable(container, U(), PSY.Bus, "Q")
-    expression = get_expression(container, T(), PSY.Bus)
-    bus_numbers = PSY.get_number.(get_available_components(PSY.Bus, sys))
+    variable = get_variable(container, U(), PSY.ACBus, "Q")
+    expression = get_expression(container, T(), PSY.ACBus)
+    bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     for t in get_time_steps(container), n in bus_numbers
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Bus, W),
+            get_variable_multiplier(U(), PSY.ACBus, W),
         )
     end
     return

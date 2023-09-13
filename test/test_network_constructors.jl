@@ -262,7 +262,7 @@ end
     constraint_keys = [
         PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
@@ -309,8 +309,8 @@ end
     constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
         PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
-        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
-        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
@@ -353,7 +353,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
@@ -400,8 +400,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Voltages, etc.
     constraint_keys = [
-        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus),
-        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.Bus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     ACR_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 240, 240, 264],
@@ -441,7 +441,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Bi-directional flows etc
-    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.Bus)]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
         c_sys14 => 142000.0,
@@ -519,7 +519,7 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
     results = ProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__HVDCLine")
+    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
 
@@ -556,7 +556,7 @@ end
     )
 
     # Test forcing flows to 0.0
-    hvdc_link = get_component(PSY.HVDCLine, c_sys5, "nodeC-nodeC2")
+    hvdc_link = get_component(TwoTerminalHVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
@@ -572,7 +572,7 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
     results = ProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__HVDCLine")
+    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 
@@ -619,7 +619,7 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
 
     results = ProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__HVDCLine")
+    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
 
@@ -656,7 +656,7 @@ end
     )
 
     # Test forcing flows to 0.0
-    hvdc_link = get_component(PSY.HVDCLine, c_sys5, "nodeC-nodeC2")
+    hvdc_link = get_component(PSY.TwoTerminalHVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
@@ -672,7 +672,7 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
     results = ProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__HVDCLine")
+    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 

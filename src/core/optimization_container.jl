@@ -267,7 +267,11 @@ end
 function is_milp(container::OptimizationContainer)::Bool
     !supports_milp(container) && return false
     if !isempty(
-        JuMP.all_constraints(container.JuMPmodel, JuMP.VariableRef, JuMP.MOI.ZeroOne),
+        JuMP.all_constraints(
+            PSI.get_jump_model(container),
+            JuMP.VariableRef,
+            JuMP.MOI.ZeroOne,
+        ),
     )
         return true
     end
@@ -307,10 +311,10 @@ function _finalize_jump_model!(container::OptimizationContainer, settings::Setti
         @debug "The optimization model has no optimizer attached" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     else
-        JuMP.set_optimizer(container.JuMPmodel, get_optimizer(settings))
+        JuMP.set_optimizer(PSI.get_jump_model(container), get_optimizer(settings))
     end
 
-    JuMPmodel = container.JuMPmodel
+    JuMPmodel = PSI.get_jump_model(container)
     warm_start_enabled = get_warm_start(settings)
     solver_supports_warm_start = _validate_warm_start_support(JuMPmodel, warm_start_enabled)
     set_warm_start!(settings, solver_supports_warm_start)
@@ -386,7 +390,7 @@ function reset_optimization_model!(container::OptimizationContainer)
     container.initial_conditions_data = InitialConditionsData()
     container.objective_function = ObjectiveFunction()
     container.primal_values_cache = PrimalValuesCache()
-    JuMP.empty!(container.JuMPmodel)
+    JuMP.empty!(PSI.get_jump_model(container))
     return
 end
 
@@ -425,15 +429,18 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
 )
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(bus_numbers, time_steps),
-        ExpressionKey(ReactivePowerBalance, PSY.Bus) =>
-            _make_container_array(bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+            _make_container_array(ac_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
+        ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
+            _make_container_array(ac_bus_numbers, time_steps),
     )
     return
 end
@@ -441,13 +448,16 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
 )
     time_steps = get_time_steps(container)
-    bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
     container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+            _make_container_array(ac_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
     )
     return
 end
@@ -455,6 +465,7 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    ::Vector{Int},
     ::Type{CopperPlatePowerModel},
 )
     time_steps = get_time_steps(container)
@@ -469,16 +480,19 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{T},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
-    bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
+    ac_bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
     subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(subnetworks, time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.Bus) =>
-            _make_container_array(bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+            _make_container_array(ac_bus_numbers, time_steps),
     )
     return
 end
@@ -487,8 +501,10 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     subnetworks::Dict{Int, Set{Int}},
+    system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    _make_system_expressions!(container, subnetworks, T)
+    dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
+    _make_system_expressions!(container, subnetworks, dc_bus_numbers, T)
     return
 end
 
@@ -499,7 +515,12 @@ function build_impl!(
 )
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    initialize_system_expressions!(container, transmission, transmission_model.subnetworks)
+    initialize_system_expressions!(
+        container,
+        transmission,
+        transmission_model.subnetworks,
+        sys,
+    )
 
     # Order is required
     for device_model in values(template.devices)
@@ -607,7 +628,7 @@ function build_impl!(
         @debug "Building Objective" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
         update_objective_function!(container)
     end
-    @debug "Total operation count $(container.JuMPmodel.operator_counter)" _group =
+    @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
     check_optimization_container(container)
@@ -1325,7 +1346,7 @@ function get_expression(
     ::Type{U},
     meta = CONTAINER_KEY_EMPTY_META,
 ) where {T <: SystemBalanceExpressions, U <: PM.AbstractPowerModel}
-    return get_expression(container, ExpressionKey(T, PSY.Bus, meta))
+    return get_expression(container, ExpressionKey(T, PSY.ACBus, meta))
 end
 
 function get_expression(

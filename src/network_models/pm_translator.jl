@@ -1,18 +1,18 @@
 const PM_MAP_TUPLE =
     NamedTuple{(:from_to, :to_from), Tuple{Tuple{Int, Int, Int}, Tuple{Int, Int, Int}}}
 
-const PM_BUSTYPES = Dict{PSY.BusTypes, Int}(
-    PSY.BusTypes.ISOLATED => 4,
-    PSY.BusTypes.PQ => 1,
-    PSY.BusTypes.PV => 2,
-    PSY.BusTypes.REF => 3,
-    PSY.BusTypes.SLACK => 3,
+const PM_BUSTYPES = Dict{PSY.ACBusTypes, Int}(
+    PSY.ACBusTypes.ISOLATED => 4,
+    PSY.ACBusTypes.PQ => 1,
+    PSY.ACBusTypes.PV => 2,
+    PSY.ACBusTypes.REF => 3,
+    PSY.ACBusTypes.SLACK => 3,
 )
 
 struct PMmap
-    bus::Dict{Int, PSY.Bus}
+    bus::Dict{Int, PSY.ACBus}
     arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
-    arcs_dc::Dict{PM_MAP_TUPLE, <:PSY.DCBranch}
+    arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalHVDCLine}
 end
 
 function get_branch_to_pm(
@@ -266,8 +266,8 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.HVDCLine,
-    ::Type{HVDCP2PDispatch},
+    branch::PSY.TwoTerminalHVDCLine,
+    ::Type{HVDCTwoTerminalDispatch},
     ::Type{<:PM.AbstractDCPModel},
 )
     PM_branch = Dict{String, Any}(
@@ -304,8 +304,8 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.HVDCLine,
-    ::Type{HVDCP2PDispatch},
+    branch::PSY.TwoTerminalHVDCLine,
+    ::Type{HVDCTwoTerminalDispatch},
     ::Type{<:PM.AbstractPowerModel},
 )
     check_hvdc_line_limits_unidirectional(branch)
@@ -343,8 +343,8 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.HVDCLine,
-    ::Type{<:AbstractBranchFormulation},
+    branch::PSY.TwoTerminalHVDCLine,
+    ::Type{<:AbstractTwoTerminalDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
     PM_branch = Dict{String, Any}(
@@ -385,7 +385,39 @@ function get_branches_to_pm(
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
-) where {T <: PSY.Branch, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
+    PM_branches = Dict{String, Any}()
+    PMmap_br = Dict{PM_MAP_TUPLE, T}()
+
+    for (d, device_model) in branch_template
+        comp_type = get_component_type(device_model)
+        if comp_type <: TwoTerminalHVDCTypes
+            continue
+        end
+        !(comp_type <: T) && continue
+        start_idx += length(PM_branches)
+        filter_func = get_attribute(device_model, "filter_function")
+        for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
+            ix = i + start_idx
+            PM_branches["$(ix)"] =
+                get_branch_to_pm(ix, branch, get_formulation(device_model), S)
+            if PM_branches["$(ix)"]["br_status"] == true
+                f = PM_branches["$(ix)"]["f_bus"]
+                t = PM_branches["$(ix)"]["t_bus"]
+                PMmap_br[(from_to = (ix, f, t), to_from = (ix, t, f))] = branch
+            end
+        end
+    end
+    return PM_branches, PMmap_br
+end
+
+function get_branches_to_pm(
+    sys::PSY.System,
+    ::Type{S},
+    ::Type{T},
+    branch_template::BranchModelContainer,
+    start_idx = 0,
+) where {T <: TwoTerminalHVDCTypes, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
@@ -414,18 +446,18 @@ function get_branches_to_pm(
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
-) where {T <: PSY.DCBranch}
+) where {T <: TwoTerminalHVDCTypes}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
     return PM_branches, PMmap_br
 end
 
-function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
+function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.ACBus})
     PM_buses = Dict{String, Any}()
-    PMmap_buses = Dict{Int, PSY.Bus}()
+    PMmap_buses = Dict{Int, PSY.ACBus}()
 
     for bus in buses
-        if PSY.get_bustype(bus) == PSY.BusTypes.ISOLATED
+        if PSY.get_bustype(bus) == PSY.ACBusTypes.ISOLATED
             continue
         end
         number = PSY.get_number(bus)
@@ -457,14 +489,14 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         PSY.ACBranch,
         template.branches,
     )
-    dc_lines, PMmap_dc = get_branches_to_pm(
+    two_terminal_dc_lines, PMmap_dc = get_branches_to_pm(
         sys,
         get_network_formulation(template),
-        PSY.DCBranch,
+        TwoTerminalHVDCTypes,
         template.branches,
         length(ac_lines),
     )
-    buses = get_available_components(PSY.Bus, sys)
+    buses = get_available_components(PSY.ACBus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(
         "bus" => pm_buses,
@@ -472,7 +504,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         "baseMVA" => PSY.get_base_power(sys),
         "per_unit" => true,
         "storage" => Dict{String, Any}(),
-        "dcline" => dc_lines,
+        "dcline" => two_terminal_dc_lines,
         "gen" => Dict{String, Any}(),
         "switch" => Dict{String, Any}(),
         "shunt" => Dict{String, Any}(),

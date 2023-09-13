@@ -27,6 +27,7 @@ const JuMPVariableMatrix = DenseAxisArray{
 const JuMPFloatArray = DenseAxisArray{Float64}
 const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 
+const TwoTerminalHVDCTypes = Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCDCLine}
 # Settings constants
 const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)

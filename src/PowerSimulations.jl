@@ -41,11 +41,15 @@ export ConstantMaxInterfaceFlow
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
-export HVDCP2PLossless
-export HVDCP2PDispatch
-export HVDCP2PUnbounded
+export HVDCTwoTerminalLossless
+export HVDCTwoTerminalDispatch
+export HVDCTwoTerminalUnbounded
 export PhaseAngleControl
 # export VoltageSourceDC
+
+######## HVDC models ########
+export LossLessConverter
+export LossLessLine
 ######## Load Models ########
 export StaticPowerLoad
 export PowerLoadInterruption
@@ -511,7 +515,8 @@ include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
-include("devices_models/devices/DC_branches.jl")
+include("devices_models/devices/TwoTerminalDC_branches.jl")
+include("devices_models/devices/HVDCsystems.jl")
 include("devices_models/devices/regulation_device.jl")
 
 # Services Models
@@ -528,12 +533,14 @@ include("network_models/powermodels_interface.jl")
 include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
+include("network_models/hvdc_networks.jl")
 
 include("initial_conditions/initialization.jl")
 
 # Device constructors
 include("devices_models/device_constructors/constructor_validations.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
+include("devices_models/device_constructors/hvdcsystems_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")
 include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
