@@ -594,7 +594,9 @@ function update_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    service = PSY.get_component(T, get_system(model), key.meta)
+    @assert service !== nothing
+    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     IS.@record :execution ParameterUpdateEvent(
         FixValueParameter,
