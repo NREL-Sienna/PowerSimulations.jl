@@ -1,4 +1,4 @@
-struct ResultsByTime{T}
+mutable struct ResultsByTime{T}
     key::OptimizationContainerKey
     data::SortedDict{Dates.DateTime, T}
     resolution::Dates.Period
@@ -51,9 +51,16 @@ function _add_timestamps!(
     timestamp::Dates.DateTime,
     data,
 )
-    time_col =
-        range(timestamp; length = get_num_rows(results, data), step = results.resolution)
-    DataFrames.insertcols!(df, 1, :DateTime => time_col)
+    if results.resolution != Dates.Period(Dates.Millisecond(0))
+        time_col =
+            range(
+                timestamp;
+                length = get_num_rows(results, data),
+                step = results.resolution,
+            )
+        DataFrames.insertcols!(df, 1, :DateTime => time_col)
+    end
+    return
 end
 
 function make_dataframe(
