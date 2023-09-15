@@ -129,13 +129,13 @@ using HiGHS # solver</code></pre><h2 id="Data"><a class="docs-heading-anchor" hr
     </tr>
     <tr>
       <td style = "text-align: left;">VariableReserve</td>
-      <td style = "text-align: left;">4</td>
+      <td style = "text-align: left;">1</td>
       <td style = "text-align: left;">true</td>
       <td style = "text-align: left;">true</td>
     </tr>
     <tr>
       <td style = "text-align: left;">VariableReserve</td>
-      <td style = "text-align: left;">1</td>
+      <td style = "text-align: left;">4</td>
       <td style = "text-align: left;">true</td>
       <td style = "text-align: left;">true</td>
     </tr>
@@ -252,10 +252,10 @@ build!(problem, output_dir = mktempdir())</code></pre><pre class="documenter-exa
   <caption style = "text-align: left;">PowerSimulations Problem Expressions Results</caption>
   <tbody>
     <tr>
-      <td style = "text-align: left;">ProductionCostExpression__RenewableDispatch</td>
+      <td style = "text-align: left;">ProductionCostExpression__ThermalStandard</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">ProductionCostExpression__ThermalStandard</td>
+      <td style = "text-align: left;">ProductionCostExpression__RenewableDispatch</td>
     </tr>
   </tbody>
 </table>
@@ -264,25 +264,25 @@ build!(problem, output_dir = mktempdir())</code></pre><pre class="documenter-exa
   <caption style = "text-align: left;">PowerSimulations Problem Parameters Results</caption>
   <tbody>
     <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3</td>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down</td>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerTimeSeriesParameter__RenewableDispatch</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up</td>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R1</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerTimeSeriesParameter__PowerLoad</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R1</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2</td>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up</td>
     </tr>
   </tbody>
 </table>
@@ -291,22 +291,16 @@ build!(problem, output_dir = mktempdir())</code></pre><pre class="documenter-exa
   <caption style = "text-align: left;">PowerSimulations Problem Variables Results</caption>
   <tbody>
     <tr>
-      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">ActivePowerVariable__ThermalStandard</td>
-    </tr>
-    <tr>
       <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R2</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R3</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">StartVariable__ThermalStandard</td>
+      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveDown__Reg_Down</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">StopVariable__ThermalStandard</td>
+      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up</td>
@@ -315,21 +309,27 @@ build!(problem, output_dir = mktempdir())</code></pre><pre class="documenter-exa
       <td style = "text-align: left;">ActivePowerVariable__RenewableDispatch</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveDown__Reg_Down</td>
+      <td style = "text-align: left;">StopVariable__ThermalStandard</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">StartVariable__ThermalStandard</td>
     </tr>
     <tr>
       <td style = "text-align: left;">OnVariable__ThermalStandard</td>
     </tr>
+    <tr>
+      <td style = "text-align: left;">ActivePowerVariable__ThermalStandard</td>
+    </tr>
   </tbody>
 </table>
-<h3 id="Optimizer-Stats"><a class="docs-heading-anchor" href="#Optimizer-Stats">Optimizer Stats</a><a id="Optimizer-Stats-1"></a><a class="docs-heading-anchor-permalink" href="#Optimizer-Stats" title="Permalink"></a></h3><p>The optimizer summary is included</p><pre><code class="language-julia hljs">get_optimizer_stats(res)</code></pre><div><div style = "float: left;"><span>1×20 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">detailed_stats</th><th style = "text-align: left;">objective_value</th><th style = "text-align: left;">termination_status</th><th style = "text-align: left;">primal_status</th><th style = "text-align: left;">dual_status</th><th style = "text-align: left;">solver_solve_time</th><th style = "text-align: left;">result_count</th><th style = "text-align: left;">has_values</th><th style = "text-align: left;">has_duals</th><th style = "text-align: left;">objective_bound</th><th style = "text-align: left;">dual_objective_value</th><th style = "text-align: left;">solve_time</th><th style = "text-align: left;">barrier_iterations</th><th style = "text-align: left;">simplex_iterations</th><th style = "text-align: left;">node_count</th><th style = "text-align: left;">timed_solve_time</th><th style = "text-align: left;">timed_calculate_aux_variables</th><th style = "text-align: left;">timed_calculate_dual_variables</th><th style = "text-align: left;">solve_bytes_alloc</th><th style = "text-align: left;">sec_in_gc</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Bool" style = "text-align: left;">Bool</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Bool" style = "text-align: left;">Bool</th><th title = "Bool" style = "text-align: left;">Bool</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">false</td><td style = "text-align: right;">2.35848e6</td><td style = "text-align: right;">1</td><td style = "text-align: right;">1</td><td style = "text-align: right;">0</td><td style = "text-align: right;">NaN</td><td style = "text-align: right;">1</td><td style = "text-align: right;">false</td><td style = "text-align: right;">false</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "text-align: right;">0.734165</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "text-align: right;">0.855209</td><td style = "text-align: right;">0.399473</td><td style = "text-align: right;">0.000511097</td><td style = "text-align: right;">2.33068e7</td><td style = "text-align: right;">0.0325667</td></tr></tbody></table></div><h3 id="Objective-Function-Value"><a class="docs-heading-anchor" href="#Objective-Function-Value">Objective Function Value</a><a id="Objective-Function-Value-1"></a><a class="docs-heading-anchor-permalink" href="#Objective-Function-Value" title="Permalink"></a></h3><pre><code class="language-julia hljs">get_objective_value(res)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2.358482086492074e6</code></pre><h3 id="Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values"><a class="docs-heading-anchor" href="#Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values">Variable, Parameter, Auxillary Variable, Dual, and Expression Values</a><a id="Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values" title="Permalink"></a></h3><p>The solution value data frames for variables, parameters, auxillary variables, duals and expressions can be accessed using the <code>read_</code> methods:</p><pre><code class="language-julia hljs">read_variables(res)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, DataFrames.DataFrame} with 10 entries:
+<h3 id="Optimizer-Stats"><a class="docs-heading-anchor" href="#Optimizer-Stats">Optimizer Stats</a><a id="Optimizer-Stats-1"></a><a class="docs-heading-anchor-permalink" href="#Optimizer-Stats" title="Permalink"></a></h3><p>The optimizer summary is included</p><pre><code class="language-julia hljs">get_optimizer_stats(res)</code></pre><div><div style = "float: left;"><span>1×20 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">detailed_stats</th><th style = "text-align: left;">objective_value</th><th style = "text-align: left;">termination_status</th><th style = "text-align: left;">primal_status</th><th style = "text-align: left;">dual_status</th><th style = "text-align: left;">solver_solve_time</th><th style = "text-align: left;">result_count</th><th style = "text-align: left;">has_values</th><th style = "text-align: left;">has_duals</th><th style = "text-align: left;">objective_bound</th><th style = "text-align: left;">dual_objective_value</th><th style = "text-align: left;">solve_time</th><th style = "text-align: left;">barrier_iterations</th><th style = "text-align: left;">simplex_iterations</th><th style = "text-align: left;">node_count</th><th style = "text-align: left;">timed_solve_time</th><th style = "text-align: left;">timed_calculate_aux_variables</th><th style = "text-align: left;">timed_calculate_dual_variables</th><th style = "text-align: left;">solve_bytes_alloc</th><th style = "text-align: left;">sec_in_gc</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Bool" style = "text-align: left;">Bool</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Bool" style = "text-align: left;">Bool</th><th title = "Bool" style = "text-align: left;">Bool</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Missing" style = "text-align: left;">Missing</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">false</td><td style = "text-align: right;">2.35848e6</td><td style = "text-align: right;">1</td><td style = "text-align: right;">1</td><td style = "text-align: right;">0</td><td style = "text-align: right;">NaN</td><td style = "text-align: right;">1</td><td style = "text-align: right;">false</td><td style = "text-align: right;">false</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "text-align: right;">0.765778</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "font-style: italic; text-align: right;">missing</td><td style = "text-align: right;">0.853736</td><td style = "text-align: right;">0.437944</td><td style = "text-align: right;">0.000561108</td><td style = "text-align: right;">2.33068e7</td><td style = "text-align: right;">0.0</td></tr></tbody></table></div><h3 id="Objective-Function-Value"><a class="docs-heading-anchor" href="#Objective-Function-Value">Objective Function Value</a><a id="Objective-Function-Value-1"></a><a class="docs-heading-anchor-permalink" href="#Objective-Function-Value" title="Permalink"></a></h3><pre><code class="language-julia hljs">get_objective_value(res)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2.358482086492074e6</code></pre><h3 id="Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values"><a class="docs-heading-anchor" href="#Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values">Variable, Parameter, Auxillary Variable, Dual, and Expression Values</a><a id="Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Variable,-Parameter,-Auxillary-Variable,-Dual,-and-Expression-Values" title="Permalink"></a></h3><p>The solution value data frames for variables, parameters, auxillary variables, duals and expressions can be accessed using the <code>read_</code> methods:</p><pre><code class="language-julia hljs">read_variables(res)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, DataFrames.DataFrame} with 10 entries:
   &quot;ActivePowerReserveVaria… =&gt; 24×52 DataFrame…
   &quot;StartVariable__ThermalS… =&gt; 24×55 DataFrame…
   &quot;ActivePowerVariable__Th… =&gt; 24×55 DataFrame…
-  &quot;StopVariable__ThermalSt… =&gt; 24×55 DataFrame…
   &quot;ActivePowerReserveVaria… =&gt; 24×52 DataFrame…
-  &quot;ActivePowerReserveVaria… =&gt; 24×18 DataFrame…
   &quot;ActivePowerVariable__Re… =&gt; 24×30 DataFrame…
+  &quot;ActivePowerReserveVaria… =&gt; 24×18 DataFrame…
+  &quot;StopVariable__ThermalSt… =&gt; 24×55 DataFrame…
   &quot;ActivePowerReserveVaria… =&gt; 24×17 DataFrame…
   &quot;OnVariable__ThermalStan… =&gt; 24×55 DataFrame…
   &quot;ActivePowerReserveVaria… =&gt; 24×19 DataFrame…</code></pre><p>Or, you can read a single parameter values for parameters that exist in the results.</p><pre><code class="language-julia hljs">list_parameter_names(res)
