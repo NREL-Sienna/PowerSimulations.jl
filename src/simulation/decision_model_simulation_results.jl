@@ -138,6 +138,7 @@ function _get_store_value(
         Dict{OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
     model_name = Symbol(get_model_name(sim_results))
     resolution = get_resolution(sim_results)
+    horizon = get_forecast_horizon(sim_results)
 
     for key in container_keys
         results_by_time = ResultsByTime(
@@ -146,10 +147,23 @@ function _get_store_value(
             resolution,
             get_column_names(store, DecisionModelIndexType, model_name, key),
         )
+        array_size::Union{Nothing, Tuple{Int, Int}} = nothing
         for ts in timestamps
             array = read_result(DenseAxisArray, store, model_name, key, ts)
+            if isnothing(array_size)
+                array_size = size(array)
+            elseif size(array) != array_size
+                error(
+                    "Arrays for $(encode_key_as_string(key)) at different timestamps have different sizes",
+                )
+            end
             if convert_result_to_natural_units(key)
                 array.data .*= base_power
+            end
+            if array_size[2] != horizon
+                @warn "$(encode_key_as_string(key)) has a different horizon than the " *
+                      "problem specification. Can't assign timestamps to the resulting DataFrame."
+                results_by_time.resolution = Dates.Period(Dates.Millisecond(0))
             end
             results_by_time[ts] = array
         end
