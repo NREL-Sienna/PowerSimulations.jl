@@ -1339,25 +1339,6 @@ function get_expression(
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 
-# Special getter functions to handle system balance expressions
-function get_expression(
-    container::OptimizationContainer,
-    ::T,
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: SystemBalanceExpressions, U <: PM.AbstractPowerModel}
-    return get_expression(container, ExpressionKey(T, PSY.ACBus, meta))
-end
-
-function get_expression(
-    container::OptimizationContainer,
-    ::T,
-    ::Type{CopperPlatePowerModel},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: SystemBalanceExpressions}
-    return get_expression(container, ExpressionKey(T, PSY.System, meta))
-end
-
 function read_expressions(container::OptimizationContainer)
     return Dict(
         k => to_dataframe(jump_value.(v), k) for (k, v) in get_expressions(container) if
