@@ -122,7 +122,7 @@ function add_to_expression!(
         name = PSY.get_name(d)
         mult = get_expression_multiplier(U(), T(), d, W())
         _add_to_jump_expression!(
-            get_expression(container, T(), X)[bus_number, t],
+            get_expression(container, T(), PSY.ACBus)[bus_number, t],
             parameter[name, t],
             mult,
         )
@@ -414,7 +414,7 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.ACBus)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
