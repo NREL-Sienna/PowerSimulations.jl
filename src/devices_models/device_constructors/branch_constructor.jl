@@ -651,6 +651,22 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    devices =
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
+    @warn "CopperPlatePowerModel models with HVDC ignores inter-area losses"
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{U},
 ) where {T <: TwoTerminalHVDCTypes, U <: PM.AbstractActivePowerModel}
     devices =

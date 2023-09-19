@@ -93,7 +93,7 @@ function add_to_expression!(
         bus_number = PSY.get_number(PSY.get_bus(d))
         name = PSY.get_name(d)
         _add_to_jump_expression!(
-            get_expression(container, T(), X)[bus_number, t],
+            get_expression(container, T(), PSY.ACBus)[bus_number, t],
             get_parameter_column_refs(param_container, name)[t],
             multiplier[name, t],
         )
@@ -148,7 +148,7 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.ACBus)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
@@ -170,12 +170,13 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCLosses,
     V <: TwoTerminalHVDCTypes,
     W <: HVDCTwoTerminalDispatch,
+    X <: Union{StandardPTDFModel, CopperPlatePowerModel},
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -206,13 +207,151 @@ function add_to_expression!(
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
+    U <: FlowActivePowerToFromVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: AbstractDeviceFormulation,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    sys_expr = get_expression(container, T(), PSY.System)
+    for d in devices
+        bus_no_to = PSY.get_number(PSY.get_arc(d).to)
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, 1.0)
+            if ref_bus_from != ref_bus_to
+                _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, 1.0)
+            end
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add branch variables to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerFromToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: AbstractTwoTerminalDCLineFormulation,
+    X <: Union{PTDFPowerModel, StandardPTDFModel},
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    sys_expr = get_expression(container, T(), PSY.System)
+    for d in devices
+        bus_no_from = PSY.get_number(PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+            if ref_bus_from != ref_bus_to
+                _add_to_jump_expression!(sys_expr[ref_bus_from, t], flow_variable, -1.0)
+            end
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add branch variables to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerToFromVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: AbstractTwoTerminalDCLineFormulation,
+    X <: CopperPlatePowerModel,
+}
+    if has_subnetworks(network_model)
+        var = get_variable(container, U(), V)
+        sys_expr = get_expression(container, T(), PSY.System)
+        for d in devices
+            ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+            ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+            for t in get_time_steps(container)
+                flow_variable = var[PSY.get_name(d), t]
+                if ref_bus_from != ref_bus_to
+                    _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, 1.0)
+                end
+            end
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add branch variables to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerFromToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: AbstractTwoTerminalDCLineFormulation,
+    X <: CopperPlatePowerModel,
+}
+    if has_subnetworks(network_model)
+        var = get_variable(container, U(), V)
+        sys_expr = get_expression(container, T(), PSY.System)
+        for d in devices
+            ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+            ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+            for t in get_time_steps(container)
+                flow_variable = var[PSY.get_name(d), t]
+                if ref_bus_from != ref_bus_to
+                    _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, -1.0)
+                end
+            end
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add branch variables to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
     U <: FlowActivePowerFromToVariable,
     V <: PSY.Branch,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.ACBus)
     for d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_arc(d).from)
@@ -240,12 +379,12 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
-    V <: PSY.Branch,
+    V <: PSY.ACBranch,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.ACBus)
     for d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_arc(d).to)
@@ -307,7 +446,7 @@ function add_to_expression!(
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.System)
     for d in devices
         device_bus = PSY.get_bus(d)
         ref_bus = get_reference_bus(network_model, device_bus)
@@ -338,7 +477,7 @@ function add_to_expression!(
     X <: CopperPlatePowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.System)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -575,7 +714,7 @@ function add_to_expression!(
     X <: PM.AbstractActivePowerModel,
 }
     var = get_variable(container, U(), V)
-    expression = get_expression(container, T(), X)
+    expression = get_expression(container, T(), PSY.ACBus)
     for d in devices
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
