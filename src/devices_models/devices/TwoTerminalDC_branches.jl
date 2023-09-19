@@ -275,11 +275,10 @@ function add_constraints!(
     ::DeviceModel{U, HVDCTwoTerminalDispatch},
     ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
-        U <: PSY.TwoTerminalHVDCLine}
+    U <: PSY.TwoTerminalHVDCLine}
     _add_hvdc_flow_constraints!(container, devices, T())
     return
 end
-
 
 function add_constraints!(
     container::OptimizationContainer,
