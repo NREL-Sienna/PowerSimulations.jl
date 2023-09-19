@@ -190,7 +190,7 @@ end
 
 function _add_hvdc_flow_constraints!(
     container::OptimizationContainer,
-    devices::Vector{T},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     constraint::FlowRateConstraintFromTo,
 ) where {T <: PSY.TwoTerminalHVDCLine}
     _add_hvdc_flow_constraints!(
@@ -203,7 +203,7 @@ end
 
 function _add_hvdc_flow_constraints!(
     container::OptimizationContainer,
-    devices::Vector{T},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     constraint::FlowRateConstraintToFrom,
 ) where {T <: PSY.TwoTerminalHVDCLine}
     _add_hvdc_flow_constraints!(
@@ -225,9 +225,9 @@ function _add_hvdc_flow_constraints!(
 
     variable = get_variable(container, var, T)
     constraint_ub =
-        add_constraints_container!(container, constraint, U, names, time_steps; meta = "ub")
+        add_constraints_container!(container, constraint, T, names, time_steps; meta = "ub")
     constraint_lb =
-        add_constraints_container!(container, constraint, U, names, time_steps; meta = "lb")
+        add_constraints_container!(container, constraint, T, names, time_steps; meta = "lb")
     for d in devices
         min_rate, max_rate = PSY.get_active_power_limits_from(d)
         for t in time_steps
@@ -274,21 +274,12 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCTwoTerminalDispatch},
     ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: FlowRateConstraintFromTo, U <: PSY.TwoTerminalHVDCLine}
-    _add_hvdc_flow_constraints!(container, devices, FlowActivePowerFromToVariable())
+) where {T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
+        U <: PSY.TwoTerminalHVDCLine}
+    _add_hvdc_flow_constraints!(container, devices, T())
     return
 end
 
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{T},
-    devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, HVDCTwoTerminalDispatch},
-    ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: FlowRateConstraintToFrom, U <: PSY.TwoTerminalHVDCLine}
-    _add_hvdc_flow_constraints!(container, devices, FlowActivePowerToFromVariable())
-    return
-end
 
 function add_constraints!(
     container::OptimizationContainer,
