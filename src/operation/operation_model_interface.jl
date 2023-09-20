@@ -87,10 +87,11 @@ function solve_impl!(model::OperationModel)
     if status != RunStatus.SUCCESSFUL
         settings = get_settings(model)
         model_name = get_name(model)
+        ts = get_current_timestamp(model)
         if !get_allow_fails(settings)
-            error("Solving model $(model_name) failed")
+            error("Solving model $(model_name) failed at $(ts)")
         else
-            @error "Solving model $(model_name) failed. Failure Allowed"
+            @error "Solving model $(model_name) failed at $(ts). Failure Allowed"
         end
     end
     return
