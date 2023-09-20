@@ -171,16 +171,15 @@ function _update_parameter_values!(
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(parameter_array)
-    resolution = get_resolution(model)
-
+    model_resolution = get_resolution(model)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     max_state_index = get_num_rows(state_data)
-
+    t_step = model_resolution ÷ state_data.resolution
     state_data_index = find_timestamp_index(state_timestamps, current_time)
-    sim_timestamps = range(current_time; step = resolution, length = time[end])
+    sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     for t in time
-        timestamp_ix = min(max_state_index, state_data_index + 1)
+        timestamp_ix = min(max_state_index, state_data_index + t_step)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
         if state_timestamps[timestamp_ix] <= sim_timestamps[t]
             state_data_index = timestamp_ix
@@ -211,16 +210,15 @@ function _update_parameter_values!(
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(parameter_array)
-    resolution = get_resolution(model)
-
+    model_resolution = get_resolution(model)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     max_state_index = get_num_rows(state_data)
-
+    t_step = model_resolution ÷ state_data.resolution
     state_data_index = find_timestamp_index(state_timestamps, current_time)
-    sim_timestamps = range(current_time; step = resolution, length = time[end])
+    sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     for t in time
-        timestamp_ix = min(max_state_index, state_data_index + 1)
+        timestamp_ix = min(max_state_index, state_data_index + t_step)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
         if state_timestamps[timestamp_ix] <= sim_timestamps[t]
             state_data_index = timestamp_ix
@@ -251,17 +249,16 @@ function _update_parameter_values!(
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(parameter_array)
-    resolution = get_resolution(model)
-
+    model_resolution = get_resolution(model)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     max_state_index = get_num_rows(state_data)
-
+    t_step = model_resolution ÷ state_data.resolution
     state_data_index = find_timestamp_index(state_timestamps, current_time)
 
-    sim_timestamps = range(current_time; step = resolution, length = time[end])
+    sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     for t in time
-        timestamp_ix = min(max_state_index, state_data_index + 1)
+        timestamp_ix = min(max_state_index, state_data_index + t_step)
         @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
         if state_timestamps[timestamp_ix] <= sim_timestamps[t]
             state_data_index = timestamp_ix
