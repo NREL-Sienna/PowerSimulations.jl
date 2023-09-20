@@ -100,7 +100,6 @@ get_variable_lower_bound(
     ::HVDCTwoTerminalDispatch,
 ) = PSY.get_active_power_limits_to(d).min
 
-
 function get_variable_upper_bound(
     ::HVDCLosses,
     d::PSY.TwoTerminalHVDCLine,
@@ -256,7 +255,7 @@ function _add_hvdc_flow_constraints!(
     for d in devices
         check_hvdc_line_limits_consistency(d)
         max_rate = get_variable_upper_bound(var, d, HVDCTwoTerminalDispatch())
-        min_rate= get_variable_lower_bound(var, d, HVDCTwoTerminalDispatch())
+        min_rate = get_variable_lower_bound(var, d, HVDCTwoTerminalDispatch())
         for t in time_steps
             constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
