@@ -76,6 +76,30 @@ get_variable_lower_bound(
     ::HVDCTwoTerminalDispatch,
 ) = 0.0
 
+get_variable_upper_bound(
+    ::FlowActivePowerFromToVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::HVDCTwoTerminalDispatch,
+) = PSY.get_active_power_limits_from(d).max
+
+get_variable_lower_bound(
+    ::FlowActivePowerFromToVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::HVDCTwoTerminalDispatch,
+) = PSY.get_active_power_limits_from(d).min
+
+get_variable_upper_bound(
+    ::FlowActivePowerToFromVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::HVDCTwoTerminalDispatch,
+) = PSY.get_active_power_limits_to(d).max
+
+get_variable_lower_bound(
+    ::FlowActivePowerToFromVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::HVDCTwoTerminalDispatch,
+) = PSY.get_active_power_limits_to(d).min
+
 function get_variable_upper_bound(
     ::HVDCLosses,
     d::PSY.TwoTerminalHVDCLine,
@@ -188,14 +212,75 @@ function add_constraints!(
     return
 end
 
+function _add_hvdc_flow_constraints!(
+    container::OptimizationContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    constraint::FlowRateConstraintFromTo,
+) where {T <: PSY.TwoTerminalHVDCLine}
+    _add_hvdc_flow_constraints!(
+        container,
+        devices,
+        FlowActivePowerFromToVariable(),
+        constraint,
+    )
+end
+
+function _add_hvdc_flow_constraints!(
+    container::OptimizationContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    constraint::FlowRateConstraintToFrom,
+) where {T <: PSY.TwoTerminalHVDCLine}
+    _add_hvdc_flow_constraints!(
+        container,
+        devices,
+        FlowActivePowerToFromVariable(),
+        constraint,
+    )
+end
+
+function _add_hvdc_flow_constraints!(
+    container::OptimizationContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    var::Union{FlowActivePowerFromToVariable, FlowActivePowerToFromVariable},
+    constraint::Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
+) where {T <: PSY.TwoTerminalHVDCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+
+    variable = get_variable(container, var, T)
+    constraint_ub =
+        add_constraints_container!(container, constraint, T, names, time_steps; meta = "ub")
+    constraint_lb =
+        add_constraints_container!(container, constraint, T, names, time_steps; meta = "lb")
+    for d in devices
+        check_hvdc_line_limits_consistency(d)
+        max_rate = get_variable_upper_bound(var, d, HVDCTwoTerminalDispatch())
+        min_rate = get_variable_lower_bound(var, d, HVDCTwoTerminalDispatch())
+        for t in time_steps
+            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                variable[PSY.get_name(d), t] <= max_rate
+            )
+            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                min_rate <= variable[PSY.get_name(d), t]
+            )
+        end
+    end
+    return
+end
+
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{FlowRateConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, HVDCTwoTerminalLossless},
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{CopperPlatePowerModel},
-) where {T <: PSY.TwoTerminalHVDCLine}
-    inter_network_branches = T[]
+) where {
+    T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
+    U <: PSY.TwoTerminalHVDCLine,
+}
+    inter_network_branches = U[]
     for d in devices
         ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
         ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
@@ -204,13 +289,7 @@ function add_constraints!(
         end
     end
     if !isempty(inter_network_branches)
-        add_constraints!(
-            container,
-            FlowRateConstraint,
-            inter_network_branches,
-            model,
-            network_model,
-        )
+        _add_hvdc_flow_constraints!(container, devices, T())
     end
     return
 end
@@ -221,59 +300,9 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{U},
     ::DeviceModel{U, HVDCTwoTerminalDispatch},
     ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: FlowRateConstraintFromTo, U <: PSY.TwoTerminalHVDCLine}
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-
-    var = get_variable(container, FlowActivePowerFromToVariable(), U)
-    constraint_ub =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "ub")
-    constraint_lb =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "lb")
-    for d in devices
-        min_rate, max_rate = PSY.get_active_power_limits_from(d)
-        for t in time_steps
-            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                var[PSY.get_name(d), t] <= max_rate
-            )
-            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                min_rate <= var[PSY.get_name(d), t]
-            )
-        end
-    end
-    return
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{T},
-    devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, HVDCTwoTerminalDispatch},
-    ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: FlowRateConstraintToFrom, U <: PSY.TwoTerminalHVDCLine}
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-
-    var = get_variable(container, FlowActivePowerToFromVariable(), U)
-    constraint_ub =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "ub")
-    constraint_lb =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "lb")
-    for d in devices
-        min_rate, max_rate = PSY.get_active_power_limits_to(d)
-        for t in time_steps
-            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                var[PSY.get_name(d), t] <= max_rate
-            )
-            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                min_rate <= var[PSY.get_name(d), t]
-            )
-        end
-    end
+) where {T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
+    U <: PSY.TwoTerminalHVDCLine}
+    _add_hvdc_flow_constraints!(container, devices, T())
     return
 end
 
