@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, D},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -59,12 +59,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{R, <: AbstractRenewableDispatchFormulation},
-    network_model::NetworkModel{S},
-) where {
-    R <: PSY.RenewableGen,
-    S <: PM.AbstractPowerModel,
-}
+    model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {R <: PSY.RenewableGen}
     devices =
         get_available_components(R, sys, get_attribute(model, "filter_function"))
 
@@ -106,7 +103,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
     return
@@ -117,7 +114,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, D},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -164,12 +161,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{R, <: AbstractRenewableDispatchFormulation},
-    network_model::NetworkModel{S},
-) where {
-    R <: PSY.RenewableGen,
-    S <: PM.AbstractActivePowerModel,
-}
+    model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {R <: PSY.RenewableGen}
     devices =
         get_available_components(R, sys, get_attribute(model, "filter_function"))
 
@@ -202,7 +196,7 @@ function construct_device!(
     end
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
 
@@ -214,7 +208,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {R <: PSY.RenewableGen}
     devices =
         get_available_components(R, sys, get_attribute(model, "filter_function"))
@@ -246,7 +240,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}
     devices =
         get_available_components(R, sys, get_attribute(model, "filter_function"))
@@ -267,8 +261,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{<: PSY.RenewableGen, FixedOutput},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    model::DeviceModel{<:PSY.RenewableGen, FixedOutput},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel

@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     device_model::DeviceModel{T, FixedOutput},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
@@ -23,8 +23,8 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{<: PSY.ThermalGen, FixedOutput},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    ::DeviceModel{<:PSY.ThermalGen, FixedOutput},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
@@ -39,7 +39,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractStandardUnitCommitment,
@@ -104,13 +104,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, D},
-    network_model::NetworkModel{S},
-) where {
-    T <: PSY.ThermalGen,
-    D <: AbstractStandardUnitCommitment,
-    S <: PM.AbstractPowerModel,
-}
+    model::DeviceModel{T, <:AbstractStandardUnitCommitment},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -144,7 +140,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -157,7 +153,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen, D <: AbstractStandardUnitCommitment}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -211,12 +207,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <: AbstractStandardUnitCommitment},
-    network_model::NetworkModel{S},
-) where {
-    T <: PSY.ThermalGen,
-    S <: PM.AbstractActivePowerModel,
-}
+    model::DeviceModel{T, <:AbstractStandardUnitCommitment},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_constraints!(
@@ -242,7 +235,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
     return
@@ -256,7 +249,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -317,8 +310,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -351,7 +344,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -364,8 +357,8 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -416,8 +409,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -442,7 +435,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -455,7 +448,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -513,8 +506,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -547,7 +540,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -560,7 +553,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -609,8 +602,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalStandardDispatch},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -635,7 +628,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -645,7 +638,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -700,12 +693,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <: AbstractThermalDispatchFormulation},
-    network_model::NetworkModel{S},
-) where {
-    T <: PSY.ThermalGen,
-    S <: PM.AbstractPowerModel,
-}
+    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -737,7 +727,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -747,7 +737,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, D},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -793,12 +783,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <: AbstractThermalDispatchFormulation},
-    network_model::NetworkModel{S},
-) where {
-    T <: PSY.ThermalGen,
-    S <: PM.AbstractActivePowerModel,
-}
+    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -821,7 +808,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     return
 end
 
@@ -830,7 +817,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
@@ -913,8 +900,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    network_model::NetworkModel{S},
-) where {S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     add_constraints!(
@@ -964,7 +951,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -974,7 +961,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
@@ -1041,8 +1028,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
-    network_model::NetworkModel{S},
-) where {S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
     devices = get_available_components(PSY.ThermalMultiStart, sys)
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
@@ -1086,7 +1073,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1096,7 +1083,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -1168,8 +1155,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -1204,7 +1191,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1214,7 +1201,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -1279,8 +1266,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -1307,7 +1294,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1317,7 +1304,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -1387,8 +1374,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -1421,7 +1408,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1431,7 +1418,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -1494,8 +1481,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -1520,7 +1507,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1530,7 +1517,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -1614,8 +1601,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -1648,7 +1635,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1658,7 +1645,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -1717,8 +1704,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, ThermalCompactDispatch},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: PSY.ThermalGen}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
 
@@ -1743,7 +1730,7 @@ function construct_device!(
 
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
     add_constraint_dual!(container, sys, model)
     return
 end

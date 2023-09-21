@@ -102,7 +102,12 @@ function construct_device!(
     if has_subnetworks(network_model)
         devices =
             get_available_components(T, sys, get_attribute(device_model, "filter_function"))
-        branch_rate_bounds!(container, devices, device_model, S)
+        branch_rate_bounds!(
+            container,
+            devices,
+            device_model,
+            typeof(network_model).parameters[1],
+        )
     end
     return
 end
@@ -173,8 +178,8 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<: PSY.ACBranch, StaticBranch},
-    ::NetworkModel{<: PM.AbstractActivePowerModel},
+    ::DeviceModel{<:PSY.ACBranch, StaticBranch},
+    ::NetworkModel{<:PM.AbstractActivePowerModel},
 )
 end
 
@@ -254,12 +259,17 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     device_model::DeviceModel{T, StaticBranchBounds},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ACBranch, S <: StandardPTDFModel}
+    network_model::NetworkModel{StandardPTDFModel},
+) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
-    branch_rate_bounds!(container, devices, device_model, S)
+    branch_rate_bounds!(
+        container,
+        devices,
+        device_model,
+        get_network_formulation(network_model),
+    )
     add_constraint_dual!(container, sys, device_model)
     return
 end
@@ -304,7 +314,7 @@ function construct_device!(
     ::PSY.System,
     ::ArgumentConstructStage,
     ::DeviceModel{T, StaticBranch},
-    ::NetworkModel{<: PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch} end
 
 function construct_device!(
@@ -312,11 +322,11 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{S},
-) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    branch_rate_bounds!(container, devices, model, S)
+    branch_rate_bounds!(container, devices, model, get_network_formulation(network_model))
 
     add_constraints!(container, RateLimitConstraintFromTo, devices, model, network_model)
     add_constraints!(container, RateLimitConstraintToFrom, devices, model, network_model)
@@ -329,7 +339,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     ::DeviceModel{T, StaticBranchBounds},
-    ::NetworkModel{<: PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch} end
 
 function construct_device!(
@@ -337,11 +347,11 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranchBounds},
-    ::NetworkModel{S},
-) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    branch_rate_bounds!(container, devices, model, S)
+    branch_rate_bounds!(container, devices, model, get_network_formulation(network_model))
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -402,8 +412,8 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<: TwoTerminalHVDCTypes, <: HVDCTwoTerminalUnbounded},
-    ::NetworkModel{<: PM.AbstractPowerModel},
+    ::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 )
     return
 end
@@ -412,8 +422,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{<: TwoTerminalHVDCTypes, <: HVDCTwoTerminalUnbounded},
-    ::NetworkModel{<: PM.AbstractPowerModel},
+    model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 )
     add_constraint_dual!(container, sys, model)
 end
@@ -424,7 +434,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, U},
-    network_model::NetworkModel{<: Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
 ) where {
     T <: TwoTerminalHVDCTypes,
     U <: HVDCTwoTerminalUnbounded,
@@ -448,8 +458,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{<: TwoTerminalHVDCTypes, <: HVDCTwoTerminalUnbounded},
-    network_model::NetworkModel{<: Union{StandardPTDFModel, PTDFPowerModel}},
+    model::DeviceModel{<:TwoTerminalHVDCTypes, <:HVDCTwoTerminalUnbounded},
+    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
 )
     add_constraint_dual!(container, sys, model)
     return
@@ -459,8 +469,8 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<: TwoTerminalHVDCTypes, <: HVDCTwoTerminalLossless},
-    ::NetworkModel{<: PM.AbstractPowerModel}
+    ::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalLossless},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 )
     return
 end
@@ -469,8 +479,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <: HVDCTwoTerminalLossless},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    model::DeviceModel{T, HVDCTwoTerminalLossless},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -590,7 +600,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -647,7 +657,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))

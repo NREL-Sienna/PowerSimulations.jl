@@ -1,5 +1,5 @@
 function validate_available_devices(
-    device_model::DeviceModel{T, <: AbstractDeviceFormulation},
+    device_model::DeviceModel{T, <:AbstractDeviceFormulation},
     system::PSY.System,
 ) where {T <: PSY.Device}
     devices =

@@ -3,7 +3,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, D},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -43,13 +43,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{L, D},
-    network_model::NetworkModel{S},
-) where {
-    L <: PSY.ControllableLoad,
-    D <: AbstractControllablePowerLoadFormulation,
-    S <: PM.AbstractPowerModel,
-}
+    model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {L <: PSY.ControllableLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
 
@@ -71,7 +67,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
     return
@@ -82,7 +78,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, D},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -112,13 +108,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{L, D},
-    network_model::NetworkModel{S},
-) where {
-    L <: PSY.ControllableLoad,
-    D <: AbstractControllablePowerLoadFormulation,
-    S <: PM.AbstractActivePowerModel,
-}
+    model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {L <: PSY.ControllableLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
 
@@ -132,7 +124,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
     return
@@ -143,7 +135,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
@@ -182,8 +174,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    network_model::NetworkModel{S},
-) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {L <: PSY.ControllableLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
 
@@ -205,7 +197,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
     return
@@ -216,7 +208,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.ControllableLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
@@ -245,8 +237,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
-    network_model::NetworkModel{S},
-) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {L <: PSY.ControllableLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
 
@@ -260,7 +252,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, S)
+    objective_function!(container, devices, model, typeof(network_model).parameters[1])
 
     add_constraint_dual!(container, sys, model)
     return
@@ -271,7 +263,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ElectricLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
@@ -303,7 +295,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{L, StaticPowerLoad},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.ElectricLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
@@ -325,8 +317,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{<: PSY.ElectricLoad, StaticPowerLoad},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    model::DeviceModel{<:PSY.ElectricLoad, StaticPowerLoad},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
     # Static PowerLoad doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
@@ -337,8 +329,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{L, <: AbstractControllablePowerLoadFormulation},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {L <: PSY.StaticLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
@@ -369,8 +361,8 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{L, <: AbstractControllablePowerLoadFormulation},
-    network_model::NetworkModel{<: PM.AbstractActivePowerModel},
+    model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.StaticLoad}
     devices =
         get_available_components(L, sys, get_attribute(model, "filter_function"))
@@ -392,7 +384,7 @@ function construct_device!(
     sys::PSY.System,
     ccs::ModelConstructStage,
     model::DeviceModel{L, D},
-    network_model::NetworkModel{<: PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,

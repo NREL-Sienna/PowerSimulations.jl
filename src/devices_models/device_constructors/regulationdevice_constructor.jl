@@ -98,7 +98,13 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, ParticipationAssignmentConstraint, devices, model, AreaBalancePowerModel)
+    add_constraints!(
+        container,
+        ParticipationAssignmentConstraint,
+        devices,
+        model,
+        AreaBalancePowerModel,
+    )
     objective_function!(container, devices, model)
     return
 end
@@ -107,7 +113,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{PSY.RegulationDevice{<: PSY.StaticInjection}, FixedOutput},
+    model::DeviceModel{PSY.RegulationDevice{<:PSY.StaticInjection}, FixedOutput},
     network_model::NetworkModel{AreaBalancePowerModel},
 )
     devices = get_available_components(get_component_type(model), sys)
@@ -128,7 +134,7 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{PSY.RegulationDevice{<: PSY.StaticInjection}, FixedOutput},
+    ::DeviceModel{PSY.RegulationDevice{<:PSY.StaticInjection}, FixedOutput},
     network_model::NetworkModel{AreaBalancePowerModel},
 )
     # There is no-op under FixedOutput formulation
