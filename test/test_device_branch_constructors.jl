@@ -237,7 +237,7 @@ end
     add_component!(sys_5, hvdc)
 
     template_uc = ProblemTemplate(
-        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(sys_5; linear_solver = "Dense")),
+        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(sys_5)),
     )
 
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
@@ -286,7 +286,8 @@ end
     dcp_objective = model.internal.container.optimizer_stats.objective_value
 
     @test isapprox(dcp_objective, ptdf_objective; atol = 0.1)
-    @test all(isapprox.(ptdf_values[!, "1"], dcp_values[!, "1"]; atol = 0.1))
+    # Resulting solution is in the 4e5 order of magnitude
+    @test all(isapprox.(ptdf_values[!, "1"], dcp_values[!, "1"]; atol = 10))
 end
 
 @testset "HVDCDispatch Model Tests" begin
