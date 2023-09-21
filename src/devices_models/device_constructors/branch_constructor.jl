@@ -412,9 +412,9 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
+    ::DeviceModel{T, HVDCTwoTerminalUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
-)
+) where {T <: TwoTerminalHVDCTypes}
     return
 end
 
@@ -433,15 +433,12 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, U},
+    model::DeviceModel{T, HVDCTwoTerminalUnbounded},
     network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
-) where {
-    T <: TwoTerminalHVDCTypes,
-    U <: HVDCTwoTerminalUnbounded,
-}
+) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    add_variables!(container, FlowActivePowerVariable, devices, U())
+    add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalUnbounded())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -458,7 +455,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{<:TwoTerminalHVDCTypes, <:HVDCTwoTerminalUnbounded},
+    model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
     network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
 )
     add_constraint_dual!(container, sys, model)
@@ -469,9 +466,9 @@ function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalLossless},
+    ::DeviceModel{T, HVDCTwoTerminalLossless},
     ::NetworkModel{<:PM.AbstractPowerModel},
-)
+) where {T <: TwoTerminalHVDCTypes}
     return
 end
 
@@ -494,12 +491,12 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, U},
+    model::DeviceModel{T, HVDCTwoTerminalLossless},
     network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
-) where {T <: TwoTerminalHVDCTypes, U <: HVDCTwoTerminalLossless}
+) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    add_variables!(container, FlowActivePowerVariable, devices, U())
+    add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalLossless())
     add_to_expression!(
         container,
         ActivePowerBalance,
