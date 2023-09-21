@@ -106,7 +106,7 @@ function construct_device!(
             container,
             devices,
             device_model,
-            typeof(network_model).parameters[1],
+            get_network_formulation(network_model),
         )
     end
     return

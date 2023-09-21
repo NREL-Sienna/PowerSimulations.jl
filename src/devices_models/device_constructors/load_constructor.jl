@@ -67,7 +67,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, typeof(network_model).parameters[1])
+    objective_function!(container, devices, model, get_network_formulation(network_model))
 
     add_constraint_dual!(container, sys, model)
     return
@@ -124,7 +124,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, typeof(network_model).parameters[1])
+    objective_function!(container, devices, model, get_network_formulation(network_model))
 
     add_constraint_dual!(container, sys, model)
     return
@@ -197,7 +197,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, typeof(network_model).parameters[1])
+    objective_function!(container, devices, model, get_network_formulation(network_model))
 
     add_constraint_dual!(container, sys, model)
     return
@@ -252,7 +252,7 @@ function construct_device!(
     )
     add_feedforward_constraints!(container, model, devices)
 
-    objective_function!(container, devices, model, typeof(network_model).parameters[1])
+    objective_function!(container, devices, model, get_network_formulation(network_model))
 
     add_constraint_dual!(container, sys, model)
     return
