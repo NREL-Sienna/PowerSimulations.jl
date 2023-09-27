@@ -61,7 +61,7 @@ end
 function get_column_names(
     key::OptimizationContainerKey,
     ::DenseAxisArray{T, 1, K},
-) where {T, K <: NTuple{1, Int}}
+) where {T, K <: NTuple{1, Any}}
     return get_column_names(key)
 end
 
