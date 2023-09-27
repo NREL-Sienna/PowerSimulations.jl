@@ -100,5 +100,5 @@ function to_dict(stats::OptimizerStats)
 end
 
 function get_column_names(::Type{OptimizerStats})
-    return collect(string.(fieldnames(OptimizerStats)))
+    return (collect(string.(fieldnames(OptimizerStats))),)
 end

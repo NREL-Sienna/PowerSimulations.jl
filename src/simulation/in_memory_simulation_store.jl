@@ -143,7 +143,7 @@ function initialize_problem_storage!(
             container = get_data_field(get_em_data(store), type)
             container[key] = InMemoryDataset(
                 fill!(
-                    DenseAxisArray{Float64}(undef, reqs["columns"], 1:reqs["dims"][1]),
+                    DenseAxisArray{Float64}(undef, reqs["columns"]..., 1:reqs["dims"][1]),
                     NaN,
                 ),
             )
