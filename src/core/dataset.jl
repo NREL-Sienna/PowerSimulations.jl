@@ -59,6 +59,24 @@ function InMemoryDataset(values::DenseAxisArray{Float64, N}) where {N}
     )
 end
 
+# Helper method for one dimensional cases
+function InMemoryDataset(
+    fill_val::Float64,
+    initial_time::Dates.DateTime,
+    resolution::Dates.Millisecond,
+    end_of_step_index::Int,
+    row_count::Int,
+    column_names::Vector{String})
+    return InMemoryDataset(
+        fill_val,
+        initial_time,
+        resolution,
+        end_of_step_index,
+        row_count,
+        (column_names,),
+    )
+end
+
 function InMemoryDataset(
     fill_val::Float64,
     initial_time::Dates.DateTime,
