@@ -20,9 +20,9 @@ end
 
 # Values field is accessed with dot syntax to avoid type instability
 
-mutable struct InMemoryDataset <: AbstractDataset
-    "Data with dimensions (column names, row indexes)"
-    values::DenseAxisArray{Float64, 2}
+mutable struct InMemoryDataset{N} <: AbstractDataset
+    "Data with dimensions (N column names, row indexes)"
+    values::DenseAxisArray{Float64, N}
     # We use Array here to allow for overwrites when updating the state
     timestamps::Vector{Dates.DateTime}
     # Resolution is needed because AbstractDataset might have just one row
@@ -33,12 +33,12 @@ mutable struct InMemoryDataset <: AbstractDataset
 end
 
 function InMemoryDataset(
-    values::DenseAxisArray{Float64, 2},
+    values::DenseAxisArray{Float64, N},
     timestamps::Vector{Dates.DateTime},
     resolution::Dates.Millisecond,
     end_of_step_index::Int,
-)
-    return InMemoryDataset(
+) where {N}
+    return InMemoryDataset{N}(
         values,
         timestamps,
         resolution,
@@ -48,8 +48,8 @@ function InMemoryDataset(
     )
 end
 
-function InMemoryDataset(values::DenseAxisArray{Float64, 2})
-    return InMemoryDataset(
+function InMemoryDataset(values::DenseAxisArray{Float64, N}) where {N}
+    return InMemoryDataset{N}(
         values,
         Vector{Dates.DateTime}(),
         Dates.Second(0.0),
@@ -59,14 +59,38 @@ function InMemoryDataset(values::DenseAxisArray{Float64, 2})
     )
 end
 
-get_num_rows(s::InMemoryDataset) = size(s.values)[2]
+function InMemoryDataset(
+    fill_val::Float64,
+    initial_time::Dates.DateTime,
+    resolution::Dates.Millisecond,
+    end_of_step_index::Int,
+    row_count::Int,
+    column_names::NTuple{N, <:Any}) where {N}
+    return InMemoryDataset(
+        fill!(
+            DenseAxisArray{Float64}(undef, column_names..., 1:row_count),
+            fill_val,
+        ),
+        collect(
+            range(
+                initial_time;
+                step = resolution,
+                length = row_count,
+            ),
+        ),
+        resolution,
+        end_of_step_index,
+    )
+end
+
+get_num_rows(s::InMemoryDataset{N}) where {N} = size(s.values)[N]
 
 function make_system_state(
-    values::DenseAxisArray{Float64, 2},
     timestamp::Dates.DateTime,
     resolution::Dates.Millisecond,
-)
-    return InMemoryDataset(values, [timestamp], resolution, 0, 1, UNSET_INI_TIME)
+    columns::NTuple{N, <:Any},
+) where {N}
+    return InMemoryDataset(NaN, timestamp, resolution, 0, 1, columns)
 end
 
 function get_dataset_value(s::InMemoryDataset, date::Dates.DateTime)
@@ -77,8 +101,9 @@ function get_dataset_value(s::InMemoryDataset, date::Dates.DateTime)
     return s.values[:, s_index]
 end
 
-get_column_names(s::InMemoryDataset) = axes(s.values)[1]
-get_column_names(::OptimizationContainerKey, s::InMemoryDataset) = get_column_names(s)
+function get_column_names(k::OptimizationContainerKey, s::InMemoryDataset)
+    return get_column_names(k, s.values)
+end
 
 function get_last_recorded_value(s::InMemoryDataset)
     if get_last_recorded_row(s) == 0
@@ -117,6 +142,11 @@ end
 
 function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 1}, index::Int)
     s.values[:, index] = vals
+    return
+end
+
+function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 3}, index::Int)
+    s.values[:, :, index] = vals
     return
 end
 

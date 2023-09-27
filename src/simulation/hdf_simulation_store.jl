@@ -261,7 +261,12 @@ function initialize_problem_storage!(
                 # Columns can't be stored in attributes because they might be larger than
                 # the max size of 64 KiB.
                 col = _make_column_name(name)
-                HDF5.write_dataset(group, col, string.(reqs["columns"]))
+                if length(reqs["columns"]) == 1
+                    HDF5.write_dataset(group, col, string.(reqs["columns"][1]))
+                else
+                    col_vals = vcat(reqs["columns"]...)
+                    HDF5.write_dataset(group, col, string.(col_vals))
+                end
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
                 datasets[key] = HDF5Dataset(
@@ -305,7 +310,12 @@ function initialize_problem_storage!(
                 # Columns can't be stored in attributes because they might be larger than
                 # the max size of 64 KiB.
                 col = _make_column_name(name)
-                HDF5.write_dataset(group, col, string.(reqs["columns"]))
+                if length(reqs["columns"]) == 1
+                    HDF5.write_dataset(group, col, string.(reqs["columns"][1]))
+                else
+                    col_vals = vcat(reqs["columns"]...)
+                    HDF5.write_dataset(group, col, string.(col_vals))
+                end
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
                 datasets[key] = HDF5Dataset(

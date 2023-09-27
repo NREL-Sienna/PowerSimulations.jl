@@ -49,7 +49,7 @@ function initialize_storage!(
             for timestamp in
                 range(initial_time; step = model_interval, length = num_of_executions)
                 data[timestamp] = fill!(
-                    DenseAxisArray{Float64}(undef, column_names, 1:time_steps_count),
+                    DenseAxisArray{Float64}(undef, column_names..., 1:time_steps_count),
                     NaN,
                 )
             end
@@ -133,5 +133,5 @@ end
 
 function get_column_names(store::DecisionModelStore, key::OptimizationContainerKey)
     container = getfield(store, get_store_container_type(key))
-    return axes(first(values(container[key])))[1]
+    return get_column_names(key, first(values(container[key])))
 end

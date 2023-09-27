@@ -61,15 +61,22 @@ end
 function get_column_names(
     key::OptimizationContainerKey,
     ::DenseAxisArray{T, 1, K},
-) where {T, K <: NTuple{1, Any}}
+) where {T, K <: NTuple{1, Int}}
     return get_column_names(key)
 end
 
 function get_column_names(
-    ::OptimizationContainerKey,
+    k::OptimizationContainerKey,
     array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
-    return string.(axes(array)[1])
+    return (string.(axes(array)[1]),)
+end
+
+function get_column_names(
+    k::OptimizationContainerKey,
+    array::DenseAxisArray{T, 3, K},
+) where {T, K <: NTuple{3, Any}}
+    return (string.(axes(array)[1]), string.(axes(array)[2]))
 end
 
 function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
@@ -80,7 +87,7 @@ function get_column_names(
     ::OptimizationContainerKey,
     array::SparseAxisArray{T, N, K},
 ) where {T, N, K <: NTuple{N, Any}}
-    return get_column_names(array)
+    return (get_column_names(array),)
 end
 
 function get_column_names(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
@@ -198,12 +205,12 @@ function _calc_dimensions(
         if length(ax[2]) != horizon
             @debug "$(encode_key_as_string(key)) has length $(length(ax[1])). Different than horizon $horizon."
         end
-        dims = (length(ax[2]), length(columns), num_rows)
+        dims = (length(ax[2]), length(columns[1]), num_rows)
     elseif length(ax) == 3
         if length(ax[3]) != horizon
             @debug "$(encode_key_as_string(key)) has length $(length(ax[1])). Different than horizon $horizon."
         end
-        dims = (length(ax[2]), length(ax[3]), length(columns), num_rows)
+        dims = (length(ax[3]), length(columns[1]), length(columns[2]), num_rows)
     else
         error("unsupported data size $(length(ax))")
     end
@@ -218,7 +225,7 @@ function _calc_dimensions(
     horizon::Int,
 )
     columns = get_column_names(key, array)
-    dims = (horizon, length(columns), num_rows)
+    dims = (horizon, length.(columns)..., num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end
 

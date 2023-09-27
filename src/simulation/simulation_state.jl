@@ -90,20 +90,12 @@ function _initialize_model_states!(
             column_names = get_column_names(key, value)
             if !haskey(field_states, key) || get_num_rows(field_states[key]) < value_counts
                 field_states[key] = InMemoryDataset(
-                    fill!(
-                        DenseAxisArray{Float64}(undef, column_names, 1:value_counts),
-                        NaN,
-                    ),
-                    collect(
-                        range(
-                            simulation_initial_time;
-                            step = params[key].resolution,
-                            length = value_counts,
-                        ),
-                    ),
+                    NaN,
+                    simulation_initial_time,
                     params[key].resolution,
                     Int(simulation_step / params[key].resolution),
-                )
+                    value_counts,
+                    column_names)
             end
         end
     end
@@ -125,9 +117,9 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                fill!(DenseAxisArray{Float64}(undef, cols, 1:1), NaN),
                 simulation_initial_time,
                 min_res,
+                cols,
             ),
         )
     end
@@ -153,9 +145,9 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 make_system_state(
-                    fill!(DenseAxisArray{Float64}(undef, column_names, 1:1), NaN),
                     simulation_initial_time,
-                    get_resolution(emulation_model),
+                    min_res,
+                    cols,
                 ),
             )
         end
@@ -173,9 +165,9 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                fill!(DenseAxisArray{Float64}(undef, cols, 1:1), NaN),
                 simulation_initial_time,
-                get_resolution(emulation_model),
+                min_res,
+                cols,
             ),
         )
     end
@@ -212,7 +204,7 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
-    column_names = get_column_names(state_data)
+    column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
