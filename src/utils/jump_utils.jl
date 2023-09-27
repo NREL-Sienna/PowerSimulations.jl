@@ -55,7 +55,7 @@ function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
 end
 
 function get_column_names(key::OptimizationContainerKey)
-    return [encode_key_as_string(key)]
+    return ([encode_key_as_string(key)],)
 end
 
 function get_column_names(
