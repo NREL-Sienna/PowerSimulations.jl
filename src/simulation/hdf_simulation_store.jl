@@ -321,7 +321,8 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
-                n_dims = length(reqs["dims"]) - 1
+                # First dim is Horizon, Last number of steps
+                n_dims = length(reqs["dims"]) - 2
                 datasets[key] = HDF5Dataset{n_dims}(
                     dataset,
                     column_dataset,
