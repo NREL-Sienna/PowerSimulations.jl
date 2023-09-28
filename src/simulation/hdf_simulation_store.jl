@@ -269,9 +269,12 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                datasets[key] = HDF5Dataset(
+                # First dim is Horizon, Last number of steps
+                n_dims = length(reqs["dims"]) - 2
+                datasets[key] = HDF5Dataset{n_dims}(
                     dataset,
                     column_dataset,
+                    reqs["dims"],
                     get_resolution(problem_params),
                     initial_time,
                 )
@@ -318,9 +321,11 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
-                datasets[key] = HDF5Dataset(
+                n_dims = length(reqs["dims"]) - 1
+                datasets[key] = HDF5Dataset{n_dims}(
                     dataset,
                     column_dataset,
+                    reqs["dims"],
                     get_resolution(emulation_params),
                     initial_time,
                 )
@@ -339,7 +344,6 @@ function initialize_problem_storage!(
 end
 
 log_cache_hit_percentages(x::HdfSimulationStore) = log_cache_hit_percentages(x.cache)
-
 
 function _make_dataframe(data::Matrix{Float64}, columns::Tuple{Vector{String}})
     if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
@@ -543,7 +547,6 @@ function _read_result(
     return data, columns
 end
 
-
 """
 Write a decision model result for a timestamp to the store.
 """
@@ -614,8 +617,6 @@ function write_result!(
     =#
     return
 end
-
-
 
 """
 Write an emulation model result for an execution index value and the timestamp of the update
