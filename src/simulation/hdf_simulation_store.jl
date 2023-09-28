@@ -378,8 +378,6 @@ function _make_denseaxisarray(
     data::Array{Float64, 3},
     columns::NTuple{2, <:Any},
 )
-    @show size(data)
-    @show columns
     return DenseAxisArray(permutedims(data, (2, 3, 1)), columns[1], columns[2], 1:size(data)[1])
 end
 
@@ -390,16 +388,12 @@ function read_result(
     key::OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
-    @show model_name
     if is_cached(store.cache, model_name, key, index)
-        @show "in cache"
         data = read_result(store.cache, model_name, key, index)
         columns = get_column_names(store, DecisionModelIndexType, model_name, key)
     else
-        @show "not in cache"
         data, columns = _read_result(store, model_name, key, index)
     end
-    @show columns
     return _make_denseaxisarray(data, columns)
 end
 
@@ -531,7 +525,7 @@ function _read_result(
     dataset = _get_dm_dataset(store, model_name, key)
     dset = dataset.values
     row_index = (simulation_step - 1) * num_executions + execution_index
-    @show columns = get_column_names(key, dataset)
+    columns = get_column_names(key, dataset)
 
     # Uncomment for performance checking
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
@@ -709,10 +703,11 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     empty!(get_dm_data(store))
     for model in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/decision_models/$model"]
+        horizon = HDF5.read(HDF5.attributes(problem_group)["horizon"])
         model_name = Symbol(model)
         store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
-            HDF5.read(HDF5.attributes(problem_group)["horizon"]),
+            horizon,
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
@@ -727,7 +722,9 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                     column_dataset = group[_make_column_name(name)]
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
-                    item = HDF5Dataset(dataset, column_dataset, resolution, initial_time)
+                    dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                    n_dims = max(1, ndims(dataset) - 2)
+                    item = HDF5Dataset{n_dims}(dataset, column_dataset, dims, resolution, initial_time)
                     container_key = container_key_lookup[name]
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(
@@ -745,6 +742,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     end
 
     em_group = _get_emulation_model_path(store)
+    horizon = HDF5.read(HDF5.attributes(em_group)["horizon"])
     model_name = Symbol(HDF5.read(HDF5.attributes(em_group)["name"]))
     resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["resolution_ms"]))
     store.params.emulation_model_params[model_name] = ModelStoreParams(
@@ -761,7 +759,9 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             if !endswith(name, "columns")
                 dataset = group[name]
                 column_dataset = group[_make_column_name(name)]
-                item = HDF5Dataset(dataset, column_dataset, resolution, initial_time)
+                dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                n_dims = max(1, ndims(dataset) - 1)
+                item = HDF5Dataset{n_dims}(dataset, column_dataset, dims, resolution, initial_time)
                 container_key = container_key_lookup[name]
                 getfield(store.em_data, type)[container_key] = item
                 add_output_cache!(store.cache, model_name, container_key, CacheFlushRule())
