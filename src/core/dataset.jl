@@ -189,7 +189,8 @@ mutable struct HDF5Dataset <: AbstractDataset
     end
 end
 
-HDF5Dataset(values, column_dataset, resolution, initial_time) =
+function HDF5Dataset(values, column_dataset, resolution, initial_time)
+    @show column_dataset[:]
     HDF5Dataset(
         values,
         column_dataset,
@@ -200,16 +201,20 @@ HDF5Dataset(values, column_dataset, resolution, initial_time) =
         UNSET_INI_TIME,
         column_dataset[:],
     )
+end
 
 function _make_column_names(vals::Vector{String})
+    @show "col vector"
     return (vals,)
 end
 
 function _make_column_names(vals::Matrix{String})
+    @show "col matrix"
     return (vals[:, 1], vals[:, 2])
 end
 
 function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
+    @show s.column_names
     return _make_column_names(s.column_names)
 end
 
