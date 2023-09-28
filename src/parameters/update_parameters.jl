@@ -25,28 +25,6 @@ function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, 
     return
 end
 
-function _set_param_value!(
-    param::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
-    value::Float64,
-    name::String,
-    subcomp::String,
-    t::Int,
-)
-    fix_parameter_value(param[name, subcomp, t], value)
-    return
-end
-
-function _set_param_value!(
-    param::SparseAxisArray{Float64},
-    value::Float64,
-    name::String,
-    subcomp::String,
-    t::Int,
-)
-    param[name, subcomp, t] = value
-    return
-end
-
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
     attributes::TimeSeriesAttributes{U},
