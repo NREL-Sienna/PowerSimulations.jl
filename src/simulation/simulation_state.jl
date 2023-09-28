@@ -199,7 +199,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::OptimizationContainerKey,
-    store_data::DenseAxisArray{Float64},
+    store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 )
@@ -241,7 +241,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::AuxVarKey{EnergyOutput, T},
-    store_data::DenseAxisArray{Float64},
+    store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -283,7 +283,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::AuxVarKey{S, T},
-    store_data::DenseAxisArray{Float64},
+    store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}

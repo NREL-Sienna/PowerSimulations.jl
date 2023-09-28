@@ -186,7 +186,7 @@ function _get_store_value(
     resolution = get_resolution(sim_results)
 
     for key in container_keys
-        results_by_time = ResultsByTime{Matrix{Float64}}(
+        results_by_time = ResultsByTime{Matrix{Float64}, 1}(
             key,
             SortedDict{Dates.DateTime, Matrix{Float64}}(),
             resolution,

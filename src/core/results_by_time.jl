@@ -39,6 +39,13 @@ function _check_column_consistency(
     end
 end
 
+function _check_column_consistency(
+    data::SortedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+    cols::NTuple{N, Vector{String}},
+) where {N}
+    # TODO:
+end
+
 # TODO: Implement consistency check for other sizes
 
 # This struct behaves like a dict, delegating to its 'data' field.

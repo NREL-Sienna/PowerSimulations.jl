@@ -371,7 +371,7 @@ function read_result(
     else
         data, columns = _read_result(store, model_name, key, index)
     end
-    return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
+    return DenseAxisArray(permutedims(data), columns..., 1:size(data)[1])
 end
 
 function read_result(
@@ -407,8 +407,7 @@ function read_results(
         data = dataset.values[index:(index + len - 1), :]
     end
     columns = get_column_names(key, dataset)
-    @assert_op size(data)[2] == length(columns)
-    return DenseAxisArray(permutedims(data), columns, 1:size(data)[1])
+    return DenseAxisArray(permutedims(data), columns..., 1:size(data)[1])
 end
 
 function get_column_names(
