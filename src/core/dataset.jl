@@ -201,7 +201,17 @@ HDF5Dataset(values, column_dataset, resolution, initial_time) =
         column_dataset[:],
     )
 
-get_column_names(::OptimizationContainerKey, s::HDF5Dataset) = s.column_names
+function _make_column_names(vals::Vector{String})
+    return (vals,)
+end
+
+function _make_column_names(vals::Matrix{String})
+    return (vals[:, 1], vals[:, 2])
+end
+
+function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
+    return _make_column_names(s.column_names)
+end
 
 """
 Return the timestamp from most recent data row updated in the dataset. This value may not be the same as the result from `get_update_timestamp`
