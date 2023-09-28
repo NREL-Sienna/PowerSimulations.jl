@@ -358,6 +358,22 @@ function read_result(
     return DataFrames.DataFrame(data, columns; copycols = false)
 end
 
+function _make_denseaxisarray(
+    data::Matrix{Float64},
+    columns::Tuple{Vector{String}},
+)
+    return DenseAxisArray(permutedims(data), columns[1], 1:size(data)[1])
+end
+
+function _make_denseaxisarray(
+    data::Array{Float64, 3},
+    columns::NTuple{2, <:Any},
+)
+    @show data
+    @show columns
+    return DenseAxisArray(permutedims(data), columns[1], columns[2], 1:size(data)[1])
+end
+
 function read_result(
     ::Type{DenseAxisArray},
     store::HdfSimulationStore,
@@ -365,13 +381,17 @@ function read_result(
     key::OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
+    @show model_name
     if is_cached(store.cache, model_name, key, index)
+        @show "in cache"
         data = read_result(store.cache, model_name, key, index)
         columns = get_column_names(store, DecisionModelIndexType, model_name, key)
     else
+        @show "not in cache"
         data, columns = _read_result(store, model_name, key, index)
     end
-    return DenseAxisArray(permutedims(data), columns..., 1:size(data)[1])
+    @show columns
+    return _make_denseaxisarray(data, columns)
 end
 
 function read_result(
@@ -502,15 +522,15 @@ function _read_result(
     dataset = _get_dm_dataset(store, model_name, key)
     dset = dataset.values
     row_index = (simulation_step - 1) * num_executions + execution_index
-    columns = get_column_names(key, dataset)
+    @show columns = get_column_names(key, dataset)
 
     # Uncomment for performance checking
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
     num_dims = ndims(dset)
     if num_dims == 3
         data = dset[:, :, row_index]
-        #elseif num_dims == 4
-        #    data = dset[:, :, :, row_index]
+    elseif num_dims == 4
+        data = dset[:, :, :, row_index]
     else
         error("unsupported dims: $num_dims")
     end
@@ -518,6 +538,7 @@ function _read_result(
 
     return data, columns
 end
+
 
 """
 Write a decision model result for a timestamp to the store.
@@ -552,6 +573,45 @@ function write_result!(
     @debug "write_result" get_size(store.cache) encode_key_as_string(key)
     return
 end
+
+"""
+Write a decision model result for a timestamp to the store.
+"""
+function write_result!(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    ::Dates.DateTime,
+    data::DenseAxisArray{Float64, 3, <:NTuple{3, Any}},
+)
+    @show "Here"
+    #=
+    output_cache = get_output_cache(store.cache, model_name, key)
+    cur_size = get_size(store.cache)
+    add_result!(output_cache, index, to_matrix(data), is_full(store.cache, cur_size))
+
+    if get_dirty_size(output_cache) >= get_min_flush_size(store.cache)
+        discard = !should_keep_in_cache(output_cache)
+
+        # PERF: A potentially significant performance improvement would be to queue several
+        # flushes and submit them in parallel.
+        size_flushed = _flush_data!(output_cache, store, model_name, key, discard)
+
+        @debug "flushed data" LOG_GROUP_SIMULATION_STORE key size_flushed discard cur_size
+    end
+
+    # Disabled because this is currently a noop.
+    #if is_full(store.cache)
+    #    _flush_data!(store.cache, store)
+    #end
+
+    @debug "write_result" get_size(store.cache) encode_key_as_string(key)
+    =#
+    return
+end
+
+
 
 """
 Write an emulation model result for an execution index value and the timestamp of the update
