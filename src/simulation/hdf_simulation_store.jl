@@ -378,9 +378,9 @@ function _make_denseaxisarray(
     data::Array{Float64, 3},
     columns::NTuple{2, <:Any},
 )
-    @show data
+    @show size(data)
     @show columns
-    return DenseAxisArray(permutedims(data), columns[1], columns[2], 1:size(data)[1])
+    return DenseAxisArray(permutedims(data, (2, 3, 1)), columns[1], columns[2], 1:size(data)[1])
 end
 
 function read_result(
