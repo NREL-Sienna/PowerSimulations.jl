@@ -340,6 +340,14 @@ end
 
 log_cache_hit_percentages(x::HdfSimulationStore) = log_cache_hit_percentages(x.cache)
 
+
+function _make_dataframe(data::Matrix{Float64}, columns::Tuple{Vector{String}})
+    if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
+        data = reshape(data, length(data), 1)
+    end
+    return DataFrames.DataFrame(data, columns[1]; copycols = false)
+end
+
 """
 Return DataFrame, DenseAxisArray, or Array for a model result at a timestamp.
 """
@@ -351,11 +359,7 @@ function read_result(
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     data, columns = _read_data_columns(store, model_name, key, index)
-
-    if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
-        data = reshape(data, length(data), 1)
-    end
-    return DataFrames.DataFrame(data, columns; copycols = false)
+    return _make_dataframe(data, columns)
 end
 
 function read_result(
@@ -865,11 +869,16 @@ function _read_data_columns(
     if is_cached(store.cache, model_name, key, index)
         data = read_result(store.cache, model_name, key, index)
         column_dataset = _get_dm_dataset(store, model_name, key).column_dataset
-        columns = column_dataset[:]
+        if ndims(column_dataset) == 1
+            columns = (column_dataset[:],)
+        elseif ndims(column_dataset) == 2
+            columns = (column_dataset[:, 1], column_dataset[:, 2])
+        else
+            error("Datasets with $(ndims(column_dataset)) columns not supported")
+        end
     else
         data, columns = _read_result(store, model_name, key, index)
     end
-
     return data, columns
 end
 
