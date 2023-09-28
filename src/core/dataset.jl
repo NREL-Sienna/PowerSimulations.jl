@@ -169,7 +169,7 @@ function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 3}, index:
 end
 
 # HDF5Dataset does not account of overwrites in the data. Values are written sequentially.
-mutable struct HDF5Dataset <: AbstractDataset
+mutable struct HDF5Dataset{N} <: AbstractDataset
     values::HDF5.Dataset
     column_dataset::HDF5.Dataset
     write_index::Int
@@ -177,21 +177,31 @@ mutable struct HDF5Dataset <: AbstractDataset
     resolution::Dates.Millisecond
     initial_timestamp::Dates.DateTime
     update_timestamp::Dates.DateTime
-    column_names::Vector{String}
+    column_names::NTuple{N, Vector{String}}
 
-    function HDF5Dataset(values, column_dataset, write_index, last_recorded_row, resolution,
+    function HDF5Dataset{N}(values,
+        column_dataset,
+        write_index,
+        last_recorded_row,
+        resolution,
         initial_timestamp,
-        update_timestamp, column_names,
-    )
-        new(values, column_dataset, write_index, last_recorded_row, resolution,
+        update_timestamp,
+        column_names::NTuple{N, Vector{String}},
+    ) where {N}
+        new{N}(values, column_dataset, write_index, last_recorded_row, resolution,
             initial_timestamp,
             update_timestamp, column_names)
     end
 end
 
-function HDF5Dataset(values, column_dataset, resolution, initial_time)
-    @show column_dataset[:]
-    HDF5Dataset(
+function HDF5Dataset{1}(
+    values::HDF5.Dataset,
+    column_dataset::HDF5.Dataset,
+    ::Tuple,
+    resolution::Dates.Millisecond,
+    initial_time::Dates.DateTime,
+)
+    HDF5Dataset{1}(
         values,
         column_dataset,
         1,
@@ -199,23 +209,34 @@ function HDF5Dataset(values, column_dataset, resolution, initial_time)
         resolution,
         initial_time,
         UNSET_INI_TIME,
-        column_dataset[:],
+        (column_dataset[:],),
     )
 end
 
-function _make_column_names(vals::Vector{String})
-    @show "col vector"
-    return (vals,)
-end
-
-function _make_column_names(vals::Matrix{String})
-    @show "col matrix"
-    return (vals[:, 1], vals[:, 2])
+function HDF5Dataset{2}(
+    values::HDF5.Dataset,
+    column_dataset::HDF5.Dataset,
+    dims::NTuple{4, Int},
+    resolution::Dates.Period,
+    initial_time::Dates.DateTime,
+)
+    col1 = column_dataset[1:dims[2]]
+    col2 = column_dataset[(dims[2] + 1):end]
+    HDF5Dataset{2}(
+        values,
+        column_dataset,
+        1,
+        0,
+        resolution,
+        initial_time,
+        UNSET_INI_TIME,
+        (col1, col2),
+    )
 end
 
 function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
-    @show s.column_names
-    return _make_column_names(s.column_names)
+    s.column_names
+    return s.column_names
 end
 
 """
