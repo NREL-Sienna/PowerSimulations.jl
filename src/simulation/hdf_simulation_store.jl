@@ -378,7 +378,12 @@ function _make_denseaxisarray(
     data::Array{Float64, 3},
     columns::NTuple{2, <:Any},
 )
-    return DenseAxisArray(permutedims(data, (2, 3, 1)), columns[1], columns[2], 1:size(data)[1])
+    return DenseAxisArray(
+        permutedims(data, (2, 3, 1)),
+        columns[1],
+        columns[2],
+        1:size(data)[1],
+    )
 end
 
 function read_result(
@@ -724,7 +729,13 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                         get_resolution(get_decision_model_params(store, model_name))
                     dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
                     n_dims = max(1, ndims(dataset) - 2)
-                    item = HDF5Dataset{n_dims}(dataset, column_dataset, dims, resolution, initial_time)
+                    item = HDF5Dataset{n_dims}(
+                        dataset,
+                        column_dataset,
+                        dims,
+                        resolution,
+                        initial_time,
+                    )
                     container_key = container_key_lookup[name]
                     getfield(get_dm_data(store)[model_name], type)[container_key] = item
                     add_output_cache!(
@@ -761,7 +772,13 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                 column_dataset = group[_make_column_name(name)]
                 dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
                 n_dims = max(1, ndims(dataset) - 1)
-                item = HDF5Dataset{n_dims}(dataset, column_dataset, dims, resolution, initial_time)
+                item = HDF5Dataset{n_dims}(
+                    dataset,
+                    column_dataset,
+                    dims,
+                    resolution,
+                    initial_time,
+                )
                 container_key = container_key_lookup[name]
                 getfield(store.em_data, type)[container_key] = item
                 add_output_cache!(store.cache, model_name, container_key, CacheFlushRule())
