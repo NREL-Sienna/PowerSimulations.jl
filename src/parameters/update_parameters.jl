@@ -560,7 +560,7 @@ end
 
 function _fix_parameter_value!(
     container::OptimizationContainer,
-    parameter_array::JuMPFloatArray,
+    parameter_array::DenseAxisArray{Float64, 2},
     parameter_attributes::VariableValueAttributes,
 )
     affected_variable_keys = parameter_attributes.affected_keys

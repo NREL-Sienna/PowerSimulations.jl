@@ -24,6 +24,7 @@ const JuMPVariableMatrix = DenseAxisArray{
         JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
     },
 }
+const JuMPFloatMatrix = DenseAxisArray{Float64, 2}
 const JuMPFloatArray = DenseAxisArray{Float64}
 const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 

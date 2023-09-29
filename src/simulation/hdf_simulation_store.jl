@@ -592,11 +592,10 @@ function write_result!(
     ::Dates.DateTime,
     data::DenseAxisArray{Float64, 3, <:NTuple{3, Any}},
 )
-    @show "Here"
-    #=
     output_cache = get_output_cache(store.cache, model_name, key)
     cur_size = get_size(store.cache)
-    add_result!(output_cache, index, to_matrix(data), is_full(store.cache, cur_size))
+
+    add_result!(output_cache, index, data.data, is_full(store.cache, cur_size))
 
     if get_dirty_size(output_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(output_cache)
@@ -614,7 +613,6 @@ function write_result!(
     #end
 
     @debug "write_result" get_size(store.cache) encode_key_as_string(key)
-    =#
     return
 end
 
@@ -627,10 +625,10 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    data::Matrix{Float64},
+    data::Array{Float64},
 )
     dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, data, index:index)
+    _write_dataset!(dataset.values, data, index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
@@ -642,7 +640,21 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    data,
+    data::DenseAxisArray{Float64, 2},
+)
+    data_array = Array{Float64, 3}(undef, size(data)[1], size(data)[2], 1)
+    data_array[:, :, 1] = data
+    write_result!(store, model_name, key, index, simulation_time, data_array)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    data::DenseAxisArray{Float64, 1},
 )
     write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
     return
@@ -984,7 +996,7 @@ function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
 end
 
 function _write_dataset!(
-    dataset,
+    dataset::HDF5.Dataset,
     array::Matrix{Float64},
     row_range::UnitRange{Int64},
     ::Val{3},
@@ -995,7 +1007,7 @@ function _write_dataset!(
 end
 
 function _write_dataset!(
-    dataset,
+    dataset::HDF5.Dataset,
     array::Matrix{Float64},
     row_range::UnitRange{Int64},
     ::Val{2},
@@ -1005,13 +1017,38 @@ function _write_dataset!(
     return
 end
 
-function _write_dataset!(dataset, array::Matrix{Float64}, row_range::UnitRange{Int64})
-    _write_dataset!(dataset, array, row_range, Val{ndims(dataset)}())
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 3},
+    row_range::UnitRange{Int64},
+    ::Val{3},
+)
+    dataset[row_range, :, :] = array
+    @debug "wrote dataset" dataset row_range
     return
 end
 
-function _write_dataset!(dataset, array::Array{Float64, 3}, row_range::UnitRange{Int64})
+function _write_dataset!(dataset::HDF5.Dataset, array::Array{Float64}, index::Int)
+    _write_dataset!(dataset, array, index:index, Val{ndims(dataset)}())
+    return
+end
+
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 3},
+    row_range::UnitRange{Int64},
+)
     dataset[:, :, row_range] = array
+    @debug "wrote dataset" dataset row_range
+    return
+end
+
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 4},
+    row_range::UnitRange{Int64},
+)
+    dataset[:, :, :, row_range] = array
     @debug "wrote dataset" dataset row_range
     return
 end
