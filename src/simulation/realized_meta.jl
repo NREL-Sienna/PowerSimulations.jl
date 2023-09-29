@@ -51,6 +51,7 @@ function _make_dataframe(
     results_by_time::ResultsByTime{Matrix{Float64}, 1},
     num_rows::Int,
     meta::RealizedMeta,
+    key::OptimizationContainerKey,
 )
     num_cols = length(columns[1])
     matrix = Matrix{Float64}(undef, num_rows, num_cols)
@@ -86,10 +87,11 @@ function get_realization(
     lk = ReentrantLock()
     num_rows = length(meta.realized_timestamps)
     start = time()
-    Threads.@threads for key in collect(keys(results))
+    #Threads.@threads
+    for key in collect(keys(results))
         results_by_time = results[key]
         columns = get_column_names(results_by_time)
-        df = _make_dataframe(columns, results_by_time, num_rows, meta)
+        df = _make_dataframe(columns, results_by_time, num_rows, meta, key)
         lock(lk) do
             realized_values[key] = df
         end
