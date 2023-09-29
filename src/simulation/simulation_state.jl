@@ -135,6 +135,7 @@ function _initialize_system_states!(
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
     emulation_container = get_optimization_container(emulation_model)
+    min_res = minimum([v.resolution for v in values(params)])
 
     for field in fieldnames(DatasetContainer)
         field_containers = getfield(emulation_container, field)
