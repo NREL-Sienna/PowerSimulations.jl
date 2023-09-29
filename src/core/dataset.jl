@@ -111,7 +111,10 @@ function make_system_state(
     return InMemoryDataset(NaN, timestamp, resolution, 0, 1, columns)
 end
 
-function get_dataset_value(s::InMemoryDataset, date::Dates.DateTime)
+function get_dataset_value(
+    s::T,
+    date::Dates.DateTime,
+) where {T <: Union{InMemoryDataset{1}, InMemoryDataset{2}}}
     s_index = find_timestamp_index(s.timestamps, date)
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
@@ -119,15 +122,30 @@ function get_dataset_value(s::InMemoryDataset, date::Dates.DateTime)
     return s.values[:, s_index]
 end
 
+function get_dataset_value(s::InMemoryDataset{3}, date::Dates.DateTime)
+    s_index = find_timestamp_index(s.timestamps, date)
+    if isnothing(s_index)
+        error("Request time stamp $date not in the state")
+    end
+    return s.values[:, :, s_index]
+end
+
 function get_column_names(k::OptimizationContainerKey, s::InMemoryDataset)
     return get_column_names(k, s.values)
 end
 
-function get_last_recorded_value(s::InMemoryDataset)
+function get_last_recorded_value(s::InMemoryDataset{2})
     if get_last_recorded_row(s) == 0
         error("The Dataset hasn't been written yet")
     end
     return s.values[:, get_last_recorded_row(s)]
+end
+
+function get_last_recorded_value(s::InMemoryDataset{3})
+    if get_last_recorded_row(s) == 0
+        error("The Dataset hasn't been written yet")
+    end
+    return s.values[:, :, get_last_recorded_row(s)]
 end
 
 function get_end_of_step_timestamp(s::InMemoryDataset)
@@ -153,17 +171,20 @@ function get_value_timestamp(s::InMemoryDataset, date::Dates.DateTime)
     return s.timestamps[s_index]
 end
 
-function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 2}, index::Int)
+# These set_value! methods expect a single time_step value because they are used to update
+#the state so the incoming vals will have one dimension less than the DataSet. The exception
+# is for vals of Dimension 1 which are still stored in DataSets of dimension 2.
+function set_value!(s::InMemoryDataset{2}, vals::DenseAxisArray{Float64, 2}, index::Int)
     s.values[:, index] = vals[:, index]
     return
 end
 
-function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 1}, index::Int)
+function set_value!(s::InMemoryDataset{2}, vals::DenseAxisArray{Float64, 1}, index::Int)
     s.values[:, index] = vals
     return
 end
 
-function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 3}, index::Int)
+function set_value!(s::InMemoryDataset{3}, vals::DenseAxisArray{Float64, 2}, index::Int)
     s.values[:, :, index] = vals
     return
 end

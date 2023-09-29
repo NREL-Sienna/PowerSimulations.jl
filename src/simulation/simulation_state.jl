@@ -410,7 +410,8 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
     system_dataset.timestamps[1] = ts
-    set_dataset_values!(state, key, 1, get_dataset_value(decision_dataset, simulation_time))
+    data_set_value = get_dataset_value(decision_dataset, simulation_time)
+    set_dataset_values!(state, key, 1, data_set_value)
     # This value shouldn't be other than one and after one execution is no-op.
     set_last_recorded_row!(system_dataset, 1)
     return
