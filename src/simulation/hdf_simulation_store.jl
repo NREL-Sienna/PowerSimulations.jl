@@ -595,7 +595,12 @@ function write_result!(
     output_cache = get_output_cache(store.cache, model_name, key)
     cur_size = get_size(store.cache)
 
-    add_result!(output_cache, index, permutedims(data.data, (3, 1, 2)), is_full(store.cache, cur_size))
+    add_result!(
+        output_cache,
+        index,
+        permutedims(data.data, (3, 1, 2)),
+        is_full(store.cache, cur_size),
+    )
 
     if get_dirty_size(output_cache) >= get_min_flush_size(store.cache)
         discard = !should_keep_in_cache(output_cache)
