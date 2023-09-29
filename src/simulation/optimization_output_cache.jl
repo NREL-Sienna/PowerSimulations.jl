@@ -52,7 +52,10 @@ end
 """
 Add result to the cache.
 """
-function add_result!(cache::OptimizationOutputCache, timestamp, array, system_cache_is_full)
+function add_result!(cache::OptimizationOutputCache,
+    timestamp::Dates.DateTime,
+    array::Array{Float64},
+    system_cache_is_full::Bool)
     if cache.size_per_entry == 0
         cache.size_per_entry = length(array) * sizeof(first(array))
     end
@@ -77,7 +80,11 @@ function add_result!(cache::OptimizationOutputCache, timestamp, array, system_ca
     return cache.size_per_entry
 end
 
-function _add_result!(cache::OptimizationOutputCache, timestamp, data)
+function _add_result!(
+    cache::OptimizationOutputCache,
+    timestamp::Dates.DateTime,
+    data::Array{Float64},
+)
     cache.data[timestamp] = data
     push!(cache.dirty_timestamps, timestamp)
     return
