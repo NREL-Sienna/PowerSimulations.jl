@@ -148,27 +148,27 @@ function _initialize_system_states!(
                 make_system_state(
                     simulation_initial_time,
                     min_res,
-                    cols,
+                    column_names,
                 ),
             )
         end
     end
 
     for key in get_dataset_keys(decision_states)
+        dm_cols = get_column_names(key, get_dataset(decision_states, key))
         if has_dataset(emulator_states, key)
-            dm_cols = get_column_names(key, get_dataset(decision_states, key))
             em_cols = get_column_names(key, get_dataset(emulator_states, key))
             @assert_op dm_cols == em_cols
             continue
         end
-        cols = get_column_names(key, get_dataset(decision_states, key))
+
         set_dataset!(
             emulator_states,
             key,
             make_system_state(
                 simulation_initial_time,
                 min_res,
-                cols,
+                dm_cols,
             ),
         )
     end
