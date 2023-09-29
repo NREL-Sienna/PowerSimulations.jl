@@ -23,10 +23,12 @@ end
     @test two_df == test_df
 
     three = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3)
-    @test_throws ErrorException PSI.to_dataframe(three, mock_key)
+    fill!(three, 1.0)
+    @test_throws MethodError PSI.to_dataframe(three, mock_key)
 
     four = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3, 1:5)
-    @test_throws ErrorException PSI.to_dataframe(four, mock_key)
+    fill!(three, 1.0)
+    @test_throws MethodError PSI.to_dataframe(four, mock_key)
 
     sparse_num =
         JuMP.Containers.@container([i = 1:10, j = (i + 1):10, t = 1:24], 0.0 + i + j + t)
