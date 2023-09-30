@@ -257,6 +257,7 @@ function initialize_problem_storage!(
             for (key, reqs) in getfield(dm_problem_reqs[problem], type)
                 !should_write_resulting_value(key) && continue
                 name = encode_key_as_string(key)
+                @error name
                 dataset = _create_dataset(group, name, reqs)
                 # Columns can't be stored in attributes because they might be larger than
                 # the max size of 64 KiB.
@@ -309,7 +310,6 @@ function initialize_problem_storage!(
             group = _get_group_or_create(emulation_group, string(type))
             for (key, reqs) in getfield(em_problem_reqs, type)
                 name = encode_key_as_string(key)
-                @error name
                 dataset = _create_dataset(group, name, reqs)
                 # Columns can't be stored in attributes because they might be larger than
                 # the max size of 64 KiB.
