@@ -1,0 +1,372 @@
+┌ Info: 2023-09-30T04:33:14.158 [3069:1]: Building problem UC
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:271
+┌ Info: 2023-09-30T04:33:14.189 [3069:1]: Initializing Optimization Container For a DecisionModel
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:290
+┌ Info: 2023-09-30T04:33:14.190 [3069:1]: Initializing ModelStoreParams
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:296
+┌ Info: 2023-09-30T04:33:14.190 [3069:1]: Instantiating Network Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:305
+┌ Info: 2023-09-30T04:33:14.190 [3069:1]: Validating connectivity with depth first search (network traversal)
+└ @ PowerNetworkMatrices /home/runner/.julia/packages/PowerNetworkMatrices/jxG9P/src/system_utils.jl:12
+┌ Warning: 2023-09-30T04:33:14.190 [3069:1]: No reference bus in the subnetwork associated with bus 101. References buses will be assigned arbitrarily
+└ @ PowerNetworkMatrices /home/runner/.julia/packages/PowerNetworkMatrices/jxG9P/src/common.jl:293
+┌ Info: 2023-09-30T04:33:14.190 [3069:1]: Make Initial Conditions Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:189
+┌ Warning: 2023-09-30T04:33:14.327 [3069:1]: Overwriting ("", Symbol("VariableReserve{ReserveUp}")) existing model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/service_model.jl:113
+┌ Warning: 2023-09-30T04:33:14.328 [3069:1]: Overwriting ("", Symbol("VariableReserve{ReserveUp}")) existing model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/service_model.jl:113
+┌ Warning: 2023-09-30T04:33:14.328 [3069:1]: Overwriting ("", Symbol("VariableReserve{ReserveUp}")) existing model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/service_model.jl:113
+┌ Warning: 2023-09-30T04:33:16.107 [3069:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:645
+┌ Info: 2023-09-30T04:33:16.246 [3069:1]: Solving Initialization Model for UC
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:203
+┌ Info: 2023-09-30T04:33:16.557 [3069:1]: Serialized initial conditions to ./jl_yY0HW5/rts-test/problems/UC/initial_conditions.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:212
+┌ Warning: 2023-09-30T04:33:18.187 [3069:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:645
+┌ Info: 2023-09-30T04:33:18.360 [3069:1]: Solving UC with optimizer = HiGHS
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:305
+┌ Info: 2023-09-30T04:33:18.450 [3069:1]: Variable bounds range is [0.0 8.47]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:266
+┌ Info: 2023-09-30T04:33:18.577 [3069:1]: Constraint coefficient bounds range is [-0.22 4380.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:276
+┌ Info: 2023-09-30T04:33:18.577 [3069:1]: Constraint right-hand-side bounds [0.06 48.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:285
+┌ Info: 2023-09-30T04:33:18.577 [3069:1]: Building problem ED
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:271
+┌ Info: 2023-09-30T04:33:18.582 [3069:1]: Initializing Optimization Container For a DecisionModel
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:290
+┌ Info: 2023-09-30T04:33:18.624 [3069:1]: Initializing ModelStoreParams
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:296
+┌ Info: 2023-09-30T04:33:18.637 [3069:1]: Instantiating Network Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:305
+┌ Info: 2023-09-30T04:33:18.637 [3069:1]: PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/network_model.jl:92
+┌ Info: 2023-09-30T04:33:18.829 [3069:1]: Make Initial Conditions Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:189
+┌ Info: 2023-09-30T04:33:18.829 [3069:1]: No initial conditions in the model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:134
+┌ Info: 2023-09-30T04:33:26.680 [3069:1]: Solving ED with optimizer = HiGHS
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:305
+┌ Info: 2023-09-30T04:33:26.807 [3069:1]: Variable bounds range is [0.0 8.47]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:266
+┌ Info: 2023-09-30T04:33:27.228 [3069:1]: Constraint coefficient bounds range is [-0.22 1.0e6]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:276
+┌ Info: 2023-09-30T04:33:27.228 [3069:1]: Constraint right-hand-side bounds [1.0 1.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:285
+┌ Info: 2023-09-30T04:33:32.870 [3069:1]: Serialized simulation name = rts-test
+│   directory = ./jl_yY0HW5/rts-test/simulation_files
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:1083
+┌ Info: 2023-09-30T04:33:32.894 [3069:1]: Serialized time series data to ./jl_yY0HW5/rts-test/problems/UC/system-68c860ff-5d8c-43ff-8a69-d575ea6c3af8_time_series_storage.h5.
+└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/swXsu/src/time_series_storage.jl:98
+┌ Info: 2023-09-30T04:33:32.980 [3069:1]: Serialized System to ./jl_yY0HW5/rts-test/problems/UC/system-68c860ff-5d8c-43ff-8a69-d575ea6c3af8.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/PbaJy/src/base.jl:299
+┌ Info: 2023-09-30T04:33:32.987 [3069:1]: Serialized System metadata to ./jl_yY0HW5/rts-test/problems/UC/system-68c860ff-5d8c-43ff-8a69-d575ea6c3af8_metadata.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/PbaJy/src/base.jl:324
+┌ Info: 2023-09-30T04:33:32.993 [3069:1]: Serialized OperationModel to
+│   bin_file_name = ./jl_yY0HW5/rts-test/problems/UC/model.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_serialization.jl:67
+┌ Info: 2023-09-30T04:33:33.059 [3069:1]: Serialized time series data to ./jl_yY0HW5/rts-test/problems/ED/system-c1260a6f-9e0b-4825-b80b-eeac781cd309_time_series_storage.h5.
+└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/swXsu/src/time_series_storage.jl:98
+┌ Info: 2023-09-30T04:33:33.149 [3069:1]: Serialized System to ./jl_yY0HW5/rts-test/problems/ED/system-c1260a6f-9e0b-4825-b80b-eeac781cd309.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/PbaJy/src/base.jl:299
+┌ Info: 2023-09-30T04:33:33.152 [3069:1]: Serialized System metadata to ./jl_yY0HW5/rts-test/problems/ED/system-c1260a6f-9e0b-4825-b80b-eeac781cd309_metadata.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/PbaJy/src/base.jl:324
+┌ Info: 2023-09-30T04:33:33.289 [3069:1]: Serialized OperationModel to
+│   bin_file_name = ./jl_yY0HW5/rts-test/problems/ED/model.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_serialization.jl:67
+┌ Info: 2023-09-30T04:33:36.686 [3069:1]: Initialize store cache
+│   get_min_flush_size(store.cache) = 1048576
+│   get_max_size(store.cache) = 1073741824
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:249
+┌ Error: 2023-09-30T04:33:36.708 [3069:1]: ActivePowerTimeSeriesParameter__PowerLoad
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:36.880 [3069:1]: (48, 51, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.362 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R1
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.362 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.451 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.451 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.453 [3069:1]: ActivePowerTimeSeriesParameter__RenewableFix
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.453 [3069:1]: (48, 31, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.540 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.540 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.542 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.542 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.629 [3069:1]: ActivePowerTimeSeriesParameter__RenewableDispatch
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.629 [3069:1]: (48, 29, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.719 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.719 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.730 [3069:1]: ActivePowerVariable__RenewableDispatch
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.730 [3069:1]: (48, 29, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.881 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R2
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.881 [3069:1]: (48, 18, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:37.969 [3069:1]: ActivePowerVariable__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:37.969 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.059 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.059 [3069:1]: (48, 51, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.060 [3069:1]: FlowActivePowerToFromVariable__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.061 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.148 [3069:1]: OnVariable__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.148 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.235 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.235 [3069:1]: (48, 16, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.237 [3069:1]: StartVariable__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.237 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.324 [3069:1]: FlowActivePowerFromToVariable__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.324 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.465 [3069:1]: HVDCFlowDirectionVariable__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.465 [3069:1]: (48, 1, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.554 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R3
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.554 [3069:1]: (48, 17, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.556 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveDown__Reg_Down
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.556 [3069:1]: (48, 51, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.644 [3069:1]: StopVariable__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.644 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.744 [3069:1]: TimeDurationOff__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.744 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.893 [3069:1]: TimeDurationOn__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.893 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:38.989 [3069:1]: ProductionCostExpression__RenewableDispatch
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:38.989 [3069:1]: (48, 29, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.138 [3069:1]: ProductionCostExpression__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.138 [3069:1]: (48, 54, 2)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.231 [3069:1]: ActivePowerTimeSeriesParameter__PowerLoad
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.231 [3069:1]: (12, 51, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.232 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R1
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.232 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.234 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.234 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.235 [3069:1]: OnStatusParameter__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.235 [3069:1]: (12, 54, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.321 [3069:1]: ActivePowerTimeSeriesParameter__RenewableFix
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.321 [3069:1]: (12, 31, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.322 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.323 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.324 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.324 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.325 [3069:1]: ActivePowerTimeSeriesParameter__RenewableDispatch
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.325 [3069:1]: (12, 29, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.326 [3069:1]: RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.327 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.328 [3069:1]: ActivePowerVariable__RenewableDispatch
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.328 [3069:1]: (12, 29, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.329 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R2
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.329 [3069:1]: (12, 18, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.330 [3069:1]: ActivePowerVariable__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.330 [3069:1]: (12, 54, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.331 [3069:1]: SystemBalanceSlackDown__System
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.331 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.417 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.417 [3069:1]: (12, 51, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.419 [3069:1]: FlowActivePowerVariable__Line
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.419 [3069:1]: (12, 105, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.507 [3069:1]: FlowActivePowerToFromVariable__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.507 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.508 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.508 [3069:1]: (12, 16, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.510 [3069:1]: SystemBalanceSlackUp__System
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.510 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.597 [3069:1]: FlowActivePowerFromToVariable__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.597 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.598 [3069:1]: FlowActivePowerVariable__TapTransformer
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.598 [3069:1]: (12, 15, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.683 [3069:1]: HVDCLosses__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.683 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.770 [3069:1]: HVDCFlowDirectionVariable__TwoTerminalHVDCLine
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.770 [3069:1]: (12, 1, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.772 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R3
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.772 [3069:1]: (12, 17, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.773 [3069:1]: ActivePowerReserveVariable__VariableReserve__ReserveDown__Reg_Down
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.774 [3069:1]: (12, 51, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.775 [3069:1]: ProductionCostExpression__RenewableDispatch
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.775 [3069:1]: (12, 29, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.776 [3069:1]: ProductionCostExpression__ThermalStandard
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:260
+┌ Error: 2023-09-30T04:33:39.776 [3069:1]: (12, 54, 192)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.836 [3069:1]: (576, 51)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.854 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.856 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.857 [3069:1]: (576, 31)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.858 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.859 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.860 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.861 [3069:1]: (576, 29)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.862 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.863 [3069:1]: (576, 29)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.864 [3069:1]: (576, 18)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.865 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.866 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.867 [3069:1]: (576, 51)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.868 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.869 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.870 [3069:1]: (576, 16)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.871 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.871 [3069:1]: (576, 105)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.872 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.873 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.873 [3069:1]: (576, 15)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.874 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.874 [3069:1]: (576, 1)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.875 [3069:1]: (576, 17)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.877 [3069:1]: (576, 51)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.878 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.878 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.879 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.880 [3069:1]: (576, 29)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Error: 2023-09-30T04:33:39.880 [3069:1]: (576, 54)
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:703
+┌ Info: 2023-09-30T04:35:06.098 [3069:1]: 
+│  ────────────────────────────────────────────────────────────────────────────────
+│                                         Time                    Allocations      
+│                                ───────────────────────   ────────────────────────
+│        Tot / % measured:            92.0s / 100.0%           2.63GiB / 100.0%    
+│ 
+│  Section               ncalls     time    %tot     avg     alloc    %tot      avg
+│  ────────────────────────────────────────────────────────────────────────────────
+│  Execute Simulation         1    92.0s  100.0%   92.0s   2.63GiB  100.0%  2.63GiB
+│    Execute ED             192    74.0s   80.4%   385ms   1.92GiB   72.9%  10.2MiB
+│      Solve ED             192    62.5s   67.9%   325ms    594MiB   22.1%  3.09MiB
+│      Update State         192    5.26s    5.7%  27.4ms    456MiB   16.9%  2.38MiB
+│      Update ED            192    4.61s    5.0%  24.0ms    409MiB   15.2%  2.13MiB
+│        Parameter Up...    192    4.45s    4.8%  23.2ms    405MiB   15.0%  2.11MiB
+│        Ini Cond Upd...    192    109μs    0.0%   568ns     0.00B    0.0%    0.00B
+│    Execute UC               2    11.2s   12.2%   5.60s    430MiB   16.0%   215MiB
+│      Solve UC               2    7.46s    8.1%   3.73s    153MiB    5.7%  76.5MiB
+│      Update State           2    2.63s    2.9%   1.32s    174MiB    6.4%  86.9MiB
+│      Update UC              2    930ms    1.0%   465ms   73.1MiB    2.7%  36.5MiB
+│        Ini Cond Upd...      1    802ms    0.9%   802ms   51.7MiB    1.9%  51.7MiB
+│        Parameter Up...      1    128ms    0.1%   128ms   21.4MiB    0.8%  21.4MiB
+│  ────────────────────────────────────────────────────────────────────────────────
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:1001
