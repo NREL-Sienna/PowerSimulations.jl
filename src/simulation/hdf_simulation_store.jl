@@ -746,6 +746,8 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                         get_resolution(get_decision_model_params(store, model_name))
                     dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
                     n_dims = max(1, ndims(dataset) - 2)
+                    @error n_dims
+                    @error dims
                     item = HDF5Dataset{n_dims}(
                         dataset,
                         column_dataset,
