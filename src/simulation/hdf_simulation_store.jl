@@ -257,7 +257,6 @@ function initialize_problem_storage!(
             for (key, reqs) in getfield(dm_problem_reqs[problem], type)
                 !should_write_resulting_value(key) && continue
                 name = encode_key_as_string(key)
-                @error name
                 dataset = _create_dataset(group, name, reqs)
                 # Columns can't be stored in attributes because they might be larger than
                 # the max size of 64 KiB.
@@ -700,7 +699,6 @@ function _compute_chunk_count(dims, dtype; max_chunk_bytes = DEFAULT_MAX_CHUNK_B
 end
 
 function _create_dataset(group, name, reqs)
-    @error reqs["dims"]
     dataset = HDF5.create_dataset(
         group,
         name,
@@ -1055,6 +1053,7 @@ function _write_dataset!(
     array::Array{Float64, 4},
     row_range::UnitRange{Int64},
 )
+    @show
     dataset[:, :, :, row_range] = array
     @debug "wrote dataset" dataset row_range
     return
