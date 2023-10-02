@@ -255,6 +255,28 @@ function HDF5Dataset{2}(
     )
 end
 
+function HDF5Dataset{2}(
+    values::HDF5.Dataset,
+    column_dataset::HDF5.Dataset,
+    dims::NTuple{5, Int},
+    resolution::Dates.Period,
+    initial_time::Dates.DateTime,
+)
+    col1 = column_dataset[1:dims[2]]
+    col2 = column_dataset[(dims[2] + 1):end]
+    HDF5Dataset{2}(
+        values,
+        column_dataset,
+        1,
+        0,
+        resolution,
+        initial_time,
+        UNSET_INI_TIME,
+        (col1, col2),
+    )
+end
+
+
 function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
     s.column_names
     return s.column_names
