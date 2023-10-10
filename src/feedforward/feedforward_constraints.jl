@@ -422,7 +422,6 @@ function add_feedforward_constraints!(
     return
 end
 
-
 @doc raw"""
         add_feedforward_constraints(
             container::OptimizationContainer,

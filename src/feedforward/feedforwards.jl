@@ -202,7 +202,6 @@ function has_semicontinuous_feedforward(
     return has_semicontinuous_feedforward(model, ActivePowerVariable)
 end
 
-
 """
 Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that can be used
 with a Parameter or a Variable as the affected value.
