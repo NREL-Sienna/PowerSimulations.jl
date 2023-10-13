@@ -1,7 +1,7 @@
 #################################################################################
 # Comments
 #
-# - Ideally the net_injection variables would be bounded.  This can be done using an adhoc data model extention
+# - Ideally the net_injection variables would be bounded.  This can be done using an adhoc data model extension
 # - the `instantiate_*_expr_model` functions combine `PM.instantiate_model` and the `build_*` methods
 #################################################################################
 # Model Definitions
