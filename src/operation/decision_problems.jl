@@ -74,7 +74,7 @@ end
 """
     AGCReserveDeployment(system::PSY.System; kwargs...)
 
-Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
+Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deployment Problem.
 Uses the template to create an `DecisionProblem`.
 
 # Example
