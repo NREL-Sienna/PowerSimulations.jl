@@ -21,7 +21,7 @@ Formulation type to enable basic unit commitment representation without any inte
 """
 struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
 """
-Formulaiton type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
+Formulation type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
 """
@@ -58,7 +58,7 @@ abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
 
 """
-Formulation type to add a time series paraemter for non-dispatchable `ElectricLoad` withdrawls to power balance constraints
+Formulation type to add a time series parameter for non-dispatchable `ElectricLoad` withdrawls to power balance constraints
 """
 struct StaticPowerLoad <: AbstractLoadFormulation end
 
