@@ -96,7 +96,7 @@ end
 """
     template_agc_reserve_deployment(; kwargs...)
 
-Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
+Creates a `ProblemTemplate` with default DeviceModels for an AGC Reserve Deployment Problem. This model doesn't support customization
 
 # Example
 
