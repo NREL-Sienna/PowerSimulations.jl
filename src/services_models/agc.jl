@@ -138,7 +138,7 @@ function add_constraints!(
     IS.@assert_op frequency_response >= 0.0
 
     # This value is the one updated later in simulation based on the UC result
-    inv_frequency_reponse = 1 / frequency_response
+    inv_frequency_response = 1 / frequency_response
 
     area_balance = get_variable(container, ActivePowerVariable(), PSY.Area)
     frequency = get_variable(container, SteadyStateFrequencyDeviation(), U)
@@ -163,7 +163,7 @@ function add_constraints!(
         end
         const_container[t] = JuMP.@constraint(
             container.JuMPmodel,
-            frequency[t] == -inv_frequency_reponse * system_balance
+            frequency[t] == -inv_frequency_response * system_balance
         )
     end
     return
