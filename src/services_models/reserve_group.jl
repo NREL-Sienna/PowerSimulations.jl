@@ -31,7 +31,7 @@ end
 
 ################################## Reserve Requirement Constraint ##########################
 """
-This function creates the requirement constraint that will be attained by the apropriate services
+This function creates the requirement constraint that will be attained by the appropriate services
 """
 function add_constraints!(
     container::OptimizationContainer,

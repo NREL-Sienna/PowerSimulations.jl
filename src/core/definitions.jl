@@ -46,7 +46,7 @@ const MAX_START_STAGES = 3
 const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
 const INITIALIZATION_PROBLEM_HORIZON = 3
-# The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reseve cost isn't provided.
+# The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reserve cost isn't provided.
 const DEFAULT_RESERVE_COST = 1.0
 const KiB = 1024
 const MiB = KiB * KiB

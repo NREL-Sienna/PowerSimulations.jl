@@ -36,7 +36,7 @@ It is possible to define a Custom Decision Problem that gives the user full cont
 struct MyCustomDecisionProblem <: PSI.DecisionProblem end
 ```
 
-Alternatevely, it is possible to define a Custom Decision Problem subtyping from `DefaultDecisionProblem` which imposes more requirements and structure onto the developer but employs more checks and validations in the process. Be aware that this route will decrease the flexibility of what can be done inside the custom model.
+Alternatively, it is possible to define a Custom Decision Problem subtyping from `DefaultDecisionProblem` which imposes more requirements and structure onto the developer but employs more checks and validations in the process. Be aware that this route will decrease the flexibility of what can be done inside the custom model.
 
 ```julia
 struct MyCustomDecisionProblem <: PSI.DefaultDecisionProblem end
