@@ -459,6 +459,23 @@ function get_column_names(
     return get_column_names(key, dataset)
 end
 
+function get_number_of_dimensions(
+    store::HdfSimulationStore,
+    i::Type{DecisionModelIndexType},
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+)
+    return length(get_column_names(store, i, model_name, key))
+end
+
+function get_number_of_dimensions(
+    store::HdfSimulationStore,
+    i::Type{EmulationModelIndexType},
+    key::OptimizationContainerKey,
+)
+    return length(get_column_names(store, i, model_name, key))
+end
+
 function get_emulation_model_dataset_size(
     store::HdfSimulationStore,
     key::OptimizationContainerKey,
@@ -746,8 +763,6 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                         get_resolution(get_decision_model_params(store, model_name))
                     dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
                     n_dims = max(1, ndims(dataset) - 2)
-                    @error n_dims
-                    @error dims
                     item = HDF5Dataset{n_dims}(
                         dataset,
                         column_dataset,
@@ -1055,7 +1070,6 @@ function _write_dataset!(
     array::Array{Float64, 4},
     row_range::UnitRange{Int64},
 )
-    @show
     dataset[:, :, :, row_range] = array
     @debug "wrote dataset" dataset row_range
     return

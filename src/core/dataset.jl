@@ -276,9 +276,7 @@ function HDF5Dataset{2}(
     )
 end
 
-
 function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
-    s.column_names
     return s.column_names
 end
 

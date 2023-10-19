@@ -89,6 +89,19 @@ function make_dataframe(
     return df
 end
 
+function make_dataframe(
+    results::ResultsByTime{DenseAxisArray{Float64, 3}},
+    timestamp::Dates.DateTime,
+)
+    df = DataFrames.DataFrame()
+    array = results.data[timestamp]
+    for idx in Iterators.product(array.axes[1:2]...)
+        df[!, "$(idx)"] = array[idx..., :].data
+    end
+    # _add_timestamps!(df, results, timestamp, array)
+    return df
+end
+
 function make_dataframe(results::ResultsByTime{Matrix{Float64}}, timestamp::Dates.DateTime)
     array = results.data[timestamp]
     df = DataFrames.DataFrame(array, results.column_names)
