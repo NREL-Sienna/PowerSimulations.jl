@@ -125,6 +125,20 @@ function _get_store_value(
     end
 end
 
+# TODO: Probably remove method later. It might be a duplicate.
+function _get_store_value(
+    T::Type{Matrix{Float64}},
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    container_keys::Vector{<:OptimizationContainerKey},
+    timestamps,
+    ::Nothing,
+)
+    simulation_store_path = joinpath(get_execution_path(res), "data_store")
+    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
+        _get_store_value(T, res, container_keys, timestamps, store)
+    end
+end
+
 function _get_store_value(
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
@@ -288,6 +302,17 @@ function _process_timestamps(
         throw(IS.InvalidValue("Timestamps not stored"))
     end
     return requested_range
+end
+
+# Temporary workaround. To be removed
+function _read_results(
+    T::Type{Matrix{Float64}},
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    result_keys,
+    timestamps::Vector{Dates.DateTime},
+    store::Union{Nothing, <:SimulationStore},
+)
+    return _get_store_value(T, res, result_keys, timestamps, store)
 end
 
 function _read_results(
