@@ -155,10 +155,8 @@ function _update_parameter_values!(
     max_state_index = get_num_rows(state_data)
     if model_resolution < state_data.resolution
         t_step = 1
-    elseif model_resolution >= state_data.resolution
-        t_step = model_resolution ÷ state_data.resolution
     else
-        @assert false
+        t_step = model_resolution ÷ state_data.resolution
     end
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
@@ -200,10 +198,8 @@ function _update_parameter_values!(
     max_state_index = get_num_rows(state_data)
     if model_resolution < state_data.resolution
         t_step = 1
-    elseif model_resolution >= state_data.resolution
-        t_step = model_resolution ÷ state_data.resolution
     else
-        @assert false
+        t_step = model_resolution ÷ state_data.resolution
     end
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
@@ -245,10 +241,8 @@ function _update_parameter_values!(
     max_state_index = get_num_rows(state_data)
     if model_resolution < state_data.resolution
         t_step = 1
-    elseif model_resolution >= state_data.resolution
-        t_step = model_resolution ÷ state_data.resolution
     else
-        @assert false
+        t_step = model_resolution ÷ state_data.resolution
     end
     state_data_index = find_timestamp_index(state_timestamps, current_time)
 
