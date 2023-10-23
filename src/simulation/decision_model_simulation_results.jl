@@ -168,6 +168,7 @@ function _get_store_value(
     resolution = get_resolution(sim_results)
     horizon = get_forecast_horizon(sim_results)
     base_power = get_model_base_power(sim_results)
+    model_name = Symbol(get_model_name(sim_results))
     results_by_time = ResultsByTime(
         key,
         SortedDict{Dates.DateTime, T}(),
