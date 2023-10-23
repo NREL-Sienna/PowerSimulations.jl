@@ -17,6 +17,24 @@ function InMemorySimulationStore()
     )
 end
 
+function get_number_of_dimensions(
+    store::InMemorySimulationStore,
+    i::Type{EmulationModelIndexType},
+    key::OptimizationContainerKey,
+)
+    return length(get_column_names(store, i, model_name, key))
+end
+
+function get_number_of_dimensions(
+    store::InMemorySimulationStore,
+    i::Type{DecisionModelIndexType},
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+)
+    return length(get_column_names(store, i, model_name, key))
+end
+
+
 function open_store(
     func::Function,
     ::Type{InMemorySimulationStore},
