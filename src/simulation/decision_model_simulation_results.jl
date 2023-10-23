@@ -393,7 +393,7 @@ function read_dual(
     key = _deserialize_key(ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -417,7 +417,7 @@ function read_parameter(
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -441,7 +441,7 @@ function read_aux_variable(
     key = _deserialize_key(AuxVarKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -465,7 +465,7 @@ function read_expression(
     key = _deserialize_key(ExpressionKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -565,7 +565,6 @@ function load_results!(
         merge!(
             get_cached_variables(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 variable_keys,
                 res.results_timestamps,
@@ -575,7 +574,6 @@ function load_results!(
         merge!(
             get_cached_duals(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 dual_keys,
                 res.results_timestamps,
@@ -585,7 +583,6 @@ function load_results!(
         merge!(
             get_cached_parameters(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 parameter_keys,
                 res.results_timestamps,
@@ -595,7 +592,6 @@ function load_results!(
         merge!(
             get_cached_aux_variables(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 aux_variable_keys,
                 res.results_timestamps,
@@ -605,7 +601,6 @@ function load_results!(
         merge!(
             get_cached_expressions(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 expression_keys,
                 res.results_timestamps,
