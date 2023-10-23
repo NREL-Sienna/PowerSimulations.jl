@@ -241,7 +241,12 @@ function HDF5Dataset{2}(
     resolution::Dates.Period,
     initial_time::Dates.DateTime,
 )
+    # The indexing is done in this way because we save all the names in an
+    # adjacent column entry in the HDF5 Datatset. The indexes for each column
+    # are known because we know how many elements are in each dimension.
+    # the names for the first column are store in the 1:first_column_number_of_elements.
     col1 = column_dataset[1:dims[2]]
+    # the names for the second column are store in the first_column_number_of elements + 1:end of the column with the names.
     col2 = column_dataset[(dims[2] + 1):end]
     HDF5Dataset{2}(
         values,
