@@ -311,8 +311,15 @@ function _read_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
-    store::Union{Nothing, <:SimulationStore},
+    store::Nothing,
 )
+    isempty(result_keys) &&
+    return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+
+    if res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
     return _get_store_value(T, res, result_keys, timestamps, store)
 end
 
