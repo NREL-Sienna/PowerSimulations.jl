@@ -130,7 +130,7 @@ function _get_store_value(
     T::Type{Matrix{Float64}},
     res::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     ::Nothing,
 )
     simulation_store_path = joinpath(get_execution_path(res), "data_store")
@@ -142,7 +142,7 @@ end
 function _get_store_value(
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 )
     results_by_key = Dict{OptimizationContainerKey, ResultsByTime}()
@@ -162,7 +162,7 @@ function _get_store_value(
     ::Type{T},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     key::OptimizationContainerKey,
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 ) where {T <: DenseAxisArray{Float64, 2}}
     resolution = get_resolution(sim_results)
@@ -203,7 +203,7 @@ function _get_store_value(
     ::Type{T},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     key::OptimizationContainerKey,
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 ) where {T <: DenseAxisArray{Float64, 3}}
     resolution = get_resolution(sim_results)
@@ -244,7 +244,7 @@ function _get_store_value(
     ::Type{Matrix{Float64}},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 )
     base_power = get_model_base_power(sim_results)
@@ -514,8 +514,8 @@ end
 
 function _are_results_cached(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    output_keys,
-    timestamps,
+    output_keys::Vector{<:OptimizationContainerKey},
+    timestamps::Vector{Dates.DateTime},
     cached_keys,
 )
     return isempty(setdiff(timestamps, res.results_timestamps)) &&
