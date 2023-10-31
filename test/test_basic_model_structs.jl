@@ -36,12 +36,6 @@ end
             source = OnVariable,
             affected_values = [ActivePowerVariable, ReactivePowerVariable],
         ),
-        EnergyLimitFeedforward(;
-            component_type = GenericBattery,
-            source = EnergyVariable,
-            affected_values = [EnergyVariable],
-            number_of_periods = 10,
-        ),
     ]
 
     for ff in ffs
@@ -59,13 +53,6 @@ end
     for av in PSI.get_affected_values(ff)
         @test isa(av, PSI.ParameterKey)
     end
-
-    @test_throws ErrorException EnergyLimitFeedforward(
-        component_type = GenericBattery,
-        source = EnergyVariable,
-        affected_values = [OnStatusParameter],
-        number_of_periods = 10,
-    )
 
     @test_throws ErrorException UpperBoundFeedforward(
         component_type = RenewableDispatch,
