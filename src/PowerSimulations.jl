@@ -77,9 +77,7 @@ export ReserveLimitedRegulation
 export UpperBoundFeedforward
 export LowerBoundFeedforward
 export SemiContinuousFeedforward
-export EnergyLimitFeedforward
 export FixValueFeedforward
-export EnergyTargetFeedforward
 
 # InitialConditions chrons
 export InterProblemChronology
