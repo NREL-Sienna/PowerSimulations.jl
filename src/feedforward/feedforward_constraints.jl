@@ -453,8 +453,10 @@ function add_feedforward_constraints!(
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
-    param = get_parameter_array(container, parameter_type(), T)
-    multiplier = get_parameter_multiplier_array(container, parameter_type(), T)
+    source_key = get_optimization_container_key(ff)
+    var_type = get_entry_type(source_key)
+    param = get_parameter_array(container, parameter_type(), T, "$var_type")
+    multiplier = get_parameter_multiplier_array(container, parameter_type(), T, "$var_type")
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
