@@ -175,12 +175,16 @@ construct_device!(
 
 # For DC Power only. Implements constraints
 function construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{<:PSY.ACBranch, StaticBranch},
+    model::DeviceModel{T, StaticBranch},
     ::NetworkModel{<:PM.AbstractActivePowerModel},
-)
+) where {T <: PSY.ACBranch}
+    devices =
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
+
+    add_feedforward_arguments!(container, model, devices)
 end
 
 # For DC Power only. Implements constraints
@@ -196,6 +200,7 @@ function construct_device!(
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
+    add_feedforward_constraints!(container, device_model, devices)
     add_constraint_dual!(container, sys, device_model)
     return
 end
