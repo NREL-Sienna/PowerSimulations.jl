@@ -159,3 +159,7 @@ struct InitialTimeDurationOn <: InitialConditionType end
 struct InitialTimeDurationOff <: InitialConditionType end
 struct InitialEnergyLevel <: InitialConditionType end
 struct AreaControlError <: InitialConditionType end
+
+requires_reconciliation(::Type{<:InitialConditionType}) = false
+requires_reconciliation(::Type{<:InitialTimeDurationOn}) = true
+requires_reconciliation(::Type{<:InitialTimeDurationOff}) = true
