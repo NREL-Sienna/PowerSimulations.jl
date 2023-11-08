@@ -279,7 +279,7 @@ function _sim_steps_to_compare(sim::Simulation)
             ff_ = ffs[name]
             select = false
             for j in ff_
-                # SemiContinuousFeedforward is usually related to Economic 
+                # SemiContinuousFeedforward is usually related to Economic
                 # Dispatch and should not have initial condition discrepancy
                 if typeof(j) == SemiContinuousFeedforward
                     select = false
