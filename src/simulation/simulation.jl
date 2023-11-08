@@ -266,6 +266,10 @@ function _check_folder(sim::Simulation)
     end
 end
 
+function _initial_conditions_reconciliation(models::SimulationModels)
+
+end
+
 function _build_decision_models!(sim::Simulation)
     for (model_number, model) in enumerate(get_decision_models(get_models(sim)))
         @info("Building problem $(get_name(model))")
@@ -290,6 +294,7 @@ function _build_decision_models!(sim::Simulation)
             rethrow()
         end
     end
+    _initial_conditions_reconciliation(get_decision_models(get_models(sim)))
     return
 end
 
