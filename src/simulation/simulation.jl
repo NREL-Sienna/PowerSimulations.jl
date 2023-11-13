@@ -266,8 +266,97 @@ function _check_folder(sim::Simulation)
     end
 end
 
-function _initial_conditions_reconciliation(models::SimulationModels)
+# select simulations steps to be compared with main one (e.g., Day Ahead)
+function _sim_steps_to_compare(sim::Simulation)
+    models = get_decision_models(get_models(sim));
+    ffs = get_sequence(sim).feedforwards
+    seq_nums = Vector{Integer}()    # vector where sequence step numbers will be stored
+    for i in keys(models)
+        # get name
+        name = get_name(models[i])
+        # now check feedforward model
+        if name in keys(ffs)
+            ff_ = ffs[name]
+            select = false
+            for j in ff_
+                # SemiContinuousFeedforward is usually related to Economic 
+                # Dispatch and should not have initial condition discrepancy
+                if typeof(j) == SemiContinuousFeedforward
+                    select = false
+                    break
+                elseif !(i in seq_nums)
+                    select = true
+                end
+            end
+            if select
+                push!(seq_nums, i)
+            end
+        end
+    end
+    return seq_nums
+end
 
+# check if initial conditions of thermal units are the same
+function _check_thermal_units_conditions(sim::Simulation)
+
+end
+
+# checks initial conditions for Thermal Units for the different simulation steps,
+# if they are not compatible with the first step (usually Day Ahead), it changes them
+function _initial_conditions_reconciliation!(
+    models::SimulationModels
+    seq_nums::Vector{Int})
+    # get the solution for the reference step
+    ic_dict = Dict()
+    ic_ = get_initial_conditions(models[1]);
+    ic_dict["names"] = PSY.get_name.(
+        get_component.(ic_[ICKey{DeviceStatus, ThermalStandard}("")])
+        )
+    keys_ = ["status", "up", "down"]
+    val_ = [DeviceStatus, InitialTimeDurationOn, InitialTimeDurationOff]
+    for (i, key) in enumerate(keys_)
+        ic_dict[key] = get_condition.(
+                ic_[ICKey{val_[i], ThermalStandard}("")]
+                )
+    end
+    for i in seq_nums
+        # do check to see if the names are in the same order
+        curr_names = PSY.get_name.(
+            get_component.(
+                get_initial_conditions(models[i])[ICKey{DeviceStatus, ThermalStandard}("")]
+                )
+            )
+        @assert all(curr_names .== ic_dict["names"]) "Vector of names mismatch, consider different method"
+        for (j, name) in enumerate(ic_dict["names"])
+            # logig:
+            # if unit is on in ref and on in "i", initial on time must match
+            # if unit is off in ref and off in "i", initial off time must match
+            # if unit is on in ref and off in "i", initial off time in "i" is set to 999
+            # if unit is off in ref and on in "i", initial on time in "i" is set to 999
+            ref_status = round(ic_dict["status"][j])
+            curr_status = round(
+                get_condition(
+                    get_initial_conditions(models[i])[ICKey{DeviceStatus, ThermalStandard}("")][j]
+                    )
+                )
+            if ref_status == 1 && curr_status == 0
+                # get initial on time for ref and "i"
+                up_ref = ic_dict["up"][j]
+                dwn_i = get_initial_conditions(
+                    models[i])[ICKey{InitialTimeDurationOff, ThermalStandard}("")][j]
+                # compare and change if needed
+                @info "Initial condition reconciliation (DurationOff) for $name at step " * get_name(models[i])
+                JuMP.fix(dwn_i.value, 10000)
+            elseif ref_status == 0 &&  curr_status == 1
+                # repeat as first clause
+                dwn_ref = ic_dict["down"][j]
+                @info "Initial condition reconciliation (DurationOn) for $name at step " * get_name(models[i])
+                up_i = get_initial_conditions(
+                    models[i])[ICKey{InitialTimeDurationOn, ThermalStandard}("")][j]
+                JuMP.fix(up_i.value, 10000)
+            end
+        end
+    end
 end
 
 function _build_decision_models!(sim::Simulation)
@@ -294,7 +383,9 @@ function _build_decision_models!(sim::Simulation)
             rethrow()
         end
     end
-    _initial_conditions_reconciliation(get_decision_models(get_models(sim)))
+    @show "here"
+    seq_nums = _sim_steps_to_compare(sim)
+    _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
     return
 end
 

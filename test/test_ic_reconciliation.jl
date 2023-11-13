@@ -15,6 +15,7 @@ const PSY = PowerSystems
 const IF = InfrastructureSystems
 const PSB = PowerSystemCaseBuilder
 const PNM = PowerNetworkMatrices
+const PSI = PowerSimulations
 
 ##############################################################################
 # create new system ##########################################################
@@ -496,7 +497,7 @@ models = SimulationModels(;
                 "MIPRELSTOP" => 0.01,       # Set the relative mip gap tolerance
             ),
             system_to_file = false,
-            initialize_model = false,
+            initialize_model = true, 
             optimizer_solve_log_print = false,
             check_numerical_bounds = false,
             rebuild_model = false,
@@ -570,4 +571,86 @@ sim = Simulation(;
 build_out = build!(sim; serialize = false)
 execute_status = execute!(sim; enable_progress_bar = true);
 
-# TODO: remove all temporary files created when creating the system
+# temp code
+
+# get the models
+models = PSI.get_decision_models(PSI.get_models(sim));
+sequence_order = PSI.get_execution_order(PSI.get_sequence(sim));
+
+## -> function 1: get the simulation steps of interest 
+# it is important to select just the part of the sequence that are not SemiContinuousFeedforward (exclude ED)
+model_numbs = [i for i in keys(models)]
+ffs = PSI.get_sequence(sim).feedforwards
+seq_nums = Vector{Integer}()
+for i in keys(models)
+    # get name
+    name = PSI.get_name(models[i])
+    # now check feedforward model
+    if name in keys(ffs)
+        ff_ = ffs[name]
+        select = false
+        for j in ff_
+            if typeof(j) == PSI.SemiContinuousFeedforward
+                select = false
+                break
+            elseif !(i in seq_nums)
+                select = true
+            end
+        end
+        if select
+            push!(seq_nums, i)
+        end
+    end
+end
+
+## -> function 2: now check the initial condition between the first step in the 
+## sequence and the other ones
+
+# get the solution for the reference step (e.g., Day Ahead)
+ic_dict = Dict()
+ic_ = PSI.get_initial_conditions(models[1]);
+ic_dict["names"] = PSY.get_name.(PSI.get_component.(ic_[PSI.ICKey{DeviceStatus, ThermalStandard}("")]))
+ic_dict["status"] = PSI.get_condition.(ic_[PSI.ICKey{DeviceStatus, ThermalStandard}("")])
+ic_dict["up"] = PSI.get_condition.(ic_[PSI.ICKey{InitialTimeDurationOn, ThermalStandard}("")])
+ic_dict["down"] = PSI.get_condition.(ic_[PSI.ICKey{InitialTimeDurationOff, ThermalStandard}("")])
+
+# now check the solution with respect to reference, if needed change values
+for i in seq_nums
+    # do check to see if the names are in the same order
+    curr_names = PSY.get_name.(
+        PSI.get_component.(
+            PSI.get_initial_conditions(models[i])[PSI.ICKey{DeviceStatus, ThermalStandard}("")]
+            )
+        )
+    @assert all(curr_names .== ic_dict["names"]) "Vector of names mismatch, consider different method"
+    for (j, name) in enumerate(ic_dict["names"])
+        # logig:
+        # if unit is on in ref and on in "i", initial on time must match
+        # if unit is off in ref and off in "i", initial off time must match
+        # if unit is on in ref and off in "i", initial off time in "i" is set to 999
+        # if unit is off in ref and on in "i", initial on time in "i" is set to 999
+        ref_status = round(ic_dict["status"][j])
+        curr_status = round(
+            PSI.get_condition(
+                PSI.get_initial_conditions(models[i])[PSI.ICKey{DeviceStatus, ThermalStandard}("")][j]
+                )
+            )
+
+        if ref_status == 1 && curr_status == 0
+            # get initial on time for ref and "i"
+            on_ref = ic_dict["up"][j]
+            off_i = PSI.get_initial_conditions(
+                models[i])[PSI.ICKey{InitialTimeDurationOff, ThermalStandard}("")][j]
+            # compare and change if needed
+            # println("here1 " * name * " " * string(round(on_ref)) * " " * string(round(PSI.get_condition(off_i))))
+            JuMP.fix(off_i.value, 10000)
+        elseif ref_status == 0 &&  curr_status == 1
+            # repeat as first clause
+            off_ref = ic_dict["down"][j]
+            on_i = PSI.get_initial_conditions(
+                models[i])[PSI.ICKey{InitialTimeDurationOn, ThermalStandard}("")][j]
+            # print("here2 " * name * " " * string(round(off_ref)) * " " * string(round(PSI.get_condition(on_i))))
+            JuMP.fix(on_i.value, 10000)
+        end
+    end
+end
