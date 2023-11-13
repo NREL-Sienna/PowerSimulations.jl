@@ -297,12 +297,11 @@ function _sim_steps_to_compare(sim::Simulation)
 end
 
 
-
 # checks initial conditions for Thermal Units for the different simulation steps,
 # if they are not compatible with the first step (usually Day Ahead), it changes them
 function _initial_conditions_reconciliation!(
-    models::Vector{DecisionModel{GenericOpProblem}},
-    seq_nums::Vector{Int64})
+    models::SimulationModels
+    seq_nums::Vector{Int})
     # get the solution for the reference step
     ic_dict = Dict()
     ic_ = get_initial_conditions(models[1]);
