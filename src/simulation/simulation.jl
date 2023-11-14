@@ -270,7 +270,7 @@ end
 function _sim_steps_to_compare(sim::Simulation)
     models = get_decision_models(get_models(sim));
     ffs = get_sequence(sim).feedforwards
-    seq_nums = Vector{Integer}()    # vector where sequence step numbers will be stored
+    seq_nums = Vector{Int64}()    # vector where sequence step numbers will be stored
     for i in keys(models)
         # get name
         name = get_name(models[i])
@@ -296,34 +296,31 @@ function _sim_steps_to_compare(sim::Simulation)
     return seq_nums
 end
 
-# check if initial conditions of thermal units are the same
-function _check_thermal_units_conditions(sim::Simulation)
 
-end
 
 # checks initial conditions for Thermal Units for the different simulation steps,
 # if they are not compatible with the first step (usually Day Ahead), it changes them
 function _initial_conditions_reconciliation!(
-    models::SimulationModels
-    seq_nums::Vector{Int})
+    models::Vector{DecisionModel{GenericOpProblem}},
+    seq_nums::Vector{Int64})
     # get the solution for the reference step
     ic_dict = Dict()
     ic_ = get_initial_conditions(models[1]);
     ic_dict["names"] = PSY.get_name.(
-        get_component.(ic_[ICKey{DeviceStatus, ThermalStandard}("")])
+        get_component.(ic_[ICKey{DeviceStatus, PSY.ThermalStandard}("")])
         )
     keys_ = ["status", "up", "down"]
     val_ = [DeviceStatus, InitialTimeDurationOn, InitialTimeDurationOff]
     for (i, key) in enumerate(keys_)
         ic_dict[key] = get_condition.(
-                ic_[ICKey{val_[i], ThermalStandard}("")]
+                ic_[ICKey{val_[i], PSY.ThermalStandard}("")]
                 )
     end
     for i in seq_nums
         # do check to see if the names are in the same order
         curr_names = PSY.get_name.(
             get_component.(
-                get_initial_conditions(models[i])[ICKey{DeviceStatus, ThermalStandard}("")]
+                get_initial_conditions(models[i])[ICKey{DeviceStatus, PSY.ThermalStandard}("")]
                 )
             )
         @assert all(curr_names .== ic_dict["names"]) "Vector of names mismatch, consider different method"
@@ -333,26 +330,26 @@ function _initial_conditions_reconciliation!(
             # if unit is off in ref and off in "i", initial off time must match
             # if unit is on in ref and off in "i", initial off time in "i" is set to 999
             # if unit is off in ref and on in "i", initial on time in "i" is set to 999
-            ref_status = round(ic_dict["status"][j])
-            curr_status = round(
+            ref_status = Int(round(ic_dict["status"][j]))
+            curr_status = Int(round(
                 get_condition(
-                    get_initial_conditions(models[i])[ICKey{DeviceStatus, ThermalStandard}("")][j]
+                    get_initial_conditions(models[i])[ICKey{DeviceStatus, PSY.ThermalStandard}("")][j]
                     )
-                )
+            ))
             if ref_status == 1 && curr_status == 0
                 # get initial on time for ref and "i"
                 up_ref = ic_dict["up"][j]
                 dwn_i = get_initial_conditions(
-                    models[i])[ICKey{InitialTimeDurationOff, ThermalStandard}("")][j]
+                    models[i])[ICKey{InitialTimeDurationOff, PSY.ThermalStandard}("")][j]
                 # compare and change if needed
-                @info "Initial condition reconciliation (DurationOff) for $name at step " * get_name(models[i])
+                @info "Initial condition reconciliation (DurationOff) for $name at step " * string(get_name(models[i]))
                 JuMP.fix(dwn_i.value, 10000)
             elseif ref_status == 0 &&  curr_status == 1
                 # repeat as first clause
                 dwn_ref = ic_dict["down"][j]
-                @info "Initial condition reconciliation (DurationOn) for $name at step " * get_name(models[i])
+                @info "Initial condition reconciliation (DurationOn) for $name at step " * string(get_name(models[i]))
                 up_i = get_initial_conditions(
-                    models[i])[ICKey{InitialTimeDurationOn, ThermalStandard}("")][j]
+                    models[i])[ICKey{InitialTimeDurationOn, PSY.ThermalStandard}("")][j]
                 JuMP.fix(up_i.value, 10000)
             end
         end
@@ -383,9 +380,12 @@ function _build_decision_models!(sim::Simulation)
             rethrow()
         end
     end
-    @show "here"
+    @info "here"
     seq_nums = _sim_steps_to_compare(sim)
-    _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
+    _initial_conditions_reconciliation!(
+        get_decision_models(get_models(sim)),
+        seq_nums
+        )
     return
 end
 

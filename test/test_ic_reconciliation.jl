@@ -1,3 +1,5 @@
+using Revise
+
 using PowerSystems
 using PowerSystemCaseBuilder
 using InfrastructureSystems
@@ -629,10 +631,12 @@ for i in seq_nums
         # if unit is off in ref and off in "i", initial off time must match
         # if unit is on in ref and off in "i", initial off time in "i" is set to 999
         # if unit is off in ref and on in "i", initial on time in "i" is set to 999
-        ref_status = round(ic_dict["status"][j])
-        curr_status = round(
-            PSI.get_condition(
-                PSI.get_initial_conditions(models[i])[PSI.ICKey{DeviceStatus, ThermalStandard}("")][j]
+        ref_status = Int(round(ic_dict["status"][j]))
+        curr_status = Int(
+                round(
+                    PSI.get_condition(
+                        PSI.get_initial_conditions(models[i])[PSI.ICKey{DeviceStatus, ThermalStandard}("")][j]
+                    )
                 )
             )
 
