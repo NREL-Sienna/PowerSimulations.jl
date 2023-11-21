@@ -87,8 +87,7 @@ function get_realization(
     lk = ReentrantLock()
     num_rows = length(meta.realized_timestamps)
     start = time()
-    #Threads.@threads
-    for key in collect(keys(results))
+    Threads.@threads for key in collect(keys(results))
         results_by_time = results[key]
         columns = get_column_names(results_by_time)
         df = _make_dataframe(columns, results_by_time, num_rows, meta, key)
