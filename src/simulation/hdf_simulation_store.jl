@@ -347,9 +347,6 @@ end
 log_cache_hit_percentages(x::HdfSimulationStore) = log_cache_hit_percentages(x.cache)
 
 function _make_dataframe(data::Matrix{Float64}, columns::Tuple{Vector{String}})
-    if (ndims(data) < 2 || size(data)[1] == 1) && size(data)[2] != size(columns)[1]
-        data = reshape(data, length(data), 1)
-    end
     return DataFrames.DataFrame(data, columns[1]; copycols = false)
 end
 
