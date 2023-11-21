@@ -84,7 +84,7 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            noheader = true,
+            show_header = false,
             backend = Val(backend),
             title = "Duals",
             alignment = :l,
@@ -176,7 +176,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         io,
         table;
         backend = Val(backend),
-        noheader = true,
+        show_header = false,
         title = "Network Model",
         alignment = :l,
         kwargs...,
@@ -338,7 +338,7 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
         io,
         table;
         backend = Val(backend),
-        noheader = true,
+        show_header = false,
         title = "Simulation Sequence",
         alignment = :l,
         kwargs...,
@@ -432,7 +432,7 @@ function _show_method(io::IO, sim::Simulation, backend::Symbol; kwargs...)
         io,
         table;
         backend = Val(backend),
-        noheader = true,
+        show_header = false,
         title = "Simulation",
         alignment = :l,
         kwargs...,
@@ -479,7 +479,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     PrettyTables.pretty_table(
         io,
         table;
-        noheader = true,
+        show_header = false,
         backend = Val(backend),
         title = "Emulator Results",
         alignment = :l,
@@ -534,7 +534,7 @@ function _show_method(
             PrettyTables.pretty_table(
                 io,
                 val;
-                noheader = true,
+                show_header = false,
                 backend = Val(backend),
                 title = "$name Problem $k Results",
                 alignment = :l,
