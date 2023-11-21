@@ -312,7 +312,7 @@ function _read_results(
     store::Nothing,
 )
     isempty(result_keys) &&
-    return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+        return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
 
     if res.store !== nothing
         # In this case we have an InMemorySimulationStore.
