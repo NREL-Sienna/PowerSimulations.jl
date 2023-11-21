@@ -20,9 +20,9 @@ end
 
 # Values field is accessed with dot syntax to avoid type instability
 
-mutable struct InMemoryDataset <: AbstractDataset
-    "Data with dimensions (column names, row indexes)"
-    values::DenseAxisArray{Float64, 2}
+mutable struct InMemoryDataset{N} <: AbstractDataset
+    "Data with dimensions (N column names, row indexes)"
+    values::DenseAxisArray{Float64, N}
     # We use Array here to allow for overwrites when updating the state
     timestamps::Vector{Dates.DateTime}
     # Resolution is needed because AbstractDataset might have just one row
@@ -33,12 +33,12 @@ mutable struct InMemoryDataset <: AbstractDataset
 end
 
 function InMemoryDataset(
-    values::DenseAxisArray{Float64, 2},
+    values::DenseAxisArray{Float64, N},
     timestamps::Vector{Dates.DateTime},
     resolution::Dates.Millisecond,
     end_of_step_index::Int,
-)
-    return InMemoryDataset(
+) where {N}
+    return InMemoryDataset{N}(
         values,
         timestamps,
         resolution,
@@ -48,8 +48,8 @@ function InMemoryDataset(
     )
 end
 
-function InMemoryDataset(values::DenseAxisArray{Float64, 2})
-    return InMemoryDataset(
+function InMemoryDataset(values::DenseAxisArray{Float64, N}) where {N}
+    return InMemoryDataset{N}(
         values,
         Vector{Dates.DateTime}(),
         Dates.Second(0.0),
@@ -59,17 +59,62 @@ function InMemoryDataset(values::DenseAxisArray{Float64, 2})
     )
 end
 
-get_num_rows(s::InMemoryDataset) = size(s.values)[2]
-
-function make_system_state(
-    values::DenseAxisArray{Float64, 2},
-    timestamp::Dates.DateTime,
+# Helper method for one dimensional cases
+function InMemoryDataset(
+    fill_val::Float64,
+    initial_time::Dates.DateTime,
     resolution::Dates.Millisecond,
-)
-    return InMemoryDataset(values, [timestamp], resolution, 0, 1, UNSET_INI_TIME)
+    end_of_step_index::Int,
+    row_count::Int,
+    column_names::Vector{String})
+    return InMemoryDataset(
+        fill_val,
+        initial_time,
+        resolution,
+        end_of_step_index,
+        row_count,
+        (column_names,),
+    )
 end
 
-function get_dataset_value(s::InMemoryDataset, date::Dates.DateTime)
+function InMemoryDataset(
+    fill_val::Float64,
+    initial_time::Dates.DateTime,
+    resolution::Dates.Millisecond,
+    end_of_step_index::Int,
+    row_count::Int,
+    column_names::NTuple{N, <:Any}) where {N}
+    return InMemoryDataset(
+        fill!(
+            DenseAxisArray{Float64}(undef, column_names..., 1:row_count),
+            fill_val,
+        ),
+        collect(
+            range(
+                initial_time;
+                step = resolution,
+                length = row_count,
+            ),
+        ),
+        resolution,
+        end_of_step_index,
+    )
+end
+
+get_num_rows(s::InMemoryDataset{N}) where {N} = size(s.values)[N]
+
+function make_system_state(
+    timestamp::Dates.DateTime,
+    resolution::Dates.Millisecond,
+    columns::NTuple{N, <:Any},
+) where {N}
+    return InMemoryDataset(NaN, timestamp, resolution, 0, 1, columns)
+end
+
+function get_dataset_value(
+    s::T,
+    date::Dates.DateTime,
+) where {T <: Union{InMemoryDataset{1}, InMemoryDataset{2}}}
     s_index = find_timestamp_index(s.timestamps, date)
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
@@ -77,14 +122,30 @@ function get_dataset_value(s::InMemoryDataset, date::Dates.DateTime)
     return s.values[:, s_index]
 end
 
-get_column_names(s::InMemoryDataset) = axes(s.values)[1]
-get_column_names(::OptimizationContainerKey, s::InMemoryDataset) = get_column_names(s)
+function get_dataset_value(s::InMemoryDataset{3}, date::Dates.DateTime)
+    s_index = find_timestamp_index(s.timestamps, date)
+    if isnothing(s_index)
+        error("Request time stamp $date not in the state")
+    end
+    return s.values[:, :, s_index]
+end
 
-function get_last_recorded_value(s::InMemoryDataset)
+function get_column_names(k::OptimizationContainerKey, s::InMemoryDataset)
+    return get_column_names(k, s.values)
+end
+
+function get_last_recorded_value(s::InMemoryDataset{2})
     if get_last_recorded_row(s) == 0
         error("The Dataset hasn't been written yet")
     end
     return s.values[:, get_last_recorded_row(s)]
+end
+
+function get_last_recorded_value(s::InMemoryDataset{3})
+    if get_last_recorded_row(s) == 0
+        error("The Dataset hasn't been written yet")
+    end
+    return s.values[:, :, get_last_recorded_row(s)]
 end
 
 function get_end_of_step_timestamp(s::InMemoryDataset)
@@ -110,18 +171,26 @@ function get_value_timestamp(s::InMemoryDataset, date::Dates.DateTime)
     return s.timestamps[s_index]
 end
 
-function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 2}, index::Int)
+# These set_value! methods expect a single time_step value because they are used to update
+#the state so the incoming vals will have one dimension less than the DataSet. The exception
+# is for vals of Dimension 1 which are still stored in DataSets of dimension 2.
+function set_value!(s::InMemoryDataset{2}, vals::DenseAxisArray{Float64, 2}, index::Int)
     s.values[:, index] = vals[:, index]
     return
 end
 
-function set_value!(s::InMemoryDataset, vals::DenseAxisArray{Float64, 1}, index::Int)
+function set_value!(s::InMemoryDataset{2}, vals::DenseAxisArray{Float64, 1}, index::Int)
     s.values[:, index] = vals
     return
 end
 
+function set_value!(s::InMemoryDataset{3}, vals::DenseAxisArray{Float64, 2}, index::Int)
+    s.values[:, :, index] = vals
+    return
+end
+
 # HDF5Dataset does not account of overwrites in the data. Values are written sequentially.
-mutable struct HDF5Dataset <: AbstractDataset
+mutable struct HDF5Dataset{N} <: AbstractDataset
     values::HDF5.Dataset
     column_dataset::HDF5.Dataset
     write_index::Int
@@ -129,20 +198,31 @@ mutable struct HDF5Dataset <: AbstractDataset
     resolution::Dates.Millisecond
     initial_timestamp::Dates.DateTime
     update_timestamp::Dates.DateTime
-    column_names::Vector{String}
+    column_names::NTuple{N, Vector{String}}
 
-    function HDF5Dataset(values, column_dataset, write_index, last_recorded_row, resolution,
+    function HDF5Dataset{N}(values,
+        column_dataset,
+        write_index,
+        last_recorded_row,
+        resolution,
         initial_timestamp,
-        update_timestamp, column_names,
-    )
-        new(values, column_dataset, write_index, last_recorded_row, resolution,
+        update_timestamp,
+        column_names::NTuple{N, Vector{String}},
+    ) where {N}
+        new{N}(values, column_dataset, write_index, last_recorded_row, resolution,
             initial_timestamp,
             update_timestamp, column_names)
     end
 end
 
-HDF5Dataset(values, column_dataset, resolution, initial_time) =
-    HDF5Dataset(
+function HDF5Dataset{1}(
+    values::HDF5.Dataset,
+    column_dataset::HDF5.Dataset,
+    ::Tuple,
+    resolution::Dates.Millisecond,
+    initial_time::Dates.DateTime,
+)
+    HDF5Dataset{1}(
         values,
         column_dataset,
         1,
@@ -150,10 +230,65 @@ HDF5Dataset(values, column_dataset, resolution, initial_time) =
         resolution,
         initial_time,
         UNSET_INI_TIME,
-        column_dataset[:],
+        (column_dataset[:],),
     )
+end
 
-get_column_names(::OptimizationContainerKey, s::HDF5Dataset) = s.column_names
+function HDF5Dataset{2}(
+    values::HDF5.Dataset,
+    column_dataset::HDF5.Dataset,
+    dims::NTuple{4, Int},
+    resolution::Dates.Period,
+    initial_time::Dates.DateTime,
+)
+    # The indexing is done in this way because we save all the names in an
+    # adjacent column entry in the HDF5 Datatset. The indexes for each column
+    # are known because we know how many elements are in each dimension.
+    # the names for the first column are store in the 1:first_column_number_of_elements.
+    col1 = column_dataset[1:dims[2]]
+    # the names for the second column are store in the first_column_number_of elements + 1:end of the column with the names.
+    col2 = column_dataset[(dims[2] + 1):end]
+    HDF5Dataset{2}(
+        values,
+        column_dataset,
+        1,
+        0,
+        resolution,
+        initial_time,
+        UNSET_INI_TIME,
+        (col1, col2),
+    )
+end
+
+function HDF5Dataset{2}(
+    values::HDF5.Dataset,
+    column_dataset::HDF5.Dataset,
+    dims::NTuple{5, Int},
+    resolution::Dates.Period,
+    initial_time::Dates.DateTime,
+)
+    # The indexing is done in this way because we save all the names in an
+    # adjacent column entry in the HDF5 Datatset. The indexes for each column
+    # are known because we know how many elements are in each dimension.
+    # the names for the first column are store in the 1:first_column_number_of_elements.
+    col1 = column_dataset[1:dims[2]]
+    # the names for the second column are store in the first_column_number_of elements + 1:end of the column with the names.
+    col2 = column_dataset[(dims[2] + 1):end]
+    HDF5Dataset{2}(
+        values,
+        column_dataset,
+        1,
+        0,
+        resolution,
+        initial_time,
+        UNSET_INI_TIME,
+        (col1, col2),
+    )
+end
+
+function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
+    return s.column_names
+end
 
 """
 Return the timestamp from most recent data row updated in the dataset. This value may not be the same as the result from `get_update_timestamp`

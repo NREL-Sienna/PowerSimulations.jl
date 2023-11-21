@@ -90,20 +90,12 @@ function _initialize_model_states!(
             column_names = get_column_names(key, value)
             if !haskey(field_states, key) || get_num_rows(field_states[key]) < value_counts
                 field_states[key] = InMemoryDataset(
-                    fill!(
-                        DenseAxisArray{Float64}(undef, column_names, 1:value_counts),
-                        NaN,
-                    ),
-                    collect(
-                        range(
-                            simulation_initial_time;
-                            step = params[key].resolution,
-                            length = value_counts,
-                        ),
-                    ),
+                    NaN,
+                    simulation_initial_time,
                     params[key].resolution,
                     Int(simulation_step / params[key].resolution),
-                )
+                    value_counts,
+                    column_names)
             end
         end
     end
@@ -125,9 +117,9 @@ function _initialize_system_states!(
             emulator_states,
             key,
             make_system_state(
-                fill!(DenseAxisArray{Float64}(undef, cols, 1:1), NaN),
                 simulation_initial_time,
                 min_res,
+                cols,
             ),
         )
     end
@@ -143,6 +135,7 @@ function _initialize_system_states!(
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
     emulation_container = get_optimization_container(emulation_model)
+    min_res = minimum([v.resolution for v in values(params)])
 
     for field in fieldnames(DatasetContainer)
         field_containers = getfield(emulation_container, field)
@@ -153,29 +146,29 @@ function _initialize_system_states!(
                 emulator_states,
                 key,
                 make_system_state(
-                    fill!(DenseAxisArray{Float64}(undef, column_names, 1:1), NaN),
                     simulation_initial_time,
-                    get_resolution(emulation_model),
+                    min_res,
+                    column_names,
                 ),
             )
         end
     end
 
     for key in get_dataset_keys(decision_states)
+        dm_cols = get_column_names(key, get_dataset(decision_states, key))
         if has_dataset(emulator_states, key)
-            dm_cols = get_column_names(key, get_dataset(decision_states, key))
             em_cols = get_column_names(key, get_dataset(emulator_states, key))
             @assert_op dm_cols == em_cols
             continue
         end
-        cols = get_column_names(key, get_dataset(decision_states, key))
+
         set_dataset!(
             emulator_states,
             key,
             make_system_state(
-                fill!(DenseAxisArray{Float64}(undef, cols, 1:1), NaN),
                 simulation_initial_time,
-                get_resolution(emulation_model),
+                min_res,
+                dm_cols,
             ),
         )
     end
@@ -207,12 +200,12 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::OptimizationContainerKey,
-    store_data::DenseAxisArray{Float64},
+    store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
-    column_names = get_column_names(state_data)
+    column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
@@ -249,7 +242,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::AuxVarKey{EnergyOutput, T},
-    store_data::DenseAxisArray{Float64},
+    store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -291,7 +284,7 @@ end
 function update_decision_state!(
     state::SimulationState,
     key::AuxVarKey{S, T},
-    store_data::DenseAxisArray{Float64},
+    store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}
@@ -417,7 +410,8 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
     system_dataset.timestamps[1] = ts
-    set_dataset_values!(state, key, 1, get_dataset_value(decision_dataset, simulation_time))
+    data_set_value = get_dataset_value(decision_dataset, simulation_time)
+    set_dataset_values!(state, key, 1, data_set_value)
     # This value shouldn't be other than one and after one execution is no-op.
     set_last_recorded_row!(system_dataset, 1)
     return

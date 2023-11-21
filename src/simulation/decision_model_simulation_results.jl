@@ -114,12 +114,24 @@ function get_forecast_horizon(res::SimulationProblemResults{DecisionModelSimulat
 end
 
 function _get_store_value(
-    ::Type{T},
     res::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
     timestamps,
     ::Nothing,
-) where {T <: Union{Matrix{Float64}, DenseAxisArray{Float64, 2}}}
+)
+    simulation_store_path = joinpath(get_execution_path(res), "data_store")
+    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
+        _get_store_value(res, container_keys, timestamps, store)
+    end
+end
+
+function _get_store_value(
+    T::Type{Matrix{Float64}},
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    container_keys::Vector{<:OptimizationContainerKey},
+    timestamps::Vector{Dates.DateTime},
+    ::Nothing,
+)
     simulation_store_path = joinpath(get_execution_path(res), "data_store")
     return open_store(HdfSimulationStore, simulation_store_path, "r") do store
         _get_store_value(T, res, container_keys, timestamps, store)
@@ -127,57 +139,111 @@ function _get_store_value(
 end
 
 function _get_store_value(
-    ::Type{DenseAxisArray{Float64, 2}},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 )
-    base_power = get_model_base_power(sim_results)
-    results_by_key =
-        Dict{OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
+    results_by_key = Dict{OptimizationContainerKey, ResultsByTime}()
     model_name = Symbol(get_model_name(sim_results))
+    for ckey in container_keys
+        n_dims = get_number_of_dimensions(store, DecisionModelIndexType, model_name, ckey)
+        container_type = DenseAxisArray{Float64, n_dims + 1}
+        results_by_key[ckey] = _get_store_value(container_type,
+            sim_results,
+            ckey,
+            timestamps, store)
+    end
+    return results_by_key
+end
+
+function _get_store_value(
+    ::Type{T},
+    sim_results::SimulationProblemResults{DecisionModelSimulationResults},
+    key::OptimizationContainerKey,
+    timestamps::Vector{Dates.DateTime},
+    store::SimulationStore,
+) where {T <: DenseAxisArray{Float64, 2}}
     resolution = get_resolution(sim_results)
     horizon = get_forecast_horizon(sim_results)
-
-    for key in container_keys
-        results_by_time = ResultsByTime(
-            key,
-            SortedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}(),
-            resolution,
-            get_column_names(store, DecisionModelIndexType, model_name, key),
-        )
-        array_size::Union{Nothing, Tuple{Int, Int}} = nothing
-        for ts in timestamps
-            array = read_result(DenseAxisArray, store, model_name, key, ts)
-            if isnothing(array_size)
-                array_size = size(array)
-            elseif size(array) != array_size
-                error(
-                    "Arrays for $(encode_key_as_string(key)) at different timestamps have different sizes",
-                )
-            end
-            if convert_result_to_natural_units(key)
-                array.data .*= base_power
-            end
-            if array_size[2] != horizon
-                @warn "$(encode_key_as_string(key)) has a different horizon than the " *
-                      "problem specification. Can't assign timestamps to the resulting DataFrame."
-                results_by_time.resolution = Dates.Period(Dates.Millisecond(0))
-            end
-            results_by_time[ts] = array
+    base_power = get_model_base_power(sim_results)
+    model_name = Symbol(get_model_name(sim_results))
+    results_by_time = ResultsByTime(
+        key,
+        SortedDict{Dates.DateTime, T}(),
+        resolution,
+        get_column_names(store, DecisionModelIndexType, model_name, key),
+    )
+    array_size::Union{Nothing, Tuple{Int, Int}} = nothing
+    for ts in timestamps
+        array = read_result(DenseAxisArray, store, model_name, key, ts)
+        if isnothing(array_size)
+            array_size = size(array)
+        elseif size(array) != array_size
+            error(
+                "Arrays for $(encode_key_as_string(key)) at different timestamps have different sizes",
+            )
         end
-        results_by_key[key] = results_by_time
+        if convert_result_to_natural_units(key)
+            array.data .*= base_power
+        end
+        if array_size[2] != horizon
+            @warn "$(encode_key_as_string(key)) has a different horizon than the " *
+                  "problem specification. Can't assign timestamps to the resulting DataFrame."
+            results_by_time.resolution = Dates.Period(Dates.Millisecond(0))
+        end
+        results_by_time[ts] = array
     end
 
-    return results_by_key
+    return results_by_time
+end
+
+function _get_store_value(
+    ::Type{T},
+    sim_results::SimulationProblemResults{DecisionModelSimulationResults},
+    key::OptimizationContainerKey,
+    timestamps::Vector{Dates.DateTime},
+    store::SimulationStore,
+) where {T <: DenseAxisArray{Float64, 3}}
+    resolution = get_resolution(sim_results)
+    horizon = get_forecast_horizon(sim_results)
+    base_power = get_model_base_power(sim_results)
+    model_name = Symbol(get_model_name(sim_results))
+    results_by_time = ResultsByTime(
+        key,
+        SortedDict{Dates.DateTime, T}(),
+        resolution,
+        get_column_names(store, DecisionModelIndexType, model_name, key),
+    )
+    array_size::Union{Nothing, Tuple{Int, Int, Int}} = nothing
+    for ts in timestamps
+        array = read_result(DenseAxisArray, store, model_name, key, ts)
+        if isnothing(array_size)
+            array_size = size(array)
+        elseif size(array) != array_size
+            error(
+                "Arrays for $(encode_key_as_string(key)) at different timestamps have different sizes",
+            )
+        end
+        if convert_result_to_natural_units(key)
+            array.data .*= base_power
+        end
+        if array_size[3] != horizon
+            @warn "$(encode_key_as_string(key)) has a different horizon than the " *
+                  "problem specification. Can't assign timestamps to the resulting DataFrame."
+            results_by_time.resolution = Dates.Period(Dates.Millisecond(0))
+        end
+        results_by_time[ts] = array
+    end
+
+    return results_by_time
 end
 
 function _get_store_value(
     ::Type{Matrix{Float64}},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
-    timestamps,
+    timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 )
     base_power = get_model_base_power(sim_results)
@@ -186,7 +252,13 @@ function _get_store_value(
     resolution = get_resolution(sim_results)
 
     for key in container_keys
-        results_by_time = ResultsByTime{Matrix{Float64}}(
+        n_dims = get_number_of_dimensions(store, DecisionModelIndexType, model_name, key)
+        if n_dims != 1
+            error(
+                "The number of dimensions $(n_dims) is not supported for $(encode_key_as_string(key))",
+            )
+        end
+        results_by_time = ResultsByTime{Matrix{Float64}, 1}(
             key,
             SortedDict{Dates.DateTime, Matrix{Float64}}(),
             resolution,
@@ -233,13 +305,30 @@ function _process_timestamps(
 end
 
 function _read_results(
-    ::Type{T},
+    T::Type{Matrix{Float64}},
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    result_keys,
+    timestamps::Vector{Dates.DateTime},
+    store::Nothing,
+)
+    isempty(result_keys) &&
+        return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+
+    if res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
+    return _get_store_value(T, res, result_keys, timestamps, store)
+end
+
+function _read_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
     store::Union{Nothing, <:SimulationStore},
-) where {T <: Union{Matrix{Float64}, DenseAxisArray{Float64, 2}}}
-    isempty(result_keys) && return Dict{OptimizationContainerKey, ResultsByTime{T}}()
+)
+    isempty(result_keys) &&
+        return Dict{OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
 
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
@@ -253,7 +342,7 @@ function _read_results(
         vals = Dict(k => cached_results[k] for k in result_keys)
     else
         @debug "reading results from data store"
-        vals = _get_store_value(T, res, result_keys, timestamps, store)
+        vals = _get_store_value(res, result_keys, timestamps, store)
     end
     return vals
 end
@@ -285,9 +374,7 @@ function read_variable(
 )
     key = _deserialize_key(VariableKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
-    return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
-    )
+    return make_dataframes(_read_results(res, [key], timestamps, store)[key])
 end
 
 """
@@ -311,7 +398,7 @@ function read_dual(
     key = _deserialize_key(ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -335,7 +422,7 @@ function read_parameter(
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -359,7 +446,7 @@ function read_aux_variable(
     key = _deserialize_key(AuxVarKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -383,7 +470,7 @@ function read_expression(
     key = _deserialize_key(ExpressionKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(DenseAxisArray{Float64, 2}, res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key],
     )
 end
 
@@ -432,8 +519,8 @@ end
 
 function _are_results_cached(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    output_keys,
-    timestamps,
+    output_keys::Vector{<:OptimizationContainerKey},
+    timestamps::Vector{Dates.DateTime},
     cached_keys,
 )
     return isempty(setdiff(timestamps, res.results_timestamps)) &&
@@ -483,7 +570,6 @@ function load_results!(
         merge!(
             get_cached_variables(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 variable_keys,
                 res.results_timestamps,
@@ -493,7 +579,6 @@ function load_results!(
         merge!(
             get_cached_duals(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 dual_keys,
                 res.results_timestamps,
@@ -503,7 +588,6 @@ function load_results!(
         merge!(
             get_cached_parameters(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 parameter_keys,
                 res.results_timestamps,
@@ -513,7 +597,6 @@ function load_results!(
         merge!(
             get_cached_aux_variables(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 aux_variable_keys,
                 res.results_timestamps,
@@ -523,7 +606,6 @@ function load_results!(
         merge!(
             get_cached_expressions(res),
             _read_results(
-                DenseAxisArray{Float64, 2},
                 res,
                 expression_keys,
                 res.results_timestamps,

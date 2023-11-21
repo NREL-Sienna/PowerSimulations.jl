@@ -1,21 +1,26 @@
-mutable struct ResultsByTime{T}
+mutable struct ResultsByTime{T, N}
     key::OptimizationContainerKey
     data::SortedDict{Dates.DateTime, T}
     resolution::Dates.Period
-    column_names::Vector{String}
+    column_names::NTuple{N, Vector{String}}
 end
 
-function ResultsByTime(key, data, resolution, column_names)
+function ResultsByTime(
+    key::OptimizationContainerKey,
+    data::SortedDict{Dates.DateTime, T},
+    resolution::Dates.Period,
+    column_names,
+) where {T}
     _check_column_consistency(data, column_names)
     ResultsByTime(key, data, resolution, column_names)
 end
 
 function _check_column_consistency(
     data::SortedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    cols::Vector{String},
+    cols::Tuple{Vector{String}},
 )
     for val in values(data)
-        if axes(val)[1] != cols
+        if axes(val)[1] != cols[1]
             error("Mismatch in DenseAxisArray column names: $(axes(val)[1]) $cols")
         end
     end
@@ -23,14 +28,25 @@ end
 
 function _check_column_consistency(
     data::SortedDict{Dates.DateTime, Matrix{Float64}},
-    cols::Vector{String},
+    cols::Tuple{Vector{String}},
 )
     for val in values(data)
-        if size(val)[2] != length(cols)
-            error("Mismatch in length of Matrix columns: $(size(val)[2]) $(length(cols))")
+        if size(val)[2] != length(cols[1])
+            error(
+                "Mismatch in length of Matrix columns: $(size(val)[2]) $(length(cols[1]))",
+            )
         end
     end
 end
+
+function _check_column_consistency(
+    data::SortedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+    cols::NTuple{N, Vector{String}},
+) where {N}
+    # TODO:
+end
+
+# TODO: Implement consistency check for other sizes
 
 # This struct behaves like a dict, delegating to its 'data' field.
 Base.length(res::ResultsByTime) = length(res.data)
@@ -70,6 +86,19 @@ function make_dataframe(
     array = results.data[timestamp]
     df = DataFrames.DataFrame(permutedims(array.data), axes(array)[1])
     _add_timestamps!(df, results, timestamp, array)
+    return df
+end
+
+function make_dataframe(
+    results::ResultsByTime{DenseAxisArray{Float64, 3}},
+    timestamp::Dates.DateTime,
+)
+    df = DataFrames.DataFrame()
+    array = results.data[timestamp]
+    for idx in Iterators.product(array.axes[1:2]...)
+        df[!, "$(idx)"] = array[idx..., :].data
+    end
+    # _add_timestamps!(df, results, timestamp, array)
     return df
 end
 

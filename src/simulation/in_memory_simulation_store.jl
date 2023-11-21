@@ -17,6 +17,23 @@ function InMemorySimulationStore()
     )
 end
 
+function get_number_of_dimensions(
+    store::InMemorySimulationStore,
+    i::Type{EmulationModelIndexType},
+    key::OptimizationContainerKey,
+)
+    return length(get_column_names(store, i, model_name, key))
+end
+
+function get_number_of_dimensions(
+    store::InMemorySimulationStore,
+    i::Type{DecisionModelIndexType},
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+)
+    return length(get_column_names(store, i, model_name, key))
+end
+
 function open_store(
     func::Function,
     ::Type{InMemorySimulationStore},
@@ -143,7 +160,7 @@ function initialize_problem_storage!(
             container = get_data_field(get_em_data(store), type)
             container[key] = InMemoryDataset(
                 fill!(
-                    DenseAxisArray{Float64}(undef, reqs["columns"], 1:reqs["dims"][1]),
+                    DenseAxisArray{Float64}(undef, reqs["columns"]..., 1:reqs["dims"][1]),
                     NaN,
                 ),
             )

@@ -39,7 +39,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         for (key, array) in model_defs[model]["variables"]
             reqs.variables[key] = Dict(
                 "columns" => model_defs[model]["names"],
-                "dims" => (horizon, length(model_defs[model]["names"]), num_rows),
+                "dims" => (horizon, length(model_defs[model]["names"][1]), num_rows),
             )
             keep_in_cache = variables[key]["keep_in_cache"]
             add_rule!(cache_rules, model, key, keep_in_cache)
@@ -146,8 +146,8 @@ function _verify_read_results(path, sim, variables, model_defs, seed)
     end
 end
 
-function _verify_data(expected, store, model, name, time, columns)
-    expected_df = DataFrames.DataFrame(expected, columns)
+function _verify_data(expected, store, model, name, time, columns::Tuple{Vector{Symbol}})
+    expected_df = DataFrames.DataFrame(expected, columns[1])
     df = read_result(DataFrames.DataFrame, store, model, name, time)
     @test expected_df == df
 end
@@ -172,7 +172,7 @@ end
         :ED => Dict(
             "execution_count" => 24,
             "horizon" => 12,
-            "names" => [:dev1, :dev2, :dev3, :dev4, :dev5],
+            "names" => ([:dev1, :dev2, :dev3, :dev4, :dev5],),
             "variables" => Dict(x => ones(12, 5) for x in keys(variables)),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
@@ -182,7 +182,7 @@ end
         :UC => Dict(
             "execution_count" => 1,
             "horizon" => 24,
-            "names" => [:dev1, :dev2, :dev3],
+            "names" => ([:dev1, :dev2, :dev3],),
             "variables" => Dict(x => ones(24, 3) for x in keys(variables)),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),

@@ -77,7 +77,7 @@ function initialize_storage!(
             column_names = get_column_names(key, field_container)
             results_container[key] = InMemoryDataset(
                 fill!(
-                    DenseAxisArray{Float64}(undef, column_names, 1:num_of_executions),
+                    DenseAxisArray{Float64}(undef, column_names..., 1:num_of_executions),
                     NaN,
                 ),
             )
@@ -139,7 +139,7 @@ end
 
 function get_column_names(store::EmulationModelStore, key::OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
-    return axes(container[key].values)[1]
+    return get_column_names(key, container[key].values)
 end
 
 function get_dataset_size(store::EmulationModelStore, key::OptimizationContainerKey)
