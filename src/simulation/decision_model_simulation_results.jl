@@ -125,7 +125,6 @@ function _get_store_value(
     end
 end
 
-# TODO: Probably remove method later. It might be a duplicate.
 function _get_store_value(
     T::Type{Matrix{Float64}},
     res::SimulationProblemResults{DecisionModelSimulationResults},
@@ -305,7 +304,6 @@ function _process_timestamps(
     return requested_range
 end
 
-# Temporary workaround. To be removed
 function _read_results(
     T::Type{Matrix{Float64}},
     res::SimulationProblemResults{DecisionModelSimulationResults},
