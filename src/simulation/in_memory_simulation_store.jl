@@ -34,7 +34,6 @@ function get_number_of_dimensions(
     return length(get_column_names(store, i, model_name, key))
 end
 
-
 function open_store(
     func::Function,
     ::Type{InMemorySimulationStore},
