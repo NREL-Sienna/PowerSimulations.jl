@@ -51,7 +51,6 @@ function construct_device!(
         network_model,
     )
     add_feedforward_arguments!(container, model, devices)
-    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -62,4 +61,8 @@ function construct_device!(
     model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
     ::NetworkModel{<:PM.AbstractActivePowerModel},
 )
+    devices = get_available_components(PSY.TModelHVDCLine, sys)
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
 end
