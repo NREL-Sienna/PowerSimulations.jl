@@ -51,6 +51,7 @@ function construct_device!(
         network_model,
     )
     add_feedforward_arguments!(container, model, devices)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
