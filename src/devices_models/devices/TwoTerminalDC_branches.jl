@@ -19,7 +19,11 @@ get_variable_binary(
 
 get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, _) =
     NaN
-get_parameter_multiplier(::FixValueParameter, ::PSY.TwoTerminalHVDCLine, ::AbstractTwoTerminalDCLineFormulation) = 1.0
+get_parameter_multiplier(
+    ::FixValueParameter,
+    ::PSY.TwoTerminalHVDCLine,
+    ::AbstractTwoTerminalDCLineFormulation,
+) = 1.0
 
 get_variable_multiplier(
     ::FlowActivePowerFromToVariable,
