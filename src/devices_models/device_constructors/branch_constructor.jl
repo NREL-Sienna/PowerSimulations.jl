@@ -635,6 +635,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -668,6 +669,7 @@ function construct_device!(
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
     add_constraints!(container, HVDCDirection, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
