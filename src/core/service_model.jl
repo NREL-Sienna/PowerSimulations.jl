@@ -98,12 +98,12 @@ function ServiceModel(
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     # If more attributes are used later, move free form string to const and organize
     # attributes
-    attributes_ = get_default_attributes(D, B)
+    attributes_for_model = get_default_attributes(D, B)
     for (k, v) in attributes
-        attributes_[k] = v
+        attributes_for_model[k] = v
     end
-    if !haskey(attributes_, "aggregated_service_model")
-        push!(attributes_, "aggregated_service_model" => true)
+    if !haskey(attributes_for_model, "aggregated_service_model")
+        push!(attributes_for_model, "aggregated_service_model" => true)
     end
     return ServiceModel(
         service_type,
@@ -113,7 +113,7 @@ function ServiceModel(
         feedforwards,
         duals,
         time_series_names,
-        attributes_,
+        attributes_for_model,
     )
 end
 
