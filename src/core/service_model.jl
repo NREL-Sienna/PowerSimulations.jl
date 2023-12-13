@@ -49,9 +49,9 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         attributes = Dict{String, Any}(),
         contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
-        attributes_ = get_default_attributes(D, B)
+        attributes_for_model = get_default_attributes(D, B)
         for (k, v) in attributes
-            attributes_[k] = v
+            attributes_for_model[k] = v
         end
 
         _check_service_formulation(D)
@@ -62,7 +62,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
             use_slacks,
             duals,
             time_series_names,
-            attributes_,
+            attributes_for_model,
             contributing_devices_map,
         )
     end
@@ -113,7 +113,7 @@ function ServiceModel(
         feedforwards,
         duals,
         time_series_names,
-        attributes_for_model,
+        attributes = attributes_for_model,
     )
 end
 
