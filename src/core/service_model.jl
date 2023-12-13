@@ -49,7 +49,6 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         attributes = Dict{String, Any}(),
         contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
-
         attributes_ = get_default_attributes(D, B)
         for (k, v) in attributes
             attributes_[k] = v
