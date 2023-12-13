@@ -107,9 +107,22 @@ function get_dirty_data_to_flush!(cache::OptimizationOutputCache)
     empty!(cache.dirty_timestamps)
     # Uncomment for performance testing of CacheFlush
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Concatenate arrays for flush" begin
-    arrays = (cache.data[x] for x in timestamps)
-    arrays = cat(arrays...; dims = ndims(first(arrays)) + 1)
-    #end
+    temp = cache.data[first(timestamps)]
+    sd = collect(size(temp))
+    push!(sd, length(timestamps))
+    arrays = Array{Float64}(undef, sd...)
+    for (ix, x) in enumerate(timestamps)
+        temp_data = cache.data[x]
+        if ndims(temp_data) == 1
+            arrays[:, ix] = temp_data
+        elseif ndims(temp_data) == 2
+            arrays[:, :, ix] = temp_data
+        elseif ndims(temp_data) == 3
+            arrays[:, :, :, ix] = temp_data
+        else
+            error("Arrays of dimensions $(ndims(temp_data)) are not supported")
+        end
+    end
 
     return timestamps, arrays
 end
