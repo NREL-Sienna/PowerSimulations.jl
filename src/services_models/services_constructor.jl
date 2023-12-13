@@ -553,13 +553,6 @@ function construct_service!(
         )
     end
 
-    add_constraints!(
-        container,
-        ParticipationFractionConstraint,
-        service,
-        contributing_services,
-        model,
-    )
     add_constraints!(container, InterfaceFlowLimit, service, model)
     add_feedforward_constraints!(container, model, service)
     add_constraint_dual!(container, sys, model)
