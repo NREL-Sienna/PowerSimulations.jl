@@ -59,8 +59,13 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         use_slacks = false,
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),
-        attributes = get_default_attributes(D, B),
+        attributes = Dict{String, Any}(),
     ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+        attributes_ = get_default_attributes(D, B)
+        for (k, v) in attributes
+            attributes_[k] = v
+        end
+
         _check_device_formulation(D)
         _check_device_formulation(B)
         new{D, B}(
@@ -69,7 +74,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
             duals,
             Vector{ServiceModel}(),
             time_series_names,
-            attributes,
+            attributes_,
         )
     end
 end

@@ -46,9 +46,14 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
         feedforwards = Vector{AbstractAffectFeedforward}(),
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),
-        attributes = get_default_attributes(D, B),
+        attributes = Dict{String, Any}(),
         contributing_devices_map = Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}(),
     ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
+        attributes_for_model = get_default_attributes(D, B)
+        for (k, v) in attributes
+            attributes_for_model[k] = v
+        end
+
         _check_service_formulation(D)
         _check_service_formulation(B)
         new{D, B}(
@@ -57,7 +62,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
             use_slacks,
             duals,
             time_series_names,
-            attributes,
+            attributes_for_model,
             contributing_devices_map,
         )
     end
@@ -93,8 +98,12 @@ function ServiceModel(
 ) where {D <: PSY.Service, B <: AbstractServiceFormulation}
     # If more attributes are used later, move free form string to const and organize
     # attributes
-    if !haskey(attributes, "aggregated_service_model")
-        push!(attributes, "aggregated_service_model" => true)
+    attributes_for_model = get_default_attributes(D, B)
+    for (k, v) in attributes
+        attributes_for_model[k] = v
+    end
+    if !haskey(attributes_for_model, "aggregated_service_model")
+        push!(attributes_for_model, "aggregated_service_model" => true)
     end
     return ServiceModel(
         service_type,
@@ -104,7 +113,7 @@ function ServiceModel(
         feedforwards,
         duals,
         time_series_names,
-        attributes,
+        attributes = attributes_for_model,
     )
 end
 
