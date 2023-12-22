@@ -655,3 +655,31 @@ end
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC) == RunStatus.SUCCESSFUL
 end
+
+@testset "Test for single row result variables" begin
+    template = get_thermal_dispatch_template_network()
+    c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems"; force_build = true)
+    device_model = DeviceModel(
+        BatteryEMS,
+        StorageDispatchWithReserves;
+        attributes = Dict{String, Any}(
+            "reservation" => true,
+            "cycling_limits" => false,
+            "energy_target" => true,
+            "complete_coverage" => false,
+            "regularization" => false,
+        ),
+    )
+    set_device_model!(template, device_model)
+    output_dir = mktempdir(; cleanup = true)
+    model = DecisionModel(
+        template,
+        c_sys5_bat;
+        optimizer = GLPK_optimizer,
+    )
+    @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test solve!(model) == RunStatus.SUCCESSFUL
+    res = ProblemResults(model)
+    shortage = read_variable(res, "StorageEnergyShortageVariable__BatteryEMS")
+    @test nrow(shortage) == 1
+end
