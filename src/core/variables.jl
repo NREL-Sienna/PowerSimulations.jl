@@ -59,10 +59,25 @@ Docs abbreviation: ``Pg^{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Hot Start Variable for Thermal units with temperature considerations
+
+Docs abbreviation: TODO
+"""
 struct HotStartVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Warm Start Variable for Thermal units with temperature considerations
+
+Docs abbreviation: TODO
+"""
 struct WarmStartVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Cold Start Variable for Thermal units with temperature considerations
+
+Docs abbreviation: TODO
+"""
 struct ColdStartVariable <: VariableType end
 
 """
@@ -104,8 +119,18 @@ struct ActivePowerReserveVariable <: VariableType end
 
 struct ServiceRequirementVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Binary Start Variables
+
+Docs abbreviation: TODO
+"""
 struct StartVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Binary Stop Variables
+
+Docs abbreviation: TODO
+"""
 struct StopVariable <: VariableType end
 
 struct SteadyStateFrequencyDeviation <: VariableType end
@@ -128,8 +153,18 @@ struct SystemBalanceSlackDown <: VariableType end
 
 struct ReserveRequirementSlack <: VariableType end
 
+"""
+Struct to dispatch the creation of Voltage Magnitude Variables for AC formulations
+
+Docs abbreviation: TODO
+"""
 struct VoltageMagnitude <: VariableType end
 
+"""
+Struct to dispatch the creation of Voltage Angle Variables for AC/DC formulations
+
+Docs abbreviation: TODO
+"""
 struct VoltageAngle <: VariableType end
 
 """
@@ -170,12 +205,33 @@ Docs abbreviation: ``\\overleftarrow{Q}``
 """
 struct FlowReactivePowerToFromVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Phase Shifters Variables
+
+Docs abbreviation: TODO
+"""
 struct PhaseShifterAngle <: VariableType end
 
 # Necessary as a work around for HVDCTwoTerminal models with losses
+"""
+Struct to dispatch the creation of HVDC Losses Auxiliary Variables
+
+Docs abbreviation: TODO
+"""
 struct HVDCLosses <: VariableType end
+
+"""
+Struct to dispatch the creation of HVDC Flow Direction Auxiliary Variables
+
+Docs abbreviation: TODO
+"""
 struct HVDCFlowDirectionVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of piecewise linear cost variables for objective function
+
+Docs abbreviation: TODO
+"""
 struct PieceWiseLinearCostVariable <: VariableType end
 
 struct InterfaceFlowSlackUp <: VariableType end
