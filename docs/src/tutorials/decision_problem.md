@@ -13,6 +13,7 @@ building blocks for sequential simulations. This example shows how to specify an
 ```@example op_problem
 using PowerSystems
 using PowerSimulations
+using HydroPowerSimulations
 using PowerSystemCaseBuilder
 using HiGHS # solver
 ```
@@ -64,8 +65,7 @@ for `HydroDispatch` and `RenewableFix` devices.
 set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
 set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
 set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-set_device_model!(template_uc, HydroDispatch, FixedOutput)
-set_device_model!(template_uc, HydroDispatchRunOfRiver, HydroDispatchRunOfRiver)
+set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
 set_device_model!(template_uc, RenewableFix, FixedOutput)
 ```
 
