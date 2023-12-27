@@ -8,7 +8,7 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)</code></p
 # Accepted Key Words
 - `network::Type{&lt;:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
-- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/bb936b8091dd4827254906e8ceee12c9a1070756/src/operation/operation_problem_templates.jl#L64">source</a></section></article><pre><code class="language-julia hljs">template_economic_dispatch()</code></pre><table>
+- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/d81f1469aa37b7291b940a885309342e335a526f/src/operation/operation_problem_templates.jl#L64">source</a></section></article><pre><code class="language-julia hljs">template_economic_dispatch()</code></pre><table>
   <caption style = "text-align: left;">Network Model</caption>
   <tbody>
     <tr>
@@ -131,7 +131,7 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)</code></p
 # Accepted Key Words
 - `network::Type{&lt;:PM.AbstractPowerModel}` : override default network model settings
 - `devices::Vector{DeviceModel}` : override default `DeviceModel` settings
-- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/bb936b8091dd4827254906e8ceee12c9a1070756/src/operation/operation_problem_templates.jl#L33">source</a></section></article><pre><code class="language-julia hljs">template_unit_commitment()</code></pre><table>
+- `services::Vector{ServiceModel}` : override default `ServiceModel` settings</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/d81f1469aa37b7291b940a885309342e335a526f/src/operation/operation_problem_templates.jl#L33">source</a></section></article><pre><code class="language-julia hljs">template_unit_commitment()</code></pre><table>
   <caption style = "text-align: left;">Network Model</caption>
   <tbody>
     <tr>
@@ -250,5 +250,103 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)</code></p
   </tbody>
 </table>
 <article class="docstring"><header><a class="docstring-binding" id="PowerSimulations.template_agc_reserve_deployment" href="#PowerSimulations.template_agc_reserve_deployment"><code>PowerSimulations.template_agc_reserve_deployment</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">template_agc_reserve_deployment(; kwargs...)
-</code></pre><pre><code class="nohighlight hljs">template_agc_reserve_deployment(; kwargs...)</code></pre><p>Creates a <code>ProblemTemplate</code> with default DeviceModels for an AGC Reserve Deployment Problem. This model doesn&#39;t support customization</p><p><strong>Example</strong></p><p>template = agc<em>reserve</em>deployment()</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/bb936b8091dd4827254906e8ceee12c9a1070756/src/operation/operation_problem_templates.jl#L96">source</a></section></article><pre><code class="language- hljs">using PowerSimulations #hide
-template_agc_reserve_deployment()</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../psi_structure/">« PowerSimulations.jl Modeling Structure</a><a class="docs-footer-nextpage" href="../running_a_simulation/">Simulation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 22 December 2023 16:16">Friday 22 December 2023</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</code></pre><pre><code class="nohighlight hljs">template_agc_reserve_deployment(; kwargs...)</code></pre><p>Creates a <code>ProblemTemplate</code> with default DeviceModels for an AGC Reserve Deployment Problem. This model doesn&#39;t support customization</p><p><strong>Example</strong></p><p>template = agc<em>reserve</em>deployment()</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/NREL-Sienna/PowerSimulations.jl/blob/d81f1469aa37b7291b940a885309342e335a526f/src/operation/operation_problem_templates.jl#L96">source</a></section></article><pre><code class="language-julia hljs">template_agc_reserve_deployment()</code></pre><table>
+  <caption style = "text-align: left;">Network Model</caption>
+  <tbody>
+    <tr>
+      <td style = "text-align: left;">Network Model</td>
+      <td style = "text-align: left;">AreaBalancePowerModel</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">Slacks</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">PTDF</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">Duals</td>
+      <td style = "text-align: left;">None</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <caption style = "text-align: left;">Device Models</caption>
+  <thead>
+    <tr class = "header headerLastRow">
+      <th style = "text-align: left;">Device Type</th>
+      <th style = "text-align: left;">Formulation</th>
+      <th style = "text-align: left;">Slacks</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style = "text-align: left;">RegulationDevice{HydroDispatch}</td>
+      <td style = "text-align: left;">ReserveLimitedRegulation</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">ThermalStandard</td>
+      <td style = "text-align: left;">FixedOutput</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">PowerLoad</td>
+      <td style = "text-align: left;">StaticPowerLoad</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">HydroDispatch</td>
+      <td style = "text-align: left;">FixedOutput</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RenewableFix</td>
+      <td style = "text-align: left;">FixedOutput</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RenewableDispatch</td>
+      <td style = "text-align: left;">FixedOutput</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RegulationDevice{HydroEnergyReservoir}</td>
+      <td style = "text-align: left;">ReserveLimitedRegulation</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RegulationDevice{ThermalStandard}</td>
+      <td style = "text-align: left;">DeviceLimitedRegulation</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">HydroEnergyReservoir</td>
+      <td style = "text-align: left;">FixedOutput</td>
+      <td style = "text-align: left;">false</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <caption style = "text-align: left;">Service Models</caption>
+  <thead>
+    <tr class = "header headerLastRow">
+      <th style = "text-align: left;">Service Type</th>
+      <th style = "text-align: left;">Formulation</th>
+      <th style = "text-align: left;">Slacks</th>
+      <th style = "text-align: left;">Aggregated Model</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style = "text-align: left;">AGC</td>
+      <td style = "text-align: left;">PIDSmoothACE</td>
+      <td style = "text-align: left;">false</td>
+      <td style = "text-align: left;">true</td>
+    </tr>
+  </tbody>
+</table>
+</article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../psi_structure/">« PowerSimulations.jl Modeling Structure</a><a class="docs-footer-nextpage" href="../running_a_simulation/">Simulation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Wednesday 27 December 2023 17:04">Wednesday 27 December 2023</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
