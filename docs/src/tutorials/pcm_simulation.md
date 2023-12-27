@@ -15,6 +15,7 @@ This example is intended to be an extension of the
 ```@example pcm
 using PowerSystems
 using PowerSimulations
+using HydroPowerSimulations
 const PSI = PowerSimulations
 using PowerSystemCaseBuilder
 using Dates
@@ -67,6 +68,7 @@ with the slightly more complex `ThermalStandardUnitCommitment` for the thermal g
 ```@example pcm
 template_uc = template_unit_commitment()
 set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
+set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
 ```
 
 ### Define the reference model for the real-time economic dispatch

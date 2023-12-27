@@ -25,6 +25,7 @@ No variables are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 ```@eval
 using PowerSimulations
+using HydroPowerSimulations
 using PowerSystems
 using DataFrames
 using Latexify

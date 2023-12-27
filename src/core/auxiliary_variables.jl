@@ -16,7 +16,14 @@ end
 get_entry_type(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = T
 get_component_type(::AuxVarKey{T, U}) where {T <: AuxVariableType, U <: PSY.Component} = U
 
+"""
+Auxiliary Variable for Thermal Generation Models to keep track of time elapsed on
+"""
 struct TimeDurationOn <: AuxVariableType end
+
+"""
+Auxiliary Variable for Thermal Generation Models to keep track of time elapsed off
+"""
 struct TimeDurationOff <: AuxVariableType end
 
 """

@@ -46,5 +46,6 @@ template_agc_reserve_deployment
 
 ```@example
 using PowerSimulations #hide
+using HydroPowerSimulations #hide
 template_agc_reserve_deployment()
 ```
