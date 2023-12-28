@@ -32,16 +32,27 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
+    radial_branches::PNM.RadialBranches
+    remove_radial_lines::Bool
 
     function NetworkModel(
         ::Type{T};
         use_slacks = false,
         PTDF_matrix = nothing,
+        remove_radial_lines = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
-        new{T}(use_slacks, PTDF_matrix, subnetworks, Dict{PSY.ACBus, Int}(), duals)
+        new{T}(
+            use_slacks,
+            PTDF_matrix,
+            subnetworks,
+            Dict{PSY.ACBus, Int}(),
+            duals,
+            PNM.RadialBranches(),
+            remove_radial_lines,
+        )
     end
 end
 
@@ -69,6 +80,9 @@ function instantiate_network_model(
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
+    if model.remove_radial_lines
+        model.radial_branches = PNM.RadialBranches(sys)
+    end
     return
 end
 
@@ -90,13 +104,16 @@ end
 function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::PSY.System)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
-        model.PTDF_matrix = PNM.PTDF(sys)
+        model.PTDF_matrix = PNM.PTDF(sys; remove_radial_lines = model.remove_radial_lines)
     end
     get_PTDF_matrix(model).subnetworks
     model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
+    end
+    if model.remove_radial_lines
+        model.radial_branches = model.PTDF_matrix.radial_branches
     end
     return
 end
