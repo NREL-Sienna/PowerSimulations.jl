@@ -519,8 +519,7 @@ function build_impl!(
         container,
         transmission,
         transmission_model.subnetworks,
-        sys,
-    )
+        sys,)
 
     # Order is required
     for device_model in values(template.devices)
