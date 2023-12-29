@@ -33,6 +33,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
     radial_branches::PNM.RadialBranches
+    bus_aggregation_map::Dict{Int, Int}
     reduce_radial_branches::Bool
 
     function NetworkModel(
@@ -51,6 +52,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             Dict{PSY.ACBus, Int}(),
             duals,
             PNM.RadialBranches(),
+            Dict{Int, Int}(),
             reduce_radial_branches,
         )
     end
