@@ -508,7 +508,7 @@ function _make_system_expressions!(
         ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-            _make_container_array(ac_bus_numbers, time_steps),
+            _make_container_array(sort!(ac_bus_numbers), time_steps),
     )
     return
 end
