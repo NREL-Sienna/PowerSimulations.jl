@@ -654,7 +654,6 @@ function add_to_expression!(
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_branches = get_radial_branches(network_model)
-    @assert !isempty(radial_branches)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
