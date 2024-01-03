@@ -1111,9 +1111,10 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), PSY.ACBus)
     expression = get_expression(container, T(), PSY.ACBus)
-    @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
+    #TODO: Update Slacks to consider reduced buses
+    #@assert_op length(axes(variable, 1)) == length(axes(expression, 1))
     # We uses axis here to avoid double addition of the slacks to the aggregated buses
-    for t in get_time_steps(container), n in axes(variable, 1)
+    for t in get_time_steps(container), n in axes(expression, 1)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
@@ -1137,7 +1138,7 @@ function add_to_expression!(
     variable = get_variable(container, U(), PSY.ACBus, "P")
     expression = get_expression(container, T(), PSY.ACBus)
     # We uses axis here to avoid double addition of the slacks to the aggregated buses
-    for t in get_time_steps(container), n in axes(variable, 1)
+    for t in get_time_steps(container), n in axes(expression, 1)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
@@ -1161,7 +1162,7 @@ function add_to_expression!(
     variable = get_variable(container, U(), PSY.ACBus, "Q")
     expression = get_expression(container, T(), PSY.ACBus)
     # We uses axis here to avoid double addition of the slacks to the aggregated buses
-    for t in get_time_steps(container), n in axes(variable, 1)
+    for t in get_time_steps(container), n in axes(expression, 1)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
