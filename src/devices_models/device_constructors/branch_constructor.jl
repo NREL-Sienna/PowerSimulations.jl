@@ -106,7 +106,7 @@ function construct_device!(
             container,
             devices,
             device_model,
-            get_network_formulation(network_model),
+            network_model,
         )
     end
     return
@@ -273,7 +273,7 @@ function construct_device!(
         container,
         devices,
         device_model,
-        get_network_formulation(network_model),
+        network_model,
     )
     add_constraint_dual!(container, sys, device_model)
     return
@@ -331,7 +331,7 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    branch_rate_bounds!(container, devices, model, get_network_formulation(network_model))
+    branch_rate_bounds!(container, devices, model, network_model)
 
     add_constraints!(container, RateLimitConstraintFromTo, devices, model, network_model)
     add_constraints!(container, RateLimitConstraintToFrom, devices, model, network_model)
@@ -356,7 +356,7 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    branch_rate_bounds!(container, devices, model, get_network_formulation(network_model))
+    branch_rate_bounds!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end

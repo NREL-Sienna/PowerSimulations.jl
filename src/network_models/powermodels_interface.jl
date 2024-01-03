@@ -291,17 +291,25 @@ function powermodels_network!(
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = get_available_components(PSY.ACBus, sys)
 
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
+    network_model = get_network_model(template)
+    radial_branches = get_radial_branches(network_model)
+    if isempty(radial_branches)
+        ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    else
+        bus_reduction_map = radial_branches.bus_reduction_map
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
+
+    for t in time_steps, bus_no in ac_bus_numbers
+        pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_p"] =
             container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
-                bus.number,
+                bus_no,
                 t,
             ]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] =
+        pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_q"] =
             container.expressions[ExpressionKey(ReactivePowerBalance, PSY.ACBus)][
-                bus.number,
+                bus_no,
                 t,
             ]
     end
@@ -324,10 +332,19 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = get_available_components(PSY.ACBus, sys)
 
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
+    network_model = get_network_model(template)
+    radial_branches = get_radial_branches(network_model)
+    if isempty(radial_branches)
+        ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    else
+        bus_reduction_map = radial_branches.bus_reduction_map
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
+
+    for t in time_steps, bus_no in ac_bus_numbers
+        pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_p"] =
             container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
-                PSY.get_number(bus),
+                bus_no,
                 t,
             ]
         # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] = 0.0

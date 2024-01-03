@@ -104,11 +104,18 @@ function branch_rate_bounds!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractDCPModel},
+    network_model::NetworkModel{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
+
+    radial_branches = get_radial_branches(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_branches)
+
     for d in devices
         name = PSY.get_name(d)
+        if name ∈ radial_branches_names
+            continue
+        end
         for t in get_time_steps(container)
             JuMP.set_upper_bound(var[name, t], PSY.get_rate(d))
             JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rate(d))
@@ -121,15 +128,23 @@ function branch_rate_bounds!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACBranch}
     vars = [
         get_variable(container, FlowActivePowerFromToVariable(), B),
         get_variable(container, FlowActivePowerToFromVariable(), B),
     ]
+
+    time_steps = get_time_steps(container)
+    radial_branches = get_radial_branches(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_branches)
+
     for d in devices
         name = PSY.get_name(d)
-        for t in get_time_steps(container), var in vars
+        if name ∈ radial_branches_names
+            continue
+        end
+        for t in time_steps, var in vars
             JuMP.set_upper_bound(var[name, t], PSY.get_rate(d))
             JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rate(d))
         end
@@ -256,7 +271,7 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::NetworkModel{T},
+    network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -272,7 +287,13 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
+    radial_branches = get_radial_branches(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_branches)
+
     for r in rating_data
+        if r[1] ∈ radial_branches_names
+            continue
+        end
         for t in time_steps
             constraint[r[1], t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -291,7 +312,7 @@ function add_constraints!(
     cons_type::Type{RateLimitConstraintToFrom},
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
-    ::NetworkModel{T},
+    network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -307,7 +328,13 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
+    radial_branches = get_radial_branches(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_branches)
+
     for r in rating_data
+        if r[1] ∈ radial_branches_names
+            continue
+        end
         for t in time_steps
             constraint[r[1], t] = JuMP.@constraint(
                 get_jump_model(container),
