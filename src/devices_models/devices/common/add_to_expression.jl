@@ -383,7 +383,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::NetworkModel{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
@@ -415,7 +415,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    ::NetworkModel{X},
+    network_model::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
     U <: OnVariable,
@@ -429,7 +429,7 @@ function add_to_expression!(
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_bus(d))
-        PNM.get_mapped_bus_number(radial_branches, bus_no_)
+        bus_no = PNM.get_mapped_bus_number(radial_branches, bus_no_)
         _add_to_jump_expression!(
             expression[bus_no, t],
             variable[name, t],
