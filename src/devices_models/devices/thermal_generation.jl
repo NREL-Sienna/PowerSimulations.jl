@@ -343,7 +343,7 @@ Startup and shutdown active power limits for Compact Unit Commitment
 function get_startup_shutdown_limits(
     device::PSY.ThermalMultiStart,
     ::Type{ActivePowerVariableLimitsConstraint},
-    ::Type{<:ThermalMultiStartUnitCommitment},
+    ::Type{ThermalMultiStartUnitCommitment},
 )
     startup_shutdown = PSY.get_power_trajectory(device)
     if isnothing(startup_shutdown)
@@ -363,7 +363,7 @@ function get_min_max_limits(
     device,
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractCompactUnitCommitment},
-) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (
         min = 0,
         max = PSY.get_active_power_limits(device).max -
