@@ -345,7 +345,11 @@ function get_startup_shutdown_limits(
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:ThermalMultiStartUnitCommitment},
 )
-    return PSY.get_power_trajectory(device)
+    startup_shutdown = PSY.get_power_trajectory(device)
+    if isnothing(startup_shutdown)
+        error("Generator $(PSY.get_name(device)) has a invalid startup_shutdown property")
+    end
+    return
 end
 
 """
