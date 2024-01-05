@@ -347,9 +347,13 @@ function get_startup_shutdown_limits(
 )
     startup_shutdown = PSY.get_power_trajectory(device)
     if isnothing(startup_shutdown)
-        error("Generator $(summary(device)) has a invalid startup_shutdown property")
+        @warn("Generator $(summary(device)) has a Nothing startup_shutdown property. Using active power limits.")
+        return (
+            startup = PSY.get_active_power_limits(device).max,
+            shutdown = PSY.get_active_power_limits(device).max,
+        )
     end
-    return
+    return startup_shutdown
 end
 
 """
