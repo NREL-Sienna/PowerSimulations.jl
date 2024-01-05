@@ -341,13 +341,13 @@ end
 Startup and shutdown active power limits for Compact Unit Commitment
 """
 function get_startup_shutdown_limits(
-    device,
+    device::PSY.ThermalMultiStart,
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:ThermalMultiStartUnitCommitment},
 )
     startup_shutdown = PSY.get_power_trajectory(device)
     if isnothing(startup_shutdown)
-        error("Generator $(PSY.get_name(device)) has a invalid startup_shutdown property")
+        error("Generator $(summary(device)) has a invalid startup_shutdown property")
     end
     return
 end
