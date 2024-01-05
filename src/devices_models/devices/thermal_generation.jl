@@ -566,6 +566,7 @@ function add_constraints!(
         name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         startup_shutdown_limits = get_startup_shutdown_limits(device, T, W)
+        @assert !isnothing(startup_shutdown_limits) "$(name)"
         if JuMP.has_lower_bound(varp[name, t])
             JuMP.set_lower_bound(varp[name, t], 0.0)
         end
