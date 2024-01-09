@@ -106,9 +106,9 @@ function _to_matrix(
     array::SparseAxisArray{T, N, K},
     columns,
 ) where {T, N, K <: NTuple{N, Any}}
-    timesteps = Set{Int}(k[N] for k in keys(array.data))
-    data = Matrix{Float64}(undef, length(timesteps), length(columns))
-    for (ix, col) in enumerate(columns), t in timesteps
+    time_steps = Set{Int}(k[N] for k in keys(array.data))
+    data = Matrix{Float64}(undef, length(time_steps), length(columns))
+    for (ix, col) in enumerate(columns), t in time_steps
         data[t, ix] = array.data[(col..., t)]
     end
     return data
