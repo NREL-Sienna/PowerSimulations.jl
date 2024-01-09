@@ -537,6 +537,7 @@ include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 include("network_models/hvdc_networks.jl")
+include("network_models/powerflow_evaluation.jl")
 
 include("initial_conditions/initialization.jl")
 

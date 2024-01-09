@@ -650,13 +650,8 @@ function build_impl!(
     @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
+    add_power_flow_data!(container, get_powerflow_evaluation(transmission_model))
     check_optimization_container(container)
-
-    powerflow_evaluation_model = get_powerflow_evaluation(transmission_model)
-    if !isnothing(powerflow_evaluation_model)
-        @info "Building PowerFlow evaluator using $(powerflow_evaluation_model)"
-        container.power_flow_data = PFS.PowerFlowData(powerflow_evaluation_model, sys; time_steps = length(get_time_steps(container)))
-    end
     return
 end
 
