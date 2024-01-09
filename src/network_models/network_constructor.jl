@@ -210,7 +210,6 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -218,7 +217,6 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -226,7 +224,6 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -234,7 +231,6 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
         objective_function!(container, PSY.ACBus, model)
     end
