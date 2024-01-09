@@ -1,26 +1,27 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-const networks_for_testing = networks = [
-    (PM.ACPPowerModel, fast_ipopt_optimizer),
-    (PM.ACRPowerModel, fast_ipopt_optimizer),
-    (PM.ACTPowerModel, fast_ipopt_optimizer),
-    #(PM.IVRPowerModel, fast_ipopt_optimizer), #instantiate_ivp_expr_model not implemented
-    (PM.DCPPowerModel, fast_ipopt_optimizer),
-    (PM.DCMPPowerModel, fast_ipopt_optimizer),
-    (PM.NFAPowerModel, fast_ipopt_optimizer),
-    (PM.DCPLLPowerModel, fast_ipopt_optimizer),
-    (PM.LPACCPowerModel, fast_ipopt_optimizer),
-    (PM.SOCWRPowerModel, fast_ipopt_optimizer),
-    (PM.SOCWRConicPowerModel, scs_solver),
-    (PM.QCRMPowerModel, fast_ipopt_optimizer),
-    (PM.QCLSPowerModel, fast_ipopt_optimizer),
-    #(PM.SOCBFPowerModel, fast_ipopt_optimizer), # not implemented
-    (PM.BFAPowerModel, fast_ipopt_optimizer),
-    #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
-    (PM.SDPWRMPowerModel, scs_solver),
-    (PM.SparseSDPWRMPowerModel, scs_solver),
-    (PTDFPowerModel, fast_ipopt_optimizer),
-]
+const networks_for_testing =
+    networks = [
+        (PM.ACPPowerModel, fast_ipopt_optimizer),
+        (PM.ACRPowerModel, fast_ipopt_optimizer),
+        (PM.ACTPowerModel, fast_ipopt_optimizer),
+        #(PM.IVRPowerModel, fast_ipopt_optimizer), #instantiate_ivp_expr_model not implemented
+        (PM.DCPPowerModel, fast_ipopt_optimizer),
+        (PM.DCMPPowerModel, fast_ipopt_optimizer),
+        (PM.NFAPowerModel, fast_ipopt_optimizer),
+        (PM.DCPLLPowerModel, fast_ipopt_optimizer),
+        (PM.LPACCPowerModel, fast_ipopt_optimizer),
+        (PM.SOCWRPowerModel, fast_ipopt_optimizer),
+        (PM.SOCWRConicPowerModel, scs_solver),
+        (PM.QCRMPowerModel, fast_ipopt_optimizer),
+        (PM.QCLSPowerModel, fast_ipopt_optimizer),
+        #(PM.SOCBFPowerModel, fast_ipopt_optimizer), # not implemented
+        (PM.BFAPowerModel, fast_ipopt_optimizer),
+        #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
+        (PM.SDPWRMPowerModel, scs_solver),
+        (PM.SparseSDPWRMPowerModel, scs_solver),
+        (PTDFPowerModel, fast_ipopt_optimizer),
+    ]
 
 @testset "All PowerModels models construction" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -871,7 +872,6 @@ end
 end
 
 @testset "DCPPowerModel Radial Branches Test" begin
-
     net_model = DCPPowerModel
 
     template_uc = template_unit_commitment(;
@@ -937,9 +937,9 @@ end
     for (network, solver) in networks_for_testing
         template = get_thermal_dispatch_template_network(
             NetworkModel(network;
-            PTDF_matrix = PTDF(c_sys5),
-            reduce_radial_branches = true,
-            use_slacks =true),
+                PTDF_matrix = PTDF(c_sys5),
+                reduce_radial_branches = true,
+                use_slacks = true),
         )
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
