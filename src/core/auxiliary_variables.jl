@@ -31,7 +31,30 @@ Auxiliary Variable for Thermal Generation Models that solve for power above min
 """
 struct PowerOutput <: AuxVariableType end
 
+"""
+Auxiliary Variable for the bus angle results from power flow evaluation
+"""
+struct PowerFlowAngle <: AuxVariableType end
+
+"""
+Auxiliary Variable for the bus voltage magnitued results from power flow evaluation
+"""
+struct PowerFlowVoltage <: AuxVariableType end
+
+"""
+Auxiliary Variable for the line reactive flow from power flow evaluation
+"""
+struct PowerFlowLineReactivePower <: AuxVariableType end
+
+"""
+Auxiliary Variable for the line active flow from power flow evaluation
+"""
+struct PowerFlowLineActivePower <: AuxVariableType end
+
+
 should_write_resulting_value(::Type{<:AuxVariableType}) = true
 
 convert_result_to_natural_units(::Type{<:AuxVariableType}) = false
 convert_result_to_natural_units(::Type{PowerOutput}) = true
+convert_result_to_natural_units(::Type{PowerFlowLineReactivePower}) = true
+convert_result_to_natural_units(::Type{PowerFlowLineActivePower}) = true

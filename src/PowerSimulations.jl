@@ -239,6 +239,10 @@ export LowerBoundFeedForwardSlack
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export PowerFlowAngle
+export PowerFlowVoltage
+export PowerFlowLineReactivePower
+export PowerFlowLineActivePower
 
 # Constraints
 export AbsoluteValueConstraint
