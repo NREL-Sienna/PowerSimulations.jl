@@ -110,6 +110,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
+    power_flow_data::Union{PFS.PowerFlowData, Nothing}
 end
 
 function OptimizationContainer(
@@ -154,6 +155,7 @@ function OptimizationContainer(
         false,
         OptimizationContainerMetadata(),
         T,
+        nothing
     )
 end
 
@@ -650,6 +652,11 @@ function build_impl!(
 
     check_optimization_container(container)
 
+    powerflow_evaluation_model = get_powerflow_evaluation(transmission_model)
+    if !isnothing(powerflow_evaluation_model)
+        @info "Building PowerFlow evaluator using $(powerflow_evaluation_model)"
+        container.power_flow_data = PFS.PowerFlowData(powerflow_evaluation_model, sys; time_steps = length(get_time_steps(container)))
+    end
     return
 end
 
