@@ -155,7 +155,7 @@ function OptimizationContainer(
         false,
         OptimizationContainerMetadata(),
         T,
-        nothing
+        nothing,
     )
 end
 
@@ -650,7 +650,7 @@ function build_impl!(
     @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
-    add_power_flow_data!(container, get_powerflow_evaluation(transmission_model))
+    add_power_flow_data!(container, get_powerflow_evaluation(transmission_model), sys)
     check_optimization_container(container)
     return
 end

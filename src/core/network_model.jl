@@ -43,7 +43,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         reduce_radial_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
-        powerflow_evaluation = nothing
+        powerflow_evaluation = nothing,
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(
@@ -54,7 +54,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.RadialBranches(),
             reduce_radial_branches,
-            powerflow_evaluation
+            powerflow_evaluation,
         )
     end
 end
