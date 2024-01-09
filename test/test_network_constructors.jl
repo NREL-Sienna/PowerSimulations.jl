@@ -939,7 +939,7 @@ end
             NetworkModel(network;
             PTDF_matrix = PTDF(c_sys5),
             reduce_radial_branches = true,
-            use_slacks),
+            use_slacks =true),
         )
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
