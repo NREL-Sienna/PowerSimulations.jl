@@ -340,6 +340,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
+import PowerFlows
 import PowerNetworkMatrices
 import PowerNetworkMatrices: PTDF, VirtualPTDF
 export PTDF
@@ -400,6 +401,7 @@ const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const MOPFM = MOI.FileFormats.Model
 const PNM = PowerNetworkMatrices
+const PFS = PowerFlows
 const TS = TimeSeries
 
 ################################################################################
