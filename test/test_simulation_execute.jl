@@ -341,3 +341,41 @@ end
     @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
     # TODO: Add more testing of resulting values
 end
+
+@testset "UC ThermalMultiStartUnitCommitment simulations" begin
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+    )
+    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+    set_device_model!(template, DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment))
+
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                UnitCommitmentProblem,
+                template,
+                PSB.build_system(PSITestSystems, "c_sys5_pglib");
+                optimizer = cbc_optimizer,
+                initialize_model = true,
+            ),
+        ],
+    )
+
+    sequence =
+        SimulationSequence(;
+            models = models,
+            ini_cond_chronology = InterProblemChronology(),
+        )
+
+    sim = Simulation(;
+        name = "pwl_cost_test",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+
+    @test build!(sim) == PSI.BuildStatus.BUILT
+    @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
+    # TODO: Add more testing of resulting values
+end
