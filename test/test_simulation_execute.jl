@@ -344,17 +344,31 @@ end
 
 @testset "UC ThermalMultiStartUnitCommitment simulations" begin
     template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel; use_slacks = true),
+        NetworkModel(CopperPlatePowerModel),
     )
-    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
-    set_device_model!(template, DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment))
+    set_device_model!(template, DeviceModel(ThermalStandard, ThermalStandardUnitCommitment))
+    set_device_model!(template, DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment))
+    sys = PSB.build_system(PSITestSystems, "c_sys5_pglib")
 
+    i = 0
+    for g in get_components(ThermalStandard, sys)
+        i += 1
+        if i > 2
+            continue
+        end
+        set_available!(g, false)
+    end
+
+    for g in get_components(ThermalMultiStart, sys)
+        limits = get_active_power_limits(g)
+        set_active_power_limits!(g, (min = limits.min*20, max = limits.max*20))
+    end
     models = SimulationModels(;
         decision_models = [
             DecisionModel(
                 UnitCommitmentProblem,
                 template,
-                PSB.build_system(PSITestSystems, "c_sys5_pglib");
+                sys;
                 optimizer = cbc_optimizer,
                 initialize_model = true,
             ),
@@ -377,5 +391,8 @@ end
 
     @test build!(sim) == PSI.BuildStatus.BUILT
     @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
-    # TODO: Add more testing of resulting values
+    results = SimulationResults(sim)
+    uc_results = get_decision_problem_results(results, "UnitCommitmentProblem")
+    on_variable = read_variable(uc_results, "OnVariable__ThermalMultiStart")
+    day_1 = on_variable[DateTime("2024-01-01T00:00:00")]
 end

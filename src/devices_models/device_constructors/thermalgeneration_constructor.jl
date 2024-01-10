@@ -840,6 +840,7 @@ function construct_device!(
     add_variables!(container, WarmStartVariable, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, HotStartVariable, devices, ThermalMultiStartUnitCommitment())
 
+    #Auxiliary variables. Not included in the JuMP Model.
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
