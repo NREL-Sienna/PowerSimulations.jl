@@ -13,7 +13,7 @@ mutable struct SimulationInfo
 end
 
 mutable struct ModelInternal{T <: AbstractModelContainer}
-    container::OptimizationContainer
+    container::T
     ic_model_container::Union{Nothing, T}
     status::BuildStatus
     run_status::RunStatus
@@ -31,11 +31,11 @@ mutable struct ModelInternal{T <: AbstractModelContainer}
 end
 
 function ModelInternal(
-    container::AbstractModelContainer;
+    container::T;
     ext = Dict{String, Any}(),
     recorders = [],
-)
-    return ModelInternal(
+) where {T <: AbstractModelContainer}
+    return ModelInternal{T}(
         container,
         nothing,
         BuildStatus.EMPTY,
