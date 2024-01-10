@@ -368,7 +368,7 @@ end
         )
 
     sim = Simulation(;
-        name = "pwl_cost_test",
+        name = "mt_test",
         steps = 2,
         models = models,
         sequence = sequence,
