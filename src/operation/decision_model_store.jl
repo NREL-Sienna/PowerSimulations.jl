@@ -27,7 +27,7 @@ end
 
 function initialize_storage!(
     store::DecisionModelStore,
-    container::OptimizationContainer,
+    container::AbstractModelContainer,
     params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
