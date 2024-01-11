@@ -265,9 +265,9 @@ end
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [384, 0, 408, 408, 288],
-        c_sys14 => [936, 0, 1080, 1080, 840],
-        c_sys14_dc => [984, 0, 1080, 984, 840],
+        c_sys5 => [384, 144, 264, 264, 288],
+        c_sys14 => [936, 480, 600, 600, 840],
+        c_sys14_dc => [984, 432, 648, 552, 840],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
@@ -313,9 +313,9 @@ end
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [1056, 0, 384, 384, 264],
-        c_sys14 => [2832, 0, 720, 720, 696],
-        c_sys14_dc => [2832, 0, 768, 672, 744],
+        c_sys5 => [1056, 144, 240, 240, 264],
+        c_sys14 => [2832, 480, 240, 240, 696],
+        c_sys14_dc => [2832, 432, 336, 240, 744],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
@@ -409,9 +409,9 @@ end
         c_sys14_dc => [2832, 0, 336, 240, 744],
     )
     ACT_test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [1344, 0, 384, 384, 840],
-        c_sys14 => [3792, 0, 720, 720, 2616],
-        c_sys14_dc => [3696, 0, 768, 672, 2472],
+        c_sys5 => [1344, 144, 240, 240, 840],
+        c_sys14 => [3792, 480, 240, 240, 2616],
+        c_sys14_dc => [3696, 432, 336, 240, 2472],
     )
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems
@@ -448,14 +448,14 @@ end
         c_sys14_dc => 142000.0,
     )
     DCPLL_test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [528, 0, 408, 408, 288],
-        c_sys14 => [1416, 0, 1080, 1080, 840],
-        c_sys14_dc => [1416, 0, 1080, 984, 840],
+        c_sys5 => [528, 144, 264, 264, 288],
+        c_sys14 => [1416, 480, 600, 600, 840],
+        c_sys14_dc => [1416, 432, 648, 552, 840],
     )
     LPACC_test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [1200, 0, 384, 384, 840],
-        c_sys14 => [3312, 0, 720, 720, 2616],
-        c_sys14_dc => [3264, 0, 768, 672, 2472],
+        c_sys5 => [1200, 144, 240, 240, 840],
+        c_sys14 => [3312, 480, 240, 240, 2616],
+        c_sys14_dc => [3264, 432, 336, 240, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, (ix, sys) in enumerate(systems)
