@@ -32,7 +32,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
-    radial_branches::PNM.RadialBranches
+    radial_branches::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
 
     function NetworkModel(
@@ -50,7 +50,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             subnetworks,
             Dict{PSY.ACBus, Int}(),
             duals,
-            PNM.RadialBranches(),
+            PNM.RadialNetworkReduction(),
             reduce_radial_branches,
         )
     end
@@ -83,7 +83,7 @@ function instantiate_network_model(
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if model.reduce_radial_branches
-        model.radial_branches = PNM.RadialBranches(sys)
+        model.radial_branches = PNM.RadialNetworkReduction(sys)
     end
     return
 end
