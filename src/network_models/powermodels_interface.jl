@@ -294,7 +294,7 @@ function powermodels_network!(
     if isempty(radial_network_reduction)
         ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     else
-        bus_reduction_map = radial_branches.bus_reduction_map
+        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
 
@@ -334,7 +334,7 @@ function powermodels_network!(
     if isempty(radial_network_reduction)
         ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     else
-        bus_reduction_map = radial_branches.bus_reduction_map
+        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
 
