@@ -83,7 +83,7 @@ function instantiate_network_model(
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if model.reduce_radial_branches
-        model.radial_network_reduction =  PNM.RadialNetworkReduction(sys)
+        model.radial_network_reduction = PNM.RadialNetworkReduction(sys)
     end
     return
 end
@@ -117,7 +117,7 @@ function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::
     end
     if model.reduce_radial_branches
         @assert !isempty(model.PTDF_matrix.radial_branches)
-        model.radial_network_reduction =  model.PTDF_matrix.radial_branches
+        model.radial_network_reduction = model.PTDF_matrix.radial_branches
     end
     return
 end

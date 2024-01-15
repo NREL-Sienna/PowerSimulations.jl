@@ -89,7 +89,7 @@ function add_to_expression!(
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices, t in get_time_steps(container)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
         name = PSY.get_name(d)
@@ -117,7 +117,7 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices, t in get_time_steps(container)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
         name = PSY.get_name(d)
@@ -150,7 +150,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
@@ -217,7 +217,7 @@ function add_to_expression!(
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     sys_expr = get_expression(container, T(), PSY.System)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
         ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
@@ -253,9 +253,10 @@ function add_to_expression!(
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     sys_expr = get_expression(container, T(), PSY.System)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
-        bus_no_from = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
         ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
         ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
         for t in get_time_steps(container)
@@ -356,7 +357,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_arc(d).from)
@@ -391,7 +392,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_arc(d).to)
@@ -423,7 +424,7 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_bus(d))
@@ -584,7 +585,7 @@ function add_to_expression!(
     multiplier = get_multiplier_array(param_container)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -617,7 +618,7 @@ function add_to_expression!(
     parameter = get_parameter_array(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_bus(d))
@@ -651,7 +652,7 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
@@ -691,12 +692,10 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
-        device_bus = PSY.get_bus(d)
-        bus_no_ = PSY.get_number(device_bus)
-        bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
+        bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
         ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
@@ -733,12 +732,11 @@ function add_to_expression!(
 }
     var = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
-        bus_no_from_ = PSY.get_number(PSY.get_arc(d).from)
-        bus_no_from = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_from_)
-        bus_no_to_ = PSY.get_number(PSY.get_arc(d).to)
-        bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_to_)
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
             _add_to_jump_expression!(
@@ -775,12 +773,11 @@ function add_to_expression!(
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     sys_expr = get_expression(container, T(), PSY.System)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
-        bus_no_from_ = PSY.get_number(PSY.get_arc(d).from)
-        bus_no_from = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_from_)
-        bus_no_to_ = PSY.get_number(PSY.get_arc(d).to)
-        bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_to_)
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
         ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
         ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
         for t in get_time_steps(container)
@@ -852,12 +849,11 @@ function add_to_expression!(
 ) where {T <: ActivePowerBalance, U <: PhaseShifterAngle, V <: PhaseAngleControl}
     var = get_variable(container, U(), PSY.PhaseShiftingTransformer)
     expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
-        bus_no_from_ = PSY.get_number(PSY.get_arc(d).from)
-        bus_no_from = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_from_)
-        bus_no_to_ = PSY.get_number(PSY.get_arc(d).to)
-        bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_to_)
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        bus_no_to = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
             _add_to_jump_expression!(

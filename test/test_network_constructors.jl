@@ -829,9 +829,9 @@ end
         @error network solver
         template = get_thermal_dispatch_template_network(
             NetworkModel(network;
-            PTDF_matrix = PTDF(new_sys),
-            reduce_radial_branches = true,
-            use_slacks = true),
+                PTDF_matrix = PTDF(new_sys),
+                reduce_radial_branches = true,
+                use_slacks = true),
         )
         ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==

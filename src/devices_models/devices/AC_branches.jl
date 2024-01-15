@@ -108,7 +108,7 @@ function branch_rate_bounds!(
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
 
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for d in devices
@@ -136,7 +136,7 @@ function branch_rate_bounds!(
     ]
 
     time_steps = get_time_steps(container)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for d in devices
@@ -191,7 +191,7 @@ function add_constraints!(
     V <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
         device_names = [PSY.get_name(d) for d in devices]
     else
@@ -287,7 +287,7 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for r in rating_data
@@ -328,7 +328,7 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for r in rating_data

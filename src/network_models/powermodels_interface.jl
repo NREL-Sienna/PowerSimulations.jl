@@ -13,7 +13,6 @@ end
 # replicates PM.build_mn_opf
 function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     for n in eachindex(PM.nws(pm))
-
         PM.variable_bus_voltage(pm; nw = n)
         PM.variable_branch_power(pm; nw = n, bounded = false)
         PM.variable_dcline_power(pm; nw = n, bounded = false)
@@ -103,7 +102,6 @@ end
 # replicates PM.build_mn_opf_bf_strg
 function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
     for n in eachindex(PM.nws(pm))
-
         PM.variable_bus_voltage(pm; nw = n)
         PM.variable_branch_power(pm; nw = n, bounded = false)
         PM.variable_dcline_power(pm; nw = n, bounded = false)
@@ -292,7 +290,7 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
 
     network_model = get_network_model(template)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
         ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     else
@@ -332,7 +330,7 @@ function powermodels_network!(
     buses = get_available_components(PSY.ACBus, sys)
 
     network_model = get_network_model(template)
-    radial_network_reduction =  get_radial_network_reduction(network_model)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
         ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     else
