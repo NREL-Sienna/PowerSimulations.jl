@@ -59,7 +59,7 @@ end
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
 get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
-get_radial_network_reduction(m::NetworkModel) = m.radial_branches
+get_radial_network_reduction(m::NetworkModel) = m.radial_network_reduction
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T} = T
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
