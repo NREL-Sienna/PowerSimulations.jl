@@ -75,6 +75,13 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
+function check_radial_branch_redution_compatibility(::Type{T}) where {T <: PM.AbstractPowerModel}
+    if T ∈ INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
+        error("Network Model $T is not compatible with radial branch reduction")
+    end
+    return
+end
+
 function instantiate_network_model(
     model::NetworkModel{T},
     sys::PSY.System,
@@ -83,6 +90,7 @@ function instantiate_network_model(
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if model.reduce_radial_branches
+        check_radial_branch_redution_compatibility(T)
         model.radial_network_reduction = PNM.RadialNetworkReduction(sys)
     end
     return

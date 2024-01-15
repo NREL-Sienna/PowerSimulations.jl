@@ -53,9 +53,6 @@ const KiB = 1024
 const MiB = KiB * KiB
 const GiB = MiB * KiB
 
-const UNSUPPORTED_POWERMODELS =
-    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
-
 const PSI_NAME_DELIMITER = "__"
 
 const M_VALUE = 1e6

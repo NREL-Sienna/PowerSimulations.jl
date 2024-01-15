@@ -6,6 +6,14 @@
 #################################################################################
 # Model Definitions
 
+const UNSUPPORTED_POWERMODELS =
+    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
+
+const INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS = [
+        PM.SparseSDPWRMPowerModel,
+        PTDFPowerModel,
+    ]
+
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
 end
