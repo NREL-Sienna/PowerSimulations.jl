@@ -202,15 +202,14 @@ function construct_network!(
     end
 
     if get_use_slacks(model)
-        add_variables!(container, SystemBalanceSlackUp, sys, T)
-        add_variables!(container, SystemBalanceSlackDown, sys, T)
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
         add_to_expression!(
             container,
             ActivePowerBalance,
             SystemBalanceSlackUp,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -218,7 +217,6 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -226,7 +224,6 @@ function construct_network!(
             SystemBalanceSlackUp,
             sys,
             model,
-            T,
         )
         add_to_expression!(
             container,
@@ -234,7 +231,6 @@ function construct_network!(
             SystemBalanceSlackDown,
             sys,
             model,
-            T,
         )
         objective_function!(container, PSY.ACBus, model)
     end
