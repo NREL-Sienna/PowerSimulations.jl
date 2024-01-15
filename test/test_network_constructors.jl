@@ -1,6 +1,6 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-const networks_for_testing = networks = [
+const networks_for_testing = [
     (PM.ACPPowerModel, fast_ipopt_optimizer),
     (PM.ACRPowerModel, fast_ipopt_optimizer),
     (PM.ACTPowerModel, fast_ipopt_optimizer),
@@ -698,117 +698,8 @@ end
     @test all(isapprox.(sum(zone_2_gen .+ zone_2_load; dims = 2), 0.0; atol = 1e-3))
 end
 
-function _updated_5bus_sys_with_extensions()
-    sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    new_sys = deepcopy(sys)
-    ################################
-    #### Create Extension Buses ####
-    ################################
-
-    busC = get_component(ACBus, new_sys, "nodeC")
-
-    busC_ext1 = ACBus(;
-        number = 301,
-        name = "nodeC_ext1",
-        bustype = ACBusTypes.PQ,
-        angle = 0.0,
-        magnitude = 1.0,
-        voltage_limits = (min = 0.9, max = 1.05),
-        base_voltage = 230.0,
-        area = nothing,
-        load_zone = nothing,
-    )
-
-    busC_ext2 = ACBus(;
-        number = 302,
-        name = "nodeC_ext2",
-        bustype = ACBusTypes.PQ,
-        angle = 0.0,
-        magnitude = 1.0,
-        voltage_limits = (min = 0.9, max = 1.05),
-        base_voltage = 230.0,
-        area = nothing,
-        load_zone = nothing,
-    )
-
-    add_components!(new_sys, [busC_ext1, busC_ext2])
-
-    ################################
-    #### Create Extension Lines ####
-    ################################
-
-    line_C_to_ext1 = Line(;
-        name = "C_to_ext1",
-        available = true,
-        active_power_flow = 0.0,
-        reactive_power_flow = 0.0,
-        arc = Arc(; from = busC, to = busC_ext1),
-        #r = 0.00281,
-        r = 0.0,
-        x = 0.0281,
-        b = (from = 0.00356, to = 0.00356),
-        rate = 2.0,
-        angle_limits = (min = -0.7, max = 0.7),
-    )
-
-    line_ext1_to_ext2 = Line(;
-        name = "ext1_to_ext2",
-        available = true,
-        active_power_flow = 0.0,
-        reactive_power_flow = 0.0,
-        arc = Arc(; from = busC_ext1, to = busC_ext2),
-        #r = 0.00281,
-        r = 0.0,
-        x = 0.0281,
-        b = (from = 0.00356, to = 0.00356),
-        rate = 2.0,
-        angle_limits = (min = -0.7, max = 0.7),
-    )
-
-    add_components!(new_sys, [line_C_to_ext1, line_ext1_to_ext2])
-
-    ###################################
-    ###### Update Extension Loads #####
-    ###################################
-
-    load_bus3 = get_component(PowerLoad, new_sys, "Bus3")
-
-    load_ext1 = PowerLoad(;
-        name = "Bus_ext1",
-        available = true,
-        bus = busC_ext1,
-        active_power = 1.0,
-        reactive_power = 0.9861 / 3,
-        base_power = 100.0,
-        max_active_power = 1.0,
-        max_reactive_power = 0.9861 / 3,
-    )
-
-    load_ext2 = PowerLoad(;
-        name = "Bus_ext2",
-        available = true,
-        bus = busC_ext2,
-        active_power = 1.0,
-        reactive_power = 0.9861 / 3,
-        base_power = 100.0,
-        max_active_power = 1.0,
-        max_reactive_power = 0.9861 / 3,
-    )
-
-    add_components!(new_sys, [load_ext1, load_ext2])
-
-    copy_time_series!(load_ext1, load_bus3)
-    copy_time_series!(load_ext2, load_bus3)
-
-    set_active_power!(load_bus3, 1.0)
-    set_max_active_power!(load_bus3, 1.0)
-    set_reactive_power!(load_bus3, 0.3287)
-    set_max_reactive_power!(load_bus3, 0.3287)
-    return new_sys
-end
-
 @testset "StandardPTDF Radial Branches Test" begin
-    new_sys = _updated_5bus_sys_with_extensions()
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
 
     net_model = StandardPTDFModel
 
@@ -871,7 +762,7 @@ end
 end
 
 @testset "DCPPowerModel Radial Branches Test" begin
-
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     net_model = DCPPowerModel
 
     template_uc = template_unit_commitment(;
@@ -933,15 +824,16 @@ end
 end
 
 @testset "All PowerModels models construction with reduced radial branches" begin
-    c_sys5 = _updated_5bus_sys_with_extensions()
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in networks_for_testing
+        @error network solver
         template = get_thermal_dispatch_template_network(
             NetworkModel(network;
-            PTDF_matrix = PTDF(c_sys5),
+            PTDF_matrix = PTDF(new_sys),
             reduce_radial_branches = true,
-            use_slacks),
+            use_slacks = true),
         )
-        ps_model = DecisionModel(template, c_sys5; optimizer = solver)
+        ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
         @test ps_model.internal.container.pm !== nothing
