@@ -401,7 +401,7 @@ function get_branches_to_pm(
         filter_func = get_attribute(device_model, "filter_function")
         for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
             if PSY.get_name(branch) ∈ radial_branches_names
-                @debug "Skipping branch $(PSY.get_name(branch)) since its radial"
+                @debug "Skipping branch $(PSY.get_name(branch)) since it is radial"
                 continue
             end
             ix = i + start_idx
