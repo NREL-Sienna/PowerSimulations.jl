@@ -703,7 +703,6 @@ end
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
 
     for net_model in [DCPPowerModel, StandardPTDFModel]
-
         template_uc = template_unit_commitment(;
             network = NetworkModel(net_model;
                 reduce_radial_branches = true,
@@ -724,7 +723,7 @@ end
         )
 
         @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
-            PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         solve!(uc_model_red)
 
         res_red = ProblemResults(uc_model_red)
@@ -750,7 +749,7 @@ end
         )
 
         @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
-            PSI.BuildStatus.BUILT
+              PSI.BuildStatus.BUILT
         solve!(uc_model_orig)
 
         res_orig = ProblemResults(uc_model_orig)

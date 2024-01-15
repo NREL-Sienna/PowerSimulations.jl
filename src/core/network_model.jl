@@ -75,7 +75,9 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-function check_radial_branch_redution_compatibility(::Type{T}) where {T <: PM.AbstractPowerModel}
+function check_radial_branch_redution_compatibility(
+    ::Type{T},
+) where {T <: PM.AbstractPowerModel}
     if T ∈ INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
         error("Network Model $T is not compatible with radial branch reduction")
     end
