@@ -1,6 +1,6 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-const networks_for_testing = [
+const NETWORKS_FOR_TESTING = [
     (PM.ACPPowerModel, fast_ipopt_optimizer),
     (PM.ACRPowerModel, fast_ipopt_optimizer),
     (PM.ACTPowerModel, fast_ipopt_optimizer),
@@ -24,7 +24,7 @@ const networks_for_testing = [
 
 @testset "All PowerModels models construction" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    for (network, solver) in networks_for_testing
+    for (network, solver) in NETWORKS_FOR_TESTING
         template = get_thermal_dispatch_template_network(
             NetworkModel(network; PTDF_matrix = PTDF(c_sys5)),
         )
@@ -764,7 +764,7 @@ end
 
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
-    for (network, solver) in networks_for_testing
+    for (network, solver) in NETWORKS_FOR_TESTING
         if network ∈ PSI.INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
             continue
         end
