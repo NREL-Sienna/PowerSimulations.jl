@@ -32,7 +32,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
-    radial_branches::PNM.RadialNetworkReduction
+    radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
 
     function NetworkModel(
@@ -59,7 +59,7 @@ end
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
 get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
-get_radial_branches(m::NetworkModel) = m.radial_branches
+get_radial_network_reduction(m::NetworkModel) = m.radial_branches
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T} = T
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
@@ -83,7 +83,7 @@ function instantiate_network_model(
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if model.reduce_radial_branches
-        model.radial_branches = PNM.RadialNetworkReduction(sys)
+        model.radial_network_reduction =  PNM.RadialNetworkReduction(sys)
     end
     return
 end
@@ -117,7 +117,7 @@ function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::
     end
     if model.reduce_radial_branches
         @assert !isempty(model.PTDF_matrix.radial_branches)
-        model.radial_branches = model.PTDF_matrix.radial_branches
+        model.radial_network_reduction =  model.PTDF_matrix.radial_branches
     end
     return
 end

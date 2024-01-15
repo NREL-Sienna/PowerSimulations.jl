@@ -389,7 +389,7 @@ function get_branches_to_pm(
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
-    radial_branches = get_radial_branches(network_model)
+    radial_network_reduction =  get_radial_network_reduction(network_model)
     radial_branches_names = PNM.get_radial_branches(radial_branches)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
