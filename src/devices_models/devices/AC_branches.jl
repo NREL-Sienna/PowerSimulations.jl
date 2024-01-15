@@ -109,7 +109,7 @@ function branch_rate_bounds!(
     var = get_variable(container, FlowActivePowerVariable(), B)
 
     radial_network_reduction =  get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
@@ -137,7 +137,7 @@ function branch_rate_bounds!(
 
     time_steps = get_time_steps(container)
     radial_network_reduction =  get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
@@ -192,10 +192,10 @@ function add_constraints!(
 }
     time_steps = get_time_steps(container)
     radial_network_reduction =  get_radial_network_reduction(network_model)
-    if isempty(radial_branches)
+    if isempty(radial_network_reduction)
         device_names = [PSY.get_name(d) for d in devices]
     else
-        device_names = PNM.get_meshed_branches(radial_branches)
+        device_names = PNM.get_meshed_branches(radial_network_reduction)
     end
 
     con_lb =
@@ -221,7 +221,7 @@ function add_constraints!(
 
     for device in devices
         ci_name = PSY.get_name(device)
-        if ci_name ∈ PNM.get_radial_branches(radial_branches)
+        if ci_name ∈ PNM.get_radial_branches(radial_network_reduction)
             continue
         end
         limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
@@ -288,7 +288,7 @@ function add_constraints!(
     constraint = get_constraint(container, cons_type(), B)
 
     radial_network_reduction =  get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for r in rating_data
         if r[1] ∈ radial_branches_names
@@ -329,7 +329,7 @@ function add_constraints!(
     constraint = get_constraint(container, cons_type(), B)
 
     radial_network_reduction =  get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for r in rating_data
         if r[1] ∈ radial_branches_names

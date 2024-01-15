@@ -390,7 +390,7 @@ function get_branches_to_pm(
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
     radial_network_reduction =  get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: TwoTerminalHVDCTypes
