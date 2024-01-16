@@ -20,7 +20,7 @@ Establishes the model for a particular device specified by type.
   - `use_slacks::Bool`: Adds slacks to the network modelings
   - `PTDF::PTDF`: PTDF Array calculated using PowerNetworkMatrices
   - `duals::Vector{DataType}`: Constraint types to calculate the duals
-
+  - `reduce_radial_branches::Bool`: Skips modeling radial branches in the system to reduce problem size
 # Example
 
 ptdf_array = PTDF(system)
@@ -35,7 +35,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
 
-    function NetworkModel(
+
         ::Type{T};
         use_slacks = false,
         PTDF_matrix = nothing,
