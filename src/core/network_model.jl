@@ -35,7 +35,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
 
-
+    function NetworkModel(
         ::Type{T};
         use_slacks = false,
         PTDF_matrix = nothing,
