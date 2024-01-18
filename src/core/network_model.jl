@@ -126,8 +126,8 @@ function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::
         _assign_subnetworks_to_buses(model, sys)
     end
     if model.reduce_radial_branches
-        @assert !isempty(model.PTDF_matrix.radial_branches)
-        model.radial_network_reduction = model.PTDF_matrix.radial_branches
+        @assert !isempty(model.PTDF_matrix.radial_network_reduction)
+        model.radial_network_reduction = model.PTDF_matrix.radial_network_reduction
     end
     return
 end
