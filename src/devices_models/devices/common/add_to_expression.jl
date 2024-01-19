@@ -656,8 +656,7 @@ function add_to_expression!(
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
-        bus_no_ = PSY.get_number(device_bus)
-        bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
+        bus_no = PNM.get_mapped_bus_number(radial_network_reduction, device_bus)
         ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
