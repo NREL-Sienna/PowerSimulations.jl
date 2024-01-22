@@ -508,6 +508,8 @@ function _make_system_expressions!(
         ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+            # Bus numbers are sorted to guarantee consistency in the order between the
+            # containers
             _make_container_array(sort!(ac_bus_numbers), time_steps),
     )
     return
