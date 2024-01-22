@@ -221,6 +221,8 @@ function construct_network!(
     return
 end
 
+#=
+# AbstractIVRModel models not currently supported
 function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -283,3 +285,4 @@ function construct_network!(
     add_constraint_dual!(container, sys, model)
     return
 end
+=#

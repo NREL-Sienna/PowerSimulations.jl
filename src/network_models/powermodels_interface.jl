@@ -49,59 +49,6 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     return
 end
 
-function instantiate_nip_ptdf_expr_model(
-    data::Dict{String, Any},
-    model_constructor;
-    kwargs...,
-)
-    return PM.instantiate_model(
-        data,
-        PM.DCPPowerModel,
-        instantiate_nip_ptdf_expr;
-        ref_extensions = [PM.ref_add_connected_components!, PM.ref_add_sm!],
-        kwargs...,
-    )
-end
-
-# replicates PM.build_opf_ptdf
-function instantiate_nip_ptdf_expr(pm::PM.AbstractPowerModel)
-    for n in eachindex(PM.nws(pm))
-
-        #PM.variable_gen_power(pm) #connect P__* with these
-
-        for i in PM.ids(pm, :bus; nw = n)
-            if !haskey(PM.var(pm, n), :inj_p)
-                PM.var(pm, n)[:inj_p] = Dict{Int, Any}()
-            end
-            PM.var(pm, n, :inj_p)[i] = PM.ref(pm, :bus, i; nw = n)["inj_p"] # use :nodal_balance_expr
-        end
-
-        PM.constraint_model_voltage(pm; nw = n)
-
-        # this constraint is implicit in this model
-        #for i in PM.ids(pm, :ref_buses, nw = n)
-        #    PM.constraint_theta_ref(pm, i, nw = n)
-        #end
-
-        # done later with PSI copper_plate
-        #for i in PM.ids(pm, :bus, nw = n)
-        #    constraint_power_balance_ni_expr(pm, i, nw = n)
-        #end
-        for (i, branch) in PM.ref(pm, :branch; nw = n)
-            if haskey(branch, "rate_a")
-                PM.expression_branch_power_ohms_yt_from_ptdf(pm, i; nw = n)
-                PM.expression_branch_power_ohms_yt_to_ptdf(pm, i; nw = n)
-            end
-
-            # done in PSI construct_branch!
-            #PM.constraint_thermal_limit_from(pm, i, nw = n)
-            #PM.constraint_thermal_limit_to(pm, i, nw = n)
-        end
-    end
-
-    return
-end
-
 function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_bfp_expr; kwargs...)
 end
@@ -138,9 +85,12 @@ function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
     return
 end
 
+#=
+# VI Methdos not supported currently
 function instantiate_vip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     throw(error("VI Models not currently supported"))
 end
+=#
 
 #################################################################################
 # Model Extention Functions
@@ -202,6 +152,8 @@ function constraint_power_balance_ni_expr(
     return
 end
 
+#=
+# VI Methdos not supported currently
 function constraint_current_balance_ni_expr(
     pm::PM.AbstractPowerModel,
     i::Int;
@@ -258,6 +210,7 @@ function constraint_current_balance_ni_expr(
 
     return
 end
+=#
 
 """
 active power only models ignore reactive power variables
@@ -554,94 +507,6 @@ function add_pm_constraint_refs!(
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
                 cons_container[name, t] = PM.con(container.pm, t, pm_v)[pm_bus]
-            end
-        end
-    end
-end
-
-function add_pm_expr_refs!(
-    container::OptimizationContainer,
-    system_formulation::Type{S},
-    ::PSY.System,
-) where {S <: PM.AbstractPowerModel}
-    time_steps = get_time_steps(container)
-
-    ACbranch_dict = container.pm.ext[:PMmap].arcs
-    ACbranch_types = typeof.(values(ACbranch_dict))
-
-    pm_variable_types = keys(PM.var(container.pm, 1))
-    pm_expr_map = PMexprmap(system_formulation)
-
-    add_pm_expr_refs!(
-        container,
-        PSY.ACBranch,
-        ACbranch_types,
-        ACbranch_dict,
-        pm_expr_map,
-        pm_variable_types,
-        time_steps,
-    )
-    return
-end
-
-function add_pm_expr_refs!(
-    container::OptimizationContainer,
-    d_class::Type,
-    device_types::Vector,
-    pm_map::Dict,
-    pm_expr_map::Dict,
-    pm_variable_types::Base.KeySet,
-    time_steps::UnitRange{Int},
-)
-    for d_type in Set(device_types)
-        for (pm_expr_var, ps_v) in pm_expr_map[d_class].pm_expr
-            if pm_expr_var in pm_variable_types
-                pm_devices = keys(PM.var(container.pm, pm_expr_var; nw = 1))
-                mapped_pm_devices = Vector()
-                mapped_ps_devices = Vector{d_type}()
-                for d in pm_map
-                    if typeof(d[2]) == d_type &&
-                       d[1].from_to ∈ pm_devices &&
-                       d[1].to_from ∈ pm_devices
-                        push!(mapped_pm_devices, d[1])
-                        push!(mapped_ps_devices, d[2])
-                    end
-                end
-                isempty(mapped_ps_devices) && continue
-                mapped_ps_device_names = PSY.get_name.(mapped_ps_devices)
-
-                # add variable in psi
-                # add psi_var = pm_expr_var as constraint
-                for dir in fieldnames(typeof(ps_v))
-                    var_type = getfield(ps_v, dir)
-                    var_type === nothing && continue
-
-                    add_variable!(
-                        container,
-                        var_type,
-                        mapped_ps_devices,
-                        StaticBranchUnbounded(),
-                    )
-                    psi_variable_container = get_variable(container, var_type, d_type)
-
-                    con_type = pm_expr_map[d_class].psi_con
-                    psi_constraint_container = add_constraints_container!(
-                        container,
-                        con_type,
-                        d_type,
-                        mapped_ps_device_names,
-                        time_steps,
-                    )
-                    for t in time_steps,
-                        (pm_d, name) in zip(mapped_pm_devices, mapped_ps_device_names)
-
-                        pm_expr = PM.var(container.pm, t, pm_expr_var, getfield(pm_d, dir))
-                        psi_constraint_container[name, t] = JuMP.@constraint(
-                            container.JuMPmodel,
-                            psi_variable_container[name, t] == pm_expr
-                        )
-                    end
-                end
             end
         end
     end
