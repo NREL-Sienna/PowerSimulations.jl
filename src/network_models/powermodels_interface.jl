@@ -6,6 +6,14 @@
 #################################################################################
 # Model Definitions
 
+const UNSUPPORTED_POWERMODELS =
+    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
+
+const INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS = [
+    PM.SparseSDPWRMPowerModel,
+    PTDFPowerModel,
+]
+
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
 end
@@ -288,17 +296,25 @@ function powermodels_network!(
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = get_available_components(PSY.ACBus, sys)
 
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_p"] =
+    network_model = get_network_model(template)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    if isempty(radial_network_reduction)
+        ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    else
+        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
+
+    for t in time_steps, bus_no in ac_bus_numbers
+        pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_p"] =
             container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
-                bus.number,
+                bus_no,
                 t,
             ]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] =
+        pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_q"] =
             container.expressions[ExpressionKey(ReactivePowerBalance, PSY.ACBus)][
-                bus.number,
+                bus_no,
                 t,
             ]
     end
@@ -321,10 +337,19 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
     buses = get_available_components(PSY.ACBus, sys)
 
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["inj_p"] =
+    network_model = get_network_model(template)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    if isempty(radial_network_reduction)
+        ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    else
+        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
+
+    for t in time_steps, bus_no in ac_bus_numbers
+        pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_p"] =
             container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
-                PSY.get_number(bus),
+                bus_no,
                 t,
             ]
         # pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["inj_q"] = 0.0

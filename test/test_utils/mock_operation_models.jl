@@ -117,6 +117,7 @@ function mock_construct_device!(
         PSI.get_network_formulation(template),
         PSI.get_network_model(template).subnetworks,
         PSI.get_system(problem),
+        Dict{Int64, Set{Int64}}(),
     )
     if PSI.validate_available_devices(model, PSI.get_system(problem))
         PSI.construct_device!(

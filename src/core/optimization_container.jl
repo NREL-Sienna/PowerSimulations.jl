@@ -431,9 +431,14 @@ function _make_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
+    bus_reduction_map::Dict{Int64, Set{Int64}},
 )
     time_steps = get_time_steps(container)
-    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    if isempty(bus_reduction_map)
+        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    else
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
@@ -450,9 +455,14 @@ function _make_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
+    bus_reduction_map::Dict{Int64, Set{Int64}},
 )
     time_steps = get_time_steps(container)
-    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    if isempty(bus_reduction_map)
+        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    else
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
@@ -467,6 +477,7 @@ function _make_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     ::Vector{Int},
     ::Type{CopperPlatePowerModel},
+    bus_reduction_map::Dict{Int64, Set{Int64}},
 )
     time_steps = get_time_steps(container)
     subnetworks_ref_buses = collect(keys(subnetworks))
@@ -482,9 +493,14 @@ function _make_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
     ::Type{T},
+    bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: Union{PTDFPowerModel, StandardPTDFModel}}
     time_steps = get_time_steps(container)
-    ac_bus_numbers = sort!(collect(Iterators.flatten(values(subnetworks))))
+    if isempty(bus_reduction_map)
+        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    else
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
     subnetworks = collect(keys(subnetworks))
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
@@ -492,7 +508,9 @@ function _make_system_expressions!(
         ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
             _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-            _make_container_array(ac_bus_numbers, time_steps),
+        # Bus numbers are sorted to guarantee consistency in the order between the
+        # containers
+            _make_container_array(sort!(ac_bus_numbers), time_steps),
     )
     return
 end
@@ -502,9 +520,10 @@ function initialize_system_expressions!(
     ::Type{T},
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
+    bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: PM.AbstractPowerModel}
     dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
-    _make_system_expressions!(container, subnetworks, dc_bus_numbers, T)
+    _make_system_expressions!(container, subnetworks, dc_bus_numbers, T, bus_reduction_map)
     return
 end
 
@@ -520,7 +539,7 @@ function build_impl!(
         transmission,
         transmission_model.subnetworks,
         sys,
-    )
+        transmission_model.radial_network_reduction.bus_reduction_map)
 
     # Order is required
     for device_model in values(template.devices)

@@ -381,7 +381,7 @@ end
 
 function get_branches_to_pm(
     sys::PSY.System,
-    ::Type{S},
+    network_model::NetworkModel{S},
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
@@ -389,6 +389,8 @@ function get_branches_to_pm(
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: TwoTerminalHVDCTypes
@@ -398,6 +400,10 @@ function get_branches_to_pm(
         start_idx += length(PM_branches)
         filter_func = get_attribute(device_model, "filter_function")
         for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
+            if PSY.get_name(branch) ∈ radial_branches_names
+                @debug "Skipping branch $(PSY.get_name(branch)) since it is radial"
+                continue
+            end
             ix = i + start_idx
             PM_branches["$(ix)"] =
                 get_branch_to_pm(ix, branch, get_formulation(device_model), S)
@@ -413,7 +419,7 @@ end
 
 function get_branches_to_pm(
     sys::PSY.System,
-    ::Type{S},
+    network_model::NetworkModel{S},
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
@@ -442,7 +448,7 @@ end
 
 function get_branches_to_pm(
     ::PSY.System,
-    ::Type{PTDFPowerModel},
+    network_model::NetworkModel{PTDFPowerModel},
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
@@ -485,13 +491,13 @@ end
 function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::Int)
     ac_lines, PMmap_ac = get_branches_to_pm(
         sys,
-        get_network_formulation(template),
+        get_network_model(template),
         PSY.ACBranch,
         template.branches,
     )
     two_terminal_dc_lines, PMmap_dc = get_branches_to_pm(
         sys,
-        get_network_formulation(template),
+        get_network_model(template),
         TwoTerminalHVDCTypes,
         template.branches,
         length(ac_lines),

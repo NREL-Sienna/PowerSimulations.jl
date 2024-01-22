@@ -415,7 +415,7 @@ end
 
 function serialize_optimization_model(model::OperationModel, save_path::String)
     serialize_jump_optimization_model(
-        get_optimization_container(model),
+        get_jump_model(get_optimization_container(model)),
         save_path,
     )
     return
