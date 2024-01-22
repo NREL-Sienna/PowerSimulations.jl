@@ -446,18 +446,6 @@ function get_branches_to_pm(
     return PM_branches, PMmap_br
 end
 
-function get_branches_to_pm(
-    ::PSY.System,
-    network_model::NetworkModel{PTDFPowerModel},
-    ::Type{T},
-    branch_template::BranchModelContainer,
-    start_idx = 0,
-) where {T <: TwoTerminalHVDCTypes}
-    PM_branches = Dict{String, Any}()
-    PMmap_br = Dict{PM_MAP_TUPLE, T}()
-    return PM_branches, PMmap_br
-end
-
 function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.ACBus})
     PM_buses = Dict{String, Any}()
     PMmap_buses = Dict{Int, PSY.ACBus}()

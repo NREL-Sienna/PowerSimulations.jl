@@ -11,7 +11,6 @@ const UNSUPPORTED_POWERMODELS =
 
 const INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS = [
     PM.SparseSDPWRMPowerModel,
-    PTDFPowerModel,
 ]
 
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
@@ -292,7 +291,7 @@ function powermodels_network!(
     system_formulation::Type{S},
     sys::PSY.System,
     template::ProblemTemplate,
-    instantiate_model = instantiate_nip_expr_model,
+    instantiate_model,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
@@ -331,7 +330,7 @@ function powermodels_network!(
     system_formulation::Type{S},
     sys::PSY.System,
     template::ProblemTemplate,
-    instantiate_model = instantiate_nip_expr_model,
+    instantiate_model,
 ) where {S <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
@@ -395,16 +394,6 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     return pm_variable_map
 end
 
-function PMvarmap(::Type{PTDFPowerModel})
-    pm_variable_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
-
-    pm_variable_map[PSY.ACBus] = Dict()
-    pm_variable_map[PSY.ACBranch] = Dict()
-    pm_variable_map[TwoTerminalHVDCTypes] = Dict()
-
-    return pm_variable_map
-end
-
 function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
@@ -455,23 +444,6 @@ function PMexprmap(::Type{S}) where {S <: PM.AbstractPowerModel}
             Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, Symbol},
         },
     }()
-
-    return pm_expr_map
-end
-
-function PMexprmap(::Type{PTDFPowerModel})
-    pm_expr_map = Dict{
-        Type,
-        NamedTuple{
-            (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, ConstraintType},
-        },
-    }()
-
-    pm_expr_map[PSY.ACBranch] = (
-        pm_expr = Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing)),
-        psi_con = NetworkFlowConstraint(),
-    )
 
     return pm_expr_map
 end

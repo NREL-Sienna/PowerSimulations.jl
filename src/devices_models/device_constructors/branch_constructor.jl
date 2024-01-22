@@ -439,7 +439,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalUnbounded},
-    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{StandardPTDFModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -461,7 +461,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
-    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{StandardPTDFModel},
 )
     add_constraint_dual!(container, sys, model)
     return
@@ -497,7 +497,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalLossless},
-    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{StandardPTDFModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -522,7 +522,7 @@ function construct_device!(
     network_model::NetworkModel{U},
 ) where {
     T <: TwoTerminalHVDCTypes,
-    U <: Union{StandardPTDFModel, PTDFPowerModel},
+    U <: StandardPTDFModel,
 }
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))

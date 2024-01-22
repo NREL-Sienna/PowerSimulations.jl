@@ -153,7 +153,6 @@ struct LossLessLine <: AbstractBranchFormulation end
 
 abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
 struct StandardPTDFModel <: AbstractPTDFModel end
-struct PTDFPowerModel <: AbstractPTDFModel end
 
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end

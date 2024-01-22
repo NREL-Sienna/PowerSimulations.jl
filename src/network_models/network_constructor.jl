@@ -79,30 +79,7 @@ function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{T},
-    template::ProblemTemplate,
-) where {T <: PTDFPowerModel}
-    construct_network!(
-        container,
-        sys,
-        model,
-        template;
-        instantiate_model = instantiate_nip_ptdf_expr_model,
-    )
-
-    add_pm_expr_refs!(container, T, sys)
-
-    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
-    add_constraint_dual!(container, sys, model)
-    return
-end
-
-function construct_network!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractActivePowerModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -126,9 +103,9 @@ function construct_network!(
         objective_function!(container, PSY.ACBus, model)
     end
 
-    @debug "Building the $T network with $instantiate_model method" _group =
+    @debug "Building the $T network with instantiate_nip_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
-    powermodels_network!(container, T, sys, template, instantiate_model)
+    powermodels_network!(container, T, sys, template, instantiate_nip_expr_model)
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_pm_variable_refs!(container, T, sys)
@@ -143,7 +120,6 @@ function construct_network!(
     sys::PSY.System,
     model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -174,11 +150,11 @@ function construct_network!(
         objective_function!(container, PSY.ACBus, model)
     end
 
-    @debug "Building the $T network with $instantiate_model method" _group =
+    @debug "Building the $T network with instantiate_nip_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
-    powermodels_network!(container, T, sys, template, instantiate_model)
+    powermodels_network!(container, T, sys, template, instantiate_nip_expr_model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)
 
@@ -190,8 +166,7 @@ function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{T},
-    template::ProblemTemplate;
-    instantiate_model = instantiate_bfp_expr_model,
+    template::ProblemTemplate
 ) where {T <: PM.AbstractBFModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -235,11 +210,11 @@ function construct_network!(
         objective_function!(container, PSY.ACBus, model)
     end
 
-    @debug "Building the $T network with $instantiate_model method" _group =
+    @debug "Building the $T network with instantiate_bfp_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
-    powermodels_network!(container, T, sys, template, instantiate_model)
+    powermodels_network!(container, T, sys, template, instantiate_bfp_expr_model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)
     add_constraint_dual!(container, sys, model)
@@ -251,7 +226,6 @@ function construct_network!(
     sys::PSY.System,
     model::NetworkModel{T},
     template::ProblemTemplate;
-    instantiate_model = instantiate_vip_expr_model,
 ) where {T <: PM.AbstractIVRModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
@@ -299,11 +273,11 @@ function construct_network!(
         objective_function!(container, PSY.ACBus, model)
     end
 
-    @debug "Building the $T network with $instantiate_model method" _group =
+    @debug "Building the $T network with instantiate_vip_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
-    powermodels_network!(container, T, sys, template, instantiate_model)
+    powermodels_network!(container, T, sys, template, instantiate_vip_expr_model)
     add_pm_variable_refs!(container, T, sys)
     add_pm_constraint_refs!(container, T, sys)
     add_constraint_dual!(container, sys, model)
