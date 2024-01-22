@@ -166,7 +166,7 @@ function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{T},
-    template::ProblemTemplate
+    template::ProblemTemplate,
 ) where {T <: PM.AbstractBFModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(
