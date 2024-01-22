@@ -119,15 +119,15 @@ function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::
         model.PTDF_matrix =
             PNM.PTDF(sys; reduce_radial_branches = model.reduce_radial_branches)
     end
+    if model.reduce_radial_branches
+        @assert !isempty(model.PTDF_matrix.radial_network_reduction)
+        model.radial_network_reduction = model.PTDF_matrix.radial_network_reduction
+    end
     get_PTDF_matrix(model).subnetworks
     model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
-    end
-    if model.reduce_radial_branches
-        @assert !isempty(model.PTDF_matrix.radial_network_reduction)
-        model.radial_network_reduction = model.PTDF_matrix.radial_network_reduction
     end
     return
 end
@@ -138,18 +138,26 @@ function _assign_subnetworks_to_buses(
 ) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
-    for bus in get_available_components(PSY.ACBus, sys)
+    radial_network_reduction = PSI.get_radial_network_reduction(model)
+    for bus in PSI.get_available_components(PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
+        mapped_bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus)
         if haskey(temp_bus_map, bus_no)
             model.bus_area_map[bus] = temp_bus_map[bus_no]
+            continue
         else
+            bus_mapped = false
             for (subnet, bus_set) in subnetworks
-                if bus_no ∈ bus_set
+                if mapped_bus_no ∈ bus_set
                     temp_bus_map[bus_no] = subnet
                     model.bus_area_map[bus] = subnet
+                    bus_mapped = true
                     break
                 end
             end
+        end
+        if !bus_mapped
+            error("Bus $(PSY.summary(bus)) not mapped to any reference bus")
         end
     end
     return
