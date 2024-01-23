@@ -113,7 +113,7 @@ function build_simulation(
     set_network_model!(
         template_uc,
         NetworkModel(
-            StandardPTDFModel;
+            PTDFPowerModel;
             PTDF_matrix = PTDF(c_sys5_pjm_da),
             # duals = [CopperPlateBalanceConstraint]
         ),

@@ -1,7 +1,7 @@
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static Unbounded" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
-    for model in [DCPPowerModel, StandardPTDFModel]
+    for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
@@ -47,7 +47,7 @@ end
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with inequalities" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
-    for model in [DCPPowerModel, StandardPTDFModel]
+    for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
@@ -67,7 +67,7 @@ end
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with Bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rate!(PSY.get_component(Line, system, "2"), 1.5)
-    for model in [DCPPowerModel, StandardPTDFModel]
+    for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
@@ -106,7 +106,7 @@ end
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
     rate_limit2w = PSY.get_rate(tap_transformer)
 
-    for model in [DCPPowerModel, StandardPTDFModel]
+    for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
@@ -163,7 +163,7 @@ end
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
     rate_limit2w = PSY.get_rate(tap_transformer)
 
-    for model in [DCPPowerModel, StandardPTDFModel]
+    for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
         )
@@ -237,7 +237,7 @@ end
     add_component!(sys_5, hvdc)
 
     template_uc = ProblemTemplate(
-        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(sys_5)),
+        NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)),
     )
 
     set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
@@ -311,7 +311,7 @@ end
     )
 
     add_component!(sys_5, hvdc)
-    for net_model in [DCPPowerModel, StandardPTDFModel]
+    for net_model in [DCPPowerModel, PTDFPowerModel]
         @testset "$net_model" begin
             PSY.set_loss!(hvdc, (l0 = 0.0, l1 = 0.0))
             template_uc = ProblemTemplate(
@@ -495,7 +495,7 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(system)),
+        NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(system)),
     )
     set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
@@ -555,7 +555,7 @@ end
     add_component!(system, ps)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF(system)),
+        NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(system)),
     )
     set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)

@@ -87,7 +87,7 @@ end
 end
 
 @testset "Network DC-PF with PTDF Model" begin
-    template = get_thermal_dispatch_template_network(StandardPTDFModel)
+    template = get_thermal_dispatch_template_network(PTDFPowerModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -116,7 +116,7 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
+            NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
         )
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
@@ -177,9 +177,9 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        template = get_thermal_dispatch_template_network(StandardPTDFModel)
+        template = get_thermal_dispatch_template_network(PTDFPowerModel)
         template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
+            NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
         )
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
@@ -513,7 +513,7 @@ end
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
     # Test not passing the PTDF to the Template
-    template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
+    template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -553,7 +553,7 @@ end
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix = VirtualPTDF(c_sys5)),
+        NetworkModel(PTDFPowerModel; PTDF_matrix = VirtualPTDF(c_sys5)),
     )
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
@@ -613,7 +613,7 @@ end
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
     # Test not passing the PTDF to the Template
-    template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
+    template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -653,7 +653,7 @@ end
 @testset "StandardPTDF/DCPPowerModel Radial Branches Test" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
 
-    for net_model in [DCPPowerModel, StandardPTDFModel]
+    for net_model in [DCPPowerModel, PTDFPowerModel]
         template_uc = template_unit_commitment(;
             network = NetworkModel(net_model;
                 reduce_radial_branches = true,

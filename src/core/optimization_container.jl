@@ -494,7 +494,7 @@ function _make_system_expressions!(
     dc_bus_numbers::Vector{Int},
     ::Type{T},
     bus_reduction_map::Dict{Int64, Set{Int64}},
-) where {T <: StandardPTDFModel}
+) where {T <: PTDFPowerModel}
     time_steps = get_time_steps(container)
     if isempty(bus_reduction_map)
         ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
