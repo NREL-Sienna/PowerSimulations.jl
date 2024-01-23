@@ -238,8 +238,8 @@ export LowerBoundFeedForwardSlack
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
-export PowerFlowAngle
-export PowerFlowVoltage
+export PowerFlowVoltageAngle
+export PowerFlowVoltageMagnitude
 export PowerFlowLineReactivePower
 export PowerFlowLineActivePower
 

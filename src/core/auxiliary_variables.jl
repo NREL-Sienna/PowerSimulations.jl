@@ -34,12 +34,12 @@ struct PowerOutput <: AuxVariableType end
 """
 Auxiliary Variable for the bus angle results from power flow evaluation
 """
-struct PowerFlowAngle <: AuxVariableType end
+struct PowerFlowVoltageAngle <: AuxVariableType end
 
 """
 Auxiliary Variable for the bus voltage magnitued results from power flow evaluation
 """
-struct PowerFlowVoltage <: AuxVariableType end
+struct PowerFlowVoltageMagnitude <: AuxVariableType end
 
 """
 Auxiliary Variable for the line reactive flow from power flow evaluation
