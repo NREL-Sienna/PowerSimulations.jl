@@ -212,7 +212,7 @@ function add_to_expression!(
     U <: FlowActivePowerToFromVariable,
     V <: TwoTerminalHVDCTypes,
     W <: AbstractDeviceFormulation,
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -248,7 +248,7 @@ function add_to_expression!(
     U <: FlowActivePowerFromToVariable,
     V <: TwoTerminalHVDCTypes,
     W <: AbstractTwoTerminalDCLineFormulation,
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -579,7 +579,7 @@ function add_to_expression!(
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel,
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
@@ -613,7 +613,7 @@ function add_to_expression!(
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel,
 }
     parameter = get_parameter_array(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -647,7 +647,7 @@ function add_to_expression!(
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -686,7 +686,7 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)

@@ -19,7 +19,6 @@ const NETWORKS_FOR_TESTING = [
     #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
     (PM.SDPWRMPowerModel, scs_solver),
     (PM.SparseSDPWRMPowerModel, scs_solver),
-    (PTDFPowerModel, fast_ipopt_optimizer),
 ]
 
 @testset "All PowerModels models construction" begin
@@ -182,54 +181,6 @@ end
         template = get_thermal_dispatch_template_network(
             NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
         )
-        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_keys)
-        moi_tests(
-            ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
-            false,
-        )
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(
-            ps_model,
-            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-            test_obj_values[sys],
-            10000,
-        )
-    end
-end
-
-@testset "Sparse Network DC-PF with PTDFPowerModel" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14, c_sys14_dc]
-    objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-    ]
-    test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 168],
-        c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 0, 648, 552, 456],
-    )
-    test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
-    )
-    for (ix, sys) in enumerate(systems)
-        template = get_thermal_dispatch_template_network(PTDFPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==

@@ -215,7 +215,7 @@ function add_to_expression!(
     U <: ActivePowerVariable,
     V <: PSY.InterconnectingConverter,
     W <: AbstractConverterFormulation,
-    X <: Union{PTDFPowerModel, StandardPTDFModel},
+    X <: StandardPTDFModel
 }
     variable = get_variable(container, U(), V)
     expression_dc = get_expression(container, T(), PSY.DCBus)
