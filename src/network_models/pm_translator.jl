@@ -389,8 +389,8 @@ function get_branches_to_pm(
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
-    radial_branches = get_radial_branches(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: TwoTerminalHVDCTypes
@@ -401,7 +401,7 @@ function get_branches_to_pm(
         filter_func = get_attribute(device_model, "filter_function")
         for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
             if PSY.get_name(branch) ∈ radial_branches_names
-                @debug "Skipping branch $(PSY.get_name(branch)) since its radial"
+                @debug "Skipping branch $(PSY.get_name(branch)) since it is radial"
                 continue
             end
             ix = i + start_idx
@@ -443,18 +443,6 @@ function get_branches_to_pm(
             end
         end
     end
-    return PM_branches, PMmap_br
-end
-
-function get_branches_to_pm(
-    ::PSY.System,
-    network_model::NetworkModel{PTDFPowerModel},
-    ::Type{T},
-    branch_template::BranchModelContainer,
-    start_idx = 0,
-) where {T <: TwoTerminalHVDCTypes}
-    PM_branches = Dict{String, Any}()
-    PMmap_br = Dict{PM_MAP_TUPLE, T}()
     return PM_branches, PMmap_br
 end
 

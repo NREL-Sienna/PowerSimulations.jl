@@ -31,7 +31,7 @@ function add_constraint_dual!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{T},
-) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
+) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
     if !isempty(get_duals(model))
         for constraint_type in get_duals(model)
             assign_dual_variable!(container, constraint_type, sys, model)

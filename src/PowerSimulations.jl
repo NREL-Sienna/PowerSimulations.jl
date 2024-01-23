@@ -19,7 +19,6 @@ export SimulationPartitionResults
 
 # Network Relevant Exports
 export NetworkModel
-export StandardPTDFModel
 export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel

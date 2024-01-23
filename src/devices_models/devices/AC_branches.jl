@@ -46,7 +46,7 @@ end
 function add_variables!(
     container::OptimizationContainer,
     ::Type{FlowActivePowerVariable},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
     devices::IS.FlattenIteratorWrapper{T},
     formulation::AbstractBranchFormulation,
 ) where {T <: PSY.ACBranch}
@@ -108,8 +108,8 @@ function branch_rate_bounds!(
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
 
-    radial_branches = get_radial_branches(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
@@ -136,8 +136,8 @@ function branch_rate_bounds!(
     ]
 
     time_steps = get_time_steps(container)
-    radial_branches = get_radial_branches(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
@@ -191,11 +191,11 @@ function add_constraints!(
     V <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    radial_branches = get_radial_branches(network_model)
-    if isempty(radial_branches)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    if isempty(radial_network_reduction)
         device_names = [PSY.get_name(d) for d in devices]
     else
-        device_names = PNM.get_meshed_branches(radial_branches)
+        device_names = PNM.get_meshed_branches(radial_network_reduction)
     end
 
     con_lb =
@@ -221,7 +221,7 @@ function add_constraints!(
 
     for device in devices
         ci_name = PSY.get_name(device)
-        if ci_name ∈ PNM.get_radial_branches(radial_branches)
+        if ci_name ∈ PNM.get_radial_branches(radial_network_reduction)
             continue
         end
         limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
@@ -287,8 +287,8 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    radial_branches = get_radial_branches(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for r in rating_data
         if r[1] ∈ radial_branches_names
@@ -328,8 +328,8 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    radial_branches = get_radial_branches(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_branches)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
     for r in rating_data
         if r[1] ∈ radial_branches_names
@@ -345,14 +345,14 @@ function add_constraints!(
 end
 
 """
-Add network flow constraints for ACBranch and NetworkModel with StandardPTDFModel
+Add network flow constraints for ACBranch and NetworkModel with PTDFPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF_matrix(network_model)
     # This is a workaround to not call the same list comprehension to find
@@ -388,14 +388,14 @@ function add_constraints!(
 end
 
 """
-Add network flow constraints for PhaseShiftingTransformer and NetworkModel with StandardPTDFModel
+Add network flow constraints for PhaseShiftingTransformer and NetworkModel with PTDFPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, PhaseAngleControl},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.PhaseShiftingTransformer}
     ptdf = get_PTDF_matrix(network_model)
     branches = PSY.get_name.(devices)

@@ -63,7 +63,7 @@ function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     return template
 end
 
-function get_template_dispatch_with_network(network = StandardPTDFModel)
+function get_template_dispatch_with_network(network = PTDFPowerModel)
     template = ProblemTemplate(network)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalBasicDispatch)

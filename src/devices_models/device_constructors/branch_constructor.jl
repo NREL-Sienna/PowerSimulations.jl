@@ -211,7 +211,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     device_model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
@@ -230,7 +230,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     device_model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
@@ -245,7 +245,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     device_model::DeviceModel{T, StaticBranchBounds},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
@@ -264,7 +264,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     device_model::DeviceModel{T, StaticBranchBounds},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
@@ -284,7 +284,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     device_model::DeviceModel{T, StaticBranchUnbounded},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
@@ -303,7 +303,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranchUnbounded},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -439,7 +439,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalUnbounded},
-    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -461,7 +461,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
-    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{PTDFPowerModel},
 )
     add_constraint_dual!(container, sys, model)
     return
@@ -497,7 +497,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalLossless},
-    network_model::NetworkModel{<:Union{StandardPTDFModel, PTDFPowerModel}},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -522,7 +522,7 @@ function construct_device!(
     network_model::NetworkModel{U},
 ) where {
     T <: TwoTerminalHVDCTypes,
-    U <: Union{StandardPTDFModel, PTDFPowerModel},
+    U <: PTDFPowerModel,
 }
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -536,7 +536,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -586,7 +586,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
@@ -705,7 +705,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 )
     devices = get_available_components(
         PSY.PhaseShiftingTransformer,
@@ -749,7 +749,7 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.PhaseShiftingTransformer, PhaseAngleControl},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 )
     devices = get_available_components(
         PSY.PhaseShiftingTransformer,

@@ -9,6 +9,15 @@ Generic PowerSimulations Operation Problem Type for unspecified models
 """
 struct GenericOpProblem <: DefaultDecisionProblem end
 
+mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
+    name::Symbol
+    template::ProblemTemplate
+    sys::PSY.System
+    internal::Union{Nothing, ModelInternal}
+    store::DecisionModelStore
+    ext::Dict{String, Any}
+end
+
 """
     DecisionModel{M}(
         template::ProblemTemplate,
@@ -51,40 +60,31 @@ template = ProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = DecisionModel(MockOperationProblem, template, system)
 ```
 """
-mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
-    name::Symbol
-    template::ProblemTemplate
-    sys::PSY.System
-    internal::Union{Nothing, ModelInternal}
-    store::DecisionModelStore
-    ext::Dict{String, Any}
-
-    function DecisionModel{M}(
-        template::ProblemTemplate,
-        sys::PSY.System,
-        settings::Settings,
-        jump_model::Union{Nothing, JuMP.Model} = nothing;
-        name = nothing,
-    ) where {M <: DecisionProblem}
-        if name === nothing
-            name = nameof(M)
-        elseif name isa String
-            name = Symbol(name)
-        end
-        internal = ModelInternal(
-            OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
-        )
-        template_ = deepcopy(template)
-        finalize_template!(template_, sys)
-        return new{M}(
-            name,
-            template_,
-            sys,
-            internal,
-            DecisionModelStore(),
-            Dict{String, Any}(),
-        )
+function DecisionModel{M}(
+    template::ProblemTemplate,
+    sys::PSY.System,
+    settings::Settings,
+    jump_model::Union{Nothing, JuMP.Model} = nothing;
+    name = nothing,
+) where {M <: DecisionProblem}
+    if name === nothing
+        name = nameof(M)
+    elseif name isa String
+        name = Symbol(name)
     end
+    internal = ModelInternal(
+        OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
+    )
+    template_ = deepcopy(template)
+    finalize_template!(template_, sys)
+    return DecisionModel{M}(
+        name,
+        template_,
+        sys,
+        internal,
+        DecisionModelStore(),
+        Dict{String, Any}(),
+    )
 end
 
 function DecisionModel{M}(

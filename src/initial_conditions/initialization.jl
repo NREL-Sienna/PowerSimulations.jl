@@ -9,7 +9,8 @@ function get_initial_conditions_template(model::OperationModel)
             get_network_model(model.template),
         ),
     )
-    network_model.radial_branches = get_radial_branches(get_network_model(model.template))
+    network_model.radial_network_reduction =
+        get_radial_network_reduction(get_network_model(model.template))
     network_model.subnetworks = get_subnetworks(get_network_model(model.template))
     # Initialization does not support PowerFlow evaluation
     network_model.powerflow_evaluation = nothing

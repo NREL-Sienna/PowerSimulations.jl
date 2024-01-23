@@ -1,31 +1,30 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-const networks_for_testing =
-    networks = [
-        (PM.ACPPowerModel, fast_ipopt_optimizer),
-        (PM.ACRPowerModel, fast_ipopt_optimizer),
-        (PM.ACTPowerModel, fast_ipopt_optimizer),
-        #(PM.IVRPowerModel, fast_ipopt_optimizer), #instantiate_ivp_expr_model not implemented
-        (PM.DCPPowerModel, fast_ipopt_optimizer),
-        (PM.DCMPPowerModel, fast_ipopt_optimizer),
-        (PM.NFAPowerModel, fast_ipopt_optimizer),
-        (PM.DCPLLPowerModel, fast_ipopt_optimizer),
-        (PM.LPACCPowerModel, fast_ipopt_optimizer),
-        (PM.SOCWRPowerModel, fast_ipopt_optimizer),
-        (PM.SOCWRConicPowerModel, scs_solver),
-        (PM.QCRMPowerModel, fast_ipopt_optimizer),
-        (PM.QCLSPowerModel, fast_ipopt_optimizer),
-        #(PM.SOCBFPowerModel, fast_ipopt_optimizer), # not implemented
-        (PM.BFAPowerModel, fast_ipopt_optimizer),
-        #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
-        (PM.SDPWRMPowerModel, scs_solver),
-        (PM.SparseSDPWRMPowerModel, scs_solver),
-        (PTDFPowerModel, fast_ipopt_optimizer),
-    ]
+const NETWORKS_FOR_TESTING = [
+    (PM.ACPPowerModel, fast_ipopt_optimizer),
+    (PM.ACRPowerModel, fast_ipopt_optimizer),
+    (PM.ACTPowerModel, fast_ipopt_optimizer),
+    #(PM.IVRPowerModel, fast_ipopt_optimizer), #instantiate_ivp_expr_model not implemented
+    (PM.DCPPowerModel, fast_ipopt_optimizer),
+    (PM.DCMPPowerModel, fast_ipopt_optimizer),
+    (PM.NFAPowerModel, fast_ipopt_optimizer),
+    (PM.DCPLLPowerModel, fast_ipopt_optimizer),
+    (PM.LPACCPowerModel, fast_ipopt_optimizer),
+    (PM.SOCWRPowerModel, fast_ipopt_optimizer),
+    (PM.SOCWRConicPowerModel, scs_solver),
+    (PM.QCRMPowerModel, fast_ipopt_optimizer),
+    (PM.QCLSPowerModel, fast_ipopt_optimizer),
+    #(PM.SOCBFPowerModel, fast_ipopt_optimizer), # not implemented
+    (PM.BFAPowerModel, fast_ipopt_optimizer),
+    #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
+    (PM.SDPWRMPowerModel, scs_solver),
+    (PM.SparseSDPWRMPowerModel, scs_solver),
+]
+
 
 @testset "All PowerModels models construction" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    for (network, solver) in networks_for_testing
+    for (network, solver) in NETWORKS_FOR_TESTING
         template = get_thermal_dispatch_template_network(
             NetworkModel(network; PTDF_matrix = PTDF(c_sys5)),
         )
@@ -89,7 +88,7 @@ end
 end
 
 @testset "Network DC-PF with PTDF Model" begin
-    template = get_thermal_dispatch_template_network(StandardPTDFModel)
+    template = get_thermal_dispatch_template_network(PTDFPowerModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -118,7 +117,7 @@ end
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
+            NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
         )
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
@@ -179,58 +178,10 @@ end
         c_sys14_dc => 142000.0,
     )
     for (ix, sys) in enumerate(systems)
-        template = get_thermal_dispatch_template_network(StandardPTDFModel)
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(StandardPTDFModel; PTDF_matrix = PTDF_ref[sys]),
-        )
-        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        psi_constraint_test(ps_model, constraint_keys)
-        moi_tests(
-            ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
-            false,
-        )
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(
-            ps_model,
-            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-            test_obj_values[sys],
-            10000,
-        )
-    end
-end
-
-@testset "Sparse Network DC-PF with PTDFPowerModel" begin
-    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14, c_sys14_dc]
-    objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-    ]
-    test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 168],
-        c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 0, 648, 552, 456],
-    )
-    test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
-    )
-    for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(PTDFPowerModel)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
+        )
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -267,9 +218,9 @@ end
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [384, 0, 408, 408, 288],
-        c_sys14 => [936, 0, 1080, 1080, 840],
-        c_sys14_dc => [984, 0, 1080, 984, 840],
+        c_sys5 => [384, 144, 264, 264, 288],
+        c_sys14 => [936, 480, 600, 600, 840],
+        c_sys14_dc => [984, 432, 648, 552, 840],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
@@ -315,9 +266,9 @@ end
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [1056, 0, 384, 384, 264],
-        c_sys14 => [2832, 0, 720, 720, 696],
-        c_sys14_dc => [2832, 0, 768, 672, 744],
+        c_sys5 => [1056, 144, 240, 240, 264],
+        c_sys14 => [2832, 480, 240, 240, 696],
+        c_sys14_dc => [2832, 432, 336, 240, 744],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
@@ -411,9 +362,9 @@ end
         c_sys14_dc => [2832, 0, 336, 240, 744],
     )
     ACT_test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [1344, 0, 384, 384, 840],
-        c_sys14 => [3792, 0, 720, 720, 2616],
-        c_sys14_dc => [3696, 0, 768, 672, 2472],
+        c_sys5 => [1344, 144, 240, 240, 840],
+        c_sys14 => [3792, 480, 240, 240, 2616],
+        c_sys14_dc => [3696, 432, 336, 240, 2472],
     )
     test_results = Dict(zip(networks, [ACR_test_results, ACT_test_results]))
     for network in networks, sys in systems
@@ -450,14 +401,14 @@ end
         c_sys14_dc => 142000.0,
     )
     DCPLL_test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [528, 0, 408, 408, 288],
-        c_sys14 => [1416, 0, 1080, 1080, 840],
-        c_sys14_dc => [1416, 0, 1080, 984, 840],
+        c_sys5 => [528, 144, 264, 264, 288],
+        c_sys14 => [1416, 480, 600, 600, 840],
+        c_sys14_dc => [1416, 432, 648, 552, 840],
     )
     LPACC_test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [1200, 0, 384, 384, 840],
-        c_sys14 => [3312, 0, 720, 720, 2616],
-        c_sys14_dc => [3264, 0, 768, 672, 2472],
+        c_sys5 => [1200, 144, 240, 240, 840],
+        c_sys14 => [3312, 480, 240, 240, 2616],
+        c_sys14_dc => [3264, 432, 336, 240, 2472],
     )
     test_results = Dict(zip(networks, [DCPLL_test_results, LPACC_test_results]))
     for network in networks, (ix, sys) in enumerate(systems)
@@ -563,7 +514,7 @@ end
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
     # Test not passing the PTDF to the Template
-    template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
+    template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -603,7 +554,7 @@ end
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(
-        NetworkModel(StandardPTDFModel; PTDF_matrix = VirtualPTDF(c_sys5)),
+        NetworkModel(PTDFPowerModel; PTDF_matrix = VirtualPTDF(c_sys5)),
     )
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
@@ -663,7 +614,7 @@ end
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
     # Test not passing the PTDF to the Template
-    template = get_thermal_dispatch_template_network(NetworkModel(StandardPTDFModel))
+    template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.BuildStatus.BUILT
@@ -699,249 +650,82 @@ end
     @test all(isapprox.(sum(zone_2_gen .+ zone_2_load; dims = 2), 0.0; atol = 1e-3))
 end
 
-function _updated_5bus_sys_with_extensions()
-    sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    new_sys = deepcopy(sys)
-    ################################
-    #### Create Extension Buses ####
-    ################################
+# These models are easier to test due to their lossless nature
+@testset "StandardPTDF/DCPPowerModel Radial Branches Test" begin
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
+    for net_model in [DCPPowerModel, PTDFPowerModel]
+        template_uc = template_unit_commitment(;
+            network = NetworkModel(net_model;
+                reduce_radial_branches = true,
+                use_slacks = false,
+            ),
+        )
+        thermal_model = ThermalStandardUnitCommitment
+        set_device_model!(template_uc, ThermalStandard, thermal_model)
 
-    busC = get_component(ACBus, new_sys, "nodeC")
+        ##### Solve Reduced Model ####
+        solver = GLPK_optimizer
+        uc_model_red = DecisionModel(
+            template_uc,
+            new_sys;
+            optimizer = solver,
+            name = "UC_RED",
+            store_variable_names = true,
+        )
 
-    busC_ext1 = ACBus(;
-        number = 301,
-        name = "nodeC_ext1",
-        bustype = ACBusTypes.PQ,
-        angle = 0.0,
-        magnitude = 1.0,
-        voltage_limits = (min = 0.9, max = 1.05),
-        base_voltage = 230.0,
-        area = nothing,
-        load_zone = nothing,
-    )
+        @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        solve!(uc_model_red)
 
-    busC_ext2 = ACBus(;
-        number = 302,
-        name = "nodeC_ext2",
-        bustype = ACBusTypes.PQ,
-        angle = 0.0,
-        magnitude = 1.0,
-        voltage_limits = (min = 0.9, max = 1.05),
-        base_voltage = 230.0,
-        area = nothing,
-        load_zone = nothing,
-    )
+        res_red = ProblemResults(uc_model_red)
 
-    add_components!(new_sys, [busC_ext1, busC_ext2])
+        flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+        line_names = DataFrames.names(flow_lines)[2:end]
 
-    ################################
-    #### Create Extension Lines ####
-    ################################
+        ##### Solve Original Model ####
+        template_uc_orig = template_unit_commitment(;
+            network = NetworkModel(net_model;
+                reduce_radial_branches = false,
+                use_slacks = false,
+            ),
+        )
+        set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
 
-    line_C_to_ext1 = Line(;
-        name = "C_to_ext1",
-        available = true,
-        active_power_flow = 0.0,
-        reactive_power_flow = 0.0,
-        arc = Arc(; from = busC, to = busC_ext1),
-        #r = 0.00281,
-        r = 0.0,
-        x = 0.0281,
-        b = (from = 0.00356, to = 0.00356),
-        rate = 2.0,
-        angle_limits = (min = -0.7, max = 0.7),
-    )
+        uc_model_orig = DecisionModel(
+            template_uc_orig,
+            new_sys;
+            optimizer = solver,
+            name = "UC_ORIG",
+            store_variable_names = true,
+        )
 
-    line_ext1_to_ext2 = Line(;
-        name = "ext1_to_ext2",
-        available = true,
-        active_power_flow = 0.0,
-        reactive_power_flow = 0.0,
-        arc = Arc(; from = busC_ext1, to = busC_ext2),
-        #r = 0.00281,
-        r = 0.0,
-        x = 0.0281,
-        b = (from = 0.00356, to = 0.00356),
-        rate = 2.0,
-        angle_limits = (min = -0.7, max = 0.7),
-    )
+        @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        solve!(uc_model_orig)
 
-    add_components!(new_sys, [line_C_to_ext1, line_ext1_to_ext2])
+        res_orig = ProblemResults(uc_model_orig)
 
-    ###################################
-    ###### Update Extension Loads #####
-    ###################################
+        flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
 
-    load_bus3 = get_component(PowerLoad, new_sys, "Bus3")
-
-    load_ext1 = PowerLoad(;
-        name = "Bus_ext1",
-        available = true,
-        bus = busC_ext1,
-        active_power = 1.0,
-        reactive_power = 0.9861 / 3,
-        base_power = 100.0,
-        max_active_power = 1.0,
-        max_reactive_power = 0.9861 / 3,
-    )
-
-    load_ext2 = PowerLoad(;
-        name = "Bus_ext2",
-        available = true,
-        bus = busC_ext2,
-        active_power = 1.0,
-        reactive_power = 0.9861 / 3,
-        base_power = 100.0,
-        max_active_power = 1.0,
-        max_reactive_power = 0.9861 / 3,
-    )
-
-    add_components!(new_sys, [load_ext1, load_ext2])
-
-    copy_time_series!(load_ext1, load_bus3)
-    copy_time_series!(load_ext2, load_bus3)
-
-    set_active_power!(load_bus3, 1.0)
-    set_max_active_power!(load_bus3, 1.0)
-    set_reactive_power!(load_bus3, 0.3287)
-    set_max_reactive_power!(load_bus3, 0.3287)
-    return new_sys
-end
-
-@testset "StandardPTDF Radial Branches Test" begin
-    new_sys = _updated_5bus_sys_with_extensions()
-
-    net_model = StandardPTDFModel
-
-    template_uc = template_unit_commitment(;
-        network = NetworkModel(net_model;
-            reduce_radial_branches = true,
-            use_slacks = false,
-        ),
-    )
-    thermal_model = ThermalStandardUnitCommitment
-    set_device_model!(template_uc, ThermalStandard, thermal_model)
-
-    ##### Solve Reduced Model ####
-    solver = GLPK_optimizer
-    uc_model_red = DecisionModel(
-        template_uc,
-        new_sys;
-        optimizer = solver,
-        name = "UC_RED",
-        store_variable_names = true,
-    )
-
-    @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    solve!(uc_model_red)
-
-    res_red = ProblemResults(uc_model_red)
-
-    flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
-    line_names = DataFrames.names(flow_lines)[2:end]
-
-    ##### Solve Original Model ####
-    template_uc_orig = template_unit_commitment(;
-        network = NetworkModel(net_model;
-            reduce_radial_branches = false,
-            use_slacks = false,
-        ),
-    )
-    set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
-
-    uc_model_orig = DecisionModel(
-        template_uc_orig,
-        new_sys;
-        optimizer = solver,
-        name = "UC_ORIG",
-        store_variable_names = true,
-    )
-
-    @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    solve!(uc_model_orig)
-
-    res_orig = ProblemResults(uc_model_orig)
-
-    flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
-
-    for line in line_names
-        @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
-    end
-end
-
-@testset "DCPPowerModel Radial Branches Test" begin
-    net_model = DCPPowerModel
-
-    template_uc = template_unit_commitment(;
-        network = NetworkModel(net_model;
-            reduce_radial_branches = true,
-            use_slacks = false,
-        ),
-    )
-    thermal_model = ThermalStandardUnitCommitment
-    set_device_model!(template_uc, ThermalStandard, thermal_model)
-
-    ##### Solve Reduced Model ####
-    solver = GLPK_optimizer
-    uc_model_red = DecisionModel(
-        template_uc,
-        new_sys;
-        optimizer = solver,
-        name = "UC_RED",
-        store_variable_names = true,
-    )
-
-    @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    solve!(uc_model_red)
-
-    res_red = ProblemResults(uc_model_red)
-
-    flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
-    line_names = DataFrames.names(flow_lines)[2:end]
-
-    ##### Solve Original Model ####
-    template_uc_orig = template_unit_commitment(;
-        network = NetworkModel(net_model;
-            reduce_radial_branches = false,
-            use_slacks = false,
-        ),
-    )
-    set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
-
-    uc_model_orig = DecisionModel(
-        template_uc_orig,
-        new_sys;
-        optimizer = solver,
-        name = "UC_ORIG",
-        store_variable_names = true,
-    )
-
-    @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    solve!(uc_model_orig)
-
-    res_orig = ProblemResults(uc_model_orig)
-
-    flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
-
-    for line in line_names
-        @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
+        for line in line_names
+            @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
+        end
     end
 end
 
 @testset "All PowerModels models construction with reduced radial branches" begin
-    c_sys5 = _updated_5bus_sys_with_extensions()
-    for (network, solver) in networks_for_testing
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
+    for (network, solver) in NETWORKS_FOR_TESTING
+        if network ∈ PSI.INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
+            continue
+        end
         template = get_thermal_dispatch_template_network(
             NetworkModel(network;
-                PTDF_matrix = PTDF(c_sys5),
+                PTDF_matrix = PTDF(new_sys),
                 reduce_radial_branches = true,
                 use_slacks = true),
         )
-        ps_model = DecisionModel(template, c_sys5; optimizer = solver)
+        ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
         @test ps_model.internal.container.pm !== nothing

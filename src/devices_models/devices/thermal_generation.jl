@@ -341,11 +341,21 @@ end
 Startup and shutdown active power limits for Compact Unit Commitment
 """
 function get_startup_shutdown_limits(
-    device,
+    device::PSY.ThermalMultiStart,
     ::Type{ActivePowerVariableLimitsConstraint},
-    ::Type{<:ThermalMultiStartUnitCommitment},
+    ::Type{ThermalMultiStartUnitCommitment},
 )
-    return PSY.get_power_trajectory(device)
+    startup_shutdown = PSY.get_power_trajectory(device)
+    if isnothing(startup_shutdown)
+        @warn(
+            "Generator $(summary(device)) has a Nothing startup_shutdown property. Using active power limits."
+        )
+        return (
+            startup = PSY.get_active_power_limits(device).max,
+            shutdown = PSY.get_active_power_limits(device).max,
+        )
+    end
+    return startup_shutdown
 end
 
 """
@@ -355,7 +365,7 @@ function get_min_max_limits(
     device,
     ::Type{ActivePowerVariableLimitsConstraint},
     ::Type{<:AbstractCompactUnitCommitment},
-) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (
         min = 0,
         max = PSY.get_active_power_limits(device).max -
@@ -562,6 +572,7 @@ function add_constraints!(
         name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         startup_shutdown_limits = get_startup_shutdown_limits(device, T, W)
+        @assert !isnothing(startup_shutdown_limits) "$(name)"
         if JuMP.has_lower_bound(varp[name, t])
             JuMP.set_lower_bound(varp[name, t], 0.0)
         end

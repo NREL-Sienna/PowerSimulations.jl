@@ -20,11 +20,11 @@ Establishes the model for a particular device specified by type.
   - `use_slacks::Bool`: Adds slacks to the network modelings
   - `PTDF::PTDF`: PTDF Array calculated using PowerNetworkMatrices
   - `duals::Vector{DataType}`: Constraint types to calculate the duals
-
+  - `reduce_radial_branches::Bool`: Skips modeling radial branches in the system to reduce problem size
 # Example
 
 ptdf_array = PTDF(system)
-thermal_gens = NetworkModel(StandardPTDFModel, ptdf = ptdf_array),
+thermal_gens = NetworkModel(PTDFPowerModel, ptdf = ptdf_array),
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
@@ -32,7 +32,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
-    radial_branches::PNM.RadialBranches
+    radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
     powerflow_evaluation::Union{Nothing, PFS.PowerFlowEvaluationModel}
 
@@ -52,7 +52,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             subnetworks,
             Dict{PSY.ACBus, Int}(),
             duals,
-            PNM.RadialBranches(),
+            PNM.RadialNetworkReduction(),
             reduce_radial_branches,
             powerflow_evaluation,
         )
@@ -62,7 +62,7 @@ end
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
 get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
-get_radial_branches(m::NetworkModel) = m.radial_branches
+get_radial_network_reduction(m::NetworkModel) = m.radial_network_reduction
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T} = T
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
@@ -79,6 +79,15 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
+function check_radial_branch_reduction_compatibility(
+    ::Type{T},
+) where {T <: PM.AbstractPowerModel}
+    if T ∈ INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
+        error("Network Model $T is not compatible with radial branch reduction")
+    end
+    return
+end
+
 function instantiate_network_model(
     model::NetworkModel{T},
     sys::PSY.System,
@@ -87,7 +96,8 @@ function instantiate_network_model(
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if model.reduce_radial_branches
-        model.radial_branches = PNM.RadialBranches(sys)
+        check_radial_branch_reduction_compatibility(T)
+        model.radial_network_reduction = PNM.RadialNetworkReduction(sys)
     end
     return
 end
@@ -107,11 +117,15 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::PSY.System)
+function instantiate_network_model(model::NetworkModel{PTDFPowerModel}, sys::PSY.System)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         model.PTDF_matrix =
             PNM.PTDF(sys; reduce_radial_branches = model.reduce_radial_branches)
+    end
+    if model.reduce_radial_branches
+        @assert !isempty(model.PTDF_matrix.radial_network_reduction)
+        model.radial_network_reduction = model.PTDF_matrix.radial_network_reduction
     end
     get_PTDF_matrix(model).subnetworks
     model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
@@ -119,31 +133,35 @@ function instantiate_network_model(model::NetworkModel{StandardPTDFModel}, sys::
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
-    if model.reduce_radial_branches
-        @assert !isempty(model.PTDF_matrix.radial_branches)
-        model.radial_branches = model.PTDF_matrix.radial_branches
-    end
     return
 end
 
 function _assign_subnetworks_to_buses(
     model::NetworkModel{T},
     sys::PSY.System,
-) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
+) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
-    for bus in get_available_components(PSY.ACBus, sys)
+    radial_network_reduction = PSI.get_radial_network_reduction(model)
+    for bus in PSI.get_available_components(PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
+        mapped_bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus)
         if haskey(temp_bus_map, bus_no)
             model.bus_area_map[bus] = temp_bus_map[bus_no]
+            continue
         else
+            bus_mapped = false
             for (subnet, bus_set) in subnetworks
-                if bus_no ∈ bus_set
+                if mapped_bus_no ∈ bus_set
                     temp_bus_map[bus_no] = subnet
                     model.bus_area_map[bus] = subnet
+                    bus_mapped = true
                     break
                 end
             end
+        end
+        if !bus_mapped
+            error("Bus $(PSY.summary(bus)) not mapped to any reference bus")
         end
     end
     return

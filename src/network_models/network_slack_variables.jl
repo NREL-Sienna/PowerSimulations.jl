@@ -10,7 +10,7 @@ function add_variables!(
     network_model::NetworkModel{U},
 ) where {
     T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    U <: Union{CopperPlatePowerModel, StandardPTDFModel},
+    U <: Union{CopperPlatePowerModel, PTDFPowerModel},
 }
     time_steps = get_time_steps(container)
     reference_buses = get_reference_buses(network_model)
@@ -37,7 +37,13 @@ function add_variables!(
     U <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    if isempty(radial_network_reduction)
+        bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    else
+        bus_numbers = collect(keys(PNM.get_bus_reduction_map(radial_network_reduction)))
+    end
+
     variable = add_variable_container!(container, T(), PSY.ACBus, bus_numbers, time_steps)
     for t in time_steps, n in bus_numbers
         variable[n, t] = JuMP.@variable(
@@ -59,7 +65,12 @@ function add_variables!(
     U <: PM.AbstractPowerModel,
 }
     time_steps = get_time_steps(container)
-    bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    if isempty(radial_network_reduction)
+        bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+    else
+        bus_numbers = collect(keys(PNM.get_bus_reduction_map(radial_network_reduction)))
+    end
     variable_active =
         add_variable_container!(container, T(), PSY.ACBus, "P", bus_numbers, time_steps)
     variable_reactive =
@@ -84,7 +95,7 @@ function objective_function!(
     container::OptimizationContainer,
     ::Type{PSY.System},
     network_model::NetworkModel{T},
-) where {T <: Union{CopperPlatePowerModel, StandardPTDFModel}}
+) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.System)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
     reference_buses = get_reference_buses(network_model)

@@ -15,11 +15,11 @@
     set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LossLessLine))
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir()) == PSI.BuildStatus.BUILT
-    moi_tests(model, 1656, 0, 1536, 816, 888, true)
+    moi_tests(model, 1656, 288, 1248, 528, 888, true)
     @test solve!(model) == RunStatus.SUCCESSFUL
 
     template_uc = ProblemTemplate(NetworkModel(
-        StandardPTDFModel;
+        PTDFPowerModel;
         #use_slacks=true,
         PTDF_matrix = PTDF(sys_5),
         #duals=[CopperPlateBalanceConstraint],
