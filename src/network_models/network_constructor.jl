@@ -53,7 +53,7 @@ end
 function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
-    model::NetworkModel{StandardPTDFModel},
+    model::NetworkModel{PTDFPowerModel},
     ::ProblemTemplate,
 )
     if get_use_slacks(model)

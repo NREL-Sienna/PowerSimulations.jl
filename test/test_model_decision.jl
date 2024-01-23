@@ -122,7 +122,7 @@ end
 
 @testset "Decision Model Solve with Slacks" begin
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
-    networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
+    networks = [PTDFPowerModel, DCPPowerModel, ACPPowerModel]
     for network in networks
         template = get_thermal_dispatch_template_network(
             NetworkModel(network; use_slacks = true, PTDF_matrix = PTDF(c_sys5_re)),
@@ -154,8 +154,8 @@ end
     @test UC_output == RunStatus.SUCCESSFUL
 end
 
-@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs StandardPTDFModel" begin
-    networks = [DCPPowerModel, StandardPTDFModel]
+@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs PTDFPowerModel" begin
+    networks = [DCPPowerModel, PTDFPowerModel]
     sys = PSB.build_system(PSITestSystems, "c_sys5")
     ptdf = PTDF(sys)
     # These are the duals of interest for the test
@@ -165,7 +165,7 @@ end
         template = get_template_dispatch_with_network(
             NetworkModel(network; PTDF_matrix = ptdf, duals = dual_constraint[ix]),
         )
-        if network == StandardPTDFModel
+        if network == PTDFPowerModel
             set_device_model!(
                 template,
                 DeviceModel(PSY.Line, PSI.StaticBranch; duals = [NetworkFlowConstraint]),
@@ -178,7 +178,7 @@ end
         res = ProblemResults(model)
 
         # These tests require results to be working
-        if network == StandardPTDFModel
+        if network == PTDFPowerModel
             push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
             duals = read_dual(res, NodalBalanceActiveConstraint, ACBus)

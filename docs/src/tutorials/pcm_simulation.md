@@ -78,7 +78,7 @@ example, PSI also provides pre-specified templates for some standard problems:
 
 ```@example pcm
 template_ed = template_economic_dispatch(
-    network = NetworkModel(StandardPTDFModel, use_slacks = true),
+    network = NetworkModel(PTDFPowerModel, use_slacks = true),
 )
 ```
 

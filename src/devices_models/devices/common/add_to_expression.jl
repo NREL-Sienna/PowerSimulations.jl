@@ -178,7 +178,7 @@ function add_to_expression!(
     U <: HVDCLosses,
     V <: TwoTerminalHVDCTypes,
     W <: HVDCTwoTerminalDispatch,
-    X <: Union{StandardPTDFModel, CopperPlatePowerModel},
+    X <: Union{PTDFPowerModel, CopperPlatePowerModel},
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -212,7 +212,7 @@ function add_to_expression!(
     U <: FlowActivePowerToFromVariable,
     V <: TwoTerminalHVDCTypes,
     W <: AbstractDeviceFormulation,
-    X <: StandardPTDFModel,
+    X <: PTDFPowerModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -248,7 +248,7 @@ function add_to_expression!(
     U <: FlowActivePowerFromToVariable,
     V <: TwoTerminalHVDCTypes,
     W <: AbstractTwoTerminalDCLineFormulation,
-    X <: StandardPTDFModel,
+    X <: PTDFPowerModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -579,7 +579,7 @@ function add_to_expression!(
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: StandardPTDFModel,
+    X <: PTDFPowerModel,
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
@@ -613,7 +613,7 @@ function add_to_expression!(
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
-    X <: StandardPTDFModel,
+    X <: PTDFPowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -647,7 +647,7 @@ function add_to_expression!(
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: StandardPTDFModel,
+    X <: PTDFPowerModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -686,7 +686,7 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-    X <: StandardPTDFModel,
+    X <: PTDFPowerModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -762,7 +762,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
@@ -844,7 +844,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{PSY.PhaseShiftingTransformer},
     ::DeviceModel{PSY.PhaseShiftingTransformer, V},
-    network_model::NetworkModel{StandardPTDFModel},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: ActivePowerBalance, U <: PhaseShifterAngle, V <: PhaseAngleControl}
     var = get_variable(container, U(), PSY.PhaseShiftingTransformer)
     expression = get_expression(container, T(), PSY.ACBus)
@@ -1076,7 +1076,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    W <: Union{CopperPlatePowerModel, StandardPTDFModel},
+    W <: Union{CopperPlatePowerModel, PTDFPowerModel},
 }
     variable = get_variable(container, U(), PSY.System)
     expression = get_expression(container, T(), PSY.System)
