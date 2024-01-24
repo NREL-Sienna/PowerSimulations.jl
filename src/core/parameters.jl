@@ -64,6 +64,7 @@ function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::Str
     return
 end
 
+get_component_names(attr::TimeSeriesAttributes) = keys(attr.component_name_to_ts_uuid)
 _get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[name]
 
 struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
