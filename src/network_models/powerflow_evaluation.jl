@@ -9,7 +9,8 @@ function _add_branches_aux_variables!(
     branch_types::Vector{DataType},
     branch_lookup::Dict{String, Int},
 )
-    branch_type_map = Dict{String, DataType}(k => branch_types[v] for (k, v) in branch_lookup)
+    branch_type_map =
+        Dict{String, DataType}(k => branch_types[v] for (k, v) in branch_lookup)
     time_steps = get_time_steps(container)
     for var_type in vars
         for D in Set(branch_types)
@@ -44,64 +45,22 @@ function _add_buses_aux_variables!(
     return
 end
 
-function add_power_flow_data!(
-    container::OptimizationContainer,
-    evaluator::T,
-    sys::PSY.System,
-) where {T <: Union{PFS.PTDFDCPowerFlow, PFS.vPTDFDCPowerFlow}}
-    @info "Building PowerFlow evaluator using $(evaluator)"
-    pf_data = PFS.PowerFlowData(evaluator, sys; time_steps = length(get_time_steps(container)))
-    container.power_flow_data = pf_data
-    branch_aux_vars = [PowerFlowLineActivePower]
-    _add_branches_aux_variables!(container, branch_aux_vars, PFS.get_branch_type(pf_data), PFS.get_branch_lookup(pf_data))
-    return
-end
-
-function add_power_flow_data!(
-    container::OptimizationContainer,
-    evaluator::PFS.DCPowerFlow,
-    sys::PSY.System,
-)
-    @info "Building PowerFlow evaluator using $(evaluator)"
-    pf_data = PFS.PowerFlowData(evaluator, sys; time_steps = length(get_time_steps(container)))
-    container.power_flow_data = PowerFlowEvaluationData(pf_data)
-    branch_aux_vars = [PowerFlowLineActivePower]
-    _add_branches_aux_variables!(container, branch_aux_vars, PFS.get_branch_type(pf_data), PFS.get_branch_lookup(pf_data))
-    bus_aux_vars = [PowerFlowVoltageAngle]
-    _add_buses_aux_variables!(container, bus_aux_vars, PFS.get_bus_lookup(pf_data))
-    return
-end
-
-function add_power_flow_data!(
-    container::OptimizationContainer,
-    evaluator::PFS.ACPowerFlow,
-    sys::PSY.System,
-)
-    @info "Building PowerFlow evaluator using $(evaluator)"
-    pf_data =  PFS.PowerFlowData(evaluator, sys; time_steps = length(get_time_steps(container)))
-    container.power_flow_data = pf_data
-    branch_aux_vars = [PowerFlowLineActivePower, PowerFlowLineReactivePower]
-    _add_branches_aux_variables!(container, branch_aux_vars, PFS.get_branch_type(pf_data), PFS.get_branch_lookup(pf_data))
-    bus_aux_vars = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
-    _add_buses_aux_variables!(container, bus_aux_vars, PFS.get_bus_lookup(pf_data))
-    return
-end
-
-injection_keys =[
+const ACTIVE_POWER_INJECTION_KEYS = [
     ActivePowerVariable
     PowerOutput
     ActivePowerTimeSeriesParameter
 ]
 
-function make_injection_map(container::OptimizationContainer, sys::PSY.System)
-    pf_data = get_power_flow_data(container)
+function _make_injection_map!(container::OptimizationContainer, sys::PSY.System)
+    pf_e_data = get_power_flow_evaluation_data(container)
+    pf_data = get_power_flow_data(pf_e_data)
     # Maps the StaticInjection component type by name to the
     # index in the PowerFlow data arrays going from Bus number to bus index
     temp_component_bus_map = Dict{DataType, Dict{String, Int}}()
     available_injectors = PSY.get_components(PSY.get_available, PSY.StaticInjection, sys)
     sizehint!(temp_component_bus_map, length(available_injectors))
     bus_lookup = PFS.get_bus_lookup(pf_data)
-    for comp ∈ available_injectors
+    for comp in available_injectors
         comp_type = typeof(comp)
         bus_dict = get!(temp_component_bus_map, comp_type, Dict{String, Int}())
         bus_number = PSY.get_number(PSY.get_bus(comp))
@@ -110,11 +69,11 @@ function make_injection_map(container::OptimizationContainer, sys::PSY.System)
 
     # Second map that persists to store the bus index that the variable
     # has to be added/substracted to in the power flow data dictionary
-    pf_data_opt_container_map = Dict{<:OptimizationContainerKey, Dict{String, Int}}()
+    pf_data_opt_container_map = Dict{OptimizationContainerKey, Dict{String, Int}}()
     added_injection_types = DataType[]
     for (key, array) in get_variables(container)
-        if get_entry_type(key) ∉ injection_keys
-           continue
+        if get_entry_type(key) ∉ ACTIVE_POWER_INJECTION_KEYS
+            continue
         end
 
         name_bus_ix_map = Dict{String, Int}()
@@ -128,8 +87,8 @@ function make_injection_map(container::OptimizationContainer, sys::PSY.System)
     end
 
     for (key, array) in get_aux_variables(container)
-        if get_entry_type(key) ∉ injection_keys
-           continue
+        if get_entry_type(key) ∉ ACTIVE_POWER_INJECTION_KEYS
+            continue
         end
         # Skip aux variable if the device was added as a variable
         if comp_type ∈ added_injection_types
@@ -146,7 +105,7 @@ function make_injection_map(container::OptimizationContainer, sys::PSY.System)
     end
 
     for (key, param_container) in get_parameters(container)
-        if get_entry_type(key) ∉ injection_keys
+        if get_entry_type(key) ∉ ACTIVE_POWER_INJECTION_KEYS
             continue
         end
         comp_type = get_component_type(key)
@@ -162,13 +121,75 @@ function make_injection_map(container::OptimizationContainer, sys::PSY.System)
         pf_data_opt_container_map[key] = name_bus_ix_map
     end
 
-
-    return pf_data_opt_container_map
+    pf_e_data.injection_key_map = pf_data_opt_container_map
+    return
 end
 
+function add_power_flow_data!(
+    container::OptimizationContainer,
+    evaluator::T,
+    sys::PSY.System,
+) where {T <: Union{PFS.PTDFDCPowerFlow, PFS.vPTDFDCPowerFlow}}
+    @info "Building PowerFlow evaluator using $(evaluator)"
+    pf_data =
+        PFS.PowerFlowData(evaluator, sys; time_steps = length(get_time_steps(container)))
+    container.power_flow_evaluation_data = PowerFlowEvaluationData(pf_data)
+    branch_aux_vars = [PowerFlowLineActivePower]
+    _add_branches_aux_variables!(
+        container,
+        branch_aux_vars,
+        PFS.get_branch_type(pf_data),
+        PFS.get_branch_lookup(pf_data),
+    )
+    _make_injection_map!(container, sys)
+    return
+end
+
+function add_power_flow_data!(
+    container::OptimizationContainer,
+    evaluator::PFS.DCPowerFlow,
+    sys::PSY.System,
+)
+    @info "Building PowerFlow evaluator using $(evaluator)"
+    pf_data =
+        PFS.PowerFlowData(evaluator, sys; time_steps = length(get_time_steps(container)))
+    container.power_flow_evaluation_data = PowerFlowEvaluationData(pf_data)
+    branch_aux_vars = [PowerFlowLineActivePower]
+    _add_branches_aux_variables!(
+        container,
+        branch_aux_vars,
+        PFS.get_branch_type(pf_data),
+        PFS.get_branch_lookup(pf_data),
+    )
+    bus_aux_vars = [PowerFlowVoltageAngle]
+    _add_buses_aux_variables!(container, bus_aux_vars, PFS.get_bus_lookup(pf_data))
+    _make_injection_map!(container, sys)
+    return
+end
+
+function add_power_flow_data!(
+    container::OptimizationContainer,
+    evaluator::PFS.ACPowerFlow,
+    sys::PSY.System,
+)
+    @info "Building PowerFlow evaluator using $(evaluator)"
+    pf_data =
+        PFS.PowerFlowData(evaluator, sys; time_steps = length(get_time_steps(container)))
+    container.power_flow_evaluation_data = PowerFlowEvaluationData(pf_data)
+    branch_aux_vars = [PowerFlowLineActivePower, PowerFlowLineReactivePower]
+    _add_branches_aux_variables!(
+        container,
+        branch_aux_vars,
+        PFS.get_branch_type(pf_data),
+        PFS.get_branch_lookup(pf_data),
+    )
+    bus_aux_vars = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+    _add_buses_aux_variables!(container, bus_aux_vars, PFS.get_bus_lookup(pf_data))
+    _make_injection_map!(container, sys)
+    return
+end
 
 function update_pf_data!(pf_data, container::OptimizationContainer)
-
 end
 
 function solve_powerflow!(

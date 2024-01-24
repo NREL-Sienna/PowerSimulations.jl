@@ -21,7 +21,6 @@ const NETWORKS_FOR_TESTING = [
     (PM.SparseSDPWRMPowerModel, scs_solver),
 ]
 
-
 @testset "All PowerModels models construction" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     for (network, solver) in NETWORKS_FOR_TESTING

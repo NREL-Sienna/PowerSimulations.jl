@@ -110,7 +110,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
-    power_flow_data::Union{<:PowerFlowEvaluationData, Nothing}
+    power_flow_evaluation_data::Union{<:PowerFlowEvaluationData, Nothing}
 end
 
 function OptimizationContainer(
@@ -193,7 +193,8 @@ get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_parameters(container::OptimizationContainer) = container.parameters
-get_power_flow_data(container::OptimizationContainer) = container.power_flow_data
+get_power_flow_evaluation_data(container::OptimizationContainer) =
+    container.power_flow_evaluation_data
 get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
