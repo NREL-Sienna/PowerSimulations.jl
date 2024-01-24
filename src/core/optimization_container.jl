@@ -110,7 +110,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
-    power_flow_data::Union{PFS.PowerFlowData, Nothing}
+    power_flow_data::Union{<:PowerFlowEvaluationData, Nothing}
 end
 
 function OptimizationContainer(

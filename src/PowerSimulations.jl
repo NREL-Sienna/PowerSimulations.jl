@@ -450,6 +450,7 @@ include("core/results_by_time.jl")
 
 # Order Required
 include("operation/problem_template.jl")
+include("core/powerflow_data_wrapper.jl")
 include("core/optimization_container.jl")
 include("core/store_common.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
