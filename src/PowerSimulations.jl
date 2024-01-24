@@ -450,7 +450,7 @@ include("core/results_by_time.jl")
 
 # Order Required
 include("operation/problem_template.jl")
-include("core/powerflow_data_wrapper.jl")
+include("core/power_flow_data_wrapper.jl")
 include("core/optimization_container.jl")
 include("core/store_common.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
@@ -537,7 +537,7 @@ include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 include("network_models/hvdc_networks.jl")
-include("network_models/powerflow_evaluation.jl")
+include("network_models/power_flow_evaluation.jl")
 
 include("initial_conditions/initialization.jl")
 

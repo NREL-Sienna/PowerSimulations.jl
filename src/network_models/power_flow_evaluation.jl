@@ -192,12 +192,12 @@ end
 function update_pf_data!(pf_data, container::OptimizationContainer)
 end
 
-function solve_powerflow!(
+function solve_power_flow!(
     container::OptimizationContainer,
     system::PSY.System)
     pf_data = get_pf_data(container)
     update_pf_data!(pf_data, container)
-    PFS.solve_powerflow!(pf_data)
+    PFS.solve_power_flow!(pf_data)
 end
 
 function calculate_aux_variable_value!(container::OptimizationContainer,

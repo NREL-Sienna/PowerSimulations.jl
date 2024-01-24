@@ -654,7 +654,7 @@ function build_impl!(
     @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
-    add_power_flow_data!(container, get_powerflow_evaluation(transmission_model), sys)
+    add_power_flow_data!(container, get_power_flow_evaluation(transmission_model), sys)
     check_optimization_container(container)
     return
 end
@@ -1508,7 +1508,7 @@ end
 
 function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
     if !isnothing(get_power_flow_data(container))
-        solve_powerflow!(container, system)
+        solve_power_flow!(container, system)
     end
 
     aux_vars = get_aux_variables(container)
