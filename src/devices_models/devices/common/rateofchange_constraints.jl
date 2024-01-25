@@ -91,25 +91,24 @@ function add_linear_ramp_constraints!(
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
-        @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             expr_up[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
         )
         con_down[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
-            ic_power - expr_dn[name, 1] >= -1 * ramp_limits.down * minutes_per_period
+            get_jump_model(container),
+            ic_power - expr_dn[name, 1] <= ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 expr_up[name, t] - variable[name, t - 1] <=
                 ramp_limits.up * minutes_per_period
             )
             con_down[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
-                variable[name, t - 1] - expr_dn[name, t] >=
-                -1 * ramp_limits.down * minutes_per_period
+                get_jump_model(container),
+                variable[name, t - 1] - expr_dn[name, t] <=
+                ramp_limits.down * minutes_per_period
             )
         end
     end
@@ -147,21 +146,21 @@ function add_linear_ramp_constraints!(
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             variable[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
         )
         con_down[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             ic_power - variable[name, 1] <= ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 variable[name, t] - variable[name, t - 1] <=
                 ramp_limits.up * minutes_per_period
             )
             con_down[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 variable[name, t - 1] - variable[name, t] <=
                 ramp_limits.down * minutes_per_period
             )
@@ -234,23 +233,23 @@ function add_semicontinuous_ramp_constraints!(
         @debug "add rate_of_change_constraint" name ic_power
 
         con_up[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             expr_up[name, 1] - ic_power <=
             ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             ic_power - expr_dn[name, 1] <=
             ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 expr_up[name, t] - variable[name, t - 1] <=
                 ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, t]
             )
             con_down[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 variable[name, t - 1] - expr_dn[name, t] <=
                 ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, t]
             )
@@ -295,23 +294,23 @@ function add_semicontinuous_ramp_constraints!(
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
         con_up[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             variable[name, 1] - ic_power <=
             ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             ic_power - variable[name, 1] <=
             ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 variable[name, t] - variable[name, t - 1] <=
                 ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, t]
             )
             con_down[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 variable[name, t - 1] - variable[name, t] <=
                 ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, t]
             )
