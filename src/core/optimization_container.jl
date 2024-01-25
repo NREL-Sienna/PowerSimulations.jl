@@ -688,8 +688,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         return RunStatus.FAILED
     end
 
-    status = RunStatus.SUCCESSFUL
-
+    # Order is important because if a dual is needed then it could move the results to the
+    # temporary primal container
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
 
@@ -698,7 +698,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system, is_milp(container))
-    return status
+
+    return RunStatus.SUCCESSFUL
 end
 
 function compute_conflict!(container::OptimizationContainer)
