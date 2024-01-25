@@ -189,7 +189,62 @@ function add_power_flow_data!(
     return
 end
 
-function update_pf_data!(pf_data, container::OptimizationContainer)
+function _write_value_to_pf_data!(
+    pf_data::PFS.PowerFlowData,
+    container::OptimizationContainer,
+    key::AuxVariableKey{PowerOutput, T},
+    bus_index_map) where {T <: PSY.ThermalGen}
+
+    result = get_variable(container, key)
+    for (device_name, index) in bus_index_map
+        injection_values = result[device_name, :]
+        for t in axes(result)[2]
+            pf_data[index, t] = jump_value(injection_values[t])
+        end
+    end
+    return
+end
+
+function _write_value_to_pf_data!(
+    pf_data::PFS.PowerFlowData,
+    container::OptimizationContainer,
+    key::VariableKey{ParameterKey, T},
+    bus_index_map) where {T <: PSY.Generator}
+
+    result = get_variable(container, key)
+    for (device_name, index) in bus_index_map
+        injection_values = result[device_name, :]
+        for t in axes(result)[2]
+            pf_data[index, t] = jump_value(injection_values[t])
+        end
+    end
+    return
+end
+
+function _write_value_to_pf_data!(
+    pf_data::PFS.PowerFlowData,
+    container::OptimizationContainer,
+    key::VariableKey{ActivePowerVariable, T},
+    bus_index_map) where {T <: PSY.StaticInjection}
+
+    result = get_variable(container, key)
+    for (device_name, index) in bus_index_map
+        injection_values = result[device_name, :]
+        for t in axes(result)[2]
+            pf_data[index, t] = jump_value(injection_values[t])
+        end
+    end
+    return
+end
+
+function update_pf_data!(pf_e_data, container::OptimizationContainer)
+    pf_data = get_power_flow_data(pf_e_data)
+    PFS.clear_injection_data!(pf_data)
+    key_map = get_injection_key_map(container)
+    for (key, bus_index_map) in key_map
+        _write_value_to_pf_data!(pf_data, container, key, bus_index_map)
+    end
+    return
 end
 
 function solve_power_flow!(
