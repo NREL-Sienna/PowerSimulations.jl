@@ -62,13 +62,12 @@ function add_linear_ramp_constraints!(
     U::Type{S},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {
     S <: Union{PowerAboveMinimumVariable, ActivePowerVariable},
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
-    parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     variable = get_variable(container, U(), V)
     ramp_devices = _get_ramp_constraint_devices(container, devices)
@@ -90,7 +89,7 @@ function add_linear_ramp_constraints!(
         name ∉ set_name && continue
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
-        @debug "add rate_of_change_constraint" name ic_power
+        @error "add rate_of_change_constraint" name ic_power
         con_up[name, 1] = JuMP.@constraint(
             get_jump_model(container),
             expr_up[name, 1] - ic_power <= ramp_limits.up * minutes_per_period

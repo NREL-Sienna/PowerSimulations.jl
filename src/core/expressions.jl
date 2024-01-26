@@ -41,9 +41,7 @@ struct RawACE <: ExpressionType end
 struct ProductionCostExpression <: CostExpressions end
 struct ActivePowerRangeExpressionLB <: RangeConstraintLBExpressions end
 struct ComponentActivePowerRangeExpressionLB <: RangeConstraintLBExpressions end
-struct ReserveRangeExpressionLB <: RangeConstraintLBExpressions end
 struct ActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
-struct ReserveRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end

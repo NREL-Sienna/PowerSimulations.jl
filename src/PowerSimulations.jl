@@ -319,9 +319,7 @@ export EmergencyDown
 export RawACE
 export ProductionCostExpression
 export ActivePowerRangeExpressionLB
-export ReserveRangeExpressionLB
 export ActivePowerRangeExpressionUB
-export ReserveRangeExpressionUB
 
 #################################################################################
 # Imports
