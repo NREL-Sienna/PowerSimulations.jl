@@ -1038,8 +1038,6 @@ function add_to_expression!(
     V <: PSY.ThermalGen,
     W <: AbstractThermalDispatchFormulation,
 }
-    @show "here"
-    error()
     parameter_array = get_parameter_array(container, U(), V)
     if !has_container_key(container, T, V)
         add_expressions!(container, T, devices, model)
