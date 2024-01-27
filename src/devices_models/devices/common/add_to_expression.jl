@@ -903,7 +903,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: Union{ActivePowerRangeExpressionUB, ReserveRangeExpressionUB},
+    T <: ActivePowerRangeExpressionUB,
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveUp},
@@ -989,7 +989,7 @@ function add_to_expression!(
     expression = get_expression(container, T(), V)
     for d in devices, t in get_time_steps(container)
         name = PSY.get_name(d)
-        _add_to_jump_expression!(expression[name, t], variable[name, t], 1.0)
+        _add_to_jump_expression!(expression[name, t], variable[name, t], -1.0)
     end
     return
 end
