@@ -401,7 +401,11 @@ for name in services_DA_names
     add_time_series!(RT_sys, service_rt, new_ts)
 
     # After For Loop
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> 63bd8d521979e57749d5b1c4a08fb6938fd09c0b
 end
 transform_single_time_series!(RT_sys, horizon_RT, interval_RT)
 
