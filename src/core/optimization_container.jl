@@ -677,7 +677,13 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
     model_status = JuMP.primal_status(jump_model)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        @error "Optimizer returned $model_status"
+        @error "Optimizer returned $model_status trying again"
+        JuMP.optimize!(jump_model)
+        model_status = JuMP.primal_status(jump_model)
+    end
+
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        @error "Optimizer returned $model_status getting conflict"
         if get_calculate_conflict(get_settings(container))
             compute_conflict!(container)
         end
