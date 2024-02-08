@@ -706,6 +706,8 @@ function compute_conflict!(container::OptimizationContainer)
         JuMP.compute_conflict!(jump_model)
         if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
             @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
+
+            return
         end
 
         for (key, field_container) in get_constraints(container)
