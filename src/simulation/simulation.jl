@@ -394,12 +394,11 @@ function _build_decision_models!(sim::Simulation)
             rethrow()
         end
     end
-    @info "here"
     seq_nums = _sim_steps_to_compare(sim)
-    _initial_conditions_reconciliation!(
-        get_decision_models(get_models(sim)),
-        seq_nums,
-    )
+    # _initial_conditions_reconciliation!(
+    #    get_decision_models(get_models(sim)),
+    #    seq_nums,
+    #)
     return
 end
 
