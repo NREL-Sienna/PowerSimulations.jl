@@ -717,14 +717,19 @@ end
 
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
+    settings = get_settings(container)
     JuMP.unset_silent(jump_model)
     jump_model.is_model_dirty = false
     conflict = container.infeasibility_conflict
     try
         JuMP.compute_conflict!(jump_model)
-        if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
-            @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
-            return MOI.get(jump_model, MOI.ConflictStatus())
+        conflict_status = MOI.get(jump_model, MOI.ConflictStatus())
+        if conflict_status != MOI.CONFLICT_FOUND
+            @error "No conflict could be found for the model. Status: $conflict_status"
+            if !get_optimizer_solve_log_print(settings)
+                JuMP.set_silent(jump_model)
+            end
+            return conflict_status
         end
 
         for (key, field_container) in get_constraints(container)
@@ -738,7 +743,7 @@ function compute_conflict!(container::OptimizationContainer)
         end
         @error "$(conflict)"
 
-        return MOI.get(jump_model, MOI.ConflictStatus())
+        return conflict_status
     catch e
         jump_model.is_model_dirty = true
         if isa(e, MethodError)
