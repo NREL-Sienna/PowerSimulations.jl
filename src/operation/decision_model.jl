@@ -513,8 +513,6 @@ function solve!(
         write_results!(store, model, start_time, start_time; exports = exports)
         write_optimizer_stats!(store, model, start_time)
         advance_execution_count!(model)
-    else
-        serialize_problem(model, )
     end
     return get_run_status(model)
 end
