@@ -684,20 +684,22 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
         model_status = JuMP.primal_status(jump_model)
 
-        if get_calculate_conflict(get_settings(container))
-            @error "Optimizer returned $model_status computing conflict"
-            conflict_status = compute_conflict!(container)
-            if conflict_status == MOI.CONFLICT_FOUND
+        if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+            if get_calculate_conflict(get_settings(container))
+                @warn "Optimizer returned $model_status computing conflict"
+                conflict_status = compute_conflict!(container)
+                if conflict_status == MOI.CONFLICT_FOUND
+                    return RunStatus.FAILED
+                end
+            else
+                @warn "Optimizer returned $model_status trying optimize! again"
+            end
+
+            try_count += 1
+            if try_count > MAX_TRIES
+                @error "Optimizer returned $model_status after $MAX_TRIES optimize! attempts"
                 return RunStatus.FAILED
             end
-        else
-            @error "Optimizer returned $model_status trying again"
-        end
-
-        try_count += 1
-        if try_count > MAX_TRIES
-            @error "Optimizer returned $model_status after $try_count solve tries"
-            return RunStatus.FAILED
         end
     end
 
