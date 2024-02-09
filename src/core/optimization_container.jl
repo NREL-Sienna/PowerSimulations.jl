@@ -675,7 +675,6 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     model_status = MOI.NO_SOLUTION::MOI.ResultStatusCode
     conflict_status = MOI.COMPUTE_CONFLICT_NOT_CALLED
 
-    MAX_TRIES = 2
     try_count = 0
     while model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         _,
@@ -696,8 +695,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
             end
 
             try_count += 1
-            if try_count > MAX_TRIES
-                @error "Optimizer returned $model_status after $MAX_TRIES optimize! attempts"
+            if try_count > MAX_OPTIMIZE_TRIES
+                @error "Optimizer returned $model_status after $MAX_OPTIMIZE_TRIES optimize! attempts"
                 return RunStatus.FAILED
             end
         end
