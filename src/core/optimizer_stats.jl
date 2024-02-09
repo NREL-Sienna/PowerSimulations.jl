@@ -10,6 +10,7 @@ mutable struct OptimizerStats
     has_duals::Bool
     # Candidate solution
     objective_bound::Union{Missing, Float64}
+    relative_gap::Union{Missing, Float64}
     # Use missing instead of nothing so that CSV writting doesn't fail
     dual_objective_value::Union{Missing, Float64}
     # Work counters
@@ -35,6 +36,7 @@ function OptimizerStats()
         -1,
         false,
         false,
+        missing,
         missing,
         missing,
         NaN,

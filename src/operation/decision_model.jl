@@ -473,7 +473,6 @@ function solve!(
                 @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
             catch e
                 @error "Decision Problem solve failed" exception = (e, catch_backtrace())
-                # TODO: Run IIS here if the solve called failed
                 set_run_status!(model, RunStatus.FAILED)
             end
         end
