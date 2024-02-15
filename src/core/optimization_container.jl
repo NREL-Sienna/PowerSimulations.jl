@@ -926,7 +926,7 @@ function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     aux = get(container.aux_variables, key, nothing)
     if aux === nothing
         name = encode_key(key)
-        keys = encode_key.(get_variable_keys(container))
+        keys = encode_key.(get_aux_variable_keys(container))
         throw(IS.InvalidValue("Auxiliary variable $name is not stored. $keys"))
     end
     return aux
