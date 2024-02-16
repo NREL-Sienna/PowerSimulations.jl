@@ -741,7 +741,13 @@ function compute_conflict!(container::OptimizationContainer)
                 conflict[encode_key(key)] = conflict_indices
             end
         end
-        @error "$(conflict)"
+
+        msg = IOBuffer()
+        for (k, v) in conflict
+            PrettyTables.pretty_table(msg, v; header = [k])
+        end
+
+        @error "Constraints participating in conflict basis (IIS) \n\n $(String(take!(msg)))"
 
         return conflict_status
     catch e
