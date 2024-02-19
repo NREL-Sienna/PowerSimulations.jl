@@ -24,8 +24,7 @@ get_variable_binary(::PhaseShifterAngle, ::Type{PSY.PhaseShiftingTransformer}, :
 get_parameter_multiplier(::FixValueParameter, ::PSY.ACBranch, ::StaticBranch) = 1.0
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
-get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, <:AbstractBranchFormulation}) where {T <: PSY.ACBranch} = DeviceModel(T, StaticBranch)
-get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, <:AbstractBranchFormulation},) where {T <: PSY.MonitoredLine} = DeviceModel(T, StaticBranchUnbounded)
+get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: <:AbstractBranchFormulation} = DeviceModel(T, U)
 
 #! format: on
 function get_default_time_series_names(
