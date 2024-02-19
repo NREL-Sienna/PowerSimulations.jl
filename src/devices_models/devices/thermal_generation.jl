@@ -302,7 +302,7 @@ function add_variable!(
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
-            container.JuMPmodel,
+            get_jump_model(container),
             base_name = "$(T)_$(D)_{$(name), $(t)}",
             binary = binary
         )
@@ -466,17 +466,17 @@ function add_constraints!(
         end
         for t in time_steps
             con_on[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 varp[name, t] <=
                 (limits.max - limits.min) * varstatus[name, t] -
                 max(limits.max - startup_shutdown_limits.startup, 0.0) * varon[name, t]
             )
 
-            con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, varp[name, t] >= 0.0)
+            con_lb[name, t] = JuMP.@constraint(get_jump_model(container), varp[name, t] >= 0.0)
 
             if t != length(time_steps)
                 con_off[name, t] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     varp[name, t] <=
                     (limits.max - limits.min) * varstatus[name, t] -
                     max(limits.max - startup_shutdown_limits.shutdown, 0.0) *
@@ -524,7 +524,7 @@ function add_constraints!(
                 JuMP.set_lower_bound(varp[name, t], 0.0)
             end
             con_lb[name, t] =
-                JuMP.@constraint(container.JuMPmodel, expression_products[name, t] >= 0)
+                JuMP.@constraint(get_jump_model(container), expression_products[name, t] >= 0)
         end
     end
     return
@@ -580,14 +580,14 @@ function add_constraints!(
                 JuMP.set_lower_bound(varp[name, t], 0.0)
             end
             con_on[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 expression_products[name, t] <=
                 (limits.max - limits.min) * varstatus[name, t] -
                 max(limits.max - startup_shutdown_limits.startup, 0) * varon[name, t]
             )
             if t != length(time_steps)
                 con_off[name, t] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     expression_products[name, t] <=
                     (limits.max - limits.min) * varstatus[name, t] -
                     max(limits.max - startup_shutdown_limits.shutdown, 0) *
@@ -626,7 +626,7 @@ function add_constraints!(
             lag_ramp_limits = PSY.get_power_trajectory(device)
             val = max(limits.max - lag_ramp_limits.shutdown, 0)
             con[name] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 val * varstop[name, 1] <=
                 ini_conds[ix, 2].value * (limits.max - limits.min) - get_value(ic)
             )
@@ -690,11 +690,11 @@ function add_constraints!(
     for ic in initial_conditions
         name = PSY.get_name(get_component(ic))
         constraint[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
         )
         aux_constraint[name, 1] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             varstart[name, 1] + varstop[name, 1] <= 1.0
         )
     end
@@ -702,11 +702,11 @@ function add_constraints!(
     for t in time_steps[2:end], ic in initial_conditions
         name = get_component_name(ic)
         constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
         )
         aux_constraint[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             varstart[name, t] + varstop[name, t] <= 1.0
         )
     end
@@ -1054,7 +1054,7 @@ function add_constraints!(
         for ix in 1:(startup_types - 1)
             if t >= time_limits[ix + 1]
                 con[ix][name, t] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     start_vars[ix][name, t] <= sum(
                         varstop[name, t - i] for i in UnitRange{Int}(
                             Int(time_limits[ix]),
@@ -1113,7 +1113,7 @@ function add_constraints!(
         name = PSY.get_name(d)
         startup_types = PSY.get_start_types(d)
         con[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             varstart[name, t] == sum(start_vars[ix][name, t] for ix in 1:(startup_types))
         )
     end
@@ -1188,13 +1188,13 @@ function add_constraints!(
             var = varstarts[st]
             if t < (time_limits[st + 1] - 1)
                 con_ub[name, t, st] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     (time_limits[st + 1] - 1) * var[name, t] +
                     (1 - var[name, t]) * M_VALUE >=
                     sum((1 - varbin[name, i]) for i in 1:t) + get_value(ic)
                 )
                 con_lb[name, t, st] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     time_limits[st] * var[name, t] <=
                     sum((1 - varbin[name, i]) for i in 1:t) + get_value(ic)
                 )
