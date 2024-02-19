@@ -747,7 +747,7 @@ function compute_conflict!(container::OptimizationContainer)
             PrettyTables.pretty_table(msg, v; header = [k])
         end
 
-        @error "Constraints participating in conflict basis (IIS) \n\n $(String(take!(msg)))"
+        @error "Constraints participating in conflict basis (IIS) \n\n$(String(take!(msg)))"
 
         return conflict_status
     catch e
