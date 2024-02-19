@@ -15,7 +15,7 @@ get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Therm
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = 0.0
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = nothing
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::ThermalDispatchNoMin) = 0.0
 
@@ -456,33 +456,35 @@ function add_constraints!(
         meta = "lb",
     )
 
-    for device in devices, t in time_steps
+    for device in devices
         name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         startup_shutdown_limits = get_startup_shutdown_limits(device, T, W)
+
         if JuMP.has_lower_bound(varp[name, t])
             JuMP.set_lower_bound(varp[name, t], 0.0)
         end
-
-        con_on[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            varp[name, t] <=
-            (limits.max - limits.min) * varstatus[name, t] -
-            max(limits.max - startup_shutdown_limits.startup, 0.0) * varon[name, t]
-        )
-
-        con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, varp[name, t] >= 0.0)
-
-        if t == length(time_steps)
-            continue
-        else
-            con_off[name, t] = JuMP.@constraint(
+        for t in time_steps
+            con_on[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 varp[name, t] <=
                 (limits.max - limits.min) * varstatus[name, t] -
-                max(limits.max - startup_shutdown_limits.shutdown, 0.0) *
-                varoff[name, t + 1]
+                max(limits.max - startup_shutdown_limits.startup, 0.0) * varon[name, t]
             )
+
+            con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, varp[name, t] >= 0.0)
+
+            if t == length(time_steps)
+                continue
+            else
+                con_off[name, t] = JuMP.@constraint(
+                    container.JuMPmodel,
+                    varp[name, t] <=
+                    (limits.max - limits.min) * varstatus[name, t] -
+                    max(limits.max - startup_shutdown_limits.shutdown, 0.0) *
+                    varoff[name, t + 1]
+                )
+            end
         end
     end
     return
@@ -517,13 +519,15 @@ function add_constraints!(
         meta = "lb",
     )
 
-    for device in devices, t in time_steps
+    for device in devices
         name = PSY.get_name(device)
-        if JuMP.has_lower_bound(varp[name, t])
-            JuMP.set_lower_bound(varp[name, t], 0.0)
+        for t in time_steps
+            if JuMP.has_lower_bound(varp[name, t])
+                JuMP.set_lower_bound(varp[name, t], 0.0)
+            end
+            con_lb[name, t] =
+                JuMP.@constraint(container.JuMPmodel, expression_products[name, t] >= 0)
         end
-        con_lb[name, t] =
-            JuMP.@constraint(container.JuMPmodel, expression_products[name, t] >= 0)
     end
     return
 end
@@ -568,29 +572,32 @@ function add_constraints!(
         meta = "uboff",
     )
 
-    for device in devices, t in time_steps
+    for device in devices
         name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         startup_shutdown_limits = get_startup_shutdown_limits(device, T, W)
         @assert !isnothing(startup_shutdown_limits) "$(name)"
-        if JuMP.has_lower_bound(varp[name, t])
-            JuMP.set_lower_bound(varp[name, t], 0.0)
-        end
-        con_on[name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            expression_products[name, t] <=
-            (limits.max - limits.min) * varstatus[name, t] -
-            max(limits.max - startup_shutdown_limits.startup, 0) * varon[name, t]
-        )
-        if t == length(time_steps)
-            continue
-        else
-            con_off[name, t] = JuMP.@constraint(
+        for t in time_steps
+            if JuMP.has_lower_bound(varp[name, t])
+                JuMP.set_lower_bound(varp[name, t], 0.0)
+            end
+            con_on[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 expression_products[name, t] <=
                 (limits.max - limits.min) * varstatus[name, t] -
-                max(limits.max - startup_shutdown_limits.shutdown, 0) * varoff[name, t + 1]
+                max(limits.max - startup_shutdown_limits.startup, 0) * varon[name, t]
             )
+            if t == length(time_steps)
+                continue
+            else
+                con_off[name, t] = JuMP.@constraint(
+                    container.JuMPmodel,
+                    expression_products[name, t] <=
+                    (limits.max - limits.min) * varstatus[name, t] -
+                    max(limits.max - startup_shutdown_limits.shutdown, 0) *
+                    varoff[name, t + 1]
+                )
+            end
         end
     end
     return
