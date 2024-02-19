@@ -474,9 +474,7 @@ function add_constraints!(
 
             con_lb[name, t] = JuMP.@constraint(container.JuMPmodel, varp[name, t] >= 0.0)
 
-            if t == length(time_steps)
-                continue
-            else
+            if t != length(time_steps)
                 con_off[name, t] = JuMP.@constraint(
                     container.JuMPmodel,
                     varp[name, t] <=
@@ -587,9 +585,7 @@ function add_constraints!(
                 (limits.max - limits.min) * varstatus[name, t] -
                 max(limits.max - startup_shutdown_limits.startup, 0) * varon[name, t]
             )
-            if t == length(time_steps)
-                continue
-            else
+            if t != length(time_steps)
                 con_off[name, t] = JuMP.@constraint(
                     container.JuMPmodel,
                     expression_products[name, t] <=
