@@ -302,6 +302,43 @@ function _initial_conditions_reconciliation!(
     models::Vector{DecisionModel{GenericOpProblem}},
     seq_nums::Vector{Int64})
     # get the solution for the reference step
+
+    # NOTE: new implementation currently ignores seq_nums
+    # all_ic_keys: all the `ICKey`s that appear in any of the models
+    # TODO: incorporate requires_reconciliation
+    all_ic_keys = union(keys.(get_initial_conditions.(models))...)
+    # all_ic_values: Dict{ICKey, Dict{model_index, Dict{component_name, ic_value}}}
+    all_ic_values = Dict()
+    for ic_key in all_ic_keys
+        # ic_vals_per_model: Dict{model_index, Dict{component_name, ic_value}}
+        ic_vals_per_model = Dict()
+        for (i, model) in enumerate(models)
+            ics = PSI.get_initial_conditions(model)
+            haskey(ics, ic_key) || continue
+            # ic_vals_per_component: Dict{component_name, ic_value}
+            ic_vals_per_component = Dict(get_name(get_component(ic)) => get_condition(ic) for ic in ics[ic_key])
+            ic_vals_per_model[i] = ic_vals_per_component
+        end
+
+        # Assert that all models have the same components for current ic_key
+        allequal(Set.(keys.(values(ic_vals_per_model)))) ||
+            @warn "For IC key $ic_key, not all models have the same components"
+        
+        # For each component in current ic_key, compare values across models
+        component_names = collect(keys(first(values(ic_vals_per_model))))
+        for component_name in component_names
+            if !allequal([result[component_name] for result in values(ic_vals_per_model)])
+                warning = "For IC key $ic_key, mismatch on component $component_name:"
+                for (model_i, result) in sort(pairs(ic_vals_per_model), by=first)
+                    warning *= "\n\tmodel $model_i: $(result[component_name])"
+                end
+                @warn warning
+            end
+        end
+        all_ic_values[ic_key] = ic_vals_per_model
+    end
+    return all_ic_values
+
     ic_dict = Dict()
     ic_ = get_initial_conditions(models[1])
     ic_dict["names"] =
