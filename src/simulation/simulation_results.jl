@@ -194,6 +194,8 @@ Base.length(res::SimulationResults) =
 get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
 """
+Return SimulationProblemResults corresponding to a SimulationResults
+
 # Arguments
  - `sim_results::PSI.SimulationResults`: the simulation results to read from
  - `problem::String`: the name of the problem (e.g., "UC", "ED")
