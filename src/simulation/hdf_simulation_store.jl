@@ -653,6 +653,59 @@ function write_result!(
     return
 end
 
+function write_result!(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    data::DenseAxisArray{Float64, 2},
+)
+    data_array = Array{Float64, 3}(undef, size(data)[1], size(data)[2], 1)
+    data_array[:, :, 1] = data
+    write_result!(store, model_name, key, index, simulation_time, data_array)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
+    model_name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    data::DenseAxisArray{Float64, 1},
+)
+    write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
+    return
+end
+
+function serialize_system!(store::HdfSimulationStore, sys::PSY.System)
+    root = store.file[HDF_SIMULATION_ROOT_PATH]
+    systems_group = _get_group_or_create(root, "systems")
+    uuid = string(IS.get_uuid(sys))
+    if haskey(systems_group, uuid)
+        @debug "System with UUID = $uuid is already stored" _group =
+            LOG_GROUP_SIMULATION_STORE
+        return
+    end
+
+    json_text = PSY.to_json(sys)
+    systems_group[uuid] = json_text
+    return
+end
+
+function deserialize_system(store::HdfSimulationStore, uuid::Base.UUID)
+    root = store.file[HDF_SIMULATION_ROOT_PATH]
+    systems_group = _get_group_or_create(root, "systems")
+    uuid_str = string(uuid)
+    if !haskey(systems_group, uuid_str)
+        error("No system with UUID $uuid_str is stored")
+    end
+
+    json_text = HDF5.read(systems_group[uuid_str])
+    return PSY.from_json(json_text, PSY.System)
+end
+
 function _check_state(store::HdfSimulationStore)
     if has_dirty(store.cache)
         error("BUG!!! dirty cache is present at shutdown: $(store.file)")
