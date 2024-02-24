@@ -210,7 +210,7 @@ function get_decision_problem_results(
     results::SimulationResults,
     problem::String;
     populate_system::Bool = false,
-    populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS,
+    populate_units::Union{IS.UnitSystem, String, Nothing} = nothing,
 )
     if !haskey(results.decision_problem_results, problem)
         throw(IS.InvalidValue("$problem is not stored"))
@@ -219,11 +219,21 @@ function get_decision_problem_results(
     results = results.decision_problem_results[problem]
 
     if populate_system
-        get_system!(results)
-        (populate_units !== nothing) &&
+        try
+            get_system!(results)
+        catch e
+            @error "Can't find the system file or retrieve the system" exception = (e, catch_backtrace())
+            rethrow(e)
+        end
+
+        if populate_units !== nothing
             PSY.set_units_base_system!(PSI.get_system(results), populate_units)
+        else
+            PSY.set_units_base_system!(PSI.get_system(results), IS.UnitSystem.NATURAL_UNITS)
+        end
+
     else
-        (populate_units !== nothing) && (populate_units !== IS.UnitSystem.NATURAL_UNITS) &&
+        (populate_units === nothing) ||
             throw(
                 ArgumentError(
                     "populate_units=$populate_units is unaccepted when populate_system=$populate_system",
