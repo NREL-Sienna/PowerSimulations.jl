@@ -271,3 +271,5 @@ function write_optimizer_stats!(
     write_optimizer_stats!(em_data, stats, index)
     return
 end
+
+serialize_system!(::InMemorySimulationStore, ::PSY.System) = nothing

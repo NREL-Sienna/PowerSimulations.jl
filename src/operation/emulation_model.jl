@@ -247,8 +247,8 @@ end
 
 function validate_time_series(model::EmulationModel{<:DefaultEmulationProblem})
     sys = get_system(model)
-    _, ts_count, _ = PSY.get_time_series_counts(sys)
-    if ts_count < 1
+    counts = PSY.get_time_series_counts(sys)
+    if counts.static_time_series_count < 1
         error(
             "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
         )

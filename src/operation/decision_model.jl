@@ -268,8 +268,8 @@ end
 
 function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
-    _, _, forecast_count = PSY.get_time_series_counts(sys)
-    if forecast_count < 1
+    counts = PSY.get_time_series_counts(sys)
+    if counts.forecast_count < 1
         error(
             "The system does not contain forecast data. A DecisionModel can't be built.",
         )
