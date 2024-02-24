@@ -222,7 +222,8 @@ function get_decision_problem_results(
         try
             get_system!(results)
         catch e
-            @error "Can't find the system file or retrieve the system" exception = (e, catch_backtrace())
+            @error "Can't find the system file or retrieve the system" exception =
+                (e, catch_backtrace())
             rethrow(e)
         end
 
