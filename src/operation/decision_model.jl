@@ -227,7 +227,7 @@ function DecisionModel(
 )
     return deserialize_problem(
         DecisionModel,
-        directory; 
+        directory;
         jump_model = jump_model,
         optimizer = optimizer,
         system = system,

@@ -208,7 +208,7 @@ function get_decision_problem_results(
     results::SimulationResults,
     problem::String;
     populate_system::Bool = false,
-    populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS
+    populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS,
 )
     if !haskey(results.decision_problem_results, problem)
         throw(IS.InvalidValue("$problem is not stored"))
@@ -218,9 +218,15 @@ function get_decision_problem_results(
 
     if populate_system
         get_system!(results)
-        (populate_units !== nothing) && PSY.set_units_base_system!(PSI.get_system(results), populate_units)
-    else 
-        (populate_units !== nothing) && (populate_units !== IS.UnitSystem.NATURAL_UNITS) && throw(ArgumentError("populate_units=$populate_units is unaccepted when populate_system=$populate_system"))
+        (populate_units !== nothing) &&
+            PSY.set_units_base_system!(PSI.get_system(results), populate_units)
+    else
+        (populate_units !== nothing) && (populate_units !== IS.UnitSystem.NATURAL_UNITS) &&
+            throw(
+                ArgumentError(
+                    "populate_units=$populate_units is unaccepted when populate_system=$populate_system",
+                ),
+            )
     end
 
     return results
