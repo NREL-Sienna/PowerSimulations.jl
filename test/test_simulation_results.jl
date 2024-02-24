@@ -875,6 +875,13 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test !isnothing(PSI.get_system(results_ed))
     @test PSY.get_units_base(get_system(results_ed)) == "DEVICE_BASE"
 
+    @test_throws ArgumentError get_decision_problem_results(
+        results,
+        "ED";
+        populate_system = false,
+        populate_units = IS.UnitSystem.DEVICE_BASE,
+    )
+
     test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
 end
 
