@@ -680,7 +680,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
 end
 
 function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c_sys5_hy_uc)
-    results = SimulationResults(path, "no_cache") 
+    results = SimulationResults(path, "no_cache")
     @test list_decision_problems(results) == ["ED", "UC"]
     results_uc = get_decision_problem_results(results, "UC")
     results_ed = get_decision_problem_results(results, "ED")
@@ -700,7 +700,12 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     set_system!(results_ed, c_sys5_hy_ed)
     set_system!(results_uc, c_sys5_hy_uc)
 
-    results_ed = get_decision_problem_results(results, "ED"; populate_system = true, populate_units = IS.UnitSystem.DEVICE_BASE)
+    results_ed = get_decision_problem_results(
+        results,
+        "ED";
+        populate_system = true,
+        populate_units = IS.UnitSystem.DEVICE_BASE,
+    )
     @test !isnothing(PSI.get_system(results_ed))
     @test PSY.get_units_base(get_system(results_ed)) == "DEVICE_BASE"
 
