@@ -193,12 +193,37 @@ Base.length(res::SimulationResults) =
     mapreduce(length, +, values(res.decision_problem_results))
 get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
-function get_decision_problem_results(results::SimulationResults, problem)
+"""
+# Arguments
+ - `sim_results::PSI.SimulationResults`: the simulation results to read from
+ - `problem::String`: the name of the problem (e.g., "UC", "ED")
+ - `populate_system::Bool = true`: whether to set the results' system using
+ [`read_serialized_system`](@ref)
+ - `populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS`:
+   the units system with which to populate the results' system, if any (requires
+   `populate_system=true`)
+"""
+
+function get_decision_problem_results(
+    results::SimulationResults,
+    problem::String;
+    populate_system::Bool = false,
+    populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS
+)
     if !haskey(results.decision_problem_results, problem)
         throw(IS.InvalidValue("$problem is not stored"))
     end
 
-    return results.decision_problem_results[problem]
+    results = results.decision_problem_results[problem]
+
+    if populate_system
+        get_system!(results)
+        (populate_units !== nothing) && PSY.set_units_base_system!(PSI.get_system(results), populate_units)
+    else 
+        (populate_units !== nothing) && (populate_units !== IS.UnitSystem.NATURAL_UNITS) && throw(ArgumentError("populate_units=$populate_units is unaccepted when populate_system=$populate_system"))
+    end
+
+    return results
 end
 
 function get_emulation_problem_results(results::SimulationResults)
