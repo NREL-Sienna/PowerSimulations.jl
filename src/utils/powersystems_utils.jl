@@ -114,3 +114,5 @@ function validate_compact_pwl_data(
     @warn "Validation of compact pwl data is not implemented for $(typeof(d))."
     return COMPACT_PWL_STATUS.UNDETERMINED
 end
+
+get_breakpoint_upper_bounds = PSY.get_x_lengths

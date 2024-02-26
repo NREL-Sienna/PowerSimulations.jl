@@ -602,7 +602,7 @@ function _add_pwl_term!(
             @debug uses_compact_power(component, V()) compact_status name T V
         end
         cost_is_convex = PSY.is_convex(data)
-        break_points = PSY.get_x_coords(data) ./ base_power  # TODO should this be get_x_lengths?
+        break_points = PSY.get_x_coords(data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !cost_is_convex
