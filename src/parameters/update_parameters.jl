@@ -599,7 +599,6 @@ function update_variable_cost!(
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
     cost_data = parameter_array[component_name, time_period]  # TODO is this a new-style cost?
-    println(typeof(cost_data))  # TODO REMOVE
     if iszero(cost_data)
         return
     end
