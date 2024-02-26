@@ -543,6 +543,10 @@ function _update_parameter_values!(
             )
             variable_cost_forecast_values = TimeSeries.values(ts_vector)
             for (t, value) in enumerate(variable_cost_forecast_values)
+                if attributes.uses_compact_power
+                    # TODO implement this
+                    value, _ = _convert_variable_cost(value)
+                end
                 # TODO removed an apparently unused block of code here?
                 _set_param_value!(parameter_array, PSY.get_raw_data(value), name, t)
                 update_variable_cost!(
