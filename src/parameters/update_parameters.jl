@@ -571,14 +571,14 @@ function _update_pwl_cost_expression(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::Vector{NTuple{2, Float64}},
+    cost_data::PSY.PiecewiseLinearPointData,
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
-    upb = PSY.get_breakpoint_upperbounds(cost_data)
+    upb = PSY.get_x_lengths(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
@@ -614,9 +614,9 @@ end
 
 function update_variable_cost!(
     container::OptimizationContainer,
-    parameter_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    parameter_array::DenseAxisArray{PSY.PiecewiseLinearPointData},
     parameter_multiplier::JuMPFloatArray,
-    ::CostFunctionAttributes{Vector{NTuple{2, Float64}}},
+    ::CostFunctionAttributes{PSY.PiecewiseLinearPointData},
     component::T,
     time_period::Int,
 ) where {T <: PSY.Component}

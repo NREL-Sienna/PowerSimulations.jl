@@ -85,10 +85,11 @@ end
 function _validate_compact_pwl_data(
     min::Float64,
     max::Float64,
-    data::Vector{Tuple{Float64, Float64}},
+    data::PSY.PiecewiseLinearPointData,
     base_power::Float64,
 )
-    if isapprox(max - min, data[end][2] / base_power) && iszero(data[1][2])
+    data = PSY.get_points(data)
+    if isapprox(max - min, last(data).x / base_power) && iszero(first(data).x)
         return COMPACT_PWL_STATUS.VALID
     else
         return COMPACT_PWL_STATUS.INVALID
@@ -97,7 +98,7 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.ThermalGen,
-    data::Vector{Tuple{Float64, Float64}},
+    data::PSY.PiecewiseLinearPointData,
     base_power::Float64,
 )
     min = PSY.get_active_power_limits(d).min
@@ -107,7 +108,7 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.Component,
-    ::Vector{Tuple{Float64, Float64}},
+    ::PSY.PiecewiseLinearPointData,
     ::Float64,
 )
     @warn "Validation of compact pwl data is not implemented for $(typeof(d))."
