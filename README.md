@@ -25,12 +25,8 @@ For example, an annual production cost modeling simulation can be created by for
 
 - Integrated Resource Planning
 - Production Cost Modeling
-
-## Opertation model formulations contained in PowerSimulations
-
-- [Unit Commitment](https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production)
-- [Economic Dispatch](https://en.wikipedia.org/wiki/Economic_dispatch)
-
+- Market Simulations
+  
 ## Installation
 
 ```julia
