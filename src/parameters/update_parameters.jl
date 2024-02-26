@@ -576,7 +576,7 @@ function _update_pwl_cost_expression(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
-    upb = PSY.get_x_lengths(cost_data)
+    upb = get_breakpoint_upper_bounds(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
