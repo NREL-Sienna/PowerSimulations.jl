@@ -167,7 +167,7 @@ function _add_variable_cost_to_objective!(
         set_parameter!(
             parameter_container,
             jump_model,
-            Tuple.(PSY.get_points(variable_cost_forecast_values[t])),
+            PSY.get_raw_data(variable_cost_forecast_values[t]),
             component_name,
             t,
         )
@@ -224,7 +224,7 @@ function _add_variable_cost_to_objective!(
         set_parameter!(
             parameter_container,
             jump_model,
-            Tuple.(PSY.get_points(variable_cost_forecast_values[t])),
+            PSY.get_raw_data(variable_cost_forecast_values[t]),
             component_name,
             t,
         )
@@ -314,7 +314,7 @@ function _get_cost_function_parameter_container(
             U,
             sos_val,
             uses_compact_power(component, V()),
-            cost_type,
+            PSY.get_raw_data_type(cost_type),
             container_axes...,
         )
     end
@@ -335,7 +335,7 @@ function _add_service_bid_cost!(
         start_time = initial_time,
         len = length(time_steps),
     )
-    forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
+    forecast_data_values = PSY.get_raw_data.(TimeSeries.values(forecast_data)) .* base_power
     reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
     component_name = PSY.get_name(component)
     for t in time_steps
@@ -545,7 +545,8 @@ function _add_pwl_term!(
     time_steps = get_time_steps(container)
     cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
-        proportional_value = PSY.get_proportional_term(cost_data[t]) * multiplier * base_power * dt
+        proportional_value =
+            PSY.get_proportional_term(cost_data[t]) * multiplier * base_power * dt
         cost_expressions[t] =
             _add_proportional_term!(container, U(), component, proportional_value, t)
     end
@@ -736,8 +737,8 @@ function _add_pwl_variables!(
 ) where {T <: PSY.Component}
     var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
     # length(PiecewiseLinearPointData) gets number of segments, here we want number of points
-    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data)+1)
-    for i in 1:length(cost_data)+1
+    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
+    for i in 1:(length(cost_data) + 1)
         pwlvars[i] =
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
