@@ -290,8 +290,7 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
             for service in get_available_components(D, sys)
                 new_key = (PSY.get_name(service), Symbol(D))
                 if !haskey(services_template, new_key)
-                    set_service_model!(
-                        template,
+                    template.services[new_key] =
                         ServiceModel(
                             D,
                             B,
@@ -299,8 +298,9 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
                             use_slacks = use_slacks,
                             duals = duals,
                             attributes = attributes,
-                        ),
-                    )
+                        )
+                else
+                    error("Key $new_key already assigned in ServiceModel")
                 end
             end
         end
