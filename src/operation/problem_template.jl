@@ -3,6 +3,8 @@ const DevicesModelContainer = Dict{Symbol, DeviceModel}
 const BranchModelContainer = Dict{Symbol, DeviceModelForBranches}
 const ServicesModelContainer = Dict{Tuple{String, Symbol}, ServiceModel}
 
+abstract type AbstractProblemTemplate end
+
 """
     ProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
@@ -16,7 +18,7 @@ Creates a model reference of the PowerSimulations Optimization Problem.
 
 template = ProblemTemplate(CopperPlatePowerModel)
 """
-mutable struct ProblemTemplate
+mutable struct ProblemTemplate <: AbstractProblemTemplate
     network_model::NetworkModel{<:PM.AbstractPowerModel}
     devices::DevicesModelContainer
     branches::BranchModelContainer
