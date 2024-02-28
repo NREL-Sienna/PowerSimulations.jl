@@ -118,7 +118,7 @@ If the simulation was configured to serialize all systems to file then the retur
 will include all data. If that was not configured then the returned system will include
 all data except time series data.
 """
-function get_system!(results::SimulationProblemResults)
+function get_system!(results::SimulationProblemResults; kwargs...)
     !isnothing(results.system) && return results.system
 
     file = joinpath(
@@ -128,7 +128,9 @@ function get_system!(results::SimulationProblemResults)
         make_system_filename(results.system_uuid),
     )
 
-    if isfile(file)
+    # This flag should remain unpublished because it should never be needed
+    # by the general audience.
+    if !get(kwargs, :use_h5_system, false) && isfile(file)
         system = PSY.System(file; time_series_read_only = true)
         @info "De-serialized the system from files."
     else
@@ -154,7 +156,7 @@ end
 
 function _deserialize_system(::SimulationProblemResults, ::InMemorySimulationStore)
     # This should never be necessary because the system is guaranteed to be in memory.
-    error("Deserializing a system from the InMemorySimulationStore is not supported.") 
+    error("Deserializing a system from the InMemorySimulationStore is not supported.")
 end
 
 """
