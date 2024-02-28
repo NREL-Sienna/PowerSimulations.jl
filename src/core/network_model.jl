@@ -69,6 +69,7 @@ get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
 get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
+get_subsystem(m::NetworkModel) = m.subsystem
 
 set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
 

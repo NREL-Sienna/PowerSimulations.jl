@@ -88,6 +88,7 @@ get_contributing_devices_map(m::ServiceModel, key) =
     get(m.contributing_devices_map, key, nothing)
 get_contributing_devices(m::ServiceModel) =
     [z for x in values(m.contributing_devices_map) for z in x]
+get_subsystem(m::ServiceModel) = m.subsystem
 
 set_subsystem!(m::ServiceModel, id::String) = m.subsystem = id
 
