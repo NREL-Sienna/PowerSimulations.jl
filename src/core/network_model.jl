@@ -34,6 +34,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     duals::Vector{DataType}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
+    subsystem::Union{Nothing, String}
 
     function NetworkModel(
         ::Type{T};
@@ -52,6 +53,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
+            nothing
         )
     end
 end
@@ -67,6 +69,8 @@ get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
 get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
+
+set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
