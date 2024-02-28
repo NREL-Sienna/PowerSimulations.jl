@@ -96,6 +96,7 @@ get_time_series_names(m::DeviceModel) = m.time_series_names
 get_attributes(m::DeviceModel) = m.attributes
 get_attribute(::Nothing, ::String) = nothing
 get_attribute(m::DeviceModel, key::String) = get(m.attributes, key, nothing)
+get_subsystem(m::DeviceModel) = m.subsystem
 
 set_subsystem!(m::DeviceModel, id::String) = m.subsystem = id
 

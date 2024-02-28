@@ -287,7 +287,7 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
             delete!(services_template, key)
             D = get_component_type(service_model)
             B = get_formulation(service_model)
-            for service in get_available_components(D, sys)
+            for service in get_available_components(service_model, sys)
                 new_key = (PSY.get_name(service), Symbol(D))
                 if !haskey(services_template, new_key)
                     template.services[new_key] =
