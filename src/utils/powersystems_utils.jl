@@ -1,54 +1,53 @@
 function get_available_components(
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     sys::PSY.System,
-    ::Nothing = nothing,
 ) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
-    return PSY.get_components(PSY.get_available, T, sys; subsystem_name = subsystem)
-end
-
-function get_available_components(
-    model::DeviceModel{T, <:AbstractDeviceFormulation},
-    sys::PSY.System,
-    f::Function,
-) where {T <: PSY.Component}
-    subsystem = get_subsystem(model)
-    return PSY.get_components(
-        x -> PSY.get_available(x) && f(x),
-        T,
-        sys;
-        subsystem_name = subsystem,
-    )
-end
-
-function get_available_components(
-    model::ServiceModel{T, <:AbstractServiceFormulation},
-    sys::PSY.System,
-    ::Nothing = nothing,
-) where {T <: PSY.Component}
-    subsystem = get_subsystem(model)
-    return PSY.get_components(PSY.get_available, T, sys; subsystem_name = subsystem)
+    filter_function = get_attribute(model, "filter_function")
+    if filter_function === nothing
+        return PSY.get_components(
+            PSY.get_available,
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    else
+        return PSY.get_components(
+            x -> PSY.get_available(x) && f(x),
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    end
 end
 
 function get_available_components(
     model::ServiceModel{T, <:AbstractServiceFormulation},
     sys::PSY.System,
-    f::Function,
 ) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
-    return PSY.get_components(
-        x -> PSY.get_available(x) && f(x),
-        T,
-        sys;
-        subsystem_name = subsystem,
-    )
+    filter_function = get_attribute(model, "filter_function")
+    if filter_function === nothing
+        return PSY.get_components(
+            PSY.get_available,
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    else
+        return PSY.get_components(
+            x -> PSY.get_available(x) && f(x),
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    end
 end
 
 function get_available_components(
     model::NetworkModel,
     ::Type{PSY.ACBus},
     sys::PSY.System,
-    ::Nothing = nothing,
 )
     subsystem = get_subsystem(model)
     return PSY.get_components(
@@ -63,12 +62,10 @@ function get_available_components(
     model::NetworkModel,
     ::Type{T},
     sys::PSY.System,
-    ::Nothing = nothing,
 ) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
     return PSY.get_components(
-        x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
-        PSY.ACBus,
+        T,
         sys;
         subsystem_name = subsystem,
     )
@@ -77,7 +74,6 @@ end
 function get_available_components(
     ::Type{PSY.RegulationDevice{T}},
     sys::PSY.System,
-    ::Nothing,
 ) where {T <: PSY.Component}
     return PSY.get_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),

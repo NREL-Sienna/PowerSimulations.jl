@@ -42,8 +42,7 @@ function _update_parameter_values!(
     multiplier_id = get_time_series_multiplier_id(attributes)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
-    components = get_available_components(V, get_system(model), filter_func)
+    components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
         ts_uuid = get_time_series_uuid(U, component, ts_name)
@@ -112,8 +111,7 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
-    components = get_available_components(V, get_system(model), filter_func)
+    components = get_available_components(device_model, filter_func)
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
@@ -529,8 +527,7 @@ function _update_parameter_values!(
     @assert !is_synchronized(container)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
-    components = get_available_components(V, get_system(model), filter_func)
+    components = get_available_components(device_model, get_system(model))
 
     for component in components
         if _has_variable_cost_parameter(component)

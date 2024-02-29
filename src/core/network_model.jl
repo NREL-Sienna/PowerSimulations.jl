@@ -144,7 +144,7 @@ function _assign_subnetworks_to_buses(
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     radial_network_reduction = PSI.get_radial_network_reduction(model)
-    for bus in PSI.get_available_components(PSY.ACBus, sys)
+    for bus in PSI.get_available_components(model, PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
         mapped_bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus)
         if haskey(temp_bus_map, bus_no)
