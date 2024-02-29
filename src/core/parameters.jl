@@ -284,7 +284,7 @@ struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-struct EventParameter <: ParameterType end
+struct EventParameter <: IS.ParameterType end
 
 should_write_resulting_value(::Type{<:IS.ParameterType}) = false
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true

@@ -120,9 +120,9 @@ struct SystemBalanceSlackDown <: IS.VariableType end
 
 struct ReserveRequirementSlack <: IS.VariableType end
 
-struct FlowActivePowerSlackUpperBound <: VariableType end
+struct FlowActivePowerSlackUpperBound <: IS.VariableType end
 
-struct FlowActivePowerSlackLowerBound <: VariableType end
+struct FlowActivePowerSlackLowerBound <: IS.VariableType end
 
 """
 Struct to dispatch the creation of Voltage Magnitude Variables for AC formulations

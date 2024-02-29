@@ -84,19 +84,19 @@ list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) = list_expre
 list_result_keys(res::SimulationProblemResults, ::IS.ParameterKey) = list_parameter_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.VariableKey) = list_variable_keys(res)
 
-get_cached_results(res::SimulationProblemResults, ::Type{<:AuxVarKey}) =
+get_cached_results(res::SimulationProblemResults, ::Type{<:IS.AuxVarKey}) =
     get_cached_aux_variables(res)
-get_cached_results(res::SimulationProblemResults, ::Type{<:ConstraintKey}) =
+get_cached_results(res::SimulationProblemResults, ::Type{<:IS.ConstraintKey}) =
     get_cached_duals(res)
-get_cached_results(res::SimulationProblemResults, ::Type{<:ExpressionKey}) =
+get_cached_results(res::SimulationProblemResults, ::Type{<:IS.ExpressionKey}) =
     get_cached_expressions(res)
-get_cached_results(res::SimulationProblemResults, ::Type{<:ParameterKey}) =
+get_cached_results(res::SimulationProblemResults, ::Type{<:IS.ParameterKey}) =
     get_cached_parameters(res)
-get_cached_results(res::SimulationProblemResults, ::Type{<:VariableKey}) =
+get_cached_results(res::SimulationProblemResults, ::Type{<:IS.VariableKey}) =
     get_cached_variables(res)
 get_cached_results(
     res::SimulationProblemResults,
-    ::Type{<:OptimizationContainerKey} = OptimizationContainerKey,
+    ::Type{<:IS.OptimizationContainerKey} = OptimizationContainerKey,
 ) =
     merge(  # PERF: could be done lazily
         get_cached_aux_variables(res),
