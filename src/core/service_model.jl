@@ -65,7 +65,7 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
             time_series_names,
             attributes_for_model,
             contributing_devices_map,
-            nothing
+            nothing,
         )
     end
 end

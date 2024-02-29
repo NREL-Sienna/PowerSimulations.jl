@@ -76,7 +76,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
             Vector{ServiceModel}(),
             time_series_names,
             attributes_,
-            nothing
+            nothing,
         )
     end
 end

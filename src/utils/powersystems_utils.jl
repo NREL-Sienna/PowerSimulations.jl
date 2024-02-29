@@ -1,5 +1,5 @@
 function get_available_components(
-    model::DeviceModel{T,  <: AbstractDeviceFormulation},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     sys::PSY.System,
     ::Nothing = nothing,
 ) where {T <: PSY.Component}
@@ -8,16 +8,21 @@ function get_available_components(
 end
 
 function get_available_components(
-    model::DeviceModel{T,  <: AbstractDeviceFormulation},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     sys::PSY.System,
     f::Function,
 ) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
-    return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys; subsystem_name = subsystem)
+    return PSY.get_components(
+        x -> PSY.get_available(x) && f(x),
+        T,
+        sys;
+        subsystem_name = subsystem,
+    )
 end
 
 function get_available_components(
-    model::ServiceModel{T,  <: AbstractServiceFormulation},
+    model::ServiceModel{T, <:AbstractServiceFormulation},
     sys::PSY.System,
     ::Nothing = nothing,
 ) where {T <: PSY.Component}
@@ -26,12 +31,17 @@ function get_available_components(
 end
 
 function get_available_components(
-    model::ServiceModel{T,  <: AbstractServiceFormulation},
+    model::ServiceModel{T, <:AbstractServiceFormulation},
     sys::PSY.System,
     f::Function,
 ) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
-    return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys; subsystem_name = subsystem)
+    return PSY.get_components(
+        x -> PSY.get_available(x) && f(x),
+        T,
+        sys;
+        subsystem_name = subsystem,
+    )
 end
 
 function get_available_components(
@@ -45,7 +55,7 @@ function get_available_components(
         x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
         PSY.ACBus,
         sys;
-        subsystem_name = subsystem
+        subsystem_name = subsystem,
     )
 end
 
@@ -54,13 +64,13 @@ function get_available_components(
     ::Type{T},
     sys::PSY.System,
     ::Nothing = nothing,
-) where T <: PSY.Component
+) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
     return PSY.get_components(
         x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
         PSY.ACBus,
         sys;
-        subsystem_name = subsystem
+        subsystem_name = subsystem,
     )
 end
 

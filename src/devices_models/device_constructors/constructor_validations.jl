@@ -3,7 +3,11 @@ function validate_available_devices(
     system::PSY.System,
 ) where {T <: PSY.Device}
     devices =
-        get_available_components(device_model, system, get_attribute(device_model, "filter_function"))
+        get_available_components(
+            device_model,
+            system,
+            get_attribute(device_model, "filter_function"),
+        )
     if isempty(devices)
         return false
     end
