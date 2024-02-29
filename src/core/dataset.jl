@@ -130,7 +130,7 @@ function get_dataset_value(s::InMemoryDataset{3}, date::Dates.DateTime)
     return s.values[:, :, s_index]
 end
 
-function get_column_names(k::OptimizationContainerKey, s::InMemoryDataset)
+function get_column_names(k::IS.OptimizationContainerKey, s::InMemoryDataset)
     return get_column_names(k, s.values)
 end
 
@@ -286,7 +286,7 @@ function HDF5Dataset{2}(
     )
 end
 
-function get_column_names(::OptimizationContainerKey, s::HDF5Dataset)
+function get_column_names(::IS.OptimizationContainerKey, s::HDF5Dataset)
     return s.column_names
 end
 

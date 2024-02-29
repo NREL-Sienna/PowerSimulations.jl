@@ -59,7 +59,6 @@ const PSI_NAME_DELIMITER = "__"
 const M_VALUE = 1e6
 
 const NO_SERVICE_NAME_PROVIDED = ""
-const CONTAINER_KEY_EMPTY_META = ""
 const UPPER_BOUND = "ub"
 const LOWER_BOUND = "lb"
 const MAX_OPTIMIZE_TRIES = 2

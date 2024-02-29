@@ -1,6 +1,6 @@
 function area_balance(
     container::OptimizationContainer,
-    expression::ExpressionKey,
+    expression::IS.ExpressionKey,
     area_mapping::Dict{String, Array{PSY.ACBus, 1}},
     branches,
 )

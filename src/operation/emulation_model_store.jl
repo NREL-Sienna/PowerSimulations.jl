@@ -89,7 +89,7 @@ end
 function write_result!(
     store::EmulationModelStore,
     name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 2},
@@ -102,7 +102,7 @@ end
 function write_result!(
     store::EmulationModelStore,
     ::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 1},
@@ -120,7 +120,7 @@ end
 
 function read_results(
     store::EmulationModelStore,
-    key::OptimizationContainerKey;
+    key::IS.OptimizationContainerKey;
     index::Union{Int, Nothing} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -137,19 +137,19 @@ function read_results(
     end
 end
 
-function get_column_names(store::EmulationModelStore, key::OptimizationContainerKey)
+function get_column_names(store::EmulationModelStore, key::IS.OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
     return get_column_names(key, container[key].values)
 end
 
-function get_dataset_size(store::EmulationModelStore, key::OptimizationContainerKey)
+function get_dataset_size(store::EmulationModelStore, key::IS.OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
     return size(container[key].values)
 end
 
 function get_last_updated_timestamp(
     store::EmulationModelStore,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     container = get_data_field(store, get_store_container_type(key))
     return get_update_timestamp(container[key])
@@ -168,6 +168,6 @@ function read_optimizer_stats(store::EmulationModelStore)
     return DataFrames.DataFrame([to_namedtuple(x) for x in values(store.optimizer_stats)])
 end
 
-function get_last_recorded_row(x::EmulationModelStore, key::OptimizationContainerKey)
+function get_last_recorded_row(x::EmulationModelStore, key::IS.OptimizationContainerKey)
     return get_last_recorded_row(x.data_container, key)
 end
