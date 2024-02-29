@@ -12,7 +12,7 @@ mutable struct SimulationInfo
     sequence_uuid::Base.UUID
 end
 
-mutable struct ModelInternal{T <: AbstractModelContainer}
+mutable struct ModelInternal{T <: IS.AbstractModelContainer}
     container::T
     ic_model_container::Union{Nothing, T}
     status::BuildStatus
@@ -34,7 +34,7 @@ function ModelInternal(
     container::T;
     ext = Dict{String, Any}(),
     recorders = [],
-) where {T <: AbstractModelContainer}
+) where {T <: IS.AbstractModelContainer}
     return ModelInternal{T}(
         container,
         nothing,

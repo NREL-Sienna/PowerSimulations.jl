@@ -5,7 +5,7 @@ struct DecisionModelSimulationResults <: OperationModelSimulationResults
     aux_variables::ResultsByKeyAndTime
     expressions::ResultsByKeyAndTime
     forecast_horizon::Int
-    container_key_lookup::Dict{String, OptimizationContainerKey}
+    container_key_lookup::Dict{String, IS.OptimizationContainerKey}
 end
 
 function SimulationProblemResults(
@@ -94,19 +94,19 @@ get_cached_results(
 ) = get_cached_aux_variables(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ConstraintKey,
+    ::IS.ConstraintKey,
 ) = get_cached_duals(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ExpressionKey,
+    ::IS.ExpressionKey,
 ) = get_cached_expressions(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ParameterKey,
+    ::IS.ParameterKey,
 ) = get_cached_parameters(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::VariableKey,
+    ::IS.VariableKey,
 ) = get_cached_variables(res)
 
 function get_forecast_horizon(res::SimulationProblemResults{DecisionModelSimulationResults})
@@ -115,7 +115,7 @@ end
 
 function _get_store_value(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:IS.OptimizationContainerKey},
     timestamps,
     ::Nothing,
 )
@@ -128,7 +128,7 @@ end
 function _get_store_value(
     T::Type{Matrix{Float64}},
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:IS.OptimizationContainerKey},
     timestamps::Vector{Dates.DateTime},
     ::Nothing,
 )
@@ -140,11 +140,11 @@ end
 
 function _get_store_value(
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:IS.OptimizationContainerKey},
     timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 )
-    results_by_key = Dict{OptimizationContainerKey, ResultsByTime}()
+    results_by_key = Dict{IS.OptimizationContainerKey, ResultsByTime}()
     model_name = Symbol(get_model_name(sim_results))
     for ckey in container_keys
         n_dims = get_number_of_dimensions(store, DecisionModelIndexType, model_name, ckey)
@@ -160,7 +160,7 @@ end
 function _get_store_value(
     ::Type{T},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 ) where {T <: DenseAxisArray{Float64, 2}}
@@ -201,7 +201,7 @@ end
 function _get_store_value(
     ::Type{T},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 ) where {T <: DenseAxisArray{Float64, 3}}
@@ -242,12 +242,12 @@ end
 function _get_store_value(
     ::Type{Matrix{Float64}},
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:IS.OptimizationContainerKey},
     timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
 )
     base_power = get_model_base_power(sim_results)
-    results_by_key = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+    results_by_key = Dict{IS.OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
     model_name = Symbol(get_model_name(sim_results))
     resolution = get_resolution(sim_results)
 
@@ -312,7 +312,7 @@ function _read_results(
     store::Nothing,
 )
     isempty(result_keys) &&
-        return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+        return Dict{IS.OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
 
     if res.store !== nothing
         # In this case we have an InMemorySimulationStore.
@@ -328,7 +328,7 @@ function _read_results(
     store::Union{Nothing, <:SimulationStore},
 )
     isempty(result_keys) &&
-        return Dict{OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
+        return Dict{IS.OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
 
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
@@ -353,7 +353,7 @@ Return the values for the requested variable. It keeps requests when performing 
 # Arguments
 
   - `args`: Can be a string returned from [`list_variable_names`](@ref) or args that can be
-    splatted into a VariableKey.
+    splatted into a IS.VariableKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
@@ -372,7 +372,7 @@ function read_variable(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    key = _deserialize_key(VariableKey, res, args...)
+    key = _deserialize_key(IS.VariableKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(_read_results(res, [key], timestamps, store)[key])
 end
@@ -383,7 +383,7 @@ Return the values for the requested dual. It keeps requests when performing mult
 # Arguments
 
   - `args`: Can be a string returned from [`list_dual_names`](@ref) or args that can be
-    splatted into a ConstraintKey.
+    splatted into a IS.ConstraintKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
@@ -395,7 +395,7 @@ function read_dual(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    key = _deserialize_key(ConstraintKey, res, args...)
+    key = _deserialize_key(IS.ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
         _read_results(res, [key], timestamps, store)[key],
@@ -408,7 +408,7 @@ Return the values for the requested parameter. It keeps requests when performing
 # Arguments
 
   - `args`: Can be a string returned from [`list_parameter_names`](@ref) or args that can be
-    splatted into a ParameterKey.
+    splatted into a IS.ParameterKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
 """
@@ -419,7 +419,7 @@ function read_parameter(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    key = _deserialize_key(ParameterKey, res, args...)
+    key = _deserialize_key(IS.ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
         _read_results(res, [key], timestamps, store)[key],
@@ -456,7 +456,7 @@ Return the values for the requested auxillary variables. It keeps requests when 
 # Arguments
 
   - `args`: Can be a string returned from [`list_expression_names`](@ref) or args that can be
-    splatted into a ExpressionKey.
+    splatted into a IS.ExpressionKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
 """
@@ -467,7 +467,7 @@ function read_expression(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    key = _deserialize_key(ExpressionKey, res, args...)
+    key = _deserialize_key(IS.ExpressionKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
         _read_results(res, [key], timestamps, store)[key],
@@ -507,7 +507,7 @@ end
 
 function read_results_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    result_keys::Vector{<:OptimizationContainerKey};
+    result_keys::Vector{<:IS.OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -519,7 +519,7 @@ end
 
 function _are_results_cached(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    output_keys::Vector{<:OptimizationContainerKey},
+    output_keys::Vector{<:IS.OptimizationContainerKey},
     timestamps::Vector{Dates.DateTime},
     cached_keys,
 )
@@ -558,14 +558,14 @@ function load_results!(
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
     res.results_timestamps = _process_timestamps(res, initial_time, count)
-    dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
+    dual_keys = [_deserialize_key(IS.ConstraintKey, res, x...) for x in duals]
     parameter_keys =
-        ParameterKey[_deserialize_key(ParameterKey, res, x...) for x in parameters]
-    variable_keys = VariableKey[_deserialize_key(VariableKey, res, x...) for x in variables]
+        IS.ParameterKey[_deserialize_key(IS.ParameterKey, res, x...) for x in parameters]
+    variable_keys = IS.VariableKey[_deserialize_key(IS.VariableKey, res, x...) for x in variables]
     aux_variable_keys =
         AuxVarKey[_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
     expression_keys =
-        ExpressionKey[_deserialize_key(ExpressionKey, res, x...) for x in expressions]
+        IS.ExpressionKey[_deserialize_key(IS.ExpressionKey, res, x...) for x in expressions]
     function merge_results(store)
         merge!(
             get_cached_variables(res),

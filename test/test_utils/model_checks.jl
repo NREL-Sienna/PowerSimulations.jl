@@ -24,7 +24,7 @@ end
 
 function psi_constraint_test(
     model::DecisionModel,
-    constraint_keys::Vector{<:PSI.ConstraintKey},
+    constraint_keys::Vector{<:PSI.IS.ConstraintKey},
 )
     constraints = PSI.get_constraints(model)
     for con in constraint_keys
@@ -52,7 +52,7 @@ end
 
 function psi_checkbinvar_test(
     model::DecisionModel,
-    bin_variable_keys::Vector{<:PSI.VariableKey},
+    bin_variable_keys::Vector{<:PSI.IS.VariableKey},
 )
     container = PSI.get_optimization_container(model)
     for variable in bin_variable_keys
@@ -69,7 +69,7 @@ function psi_checkobjfun_test(model::DecisionModel, exp_type)
     return
 end
 
-function moi_lbvalue_test(model::DecisionModel, con_key::PSI.ConstraintKey, value::Number)
+function moi_lbvalue_test(model::DecisionModel, con_key::PSI.IS.ConstraintKey, value::Number)
     for con in PSI.get_constraints(model)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
@@ -91,10 +91,10 @@ function psi_checksolve_test(model::DecisionModel, status, expected_result, tol 
 end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
-    cp_duals = read_dual(res, PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
+    cp_duals = read_dual(res, PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
     λ = Matrix{Float64}(cp_duals[:, propertynames(cp_duals) .!= :DateTime])
 
-    flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
+    flow_duals = read_dual(res, PSI.IS.ConstraintKey(NetworkFlowConstraint, PSY.Line))
     μ = Matrix{Float64}(flow_duals[:, PNM.get_branch_ax(ptdf)])
 
     buses = get_components(Bus, get_system(res))
@@ -110,11 +110,11 @@ function check_variable_unbounded(
     model::DecisionModel,
     ::Type{T},
     ::Type{U},
-) where {T <: PSI.VariableType, U <: PSY.Component}
-    return check_variable_unbounded(model::DecisionModel, PSI.VariableKey(T, U))
+) where {T <: PSI.IS.VariableType, U <: PSY.Component}
+    return check_variable_unbounded(model::DecisionModel, PSI.IS.VariableKey(T, U))
 end
 
-function check_variable_unbounded(model::DecisionModel, var_key::PSI.VariableKey)
+function check_variable_unbounded(model::DecisionModel, var_key::PSI.IS.VariableKey)
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -129,11 +129,11 @@ function check_variable_bounded(
     model::DecisionModel,
     ::Type{T},
     ::Type{U},
-) where {T <: PSI.VariableType, U <: PSY.Component}
-    return check_variable_bounded(model, PSI.VariableKey(T, U))
+) where {T <: PSI.IS.VariableType, U <: PSY.Component}
+    return check_variable_bounded(model, PSI.IS.VariableKey(T, U))
 end
 
-function check_variable_bounded(model::DecisionModel, var_key::PSI.VariableKey)
+function check_variable_bounded(model::DecisionModel, var_key::PSI.IS.VariableKey)
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, var_key)
     for var in variable
@@ -150,7 +150,7 @@ function check_flow_variable_values(
     ::Type{U},
     device_name::String,
     limit::Float64,
-) where {T <: PSI.VariableType, U <: PSY.Component}
+) where {T <: PSI.IS.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
@@ -169,7 +169,7 @@ function check_flow_variable_values(
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-) where {T <: PSI.VariableType, U <: PSY.Component}
+) where {T <: PSI.IS.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, T(), U)
     for var in variable[device_name, :]
@@ -189,7 +189,7 @@ function check_flow_variable_values(
     device_name::String,
     limit_min::Float64,
     limit_max::Float64,
-) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
+) where {T <: PSI.IS.VariableType, U <: PSI.IS.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(model)
     time_steps = PSI.get_time_steps(psi_cont)
     pvariable = PSI.get_variable(psi_cont, T(), V)
@@ -212,7 +212,7 @@ function check_flow_variable_values(
     ::Type{V},
     device_name::String,
     limit::Float64,
-) where {T <: PSI.VariableType, U <: PSI.VariableType, V <: PSY.Component}
+) where {T <: PSI.IS.VariableType, U <: PSI.IS.VariableType, V <: PSY.Component}
     psi_cont = PSI.get_optimization_container(model)
     time_steps = PSI.get_time_steps(psi_cont)
     pvariable = PSI.get_variable(psi_cont, T(), V)
@@ -389,7 +389,7 @@ function check_initialization_variable_count(
     model,
     ::S,
     ::Type{T},
-) where {S <: PSI.VariableType, T <: PSY.Component}
+) where {S <: PSI.IS.VariableType, T <: PSY.Component}
     container = PSI.get_optimization_container(model)
     initial_conditions_data = PSI.get_initial_conditions_data(container)
     no_component = length(PSY.get_components(PSY.get_available, T, model.sys))
@@ -402,7 +402,7 @@ function check_variable_count(
     model,
     ::S,
     ::Type{T},
-) where {S <: PSI.VariableType, T <: PSY.Component}
+) where {S <: PSI.IS.VariableType, T <: PSY.Component}
     no_component = length(PSY.get_components(PSY.get_available, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
     variable = PSI.get_variable(PSI.get_optimization_container(model), S(), T)
@@ -414,8 +414,8 @@ function check_initialization_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.CONTAINER_KEY_EMPTY_META,
-) where {S <: PSI.ConstraintType, T <: PSY.Component}
+    meta = PSI.IS.CONTAINER_KEY_EMPTY_META,
+) where {S <: PSI.IS.ConstraintType, T <: PSY.Component}
     container = model.internal.ic_model_container
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
@@ -428,8 +428,8 @@ function check_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.CONTAINER_KEY_EMPTY_META,
-) where {S <: PSI.ConstraintType, T <: PSY.Component}
+    meta = PSI.IS.CONTAINER_KEY_EMPTY_META,
+) where {S <: PSI.IS.ConstraintType, T <: PSY.Component}
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
     constraint = PSI.get_constraint(PSI.get_optimization_container(model), S(), T, meta)

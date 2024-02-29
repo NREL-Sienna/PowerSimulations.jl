@@ -52,7 +52,7 @@ end
     res = ProblemResults(UC)
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
-    @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
+    @test PSI.IS.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
     @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 6)
     @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 4)
     @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 6)
@@ -180,7 +180,7 @@ end
 
     res = ProblemResults(model)
     container = PSI.get_optimization_container(model)
-    constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
+    constraint_key = PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
     dual_results = PSI.read_duals(container)[constraint_key]
     dual_results_read = read_dual(res, constraint_key)
@@ -203,7 +203,7 @@ end
     end
 
     system = PSI.get_system(model)
-    parameter_key = PSI.ParameterKey(ActivePowerTimeSeriesParameter, PSY.PowerLoad)
+    parameter_key = PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, PSY.PowerLoad)
     param_vals = PSI.read_parameters(container)[parameter_key]
     for load in get_components(PowerLoad, system)
         name = get_name(load)
@@ -217,13 +217,13 @@ end
     @test length(list_dual_names(res)) == 1
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
-    @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
+    @test isa(res.variable_values, Dict{PSI.IS.VariableKey, DataFrames.DataFrame})
     @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
     @test isa(PSI.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
-    @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
+    @test isa(res.dual_values, Dict{PSI.IS.ConstraintKey, DataFrames.DataFrame})
     @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
-    @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
+    @test isa(res.parameter_values, Dict{PSI.IS.ParameterKey, DataFrames.DataFrame})
     @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
     @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(get_system(res), PSY.System)
@@ -295,7 +295,7 @@ end
     res = ProblemResults(UC)
     @test isapprox(get_objective_value(res), 247448.0; atol = 10000.0)
     vars = res.variable_values
-    service_key = PSI.VariableKey(
+    service_key = PSI.IS.VariableKey(
         ActivePowerReserveVariable,
         PSY.VariableReserveNonSpinning,
         "NonSpinningReserve",

@@ -3,12 +3,12 @@ Stores results data for one DecisionModel
 """
 mutable struct DecisionModelStore <: AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
-    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    duals::Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    parameters::Dict{IS.ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    variables::Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     expressions::Dict{
-        ExpressionKey,
+        IS.ExpressionKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
     optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
@@ -16,18 +16,18 @@ end
 
 function DecisionModelStore()
     return DecisionModelStore(
-        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{IS.ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{IS.ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         OrderedDict{Dates.DateTime, OptimizerStats}(),
     )
 end
 
 function initialize_storage!(
     store::DecisionModelStore,
-    container::AbstractModelContainer,
+    container::IS.AbstractModelContainer,
     params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
@@ -62,7 +62,7 @@ end
 function write_result!(
     store::DecisionModelStore,
     name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 2},
@@ -80,7 +80,7 @@ end
 function write_result!(
     store::DecisionModelStore,
     name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 1},
@@ -98,7 +98,7 @@ end
 
 function read_results(
     store::DecisionModelStore,
-    key::OptimizationContainerKey;
+    key::IS.OptimizationContainerKey;
     index::Union{DecisionModelIndexType, Nothing} = nothing,
 )
     container = getfield(store, get_store_container_type(key))
@@ -131,7 +131,7 @@ function read_optimizer_stats(store::DecisionModelStore)
     return df
 end
 
-function get_column_names(store::DecisionModelStore, key::OptimizationContainerKey)
+function get_column_names(store::DecisionModelStore, key::IS.OptimizationContainerKey)
     container = getfield(store, get_store_container_type(key))
     return get_column_names(key, first(values(container[key])))
 end

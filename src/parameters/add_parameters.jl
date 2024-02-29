@@ -23,7 +23,7 @@ function add_parameters!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <: ParameterType,
+    T <: IS.ParameterType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -296,12 +296,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::VariableKey{U, D},
+    key::IS.VariableKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -339,12 +339,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::VariableKey{U, D},
+    key::IS.VariableKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: FixValueParameter,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -388,7 +388,7 @@ function _add_parameters!(
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: AuxVariableType,
+    U <: IS.AuxVariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -449,7 +449,7 @@ function _add_parameters!(
         container,
         T(),
         D,
-        VariableKey(OnVariable, D),
+        IS.VariableKey(OnVariable, D),
         names,
         time_steps,
     )
@@ -479,13 +479,13 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::VariableKey{U, S},
+    key::IS.VariableKey{U, S},
     model::ServiceModel{S, W},
     devices::V,
 ) where {
     S <: PSY.AbstractReserve,
     T <: VariableValueParameter,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}

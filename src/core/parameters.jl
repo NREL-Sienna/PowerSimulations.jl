@@ -1,29 +1,3 @@
-struct ParameterKey{T <: ParameterType, U <: PSY.Component} <: OptimizationContainerKey
-    meta::String
-end
-
-function ParameterKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType, U <: PSY.Component}
-    if isabstracttype(U)
-        error("Type $U can't be abstract")
-    end
-    check_meta_chars(meta)
-    return ParameterKey{T, U}(meta)
-end
-
-function ParameterKey(
-    ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType}
-    return ParameterKey(T, PSY.Component, meta)
-end
-
-get_entry_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = T
-get_component_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = U
-
 abstract type ParameterAttributes end
 
 struct NoAttributes end
@@ -66,12 +40,12 @@ end
 
 _get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[name]
 
-struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
+struct VariableValueAttributes{T <: IS.OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
     affected_keys::Set
 end
 
-function VariableValueAttributes(key::T) where {T <: OptimizationContainerKey}
+function VariableValueAttributes(key::T) where {T <: IS.OptimizationContainerKey}
     return VariableValueAttributes{T}(key, Set())
 end
 
@@ -187,7 +161,7 @@ get_attributes(c::ParameterContainer) = c.attributes
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
-function get_column_names(key::ParameterKey, c::ParameterContainer)
+function get_column_names(key::IS.ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
@@ -261,8 +235,8 @@ end
 """
 Parameters implemented through VariableRef
 """
-abstract type RightHandSideParameter <: ParameterType end
-abstract type ObjectiveFunctionParameter <: ParameterType end
+abstract type RightHandSideParameter <: IS.ParameterType end
+abstract type ObjectiveFunctionParameter <: IS.ParameterType end
 
 abstract type TimeSeriesParameter <: RightHandSideParameter end
 
@@ -312,10 +286,10 @@ abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 struct EventParameter <: ParameterType end
 
-should_write_resulting_value(::Type{<:ParameterType}) = false
+should_write_resulting_value(::Type{<:IS.ParameterType}) = false
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
-convert_result_to_natural_units(::Type{<:ParameterType}) = false
+convert_result_to_natural_units(::Type{<:IS.ParameterType}) = false
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

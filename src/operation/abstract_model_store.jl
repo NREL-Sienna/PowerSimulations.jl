@@ -62,15 +62,15 @@ function get_variable_value(
     store::AbstractModelStore,
     ::T,
     ::Type{U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_data_field(store, :variables)[VariableKey(T, U)]
+) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_data_field(store, :variables)[IS.VariableKey(T, U)]
 end
 
 function get_aux_variable_value(
     store::AbstractModelStore,
     ::T,
     ::Type{U},
-) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
     return get_data_field(store, :aux_variables)[AuxVarKey(T, U)]
 end
 
@@ -78,14 +78,14 @@ function get_dual_value(
     store::AbstractModelStore,
     ::T,
     ::Type{U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_data_field(store, :duals)[ConstraintKey(T, U)]
+) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_data_field(store, :duals)[IS.ConstraintKey(T, U)]
 end
 
 function get_parameter_value(
     store::AbstractModelStore,
     ::T,
     ::Type{U},
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_data_field(store, :parameters)[ParameterKey(T, U)]
+) where {T <: IS.ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_data_field(store, :parameters)[IS.ParameterKey(T, U)]
 end

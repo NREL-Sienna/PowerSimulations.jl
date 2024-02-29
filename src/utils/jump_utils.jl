@@ -54,26 +54,26 @@ function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     )
 end
 
-function get_column_names(key::OptimizationContainerKey)
+function get_column_names(key::IS.OptimizationContainerKey)
     return ([encode_key_as_string(key)],)
 end
 
 function get_column_names(
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     ::DenseAxisArray{T, 1, K},
 ) where {T, K <: NTuple{1, Any}}
     return get_column_names(key)
 end
 
 function get_column_names(
-    k::OptimizationContainerKey,
+    k::IS.OptimizationContainerKey,
     array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
     return (string.(axes(array)[1]),)
 end
 
 function get_column_names(
-    k::OptimizationContainerKey,
+    k::IS.OptimizationContainerKey,
     array::DenseAxisArray{T, 3, K},
 ) where {T, K <: NTuple{3, Any}}
     return (string.(axes(array)[1]), string.(axes(array)[2]))
@@ -84,7 +84,7 @@ function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTup
 end
 
 function get_column_names(
-    ::OptimizationContainerKey,
+    ::IS.OptimizationContainerKey,
     array::SparseAxisArray{T, N, K},
 ) where {T, N, K <: NTuple{N, Any}}
     return (get_column_names(array),)
@@ -186,7 +186,7 @@ remove_undef!(expression_array::SparseAxisArray) = expression_array
 
 function _calc_dimensions(
     array::DenseAxisArray,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     num_rows::Int,
     horizon::Int,
 )
@@ -220,7 +220,7 @@ end
 
 function _calc_dimensions(
     array::SparseAxisArray,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     num_rows::Int,
     horizon::Int,
 )

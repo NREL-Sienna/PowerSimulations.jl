@@ -1,8 +1,8 @@
 function _update_initial_conditions!(
     model::OperationModel,
-    key::ICKey{T, U},
+    key::IS.ICKey{T, U},
     source, # Store or State are used in simulations by default
-) where {T <: InitialConditionType, U <: PSY.Component}
+) where {T <: IS.InitialConditionType, U <: PSY.Component}
     if get_execution_count(model) < 1
         return
     end
@@ -28,18 +28,18 @@ end
 # Note to devs: Implemented this way to avoid ambiguities and future proof custom ic updating
 function update_initial_conditions!(
     model::DecisionModel,
-    key::ICKey{T, U},
+    key::IS.ICKey{T, U},
     source, # Store or State are used in simulations by default
-) where {T <: InitialConditionType, U <: PSY.Component}
+) where {T <: IS.InitialConditionType, U <: PSY.Component}
     _update_initial_conditions!(model, key, source)
     return
 end
 
 function update_initial_conditions!(
     model::EmulationModel,
-    key::ICKey{T, U},
+    key::IS.ICKey{T, U},
     source, # Store or State are used in simulations by default
-) where {T <: InitialConditionType, U <: PSY.Component}
+) where {T <: IS.InitialConditionType, U <: PSY.Component}
     _update_initial_conditions!(model, key, source)
     return
 end

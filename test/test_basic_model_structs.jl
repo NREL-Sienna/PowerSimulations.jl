@@ -40,7 +40,7 @@ end
 
     for ff in ffs
         for av in PSI.get_affected_values(ff)
-            @test isa(av, PSI.VariableKey)
+            @test isa(av, PSI.IS.VariableKey)
         end
     end
 
@@ -51,7 +51,7 @@ end
     )
 
     for av in PSI.get_affected_values(ff)
-        @test isa(av, PSI.ParameterKey)
+        @test isa(av, PSI.IS.ParameterKey)
     end
 
     @test_throws ErrorException UpperBoundFeedforward(

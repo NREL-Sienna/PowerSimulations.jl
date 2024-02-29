@@ -248,7 +248,7 @@ function initialize_problem_storage!(
     store.cache = OptimizationOutputCaches(flush_rules)
     @info "Initialize store cache" get_min_flush_size(store.cache) get_max_size(store.cache)
     initial_time = get_initial_time(store)
-    container_key_lookup = Dict{String, OptimizationContainerKey}()
+    container_key_lookup = Dict{String, IS.OptimizationContainerKey}()
     for (problem, problem_params) in store.params.decision_models_params
         get_dm_data(store)[problem] = DatasetContainer{HDF5Dataset}()
         problem_group = _get_group_or_create(problems_group, string(problem))
@@ -357,7 +357,7 @@ function read_result(
     ::Type{DataFrames.DataFrame},
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     data, columns = _read_data_columns(store, model_name, key, index)
@@ -387,7 +387,7 @@ function read_result(
     ::Type{DenseAxisArray},
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     if is_cached(store.cache, model_name, key, index)
@@ -403,7 +403,7 @@ function read_result(
     ::Type{Array},
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::Union{DecisionModelIndexType, EmulationModelIndexType},
 )
     if is_cached(store.cache, model_name, key, index)
@@ -417,7 +417,7 @@ end
 
 function read_results(
     store::HdfSimulationStore,
-    key::OptimizationContainerKey;
+    key::IS.OptimizationContainerKey;
     index::Union{Nothing, EmulationModelIndexType} = nothing,
     len::Union{Nothing, Int} = nothing,
 )
@@ -439,7 +439,7 @@ function get_column_names(
     store::HdfSimulationStore,
     ::Type{DecisionModelIndexType},
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
     dataset = _get_dm_dataset(store, model_name, key)
@@ -449,7 +449,7 @@ end
 function get_column_names(
     store::HdfSimulationStore,
     ::Type{EmulationModelIndexType},
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
     dataset = _get_em_dataset(store, key)
@@ -460,7 +460,7 @@ function get_number_of_dimensions(
     store::HdfSimulationStore,
     i::Type{DecisionModelIndexType},
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     return length(get_column_names(store, i, model_name, key))
 end
@@ -468,14 +468,14 @@ end
 function get_number_of_dimensions(
     store::HdfSimulationStore,
     i::Type{EmulationModelIndexType},
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     return length(get_column_names(store, i, model_name, key))
 end
 
 function get_emulation_model_dataset_size(
     store::HdfSimulationStore,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     dataset = _get_em_dataset(store, key)
     return size(dataset.values)[1]
@@ -484,7 +484,7 @@ end
 function _read_result(
     store::HdfSimulationStore,
     ::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
     !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
@@ -515,7 +515,7 @@ end
 function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
     simulation_step, execution_index = _get_indices(store, model_name, index)
@@ -525,7 +525,7 @@ end
 function _read_result(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     simulation_step::Int,
     execution_index::Int,
 )
@@ -567,7 +567,7 @@ Write a decision model result for a timestamp to the store.
 function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::DecisionModelIndexType,
     ::Dates.DateTime,
     data::DenseAxisArray{Float64, N, <:NTuple{N, Any}},
@@ -601,7 +601,7 @@ Write a decision model result for a timestamp to the store.
 function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::DecisionModelIndexType,
     ::Dates.DateTime,
     data::DenseAxisArray{Float64, 3, <:NTuple{3, Any}},
@@ -641,7 +641,7 @@ Write an emulation model result for an execution index value and the timestamp o
 function write_result!(
     store::HdfSimulationStore,
     ::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
     data::Array{Float64},
@@ -656,7 +656,7 @@ end
 function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
     data::DenseAxisArray{Float64, 2},
@@ -670,7 +670,7 @@ end
 function write_result!(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
     data::DenseAxisArray{Float64, 1},
@@ -895,7 +895,7 @@ function _flush_data!(
     cache::OptimizationOutputCache,
     store::HdfSimulationStore,
     model_name,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     discard,
 )
     return _flush_data!(cache, store, OptimizationResultCacheKey(model_name, key), discard)
@@ -938,7 +938,7 @@ function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
     return store.optimizer_stats_datasets
 end
 
-function _get_em_dataset(store::HdfSimulationStore, key::OptimizationContainerKey)
+function _get_em_dataset(store::HdfSimulationStore, key::IS.OptimizationContainerKey)
     return getfield(get_em_data(store), get_store_container_type(key))[key]
 end
 
@@ -949,7 +949,7 @@ end
 function _get_dm_dataset(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     return getfield(get_dm_data(store)[model_name], get_store_container_type(key))[key]
 end
@@ -1000,7 +1000,7 @@ end
 function _read_data_columns(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
     if is_cached(store.cache, model_name, key, index)
@@ -1022,7 +1022,7 @@ end
 function _read_data_columns(
     store::HdfSimulationStore,
     model_name::Symbol,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
     # TODO: Enable once the cache is in use for em_data
