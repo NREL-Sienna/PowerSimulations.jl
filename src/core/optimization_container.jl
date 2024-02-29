@@ -336,7 +336,7 @@ end
 
 function init_optimization_container!(
     container::OptimizationContainer,
-    ::Type{T},
+    network_model::NetworkModel{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
@@ -358,10 +358,13 @@ function init_optimization_container!(
     container.time_steps = 1:get_horizon(settings)
 
     if T <: CopperPlatePowerModel || T <: AreaBalancePowerModel
-        total_number_of_devices = length(get_available_components(PSY.Device, sys))
+        total_number_of_devices =
+            length(get_available_components(network_model, PSY.Device, sys))
     else
-        total_number_of_devices = length(get_available_components(PSY.Device, sys))
-        total_number_of_devices += length(get_available_components(PSY.ACBranch, sys))
+        total_number_of_devices =
+            length(get_available_components(network_model, PSY.Device, sys))
+        total_number_of_devices +=
+            length(get_available_components(network_model, PSY.ACBranch, sys))
     end
 
     # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html

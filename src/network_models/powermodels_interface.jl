@@ -252,7 +252,8 @@ function powermodels_network!(
     network_model = get_network_model(template)
     radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
-        ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+        ac_bus_numbers =
+            PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
         bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
@@ -287,12 +288,12 @@ function powermodels_network!(
 ) where {S <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
-    buses = get_available_components(PSY.ACBus, sys)
 
     network_model = get_network_model(template)
     radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
-        ac_bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
+        ac_bus_numbers =
+            PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
         bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
