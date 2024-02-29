@@ -53,7 +53,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
-            nothing
+            nothing,
         )
     end
 end
