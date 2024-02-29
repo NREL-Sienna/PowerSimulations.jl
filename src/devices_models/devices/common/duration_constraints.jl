@@ -33,7 +33,7 @@ for i in the set of time steps.
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+* var_keys::Tuple{IS.VariableKey, IS.VariableKey, IS.VariableKey}) : names of the variables
 - : var_keys[1] : varon
 - : var_keys[2] : varstart
 - : var_keys[3] : varstop
@@ -42,8 +42,8 @@ function device_duration_retrospective!(
     container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_type::ConstraintType,
-    var_types::Tuple{VariableType, VariableType, VariableType},
+    cons_type::IS.ConstraintType,
+    var_types::Tuple{IS.VariableType, IS.VariableType, IS.VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
@@ -140,7 +140,7 @@ for i in the set of time steps.
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+* var_keys::Tuple{IS.VariableKey, IS.VariableKey, IS.VariableKey}) : names of the variables
 - : var_keys[1] : varon
 - : var_keys[2] : varstart
 - : var_keys[3] : varstop
@@ -149,9 +149,9 @@ function device_duration_look_ahead!(
     container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_type_up::ConstraintType,
-    cons_type_down::ConstraintType,
-    var_types::Tuple{VariableType, VariableType, VariableType},
+    cons_type_up::IS.ConstraintType,
+    cons_type_down::IS.ConstraintType,
+    var_types::Tuple{IS.VariableType, IS.VariableType, IS.VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
@@ -239,7 +239,7 @@ for i in the set of time steps.
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
 * initial_duration_off::Vector{InitialCondition} : gives initial number of time steps variable is down
 * cons_name::Symbol : name of the constraint
-* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+* var_keys::Tuple{IS.VariableKey, IS.VariableKey, IS.VariableKey}) : names of the variables
 - : var_keys[1] : varon
 - : var_keys[2] : varstart
 - : var_keys[3] : varstop
@@ -248,8 +248,8 @@ function device_duration_parameters!(
     container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_type::ConstraintType,
-    var_types::Tuple{VariableType, VariableType, VariableType},
+    cons_type::IS.ConstraintType,
+    var_types::Tuple{IS.VariableType, IS.VariableType, IS.VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
@@ -354,7 +354,7 @@ for i in the set of time steps.
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
-* var_keys::Tuple{VariableKey, VariableKey, VariableKey}) : names of the variables
+* var_keys::Tuple{IS.VariableKey, IS.VariableKey, IS.VariableKey}) : names of the variables
 - : var_keys[1] : varon
 - : var_keys[2] : varstart
 - : var_keys[3] : varstop
@@ -363,8 +363,8 @@ function device_duration_compact_retrospective!(
     container::OptimizationContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
-    cons_type::ConstraintType,
-    var_types::Tuple{VariableType, VariableType, VariableType},
+    cons_type::IS.ConstraintType,
+    var_types::Tuple{IS.VariableType, IS.VariableType, IS.VariableType},
     ::Type{T},
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)

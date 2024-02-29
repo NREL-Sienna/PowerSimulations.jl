@@ -70,7 +70,7 @@ get_output_cache(cache::OptimizationOutputCaches, key::OptimizationResultCacheKe
 function get_output_cache(
     cache::OptimizationOutputCaches,
     model_name,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     cache_key = OptimizationResultCacheKey(model_name, key)
     return get_output_cache(cache, cache_key)

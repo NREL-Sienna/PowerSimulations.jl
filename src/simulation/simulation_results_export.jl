@@ -64,15 +64,15 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
         problem_params = params.decision_models_params[Symbol(model["name"])]
         duals = Set(
             deserialize_key(problem_params, x) for
-            x in get(model, "duals", Set{ConstraintKey}())
+            x in get(model, "duals", Set{IS.ConstraintKey}())
         )
         parameters = Set(
             deserialize_key(problem_params, x) for
-            x in get(model, "parameters", Set{ParameterKey}())
+            x in get(model, "parameters", Set{IS.ParameterKey}())
         )
         variables = Set(
             deserialize_key(problem_params, x) for
-            x in get(model, "variables", Set{VariableKey}())
+            x in get(model, "variables", Set{IS.VariableKey}())
         )
         aux_variables = Set(
             deserialize_key(problem_params, x) for

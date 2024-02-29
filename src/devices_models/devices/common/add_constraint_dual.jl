@@ -56,7 +56,7 @@ end
 
 function assign_dual_variable!(
     container::OptimizationContainer,
-    constraint_type::Type{<:ConstraintType},
+    constraint_type::Type{<:IS.ConstraintType},
     service::D,
     ::Type{<:AbstractServiceFormulation},
 ) where {D <: PSY.Service}
@@ -75,7 +75,7 @@ end
 
 function assign_dual_variable!(
     container::OptimizationContainer,
-    constraint_type::Type{<:ConstraintType},
+    constraint_type::Type{<:IS.ConstraintType},
     devices::U,
     ::Type{<:AbstractDeviceFormulation},
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Device}
@@ -93,7 +93,7 @@ end
 
 function assign_dual_variable!(
     container::OptimizationContainer,
-    constraint_type::Type{<:ConstraintType},
+    constraint_type::Type{<:IS.ConstraintType},
     devices::U,
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.ACBus}

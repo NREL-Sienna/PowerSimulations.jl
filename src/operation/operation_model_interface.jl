@@ -76,7 +76,7 @@ function get_initial_conditions(
     model::OperationModel,
     ::T,
     ::U,
-) where {T <: InitialConditionType, U <: PSY.Device}
+) where {T <: IS.InitialConditionType, U <: PSY.Device}
     return get_initial_conditions(get_optimization_container(model), T, U)
 end
 
@@ -319,11 +319,11 @@ function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
 end
 
-read_dual(model::OperationModel, key::ConstraintKey) = _read_results(model, key)
-read_parameter(model::OperationModel, key::ParameterKey) = _read_results(model, key)
+read_dual(model::OperationModel, key::IS.ConstraintKey) = _read_results(model, key)
+read_parameter(model::OperationModel, key::IS.ParameterKey) = _read_results(model, key)
 read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, key)
-read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
-read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
+read_variable(model::OperationModel, key::IS.VariableKey) = _read_results(model, key)
+read_expression(model::OperationModel, key::IS.ExpressionKey) = _read_results(model, key)
 
 function _read_col_name(axes)
     if length(axes) == 1
@@ -342,7 +342,7 @@ function _read_col_name(axes)
     end
 end
 
-function _read_results(model::OperationModel, key::OptimizationContainerKey)
+function _read_results(model::OperationModel, key::IS.OptimizationContainerKey)
     res = read_results(get_store(model), key)
     col_name = _read_col_name(axes(res))
     return DataFrames.DataFrame(permutedims(res.data), col_name)

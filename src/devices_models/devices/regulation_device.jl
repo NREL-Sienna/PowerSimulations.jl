@@ -26,7 +26,7 @@ get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.RegulationDevice, 
 proportional_cost(::PSY.OperationalCost, ::AdditionalDeltaActivePowerUpVariable, d::PSY.RegulationDevice, ::AbstractRegulationFormulation) = isapprox(PSY.get_participation_factor(d).up, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / PSY.get_participation_factor(d).up
 proportional_cost(::PSY.OperationalCost, ::AdditionalDeltaActivePowerDownVariable, d::PSY.RegulationDevice, ::AbstractRegulationFormulation) = isapprox(PSY.get_participation_factor(d).dn, 0.0; atol=1e-2) ? SERVICES_SLACK_COST : 1 / PSY.get_participation_factor(d).dn
 
-objective_function_multiplier(::VariableType, ::AbstractRegulationFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::IS.VariableType, ::AbstractRegulationFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
 #! format: on
 

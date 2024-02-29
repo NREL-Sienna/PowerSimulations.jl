@@ -227,7 +227,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
+    attributes::VariableValueAttributes{IS.VariableKey{OnVariable, U}},
     ::Type{U},
     model::DecisionModel,
     state::DatasetContainer{InMemoryDataset},
@@ -292,7 +292,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
+    attributes::VariableValueAttributes{IS.VariableKey{OnVariable, U}},
     ::Type{<:PSY.Component},
     model::EmulationModel,
     state::DatasetContainer{InMemoryDataset},
@@ -335,9 +335,9 @@ Update parameter function an OperationModel
 """
 function update_parameter_values!(
     model::OperationModel,
-    key::ParameterKey{T, U},
+    key::IS.ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: ParameterType, U <: PSY.Component}
+) where {T <: IS.ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     optimization_container = get_optimization_container(model)
@@ -359,7 +359,7 @@ end
 
 function update_parameter_values!(
     model::OperationModel,
-    key::ParameterKey{T, U},
+    key::IS.ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     # Enable again for detailed debugging
@@ -392,7 +392,7 @@ end
 
 function update_parameter_values!(
     model::OperationModel,
-    key::ParameterKey{FixValueParameter, T},
+    key::IS.ParameterKey{FixValueParameter, T},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: PSY.Component}
     # Enable again for detailed debugging
@@ -420,9 +420,9 @@ Update parameter function an OperationModel
 """
 function update_parameter_values!(
     model::OperationModel,
-    key::ParameterKey{T, U},
+    key::IS.ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: ParameterType, U <: PSY.Service}
+) where {T <: IS.ParameterType, U <: PSY.Service}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     optimization_container = get_optimization_container(model)
@@ -446,7 +446,7 @@ end
 
 function update_parameter_values!(
     model::OperationModel,
-    key::ParameterKey{T, U},
+    key::IS.ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
     # Enable again for detailed debugging
@@ -489,7 +489,7 @@ end
 
 function update_parameter_values!(
     model::OperationModel,
-    key::ParameterKey{FixValueParameter, T},
+    key::IS.ParameterKey{FixValueParameter, T},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: PSY.Service}
     # Enable again for detailed debugging

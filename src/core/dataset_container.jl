@@ -1,18 +1,18 @@
 struct DatasetContainer{T}
-    duals::Dict{ConstraintKey, T}
+    duals::Dict{IS.ConstraintKey, T}
     aux_variables::Dict{AuxVarKey, T}
-    variables::Dict{VariableKey, T}
-    parameters::Dict{ParameterKey, T}
-    expressions::Dict{ExpressionKey, T}
+    variables::Dict{IS.VariableKey, T}
+    parameters::Dict{IS.ParameterKey, T}
+    expressions::Dict{IS.ExpressionKey, T}
 end
 
 function DatasetContainer{T}() where {T <: AbstractDataset}
     return DatasetContainer(
-        Dict{ConstraintKey, T}(),
+        Dict{IS.ConstraintKey, T}(),
         Dict{AuxVarKey, T}(),
-        Dict{VariableKey, T}(),
-        Dict{ParameterKey, T}(),
-        Dict{ExpressionKey, T}(),
+        Dict{IS.VariableKey, T}(),
+        Dict{IS.ParameterKey, T}(),
+        Dict{IS.ExpressionKey, T}(),
     )
 end
 
@@ -73,14 +73,14 @@ function get_dataset_keys(container::DatasetContainer)
     )
 end
 
-function get_dataset(container::DatasetContainer, key::OptimizationContainerKey)
+function get_dataset(container::DatasetContainer, key::IS.OptimizationContainerKey)
     datasets = getfield(container, get_store_container_type(key))
     return datasets[key]
 end
 
 function set_dataset!(
     container::DatasetContainer{T},
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     val::T,
 ) where {T <: AbstractDataset}
     datasets = getfield(container, get_store_container_type(key))
@@ -88,7 +88,7 @@ function set_dataset!(
     return
 end
 
-function has_dataset(container::DatasetContainer, key::OptimizationContainerKey)
+function has_dataset(container::DatasetContainer, key::IS.OptimizationContainerKey)
     datasets = getfield(container, get_store_container_type(key))
     return haskey(datasets, key)
 end
@@ -97,23 +97,23 @@ function get_dataset(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset(container, ConstraintKey(T, U))
+) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset(container, IS.ConstraintKey(T, U))
 end
 
 function get_dataset(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset(container, VariableKey(T, U))
+) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset(container, IS.VariableKey(T, U))
 end
 
 function get_dataset(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
     return get_dataset(container, AuxVarKey(T, U))
 end
 
@@ -121,19 +121,19 @@ function get_dataset(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset(container, ParameterKey(T, U))
+) where {T <: IS.ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset(container, IS.ParameterKey(T, U))
 end
 
 function get_dataset(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset(container, ExpressionKey(T, U))
+) where {T <: IS.ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset(container, IS.ExpressionKey(T, U))
 end
 
-function get_dataset_values(container::DatasetContainer, key::OptimizationContainerKey)
+function get_dataset_values(container::DatasetContainer, key::IS.OptimizationContainerKey)
     return get_dataset(container, key).values
 end
 
@@ -141,23 +141,23 @@ function get_dataset_values(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset_values(container, ConstraintKey(T, U))
+) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset_values(container, IS.ConstraintKey(T, U))
 end
 
 function get_dataset_values(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset_values(container, VariableKey(T, U))
+) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset_values(container, IS.VariableKey(T, U))
 end
 
 function get_dataset_values(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
     return get_dataset_values(container, AuxVarKey(T, U))
 end
 
@@ -165,26 +165,26 @@ function get_dataset_values(
     container::DatasetContainer,
     ::T,
     ::Type{U},
-) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset_values(container, ExpressionKey(T, U))
+) where {T <: IS.ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset_values(container, IS.ExpressionKey(T, U))
 end
 
 function get_dataset_values(
     container::DatasetContainer,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     date::Dates.DateTime,
 )
     return get_dataset_value(get_dataset(container, key), date)
 end
 
-function get_last_recorded_row(container::DatasetContainer, key::OptimizationContainerKey)
+function get_last_recorded_row(container::DatasetContainer, key::IS.OptimizationContainerKey)
     return get_last_recorded_row(get_dataset(container, key))
 end
 
 """
 Return the timestamp from the data used in the last update
 """
-function get_update_timestamp(container::DatasetContainer, key::OptimizationContainerKey)
+function get_update_timestamp(container::DatasetContainer, key::IS.OptimizationContainerKey)
     return get_update_timestamp(get_dataset(container, key))
 end
 
@@ -193,18 +193,18 @@ Return the timestamp from most recent data row updated in the dataset. This valu
 """
 function get_last_updated_timestamp(
     container::DatasetContainer,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
 )
     return get_last_updated_timestamp(get_dataset(container, key))
 end
 
-function get_last_update_value(container::DatasetContainer, key::OptimizationContainerKey)
+function get_last_update_value(container::DatasetContainer, key::IS.OptimizationContainerKey)
     return get_last_recorded_value(get_dataset(container, key))
 end
 
 function set_dataset_values!(
     container::DatasetContainer,
-    key::OptimizationContainerKey,
+    key::IS.OptimizationContainerKey,
     index::Int,
     vals,
 )

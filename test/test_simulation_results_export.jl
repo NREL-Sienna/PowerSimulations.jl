@@ -35,11 +35,11 @@ function _make_params()
     container_metadata = OptimizationContainerMetadata(
         Dict(
             "ActivePowerVariable__ThermalStandard" =>
-                PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+                PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
             "EnergyVariable__HydroEnergyReservoir" =>
-                PSI.VariableKey(EnergyVariable, HydroEnergyReservoir),
+                PSI.IS.VariableKey(EnergyVariable, HydroEnergyReservoir),
             "OnVariable__ThermalStandard" =>
-                PSI.VariableKey(OnVariable, ThermalStandard),
+                PSI.IS.VariableKey(OnVariable, ThermalStandard),
         ),
     )
     problems = OrderedDict{Symbol, ModelStoreParams}()
@@ -80,68 +80,68 @@ end
         exports,
         valid,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test should_export_variable(
         exports,
         valid2,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         invalid,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         invalid2,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         valid,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.IS.VariableKey(ActivePowerVariable, RenewableFix),
     )
     @test should_export_parameter(
         exports,
         valid,
         :ED,
-        PSI.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
+        PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
     )
     @test !should_export_dual(
         exports,
         valid,
         :ED,
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.IS.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
     )
 
     @test should_export_variable(
         exports,
         valid,
         :UC,
-        PSI.VariableKey(OnVariable, ThermalStandard),
+        PSI.IS.VariableKey(OnVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         valid,
         :UC,
-        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.IS.VariableKey(ActivePowerVariable, RenewableFix),
     )
     @test should_export_parameter(
         exports,
         valid,
         :UC,
-        PSI.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
+        PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
     )
     @test should_export_dual(
         exports,
         valid,
         :UC,
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.IS.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
     )
 
     @test exports.path == "export_path"

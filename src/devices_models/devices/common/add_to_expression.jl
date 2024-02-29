@@ -4,7 +4,7 @@ function add_expressions!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <: ExpressionType,
+    T <: IS.ExpressionType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -20,7 +20,7 @@ function add_expressions!(
     devices::U,
     model::ServiceModel{V, W},
 ) where {
-    T <: ExpressionType,
+    T <: IS.ExpressionType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     V <: PSY.Reserve,
     W <: AbstractReservesFormulation,
@@ -143,7 +143,7 @@ function add_to_expression!(
     network_model::NetworkModel{X},
 ) where {
     T <: SystemBalanceExpressions,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -513,7 +513,7 @@ function add_to_expression!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
 }
@@ -644,7 +644,7 @@ function add_to_expression!(
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
     X <: PTDFPowerModel,
@@ -879,7 +879,7 @@ function add_to_expression!(
     network_model::NetworkModel{X},
 ) where {
     T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB},
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: PSY.Device,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -904,7 +904,7 @@ function add_to_expression!(
     model::ServiceModel{X, W},
 ) where {
     T <: Union{ActivePowerRangeExpressionUB, ReserveRangeExpressionUB},
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveUp},
     W <: AbstractReservesFormulation,
@@ -976,7 +976,7 @@ function add_to_expression!(
     model::ServiceModel{X, W},
 ) where {
     T <: Union{ActivePowerRangeExpressionLB, ReserveRangeExpressionLB},
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveDown},
     W <: AbstractReservesFormulation,
@@ -1056,7 +1056,7 @@ function add_to_expression!(
     ::Type{U},
     model::ServiceModel{V, W},
     devices_template::Dict{Symbol, DeviceModel},
-) where {U <: VariableType, V <: PSY.Reserve, W <: AbstractReservesFormulation}
+) where {U <: IS.VariableType, V <: PSY.Reserve, W <: AbstractReservesFormulation}
     contributing_devices_map = get_contributing_devices_map(model)
     for (device_type, devices) in contributing_devices_map
         device_model = get(devices_template, Symbol(device_type), nothing)

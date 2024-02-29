@@ -1,10 +1,10 @@
 struct EmulationModelSimulationResults <: OperationModelSimulationResults
-    variables::Dict{OptimizationContainerKey, DataFrames.DataFrame}
-    duals::Dict{OptimizationContainerKey, DataFrames.DataFrame}
-    parameters::Dict{OptimizationContainerKey, DataFrames.DataFrame}
-    aux_variables::Dict{OptimizationContainerKey, DataFrames.DataFrame}
-    expressions::Dict{OptimizationContainerKey, DataFrames.DataFrame}
-    container_key_lookup::Dict{String, OptimizationContainerKey}
+    variables::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
+    duals::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
+    parameters::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
+    aux_variables::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
+    expressions::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
+    container_key_lookup::Dict{String, IS.OptimizationContainerKey}
 end
 
 function SimulationProblemResults(
@@ -78,19 +78,19 @@ get_cached_results(
 ) = get_cached_aux_variables(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::ConstraintKey,
+    ::IS.ConstraintKey,
 ) = get_cached_duals(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::ExpressionKey,
+    ::IS.ExpressionKey,
 ) = get_cached_expressions(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::ParameterKey,
+    ::IS.ParameterKey,
 ) = get_cached_parameters(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::VariableKey,
+    ::IS.VariableKey,
 ) = get_cached_variables(res)
 
 function _list_containers(res::SimulationProblemResults)
@@ -132,7 +132,7 @@ end
 
 function _get_store_value(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:IS.OptimizationContainerKey},
     ::Nothing;
     start_time = nothing,
     len = nothing,
@@ -145,13 +145,13 @@ end
 
 function _get_store_value(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
+    container_keys::Vector{<:IS.OptimizationContainerKey},
     store::SimulationStore;
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Nothing, Int} = nothing,
 )
     base_power = res.base_power
-    results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
+    results = Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}()
     for key in container_keys
         start_time, _len, resolution = _check_offsets(res, key, store, start_time, len)
         start_index = (start_time - first(res.timestamps)) ÷ resolution + 1
@@ -217,7 +217,7 @@ function _read_results(
     start_time = nothing,
     len = nothing,
 )
-    isempty(result_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
+    isempty(result_keys) && return Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}()
     if store === nothing && res.store !== nothing
         # In this case we have an InMemorySimulationStore.
         store = res.store
@@ -247,7 +247,7 @@ end
 
 function read_results_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    result_keys::Vector{<:OptimizationContainerKey};
+    result_keys::Vector{<:IS.OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Nothing, Int} = nothing,
 )
@@ -281,10 +281,10 @@ function load_results!(
 )
     # TODO: consider extending this to support start_time and len
     aux_variable_keys = [_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
-    dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
-    expression_keys = [_deserialize_key(ExpressionKey, res, x...) for x in expressions]
-    parameter_keys = [_deserialize_key(ParameterKey, res, x...) for x in parameters]
-    variable_keys = [_deserialize_key(VariableKey, res, x...) for x in variables]
+    dual_keys = [_deserialize_key(IS.ConstraintKey, res, x...) for x in duals]
+    expression_keys = [_deserialize_key(IS.ExpressionKey, res, x...) for x in expressions]
+    parameter_keys = [_deserialize_key(IS.ParameterKey, res, x...) for x in parameters]
+    variable_keys = [_deserialize_key(IS.VariableKey, res, x...) for x in variables]
     function merge_results(store)
         merge!(get_cached_aux_variables(res), _read_results(res, aux_variable_keys, store))
         merge!(get_cached_duals(res), _read_results(res, dual_keys, store))

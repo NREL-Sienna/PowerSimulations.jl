@@ -159,13 +159,13 @@ end
         "num_steps" => 50,
     )
     variables = Dict(
-        PSI.VariableKey(ActivePowerVariable, ThermalStandard) =>
+        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard) =>
             Dict("keep_in_cache" => true),
-        PSI.VariableKey(ActivePowerVariable, RenewableDispatch) =>
+        PSI.IS.VariableKey(ActivePowerVariable, RenewableDispatch) =>
             Dict("keep_in_cache" => true),
-        PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad) =>
+        PSI.IS.VariableKey(ActivePowerVariable, InterruptiblePowerLoad) =>
             Dict("keep_in_cache" => false),
-        PSI.VariableKey(ActivePowerVariable, RenewableFix) =>
+        PSI.IS.VariableKey(ActivePowerVariable, RenewableFix) =>
             Dict("keep_in_cache" => false),
     )
     model_defs = OrderedDict(
@@ -203,7 +203,7 @@ end
 @testset "Test OptimizationOutputCache" begin
     key = PSI.OptimizationResultCacheKey(
         :ED,
-        PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad),
+        PSI.IS.VariableKey(ActivePowerVariable, InterruptiblePowerLoad),
     )
     cache = PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true))
     @test !PSI.has_clean(cache)

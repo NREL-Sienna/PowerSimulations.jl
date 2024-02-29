@@ -40,10 +40,10 @@ function _add_feedforward_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     param::P,
-    ::VariableKey{U, V},
+    ::IS.VariableKey{U, V},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel,
-) where {T <: ConstraintType, P <: ParameterType, U <: VariableType, V <: PSY.Component}
+) where {T <: IS.ConstraintType, P <: IS.ParameterType, U <: IS.VariableType, V <: PSY.Component}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     constraint_lb =
@@ -74,7 +74,7 @@ function _add_sc_feedforward_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     ::P,
-    ::VariableKey{U, V},
+    ::IS.VariableKey{U, V},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
@@ -119,13 +119,13 @@ function _add_sc_feedforward_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     ::P,
-    ::VariableKey{U, V},
+    ::IS.VariableKey{U, V},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
     T <: FeedforwardSemiContinousConstraint,
-    P <: ParameterType,
-    U <: VariableType,
+    P <: IS.ParameterType,
+    U <: IS.VariableType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
@@ -240,7 +240,7 @@ end
               cons_name::Symbol,
               constraint_infos,
               param_reference,
-              var_key::VariableKey)
+              var_key::IS.VariableKey)
 
 Constructs a parameterized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
@@ -256,7 +256,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the JuMP.VariableRef used to determine the upperbound
-* var_key::VariableKey : the name of the continuous variable
+* var_key::IS.VariableKey : the name of the continuous variable
 """
 function add_feedforward_constraints!(
     container::OptimizationContainer,
@@ -299,7 +299,7 @@ end
               cons_name::Symbol,
               constraint_infos,
               param_reference,
-              var_key::VariableKey)
+              var_key::IS.VariableKey)
 
 Constructs a parameterized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
@@ -315,7 +315,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * param_reference : Reference to the JuMP.VariableRef used to determine the upperbound
-* var_key::VariableKey : the name of the continuous variable
+* var_key::IS.VariableKey : the name of the continuous variable
 """
 function add_feedforward_constraints!(
     container::OptimizationContainer,

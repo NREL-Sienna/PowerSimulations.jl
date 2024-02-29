@@ -3,7 +3,7 @@ function add_variable_cost!(
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         _add_variable_cost_to_objective!(container, U(), d, op_cost_data, V())
@@ -16,7 +16,7 @@ function add_variable_cost!(
     ::U,
     service::T,
     ::V,
-) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
+) where {T <: PSY.ReserveDemandCurve, U <: IS.VariableType, V <: StepwiseCostReserve}
     _add_variable_cost_to_objective!(container, U(), service, V())
     return
 end
@@ -26,7 +26,7 @@ function add_shut_down_cost!(
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
@@ -44,7 +44,7 @@ function add_proportional_cost!(
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
@@ -119,7 +119,7 @@ function _add_variable_cost_to_objective!(
     component::PSY.Component,
     op_cost::PSY.OperationalCost,
     ::U,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
+) where {T <: IS.VariableType, U <: AbstractDeviceFormulation}
     variable_cost_data = variable_cost(op_cost, T(), component, U())
     _add_variable_cost_to_objective!(container, T(), component, variable_cost_data, U())
     return
@@ -131,7 +131,7 @@ function _add_variable_cost_to_objective!(
     component::PSY.Component,
     op_cost::PSY.MarketBidCost,
     ::U,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
+) where {T <: IS.VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
     time_steps = get_time_steps(container)
@@ -194,7 +194,7 @@ function _add_variable_cost_to_objective!(
     ::T,
     component::PSY.Reserve,
     ::U,
-) where {T <: VariableType, U <: StepwiseCostReserve}
+) where {T <: IS.VariableType, U <: StepwiseCostReserve}
     component_name = PSY.get_name(component)
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     # If array is full of tuples with zeros return 0.0
@@ -239,7 +239,7 @@ function add_start_up_cost!(
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         _add_start_up_cost_to_objective!(container, U(), d, op_cost_data, V())
@@ -253,7 +253,7 @@ function _add_start_up_cost_to_objective!(
     component::PSY.Component,
     op_cost::PSY.OperationalCost,
     ::U,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
+) where {T <: IS.VariableType, U <: AbstractDeviceFormulation}
     cost_term = start_up_cost(op_cost, component, U())
     iszero(cost_term) && return
     multiplier = objective_function_multiplier(T(), U())
@@ -275,7 +275,7 @@ function _add_start_up_cost_to_objective!(
     component::PSY.Component,
     op_cost::Union{PSY.MultiStartCost, PSY.MarketBidCost},
     ::U,
-) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
+) where {T <: IS.VariableType, U <: ThermalMultiStartUnitCommitment}
     cost_terms = start_up_cost(op_cost, component, U())
     cost_term = cost_terms[MULTI_START_COST_MAP[T]]
     iszero(cost_term) && return
@@ -298,7 +298,7 @@ function _get_cost_function_parameter_container(
 ) where {
     S <: ObjectiveFunctionParameter,
     T <: PSY.Component,
-    U <: VariableType,
+    U <: IS.VariableType,
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
 }
     if has_container_key(container, S, T)
@@ -370,7 +370,7 @@ Adds to the cost function cost terms for sum of variables with common factor to 
 # Arguments
 
   - container::OptimizationContainer : the optimization_container model built in PowerSimulations
-  - var_key::VariableKey: The variable name
+  - var_key::IS.VariableKey: The variable name
   - component_name::String: The component_name of the variable container
   - cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 """
@@ -380,7 +380,7 @@ function _add_variable_cost_to_objective!(
     component::PSY.Component,
     cost_component::PSY.VariableCost{Float64},
     ::U,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
+) where {T <: IS.VariableType, U <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
     cost_data = PSY.get_cost(cost_component)
@@ -422,7 +422,7 @@ linear cost term `sum(variable)*cost_data[2]`
 # Arguments
 
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* var_key::VariableKey: The variable name
+* var_key::IS.VariableKey: The variable name
 * component_name::String: The component_name of the variable container
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
@@ -432,7 +432,7 @@ function _add_variable_cost_to_objective!(
     component::PSY.Component,
     cost_component::PSY.VariableCost{NTuple{2, Float64}},
     ::U,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
+) where {T <: IS.VariableType, U <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
     cost_data = PSY.get_cost(cost_component)
@@ -475,7 +475,7 @@ Creates piecewise linear cost function using a sum of variables and expression w
 # Arguments
 
   - container::OptimizationContainer : the optimization_container model built in PowerSimulations
-  - var_key::VariableKey: The variable name
+  - var_key::IS.VariableKey: The variable name
   - component_name::String: The component_name of the variable container
   - cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 """
@@ -485,7 +485,7 @@ function _add_variable_cost_to_objective!(
     component::PSY.Component,
     cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     ::U,
-) where {T <: VariableType, U <: AbstractDeviceFormulation}
+) where {T <: IS.VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     # If array is full of tuples with zeros return 0.0
@@ -550,7 +550,7 @@ function _add_pwl_term!(
     cost_data::Vector{PSY.VariableCost{Float64}},
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -575,7 +575,7 @@ function _add_pwl_term!(
     cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -625,7 +625,7 @@ function _add_pwl_term!(
     cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractServiceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -660,7 +660,7 @@ function _add_pwl_term!(
     data::Vector{NTuple{2, Float64}},
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -709,7 +709,7 @@ function _add_pwl_term!(
     data::Vector{NTuple{2, Float64}},
     ::U,
     ::V,
-) where {T <: PSY.ThermalGen, U <: VariableType, V <: ThermalDispatchNoMin}
+) where {T <: PSY.ThermalGen, U <: IS.VariableType, V <: ThermalDispatchNoMin}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -780,7 +780,7 @@ function _add_pwl_constraint!(
     break_points::Vector{Float64},
     sos_status::SOSStatusVariable,
     period::Int,
-) where {T <: PSY.Component, U <: VariableType}
+) where {T <: PSY.Component, U <: IS.VariableType}
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
@@ -831,7 +831,7 @@ function _add_pwl_sos_constraint!(
     break_points::Vector{Float64},
     sos_status::SOSStatusVariable,
     period::Int,
-) where {T <: PSY.Component, U <: VariableType}
+) where {T <: PSY.Component, U <: IS.VariableType}
     name = PSY.get_name(component)
     @warn(
         "The cost function provided for $(name) is not compatible with a linear PWL cost function.
@@ -869,7 +869,7 @@ function _get_no_load_cost(
     component::T,
     ::V,
     ::U,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {T <: PSY.Component, U <: IS.VariableType, V <: AbstractDeviceFormulation}
     return no_load_cost(PSY.get_operation_cost(component), U(), component, V())
 end
 
@@ -892,7 +892,7 @@ function _add_proportional_term!(
     component::U,
     linear_term::Float64,
     time_period::Int,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: IS.VariableType, U <: PSY.Component}
     component_name = PSY.get_name(component)
     @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     variable = get_variable(container, T(), U)[component_name, time_period]
@@ -909,7 +909,7 @@ function _add_quadratic_term!(
     var_multiplier::Float64,
     expression_multiplier::Float64,
     time_period::Int,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: IS.VariableType, U <: PSY.Component}
     component_name = PSY.get_name(component)
     @debug "$component_name Quadratic Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     var = get_variable(container, T(), U)[component_name, time_period]

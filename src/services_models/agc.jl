@@ -77,7 +77,7 @@ end
 
 function _get_variable_initial_value(
     d::PSY.Component,
-    key::ICKey,
+    key::IS.ICKey,
     ::AbstractAGCFormulation,
     ::Nothing,
 )
