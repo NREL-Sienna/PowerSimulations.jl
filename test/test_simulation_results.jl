@@ -125,89 +125,115 @@ function make_export_all(problems)
     ]
 end
 
-function test_simulation_results(file_path::String, export_path; in_memory = false)
-    @testset "Test simulation results in_memory = $in_memory" begin
-        template_uc = get_template_basic_uc_simulation()
-        template_ed = get_template_nomin_ed_simulation()
-        set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-        set_network_model!(
-            template_uc,
-            NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
-        )
-        set_network_model!(
-            template_ed,
-            NetworkModel(
-                CopperPlatePowerModel;
-                duals = [CopperPlateBalanceConstraint],
-                use_slacks = true,
+function run_simulation(
+    c_sys5_hy_uc,
+    c_sys5_hy_ed,
+    file_path::String,
+    export_path;
+    in_memory = false,
+    system_to_file = true,
+)
+    template_uc = get_template_basic_uc_simulation()
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
+    set_network_model!(
+        template_uc,
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
+    )
+    set_network_model!(
+        template_ed,
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+            use_slacks = true,
+        ),
+    )
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = GLPK_optimizer,
+                system_to_file = system_to_file,
             ),
-        )
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = ipopt_optimizer,
+                system_to_file = system_to_file,
+            ),
+        ],
+    )
+
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+    sim = Simulation(;
+        name = "no_cache",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = file_path,
+    )
+
+    build_out = build!(sim; console_level = Logging.Error)
+    @test build_out == PSI.BuildStatus.BUILT
+
+    exports = Dict(
+        "models" => [
+            Dict(
+                "name" => "UC",
+                "store_all_variables" => true,
+                "store_all_parameters" => true,
+                "store_all_duals" => true,
+                "store_all_aux_variables" => true,
+            ),
+            Dict(
+                "name" => "ED",
+                "store_all_variables" => true,
+                "store_all_parameters" => true,
+                "store_all_duals" => true,
+                "store_all_aux_variables" => true,
+            ),
+        ],
+        "path" => export_path,
+        "optimizer_stats" => true,
+    )
+    execute_out = execute!(sim; exports = exports, in_memory = in_memory)
+    @test execute_out == PSI.RunStatus.SUCCESSFUL
+
+    return sim
+end
+
+function test_simulation_results(
+    file_path::String,
+    export_path;
+    in_memory = false,
+    system_to_file = true,
+)
+    @testset "Test simulation results in_memory = $in_memory" begin
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-        models = SimulationModels(;
-            decision_models = [
-                DecisionModel(
-                    template_uc,
-                    c_sys5_hy_uc;
-                    name = "UC",
-                    optimizer = GLPK_optimizer,
-                ),
-                DecisionModel(
-                    template_ed,
-                    c_sys5_hy_ed;
-                    name = "ED",
-                    optimizer = ipopt_optimizer,
-                ),
-            ],
+        sim = run_simulation(
+            c_sys5_hy_uc,
+            c_sys5_hy_ed,
+            file_path,
+            export_path;
+            in_memory = in_memory,
+            system_to_file = system_to_file,
         )
-
-        sequence = SimulationSequence(;
-            models = models,
-            feedforwards = Dict(
-                "ED" => [
-                    SemiContinuousFeedforward(;
-                        component_type = ThermalStandard,
-                        source = OnVariable,
-                        affected_values = [ActivePowerVariable],
-                    ),
-                ],
-            ),
-            ini_cond_chronology = InterProblemChronology(),
-        )
-        sim = Simulation(;
-            name = "no_cache",
-            steps = 2,
-            models = models,
-            sequence = sequence,
-            simulation_folder = file_path,
-        )
-
-        build_out = build!(sim; console_level = Logging.Error)
-        @test build_out == PSI.BuildStatus.BUILT
-
-        exports = Dict(
-            "models" => [
-                Dict(
-                    "name" => "UC",
-                    "store_all_variables" => true,
-                    "store_all_parameters" => true,
-                    "store_all_duals" => true,
-                    "store_all_aux_variables" => true,
-                ),
-                Dict(
-                    "name" => "ED",
-                    "store_all_variables" => true,
-                    "store_all_parameters" => true,
-                    "store_all_duals" => true,
-                    "store_all_aux_variables" => true,
-                ),
-            ],
-            "path" => export_path,
-            "optimizer_stats" => true,
-        )
-        execute_out = execute!(sim; exports = exports, in_memory = in_memory)
-        @test execute_out == PSI.RunStatus.SUCCESSFUL
-
         results = SimulationResults(sim)
         test_decision_problem_results(results, c_sys5_hy_ed, c_sys5_hy_uc, in_memory)
         test_emulation_problem_results(results, in_memory)
@@ -703,4 +729,27 @@ end
         export_path = mktempdir(; cleanup = true)
         test_simulation_results(file_path, export_path; in_memory = in_memory)
     end
+end
+
+@testset "Test simulation results with system from store" begin
+    file_path = mktempdir(; cleanup = true)
+    export_path = mktempdir(; cleanup = true)
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    in_memory = false
+    sim = run_simulation(
+        c_sys5_hy_uc,
+        c_sys5_hy_ed,
+        file_path,
+        export_path;
+        system_to_file = false,
+        in_memory = in_memory,
+    )
+    results = SimulationResults(PSI.get_simulation_folder(sim))
+    uc = get_decision_problem_results(results, "UC")
+    ed = get_decision_problem_results(results, "ED")
+    sys_uc = get_system!(uc)
+    sys_ed = get_system!(ed)
+    test_decision_problem_results(results, sys_ed, sys_uc, in_memory)
+    test_emulation_problem_results(results, in_memory)
 end
