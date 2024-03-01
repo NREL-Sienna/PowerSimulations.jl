@@ -138,8 +138,8 @@ end
 function initialize_problem_storage!(
     store::InMemorySimulationStore,
     params::SimulationStoreParams,
-    dm_problem_reqs::Dict{Symbol, SimulationModelStoreRequirements},
-    em_problem_reqs::SimulationModelStoreRequirements,
+    dm_problem_reqs::Dict{Symbol, IS.SimulationModelStoreRequirements},
+    em_problem_reqs::IS.SimulationModelStoreRequirements,
     ::CacheFlushRules,
 )
     store.params = params
