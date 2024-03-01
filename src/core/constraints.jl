@@ -59,7 +59,7 @@ struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
-abstract type EventConstraint <: ConstraintType end
+abstract type EventConstraint <: IS.ConstraintType end
 struct OutageConstraint <: EventConstraint end
 
 # These apply to the processing of constraint duals
