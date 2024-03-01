@@ -54,7 +54,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::ModelInternal
+    internal::IS.ModelInternal
     store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
@@ -71,7 +71,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
             name = Symbol(name)
         end
         finalize_template!(template, sys)
-        internal = ModelInternal(
+        internal = IS.ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
         new{M}(name, template, sys, internal, EmulationModelStore(), Dict{String, Any}())

@@ -13,7 +13,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ModelInternal}
+    internal::Union{Nothing, IS.ModelInternal}
     store::DecisionModelStore
     ext::Dict{String, Any}
 end
@@ -72,7 +72,7 @@ function DecisionModel{M}(
     elseif name isa String
         name = Symbol(name)
     end
-    internal = ModelInternal(
+    internal = IS.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
     )
     template_ = deepcopy(template)
