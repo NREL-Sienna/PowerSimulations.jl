@@ -57,7 +57,7 @@ mutable struct InitialConditionsData
     duals::Dict{IS.ConstraintKey, DataFrames.DataFrame}
     parameters::Dict{IS.ParameterKey, DataFrames.DataFrame}
     variables::Dict{IS.VariableKey, DataFrames.DataFrame}
-    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
+    aux_variables::Dict{IS.AuxVarKey, DataFrames.DataFrame}
 end
 
 function InitialConditionsData()
@@ -65,7 +65,7 @@ function InitialConditionsData()
         Dict{IS.ConstraintKey, DataFrames.DataFrame}(),
         Dict{IS.ParameterKey, DataFrames.DataFrame}(),
         Dict{IS.VariableKey, DataFrames.DataFrame}(),
-        Dict{AuxVarKey, DataFrames.DataFrame}(),
+        Dict{IS.AuxVarKey, DataFrames.DataFrame}(),
     )
 end
 
@@ -82,7 +82,7 @@ function get_initial_condition_value(
     ::T,
     ::Type{U},
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return ic_data.aux_variables[AuxVarKey(T, U)]
+    return ic_data.aux_variables[IS.AuxVarKey(T, U)]
 end
 
 function get_initial_condition_value(
@@ -114,7 +114,7 @@ function has_initial_condition_value(
     ::T,
     ::Type{U},
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return haskey(ic_data.aux_variables, AuxVarKey(T, U))
+    return haskey(ic_data.aux_variables, IS.AuxVarKey(T, U))
 end
 
 function has_initial_condition_value(

@@ -400,7 +400,7 @@ function read_realized_aux_variables(
 )
     return read_realized_aux_variables(
         res,
-        [AuxVarKey(x...) for x in aux_variables];
+        [IS.AuxVarKey(x...) for x in aux_variables];
         kwargs...,
     )
 end
@@ -412,7 +412,7 @@ function read_realized_aux_variables(
 )
     return read_realized_aux_variables(
         res,
-        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
+        [_deserialize_key(IS.AuxVarKey, res, x) for x in aux_variables];
         kwargs...,
     )
 end
@@ -440,7 +440,7 @@ function read_realized_aux_variable(
         values(
             read_realized_aux_variables(
                 res,
-                [_deserialize_key(AuxVarKey, res, aux_variable)];
+                [_deserialize_key(IS.AuxVarKey, res, aux_variable)];
                 kwargs...,
             ),
         ),
@@ -454,7 +454,7 @@ function read_realized_aux_variable(
 )
     return first(
         values(
-            read_realized_aux_variables(res, [AuxVarKey(aux_variable...)]; kwargs...),
+            read_realized_aux_variables(res, [IS.AuxVarKey(aux_variable...)]; kwargs...),
         ),
     )
 end

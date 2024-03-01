@@ -383,7 +383,7 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::AuxVarKey{U, D},
+    key::IS.AuxVarKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {

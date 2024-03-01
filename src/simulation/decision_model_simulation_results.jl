@@ -396,7 +396,7 @@ Return the values for the requested auxillary variables. It keeps requests when 
 # Arguments
 
   - `args`: Can be a string returned from [`list_aux_variable_names`](@ref) or args that can be
-    splatted into a AuxVarKey.
+    splatted into a IS.AuxVarKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
 """
@@ -407,7 +407,7 @@ function read_aux_variable(
     count::Union{Int, Nothing} = nothing,
     store = nothing,
 )
-    key = _deserialize_key(AuxVarKey, res, args...)
+    key = _deserialize_key(IS.AuxVarKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
         _read_results(res, [key], timestamps, store)[key],

@@ -4,7 +4,7 @@ struct ProblemResultsExport
     expressions::Set{IS.ExpressionKey}
     parameters::Set{IS.ParameterKey}
     variables::Set{IS.VariableKey}
-    aux_variables::Set{AuxVarKey}
+    aux_variables::Set{IS.AuxVarKey}
     optimizer_stats::Bool
     store_all_flags::Dict{Symbol, Bool}
 
@@ -42,7 +42,7 @@ function ProblemResultsExport(
     expressions = Set{IS.ExpressionKey}(),
     parameters = Set{IS.ParameterKey}(),
     variables = Set{IS.VariableKey}(),
-    aux_variables = Set{AuxVarKey}(),
+    aux_variables = Set{IS.AuxVarKey}(),
     optimizer_stats = true,
     store_all_duals = false,
     store_all_expressions = false,

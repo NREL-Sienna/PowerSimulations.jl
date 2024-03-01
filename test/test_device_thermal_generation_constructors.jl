@@ -15,8 +15,8 @@ test_path = mktempdir()
     ]
 
     aux_variables_keys = [
-        PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
-        PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
+        PSI.IS.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
+        PSI.IS.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
     ]
     device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -51,8 +51,8 @@ end
     ]
 
     aux_variables_keys = [
-        PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
-        PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
+        PSI.IS.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
+        PSI.IS.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
     ]
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)

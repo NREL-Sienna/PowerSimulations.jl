@@ -255,7 +255,7 @@ function load_results!(
     variables = Vector{Tuple}(),
 )
     # TODO: consider extending this to support start_time and len
-    aux_variable_keys = [_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
+    aux_variable_keys = [_deserialize_key(IS.AuxVarKey, res, x...) for x in aux_variables]
     dual_keys = [_deserialize_key(IS.ConstraintKey, res, x...) for x in duals]
     expression_keys = [_deserialize_key(IS.ExpressionKey, res, x...) for x in expressions]
     parameter_keys = [_deserialize_key(IS.ParameterKey, res, x...) for x in parameters]

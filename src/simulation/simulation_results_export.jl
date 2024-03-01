@@ -76,7 +76,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
         )
         aux_variables = Set(
             deserialize_key(problem_params, x) for
-            x in get(model, "variables", Set{AuxVarKey}())
+            x in get(model, "variables", Set{IS.AuxVarKey}())
         )
         problem_export = ProblemResultsExport(
             model["name"];

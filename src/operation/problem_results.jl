@@ -4,7 +4,7 @@ mutable struct ProblemResults <: IS.Results
     timestamps::StepRange{Dates.DateTime, Dates.Millisecond}
     system::Union{Nothing, PSY.System}
     system_uuid::Base.UUID
-    aux_variable_values::Dict{AuxVarKey, DataFrames.DataFrame}
+    aux_variable_values::Dict{IS.AuxVarKey, DataFrames.DataFrame}
     variable_values::Dict{IS.VariableKey, DataFrames.DataFrame}
     dual_values::Dict{IS.ConstraintKey, DataFrames.DataFrame}
     parameter_values::Dict{IS.ParameterKey, DataFrames.DataFrame}
@@ -41,7 +41,7 @@ get_resolution(res::ProblemResults) = res.timestamps.step
 get_system(res::ProblemResults) = res.system
 get_forecast_horizon(res::ProblemResults) = length(get_timestamps(res))
 
-get_result_values(x::ProblemResults, ::AuxVarKey) = x.aux_variable_values
+get_result_values(x::ProblemResults, ::IS.AuxVarKey) = x.aux_variable_values
 get_result_values(x::ProblemResults, ::IS.ConstraintKey) = x.dual_values
 get_result_values(x::ProblemResults, ::IS.ExpressionKey) = x.expression_values
 get_result_values(x::ProblemResults, ::IS.ParameterKey) = x.parameter_values
@@ -587,17 +587,17 @@ loaded using the [`load_results!`](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_aux_variable(res::ProblemResults, args...; kwargs...)
-    key = AuxVarKey(args...)
+    key = IS.AuxVarKey(args...)
     return read_aux_variable(res, key; kwargs...)
 end
 
 function read_aux_variable(res::ProblemResults, key::AbstractString; kwargs...)
-    return read_aux_variable(res, _deserialize_key(AuxVarKey, res, key); kwargs...)
+    return read_aux_variable(res, _deserialize_key(IS.AuxVarKey, res, key); kwargs...)
 end
 
 function read_aux_variable(
     res::ProblemResults,
-    key::AuxVarKey;
+    key::IS.AuxVarKey;
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -616,7 +616,7 @@ loaded using the [`load_results!`](@ref) function it will read from memory.
   - `len::Int`: length of results
 """
 function read_aux_variables(res::ProblemResults, aux_variables; kwargs...)
-    return read_aux_variables(res, [AuxVarKey(x...) for x in aux_variables]; kwargs...)
+    return read_aux_variables(res, [IS.AuxVarKey(x...) for x in aux_variables]; kwargs...)
 end
 
 function read_aux_variables(
@@ -626,7 +626,7 @@ function read_aux_variables(
 )
     return read_aux_variables(
         res,
-        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
+        [_deserialize_key(IS.AuxVarKey, res, x) for x in aux_variables];
         kwargs...,
     )
 end

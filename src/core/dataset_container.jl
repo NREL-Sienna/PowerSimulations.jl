@@ -1,6 +1,6 @@
 struct DatasetContainer{T}
     duals::Dict{IS.ConstraintKey, T}
-    aux_variables::Dict{AuxVarKey, T}
+    aux_variables::Dict{IS.AuxVarKey, T}
     variables::Dict{IS.VariableKey, T}
     parameters::Dict{IS.ParameterKey, T}
     expressions::Dict{IS.ExpressionKey, T}
@@ -9,7 +9,7 @@ end
 function DatasetContainer{T}() where {T <: AbstractDataset}
     return DatasetContainer(
         Dict{IS.ConstraintKey, T}(),
-        Dict{AuxVarKey, T}(),
+        Dict{IS.AuxVarKey, T}(),
         Dict{IS.VariableKey, T}(),
         Dict{IS.ParameterKey, T}(),
         Dict{IS.ExpressionKey, T}(),
@@ -114,7 +114,7 @@ function get_dataset(
     ::T,
     ::Type{U},
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset(container, AuxVarKey(T, U))
+    return get_dataset(container, IS.AuxVarKey(T, U))
 end
 
 function get_dataset(
@@ -158,7 +158,7 @@ function get_dataset_values(
     ::T,
     ::Type{U},
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_dataset_values(container, AuxVarKey(T, U))
+    return get_dataset_values(container, IS.AuxVarKey(T, U))
 end
 
 function get_dataset_values(

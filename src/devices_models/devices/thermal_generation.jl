@@ -779,7 +779,7 @@ end
 ############################ Auxiliary Variables Calculation ################################
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::AuxVarKey{TimeDurationOn, T},
+    ::IS.AuxVarKey{TimeDurationOn, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_variable_results = get_variable(container, OnVariable(), T)
@@ -821,7 +821,7 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::AuxVarKey{TimeDurationOff, T},
+    ::IS.AuxVarKey{TimeDurationOff, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_variable_results = get_variable(container, OnVariable(), T)
@@ -862,7 +862,7 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::AuxVarKey{PowerOutput, T},
+    ::IS.AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
     time_steps = get_time_steps(container)

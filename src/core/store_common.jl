@@ -1,5 +1,5 @@
 # Keep these in sync with the Symbols in src/core/definitions.
-get_store_container_type(::AuxVarKey) = STORE_CONTAINER_AUX_VARIABLES
+get_store_container_type(::IS.AuxVarKey) = STORE_CONTAINER_AUX_VARIABLES
 get_store_container_type(::IS.ConstraintKey) = STORE_CONTAINER_DUALS
 get_store_container_type(::IS.ExpressionKey) = STORE_CONTAINER_EXPRESSIONS
 get_store_container_type(::IS.ParameterKey) = STORE_CONTAINER_PARAMETERS
