@@ -9,7 +9,7 @@ mutable struct DecisionModelStore <: IS.AbstractModelStore
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
     variables::Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    aux_variables::Dict{IS.AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     expressions::Dict{
         IS.ExpressionKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
@@ -22,7 +22,7 @@ function DecisionModelStore()
         Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         Dict{IS.ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{IS.AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         Dict{IS.ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         OrderedDict{Dates.DateTime, IS.OptimizerStats}(),
     )
@@ -30,7 +30,7 @@ end
 
 function initialize_storage!(
     store::DecisionModelStore,
-    container::IS.IS.AbstractOptimizationContainer,
+    container::IS.AbstractOptimizationContainer,
     params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)

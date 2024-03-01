@@ -241,7 +241,7 @@ end
 
 function update_decision_state!(
     state::SimulationState,
-    key::AuxVarKey{S, T},
+    key::IS.AuxVarKey{S, T},
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
@@ -377,7 +377,7 @@ end
 
 function update_system_state!(
     state::DatasetContainer{InMemoryDataset},
-    key::AuxVarKey{T, PSY.ThermalStandard},
+    key::IS.AuxVarKey{T, PSY.ThermalStandard},
     decision_state::DatasetContainer{InMemoryDataset},
     simulation_time::Dates.DateTime,
 ) where {T <: Union{TimeDurationOn, TimeDurationOff}}
@@ -431,7 +431,7 @@ function get_system_state_value(
     ::T,
     ::Type{U},
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, AuxVarKey(T, U))
+    return get_system_state_value(state, IS.AuxVarKey(T, U))
 end
 
 function get_system_state_value(
@@ -455,7 +455,7 @@ function get_system_state_data(
     ::T,
     ::Type{U},
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, AuxVarKey(T, U))
+    return get_system_state_data(state, IS.AuxVarKey(T, U))
 end
 
 function get_system_state_data(

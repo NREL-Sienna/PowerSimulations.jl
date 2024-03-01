@@ -321,7 +321,7 @@ end
 
 read_dual(model::OperationModel, key::IS.ConstraintKey) = _read_results(model, key)
 read_parameter(model::OperationModel, key::IS.ParameterKey) = _read_results(model, key)
-read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, key)
+read_aux_variable(model::OperationModel, key::IS.AuxVarKey) = _read_results(model, key)
 read_variable(model::OperationModel, key::IS.VariableKey) = _read_results(model, key)
 read_expression(model::OperationModel, key::IS.ExpressionKey) = _read_results(model, key)
 

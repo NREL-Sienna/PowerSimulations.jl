@@ -69,7 +69,7 @@ IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
 
-list_result_keys(res::SimulationProblemResults, ::AuxVarKey) = list_aux_variable_keys(res)
+list_result_keys(res::SimulationProblemResults, ::IS.AuxVarKey) = list_aux_variable_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ConstraintKey) = list_dual_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) =
     list_expression_keys(res)
@@ -369,7 +369,7 @@ function read_realized_aux_variables(
 )
     return read_realized_aux_variables(
         res,
-        [AuxVarKey(x...) for x in aux_variables];
+        [IS.AuxVarKey(x...) for x in aux_variables];
         kwargs...,
     )
 end
@@ -381,7 +381,7 @@ function read_realized_aux_variables(
 )
     return read_realized_aux_variables(
         res,
-        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
+        [_deserialize_key(IS.AuxVarKey, res, x) for x in aux_variables];
         kwargs...,
     )
 end
@@ -409,7 +409,7 @@ function read_realized_aux_variable(
         values(
             read_realized_aux_variables(
                 res,
-                [_deserialize_key(AuxVarKey, res, aux_variable)];
+                [_deserialize_key(IS.AuxVarKey, res, aux_variable)];
                 kwargs...,
             ),
         ),
@@ -423,7 +423,7 @@ function read_realized_aux_variable(
 )
     return first(
         values(
-            read_realized_aux_variables(res, [AuxVarKey(aux_variable...)]; kwargs...),
+            read_realized_aux_variables(res, [IS.AuxVarKey(aux_variable...)]; kwargs...),
         ),
     )
 end

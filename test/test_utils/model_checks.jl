@@ -40,7 +40,7 @@ end
 
 function psi_aux_variable_test(
     model::DecisionModel,
-    constraint_keys::Vector{<:PSI.AuxVarKey},
+    constraint_keys::Vector{<:PSI.IS.AuxVarKey},
 )
     op_container = PSI.get_optimization_container(model)
     vars = PSI.get_aux_variables(op_container)

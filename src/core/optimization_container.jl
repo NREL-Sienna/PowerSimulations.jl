@@ -51,14 +51,14 @@ function ObjectiveFunction()
     )
 end
 
-mutable struct OptimizationContainer <: IS.IS.AbstractOptimizationContainer
+mutable struct OptimizationContainer <: IS.AbstractOptimizationContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     settings::Settings
     settings_copy::Settings
     variables::Dict{IS.VariableKey, AbstractArray}
-    aux_variables::Dict{AuxVarKey, AbstractArray}
+    aux_variables::Dict{IS.AuxVarKey, AbstractArray}
     duals::Dict{IS.ConstraintKey, AbstractArray}
     constraints::Dict{IS.ConstraintKey, AbstractArray}
     objective_function::ObjectiveFunction
@@ -102,7 +102,7 @@ function OptimizationContainer(
         settings,
         copy_for_serialization(settings),
         Dict{IS.VariableKey, AbstractArray}(),
-        Dict{AuxVarKey, AbstractArray}(),
+        Dict{IS.AuxVarKey, AbstractArray}(),
         Dict{IS.ConstraintKey, AbstractArray}(),
         Dict{IS.ConstraintKey, AbstractArray}(),
         ObjectiveFunction(),
@@ -194,7 +194,7 @@ function has_container_key(
     ::Type{U},
     meta = IS.CONTAINER_KEY_EMPTY_META,
 ) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    key = AuxVarKey(T, U, meta)
+    key = IS.AuxVarKey(T, U, meta)
     return haskey(container.aux_variables, key)
 end
 
@@ -881,7 +881,7 @@ function add_aux_variable_container!(
     sparse = false,
     meta = IS.CONTAINER_KEY_EMPTY_META,
 ) where {T <: IS.AuxVariableType, U <: PSY.Component}
-    var_key = AuxVarKey(T, U, meta)
+    var_key = IS.AuxVarKey(T, U, meta)
     if sparse
         aux_variable_container = sparse_container_spec(Float64, axs...)
     else
@@ -895,7 +895,7 @@ function get_aux_variable_keys(container::OptimizationContainer)
     return collect(keys(container.aux_variables))
 end
 
-function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
+function get_aux_variable(container::OptimizationContainer, key::IS.AuxVarKey)
     aux = get(container.aux_variables, key, nothing)
     if aux === nothing
         name = encode_key(key)
@@ -911,7 +911,7 @@ function get_aux_variable(
     ::Type{U},
     meta::String = IS.CONTAINER_KEY_EMPTY_META,
 ) where {T <: IS.AuxVariableType, U <: PSY.Component}
-    return get_aux_variable(container, AuxVarKey(T, U, meta))
+    return get_aux_variable(container, IS.AuxVarKey(T, U, meta))
 end
 
 ##################################### DualVariable Container ################################
@@ -1675,7 +1675,7 @@ function get_optimization_container_key(
     ::Type{U},
     meta::String,
 ) where {T <: IS.AuxVariableType, U <: PSY.Component}
-    return AuxVarKey(T, U, meta)
+    return IS.AuxVarKey(T, U, meta)
 end
 
 function get_optimization_container_key(
