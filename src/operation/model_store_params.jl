@@ -23,7 +23,7 @@ struct ModelStoreParams
     resolution::Dates.Millisecond
     base_power::Float64
     system_uuid::Base.UUID
-    container_metadata::OptimizationContainerMetadata
+    container_metadata::IS.OptimizationContainerMetadata
 
     function ModelStoreParams(
         num_executions,
@@ -32,7 +32,7 @@ struct ModelStoreParams
         resolution,
         base_power,
         system_uuid,
-        container_metadata = OptimizationContainerMetadata(),
+        container_metadata = IS.OptimizationContainerMetadata(),
     )
         new(
             num_executions,

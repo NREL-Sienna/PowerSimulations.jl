@@ -1,39 +1,3 @@
-"""
-Optimization Container construction stage
-"""
-abstract type ConstructStage end
-
-struct ArgumentConstructStage <: ConstructStage end
-struct ModelConstructStage <: ConstructStage end
-
-struct OptimizationContainerMetadata
-    container_key_lookup::Dict{String, <:IS.OptimizationContainerKey}
-end
-
-function OptimizationContainerMetadata()
-    return OptimizationContainerMetadata(Dict{String, IS.OptimizationContainerKey}())
-end
-
-function deserialize_metadata(
-    ::Type{OptimizationContainerMetadata},
-    output_dir::String,
-    model_name,
-)
-    filename = _make_metadata_filename(model_name, output_dir)
-    return Serialization.deserialize(filename)
-end
-
-function deserialize_key(metadata::OptimizationContainerMetadata, name::AbstractString)
-    !haskey(metadata.container_key_lookup, name) && error("$name is not stored")
-    return metadata.container_key_lookup[name]
-end
-
-add_container_key!(x::OptimizationContainerMetadata, key, val) =
-    x.container_key_lookup[key] = val
-get_container_key(x::OptimizationContainerMetadata, key) = x.container_key_lookup[key]
-has_container_key(x::OptimizationContainerMetadata, key) =
-    haskey(x.container_key_lookup, key)
-
 struct PrimalValuesCache
     variables_cache::Dict{IS.VariableKey, AbstractArray}
     expressions_cache::Dict{IS.ExpressionKey, AbstractArray}
@@ -87,7 +51,7 @@ function ObjectiveFunction()
     )
 end
 
-mutable struct OptimizationContainer <: IS.AbstractModelContainer
+mutable struct OptimizationContainer <: IS.IS.AbstractOptimizationContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
@@ -108,7 +72,7 @@ mutable struct OptimizationContainer <: IS.AbstractModelContainer
     base_power::Float64
     optimizer_stats::IS.OptimizerStats
     built_for_recurrent_solves::Bool
-    metadata::OptimizationContainerMetadata
+    metadata::IS.OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
 end
 
@@ -152,7 +116,7 @@ function OptimizationContainer(
         PSY.get_base_power(sys),
         IS.OptimizerStats(),
         false,
-        OptimizationContainerMetadata(),
+        IS.OptimizationContainerMetadata(),
         T,
     )
 end
@@ -813,7 +777,7 @@ function deserialize_metadata!(
 )
     merge!(
         container.metadata.container_key_lookup,
-        deserialize_metadata(OptimizationContainerMetadata, output_dir, model_name),
+        deserialize_metadata(IS.OptimizationContainerMetadata, output_dir, model_name),
     )
     return
 end

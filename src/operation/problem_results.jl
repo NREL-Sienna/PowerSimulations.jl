@@ -10,7 +10,7 @@ mutable struct ProblemResults <: IS.Results
     parameter_values::Dict{IS.ParameterKey, DataFrames.DataFrame}
     expression_values::Dict{IS.ExpressionKey, DataFrames.DataFrame}
     optimizer_stats::DataFrames.DataFrame
-    optimization_container_metadata::OptimizationContainerMetadata
+    optimization_container_metadata::IS.OptimizationContainerMetadata
     model_type::String
     output_dir::String
 end
