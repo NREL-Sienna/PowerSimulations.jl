@@ -44,7 +44,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
+    ::IS.ModelConstructStage,
     model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
@@ -113,7 +113,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
+    ::IS.ModelConstructStage,
     model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.ControllableLoad}
@@ -182,7 +182,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
+    ::IS.ModelConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
@@ -249,7 +249,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
+    ::IS.ModelConstructStage,
     model::DeviceModel{L, PowerLoadInterruption},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.ControllableLoad}
@@ -336,7 +336,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
+    ::IS.ModelConstructStage,
     model::DeviceModel{<:PSY.ElectricLoad, StaticPowerLoad},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
@@ -406,7 +406,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ccs::ModelConstructStage,
+    ccs::IS.ModelConstructStage,
     model::DeviceModel{L, D},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
