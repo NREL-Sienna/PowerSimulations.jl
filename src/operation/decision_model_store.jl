@@ -1,7 +1,7 @@
 """
 Stores results data for one DecisionModel
 """
-mutable struct DecisionModelStore <: AbstractModelStore
+mutable struct DecisionModelStore <: IS.AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
     duals::Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     parameters::Dict{
