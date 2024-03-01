@@ -517,7 +517,7 @@ function build_impl!(
                 construct_device!(
                     container,
                     sys,
-                    ArgumentConstructStage(),
+                    IS.ArgumentConstructStage(),
                     device_model,
                     transmission_model,
                 )
@@ -531,7 +531,7 @@ function build_impl!(
         construct_services!(
             container,
             sys,
-            ArgumentConstructStage(),
+            IS.ArgumentConstructStage(),
             get_service_models(template),
             get_device_models(template),
         )
@@ -545,7 +545,7 @@ function build_impl!(
                 construct_device!(
                     container,
                     sys,
-                    ArgumentConstructStage(),
+                    IS.ArgumentConstructStage(),
                     branch_model,
                     transmission_model,
                 )

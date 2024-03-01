@@ -1,7 +1,7 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
@@ -42,7 +42,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
