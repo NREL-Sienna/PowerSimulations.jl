@@ -176,7 +176,10 @@ end
 
     @test read_variable(results, "ActivePowerVariable__ThermalStandard") isa DataFrame
     @test read_variable(results, ActivePowerVariable, ThermalStandard) isa DataFrame
-    @test read_variable(results, PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard)) isa
+    @test read_variable(
+        results,
+        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+    ) isa
           DataFrame
 
     @test read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad") isa DataFrame

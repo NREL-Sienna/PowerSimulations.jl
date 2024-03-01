@@ -4,7 +4,10 @@ Stores results data for one DecisionModel
 mutable struct DecisionModelStore <: AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
     duals::Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    parameters::Dict{IS.ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    parameters::Dict{
+        IS.ParameterKey,
+        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+    }
     variables::Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     expressions::Dict{

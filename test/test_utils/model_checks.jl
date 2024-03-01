@@ -69,7 +69,11 @@ function psi_checkobjfun_test(model::DecisionModel, exp_type)
     return
 end
 
-function moi_lbvalue_test(model::DecisionModel, con_key::PSI.IS.ConstraintKey, value::Number)
+function moi_lbvalue_test(
+    model::DecisionModel,
+    con_key::PSI.IS.ConstraintKey,
+    value::Number,
+)
     for con in PSI.get_constraints(model)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
@@ -91,7 +95,8 @@ function psi_checksolve_test(model::DecisionModel, status, expected_result, tol 
 end
 
 function psi_ptdf_lmps(res::ProblemResults, ptdf)
-    cp_duals = read_dual(res, PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
+    cp_duals =
+        read_dual(res, PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
     λ = Matrix{Float64}(cp_duals[:, propertynames(cp_duals) .!= :DateTime])
 
     flow_duals = read_dual(res, PSI.IS.ConstraintKey(NetworkFlowConstraint, PSY.Line))

@@ -561,7 +561,8 @@ function load_results!(
     dual_keys = [_deserialize_key(IS.ConstraintKey, res, x...) for x in duals]
     parameter_keys =
         IS.ParameterKey[_deserialize_key(IS.ParameterKey, res, x...) for x in parameters]
-    variable_keys = IS.VariableKey[_deserialize_key(IS.VariableKey, res, x...) for x in variables]
+    variable_keys =
+        IS.VariableKey[_deserialize_key(IS.VariableKey, res, x...) for x in variables]
     aux_variable_keys =
         AuxVarKey[_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
     expression_keys =

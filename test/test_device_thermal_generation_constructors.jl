@@ -407,8 +407,16 @@ end
             PSY.ThermalMultiStart,
             "hot",
         ),
-        PSI.IS.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
-        PSI.IS.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
+        PSI.IS.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "lb",
+        ),
+        PSI.IS.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "ub",
+        ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 334, false => 282)
@@ -434,8 +442,16 @@ end
             PSY.ThermalMultiStart,
             "hot",
         ),
-        PSI.IS.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
-        PSI.IS.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
+        PSI.IS.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "lb",
+        ),
+        PSI.IS.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "ub",
+        ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 382, false => 330)

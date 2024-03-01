@@ -71,8 +71,10 @@ IS.get_base_power(result::SimulationProblemResults) = result.base_power
 
 list_result_keys(res::SimulationProblemResults, ::AuxVarKey) = list_aux_variable_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ConstraintKey) = list_dual_keys(res)
-list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) = list_expression_keys(res)
-list_result_keys(res::SimulationProblemResults, ::IS.ParameterKey) = list_parameter_keys(res)
+list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) =
+    list_expression_keys(res)
+list_result_keys(res::SimulationProblemResults, ::IS.ParameterKey) =
+    list_parameter_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.VariableKey) = list_variable_keys(res)
 
 """
@@ -267,7 +269,11 @@ function read_realized_variables(
     variables::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
-    return read_realized_variables(res, [IS.VariableKey(x...) for x in variables]; kwargs...)
+    return read_realized_variables(
+        res,
+        [IS.VariableKey(x...) for x in variables];
+        kwargs...,
+    )
 end
 
 function read_realized_variables(
@@ -615,7 +621,9 @@ end
 
 function read_realized_expression(res::SimulationProblemResults, expression...; kwargs...)
     return first(
-        values(read_realized_expressions(res, [IS.ExpressionKey(expression...)]; kwargs...)),
+        values(
+            read_realized_expressions(res, [IS.ExpressionKey(expression...)]; kwargs...),
+        ),
     )
 end
 

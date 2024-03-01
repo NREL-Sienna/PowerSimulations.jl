@@ -262,7 +262,10 @@ end
 
     ptdf_vars = get_variable_values(ProblemResults(model))
     ptdf_values =
-        ptdf_vars[PowerSimulations.IS.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine}(
+        ptdf_vars[PowerSimulations.IS.VariableKey{
+            FlowActivePowerVariable,
+            TwoTerminalHVDCLine,
+        }(
             "",
         )]
     ptdf_objective = model.internal.container.optimizer_stats.objective_value
@@ -280,7 +283,10 @@ end
     solve!(model; output_dir = mktempdir())
     dcp_vars = get_variable_values(ProblemResults(model))
     dcp_values =
-        dcp_vars[PowerSimulations.IS.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine}(
+        dcp_vars[PowerSimulations.IS.VariableKey{
+            FlowActivePowerVariable,
+            TwoTerminalHVDCLine,
+        }(
             "",
         )]
     dcp_objective = model.internal.container.optimizer_stats.objective_value
