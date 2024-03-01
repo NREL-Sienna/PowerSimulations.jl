@@ -1,7 +1,7 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::DeviceModel{R, D},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
@@ -112,7 +112,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::DeviceModel{R, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {
@@ -206,7 +206,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {R <: PSY.RenewableGen}
@@ -238,7 +238,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}

@@ -15,7 +15,7 @@ end
 function construct_services!(
     container::OptimizationContainer,
     sys::PSY.System,
-    stage::ArgumentConstructStage,
+    stage::IS.ArgumentConstructStage,
     services_template::ServicesModelContainer,
     devices_template::DevicesModelContainer,
 )
@@ -90,7 +90,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
@@ -144,7 +144,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
@@ -196,7 +196,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
@@ -242,7 +242,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{S, T},
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
@@ -336,7 +336,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
@@ -377,7 +377,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{SR, RampReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
@@ -432,7 +432,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{SR, NonSpinningReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
@@ -493,7 +493,7 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
+    ::IS.ArgumentConstructStage,
     model::ServiceModel{T, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
