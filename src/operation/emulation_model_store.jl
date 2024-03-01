@@ -65,7 +65,7 @@ end
 function initialize_storage!(
     store::EmulationModelStore,
     container::OptimizationContainer,
-    params::ModelStoreParams,
+    params::IS.ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
     for type in STORE_CONTAINERS

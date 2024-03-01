@@ -3,7 +3,7 @@ import PowerSimulations:
     HdfSimulationStore,
     HDF_FILENAME,
     SimulationStoreParams,
-    ModelStoreParams,
+    IS.ModelStoreParams,
     SimulationModelStoreRequirements,
     CacheFlushRules,
     KiB,
@@ -18,7 +18,7 @@ import PowerSimulations:
     get_cache_hit_percentage
 
 function _initialize!(store, sim, variables, model_defs, cache_rules)
-    models = OrderedDict{Symbol, ModelStoreParams}()
+    models = OrderedDict{Symbol, IS.ModelStoreParams}()
     model_reqs = Dict{Symbol, SimulationModelStoreRequirements}()
     num_param_containers = 0
     for model in keys(model_defs)
@@ -26,7 +26,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         horizon = model_defs[model]["horizon"]
         num_rows = execution_count * sim["num_steps"]
 
-        model_params = ModelStoreParams(
+        model_params = IS.ModelStoreParams(
             execution_count,
             horizon,
             model_defs[model]["interval"],
@@ -57,7 +57,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         models,
         # Emulation Model Store requirements. No tests yet
         OrderedDict(
-            :Emulator => ModelStoreParams(
+            :Emulator => IS.ModelStoreParams(
                 100, # Num Executions
                 1,
                 Minute(5), # Interval
