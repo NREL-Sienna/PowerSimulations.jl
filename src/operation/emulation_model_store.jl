@@ -3,7 +3,7 @@ Stores results data for one EmulationModel
 """
 mutable struct EmulationModelStore <: AbstractModelStore
     data_container::DatasetContainer{InMemoryDataset}
-    optimizer_stats::OrderedDict{Int, OptimizerStats}
+    optimizer_stats::OrderedDict{Int, IS.OptimizerStats}
 end
 
 get_data_field(store::EmulationModelStore, type::Symbol) =
@@ -12,7 +12,7 @@ get_data_field(store::EmulationModelStore, type::Symbol) =
 function EmulationModelStore()
     return EmulationModelStore(
         DatasetContainer{InMemoryDataset}(),
-        OrderedDict{Int, OptimizerStats}(),
+        OrderedDict{Int, IS.OptimizerStats}(),
     )
 end
 
@@ -156,7 +156,7 @@ function get_last_updated_timestamp(
 end
 function write_optimizer_stats!(
     store::EmulationModelStore,
-    stats::OptimizerStats,
+    stats::IS.OptimizerStats,
     index::EmulationModelIndexType,
 )
     @assert !(index in keys(store.optimizer_stats))

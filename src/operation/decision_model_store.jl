@@ -14,7 +14,7 @@ mutable struct DecisionModelStore <: AbstractModelStore
         IS.ExpressionKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
-    optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
+    optimizer_stats::OrderedDict{Dates.DateTime, IS.OptimizerStats}
 end
 
 function DecisionModelStore()
@@ -24,7 +24,7 @@ function DecisionModelStore()
         Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
         Dict{IS.ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        OrderedDict{Dates.DateTime, OptimizerStats}(),
+        OrderedDict{Dates.DateTime, IS.OptimizerStats}(),
     )
 end
 
@@ -116,7 +116,7 @@ end
 
 function write_optimizer_stats!(
     store::DecisionModelStore,
-    stats::OptimizerStats,
+    stats::IS.OptimizerStats,
     index::DecisionModelIndexType,
 )
     if index in keys(store.optimizer_stats)

@@ -83,7 +83,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model_name,
-    stats::OptimizerStats,
+    stats::IS.OptimizerStats,
     index::DecisionModelIndexType,
 )
     write_optimizer_stats!(get_dm_data(store)[model_name], stats, index)
@@ -92,7 +92,7 @@ end
 
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
-    stats::OptimizerStats,
+    stats::IS.OptimizerStats,
     index::EmulationModelIndexType,
 )
     write_optimizer_stats!(get_em_data(store), stats, index)

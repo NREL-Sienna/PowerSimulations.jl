@@ -190,7 +190,7 @@ function write_optimizer_stats!(
 )
     stats = get_optimizer_stats(model)
     model_name = get_name(model)
-    dataset = _get_dataset(OptimizerStats, store, model_name)
+    dataset = _get_dataset(IS.OptimizerStats, store, model_name)
 
     # Uncomment for performance measures of HDF Store
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
@@ -221,17 +221,17 @@ function read_optimizer_stats(
     optimizer_stats_write_index =
         (simulation_step - 1) *
         store.params.decision_models_params[model_name].num_executions + execution_index
-    dataset = _get_dataset(OptimizerStats, store, model_name)
-    return OptimizerStats(dataset[:, optimizer_stats_write_index])
+    dataset = _get_dataset(IS.OptimizerStats, store, model_name)
+    return IS.OptimizerStats(dataset[:, optimizer_stats_write_index])
 end
 
 """
 Return the optimizer stats for a problem as a DataFrame.
 """
 function read_optimizer_stats(store::HdfSimulationStore, model_name)
-    dataset = _get_dataset(OptimizerStats, store, model_name)
+    dataset = _get_dataset(IS.OptimizerStats, store, model_name)
     data = permutedims(dataset[:, :])
-    stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
+    stats = [to_namedtuple(IS.OptimizerStats(data[i, :])) for i in axes(data)[1]]
     return DataFrames.DataFrame(stats)
 end
 
@@ -289,7 +289,7 @@ function initialize_problem_storage!(
         end
 
         num_stats = params.num_steps * params.decision_models_params[problem].num_executions
-        columns = fieldnames(OptimizerStats)
+        columns = fieldnames(IS.OptimizerStats)
         num_columns = length(columns)
         dataset = HDF5.create_dataset(
             problem_group,
@@ -904,11 +904,11 @@ function _flush_data!(
     return size_flushed
 end
 
-function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_name)
+function _get_dataset(::Type{IS.OptimizerStats}, store::HdfSimulationStore, model_name)
     return store.optimizer_stats_datasets[model_name]
 end
 
-function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
+function _get_dataset(::Type{IS.OptimizerStats}, store::HdfSimulationStore)
     return store.optimizer_stats_datasets
 end
 
@@ -966,8 +966,8 @@ end
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
 _get_emulation_model_path(store::HdfSimulationStore) = store.file[EMULATION_MODEL_PATH]
 
-function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = _get_dataset(OptimizerStats, store)
+function _read_column_names(::Type{IS.OptimizerStats}, store::HdfSimulationStore)
+    dataset = _get_dataset(IS.OptimizerStats, store)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
@@ -1010,8 +1010,8 @@ function _read_data_columns(
     return _read_result(store, model_name, key, index)
 end
 
-function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = _get_dataset(OptimizerStats, store)
+function _read_length(::Type{IS.OptimizerStats}, store::HdfSimulationStore)
+    dataset = _get_dataset(IS.OptimizerStats, store)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 

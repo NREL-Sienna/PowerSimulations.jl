@@ -232,7 +232,7 @@ end
 """
 Run this function only when getting detailed solver stats
 """
-function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
+function _summary_to_dict!(optimizer_stats::IS.OptimizerStats, jump_model::JuMP.Model)
     # JuMP.solution_summary uses a lot of try-catch so it has a performance hit and should be opt-in
     jump_summary = JuMP.solution_summary(jump_model; verbose = false)
     # Note we don't grab all the fields from the summary because not all can be encoded as Float for HDF store
@@ -287,7 +287,7 @@ function _get_solver_time(jump_model::JuMP.Model)
     return solver_solve_time
 end
 
-function write_optimizer_stats!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
+function write_optimizer_stats!(optimizer_stats::IS.OptimizerStats, jump_model::JuMP.Model)
     if JuMP.primal_status(jump_model) == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         optimizer_stats.objective_value = JuMP.objective_value(jump_model)
     else

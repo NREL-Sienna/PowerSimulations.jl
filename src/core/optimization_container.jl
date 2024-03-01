@@ -106,7 +106,7 @@ mutable struct OptimizationContainer <: IS.AbstractModelContainer
     infeasibility_conflict::Dict{Symbol, Array}
     pm::Union{Nothing, PM.AbstractPowerModel}
     base_power::Float64
-    optimizer_stats::OptimizerStats
+    optimizer_stats::IS.OptimizerStats
     built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
@@ -150,7 +150,7 @@ function OptimizationContainer(
         Dict{Symbol, Array}(),
         nothing,
         PSY.get_base_power(sys),
-        OptimizerStats(),
+        IS.OptimizerStats(),
         false,
         OptimizationContainerMetadata(),
         T,
