@@ -559,7 +559,7 @@ function build_impl!(
         construct_services!(
             container,
             sys,
-            ModelConstructStage(),
+            IS.ModelConstructStage(),
             get_service_models(template),
             get_device_models(template),
         )
@@ -573,7 +573,7 @@ function build_impl!(
                 construct_device!(
                     container,
                     sys,
-                    ModelConstructStage(),
+                    IS.ModelConstructStage(),
                     device_model,
                     transmission_model,
                 )
@@ -583,7 +583,7 @@ function build_impl!(
         end
     end
 
-    # This function should be called after construct_device ModelConstructStage
+    # This function should be called after construct_device IS.ModelConstructStage
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(transmission)" begin
         @debug "Building $(transmission) network formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -600,7 +600,7 @@ function build_impl!(
                 construct_device!(
                     container,
                     sys,
-                    ModelConstructStage(),
+                    IS.ModelConstructStage(),
                     branch_model,
                     transmission_model,
                 )
