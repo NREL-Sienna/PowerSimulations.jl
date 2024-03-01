@@ -202,7 +202,7 @@ function update_decision_state!(
     key::IS.OptimizationContainerKey,
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
-    model_params::ModelStoreParams,
+    model_params::IS.ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
     column_names = get_column_names(key, state_data)[1]
@@ -244,7 +244,7 @@ function update_decision_state!(
     key::IS.AuxVarKey{S, T},
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
-    model_params::ModelStoreParams,
+    model_params::IS.ModelStoreParams,
 ) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}
     state_data = get_decision_state_data(state, key)
     model_resolution = get_resolution(model_params)

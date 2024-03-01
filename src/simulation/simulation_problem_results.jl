@@ -29,7 +29,7 @@ end
 function SimulationProblemResults{T}(
     store::SimulationStore,
     model_name::AbstractString,
-    problem_params::ModelStoreParams,
+    problem_params::IS.ModelStoreParams,
     sim_params::SimulationStoreParams,
     path,
     vals::T;

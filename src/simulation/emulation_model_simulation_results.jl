@@ -11,7 +11,7 @@ function SimulationProblemResults(
     ::Type{EmulationModel},
     store::SimulationStore,
     model_name::AbstractString,
-    problem_params::ModelStoreParams,
+    problem_params::IS.ModelStoreParams,
     sim_params::SimulationStoreParams,
     path,
     container_key_lookup;

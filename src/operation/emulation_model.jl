@@ -233,7 +233,7 @@ function init_model_store_params!(model::EmulationModel)
     interval = resolution = PSY.get_time_series_resolution(system)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    model.internal.store_parameters = ModelStoreParams(
+    model.internal.store_parameters = IS.ModelStoreParams(
         num_executions,
         1,
         interval,
@@ -274,7 +274,7 @@ function build_pre_step!(model::EmulationModel)
             get_system(model),
         )
 
-        @info "Initializing ModelStoreParams"
+        @info "Initializing IS.ModelStoreParams"
         init_model_store_params!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end

@@ -31,7 +31,7 @@ end
 function initialize_storage!(
     store::DecisionModelStore,
     container::IS.AbstractOptimizationContainer,
-    params::ModelStoreParams,
+    params::IS.ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
     if length(get_time_steps(container)) < 1
