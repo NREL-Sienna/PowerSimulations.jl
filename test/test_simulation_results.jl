@@ -863,6 +863,22 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test PSY.get_units_base(get_system(results_ed)) == "NATURAL_UNITS"
 
     @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+
+    current_file = joinpath(
+        results_uc.execution_path,
+        "problems",
+        results_uc.problem,
+        PSI.make_system_filename(results_uc.system_uuid),
+    )
+    mv(current_file, "system-temporary-file-name.json"; force = true)
+
+    @test_throws ErrorException get_decision_problem_results(
+        results,
+        "UC";
+        populate_system = true,
+    )
+    mv("system-temporary-file-name.json", current_file)
+
     set_system!(results_ed, c_sys5_hy_ed)
     set_system!(results_uc, c_sys5_hy_uc)
 

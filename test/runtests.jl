@@ -26,6 +26,7 @@ using DataStructures
 import UUIDs
 using Random
 import Serialization
+using Base.Filesystem
 
 # Code Quality Tests
 import Aqua
