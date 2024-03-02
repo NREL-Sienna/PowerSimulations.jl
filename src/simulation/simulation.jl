@@ -266,44 +266,13 @@ function _check_folder(sim::Simulation)
     end
 end
 
-# select simulations steps to be compared with main one (e.g., Day Ahead)
-function _sim_steps_to_compare(sim::Simulation)
-    models = get_decision_models(get_models(sim))
-    ffs = get_sequence(sim).feedforwards
-    seq_nums = Vector{Int64}()    # vector where sequence step numbers will be stored
-    for i in keys(models)
-        # get name
-        name = get_name(models[i])
-        # now check feedforward model
-        if name in keys(ffs)
-            ff_ = ffs[name]
-            select = false
-            for j in ff_
-                # SemiContinuousFeedforward is usually related to Economic
-                # Dispatch and should not have initial condition discrepancy
-                if typeof(j) == SemiContinuousFeedforward
-                    select = false
-                    break
-                elseif !(i in seq_nums)
-                    select = true
-                end
-            end
-            if select
-                push!(seq_nums, i)
-            end
-        end
-    end
-    return seq_nums
-end
-
-# checks initial conditions for Thermal Units for the different simulation steps,
-# if they are not compatible with the first step (usually Day Ahead), it changes them
+# Compare initial conditions for all `InitialConditionType`s with the
+# `requires_reconciliation` trait across `models`, log @info messages for mismatches
 function _initial_conditions_reconciliation!(
-    models::Vector{DecisionModel{GenericOpProblem}},
-    seq_nums::Vector{Int64})
-    # get the solution for the reference step
-
-    # NOTE: new implementation currently ignores seq_nums
+    models::Vector{DecisionModel{GenericOpProblem}})
+    model_names = get_name.(models)
+    has_mismatches = false
+    @info "Reconciling initial conditions across models $(join(model_names, ", "))"
     # all_ic_keys: all the `ICKey`s that appear in any of the models
     # TODO: incorporate requires_reconciliation
     all_ic_keys = union(keys.(get_initial_conditions.(models))...)
@@ -316,95 +285,37 @@ function _initial_conditions_reconciliation!(
             ics = PSI.get_initial_conditions(model)
             haskey(ics, ic_key) || continue
             # ic_vals_per_component: Dict{component_name, ic_value}
-            ic_vals_per_component = Dict(get_name(get_component(ic)) => get_condition(ic) for ic in ics[ic_key])
+            ic_vals_per_component =
+                Dict(get_name(get_component(ic)) => get_condition(ic) for ic in ics[ic_key])
             ic_vals_per_model[i] = ic_vals_per_component
         end
 
         # Assert that all models have the same components for current ic_key
-        allequal(Set.(keys.(values(ic_vals_per_model)))) ||
-            @warn "For IC key $ic_key, not all models have the same components"
-        
+        @assert allequal(Set.(keys.(values(ic_vals_per_model)))) "For IC key $ic_key, not all models have the same components"
+
         # For each component in current ic_key, compare values across models
         component_names = collect(keys(first(values(ic_vals_per_model))))
         for component_name in component_names
-            if !allequal([result[component_name] for result in values(ic_vals_per_model)])
-                warning = "For IC key $ic_key, mismatch on component $component_name:"
-                for (model_i, result) in sort(pairs(ic_vals_per_model), by=first)
-                    warning *= "\n\tmodel $model_i: $(result[component_name])"
+            all_values = [result[component_name] for result in values(ic_vals_per_model)]
+            ref_value = first(all_values)
+            if !allequal(isapprox.(all_values, ref_value; atol = ABSOLUTE_TOLERANCE))
+                has_mismatches = true
+                mismatch_msg = "For IC key $ic_key, mismatch on component $component_name:"
+                for (model_i, result) in sort(pairs(ic_vals_per_model); by = first)
+                    mismatch_msg *= "\n\t$(model_names[model_i]): $(result[component_name])"
                 end
-                @warn warning
+                @info mismatch_msg
             end
         end
         all_ic_values[ic_key] = ic_vals_per_model
     end
-    return all_ic_values
 
-    ic_dict = Dict()
-    ic_ = get_initial_conditions(models[1])
-    ic_dict["names"] =
-        PSY.get_name.(
-            get_component.(ic_[ICKey{DeviceStatus, PSY.ThermalStandard}("")])
-        )
-    keys_ = ["status", "up", "down"]
-    val_ = [DeviceStatus, InitialTimeDurationOn, InitialTimeDurationOff]
-    for (i, key) in enumerate(keys_)
-        ic_dict[key] = get_condition.(
-            ic_[ICKey{val_[i], PSY.ThermalStandard}("")]
-        )
+    # TODO now that we have found the initial conditions mismatches, we must fix them
+    if has_mismatches
+        @warn "Models have initial condition mismatches; reconciliation is not yet implemented"
     end
-    for i in seq_nums
-        # do check to see if the names are in the same order
-        curr_names =
-            PSY.get_name.(
-                get_component.(
-                    get_initial_conditions(models[i])[ICKey{
-                        DeviceStatus,
-                        PSY.ThermalStandard,
-                    }(
-                        "",
-                    )]
-                )
-            )
-        @assert all(curr_names .== ic_dict["names"]) "Vector of names mismatch, consider different method"
-        for (j, name) in enumerate(ic_dict["names"])
-            # logig:
-            # if unit is on in ref and on in "i", initial on time must match
-            # if unit is off in ref and off in "i", initial off time must match
-            # if unit is on in ref and off in "i", initial off time in "i" is set to 999
-            # if unit is off in ref and on in "i", initial on time in "i" is set to 999
-            ref_status = Int(round(ic_dict["status"][j]))
-            curr_status = Int(
-                round(
-                    get_condition(
-                        get_initial_conditions(models[i])[ICKey{
-                            DeviceStatus,
-                            PSY.ThermalStandard,
-                        }(
-                            "",
-                        )][j],
-                    ),
-                ),
-            )
-            if ref_status == 1 && curr_status == 0
-                # get initial on time for ref and "i"
-                up_ref = ic_dict["up"][j]
-                dwn_i = get_initial_conditions(
-                    models[i])[ICKey{InitialTimeDurationOff, PSY.ThermalStandard}("")][j]
-                # compare and change if needed
-                @info "Initial condition reconciliation (DurationOff) for $name at step " *
-                      string(get_name(models[i]))
-                JuMP.fix(dwn_i.value, 10000)
-            elseif ref_status == 0 && curr_status == 1
-                # repeat as first clause
-                dwn_ref = ic_dict["down"][j]
-                @info "Initial condition reconciliation (DurationOn) for $name at step " *
-                      string(get_name(models[i]))
-                up_i = get_initial_conditions(
-                    models[i])[ICKey{InitialTimeDurationOn, PSY.ThermalStandard}("")][j]
-                JuMP.fix(up_i.value, 10000)
-            end
-        end
-    end
+
+    return all_ic_values
 end
 
 function _build_decision_models!(sim::Simulation)
@@ -431,11 +342,7 @@ function _build_decision_models!(sim::Simulation)
             rethrow()
         end
     end
-    seq_nums = _sim_steps_to_compare(sim)
-    # _initial_conditions_reconciliation!(
-    #    get_decision_models(get_models(sim)),
-    #    seq_nums,
-    #)
+    _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
     return
 end
 
