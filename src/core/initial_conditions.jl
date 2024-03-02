@@ -160,6 +160,9 @@ struct InitialTimeDurationOff <: InitialConditionType end
 struct InitialEnergyLevel <: InitialConditionType end
 struct AreaControlError <: InitialConditionType end
 
+# Decide whether to run the initial conditions reconciliation algorithm based on the presence of any of these
 requires_reconciliation(::Type{<:InitialConditionType}) = false
+
 requires_reconciliation(::Type{<:InitialTimeDurationOn}) = true
 requires_reconciliation(::Type{<:InitialTimeDurationOff}) = true
+requires_reconciliation(::Type{<:DeviceStatus}) = true
