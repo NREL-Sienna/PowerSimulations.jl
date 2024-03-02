@@ -279,6 +279,10 @@ function _initial_conditions_reconciliation!(
     # all_ic_values: Dict{ICKey, Dict{model_index, Dict{component_name, ic_value}}}
     all_ic_values = Dict()
     for ic_key in all_ic_keys
+        if !requires_reconciliation(get_entry_type(ic_key))
+            @debug "Skipping initial conditions reconciliation for $(get_entry_type(ic_key)) due to false requires_reconciliation"
+            continue
+        end
         # ic_vals_per_model: Dict{model_index, Dict{component_name, ic_value}}
         ic_vals_per_model = Dict()
         for (i, model) in enumerate(models)
