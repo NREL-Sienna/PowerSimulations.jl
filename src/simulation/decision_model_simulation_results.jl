@@ -126,19 +126,6 @@ function _get_store_value(
 end
 
 function _get_store_value(
-    T::Type{Matrix{Float64}},
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
-    timestamps::Vector{Dates.DateTime},
-    ::Nothing,
-)
-    simulation_store_path = joinpath(get_execution_path(res), "data_store")
-    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
-        _get_store_value(T, res, container_keys, timestamps, store)
-    end
-end
-
-function _get_store_value(
     sim_results::SimulationProblemResults{DecisionModelSimulationResults},
     container_keys::Vector{<:OptimizationContainerKey},
     timestamps::Vector{Dates.DateTime},
@@ -239,44 +226,6 @@ function _get_store_value(
     return results_by_time
 end
 
-function _get_store_value(
-    ::Type{Matrix{Float64}},
-    sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
-    timestamps::Vector{Dates.DateTime},
-    store::SimulationStore,
-)
-    base_power = get_model_base_power(sim_results)
-    results_by_key = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
-    model_name = Symbol(get_model_name(sim_results))
-    resolution = get_resolution(sim_results)
-
-    for key in container_keys
-        n_dims = get_number_of_dimensions(store, DecisionModelIndexType, model_name, key)
-        if n_dims != 1
-            error(
-                "The number of dimensions $(n_dims) is not supported for $(encode_key_as_string(key))",
-            )
-        end
-        results_by_time = ResultsByTime{Matrix{Float64}, 1}(
-            key,
-            SortedDict{Dates.DateTime, Matrix{Float64}}(),
-            resolution,
-            get_column_names(store, DecisionModelIndexType, model_name, key),
-        )
-        for ts in timestamps
-            array = read_result(Array, store, model_name, key, ts)
-            if convert_result_to_natural_units(key)
-                array .*= base_power
-            end
-            results_by_time[ts] = array
-        end
-        results_by_key[key] = results_by_time
-    end
-
-    return results_by_key
-end
-
 function _process_timestamps(
     res::SimulationProblemResults,
     initial_time::Union{Nothing, Dates.DateTime},
@@ -305,20 +254,25 @@ function _process_timestamps(
 end
 
 function _read_results(
-    T::Type{Matrix{Float64}},
+    ::Type{Matrix{Float64}},
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
-    store::Nothing,
+    store::Union{Nothing, <:SimulationStore},
 )
-    isempty(result_keys) &&
-        return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
-
-    if res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
+    vals = _read_results(res, result_keys, timestamps, store)
+    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+    for (result_key, result_data) in vals
+        inner_converted = SortedDict(
+            (date_key, Matrix{Float64}(permutedims(inner_data.data)))
+            for (date_key, inner_data) in result_data.data)
+        converted_vals[result_key] = ResultsByTime{Matrix{Float64}, 1}(
+                        result_data.key,
+                        inner_converted,
+                        result_data.resolution,
+                        result_data.column_names)
     end
-    return _get_store_value(T, res, result_keys, timestamps, store)
+    return converted_vals
 end
 
 function _read_results(
@@ -344,6 +298,7 @@ function _read_results(
         @debug "reading results from data store"
         vals = _get_store_value(res, result_keys, timestamps, store)
     end
+    @assert all(length.(values(vals)) .== length(timestamps))
     return vals
 end
 
@@ -618,6 +573,7 @@ function load_results!(
         merge_results(res.store)
     else
         simulation_store_path = joinpath(res.execution_path, "data_store")
+        println(simulation_store_path)
         open_store(HdfSimulationStore, simulation_store_path, "r") do store
             merge_results(store)
         end
