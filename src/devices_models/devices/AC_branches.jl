@@ -26,6 +26,14 @@ get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation} = DeviceModel(T, U)
 
+#### Properties of slack variables
+get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
+get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
+get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
+get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
+get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
+get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
+
 #! format: on
 function get_default_time_series_names(
     ::Type{U},
@@ -44,19 +52,25 @@ end
 # Additional Method to be able to filter the branches that are not in the PTDF matrix
 function add_variables!(
     container::OptimizationContainer,
-    ::Type{FlowActivePowerVariable},
+    ::Type{T},
     network_model::NetworkModel{PTDFPowerModel},
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::IS.FlattenIteratorWrapper{U},
     formulation::AbstractBranchFormulation,
-) where {T <: PSY.ACBranch}
+) where {
+    T <: Union{
+        FlowActivePowerVariable,
+        FlowActivePowerSlackUpperBound,
+        FlowActivePowerSlackLowerBound,
+    },
+    U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     branches_in_ptdf =
         [b for b in devices if PSY.get_name(b) ∈ Set(PNM.get_branch_ax(ptdf))]
     variable = add_variable_container!(
         container,
-        FlowActivePowerVariable(),
-        T,
+        T(),
+        U,
         PSY.get_name.(branches_in_ptdf),
         time_steps,
     )
@@ -67,7 +81,7 @@ function add_variables!(
         for t in time_steps
             variable[name, t] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "FlowActivePowerVariable_$(T)_{$(name), $(t)}",
+                base_name = "$(T)_$(U)_{$(name), $(t)}",
             )
             ub = get_variable_upper_bound(FlowActivePowerVariable(), d, formulation)
             ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
@@ -76,6 +90,7 @@ function add_variables!(
             lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
         end
     end
+    return
 end
 
 function add_variables!(
@@ -182,7 +197,7 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraint},
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     network_model::NetworkModel{V},
 ) where {
     T <: PSY.ACBranch,
@@ -218,6 +233,12 @@ function add_constraints!(
 
     array = get_variable(container, FlowActivePowerVariable(), T)
 
+    use_slacks = get_use_slacks(device_model)
+    if use_slacks
+        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
+    end
+
     for device in devices
         ci_name = PSY.get_name(device)
         if ci_name ∈ PNM.get_radial_branches(radial_network_reduction)
@@ -226,9 +247,13 @@ function add_constraints!(
         limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
         for t in time_steps
             con_ub[ci_name, t] =
-                JuMP.@constraint(container.JuMPmodel, array[ci_name, t] <= limits.max)
+                JuMP.@constraint(get_jump_model(container),
+                    array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
+                    limits.max)
             con_lb[ci_name, t] =
-                JuMP.@constraint(container.JuMPmodel, array[ci_name, t] >= limits.min)
+                JuMP.@constraint(get_jump_model(container),
+                    array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
+                    limits.min)
         end
     end
     return
