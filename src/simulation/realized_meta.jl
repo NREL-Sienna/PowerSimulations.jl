@@ -69,6 +69,8 @@ function _make_dataframe(
         row_end = row_index + last_id - first_id
         matrix[row_index:row_end, :] = array[first_id:last_id, :]
         row_index += last_id - first_id + 1
+        # Gracefully handle being given more results_by_time than we need
+        (row_index > num_rows) && break
     end
     df = DataFrames.DataFrame(matrix, collect(columns[1]); copycols = false)
     DataFrames.insertcols!(
