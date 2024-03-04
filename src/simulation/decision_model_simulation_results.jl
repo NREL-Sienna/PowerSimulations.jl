@@ -298,7 +298,6 @@ function _read_results(
         @debug "reading results from data store"
         vals = _get_store_value(res, result_keys, timestamps, store)
     end
-    @assert all(length.(values(vals)) .== length(timestamps))
     return vals
 end
 
@@ -573,7 +572,6 @@ function load_results!(
         merge_results(res.store)
     else
         simulation_store_path = joinpath(res.execution_path, "data_store")
-        println(simulation_store_path)
         open_store(HdfSimulationStore, simulation_store_path, "r") do store
             merge_results(store)
         end
