@@ -74,23 +74,23 @@ get_cached_variables(res::SimulationProblemResults{EmulationModelSimulationResul
 
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::AuxVarKey,
+    ::Type{<:AuxVarKey},
 ) = get_cached_aux_variables(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::ConstraintKey,
+    ::Type{<:ConstraintKey},
 ) = get_cached_duals(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::ExpressionKey,
+    ::Type{<:ExpressionKey},
 ) = get_cached_expressions(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::ParameterKey,
+    ::Type{<:ParameterKey},
 ) = get_cached_parameters(res)
 get_cached_results(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::VariableKey,
+    ::Type{<:VariableKey},
 ) = get_cached_variables(res)
 
 function _list_containers(res::SimulationProblemResults)
@@ -226,7 +226,7 @@ function _read_results(
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
     cached_results = Dict(
-        k => v for (k, v) in get_cached_results(res, first(result_keys)) if !isempty(v)
+        k => v for (k, v) in get_cached_results(res, typeof(first(result_keys))) if !isempty(v)
     )
     if isempty(setdiff(result_keys, keys(cached_results)))
         @debug "reading aux_variables from SimulationsResults"
@@ -255,9 +255,8 @@ function read_results_with_keys(
 end
 
 """
-Load the simulation results into memory for repeated reads. Running this function twice
-overwrites the previously loaded results. This is useful when loading results from remote
-locations over network connections.
+Load the simulation results into memory for repeated reads. This is useful when loading
+results from remote locations over network connections.
 
 For each variable/parameter/dual, etc., each element must be the name encoded as a string,
 like `"ActivePowerVariable__ThermalStandard"`` or a Tuple with its constituent types, like

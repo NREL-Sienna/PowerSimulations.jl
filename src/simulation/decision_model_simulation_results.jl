@@ -90,23 +90,23 @@ get_cached_variables(res::SimulationProblemResults{DecisionModelSimulationResult
 
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::AuxVarKey,
+    ::Type{<:AuxVarKey},
 ) = get_cached_aux_variables(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ConstraintKey,
+    ::Type{<:ConstraintKey},
 ) = get_cached_duals(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ExpressionKey,
+    ::Type{<:ExpressionKey},
 ) = get_cached_expressions(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ParameterKey,
+    ::Type{<:ParameterKey},
 ) = get_cached_parameters(res)
 get_cached_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::VariableKey,
+    ::Type{<:VariableKey},
 ) = get_cached_variables(res)
 
 function get_forecast_horizon(res::SimulationProblemResults{DecisionModelSimulationResults})
@@ -290,12 +290,12 @@ function _read_results(
     end
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
-    cached_results = get_cached_results(res, first(result_keys))
+    cached_results = get_cached_results(res, typeof(first(result_keys)))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
-        @debug "reading results from SimulationsResults cache"
+        @debug "reading results from SimulationsResults cache"  # NOTE tests match on this
         vals = Dict(k => cached_results[k] for k in result_keys)
     else
-        @debug "reading results from data store"
+        @debug "reading results from data store"  # NOTE tests match on this
         vals = _get_store_value(res, result_keys, timestamps, store)
     end
     return vals
@@ -482,18 +482,26 @@ function _are_results_cached(
 end
 
 """
-Load the simulation results into memory for repeated reads. Running this function twice
-overwrites the previously loaded results. This is useful when loading results from remote
-locations over network connections.
+Load the simulation results into memory for repeated reads. This is useful when loading
+results from remote locations over network connections, when reading the same data very many
+times, etc. Multiple calls augment the cache according to these rules, where "variable"
+means "variable, expression, etc.":
+  - Requests for an already cached variable at a lesser `count` than already cached do *not*
+    decrease the `count` of the cached variable
+  - Requests for an already cached variable at a greater `count` than already cached *do*
+    increase the `count` of the cached variable
+  - Requests for new variables are fulfilled without evicting existing variables
 
-For each variable/parameter/dual, etc., each element must be the name encoded as a string,
-like `"ActivePowerVariable__ThermalStandard"` or a Tuple with its constituent types, like
-`(ActivePowerVariable, ThermalStandard)`.
+Note that `count` is global across all variables, so increasing the `count` re-reads already
+cached variables. For each variable, each element must be the name encoded as a string, like
+`"ActivePowerVariable__ThermalStandard"` or a Tuple with its constituent types, like
+`(ActivePowerVariable, ThermalStandard)`. To clear the cache, use [`Base.empty!`](@ref).
 
 # Arguments
 
   - `count::Int`: Number of windows to load.
-  - `initial_time::Dates.DateTime` : Initial time of first window to load. Defaults to first.
+  - `initial_time::Dates.DateTime` : Initial time of first window to load. Defaults to
+    first.
   - `aux_variables::Vector{Union{String, Tuple}}`: Optional list of aux variables to load.
   - `duals::Vector{Union{String, Tuple}}`: Optional list of duals to load.
   - `expressions::Vector{Union{String, Tuple}}`: Optional list of expressions to load.
@@ -511,61 +519,23 @@ function load_results!(
     expressions = Vector{Tuple}(),
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
-    res.results_timestamps = _process_timestamps(res, initial_time, count)
-    dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
-    parameter_keys =
-        ParameterKey[_deserialize_key(ParameterKey, res, x...) for x in parameters]
-    variable_keys = VariableKey[_deserialize_key(VariableKey, res, x...) for x in variables]
-    aux_variable_keys =
-        AuxVarKey[_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
-    expression_keys =
-        ExpressionKey[_deserialize_key(ExpressionKey, res, x...) for x in expressions]
+    count = max(count, length(res.results_timestamps))
+    new_timestamps = _process_timestamps(res, initial_time, count)
+
     function merge_results(store)
-        merge!(
-            get_cached_variables(res),
-            _read_results(
-                res,
-                variable_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_duals(res),
-            _read_results(
-                res,
-                dual_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_parameters(res),
-            _read_results(
-                res,
-                parameter_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_aux_variables(res),
-            _read_results(
-                res,
-                aux_variable_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_expressions(res),
-            _read_results(
-                res,
-                expression_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
+        for (key_type, new_items) in [
+                (ConstraintKey, duals),
+                (ParameterKey, parameters),
+                (VariableKey, variables),
+                (AuxVarKey, aux_variables),
+                (ExpressionKey, expressions),
+            ]
+            new_keys = key_type[_deserialize_key(key_type, res, x...) for x in new_items]
+            existing_results = get_cached_results(res, key_type)
+            total_keys = union(collect(keys(existing_results)), new_keys)
+            # _read_results checks the cache to eliminate unnecessary re-reads
+            merge!(existing_results, _read_results(res, total_keys, new_timestamps, store))
+        end
     end
 
     if res.store isa InMemorySimulationStore
@@ -576,6 +546,7 @@ function load_results!(
             merge_results(store)
         end
     end
+    res.results_timestamps = new_timestamps
 
     return nothing
 end
