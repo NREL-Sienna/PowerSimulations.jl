@@ -223,7 +223,7 @@ validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
 function get_current_time(model::EmulationModel)
     execution_count = IS.get_execution_count(get_internal(model))
     initial_time = get_initial_time(model)
-    resolution = get_resolution(model.internal.store_parameters)
+    resolution = get_resolution(get_store_parameters(model))
     return initial_time + resolution * execution_count
 end
 
@@ -233,7 +233,7 @@ function init_model_store_params!(model::EmulationModel)
     interval = resolution = PSY.get_time_series_resolution(system)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    model.internal.store_parameters = IS.ModelStoreParams(
+    get_store_parameters(model) = IS.ModelStoreParams(
         num_executions,
         1,
         interval,
@@ -313,7 +313,7 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = configure_logging(model.internal, file_mode)
+    logger = configure_logging(get_internal(model), file_mode)
     try
         Logging.with_logger(logger) do
             try
@@ -350,13 +350,13 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
-    model.internal.container = OptimizationContainer(
+    IS.get_optimization_container(get_internal(model)) = OptimizationContainer(
         get_system(model),
         get_settings(model),
         nothing,
         PSY.SingleTimeSeries,
     )
-    model.internal.ic_model_container = nothing
+    IS.get_ic_model_container(get_internal(model)) = nothing
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
@@ -490,14 +490,14 @@ function run!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = configure_logging(model.internal, file_mode)
+    logger = configure_logging(get_internal(model), file_mode)
     try
         Logging.with_logger(logger) do
             try
                 initialize_storage!(
                     get_store(model),
                     get_optimization_container(model),
-                    model.internal.store_parameters,
+                    get_store_parameters(model),
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                     run_impl!(model; kwargs...)
