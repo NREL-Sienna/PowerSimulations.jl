@@ -5,12 +5,16 @@ warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
     get_optimization_container(model).built_for_recurrent_solves
-get_constraints(model::OperationModel) = get_internal(model).container.constraints
-get_execution_count(model::OperationModel) = get_internal(model).execution_count
-get_executions(model::OperationModel) = get_internal(model).executions
+get_constraints(model::OperationModel) = IS.get_constraints(get_internal(model))
+get_execution_count(model::OperationModel) = IS.get_execution_count(get_internal(model))
+get_executions(model::OperationModel) = IS.get_executions(get_internal(model))
 get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
 get_internal(model::OperationModel) = model.internal
-get_jump_model(model::OperationModel) = get_jump_model(get_internal(model).container)
+
+function get_jump_model(model::OperationModel)
+    return get_jump_model(IS.get_container(get_internal(model)))
+end
+
 get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
 is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
@@ -23,7 +27,10 @@ function get_rebuild_model(model::OperationModel)
     return get_rebuild_model(get_optimization_container(model).settings)
 end
 
-get_optimization_container(model::OperationModel) = get_internal(model).container
+function get_optimization_container(model::OperationModel)
+    return IS.get_optimization_container(get_internal(model))
+end
+
 function get_resolution(model::OperationModel)
     resolution = PSY.get_time_series_resolution(get_system(model))
     return IS.time_period_conversion(resolution)
@@ -33,8 +40,8 @@ get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
 get_settings(model::OperationModel) = get_optimization_container(model).settings
 get_optimizer_stats(model::OperationModel) =
     get_optimizer_stats(get_optimization_container(model))
-get_simulation_info(model::OperationModel) = model.internal.simulation_info
-get_simulation_number(model::OperationModel) = model.internal.simulation_info.number
+get_simulation_info(model::OperationModel) = model.simulation_info
+get_simulation_number(model::OperationModel) = model.simulation_info.number
 get_status(model::OperationModel) = model.internal.status
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
@@ -108,7 +115,7 @@ set_execution_count!(model::OperationModel, val::Int) =
     get_internal(model).execution_count = val
 set_initial_time!(model::OperationModel, val::Dates.DateTime) =
     set_initial_time!(get_settings(model), val)
-set_simulation_info!(model::OperationModel, info) = model.internal.simulation_info = info
+set_simulation_info!(model::OperationModel, info) = model.simulation_info = info
 function set_status!(model::OperationModel, status::BuildStatus)
     model.internal.status = status
     return

@@ -56,7 +56,7 @@
     @test length(findall(x -> x == 1, test_sequence.execution_order)) == 1
 
     for model in PSI.get_decision_models(models)
-        @test model.internal.simulation_info.sequence_uuid == test_sequence.uuid
+        @test model.simulation_info.sequence_uuid == test_sequence.uuid
     end
 
     # Test single stage sequence

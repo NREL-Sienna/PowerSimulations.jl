@@ -14,6 +14,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     template::AbstractProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, IS.ModelInternal}
+    simulation_info::Union{Nothing, SimulationInfo}
     store::DecisionModelStore
     ext::Dict{String, Any}
 end
@@ -82,6 +83,7 @@ function DecisionModel{M}(
         template_,
         sys,
         internal,
+        nothing,
         DecisionModelStore(),
         Dict{String, Any}(),
     )
