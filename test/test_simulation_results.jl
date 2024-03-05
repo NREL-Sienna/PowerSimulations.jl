@@ -557,7 +557,7 @@ function test_decision_problem_results_values(
             timestamps[1:2],
             nothing,
         )
-        @test isempty(setdiff(timestamps[1:2], actual_timestamps(read)))  # Allow the timestamps actually read to be a superset of those requested
+        @test actual_timestamps(read) == timestamps[1:2]
         read = @test_yes_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
         @test actual_timestamps(read) == timestamps
 
@@ -576,7 +576,6 @@ function test_decision_problem_results_values(
 
         # Reset back down to 2 windows
         empty!(myres)
-        @test isempty(PSI.get_cached_variables(myres))
         @test_no_cache load_results!(
             myres,
             2;
@@ -604,6 +603,36 @@ function test_decision_problem_results_values(
             initial_time = initial_time,
             variables = [variable_tuple],
         )
+        empty!(myres)
+
+        # With windows 2-3 cached, reading 2-3 and 3-3 should be from cache, reading 1-2 should be from outside cache
+        @test_no_cache load_results!(
+            myres,
+            2;
+            initial_time = timestamps[2],
+            variables = [variable_tuple],
+        )
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[2:3],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[2:3]
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[3:3],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[3:3]
+        read = @test_no_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
 
         empty!(myres)
         @test isempty(PSI.get_cached_variables(myres))
