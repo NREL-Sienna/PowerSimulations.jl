@@ -273,6 +273,18 @@ function _read_results(
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
         @debug "reading results from SimulationsResults cache"  # NOTE tests match on this
         vals = Dict(k => cached_results[k] for k in result_keys)
+        # Cached data may contain more timestamps than we need, remove these if so
+        (timestamps == get_results_timestamps(res)) && return vals
+        filtered_vals = Dict{keytype(vals), valtype(vals)}()
+        for (result_key, result_data) in vals
+            inner_converted = filter((((k, v),) -> k in timestamps), result_data.data)
+            filtered_vals[result_key] = ResultsByTime{valtype(inner_converted), 1}(
+                result_data.key,
+                inner_converted,
+                result_data.resolution,
+                result_data.column_names)
+        end
+        return filtered_vals
     else
         @debug "reading results from data store"  # NOTE tests match on this
         vals = _get_store_value(res, result_keys, timestamps, store)
