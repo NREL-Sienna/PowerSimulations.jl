@@ -20,7 +20,7 @@ get_store(model::OperationModel) = model.store
 is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
 
 function get_rebuild_model(model::OperationModel)
-    sim_info = get_internal(model).simulation_info
+    sim_info = model.simulation_info
     if sim_info === nothing
         error("Model not part of a simulation")
     end
@@ -108,20 +108,27 @@ function solve_impl!(model::OperationModel)
     return
 end
 
-set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
-set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
-set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
-set_execution_count!(model::OperationModel, val::Int) =
-    get_internal(model).execution_count = val
-set_initial_time!(model::OperationModel, val::Dates.DateTime) =
-    set_initial_time!(get_settings(model), val)
-set_simulation_info!(model::OperationModel, info) = model.simulation_info = info
-function set_status!(model::OperationModel, status::BuildStatus)
-    model.internal.status = status
+set_console_level!(model::OperationModel, val) = IS.set_console_level!(get_internal(model), val)
+set_file_level!(model::OperationModel, val) = IS.set_file_level!(get_internal(model), val)
+function set_executions!(model::OperationModel, val::Int)
+    IS.set_executions!(get_internal(model), val)
     return
 end
-set_output_dir!(model::OperationModel, path::AbstractString) =
-    get_internal(model).output_dir = path
+
+function set_execution_count!(model::OperationModel, val::Int)
+    IS.set_execution_count!(get_internal(model), val)
+    return
+end
+
+function set_status!(model::OperationModel, status::BuildStatus)
+    IS.set_status!(get_internal(model), status)
+    return
+end
+
+function set_output_dir!(model::OperationModel, path::AbstractString)
+    set_output_dir!(get_internal(model), path)
+    return
+end
 
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
@@ -369,13 +376,13 @@ end
 function register_recorders!(model::OperationModel, file_mode)
     recorder_dir = get_recorder_dir(model)
     mkpath(recorder_dir)
-    for name in get_recorders(get_internal(model))
+    for name in IS.get_recorders(get_internal(model))
         IS.register_recorder!(name; mode = file_mode, directory = recorder_dir)
     end
 end
 
 function unregister_recorders!(model::OperationModel)
-    for name in get_recorders(get_internal(model))
+    for name in IS.get_recorders(get_internal(model))
         IS.unregister_recorder!(name)
     end
 end
