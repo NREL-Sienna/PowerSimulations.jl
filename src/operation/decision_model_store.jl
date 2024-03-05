@@ -9,7 +9,10 @@ mutable struct DecisionModelStore <: IS.AbstractModelStore
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
     variables::Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    aux_variables::Dict{IS.AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    aux_variables::Dict{
+        IS.AuxVarKey,
+        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+    }
     expressions::Dict{
         IS.ExpressionKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
