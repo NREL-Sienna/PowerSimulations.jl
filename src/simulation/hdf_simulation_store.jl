@@ -238,8 +238,8 @@ end
 function initialize_problem_storage!(
     store::HdfSimulationStore,
     params::SimulationStoreParams,
-    dm_problem_reqs::Dict{Symbol, IS.SimulationModelStoreRequirements},
-    em_problem_reqs::IS.SimulationModelStoreRequirements,
+    dm_problem_reqs::Dict{Symbol, SimulationModelStoreRequirements},
+    em_problem_reqs::SimulationModelStoreRequirements,
     flush_rules::CacheFlushRules,
 )
     store.params = params

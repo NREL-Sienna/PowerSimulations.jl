@@ -337,7 +337,7 @@ function _get_model_store_requirements!(
 )
     model_name = get_name(model)
     horizon = get_horizon(model)
-    reqs = IS.SimulationModelStoreRequirements()
+    reqs = SimulationModelStoreRequirements()
     container = get_optimization_container(model)
 
     for (key, array) in get_duals(container)
@@ -378,7 +378,7 @@ function _get_emulation_store_requirements(sim::Simulation)
     sim_state = get_simulation_state(sim)
     system_state = get_system_states(sim_state)
     sim_time = get_steps(sim) * get_step_resolution(get_sequence(sim))
-    reqs = IS.SimulationModelStoreRequirements()
+    reqs = SimulationModelStoreRequirements()
 
     for (key, state_values) in get_duals_values(system_state)
         !should_write_resulting_value(key) && continue
@@ -427,7 +427,7 @@ function _initialize_problem_storage!(
     executions_by_model = sequence.executions_by_model
     models = get_models(sim)
     decision_model_store_params = OrderedDict{Symbol, IS.ModelStoreParams}()
-    dm_model_req = Dict{Symbol, IS.SimulationModelStoreRequirements}()
+    dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     rules = CacheFlushRules(;
         max_size = cache_size_mib * MiB,
         min_flush_size = trunc(min_cache_flush_size_mib * MiB),
