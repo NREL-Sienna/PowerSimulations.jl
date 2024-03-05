@@ -402,7 +402,7 @@ keyword arguments to that function.
 # Arguments
 
   - `model::OperationModel = model`: operation model
-  - `export_problem_results::Bool = false`: If true, export ProblemResults DataFrames to CSV files. Reduces solution times during simulation.
+  - `export_problem_results::Bool = false`: If true, export OptimizationProblemResults DataFrames to CSV files. Reduces solution times during simulation.
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
   - `disable_timer_outputs = false` : Enable/Disable timing outputs
@@ -466,7 +466,7 @@ function solve!(
                 end
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
                     # TODO: This could be more complicated than it needs to be
-                    results = ProblemResults(model)
+                    results = OptimizationProblemResults(model)
                     serialize_results(results, get_output_dir(model))
                     export_problem_results && export_results(results)
                 end

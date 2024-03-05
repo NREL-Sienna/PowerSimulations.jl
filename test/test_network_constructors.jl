@@ -450,7 +450,7 @@ end
 
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
@@ -503,7 +503,7 @@ end
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
@@ -550,7 +550,7 @@ end
 
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
@@ -603,7 +603,7 @@ end
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
@@ -657,7 +657,7 @@ end
               PSI.BuildStatus.BUILT
         solve!(uc_model_red)
 
-        res_red = ProblemResults(uc_model_red)
+        res_red = OptimizationProblemResults(uc_model_red)
 
         flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
         line_names = DataFrames.names(flow_lines)[2:end]
@@ -683,7 +683,7 @@ end
               PSI.BuildStatus.BUILT
         solve!(uc_model_orig)
 
-        res_orig = ProblemResults(uc_model_orig)
+        res_orig = OptimizationProblemResults(uc_model_orig)
 
         flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
 

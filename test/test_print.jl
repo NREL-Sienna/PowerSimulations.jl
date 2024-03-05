@@ -26,7 +26,7 @@ end
     @test build!(dm_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.BuildStatus.BUILT
     @test solve!(dm_model; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
-    results = ProblemResults(dm_model)
+    results = OptimizationProblemResults(dm_model)
     variables = read_variables(results)
 
     list = [

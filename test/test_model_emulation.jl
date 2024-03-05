@@ -162,7 +162,7 @@ end
     ) ==
           BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
-    results = ProblemResults(model)
+    results = OptimizationProblemResults(model)
     @test list_aux_variable_names(results) == []
     @test list_aux_variable_keys(results) == []
     @test list_variable_names(results) == ["ActivePowerVariable__ThermalStandard"]
@@ -242,14 +242,14 @@ end
     executions = 10
     @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
     @test run!(model; export_problem_results = true) == RunStatus.SUCCESSFUL
-    results1 = ProblemResults(model)
+    results1 = OptimizationProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
     var1_b = read_variable(results1, "ActivePowerVariable__ThermalStandard")
     @test var1_a == var1_b
 
     # Results were automatically serialized here.
-    results2 = ProblemResults(joinpath(PSI.get_output_dir(model)))
+    results2 = OptimizationProblemResults(joinpath(PSI.get_output_dir(model)))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
     @test get_system(results2) !== nothing
@@ -258,7 +258,7 @@ end
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
     @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
-    results3 = ProblemResults(results_path)
+    results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
     @test get_system(results3) === nothing
@@ -286,7 +286,7 @@ end
     executions = 10
     @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
-    results = ProblemResults(model)
+    results = OptimizationProblemResults(model)
     var1 = read_variable(results, ActivePowerVariable, ThermalStandard)
 
     file_list = sort!(collect(readdir(path)))
@@ -296,7 +296,7 @@ end
     model2 = EmulationModel(path, HiGHS_optimizer)
     build!(model2; output_dir = path2)
     @test run!(model2) == RunStatus.SUCCESSFUL
-    results2 = ProblemResults(model2)
+    results2 = OptimizationProblemResults(model2)
     var2 = read_variable(results, ActivePowerVariable, ThermalStandard)
 
     @test var1 == var2

@@ -262,7 +262,7 @@ end
 
     solve!(model)
 
-    ptdf_vars = get_variable_values(ProblemResults(model))
+    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     ptdf_values =
         ptdf_vars[PowerSimulations.IS.VariableKey{
             FlowActivePowerVariable,
@@ -283,7 +283,7 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    dcp_vars = get_variable_values(ProblemResults(model))
+    dcp_vars = get_variable_values(OptimizationProblemResults(model))
     dcp_values =
         dcp_vars[PowerSimulations.IS.VariableKey{
             FlowActivePowerVariable,
@@ -344,7 +344,7 @@ end
             )
 
             solve!(model_ref; output_dir = mktempdir())
-            ref_vars = get_variable_values(ProblemResults(model_ref))
+            ref_vars = get_variable_values(OptimizationProblemResults(model_ref))
             ref_values =
                 ref_vars[PowerSimulations.IS.VariableKey{FlowActivePowerVariable, Line}("")]
             hvdc_ref_values = ref_vars[PowerSimulations.IS.VariableKey{
@@ -380,7 +380,7 @@ end
             )
 
             solve!(model; output_dir = mktempdir())
-            no_loss_vars = get_variable_values(ProblemResults(model))
+            no_loss_vars = get_variable_values(OptimizationProblemResults(model))
             no_loss_values =
                 no_loss_vars[PowerSimulations.IS.VariableKey{FlowActivePowerVariable, Line}(
                     "",
@@ -438,7 +438,7 @@ end
             )
 
             solve!(model_wl; output_dir = mktempdir())
-            dispatch_vars = get_variable_values(ProblemResults(model_wl))
+            dispatch_vars = get_variable_values(OptimizationProblemResults(model_wl))
             dispatch_values_ft = dispatch_vars[PowerSimulations.IS.VariableKey{
                 FlowActivePowerFromToVariable,
                 TwoTerminalHVDCLine,
