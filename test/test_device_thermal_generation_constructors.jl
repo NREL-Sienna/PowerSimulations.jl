@@ -827,7 +827,7 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    ptdf_vars = get_variable_values(ProblemResults(model))
+    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     on = ptdf_vars[PowerSimulations.IS.VariableKey{OnVariable, ThermalStandard}("")]
     on_sundance = on[!, "Sundance"]
     @test all(isapprox.(on_sundance, 1.0))

@@ -455,7 +455,7 @@ keyword arguments to that function.
   - `model::EmulationModel = model`: Emulation model
   - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
   - `executions::Int`: Number of executions for the emulator run
-  - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
+  - `export_problem_results::Bool`: If true, export OptimizationProblemResults DataFrames to CSV files.
   - `output_dir::String`: Required if the model is not already built, otherwise ignored
   - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
   - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
@@ -510,7 +510,7 @@ function run!(
                     end
                 end
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                    results = ProblemResults(model)
+                    results = OptimizationProblemResults(model)
                     serialize_results(results, get_output_dir(model))
                     export_problem_results && export_results(results)
                 end

@@ -8,7 +8,6 @@ module PowerSimulations
 export Simulation
 export DecisionModel
 export EmulationModel
-export ProblemResults
 export ProblemTemplate
 export InitialCondition
 export SimulationModels
@@ -123,7 +122,6 @@ export set_network_model!
 export get_network_formulation
 ## Results interfaces
 export SimulationResultsExport
-export ProblemResultsExport
 export export_results
 export export_realized_results
 export export_optimizer_stats
@@ -179,6 +177,9 @@ export read_optimizer_stats
 export serialize_optimization_model
 
 ## Utils Exports
+export OptimizationProblemResults
+export OptimizationProblemResultsExport
+export OptimizerStats
 export get_all_constraint_index
 export get_all_variable_index
 export get_constraint_index
@@ -341,7 +342,8 @@ import PowerNetworkMatrices
 import PowerNetworkMatrices: PTDF, VirtualPTDF
 export PTDF
 export VirtualPTDF
-import InfrastructureSystems: @assert_op, list_recorder_events, get_name
+import InfrastructureSystems: @assert_op, list_recorder_events, get_name,
+    OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats
 export get_name
 export get_model_base_power
 export get_optimizer_stats
@@ -449,7 +451,6 @@ include("operation/emulation_model_store.jl")
 include("operation/initial_conditions_update_in_memory_store.jl")
 include("operation/decision_model.jl")
 include("operation/emulation_model.jl")
-include("operation/problem_results_export.jl")
 include("operation/problem_results.jl")
 include("operation/operation_model_serialization.jl")
 include("operation/time_series_interface.jl")

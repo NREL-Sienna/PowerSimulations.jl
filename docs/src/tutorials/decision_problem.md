@@ -135,7 +135,7 @@ solve!(problem)
 PowerSimulations collects the `DecisionModel` results into a `ProblemResults` struct:
 
 ```@example op_problem
-res = ProblemResults(problem)
+res = OptimizationProblemResults(problem)
 ```
 
 ### Optimizer Stats
