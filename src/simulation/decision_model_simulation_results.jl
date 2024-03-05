@@ -267,10 +267,10 @@ function _read_results(
             (date_key, Matrix{Float64}(permutedims(inner_data.data)))
             for (date_key, inner_data) in result_data.data)
         converted_vals[result_key] = ResultsByTime{Matrix{Float64}, 1}(
-                        result_data.key,
-                        inner_converted,
-                        result_data.resolution,
-                        result_data.column_names)
+            result_data.key,
+            inner_converted,
+            result_data.resolution,
+            result_data.column_names)
     end
     return converted_vals
 end
@@ -524,12 +524,12 @@ function load_results!(
 
     function merge_results(store)
         for (key_type, new_items) in [
-                (ConstraintKey, duals),
-                (ParameterKey, parameters),
-                (VariableKey, variables),
-                (AuxVarKey, aux_variables),
-                (ExpressionKey, expressions),
-            ]
+            (ConstraintKey, duals),
+            (ParameterKey, parameters),
+            (VariableKey, variables),
+            (AuxVarKey, aux_variables),
+            (ExpressionKey, expressions),
+        ]
             new_keys = key_type[_deserialize_key(key_type, res, x...) for x in new_items]
             existing_results = get_cached_results(res, key_type)
             total_keys = union(collect(keys(existing_results)), new_keys)
