@@ -1,3 +1,26 @@
+# Read the actual data of a result to see what the timestamps are
+actual_timestamps(result) = result |> values |> first |> x -> x.data |> keys |> collect
+
+# Test that a particular call to _read_results reads from outside the cache; pass through the results
+macro test_no_cache(expr)
+    :(@test_logs(
+        match_mode = :any,
+        (:debug, r"reading results from data store"),
+        min_level = Logging.Debug,
+        $(esc(expr))))
+end
+@test_no_cache((@debug "reading results from data store"; @debug "msg 2"))
+
+# Test that a particular call to _read_results reads from the cache; pass through the results
+macro test_yes_cache(expr)
+    :(@test_logs(
+        match_mode = :any,
+        (:debug, r"reading results from SimulationsResults cache"),
+        min_level = Logging.Debug,
+        $(esc(expr))))
+end
+@test_yes_cache((@debug "reading results from SimulationsResults cache"; @debug "msg 2"))
+
 ED_EXPECTED_VARS = [
     "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
@@ -523,6 +546,123 @@ function test_decision_problem_results_values(
             "",
         )].data,
     )
+
+    # Inspired by https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1072
+    @testset "Test cache behavior" begin
+        myres = deepcopy(results_ed)
+        initial_time = DateTime("2024-01-01T00:00:00")
+        timestamps = PSI._process_timestamps(myres, initial_time, 3)
+        variable_tuple = (ActivePowerVariable, ThermalStandard)
+        variable_key = PSI.VariableKey(variable_tuple...)
+
+        empty!(myres)
+        @test isempty(PSI.get_cached_variables(myres))
+
+        # With nothing cached, all reads should be from outside the cache
+        read = @test_no_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
+        @test actual_timestamps(read) == timestamps
+
+        # With 2 result windows cached, reading 2 windows should come from cache and reading 3 should come from outside
+        load_results!(myres, 2; initial_time = initial_time, variables = [variable_tuple])
+        @test haskey(PSI.get_cached_variables(myres), variable_key)
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
+        read = @test_no_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
+        @test actual_timestamps(read) == timestamps
+
+        # With 3 result windows cached, reading 2 and 3 windows should both come from cache
+        load_results!(myres, 3; initial_time = initial_time, variables = [variable_tuple])
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
+        read = @test_yes_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
+        @test actual_timestamps(read) == timestamps
+
+        # Caching an additional variable should incur an additional read but not evict the old variable
+        @test_no_cache load_results!(
+            myres,
+            3;
+            initial_time = initial_time,
+            variables = [(ActivePowerVariable, RenewableDispatch)],
+        )
+        @test haskey(PSI.get_cached_variables(myres), variable_key)
+        @test haskey(
+            PSI.get_cached_variables(myres),
+            PSI.VariableKey(ActivePowerVariable, RenewableDispatch),
+        )
+
+        # Reset back down to 2 windows
+        empty!(myres)
+        @test_no_cache load_results!(
+            myres,
+            2;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+
+        # Loading a subset of what has already been loaded should not incur additional reads from outside the cache
+        @test_yes_cache load_results!(
+            myres,
+            2;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+        @test_yes_cache load_results!(
+            myres,
+            1;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+        # But loading a superset should
+        @test_no_cache load_results!(
+            myres,
+            3;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+        empty!(myres)
+
+        # With windows 2-3 cached, reading 2-3 and 3-3 should be from cache, reading 1-2 should be from outside cache
+        @test_no_cache load_results!(
+            myres,
+            2;
+            initial_time = timestamps[2],
+            variables = [variable_tuple],
+        )
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[2:3],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[2:3]
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[3:3],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[3:3]
+        read = @test_no_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
+
+        empty!(myres)
+        @test isempty(PSI.get_cached_variables(myres))
+    end
 end
 
 function test_decision_problem_results(
