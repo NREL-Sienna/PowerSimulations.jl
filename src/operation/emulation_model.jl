@@ -221,7 +221,7 @@ validate_template(::EmulationModel{<:EmulationProblem}) = nothing
 validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
 
 function get_current_time(model::EmulationModel)
-    execution_count = get_internal(model).execution_count
+    execution_count = IS.get_execution_count(get_internal(model))
     initial_time = get_initial_time(model)
     resolution = get_resolution(model.internal.store_parameters)
     return initial_time + resolution * execution_count
@@ -419,13 +419,14 @@ function run_impl!(
 )
     _pre_solve_model_checks(model, optimizer)
     internal = get_internal(model)
+    executions = IS.get_executions(internal)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
         error("Call build! again")
     end
-    prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+    prog_bar = ProgressMeter.Progress(executions; enabled = enable_progress_bar)
     initial_time = get_initial_time(model)
-    for execution in 1:(internal.executions)
+    for execution in 1:executions
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
             solve_impl!(model)
             current_time = initial_time + (execution - 1) * PSI.get_resolution(model)
