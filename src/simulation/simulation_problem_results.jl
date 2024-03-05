@@ -78,7 +78,7 @@ function set_results_timestamps!(
     result.results_timestamps = results_timestamps
 end
 
-list_result_keys(res::SimulationProblemResults, ::AuxVarKey) = list_aux_variable_keys(res)
+list_result_keys(res::SimulationProblemResults, ::IS.AuxVarKey) = list_aux_variable_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ConstraintKey) = list_dual_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) =
     list_expression_keys(res)

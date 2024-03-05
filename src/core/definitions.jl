@@ -84,7 +84,15 @@ const RESULTS_DIR = "results"
 
 # Enums
 BuildStatus = IS.BuildStatus
-RunStatus = IS.RunStatus
+
+@scoped_enum(
+    RunStatus,
+    NOT_READY = -2,
+    READY = -1,
+    SUCCESSFUL = 0,
+    RUNNING = 1,
+    FAILED = 2,
+)
 
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
