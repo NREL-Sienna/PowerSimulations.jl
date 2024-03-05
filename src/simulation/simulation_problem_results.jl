@@ -69,7 +69,8 @@ IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
 
-list_result_keys(res::SimulationProblemResults, ::IS.AuxVarKey) = list_aux_variable_keys(res)
+list_result_keys(res::SimulationProblemResults, ::IS.AuxVarKey) =
+    list_aux_variable_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ConstraintKey) = list_dual_keys(res)
 list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) =
     list_expression_keys(res)
