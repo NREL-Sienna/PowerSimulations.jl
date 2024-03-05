@@ -54,7 +54,7 @@ end
 
 function Base.empty!(res::SimulationProblemResults{DecisionModelSimulationResults})
     foreach(empty!, _list_containers(res))
-    empty!(res.results_timestamps)
+    empty!(get_results_timestamps(res))
 end
 
 function Base.isempty(res::SimulationProblemResults{DecisionModelSimulationResults})
@@ -87,27 +87,6 @@ get_cached_parameters(res::SimulationProblemResults{DecisionModelSimulationResul
     res.values.parameters.cached_results
 get_cached_variables(res::SimulationProblemResults{DecisionModelSimulationResults}) =
     res.values.variables.cached_results
-
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::Type{<:AuxVarKey},
-) = get_cached_aux_variables(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::Type{<:ConstraintKey},
-) = get_cached_duals(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::Type{<:ExpressionKey},
-) = get_cached_expressions(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::Type{<:ParameterKey},
-) = get_cached_parameters(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::Type{<:VariableKey},
-) = get_cached_variables(res)
 
 function get_forecast_horizon(res::SimulationProblemResults{DecisionModelSimulationResults})
     return res.values.forecast_horizon
@@ -290,7 +269,7 @@ function _read_results(
     end
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
-    cached_results = get_cached_results(res, typeof(first(result_keys)))
+    cached_results = get_cached_results(res, eltype(result_keys))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
         @debug "reading results from SimulationsResults cache"  # NOTE tests match on this
         vals = Dict(k => cached_results[k] for k in result_keys)
@@ -477,7 +456,7 @@ function _are_results_cached(
     timestamps::Vector{Dates.DateTime},
     cached_keys,
 )
-    return isempty(setdiff(timestamps, res.results_timestamps)) &&
+    return isempty(setdiff(timestamps, get_results_timestamps(res))) &&
            isempty(setdiff(output_keys, cached_keys))
 end
 
@@ -519,7 +498,7 @@ function load_results!(
     expressions = Vector{Tuple}(),
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
-    count = max(count, length(res.results_timestamps))
+    count = max(count, length(get_results_timestamps(res)))
     new_timestamps = _process_timestamps(res, initial_time, count)
 
     function merge_results(store)
@@ -546,7 +525,7 @@ function load_results!(
             merge_results(store)
         end
     end
-    res.results_timestamps = new_timestamps
+    set_results_timestamps!(res, new_timestamps)
 
     return nothing
 end
