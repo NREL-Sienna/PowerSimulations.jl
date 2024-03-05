@@ -500,7 +500,7 @@ function _initialize_problem_storage!(
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
-        decision_model_store_params[model_name] = model.internal.store_parameters
+        decision_model_store_params[model_name] = get_store_parameters(model)
         num_executions = executions_by_model[model_name]
         num_rows = num_executions * get_steps(sim)
         dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)

@@ -421,7 +421,7 @@ function check_initialization_constraint_count(
     filter_func = PSY.get_available,
     meta = PSI.IS.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.IS.ConstraintType, T <: PSY.Component}
-    container = model.internal.ic_model_container
+    container = IS.get_ic_model_container(get_internal(model))
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
     constraint = PSI.get_constraint(container, S(), T, meta)

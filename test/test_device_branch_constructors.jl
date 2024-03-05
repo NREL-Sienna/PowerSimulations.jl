@@ -270,7 +270,8 @@ end
         }(
             "",
         )]
-    ptdf_objective = model.internal.container.optimizer_stats.objective_value
+    ptdf_objective =
+        IS.get_optimization_container(get_internal(model)).optimizer_stats.objective_value
 
     set_network_model!(template_uc, NetworkModel(DCPPowerModel))
 
@@ -291,7 +292,8 @@ end
         }(
             "",
         )]
-    dcp_objective = model.internal.container.optimizer_stats.objective_value
+    dcp_objective =
+        IS.get_optimization_container(get_internal(model)).optimizer_stats.objective_value
 
     @test isapprox(dcp_objective, ptdf_objective; atol = 0.1)
     # Resulting solution is in the 4e5 order of magnitude
@@ -397,7 +399,10 @@ end
             }(
                 "",
             )]
-            no_loss_objective = model.internal.container.optimizer_stats.objective_value
+            no_loss_objective =
+                IS.get_optimization_container(
+                    get_internal(model),
+                ).optimizer_stats.objective_value
             no_loss_total_gen = sum(
                 sum.(
                     eachrow(
