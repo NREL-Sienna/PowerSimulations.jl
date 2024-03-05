@@ -72,27 +72,6 @@ get_cached_parameters(res::SimulationProblemResults{EmulationModelSimulationResu
 get_cached_variables(res::SimulationProblemResults{EmulationModelSimulationResults}) =
     res.values.variables
 
-get_cached_results(
-    res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::Type{<:AuxVarKey},
-) = get_cached_aux_variables(res)
-get_cached_results(
-    res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::Type{<:ConstraintKey},
-) = get_cached_duals(res)
-get_cached_results(
-    res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::Type{<:ExpressionKey},
-) = get_cached_expressions(res)
-get_cached_results(
-    res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::Type{<:ParameterKey},
-) = get_cached_parameters(res)
-get_cached_results(
-    res::SimulationProblemResults{EmulationModelSimulationResults},
-    ::Type{<:VariableKey},
-) = get_cached_variables(res)
-
 function _list_containers(res::SimulationProblemResults)
     return (getfield(res.values, x) for x in get_container_fields(res))
 end
@@ -227,7 +206,7 @@ function _read_results(
     _validate_keys(existing_keys, result_keys)
     cached_results = Dict(
         k => v for
-        (k, v) in get_cached_results(res, typeof(first(result_keys))) if !isempty(v)
+        (k, v) in get_cached_results(res, eltype(result_keys)) if !isempty(v)
     )
     if isempty(setdiff(result_keys, keys(cached_results)))
         @debug "reading aux_variables from SimulationsResults"
