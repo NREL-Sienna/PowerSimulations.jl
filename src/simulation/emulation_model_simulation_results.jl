@@ -226,7 +226,8 @@ function _read_results(
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
     cached_results = Dict(
-        k => v for (k, v) in get_cached_results(res, typeof(first(result_keys))) if !isempty(v)
+        k => v for
+        (k, v) in get_cached_results(res, typeof(first(result_keys))) if !isempty(v)
     )
     if isempty(setdiff(result_keys, keys(cached_results)))
         @debug "reading aux_variables from SimulationsResults"
