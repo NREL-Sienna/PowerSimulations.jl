@@ -742,12 +742,6 @@ function serialize_optimization_model(container::OptimizationContainer, save_pat
     return
 end
 
-const _CONTAINER_METADATA_FILE = "optimization_container_metadata.bin"
-
-_make_metadata_filename(model_name::Symbol, output_dir) =
-    joinpath(output_dir, string(model_name), _CONTAINER_METADATA_FILE)
-_make_metadata_filename(output_dir) = joinpath(output_dir, _CONTAINER_METADATA_FILE)
-
 function serialize_metadata!(container::OptimizationContainer, output_dir::String)
     for key in Iterators.flatten((
         keys(container.constraints),
@@ -758,7 +752,7 @@ function serialize_metadata!(container::OptimizationContainer, output_dir::Strin
         keys(container.expressions),
     ))
         encoded_key = encode_key_as_string(key)
-        if has_container_key(container.metadata, encoded_key)
+        if IS.has_container_key(container.metadata, encoded_key)
             # Constraints and Duals can store the same key.
             IS.@assert_op key == get_container_key(container.metadata, encoded_key)
         end
