@@ -26,6 +26,7 @@ using DataStructures
 import UUIDs
 using Random
 import Serialization
+using Base.Filesystem
 
 # Code Quality Tests
 import Aqua
@@ -67,7 +68,7 @@ const DISABLED_TEST_FILES = [
 # "test_problem_template.jl",
 # "test_model_emulation.jl",
 # "test_network_constructors.jl",
-# "test_services_constructor.jl",
+"test_services_constructor.jl",
 # "test_simulation_models.jl",
 # "test_simulation_sequence.jl",
 # "test_simulation_build.jl",

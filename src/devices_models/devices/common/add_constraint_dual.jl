@@ -1,12 +1,11 @@
 function add_constraint_dual!(
     container::OptimizationContainer,
     sys::PSY.System,
-    device_model::DeviceModel{T, D},
+    model::DeviceModel{T, D},
 ) where {T <: PSY.Component, D <: AbstractDeviceFormulation}
-    if !isempty(get_duals(device_model))
-        devices =
-            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
-        for constraint_type in get_duals(device_model)
+    if !isempty(get_duals(model))
+        devices = get_available_components(model, sys)
+        for constraint_type in get_duals(model)
             assign_dual_variable!(container, constraint_type, devices, D)
         end
     end
@@ -19,7 +18,7 @@ function add_constraint_dual!(
     model::NetworkModel{T},
 ) where {T <: PM.AbstractPowerModel}
     if !isempty(get_duals(model))
-        devices = PSY.get_components(PSY.ACBus, sys)
+        devices = get_available_components(model, PSY.ACBus, sys)
         for constraint_type in get_duals(model)
             assign_dual_variable!(container, constraint_type, devices, model)
         end
@@ -46,7 +45,7 @@ function add_constraint_dual!(
     model::ServiceModel{T, D},
 ) where {T <: PSY.Service, D <: AbstractServiceFormulation}
     if !isempty(get_duals(model))
-        service = PSY.get_component(T, sys, model.service_name)
+        service = get_available_components(model, sys)
         for constraint_type in get_duals(model)
             assign_dual_variable!(container, constraint_type, service, D)
         end

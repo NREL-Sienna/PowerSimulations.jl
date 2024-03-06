@@ -243,6 +243,7 @@ function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Mod
         :objective_bound, # Union{Missing,Float64}
         :dual_objective_value, # Union{Missing,Float64}
         # Work counters
+        :relative_gap, # Union{Missing,Int}
         :barrier_iterations, # Union{Missing,Int}
         :simplex_iterations, # Union{Missing,Int}
         :node_count, # Union{Missing,Int}

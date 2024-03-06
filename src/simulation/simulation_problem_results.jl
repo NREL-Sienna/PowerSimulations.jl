@@ -65,15 +65,46 @@ get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
+get_system_uuid(results::PSI.SimulationProblemResults) = results.system_uuid
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
+
+get_results_timestamps(result::SimulationProblemResults) = result.results_timestamps
+function set_results_timestamps!(
+    result::SimulationProblemResults,
+    results_timestamps::Vector{Dates.DateTime},
+)
+    result.results_timestamps = results_timestamps
+end
 
 list_result_keys(res::SimulationProblemResults, ::AuxVarKey) = list_aux_variable_keys(res)
 list_result_keys(res::SimulationProblemResults, ::ConstraintKey) = list_dual_keys(res)
 list_result_keys(res::SimulationProblemResults, ::ExpressionKey) = list_expression_keys(res)
 list_result_keys(res::SimulationProblemResults, ::ParameterKey) = list_parameter_keys(res)
 list_result_keys(res::SimulationProblemResults, ::VariableKey) = list_variable_keys(res)
+
+get_cached_results(res::SimulationProblemResults, ::Type{<:AuxVarKey}) =
+    get_cached_aux_variables(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ConstraintKey}) =
+    get_cached_duals(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ExpressionKey}) =
+    get_cached_expressions(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ParameterKey}) =
+    get_cached_parameters(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:VariableKey}) =
+    get_cached_variables(res)
+get_cached_results(
+    res::SimulationProblemResults,
+    ::Type{<:OptimizationContainerKey} = OptimizationContainerKey,
+) =
+    merge(  # PERF: could be done lazily
+        get_cached_aux_variables(res),
+        get_cached_duals(res),
+        get_cached_expressions(res),
+        get_cached_parameters(res),
+        get_cached_variables(res),
+    )
 
 """
 Return an array of variable names (strings) that are available for reads.
@@ -113,16 +144,50 @@ get_timestamps(result::SimulationProblemResults) = result.timestamps
 """
 Return the system used for the problem. If the system hasn't already been deserialized or
 set with [`set_system!`](@ref) then deserialize and store it.
+
+If the simulation was configured to serialize all systems to file then the returned system
+will include all data. If that was not configured then the returned system will include
+all data except time series data.
 """
-function get_system!(results::SimulationProblemResults)
+function get_system!(results::SimulationProblemResults; kwargs...)
+    !isnothing(results.system) && return results.system
+
     file = joinpath(
         results.execution_path,
         "problems",
         results.problem,
         make_system_filename(results.system_uuid),
     )
-    results.system = PSY.System(file; time_series_read_only = true)
+
+    # This flag should remain unpublished because it should never be needed
+    # by the general audience.
+    if !get(kwargs, :use_h5_system, false) && isfile(file)
+        system = PSY.System(file; time_series_read_only = true)
+        @info "De-serialized the system from files."
+    else
+        system = _deserialize_system(results, results.store)
+    end
+
+    results.system = system
     return results.system
+end
+
+function _deserialize_system(results::SimulationProblemResults, ::Nothing)
+    open_store(
+        HdfSimulationStore,
+        joinpath(get_execution_path(results), "data_store"),
+        "r",
+    ) do store
+        system = deserialize_system(store, results.system_uuid)
+        @info "De-serialized the system from the simulation store. The system does " *
+              "not include time series data."
+        return system
+    end
+end
+
+function _deserialize_system(::SimulationProblemResults, ::InMemorySimulationStore)
+    # This should never be necessary because the system is guaranteed to be in memory.
+    error("Deserializing a system from the InMemorySimulationStore is not supported.")
 end
 
 """
@@ -593,11 +658,8 @@ Return the optimizer stats for the problem as a DataFrame.
   - `store::SimulationStore`: a store that has been opened for reading
 """
 function read_optimizer_stats(res::SimulationProblemResults; store = nothing)
-    if store === nothing && res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
-    end
-    return _read_optimizer_stats(res, store)
+    _store = isnothing(store) ? res.store : store
+    return _read_optimizer_stats(res, _store)
 end
 
 function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)

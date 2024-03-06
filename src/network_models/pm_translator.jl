@@ -398,8 +398,7 @@ function get_branches_to_pm(
         end
         !(comp_type <: T) && continue
         start_idx += length(PM_branches)
-        filter_func = get_attribute(device_model, "filter_function")
-        for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
+        for (i, branch) in enumerate(get_available_components(device_model, sys))
             if PSY.get_name(branch) ∈ radial_branches_names
                 @debug "Skipping branch $(PSY.get_name(branch)) since it is radial"
                 continue
@@ -431,8 +430,7 @@ function get_branches_to_pm(
         comp_type = get_component_type(device_model)
         !(comp_type <: T) && continue
         start_idx += length(PM_branches)
-        filter_func = get_attribute(device_model, "filter_function")
-        for (i, branch) in enumerate(get_available_components(comp_type, sys, filter_func))
+        for (i, branch) in enumerate(get_available_components(device_model, sys))
             ix = i + start_idx
             PM_branches["$(ix)"] =
                 get_branch_to_pm(ix, branch, get_formulation(device_model), S)
@@ -490,7 +488,8 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
         template.branches,
         length(ac_lines),
     )
-    buses = get_available_components(PSY.ACBus, sys)
+    network_model = get_network_model(template)
+    buses = get_available_components(network_model, PSY.ACBus, sys)
     pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(
         "bus" => pm_buses,

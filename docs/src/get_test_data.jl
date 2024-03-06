@@ -38,4 +38,3 @@ set_services_template!(
 )
 
 op_results = solve!(operation_problem)
-re_results = PSI.run_economic_dispatch(system; optimizer = solver, use_parameters = true)

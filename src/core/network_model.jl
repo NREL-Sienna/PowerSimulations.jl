@@ -35,6 +35,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
     power_flow_evaluation::Union{Nothing, PFS.PowerFlowEvaluationModel}
+    subsystem::Union{Nothing, String}
 
     function NetworkModel(
         ::Type{T};
@@ -55,6 +56,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
             power_flow_evaluation,
+            nothing,
         )
     end
 end
@@ -71,6 +73,9 @@ get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
 get_power_flow_evaluation(m::NetworkModel) = m.power_flow_evaluation
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
+get_subsystem(m::NetworkModel) = m.subsystem
+
+set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
@@ -143,7 +148,7 @@ function _assign_subnetworks_to_buses(
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     radial_network_reduction = PSI.get_radial_network_reduction(model)
-    for bus in PSI.get_available_components(PSY.ACBus, sys)
+    for bus in PSI.get_available_components(model, PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
         mapped_bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus)
         if haskey(temp_bus_map, bus_no)

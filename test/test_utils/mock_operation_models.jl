@@ -105,7 +105,7 @@ function mock_construct_device!(
     PSI.finalize_template!(template, PSI.get_system(problem))
     PSI.init_optimization_container!(
         PSI.get_optimization_container(problem),
-        PSI.get_network_formulation(template),
+        PSI.get_network_model(template),
         PSI.get_system(problem),
     )
     PSI.get_network_model(template).subnetworks =
@@ -202,7 +202,7 @@ function setup_ic_model_container!(model::DecisionModel)
 
     PSI.init_optimization_container!(
         PSI.get_optimization_container(model),
-        PSI.get_network_formulation(PSI.get_template(model)),
+        PSI.get_network_model(PSI.get_template(model)),
         PSI.get_system(model),
     )
 
