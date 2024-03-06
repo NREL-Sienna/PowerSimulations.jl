@@ -247,9 +247,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    device_model::DeviceModel{T, U},
+    device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{PTDFPowerModel},
-) where {T <: PSY.ACBranch, U <: StaticBranch}
+) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     if get_use_slacks(device_model)
@@ -258,14 +258,14 @@ function construct_device!(
             FlowActivePowerSlackUpperBound,
             network_model,
             devices,
-            U(),
+            StaticBranch(),
         )
         add_variables!(
             container,
             FlowActivePowerSlackLowerBound,
             network_model,
             devices,
-            U(),
+            StaticBranch(),
         )
     end
 
@@ -290,7 +290,7 @@ function construct_device!(
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
-    objective_function!(container, devices, model)
+    objective_function!(container, devices, device_model)
     add_constraint_dual!(container, sys, device_model)
     return
 end
@@ -405,16 +405,16 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranch},
+    device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
-        get_available_components(T, sys, get_attribute(model, "filter_function"))
-    branch_rate_bounds!(container, devices, model, network_model)
-    add_constraints!(container, RateLimitConstraintFromTo, devices, model, network_model)
-    add_constraints!(container, RateLimitConstraintToFrom, devices, model, network_model)
-    objective_function!(container, devices, model)
-    add_constraint_dual!(container, sys, model)
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+    branch_rate_bounds!(container, devices, device_model, network_model)
+    add_constraints!(container, RateLimitConstraintFromTo, devices, device_model, network_model)
+    add_constraints!(container, RateLimitConstraintToFrom, devices, device_model, network_model)
+    objective_function!(container, devices, device_model)
+    add_constraint_dual!(container, sys, device_model)
     return
 end
 
@@ -430,13 +430,13 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(model, "filter_function"))
-    branch_rate_bounds!(container, devices, model, network_model)
-    add_constraint_dual!(container, sys, model)
+    branch_rate_bounds!(container, devices, device_model, network_model)
+    add_constraint_dual!(container, sys, device_model)
     return
 end
 
@@ -506,10 +506,10 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
+    device_model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
 )
-    add_constraint_dual!(container, sys, model)
+    add_constraint_dual!(container, sys, device_model)
 end
 
 # Repeated method to avoid ambiguity between HVDCTwoTerminalUnbounded and HVDCTwoTerminalLossless
