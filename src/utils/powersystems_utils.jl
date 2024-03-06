@@ -13,7 +13,7 @@ function get_available_components(
         )
     else
         return PSY.get_components(
-            x -> PSY.get_available(x) && f(x),
+            x -> PSY.get_available(x) && filter_function(x),
             T,
             sys;
             subsystem_name = subsystem,
@@ -36,7 +36,7 @@ function get_available_components(
         )
     else
         return PSY.get_components(
-            x -> PSY.get_available(x) && f(x),
+            x -> PSY.get_available(x) && filter_function(x),
             T,
             sys;
             subsystem_name = subsystem,

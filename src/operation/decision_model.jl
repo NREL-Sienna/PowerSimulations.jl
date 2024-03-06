@@ -290,7 +290,7 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         @info "Initializing Optimization Container For a DecisionModel"
         init_optimization_container!(
             get_optimization_container(model),
-            get_network_formulation(get_template(model)),
+            get_network_model(get_template(model)),
             get_system(model),
         )
         @info "Initializing ModelStoreParams"

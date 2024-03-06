@@ -865,7 +865,6 @@ function calculate_aux_variable_value!(
     ::AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
     if has_container_key(container, OnVariable, T)
         on_variable_results = get_variable(container, OnVariable(), T)
@@ -878,13 +877,17 @@ function calculate_aux_variable_value!(
         )
     end
     p_variable_results = get_variable(container, PowerAboveMinimumVariable(), T)
+    device_name = axes(p_variable_results, 1)
     aux_variable_container = get_aux_variable(container, PowerOutput(), T)
-    for d in devices, t in time_steps
+    for d_name in device_name
+        d = PSY.get_component(T, system, d_name)
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
-        aux_variable_container[name, t] =
-            jump_value(on_variable_results[name, t]) * min +
-            jump_value(p_variable_results[name, t])
+        for t in time_steps
+            aux_variable_container[name, t] =
+                jump_value(on_variable_results[name, t]) * min +
+                jump_value(p_variable_results[name, t])
+        end
     end
 
     return
