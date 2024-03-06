@@ -259,6 +259,13 @@ function test_simulation_results(
         )
         results = SimulationResults(sim)
         test_decision_problem_results(results, c_sys5_hy_ed, c_sys5_hy_uc, in_memory)
+        if !in_memory
+            test_decision_problem_results_kwargs_handling(
+                dirname(results.path),
+                c_sys5_hy_ed,
+                c_sys5_hy_uc,
+            )
+        end
         test_emulation_problem_results(results, in_memory)
 
         results_ed = get_decision_problem_results(results, "ED")
@@ -889,6 +896,26 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test get_system(results_uc) === nothing
     @test length(read_realized_variables(results_uc)) == length(UC_EXPECTED_VARS)
 
+    @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+    set_system!(results_ed, c_sys5_hy_ed)
+    set_system!(results_uc, c_sys5_hy_uc)
+
+    test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
+end
+
+function test_decision_problem_results_kwargs_handling(
+    path::AbstractString,
+    c_sys5_hy_ed,
+    c_sys5_hy_uc,
+)
+    results = SimulationResults(path, "no_cache")
+    @test list_decision_problems(results) == ["ED", "UC"]
+    results_uc = get_decision_problem_results(results, "UC")
+    results_ed = get_decision_problem_results(results, "ED")
+
+    # Verify this works without system.
+    @test get_system(results_uc) === nothing
+
     results_ed = get_decision_problem_results(results, "ED")
     @test isnothing(get_system(results_ed))
 
@@ -897,21 +924,6 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test PSY.get_units_base(get_system(results_ed)) == "NATURAL_UNITS"
 
     @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
-
-    current_file = joinpath(
-        results_uc.execution_path,
-        "problems",
-        results_uc.problem,
-        PSI.make_system_filename(results_uc.system_uuid),
-    )
-    mv(current_file, "system-temporary-file-name.json"; force = true)
-
-    @test_throws ErrorException get_decision_problem_results(
-        results,
-        "UC";
-        populate_system = true,
-    )
-    mv("system-temporary-file-name.json", current_file)
 
     set_system!(results_ed, c_sys5_hy_ed)
     set_system!(results_uc, c_sys5_hy_uc)
