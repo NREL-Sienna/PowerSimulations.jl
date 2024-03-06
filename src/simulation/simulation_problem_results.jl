@@ -746,3 +746,9 @@ function export_optimizer_stats(
         throw(error("writing optimizer stats only supports csv or json formats"))
     end
 end
+
+# Chooses the user-passed store or results store for reading values. Either could be
+# something or nothing. If both are nothing, we must open the HDF5 store.
+try_resolve_store(user::SimulationStore, results::Union{Nothing, SimulationStore}) = user
+try_resolve_store(user::Nothing, results::SimulationStore) = results
+try_resolve_store(user::Nothing, results::Nothing) = nothing
