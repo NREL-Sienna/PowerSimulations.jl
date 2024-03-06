@@ -263,10 +263,7 @@ function _read_results(
     isempty(result_keys) &&
         return Dict{OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
 
-    if store === nothing && res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
-    end
+    _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
     cached_results = get_cached_results(res, eltype(result_keys))
@@ -287,7 +284,7 @@ function _read_results(
         return filtered_vals
     else
         @debug "reading results from data store"  # NOTE tests match on this
-        vals = _get_store_value(res, result_keys, timestamps, store)
+        vals = _get_store_value(res, result_keys, timestamps, _store)
     end
     return vals
 end
