@@ -269,7 +269,6 @@ function test_simulation_results(
         @test isempty(results)
 
         verify_export_results(results, export_path)
-
         @test length(readdir(export_realized_results(results_ed))) === 17
 
         # Test that you can't read a failed simulation.
@@ -856,9 +855,48 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test get_system(results_uc) === nothing
     @test length(read_realized_variables(results_uc)) == length(UC_EXPECTED_VARS)
 
+    results_ed = get_decision_problem_results(results, "ED")
+    @test isnothing(get_system(results_ed))
+
+    results_ed = get_decision_problem_results(results, "ED"; populate_system = true)
+    @test !isnothing(get_system(results_ed))
+    @test PSY.get_units_base(get_system(results_ed)) == "NATURAL_UNITS"
+
     @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+
+    current_file = joinpath(
+        results_uc.execution_path,
+        "problems",
+        results_uc.problem,
+        PSI.make_system_filename(results_uc.system_uuid),
+    )
+    mv(current_file, "system-temporary-file-name.json"; force = true)
+
+    @test_throws ErrorException get_decision_problem_results(
+        results,
+        "UC";
+        populate_system = true,
+    )
+    mv("system-temporary-file-name.json", current_file)
+
     set_system!(results_ed, c_sys5_hy_ed)
     set_system!(results_uc, c_sys5_hy_uc)
+
+    results_ed = get_decision_problem_results(
+        results,
+        "ED";
+        populate_system = true,
+        populate_units = IS.UnitSystem.DEVICE_BASE,
+    )
+    @test !isnothing(PSI.get_system(results_ed))
+    @test PSY.get_units_base(get_system(results_ed)) == "DEVICE_BASE"
+
+    @test_throws ArgumentError get_decision_problem_results(
+        results,
+        "ED";
+        populate_system = false,
+        populate_units = IS.UnitSystem.DEVICE_BASE,
+    )
 
     test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
 end

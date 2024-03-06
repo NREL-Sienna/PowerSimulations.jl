@@ -65,6 +65,7 @@ get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
+get_system_uuid(results::PSI.SimulationProblemResults) = results.system_uuid
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
