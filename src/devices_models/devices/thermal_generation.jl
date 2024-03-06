@@ -877,7 +877,7 @@ function calculate_aux_variable_value!(
         d = PSY.get_component(T, system, d_name)
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
-        for  t in time_steps
+        for t in time_steps
             aux_variable_container[name, t] =
                 jump_value(on_variable_results[name, t]) * min +
                 jump_value(p_variable_results[name, t])
