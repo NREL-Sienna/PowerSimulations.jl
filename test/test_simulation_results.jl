@@ -637,6 +637,40 @@ function test_decision_problem_results_values(
         empty!(myres)
         @test isempty(PSI.get_cached_variables(myres))
     end
+
+    @testset "Test read_results_with_keys" begin
+        myres = deepcopy(results_ed)
+        initial_time = DateTime("2024-01-01T00:00:00")
+        timestamps = PSI._process_timestamps(myres, initial_time, 3)
+        result_keys = [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
+
+        res1 = PSI.read_results_with_keys(myres, result_keys)
+        @test Set(keys(res1)) == Set(result_keys)
+        res1_df = res1[first(result_keys)]
+        @test size(res1_df) == (576, 6)
+        @test names(res1_df) ==
+              ["DateTime", "Solitude", "Park City", "Alta", "Brighton", "Sundance"]
+        @test first(eltype.(eachcol(res1_df))) === DateTime
+
+        res2 =
+            PSI.read_results_with_keys(myres, result_keys; cols = ["Park City", "Brighton"])
+        @test Set(keys(res2)) == Set(result_keys)
+        res2_df = res2[first(result_keys)]
+        @test size(res2_df) == (576, 3)
+        @test names(res2_df) ==
+              ["DateTime", "Park City", "Brighton"]
+        @test first(eltype.(eachcol(res2_df))) === DateTime
+
+        res3_df =
+            PSI.read_results_with_keys(myres, result_keys; start_time = timestamps[2])[first(
+                result_keys,
+            )]
+        @test res3_df[1, "DateTime"] == timestamps[2]
+
+        res4_df =
+            PSI.read_results_with_keys(myres, result_keys; len = 2)[first(result_keys)]
+        @test size(res4_df) == (2, 6)
+    end
 end
 
 function test_decision_problem_results(

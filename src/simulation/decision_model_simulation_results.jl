@@ -237,19 +237,20 @@ function _read_results(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
-    store::Union{Nothing, <:SimulationStore},
+    store::Union{Nothing, <:SimulationStore};
+    cols::Union{Colon, Vector{String}} = (:),
 )
     vals = _read_results(res, result_keys, timestamps, store)
     converted_vals = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
     for (result_key, result_data) in vals
         inner_converted = SortedDict(
-            (date_key, Matrix{Float64}(permutedims(inner_data.data)))
+            (date_key, Matrix{Float64}(permutedims(inner_data[cols, :].data)))
             for (date_key, inner_data) in result_data.data)
         converted_vals[result_key] = ResultsByTime{Matrix{Float64}, 1}(
             result_data.key,
             inner_converted,
             result_data.resolution,
-            result_data.column_names)
+            (cols isa Vector) ? (cols,) : result_data.column_names)
     end
     return converted_vals
 end
@@ -450,15 +451,32 @@ function get_realized_timestamps(
     return requested_range
 end
 
+"""
+High-level function to read a DataFrame of results.
+
+# Arguments
+
+  - `res`: the results to read.
+  - `result_keys::Vector{<:OptimizationContainerKey}`: the keys to read. Output will be a
+    `Dict{OptimizationContainerKey, DataFrame}` with these as the keys
+  - `start_time::Union{Nothing, Dates.DateTime} = nothing`: the time at which the resulting
+    time series should begin; `nothing` indicates the first time in the results
+  - `len::Union{Int, Nothing} = nothing`: the number of steps in the resulting time series;
+    `nothing` indicates up to the end of the results
+  - `cols::Union{Colon, Vector{String}} = (:)`: which columns to fetch; defaults to `:`,
+    i.e., all the columns
+"""
 function read_results_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys::Vector{<:OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
+    cols::Union{Colon, Vector{String}} = (:),
 )
     meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
-    result_values = _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing)
+    result_values =
+        _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing; cols = cols)
     return get_realization(result_values, meta)
 end
 
