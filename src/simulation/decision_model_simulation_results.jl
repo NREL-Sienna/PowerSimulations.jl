@@ -505,34 +505,24 @@ function load_results!(
     parameters = Vector{Tuple}(),
     aux_variables = Vector{Tuple}(),
     expressions = Vector{Tuple}(),
+    store::Union{Nothing, <:SimulationStore} = nothing,
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
     count = max(count, length(get_results_timestamps(res)))
     new_timestamps = _process_timestamps(res, initial_time, count)
 
-    function merge_results(store)
-        for (key_type, new_items) in [
-            (ConstraintKey, duals),
-            (ParameterKey, parameters),
-            (VariableKey, variables),
-            (AuxVarKey, aux_variables),
-            (ExpressionKey, expressions),
-        ]
-            new_keys = key_type[_deserialize_key(key_type, res, x...) for x in new_items]
-            existing_results = get_cached_results(res, key_type)
-            total_keys = union(collect(keys(existing_results)), new_keys)
-            # _read_results checks the cache to eliminate unnecessary re-reads
-            merge!(existing_results, _read_results(res, total_keys, new_timestamps, store))
-        end
-    end
-
-    if res.store isa InMemorySimulationStore
-        merge_results(res.store)
-    else
-        simulation_store_path = joinpath(res.execution_path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
-            merge_results(store)
-        end
+    for (key_type, new_items) in [
+        (ConstraintKey, duals),
+        (ParameterKey, parameters),
+        (VariableKey, variables),
+        (AuxVarKey, aux_variables),
+        (ExpressionKey, expressions),
+    ]
+        new_keys = key_type[_deserialize_key(key_type, res, x...) for x in new_items]
+        existing_results = get_cached_results(res, key_type)
+        total_keys = union(collect(keys(existing_results)), new_keys)
+        # _read_results checks the cache to eliminate unnecessary re-reads
+        merge!(existing_results, _read_results(res, total_keys, new_timestamps, store))
     end
     set_results_timestamps!(res, new_timestamps)
 
