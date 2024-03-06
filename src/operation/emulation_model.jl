@@ -270,7 +270,7 @@ function build_pre_step!(model::EmulationModel)
         @info "Initializing Optimization Container For an EmulationModel"
         init_optimization_container!(
             get_optimization_container(model),
-            get_network_formulation(get_template(model)),
+            get_network_model(get_template(model)),
             get_system(model),
         )
 
