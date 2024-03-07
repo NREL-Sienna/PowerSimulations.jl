@@ -344,10 +344,21 @@ function _read_col_name(axes)
     end
 end
 
+function _read_col_name(axes::Tuple{Vector{String}, Vector{String}})
+    return axes[1]
+end
+
 function _read_results(model::OperationModel, key::OptimizationContainerKey)
     res = read_results(get_store(model), key)
     col_name = _read_col_name(axes(res))
-    return DataFrames.DataFrame(permutedims(res.data), col_name)
+    try
+        return DataFrames.DataFrame(permutedims(res.data), col_name)
+    catch err
+        @error key
+        @error axes(res)
+        @error col_name
+        rethrow(err)
+    end
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))
