@@ -37,6 +37,7 @@ const UNSET_INI_TIME = Dates.DateTime(0)
 # MIP gap tolerances in most solvers are set to 1e-4
 const ABSOLUTE_TOLERANCE = 1.0e-3
 const BALANCE_SLACK_COST = 1e6
+const CONSTRAINT_VIOLATION_SLACK_COST = 2e5
 const SERVICES_SLACK_COST = 1e5
 const COST_EPSILON = 1e-3
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0

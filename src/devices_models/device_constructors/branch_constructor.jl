@@ -411,8 +411,20 @@ function construct_device!(
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     branch_rate_bounds!(container, devices, device_model, network_model)
-    add_constraints!(container, RateLimitConstraintFromTo, devices, device_model, network_model)
-    add_constraints!(container, RateLimitConstraintToFrom, devices, device_model, network_model)
+    add_constraints!(
+        container,
+        RateLimitConstraintFromTo,
+        devices,
+        device_model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        RateLimitConstraintToFrom,
+        devices,
+        device_model,
+        network_model,
+    )
     objective_function!(container, devices, device_model)
     add_constraint_dual!(container, sys, device_model)
     return

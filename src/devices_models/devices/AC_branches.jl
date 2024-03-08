@@ -29,10 +29,10 @@ get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where
 #### Properties of slack variables
 get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
 get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
-get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
-get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
-get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
-get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
+get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
+get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
 
 #! format: on
 function get_default_time_series_names(
@@ -83,10 +83,10 @@ function add_variables!(
                 get_jump_model(container),
                 base_name = "$(T)_$(U)_{$(name), $(t)}",
             )
-            ub = get_variable_upper_bound(FlowActivePowerVariable(), d, formulation)
+            ub = get_variable_upper_bound(T(), d, formulation)
             ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
-            lb = get_variable_lower_bound(FlowActivePowerVariable(), d, formulation)
+            lb = get_variable_lower_bound(T(), d, formulation)
             lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
         end
     end
@@ -664,6 +664,28 @@ function add_constraints!(
                 flow_variables_[t] ==
                 inv_x * (bus_angle_from[t] - bus_angle_to[t] + angle_variables_[t])
             )
+        end
+    end
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{T},
+    device_model::DeviceModel{T, <:AbstractBranchFormulation},
+) where {T <: PSY.ACBranch}
+    if get_use_slacks(device_model)
+        variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        variable_dn = get_variable(container, FlowActivePowerSlackLowerBound(), T)
+        # Use device names because there might be a radial network reduction
+        for name in axes(variable_up, 1)
+            for t in get_time_steps(container)
+                add_to_objective_invariant_expression!(
+                    container,
+                    (variable_dn[name, t] + variable_up[name, t]) *
+                    CONSTRAINT_VIOLATION_SLACK_COST,
+                )
+            end
         end
     end
     return
