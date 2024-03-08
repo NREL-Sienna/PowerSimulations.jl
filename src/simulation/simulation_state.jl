@@ -39,7 +39,7 @@ end
 const STATE_TIME_PARAMS = NamedTuple{(:horizon, :resolution), NTuple{2, Dates.Millisecond}}
 
 function _get_state_params(models::SimulationModels, simulation_step::Dates.Millisecond)
-    params = OrderedDict{IS.OptimizationContainerKey, STATE_TIME_PARAMS}()
+    params = OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS}()
     for model in get_decision_models(models)
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
@@ -77,7 +77,7 @@ function _initialize_model_states!(
     model::OperationModel,
     simulation_initial_time::Dates.DateTime,
     simulation_step::Dates.Millisecond,
-    params::OrderedDict{IS.OptimizationContainerKey, STATE_TIME_PARAMS},
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     states = get_decision_states(sim_state)
     container = get_optimization_container(model)
@@ -106,7 +106,7 @@ function _initialize_system_states!(
     sim_state::SimulationState,
     ::Nothing,
     simulation_initial_time::Dates.DateTime,
-    params::OrderedDict{IS.OptimizationContainerKey, STATE_TIME_PARAMS},
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
@@ -130,7 +130,7 @@ function _initialize_system_states!(
     sim_state::SimulationState,
     emulation_model::EmulationModel,
     simulation_initial_time::Dates.DateTime,
-    params::OrderedDict{IS.OptimizationContainerKey, STATE_TIME_PARAMS},
+    params::OrderedDict{OptimizationContainerKey, STATE_TIME_PARAMS},
 )
     decision_states = get_decision_states(sim_state)
     emulator_states = get_system_states(sim_state)
@@ -199,10 +199,10 @@ end
 
 function update_decision_state!(
     state::SimulationState,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
-    model_params::IS.ModelStoreParams,
+    model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
     column_names = get_column_names(key, state_data)[1]
@@ -241,10 +241,10 @@ end
 
 function update_decision_state!(
     state::SimulationState,
-    key::IS.AuxVarKey{S, T},
+    key::AuxVarKey{S, T},
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
-    model_params::IS.ModelStoreParams,
+    model_params::ModelStoreParams,
 ) where {T <: PSY.Component, S <: Union{TimeDurationOff, TimeDurationOn}}
     state_data = get_decision_state_data(state, key)
     model_resolution = get_resolution(model_params)
@@ -299,33 +299,33 @@ function update_decision_state!(
     return
 end
 
-function get_decision_state_data(state::SimulationState, key::IS.OptimizationContainerKey)
+function get_decision_state_data(state::SimulationState, key::OptimizationContainerKey)
     return get_dataset(get_decision_states(state), key)
 end
 
-function get_decision_state_value(state::SimulationState, key::IS.OptimizationContainerKey)
+function get_decision_state_value(state::SimulationState, key::OptimizationContainerKey)
     return get_dataset_values(get_decision_states(state), key)
 end
 
 function get_decision_state_value(
     state::SimulationState,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     date::Dates.DateTime,
 )
     return get_dataset_values(get_decision_states(state), key, date)
 end
 
-function get_system_state_data(state::SimulationState, key::IS.OptimizationContainerKey)
+function get_system_state_data(state::SimulationState, key::OptimizationContainerKey)
     return get_dataset(get_system_states(state), key)
 end
 
-function get_system_state_value(state::SimulationState, key::IS.OptimizationContainerKey)
+function get_system_state_value(state::SimulationState, key::OptimizationContainerKey)
     return get_dataset_values(get_system_states(state), key)[:, 1]
 end
 
 function update_system_state!(
     state::DatasetContainer{InMemoryDataset},
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     store::SimulationStore,
     model_name::Symbol,
     simulation_time::Dates.DateTime,
@@ -342,7 +342,7 @@ end
 
 function update_system_state!(
     state::DatasetContainer{InMemoryDataset},
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     decision_state::DatasetContainer{InMemoryDataset},
     simulation_time::Dates.DateTime,
 )
@@ -377,7 +377,7 @@ end
 
 function update_system_state!(
     state::DatasetContainer{InMemoryDataset},
-    key::IS.AuxVarKey{T, PSY.ThermalStandard},
+    key::AuxVarKey{T, PSY.ThermalStandard},
     decision_state::DatasetContainer{InMemoryDataset},
     simulation_time::Dates.DateTime,
 ) where {T <: Union{TimeDurationOn, TimeDurationOff}}
@@ -422,46 +422,46 @@ function get_system_state_value(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, IS.VariableKey(T, U))
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, VariableKey(T, U))
 end
 
 function get_system_state_value(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, IS.AuxVarKey(T, U))
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, AuxVarKey(T, U))
 end
 
 function get_system_state_value(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, IS.ConstraintKey(T, U))
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, ConstraintKey(T, U))
 end
 
 function get_system_state_data(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, IS.VariableKey(T, U))
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, VariableKey(T, U))
 end
 
 function get_system_state_data(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, IS.AuxVarKey(T, U))
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, AuxVarKey(T, U))
 end
 
 function get_system_state_data(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, IS.ConstraintKey(T, U))
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, ConstraintKey(T, U))
 end

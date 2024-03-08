@@ -342,9 +342,18 @@ import PowerNetworkMatrices
 import PowerNetworkMatrices: PTDF, VirtualPTDF
 export PTDF
 export VirtualPTDF
-import InfrastructureSystems: @assert_op, list_recorder_events, get_name,
-    OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats,
-    RightHandSideParameter, ObjectiveFunctionParameter, TimeSeriesParameter
+import InfrastructureSystems: @assert_op, list_recorder_events, get_name
+import InfrastructureSystems.Optimization:
+    OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats
+import InfrastructureSystems.Optimization: OptimizationContainerKey, VariableKey,
+    ConstraintKey, ExpressionKey, AuxVarKey, InitialConditionKey, ParameterKey
+import InfrastructureSystems.Optimization: VariableType, ConstraintType, AuxVariableType,
+    ParameterType, InitialConditionType, ExpressionType
+import InfrastructureSystems.Optimization:
+    OptimizerStats, ArgumentConstructStage, ModelConstructStage
+import InfrastructureSystems.Optimization: get_aux_variable_values, get_dual_values,
+    get_objective_value, get_variable_values, read_aux_variables, read_variables,
+    serialize_results
 export get_name
 export get_model_base_power
 export get_optimizer_stats
@@ -447,6 +456,8 @@ include("core/optimization_container.jl")
 include("core/store_common.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
 include("operation/operation_model_interface.jl")
+include("core/model_store_params.jl")
+include("simulation/simulation_store_requirements.jl")
 include("operation/decision_model_store.jl")
 include("operation/emulation_model_store.jl")
 include("operation/initial_conditions_update_in_memory_store.jl")

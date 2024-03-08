@@ -1,17 +1,17 @@
 struct EmulationModelSimulationResults <: OperationModelSimulationResults
-    variables::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
-    duals::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
-    parameters::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
-    aux_variables::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
-    expressions::Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}
-    container_key_lookup::Dict{String, IS.OptimizationContainerKey}
+    variables::Dict{OptimizationContainerKey, DataFrames.DataFrame}
+    duals::Dict{OptimizationContainerKey, DataFrames.DataFrame}
+    parameters::Dict{OptimizationContainerKey, DataFrames.DataFrame}
+    aux_variables::Dict{OptimizationContainerKey, DataFrames.DataFrame}
+    expressions::Dict{OptimizationContainerKey, DataFrames.DataFrame}
+    container_key_lookup::Dict{String, OptimizationContainerKey}
 end
 
 function SimulationProblemResults(
     ::Type{EmulationModel},
     store::SimulationStore,
     model_name::AbstractString,
-    problem_params::IS.ModelStoreParams,
+    problem_params::ModelStoreParams,
     sim_params::SimulationStoreParams,
     path,
     container_key_lookup;
@@ -111,7 +111,7 @@ end
 
 function _get_store_value(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    container_keys::Vector{<:IS.OptimizationContainerKey},
+    container_keys::Vector{<:OptimizationContainerKey},
     ::Nothing;
     start_time = nothing,
     len = nothing,
@@ -124,13 +124,13 @@ end
 
 function _get_store_value(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    container_keys::Vector{<:IS.OptimizationContainerKey},
+    container_keys::Vector{<:OptimizationContainerKey},
     store::SimulationStore;
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Nothing, Int} = nothing,
 )
     base_power = res.base_power
-    results = Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}()
+    results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     for key in container_keys
         start_time, _len, resolution = _check_offsets(res, key, store, start_time, len)
         start_index = (start_time - first(res.timestamps)) ÷ resolution + 1
@@ -223,7 +223,7 @@ end
 
 function read_results_with_keys(
     res::SimulationProblemResults{EmulationModelSimulationResults},
-    result_keys::Vector{<:IS.OptimizationContainerKey};
+    result_keys::Vector{<:OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Nothing, Int} = nothing,
 )
@@ -255,11 +255,11 @@ function load_results!(
     variables = Vector{Tuple}(),
 )
     # TODO: consider extending this to support start_time and len
-    aux_variable_keys = [_deserialize_key(IS.AuxVarKey, res, x...) for x in aux_variables]
-    dual_keys = [_deserialize_key(IS.ConstraintKey, res, x...) for x in duals]
-    expression_keys = [_deserialize_key(IS.ExpressionKey, res, x...) for x in expressions]
-    parameter_keys = [_deserialize_key(IS.ParameterKey, res, x...) for x in parameters]
-    variable_keys = [_deserialize_key(IS.VariableKey, res, x...) for x in variables]
+    aux_variable_keys = [_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
+    dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
+    expression_keys = [_deserialize_key(ExpressionKey, res, x...) for x in expressions]
+    parameter_keys = [_deserialize_key(ParameterKey, res, x...) for x in parameters]
+    variable_keys = [_deserialize_key(VariableKey, res, x...) for x in variables]
     function merge_results(store)
         merge!(get_cached_aux_variables(res), _read_results(res, aux_variable_keys, store))
         merge!(get_cached_duals(res), _read_results(res, dual_keys, store))

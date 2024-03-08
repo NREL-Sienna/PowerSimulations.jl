@@ -176,7 +176,7 @@ Min and max limits for Abstract Branch Formulation
 """
 function get_min_max_limits(
     device::PSY.ACBranch,
-    ::Type{<:IS.ConstraintType},
+    ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (min = -1 * PSY.get_rate(device), max = PSY.get_rate(device))
@@ -520,7 +520,7 @@ Min and max limits for monitored line
 """
 function get_min_max_limits(
     device::PSY.MonitoredLine,
-    ::Type{<:IS.ConstraintType},
+    ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 )
     if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to

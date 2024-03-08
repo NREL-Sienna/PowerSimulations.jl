@@ -1,12 +1,12 @@
 mutable struct ResultsByTime{T, N}
-    key::IS.OptimizationContainerKey
+    key::OptimizationContainerKey
     data::SortedDict{Dates.DateTime, T}
     resolution::Dates.Period
     column_names::NTuple{N, Vector{String}}
 end
 
 function ResultsByTime(
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     data::SortedDict{Dates.DateTime, T},
     resolution::Dates.Period,
     column_names,
@@ -115,14 +115,14 @@ end
 
 struct ResultsByKeyAndTime
     "Contains all keys stored in the model."
-    result_keys::Vector{IS.OptimizationContainerKey}
+    result_keys::Vector{OptimizationContainerKey}
     "Contains the results that have been read from the store and cached."
-    cached_results::Dict{IS.OptimizationContainerKey, ResultsByTime}
+    cached_results::Dict{OptimizationContainerKey, ResultsByTime}
 end
 
 ResultsByKeyAndTime(result_keys) = ResultsByKeyAndTime(
     collect(result_keys),
-    Dict{IS.OptimizationContainerKey, ResultsByTime}(),
+    Dict{OptimizationContainerKey, ResultsByTime}(),
 )
 
 Base.empty!(res::ResultsByKeyAndTime) = empty!(res.cached_results)

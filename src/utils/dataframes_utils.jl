@@ -5,23 +5,23 @@ Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 # Arguments
 
   - `array`: JuMP DenseAxisArray or SparseAxisArray to convert
-  - `key::IS.OptimizationContainerKey`:
+  - `key::OptimizationContainerKey`:
 """
 function to_dataframe(
     array::DenseAxisArray{T, 2},
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 ) where {T <: Number}
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array)[1])
 end
 
 function to_dataframe(
     array::DenseAxisArray{T, 1},
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 ) where {T <: Number}
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array)[1])
 end
 
-function to_dataframe(array::SparseAxisArray, key::IS.OptimizationContainerKey)
+function to_dataframe(array::SparseAxisArray, key::OptimizationContainerKey)
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array)[1])
 end
 

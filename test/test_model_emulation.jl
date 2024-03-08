@@ -167,18 +167,18 @@ end
     @test list_aux_variable_keys(results) == []
     @test list_variable_names(results) == ["ActivePowerVariable__ThermalStandard"]
     @test list_variable_keys(results) ==
-          [PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard)]
+          [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
     @test list_dual_names(results) == []
     @test list_dual_keys(results) == []
     @test list_parameter_names(results) == ["ActivePowerTimeSeriesParameter__PowerLoad"]
     @test list_parameter_keys(results) ==
-          [PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad)]
+          [PSI.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad)]
 
     @test read_variable(results, "ActivePowerVariable__ThermalStandard") isa DataFrame
     @test read_variable(results, ActivePowerVariable, ThermalStandard) isa DataFrame
     @test read_variable(
         results,
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     ) isa
           DataFrame
 
@@ -186,7 +186,7 @@ end
     @test read_parameter(results, ActivePowerTimeSeriesParameter, PowerLoad) isa DataFrame
     @test read_parameter(
         results,
-        PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad),
+        PSI.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad),
     ) isa DataFrame
 
     @test read_optimizer_stats(model) isa DataFrame

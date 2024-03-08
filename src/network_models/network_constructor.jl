@@ -42,7 +42,7 @@ function construct_network!(
 
     area_balance(
         container,
-        IS.ExpressionKey(ActivePowerBalance, PSY.ACBus),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus),
         area_mapping,
         branches,
     )

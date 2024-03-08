@@ -407,7 +407,7 @@ end
 function export_result(
     ::Type{CSV.File},
     path,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     timestamp::Dates.DateTime,
     df::DataFrames.DataFrame,
 )
@@ -431,7 +431,7 @@ end
 function export_result(
     ::Type{CSV.File},
     path,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     df::DataFrames.DataFrame,
 )
     name = encode_key_as_string(key)

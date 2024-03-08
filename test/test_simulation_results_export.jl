@@ -1,12 +1,12 @@
 
 import PowerSimulations:
     SimulationStoreParams,
-    IS.ModelStoreParams,
+    ModelStoreParams,
     get_problem_exports,
     should_export_dual,
     should_export_parameter,
     should_export_variable,
-    IS.OptimizationContainerMetadata
+    IS.Optimization.OptimizationContainerMetadata
 
 function _make_params()
     sim = Dict(
@@ -32,19 +32,19 @@ function _make_params()
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
-    container_metadata = IS.OptimizationContainerMetadata(
+    container_metadata = IS.Optimization.OptimizationContainerMetadata(
         Dict(
             "ActivePowerVariable__ThermalStandard" =>
-                PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+                PSI.VariableKey(ActivePowerVariable, ThermalStandard),
             "EnergyVariable__HydroEnergyReservoir" =>
-                PSI.IS.VariableKey(EnergyVariable, HydroEnergyReservoir),
+                PSI.VariableKey(EnergyVariable, HydroEnergyReservoir),
             "OnVariable__ThermalStandard" =>
-                PSI.IS.VariableKey(OnVariable, ThermalStandard),
+                PSI.VariableKey(OnVariable, ThermalStandard),
         ),
     )
-    problems = OrderedDict{Symbol, IS.ModelStoreParams}()
+    problems = OrderedDict{Symbol, ModelStoreParams}()
     for problem in keys(problem_defs)
-        problem_params = IS.ModelStoreParams(
+        problem_params = ModelStoreParams(
             problem_defs[problem]["execution_count"],
             problem_defs[problem]["horizon"],
             problem_defs[problem]["interval"],
@@ -63,7 +63,7 @@ function _make_params()
         sim["num_steps"],
         problems,
         # Emulation Problem Params. Export not implemented yet
-        OrderedDict{Symbol, IS.ModelStoreParams}(),
+        OrderedDict{Symbol, ModelStoreParams}(),
     )
 end
 
@@ -80,68 +80,68 @@ end
         exports,
         valid,
         :ED,
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test should_export_variable(
         exports,
         valid2,
         :ED,
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         invalid,
         :ED,
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         invalid2,
         :ED,
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         valid,
         :ED,
-        PSI.IS.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.VariableKey(ActivePowerVariable, RenewableFix),
     )
     @test should_export_parameter(
         exports,
         valid,
         :ED,
-        PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
+        PSI.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
     )
     @test !should_export_dual(
         exports,
         valid,
         :ED,
-        PSI.IS.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
     )
 
     @test should_export_variable(
         exports,
         valid,
         :UC,
-        PSI.IS.VariableKey(OnVariable, ThermalStandard),
+        PSI.VariableKey(OnVariable, ThermalStandard),
     )
     @test !should_export_variable(
         exports,
         valid,
         :UC,
-        PSI.IS.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.VariableKey(ActivePowerVariable, RenewableFix),
     )
     @test should_export_parameter(
         exports,
         valid,
         :UC,
-        PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
+        PSI.ParameterKey(ActivePowerTimeSeriesParameter, ThermalStandard),
     )
     @test should_export_dual(
         exports,
         valid,
         :UC,
-        PSI.IS.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
     )
 
     @test exports.path == "export_path"

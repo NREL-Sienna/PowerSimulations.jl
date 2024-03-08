@@ -87,10 +87,10 @@ end
 
 @testset "DC Power Flow Models for TwoTerminalHVDCLine  with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.IS.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -264,7 +264,7 @@ end
 
     ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     ptdf_values =
-        ptdf_vars[PowerSimulations.IS.VariableKey{
+        ptdf_vars[PowerSimulations.VariableKey{
             FlowActivePowerVariable,
             TwoTerminalHVDCLine,
         }(
@@ -286,7 +286,7 @@ end
     solve!(model; output_dir = mktempdir())
     dcp_vars = get_variable_values(OptimizationProblemResults(model))
     dcp_values =
-        dcp_vars[PowerSimulations.IS.VariableKey{
+        dcp_vars[PowerSimulations.VariableKey{
             FlowActivePowerVariable,
             TwoTerminalHVDCLine,
         }(
@@ -348,8 +348,8 @@ end
             solve!(model_ref; output_dir = mktempdir())
             ref_vars = get_variable_values(OptimizationProblemResults(model_ref))
             ref_values =
-                ref_vars[PowerSimulations.IS.VariableKey{FlowActivePowerVariable, Line}("")]
-            hvdc_ref_values = ref_vars[PowerSimulations.IS.VariableKey{
+                ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
+            hvdc_ref_values = ref_vars[PowerSimulations.VariableKey{
                 FlowActivePowerVariable,
                 TwoTerminalHVDCLine,
             }(
@@ -359,7 +359,7 @@ end
             ref_total_gen = sum(
                 sum.(
                     eachrow(
-                        ref_vars[PowerSimulations.IS.VariableKey{
+                        ref_vars[PowerSimulations.VariableKey{
                             ActivePowerVariable,
                             ThermalStandard,
                         }(
@@ -384,16 +384,16 @@ end
             solve!(model; output_dir = mktempdir())
             no_loss_vars = get_variable_values(OptimizationProblemResults(model))
             no_loss_values =
-                no_loss_vars[PowerSimulations.IS.VariableKey{FlowActivePowerVariable, Line}(
+                no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}(
                     "",
                 )]
-            hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.IS.VariableKey{
+            hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
                 TwoTerminalHVDCLine,
             }(
                 "",
             )]
-            hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.IS.VariableKey{
+            hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
                 FlowActivePowerToFromVariable,
                 TwoTerminalHVDCLine,
             }(
@@ -406,7 +406,7 @@ end
             no_loss_total_gen = sum(
                 sum.(
                     eachrow(
-                        no_loss_vars[PowerSimulations.IS.VariableKey{
+                        no_loss_vars[PowerSimulations.VariableKey{
                             ActivePowerVariable,
                             ThermalStandard,
                         }(
@@ -444,13 +444,13 @@ end
 
             solve!(model_wl; output_dir = mktempdir())
             dispatch_vars = get_variable_values(OptimizationProblemResults(model_wl))
-            dispatch_values_ft = dispatch_vars[PowerSimulations.IS.VariableKey{
+            dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
                 TwoTerminalHVDCLine,
             }(
                 "",
             )]
-            dispatch_values_tf = dispatch_vars[PowerSimulations.IS.VariableKey{
+            dispatch_values_tf = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerToFromVariable,
                 TwoTerminalHVDCLine,
             }(
@@ -459,7 +459,7 @@ end
             wl_total_gen = sum(
                 sum.(
                     eachrow(
-                        dispatch_vars[PowerSimulations.IS.VariableKey{
+                        dispatch_vars[PowerSimulations.VariableKey{
                             ActivePowerVariable,
                             ThermalStandard,
                         }(
@@ -483,14 +483,14 @@ end
 
 @testset "DC Power Flow Models for TwoTerminalHVDCLine  Dispatch and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.IS.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, Line, "ub"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, Line, "lb"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
-        PSI.IS.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "ub"),
-        PSI.IS.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Line, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
+        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -605,12 +605,12 @@ end
 
 @testset "AC Power Flow Models for TwoTerminalHVDCLine  Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.IS.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
-        PSI.IS.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
-        PSI.IS.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
-        PSI.IS.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
-        PSI.IS.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "ub"),
-        PSI.IS.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "lb"),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
