@@ -132,7 +132,7 @@ solve!(problem)
 
 ## Results Inspection
 
-PowerSimulations collects the `DecisionModel` results into a `ProblemResults` struct:
+PowerSimulations collects the `DecisionModel` results into a `OptimizationProblemResults` struct:
 
 ```@example op_problem
 res = OptimizationProblemResults(problem)

@@ -261,12 +261,12 @@ function powermodels_network!(
 
     for t in time_steps, bus_no in ac_bus_numbers
         pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_p"] =
-            container.expressions[IS.ExpressionKey(ActivePowerBalance, PSY.ACBus)][
+            container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
                 bus_no,
                 t,
             ]
         pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_q"] =
-            container.expressions[IS.ExpressionKey(ReactivePowerBalance, PSY.ACBus)][
+            container.expressions[ExpressionKey(ReactivePowerBalance, PSY.ACBus)][
                 bus_no,
                 t,
             ]
@@ -301,7 +301,7 @@ function powermodels_network!(
 
     for t in time_steps, bus_no in ac_bus_numbers
         pm_data["nw"]["$(t)"]["bus"]["$bus_no"]["inj_p"] =
-            container.expressions[IS.ExpressionKey(ActivePowerBalance, PSY.ACBus)][
+            container.expressions[ExpressionKey(ActivePowerBalance, PSY.ACBus)][
                 bus_no,
                 t,
             ]
@@ -322,7 +322,7 @@ end
 #### PM accessor functions ########
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
-    pm_variable_map = Dict{Type, Dict{Symbol, Union{IS.VariableType, NamedTuple}}}()
+    pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] =
@@ -334,7 +334,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
 end
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_variable_map = Dict{Type, Dict{Symbol, Union{IS.VariableType, NamedTuple}}}()
+    pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
@@ -349,7 +349,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
 end
 
 function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_variable_map = Dict{Type, Dict{Symbol, Union{IS.VariableType, NamedTuple}}}()
+    pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
     pm_variable_map[PSY.ACBranch] = Dict(
@@ -374,14 +374,14 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_constraint_map = Dict{Type, Dict{Symbol, <:IS.ConstraintType}}()
+    pm_constraint_map = Dict{Type, Dict{Symbol, <:ConstraintType}}()
 
     pm_constraint_map[PSY.ACBus] = Dict(:power_balance_p => NodalBalanceActiveConstraint())
     return pm_constraint_map
 end
 
 function PMconmap(::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_constraint_map = Dict{Type, Dict{Symbol, IS.ConstraintType}}()
+    pm_constraint_map = Dict{Type, Dict{Symbol, ConstraintType}}()
 
     pm_constraint_map[PSY.ACBus] = Dict(
         :power_balance_p => NodalBalanceActiveConstraint(),
@@ -395,7 +395,7 @@ function PMexprmap(::Type{S}) where {S <: PM.AbstractPowerModel}
         Type,
         NamedTuple{
             (:pm_expr, :psi_con),
-            Tuple{Dict{Symbol, Union{IS.VariableType, NamedTuple}}, Symbol},
+            Tuple{Dict{Symbol, Union{VariableType, NamedTuple}}, Symbol},
         },
     }()
 

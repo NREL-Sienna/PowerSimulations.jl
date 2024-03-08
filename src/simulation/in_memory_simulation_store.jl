@@ -5,7 +5,7 @@ mutable struct InMemorySimulationStore <: SimulationStore
     params::SimulationStoreParams
     dm_data::OrderedDict{Symbol, DecisionModelStore}
     em_data::EmulationModelStore
-    container_key_lookup::Dict{String, IS.OptimizationContainerKey}
+    container_key_lookup::Dict{String, OptimizationContainerKey}
 end
 
 function InMemorySimulationStore()
@@ -13,14 +13,14 @@ function InMemorySimulationStore()
         SimulationStoreParams(),
         OrderedDict{Symbol, DecisionModelStore}(),
         EmulationModelStore(),
-        Dict{String, IS.OptimizationContainerKey}(),
+        Dict{String, OptimizationContainerKey}(),
     )
 end
 
 function get_number_of_dimensions(
     store::InMemorySimulationStore,
     i::Type{EmulationModelIndexType},
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     return length(get_column_names(store, i, model_name, key))
 end
@@ -29,7 +29,7 @@ function get_number_of_dimensions(
     store::InMemorySimulationStore,
     i::Type{DecisionModelIndexType},
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     return length(get_column_names(store, i, model_name, key))
 end
@@ -83,7 +83,7 @@ end
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
     model_name,
-    stats::IS.OptimizerStats,
+    stats::OptimizerStats,
     index::DecisionModelIndexType,
 )
     write_optimizer_stats!(get_dm_data(store)[model_name], stats, index)
@@ -92,7 +92,7 @@ end
 
 function write_optimizer_stats!(
     store::InMemorySimulationStore,
-    stats::IS.OptimizerStats,
+    stats::OptimizerStats,
     index::EmulationModelIndexType,
 )
     write_optimizer_stats!(get_em_data(store), stats, index)
@@ -102,7 +102,7 @@ end
 function write_result!(
     store::InMemorySimulationStore,
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
     array,
@@ -121,7 +121,7 @@ end
 function write_result!(
     store::InMemorySimulationStore,
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
     array,
@@ -176,7 +176,7 @@ function get_column_names(
     store::InMemorySimulationStore,
     ::Type{DecisionModelIndexType},
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     return get_column_names(get_dm_data(store)[model_name], key)
 end
@@ -185,7 +185,7 @@ function get_column_names(
     store::InMemorySimulationStore,
     ::Type{EmulationModelIndexType},
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     return get_column_names(get_em_data(store)[model_name], key)
 end
@@ -194,7 +194,7 @@ function read_result(
     ::Type{DenseAxisArray},
     store::InMemorySimulationStore,
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
     return read_results(get_dm_data(store)[model_name], key; index = index)
@@ -204,7 +204,7 @@ function read_result(
     ::Type{Array},
     store::InMemorySimulationStore,
     model_name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::DecisionModelIndexType,
 )
     return permutedims(
@@ -216,7 +216,7 @@ function read_result(
     ::Type{DenseAxisArray},
     store::InMemorySimulationStore,
     ::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
     return read_results(get_em_data(store), key; index = index)
@@ -224,7 +224,7 @@ end
 
 function read_results(
     store::InMemorySimulationStore,
-    key::IS.OptimizationContainerKey;
+    key::OptimizationContainerKey;
     index::EmulationModelIndexType = nothing,
     len::Int = nothing,
 )
@@ -233,7 +233,7 @@ end
 
 function get_emulation_model_dataset_size(
     store::InMemorySimulationStore,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     return get_dataset_size(get_em_data(store), key)[2]
 end

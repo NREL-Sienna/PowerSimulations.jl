@@ -1,40 +1,40 @@
 """
 Stores results data for one DecisionModel
 """
-mutable struct DecisionModelStore <: IS.AbstractModelStore
+mutable struct DecisionModelStore <: IS.Optimization.AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
-    duals::Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     parameters::Dict{
-        IS.ParameterKey,
+        ParameterKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
-    variables::Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
     aux_variables::Dict{
-        IS.AuxVarKey,
+        AuxVarKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
     expressions::Dict{
-        IS.ExpressionKey,
+        ExpressionKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
     }
-    optimizer_stats::OrderedDict{Dates.DateTime, IS.OptimizerStats}
+    optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
 end
 
 function DecisionModelStore()
     return DecisionModelStore(
-        Dict{IS.ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{IS.ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{IS.VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{IS.AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{IS.ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        OrderedDict{Dates.DateTime, IS.OptimizerStats}(),
+        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        OrderedDict{Dates.DateTime, OptimizerStats}(),
     )
 end
 
 function initialize_storage!(
     store::DecisionModelStore,
-    container::IS.AbstractOptimizationContainer,
-    params::IS.ModelStoreParams,
+    container::IS.Optimization.AbstractOptimizationContainer,
+    params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
     if length(get_time_steps(container)) < 1
@@ -68,7 +68,7 @@ end
 function write_result!(
     store::DecisionModelStore,
     name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 2},
@@ -86,7 +86,7 @@ end
 function write_result!(
     store::DecisionModelStore,
     name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 1},
@@ -104,7 +104,7 @@ end
 
 function read_results(
     store::DecisionModelStore,
-    key::IS.OptimizationContainerKey;
+    key::OptimizationContainerKey;
     index::Union{DecisionModelIndexType, Nothing} = nothing,
 )
     container = getfield(store, get_store_container_type(key))
@@ -120,7 +120,7 @@ end
 
 function write_optimizer_stats!(
     store::DecisionModelStore,
-    stats::IS.OptimizerStats,
+    stats::OptimizerStats,
     index::DecisionModelIndexType,
 )
     if index in keys(store.optimizer_stats)
@@ -137,7 +137,7 @@ function read_optimizer_stats(store::DecisionModelStore)
     return df
 end
 
-function get_column_names(store::DecisionModelStore, key::IS.OptimizationContainerKey)
+function get_column_names(store::DecisionModelStore, key::OptimizationContainerKey)
     container = getfield(store, get_store_container_type(key))
     return get_column_names(key, first(values(container[key])))
 end

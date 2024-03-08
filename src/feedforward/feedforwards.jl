@@ -53,7 +53,7 @@ end
 Adds an upper bound constraint to a variable.
 """
 struct UpperBoundFeedforward <: AbstractAffectFeedforward
-    optimization_container_key::IS.OptimizationContainerKey
+    optimization_container_key::OptimizationContainerKey
     affected_values::Vector
     add_slacks::Bool
     function UpperBoundFeedforward(;
@@ -61,16 +61,16 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         add_slacks::Bool = false,
-        meta = IS.CONTAINER_KEY_EMPTY_META,
+        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
-            if v <: IS.VariableType
+            if v <: VariableType
                 values_vector[ix] =
                     get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "UpperBoundFeedforward is only compatible with IS.VariableType affected values",
+                    "UpperBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -90,24 +90,24 @@ get_slacks(ff::UpperBoundFeedforward) = ff.add_slacks
 Adds a lower bound constraint to a variable.
 """
 struct LowerBoundFeedforward <: AbstractAffectFeedforward
-    optimization_container_key::IS.OptimizationContainerKey
-    affected_values::Vector{<:IS.OptimizationContainerKey}
+    optimization_container_key::OptimizationContainerKey
+    affected_values::Vector{<:OptimizationContainerKey}
     add_slacks::Bool
     function LowerBoundFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
         add_slacks::Bool = false,
-        meta = IS.CONTAINER_KEY_EMPTY_META,
+        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values_vector = Vector{IS.VariableKey}(undef, length(affected_values))
+        values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
-            if v <: IS.VariableType
+            if v <: VariableType
                 values_vector[ix] =
                     get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "LowerBoundFeedforward is only compatible with IS.VariableType affected values",
+                    "LowerBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -152,22 +152,22 @@ end
 Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.
 """
 struct SemiContinuousFeedforward <: AbstractAffectFeedforward
-    optimization_container_key::IS.OptimizationContainerKey
-    affected_values::Vector{<:IS.OptimizationContainerKey}
+    optimization_container_key::OptimizationContainerKey
+    affected_values::Vector{<:OptimizationContainerKey}
     function SemiContinuousFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = IS.CONTAINER_KEY_EMPTY_META,
+        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
     ) where {T}
-        values_vector = Vector{IS.VariableKey}(undef, length(affected_values))
+        values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
-            if v <: IS.VariableType
+            if v <: VariableType
                 values_vector[ix] =
                     get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "SemiContinuousFeedforward is only compatible with IS.VariableType affected values",
+                    "SemiContinuousFeedforward is only compatible with VariableType affected values",
                 )
             end
         end
@@ -181,7 +181,7 @@ get_optimization_container_key(f::SemiContinuousFeedforward) = f.optimization_co
 function has_semicontinuous_feedforward(
     model::DeviceModel,
     ::Type{T},
-)::Bool where {T <: Union{IS.VariableType, IS.ExpressionType}}
+)::Bool where {T <: Union{VariableType, ExpressionType}}
     if isempty(model.feedforwards)
         return false
     end
@@ -207,22 +207,22 @@ Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that 
 with a Parameter or a Variable as the affected value.
 """
 struct FixValueFeedforward <: AbstractAffectFeedforward
-    optimization_container_key::IS.OptimizationContainerKey
+    optimization_container_key::OptimizationContainerKey
     affected_values::Vector
     function FixValueFeedforward(;
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = IS.CONTAINER_KEY_EMPTY_META,
+        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
-            if v <: IS.VariableType || v <: IS.ParameterType
+            if v <: VariableType || v <: ParameterType
                 values_vector[ix] =
                     get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "UpperBoundFeedforward is only compatible with IS.VariableType affected values",
+                    "UpperBoundFeedforward is only compatible with VariableType affected values",
                 )
             end
         end

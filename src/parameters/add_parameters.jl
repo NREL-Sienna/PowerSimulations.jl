@@ -23,7 +23,7 @@ function add_parameters!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <: IS.ParameterType,
+    T <: ParameterType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -296,12 +296,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.VariableKey{U, D},
+    key::VariableKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -339,12 +339,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.VariableKey{U, D},
+    key::VariableKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: FixValueParameter,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -383,12 +383,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.AuxVarKey{U, D},
+    key::AuxVarKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: IS.AuxVariableType,
+    U <: AuxVariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -449,7 +449,7 @@ function _add_parameters!(
         container,
         T(),
         D,
-        IS.VariableKey(OnVariable, D),
+        VariableKey(OnVariable, D),
         names,
         time_steps,
     )
@@ -479,13 +479,13 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.VariableKey{U, S},
+    key::VariableKey{U, S},
     model::ServiceModel{S, W},
     devices::V,
 ) where {
     S <: PSY.AbstractReserve,
     T <: VariableValueParameter,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}

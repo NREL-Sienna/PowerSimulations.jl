@@ -2,7 +2,7 @@
 Container for the initial condition data
 """
 mutable struct InitialCondition{
-    T <: IS.InitialConditionType,
+    T <: InitialConditionType,
     U <: Union{JuMP.VariableRef, Float64},
 }
     component::PSY.Component
@@ -13,29 +13,29 @@ function InitialCondition(
     ::Type{T},
     component::PSY.Component,
     value::U,
-) where {T <: IS.InitialConditionType, U <: Union{JuMP.VariableRef, Float64}}
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}}
     return InitialCondition{T, U}(component, value)
 end
 
 function InitialCondition(
-    ::IS.ICKey{T, U},
+    ::InitialConditionKey{T, U},
     component::U,
     value::V,
 ) where {
-    T <: IS.InitialConditionType,
+    T <: InitialConditionType,
     U <: PSY.Component,
     V <: Union{JuMP.VariableRef, Float64},
 }
     return InitialCondition{T, U}(component, value)
 end
 
-function get_condition(p::InitialCondition{T, Float64}) where {T <: IS.InitialConditionType}
+function get_condition(p::InitialCondition{T, Float64}) where {T <: InitialConditionType}
     return p.value
 end
 
 function get_condition(
     p::InitialCondition{T, JuMP.VariableRef},
-) where {T <: IS.InitialConditionType}
+) where {T <: InitialConditionType}
     return jump_value(p.value)
 end
 
@@ -45,27 +45,27 @@ get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
 get_component_type(ic::InitialCondition) = typeof(ic.component)
 get_ic_type(
     ::Type{InitialCondition{T, U}},
-) where {T <: IS.InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
 get_ic_type(
     ::InitialCondition{T, U},
-) where {T <: IS.InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
 
 """
 Stores data to populate initial conditions before the build call
 """
 mutable struct InitialConditionsData
-    duals::Dict{IS.ConstraintKey, DataFrames.DataFrame}
-    parameters::Dict{IS.ParameterKey, DataFrames.DataFrame}
-    variables::Dict{IS.VariableKey, DataFrames.DataFrame}
-    aux_variables::Dict{IS.AuxVarKey, DataFrames.DataFrame}
+    duals::Dict{ConstraintKey, DataFrames.DataFrame}
+    parameters::Dict{ParameterKey, DataFrames.DataFrame}
+    variables::Dict{VariableKey, DataFrames.DataFrame}
+    aux_variables::Dict{AuxVarKey, DataFrames.DataFrame}
 end
 
 function InitialConditionsData()
     return InitialConditionsData(
-        Dict{IS.ConstraintKey, DataFrames.DataFrame}(),
-        Dict{IS.ParameterKey, DataFrames.DataFrame}(),
-        Dict{IS.VariableKey, DataFrames.DataFrame}(),
-        Dict{IS.AuxVarKey, DataFrames.DataFrame}(),
+        Dict{ConstraintKey, DataFrames.DataFrame}(),
+        Dict{ParameterKey, DataFrames.DataFrame}(),
+        Dict{VariableKey, DataFrames.DataFrame}(),
+        Dict{AuxVarKey, DataFrames.DataFrame}(),
     )
 end
 
@@ -73,71 +73,71 @@ function get_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
-    return ic_data.variables[IS.VariableKey(T, U)]
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return ic_data.variables[VariableKey(T, U)]
 end
 
 function get_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return ic_data.aux_variables[IS.AuxVarKey(T, U)]
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return ic_data.aux_variables[AuxVarKey(T, U)]
 end
 
 function get_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return ic_data.duals[IS.ConstraintKey(T, U)]
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return ic_data.duals[ConstraintKey(T, U)]
 end
 
 function get_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return ic_data.parameters[IS.ParameterKey(T, U)]
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return ic_data.parameters[ParameterKey(T, U)]
 end
 
 function has_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.VariableType, U <: Union{PSY.Component, PSY.System}}
-    return haskey(ic_data.variables, IS.VariableKey(T, U))
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.variables, VariableKey(T, U))
 end
 
 function has_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return haskey(ic_data.aux_variables, IS.AuxVarKey(T, U))
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.aux_variables, AuxVarKey(T, U))
 end
 
 function has_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return haskey(ic_data.duals, IS.ConstraintKey(T, U))
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.duals, ConstraintKey(T, U))
 end
 
 function has_initial_condition_value(
     ic_data::InitialConditionsData,
     ::T,
     ::Type{U},
-) where {T <: IS.ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return haskey(ic_data.parameters, IS.ParameterKey(T, U))
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return haskey(ic_data.parameters, ParameterKey(T, U))
 end
 
 ######################### Initial Conditions Definitions#####################################
-struct DevicePower <: IS.InitialConditionType end
-struct DeviceAboveMinPower <: IS.InitialConditionType end
-struct DeviceStatus <: IS.InitialConditionType end
-struct InitialTimeDurationOn <: IS.InitialConditionType end
-struct InitialTimeDurationOff <: IS.InitialConditionType end
-struct InitialEnergyLevel <: IS.InitialConditionType end
-struct AreaControlError <: IS.InitialConditionType end
+struct DevicePower <: InitialConditionType end
+struct DeviceAboveMinPower <: InitialConditionType end
+struct DeviceStatus <: InitialConditionType end
+struct InitialTimeDurationOn <: InitialConditionType end
+struct InitialTimeDurationOff <: InitialConditionType end
+struct InitialEnergyLevel <: InitialConditionType end
+struct AreaControlError <: InitialConditionType end

@@ -1,7 +1,7 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{R, D},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {
@@ -58,7 +58,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ModelConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {R <: PSY.RenewableGen}
@@ -112,7 +112,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{R, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {
@@ -160,7 +160,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ModelConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}
@@ -206,7 +206,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {R <: PSY.RenewableGen}
@@ -238,7 +238,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{R, FixedOutput},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}
@@ -260,7 +260,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ModelConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{<:PSY.RenewableGen, FixedOutput},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 )

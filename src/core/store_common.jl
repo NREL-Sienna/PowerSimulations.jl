@@ -1,9 +1,9 @@
 # Keep these in sync with the Symbols in src/core/definitions.
-get_store_container_type(::IS.AuxVarKey) = STORE_CONTAINER_AUX_VARIABLES
-get_store_container_type(::IS.ConstraintKey) = STORE_CONTAINER_DUALS
-get_store_container_type(::IS.ExpressionKey) = STORE_CONTAINER_EXPRESSIONS
-get_store_container_type(::IS.ParameterKey) = STORE_CONTAINER_PARAMETERS
-get_store_container_type(::IS.VariableKey) = STORE_CONTAINER_VARIABLES
+get_store_container_type(::AuxVarKey) = STORE_CONTAINER_AUX_VARIABLES
+get_store_container_type(::ConstraintKey) = STORE_CONTAINER_DUALS
+get_store_container_type(::ExpressionKey) = STORE_CONTAINER_EXPRESSIONS
+get_store_container_type(::ParameterKey) = STORE_CONTAINER_PARAMETERS
+get_store_container_type(::VariableKey) = STORE_CONTAINER_VARIABLES
 
 # Aliases used for clarity in the method dispatches so it is possible to know if writing to
 # DecisionModel data or EmulationModel data

@@ -115,7 +115,7 @@ end
 
 function make_export_all(problems)
     return [
-        ProblemResultsExport(
+        OptimizationProblemResultsExport(
             x;
             store_all_duals = true,
             store_all_variables = true,
@@ -262,7 +262,7 @@ function test_simulation_results(
 
         if in_memory
             @test !isempty(
-                sim.internal.store.dm_data[:ED].variables[PSI.IS.VariableKey(
+                sim.internal.store.dm_data[:ED].variables[PSI.VariableKey(
                     ActivePowerVariable,
                     ThermalStandard,
                 )],
@@ -452,13 +452,13 @@ function test_decision_problem_results_values(
     )
 
     @test !isempty(
-        PSI.get_cached_variables(results_ed)[PSI.IS.VariableKey(
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
             ActivePowerVariable,
             ThermalStandard,
         )].data,
     )
     @test length(
-        PSI.get_cached_variables(results_ed)[PSI.IS.VariableKey(
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
             ActivePowerVariable,
             ThermalStandard,
         )].data,
@@ -490,7 +490,7 @@ function test_decision_problem_results_values(
     empty!(results_ed)
     @test !haskey(
         PSI.get_cached_variables(results_ed),
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     )
 
     initial_time = DateTime("2024-01-01T00:00:00")
@@ -504,19 +504,19 @@ function test_decision_problem_results_values(
     )
 
     @test !isempty(
-        PSI.get_cached_variables(results_ed)[PSI.IS.VariableKey(
+        PSI.get_cached_variables(results_ed)[PSI.VariableKey(
             ActivePowerVariable,
             ThermalStandard,
         )].data,
     )
     @test !isempty(
-        PSI.get_cached_duals(results_ed)[PSI.IS.ConstraintKey(
+        PSI.get_cached_duals(results_ed)[PSI.ConstraintKey(
             CopperPlateBalanceConstraint,
             System,
         )].data,
     )
     @test !isempty(
-        PSI.get_cached_parameters(results_ed)[PSI.IS.ParameterKey{
+        PSI.get_cached_parameters(results_ed)[PSI.ParameterKey{
             ActivePowerTimeSeriesParameter,
             RenewableDispatch,
         }(

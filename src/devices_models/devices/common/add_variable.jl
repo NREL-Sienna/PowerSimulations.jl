@@ -6,7 +6,7 @@ function add_variables!(
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     formulation::Union{AbstractServiceFormulation, AbstractDeviceFormulation},
-) where {T <: IS.VariableType, U <: PSY.Component}
+) where {T <: VariableType, U <: PSY.Component}
     add_variable!(container, T(), devices, formulation)
     return
 end
@@ -20,7 +20,7 @@ function add_variables!(
     service::U,
     contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     formulation::AbstractReservesFormulation,
-) where {T <: IS.VariableType, U <: PSY.AbstractReserve, V <: PSY.Component}
+) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component}
     add_service_variable!(container, T(), service, contributing_devices, formulation)
     return
 end
@@ -47,7 +47,7 @@ If binary = true:
 # Arguments
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * devices : Vector or Iterator with the devices
-* var_key::IS.VariableKey : Base Name for the variable
+* var_key::VariableKey : Base Name for the variable
 * binary::Bool : Select if the variable is binary
 * expression_name::Symbol : Expression_name name stored in container.expressions to add the variable
 * sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
@@ -64,7 +64,7 @@ function add_variable!(
     devices::U,
     formulation,
 ) where {
-    T <: IS.VariableType,
+    T <: VariableType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     @assert !isempty(devices)
@@ -109,7 +109,7 @@ function add_service_variable!(
     contributing_devices::V,
     formulation::AbstractServiceFormulation,
 ) where {
-    T <: IS.VariableType,
+    T <: VariableType,
     U <: PSY.Service,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}

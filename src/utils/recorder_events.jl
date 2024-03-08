@@ -85,7 +85,7 @@ struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
 end
 
 function ParameterUpdateEvent(
-    parameter_type::Type{<:IS.ParameterType},
+    parameter_type::Type{<:ParameterType},
     component_type::DataType,
     tag::String,
     simulation_time::Dates.DateTime,
@@ -102,7 +102,7 @@ function ParameterUpdateEvent(
 end
 
 function ParameterUpdateEvent(
-    parameter_type::Type{<:IS.ParameterType},
+    parameter_type::Type{<:ParameterType},
     component_type::DataType,
     attributes::TimeSeriesAttributes,
     simulation_time::Dates.DateTime,
@@ -118,7 +118,7 @@ function ParameterUpdateEvent(
 end
 
 function ParameterUpdateEvent(
-    parameter_type::Type{<:IS.ParameterType},
+    parameter_type::Type{<:ParameterType},
     component_type::DataType,
     attributes::VariableValueAttributes,
     simulation_time::Dates.DateTime,
@@ -135,7 +135,7 @@ function ParameterUpdateEvent(
 end
 
 function ParameterUpdateEvent(
-    parameter_type::Type{<:IS.ParameterType},
+    parameter_type::Type{<:ParameterType},
     component_type::DataType,
     attributes::CostFunctionAttributes,
     simulation_time::Dates.DateTime,

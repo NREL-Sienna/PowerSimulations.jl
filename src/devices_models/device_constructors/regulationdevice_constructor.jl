@@ -1,7 +1,7 @@
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, U},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection, U <: DeviceLimitedRegulation}
@@ -27,7 +27,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ModelConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection}
@@ -57,7 +57,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, U},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection, U <: ReserveLimitedRegulation}
@@ -83,7 +83,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ModelConstructStage,
+    ::ModelConstructStage,
     model::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {T <: PSY.StaticInjection}
@@ -112,7 +112,7 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::IS.ArgumentConstructStage,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.RegulationDevice{<:PSY.StaticInjection}, FixedOutput},
     network_model::NetworkModel{AreaBalancePowerModel},
 )
@@ -133,7 +133,7 @@ end
 function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
-    ::IS.ModelConstructStage,
+    ::ModelConstructStage,
     ::DeviceModel{PSY.RegulationDevice{<:PSY.StaticInjection}, FixedOutput},
     network_model::NetworkModel{AreaBalancePowerModel},
 )

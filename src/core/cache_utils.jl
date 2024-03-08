@@ -1,7 +1,7 @@
 
 struct OptimizationResultCacheKey
     model::Symbol
-    key::IS.OptimizationContainerKey
+    key::OptimizationContainerKey
 end
 
 struct CacheFlushRule

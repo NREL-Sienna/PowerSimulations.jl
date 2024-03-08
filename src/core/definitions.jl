@@ -82,9 +82,9 @@ const KNOWN_SIMULATION_PATHS = [
 const RESULTS_DIR = "results"
 
 # Enums
-BuildStatus = IS.BuildStatus
+BuildStatus = IS.Optimization.BuildStatus
 
-@scoped_enum(
+IS.@scoped_enum(
     RunStatus,
     NOT_READY = -2,
     READY = -1,

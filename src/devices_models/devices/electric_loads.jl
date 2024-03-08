@@ -29,7 +29,7 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractContr
 proportional_cost(cost::Nothing, ::OnVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
 proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_fixed(cost)
 
-objective_function_multiplier(::IS.VariableType, ::AbstractControllablePowerLoadFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::VariableType, ::AbstractControllablePowerLoadFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 
 variable_cost(::Nothing, ::PSY.ElectricLoad, ::ActivePowerVariable, ::AbstractControllablePowerLoadFormulation)=1.0
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_variable(cost)
@@ -95,7 +95,7 @@ end
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{ActivePowerVariableLimitsConstraint},
-    U::Type{<:IS.VariableType},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::NetworkModel{X},
@@ -115,7 +115,7 @@ end
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{ActivePowerVariableLimitsConstraint},
-    U::Type{<:IS.VariableType},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::NetworkModel{X},

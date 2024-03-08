@@ -426,7 +426,7 @@ function _initialize_problem_storage!(
     sequence = get_sequence(sim)
     executions_by_model = sequence.executions_by_model
     models = get_models(sim)
-    decision_model_store_params = OrderedDict{Symbol, IS.ModelStoreParams}()
+    decision_model_store_params = OrderedDict{Symbol, ModelStoreParams}()
     dm_model_req = Dict{Symbol, SimulationModelStoreRequirements}()
     rules = CacheFlushRules(;
         max_size = cache_size_mib * MiB,
@@ -445,7 +445,7 @@ function _initialize_problem_storage!(
         base_params = last(collect(values(decision_model_store_params)))
         resolution = minimum([v.resolution for v in values(decision_model_store_params)])
         emulation_model_store_params = OrderedDict(
-            :Emulator => IS.ModelStoreParams(
+            :Emulator => ModelStoreParams(
                 get_step_resolution(sequence) ÷ resolution, # Num Executions
                 1,
                 resolution, # Interval

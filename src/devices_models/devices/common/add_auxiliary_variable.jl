@@ -6,7 +6,7 @@ function add_variables!(
     ::Type{T},
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     formulation::Union{AbstractDeviceFormulation, AbstractServiceFormulation},
-) where {T <: IS.AuxVariableType, U <: PSY.Component}
+) where {T <: AuxVariableType, U <: PSY.Component}
     add_variable!(container, T(), devices, formulation)
     return
 end
@@ -16,7 +16,7 @@ Default implementation of adding auxiliary variable to the model.
 """
 function add_variable!(
     container::OptimizationContainer,
-    var_type::IS.AuxVariableType,
+    var_type::AuxVariableType,
     devices::U,
     formulation,
 ) where {U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}} where {D <: PSY.Component}

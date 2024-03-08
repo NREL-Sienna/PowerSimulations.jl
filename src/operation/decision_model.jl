@@ -13,7 +13,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, IS.ModelInternal}
+    internal::Union{Nothing, IS.Optimization.ModelInternal}
     simulation_info::Union{Nothing, SimulationInfo}
     store::DecisionModelStore
     ext::Dict{String, Any}
@@ -73,7 +73,7 @@ function DecisionModel{M}(
     elseif name isa String
         name = Symbol(name)
     end
-    internal = IS.ModelInternal(
+    internal = IS.Optimization.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
     )
     template_ = deepcopy(template)
@@ -257,7 +257,7 @@ function init_model_store_params!(model::DecisionModel)
     resolution = PSY.get_time_series_resolution(system)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    store_params = IS.ModelStoreParams(
+    store_params = ModelStoreParams(
         num_executions,
         horizon,
         iszero(interval) ? resolution : interval,
@@ -297,7 +297,7 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
             get_network_formulation(get_template(model)),
             get_system(model),
         )
-        @info "Initializing IS.ModelStoreParams"
+        @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
@@ -346,7 +346,7 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = configure_logging(get_internal(model), file_mode)
+    logger = IS.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
     try
         Logging.with_logger(logger) do
             try
@@ -382,11 +382,14 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
-    IS.get_optimization_container(get_internal(model)) = OptimizationContainer(
-        get_system(model),
-        get_settings(model),
-        nothing,
-        PSY.Deterministic,
+    IS.set_optimization_container!(
+        get_internal(model),
+        OptimizationContainer(
+            get_system(model),
+            get_settings(model),
+            nothing,
+            PSY.Deterministic,
+        ),
     )
     IS.get_optimization_container(get_internal(model)).built_for_recurrent_solves =
         was_built_for_recurrent_solves

@@ -123,14 +123,14 @@ function mock_construct_device!(
         PSI.construct_device!(
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
-            PSI.IS.ArgumentConstructStage(),
+            PSI.ArgumentConstructStage(),
             model,
             PSI.get_network_model(template),
         )
         PSI.construct_device!(
             PSI.get_optimization_container(problem),
             PSI.get_system(problem),
-            PSI.IS.ModelConstructStage(),
+            PSI.ModelConstructStage(),
             model,
             PSI.get_network_model(template),
         )

@@ -1,6 +1,8 @@
 # Default implementations of getter/setter functions for OperationModel.
-is_built(model::OperationModel) = IS.get_status(get_internal(model)) == BuildStatus.BUILT
-isempty(model::OperationModel) = IS.get_status(get_internal(model)) == BuildStatus.EMPTY
+is_built(model::OperationModel) =
+    IS.Optimization.get_status(get_internal(model)) == BuildStatus.BUILT
+isempty(model::OperationModel) =
+    IS.Optimization.get_status(get_internal(model)) == BuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
@@ -28,12 +30,12 @@ function get_rebuild_model(model::OperationModel)
 end
 
 function get_optimization_container(model::OperationModel)
-    return IS.get_optimization_container(get_internal(model))
+    return IS.Optimization.get_optimization_container(get_internal(model))
 end
 
 function get_resolution(model::OperationModel)
     resolution = PSY.get_time_series_resolution(get_system(model))
-    return IS.time_period_conversion(resolution)
+    return IS.Optimization.time_period_conversion(resolution)
 end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
@@ -42,15 +44,15 @@ get_optimizer_stats(model::OperationModel) =
     get_optimizer_stats(get_optimization_container(model))
 get_simulation_info(model::OperationModel) = model.simulation_info
 get_simulation_number(model::OperationModel) = model.simulation_info.number
-get_status(model::OperationModel) = IS.get_status(get_internal(model))
+get_status(model::OperationModel) = IS.Optimization.get_status(get_internal(model))
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_log_file(model::OperationModel) = joinpath(get_output_dir(model), PROBLEM_LOG_FILENAME)
-get_output_dir(model::OperationModel) = IS.get_output_dir(get_internal(model))
+get_output_dir(model::OperationModel) = IS.Optimization.get_output_dir(get_internal(model))
 get_initial_conditions_file(model::OperationModel) =
-    joinpath(IS.get_output_dir(get_internal(model)), "initial_conditions.bin")
+    joinpath(get_output_dir(model), "initial_conditions.bin")
 get_recorder_dir(model::OperationModel) =
-    joinpath(IS.get_output_dir(get_internal(model)), "recorder")
+    joinpath(get_output_dir(model), "recorder")
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
 get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
@@ -84,7 +86,7 @@ function get_initial_conditions(
     model::OperationModel,
     ::T,
     ::U,
-) where {T <: IS.InitialConditionType, U <: PSY.Device}
+) where {T <: InitialConditionType, U <: PSY.Device}
     return get_initial_conditions(get_optimization_container(model), T, U)
 end
 
@@ -110,25 +112,26 @@ function solve_impl!(model::OperationModel)
 end
 
 set_console_level!(model::OperationModel, val) =
-    IS.set_console_level!(get_internal(model), val)
-set_file_level!(model::OperationModel, val) = IS.set_file_level!(get_internal(model), val)
+    IS.Optimization.set_console_level!(get_internal(model), val)
+set_file_level!(model::OperationModel, val) =
+    IS.Optimization.set_file_level!(get_internal(model), val)
 function set_executions!(model::OperationModel, val::Int)
     IS.set_executions!(get_internal(model), val)
     return
 end
 
 function set_execution_count!(model::OperationModel, val::Int)
-    IS.set_execution_count!(get_internal(model), val)
+    IS.Optimization.set_execution_count!(get_internal(model), val)
     return
 end
 
 function set_status!(model::OperationModel, status::BuildStatus)
-    IS.set_status!(get_internal(model), status)
+    IS.Optimization.set_status!(get_internal(model), status)
     return
 end
 
 function set_output_dir!(model::OperationModel, path::AbstractString)
-    set_output_dir!(get_internal(model), path)
+    IS.Optimization.set_output_dir!(get_internal(model), path)
     return
 end
 
@@ -139,7 +142,7 @@ function advance_execution_count!(model::OperationModel)
 end
 
 function build_initial_conditions!(model::OperationModel)
-    @assert `IS.get_ic_model_container(get_internal(model))` === nothing
+    @assert IS.get_ic_model_container(get_internal(model)) === nothing
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
@@ -210,7 +213,7 @@ function handle_initial_conditions!(model::OperationModel)
             build_initial_conditions!(model)
             initialize!(model)
         end
-        IS.get_ic_model_container(get_internal(model)) = nothing
+        IS.set_ic_model_container!(get_internal(model), nothing)
     end
     return
 end
@@ -338,11 +341,11 @@ function _list_names(model::OperationModel, container_type)
     return encode_keys_as_strings(list_keys(get_store(model), container_type))
 end
 
-read_dual(model::OperationModel, key::IS.ConstraintKey) = _read_results(model, key)
-read_parameter(model::OperationModel, key::IS.ParameterKey) = _read_results(model, key)
-read_aux_variable(model::OperationModel, key::IS.AuxVarKey) = _read_results(model, key)
-read_variable(model::OperationModel, key::IS.VariableKey) = _read_results(model, key)
-read_expression(model::OperationModel, key::IS.ExpressionKey) = _read_results(model, key)
+read_dual(model::OperationModel, key::ConstraintKey) = _read_results(model, key)
+read_parameter(model::OperationModel, key::ParameterKey) = _read_results(model, key)
+read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, key)
+read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
+read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
 
 function _read_col_name(axes)
     if length(axes) == 1
@@ -361,7 +364,7 @@ function _read_col_name(axes)
     end
 end
 
-function _read_results(model::OperationModel, key::IS.OptimizationContainerKey)
+function _read_results(model::OperationModel, key::OptimizationContainerKey)
     res = read_results(get_store(model), key)
     col_name = _read_col_name(axes(res))
     return DataFrames.DataFrame(permutedims(res.data), col_name)
@@ -372,20 +375,20 @@ read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(mod
 function add_recorders!(model::OperationModel, recorders)
     internal = get_internal(model)
     for name in union(REQUIRED_RECORDERS, recorders)
-        add_recorder!(internal, name)
+        IS.Optimization.add_recorder!(internal, name)
     end
 end
 
 function register_recorders!(model::OperationModel, file_mode)
     recorder_dir = get_recorder_dir(model)
     mkpath(recorder_dir)
-    for name in IS.get_recorders(get_internal(model))
+    for name in IS.Optimization.get_recorders(get_internal(model))
         IS.register_recorder!(name; mode = file_mode, directory = recorder_dir)
     end
 end
 
 function unregister_recorders!(model::OperationModel)
-    for name in IS.get_recorders(get_internal(model))
+    for name in IS.Optimization.get_recorders(get_internal(model))
         IS.unregister_recorder!(name)
     end
 end
