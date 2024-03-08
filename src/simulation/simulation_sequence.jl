@@ -275,7 +275,7 @@ mutable struct SimulationSequence
             horizons,
             intervals,
             _attach_feedforwards(models, feedforwards),
-            event,
+            events,
             ini_cond_chronology,
             execution_order,
             executions_by_model,

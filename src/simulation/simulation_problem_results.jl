@@ -65,9 +65,18 @@ get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
+get_system_uuid(results::PSI.SimulationProblemResults) = results.system_uuid
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
+
+get_results_timestamps(result::SimulationProblemResults) = result.results_timestamps
+function set_results_timestamps!(
+    result::SimulationProblemResults,
+    results_timestamps::Vector{Dates.DateTime},
+)
+    result.results_timestamps = results_timestamps
+end
 
 list_result_keys(res::SimulationProblemResults, ::AuxVarKey) =
     list_aux_variable_keys(res)
@@ -77,6 +86,28 @@ list_result_keys(res::SimulationProblemResults, ::ExpressionKey) =
 list_result_keys(res::SimulationProblemResults, ::ParameterKey) =
     list_parameter_keys(res)
 list_result_keys(res::SimulationProblemResults, ::VariableKey) = list_variable_keys(res)
+
+get_cached_results(res::SimulationProblemResults, ::Type{<:AuxVarKey}) =
+    get_cached_aux_variables(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ConstraintKey}) =
+    get_cached_duals(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ExpressionKey}) =
+    get_cached_expressions(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ParameterKey}) =
+    get_cached_parameters(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:VariableKey}) =
+    get_cached_variables(res)
+get_cached_results(
+    res::SimulationProblemResults,
+    ::Type{<:OptimizationContainerKey} = OptimizationContainerKey,
+) =
+    merge(  # PERF: could be done lazily
+        get_cached_aux_variables(res),
+        get_cached_duals(res),
+        get_cached_expressions(res),
+        get_cached_parameters(res),
+        get_cached_variables(res),
+    )
 
 """
 Return an array of variable names (strings) that are available for reads.
@@ -724,3 +755,9 @@ function export_optimizer_stats(
         throw(error("writing optimizer stats only supports csv or json formats"))
     end
 end
+
+# Chooses the user-passed store or results store for reading values. Either could be
+# something or nothing. If both are nothing, we must open the HDF5 store.
+try_resolve_store(user::SimulationStore, results::Union{Nothing, SimulationStore}) = user
+try_resolve_store(user::Nothing, results::SimulationStore) = results
+try_resolve_store(user::Nothing, results::Nothing) = nothing

@@ -54,7 +54,7 @@ end
 
 function Base.empty!(res::SimulationProblemResults{DecisionModelSimulationResults})
     foreach(empty!, _list_containers(res))
-    empty!(res.results_timestamps)
+    empty!(get_results_timestamps(res))
 end
 
 function Base.isempty(res::SimulationProblemResults{DecisionModelSimulationResults})
@@ -88,27 +88,6 @@ get_cached_parameters(res::SimulationProblemResults{DecisionModelSimulationResul
 get_cached_variables(res::SimulationProblemResults{DecisionModelSimulationResults}) =
     res.values.variables.cached_results
 
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::AuxVarKey,
-) = get_cached_aux_variables(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ConstraintKey,
-) = get_cached_duals(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ExpressionKey,
-) = get_cached_expressions(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ParameterKey,
-) = get_cached_parameters(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::VariableKey,
-) = get_cached_variables(res)
-
 function get_forecast_horizon(res::SimulationProblemResults{DecisionModelSimulationResults})
     return res.values.forecast_horizon
 end
@@ -122,19 +101,6 @@ function _get_store_value(
     simulation_store_path = joinpath(get_execution_path(res), "data_store")
     return open_store(HdfSimulationStore, simulation_store_path, "r") do store
         _get_store_value(res, container_keys, timestamps, store)
-    end
-end
-
-function _get_store_value(
-    T::Type{Matrix{Float64}},
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
-    timestamps::Vector{Dates.DateTime},
-    ::Nothing,
-)
-    simulation_store_path = joinpath(get_execution_path(res), "data_store")
-    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
-        _get_store_value(T, res, container_keys, timestamps, store)
     end
 end
 
@@ -239,44 +205,6 @@ function _get_store_value(
     return results_by_time
 end
 
-function _get_store_value(
-    ::Type{Matrix{Float64}},
-    sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    container_keys::Vector{<:OptimizationContainerKey},
-    timestamps::Vector{Dates.DateTime},
-    store::SimulationStore,
-)
-    base_power = get_model_base_power(sim_results)
-    results_by_key = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
-    model_name = Symbol(get_model_name(sim_results))
-    resolution = get_resolution(sim_results)
-
-    for key in container_keys
-        n_dims = get_number_of_dimensions(store, DecisionModelIndexType, model_name, key)
-        if n_dims != 1
-            error(
-                "The number of dimensions $(n_dims) is not supported for $(encode_key_as_string(key))",
-            )
-        end
-        results_by_time = ResultsByTime{Matrix{Float64}, 1}(
-            key,
-            SortedDict{Dates.DateTime, Matrix{Float64}}(),
-            resolution,
-            get_column_names(store, DecisionModelIndexType, model_name, key),
-        )
-        for ts in timestamps
-            array = read_result(Array, store, model_name, key, ts)
-            if convert_result_to_natural_units(key)
-                array .*= base_power
-            end
-            results_by_time[ts] = array
-        end
-        results_by_key[key] = results_by_time
-    end
-
-    return results_by_key
-end
-
 function _process_timestamps(
     res::SimulationProblemResults,
     initial_time::Union{Nothing, Dates.DateTime},
@@ -305,20 +233,26 @@ function _process_timestamps(
 end
 
 function _read_results(
-    T::Type{Matrix{Float64}},
+    ::Type{Matrix{Float64}},
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
-    store::Nothing,
+    store::Union{Nothing, <:SimulationStore};
+    cols::Union{Colon, Vector{String}} = (:),
 )
-    isempty(result_keys) &&
-        return Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
-
-    if res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
+    vals = _read_results(res, result_keys, timestamps, store)
+    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+    for (result_key, result_data) in vals
+        inner_converted = SortedDict(
+            (date_key, Matrix{Float64}(permutedims(inner_data[cols, :].data)))
+            for (date_key, inner_data) in result_data.data)
+        converted_vals[result_key] = ResultsByTime{Matrix{Float64}, 1}(
+            result_data.key,
+            inner_converted,
+            result_data.resolution,
+            (cols isa Vector) ? (cols,) : result_data.column_names)
     end
-    return _get_store_value(T, res, result_keys, timestamps, store)
+    return converted_vals
 end
 
 function _read_results(
@@ -330,19 +264,28 @@ function _read_results(
     isempty(result_keys) &&
         return Dict{OptimizationContainerKey, ResultsByTime{DenseAxisArray{Float64, 2}}}()
 
-    if store === nothing && res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
-    end
+    _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
-    cached_results = get_cached_results(res, first(result_keys))
+    cached_results = get_cached_results(res, eltype(result_keys))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
-        @debug "reading results from SimulationsResults cache"
+        @debug "reading results from SimulationsResults cache"  # NOTE tests match on this
         vals = Dict(k => cached_results[k] for k in result_keys)
+        # Cached data may contain more timestamps than we need, remove these if so
+        (timestamps == get_results_timestamps(res)) && return vals
+        filtered_vals = Dict{keytype(vals), valtype(vals)}()
+        for (result_key, result_data) in vals
+            inner_converted = filter((((k, v),) -> k in timestamps), result_data.data)
+            filtered_vals[result_key] = ResultsByTime{valtype(inner_converted), 1}(
+                result_data.key,
+                inner_converted,
+                result_data.resolution,
+                result_data.column_names)
+        end
+        return filtered_vals
     else
-        @debug "reading results from data store"
-        vals = _get_store_value(res, result_keys, timestamps, store)
+        @debug "reading results from data store"  # NOTE tests match on this
+        vals = _get_store_value(res, result_keys, timestamps, _store)
     end
     return vals
 end
@@ -505,15 +448,32 @@ function get_realized_timestamps(
     return requested_range
 end
 
+"""
+High-level function to read a DataFrame of results.
+
+# Arguments
+
+  - `res`: the results to read.
+  - `result_keys::Vector{<:OptimizationContainerKey}`: the keys to read. Output will be a
+    `Dict{OptimizationContainerKey, DataFrame}` with these as the keys
+  - `start_time::Union{Nothing, Dates.DateTime} = nothing`: the time at which the resulting
+    time series should begin; `nothing` indicates the first time in the results
+  - `len::Union{Int, Nothing} = nothing`: the number of steps in the resulting time series;
+    `nothing` indicates up to the end of the results
+  - `cols::Union{Colon, Vector{String}} = (:)`: which columns to fetch; defaults to `:`,
+    i.e., all the columns
+"""
 function read_results_with_keys(
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys::Vector{<:OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
+    cols::Union{Colon, Vector{String}} = (:),
 )
     meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
-    result_values = _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing)
+    result_values =
+        _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing; cols = cols)
     return get_realization(result_values, meta)
 end
 
@@ -523,23 +483,31 @@ function _are_results_cached(
     timestamps::Vector{Dates.DateTime},
     cached_keys,
 )
-    return isempty(setdiff(timestamps, res.results_timestamps)) &&
+    return isempty(setdiff(timestamps, get_results_timestamps(res))) &&
            isempty(setdiff(output_keys, cached_keys))
 end
 
 """
-Load the simulation results into memory for repeated reads. Running this function twice
-overwrites the previously loaded results. This is useful when loading results from remote
-locations over network connections.
+Load the simulation results into memory for repeated reads. This is useful when loading
+results from remote locations over network connections, when reading the same data very many
+times, etc. Multiple calls augment the cache according to these rules, where "variable"
+means "variable, expression, etc.":
+  - Requests for an already cached variable at a lesser `count` than already cached do *not*
+    decrease the `count` of the cached variable
+  - Requests for an already cached variable at a greater `count` than already cached *do*
+    increase the `count` of the cached variable
+  - Requests for new variables are fulfilled without evicting existing variables
 
-For each variable/parameter/dual, etc., each element must be the name encoded as a string,
-like `"ActivePowerVariable__ThermalStandard"` or a Tuple with its constituent types, like
-`(ActivePowerVariable, ThermalStandard)`.
+Note that `count` is global across all variables, so increasing the `count` re-reads already
+cached variables. For each variable, each element must be the name encoded as a string, like
+`"ActivePowerVariable__ThermalStandard"` or a Tuple with its constituent types, like
+`(ActivePowerVariable, ThermalStandard)`. To clear the cache, use [`Base.empty!`](@ref).
 
 # Arguments
 
   - `count::Int`: Number of windows to load.
-  - `initial_time::Dates.DateTime` : Initial time of first window to load. Defaults to first.
+  - `initial_time::Dates.DateTime` : Initial time of first window to load. Defaults to
+    first.
   - `aux_variables::Vector{Union{String, Tuple}}`: Optional list of aux variables to load.
   - `duals::Vector{Union{String, Tuple}}`: Optional list of duals to load.
   - `expressions::Vector{Union{String, Tuple}}`: Optional list of expressions to load.
@@ -555,74 +523,26 @@ function load_results!(
     parameters = Vector{Tuple}(),
     aux_variables = Vector{Tuple}(),
     expressions = Vector{Tuple}(),
+    store::Union{Nothing, <:SimulationStore} = nothing,
 )
     initial_time = initial_time === nothing ? first(get_timestamps(res)) : initial_time
-    res.results_timestamps = _process_timestamps(res, initial_time, count)
-    dual_keys = [_deserialize_key(ConstraintKey, res, x...) for x in duals]
-    parameter_keys =
-        ParameterKey[_deserialize_key(ParameterKey, res, x...) for x in parameters]
-    variable_keys =
-        VariableKey[_deserialize_key(VariableKey, res, x...) for x in variables]
-    aux_variable_keys =
-        AuxVarKey[_deserialize_key(AuxVarKey, res, x...) for x in aux_variables]
-    expression_keys =
-        ExpressionKey[_deserialize_key(ExpressionKey, res, x...) for x in expressions]
-    function merge_results(store)
-        merge!(
-            get_cached_variables(res),
-            _read_results(
-                res,
-                variable_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_duals(res),
-            _read_results(
-                res,
-                dual_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_parameters(res),
-            _read_results(
-                res,
-                parameter_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_aux_variables(res),
-            _read_results(
-                res,
-                aux_variable_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-        merge!(
-            get_cached_expressions(res),
-            _read_results(
-                res,
-                expression_keys,
-                res.results_timestamps,
-                store,
-            ),
-        )
-    end
+    count = max(count, length(get_results_timestamps(res)))
+    new_timestamps = _process_timestamps(res, initial_time, count)
 
-    if res.store isa InMemorySimulationStore
-        merge_results(res.store)
-    else
-        simulation_store_path = joinpath(res.execution_path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
-            merge_results(store)
-        end
+    for (key_type, new_items) in [
+        (ConstraintKey, duals),
+        (ParameterKey, parameters),
+        (VariableKey, variables),
+        (AuxVarKey, aux_variables),
+        (ExpressionKey, expressions),
+    ]
+        new_keys = key_type[_deserialize_key(key_type, res, x...) for x in new_items]
+        existing_results = get_cached_results(res, key_type)
+        total_keys = union(collect(keys(existing_results)), new_keys)
+        # _read_results checks the cache to eliminate unnecessary re-reads
+        merge!(existing_results, _read_results(res, total_keys, new_timestamps, store))
     end
+    set_results_timestamps!(res, new_timestamps)
 
     return nothing
 end

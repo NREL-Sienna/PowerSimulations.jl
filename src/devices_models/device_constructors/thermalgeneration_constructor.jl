@@ -819,7 +819,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
-    devices = get_available_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(
         container,
@@ -902,7 +902,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
-    devices = get_available_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -963,7 +963,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
-    devices = get_available_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(
         container,
@@ -1030,7 +1030,7 @@ function construct_device!(
     model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
-    devices = get_available_components(PSY.ThermalMultiStart, sys)
+    devices = get_available_components(model, sys)
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 

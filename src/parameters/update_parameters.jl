@@ -111,7 +111,7 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
     device_model = get_model(template, V)
-    components = get_available_components(device_model, filter_func)
+    components = get_available_components(device_model, get_system(model))
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
