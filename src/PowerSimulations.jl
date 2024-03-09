@@ -354,6 +354,7 @@ import InfrastructureSystems.Optimization:
 import InfrastructureSystems.Optimization: get_aux_variable_values, get_dual_values,
     get_objective_value, get_variable_values, read_aux_variables, read_variables,
     serialize_results
+import InfrastructureSystems.Optimization: encode_key_as_string, should_write_resulting_value
 export get_name
 export get_model_base_power
 export get_optimizer_stats

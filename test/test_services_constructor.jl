@@ -29,7 +29,7 @@
     ]
     found_vars = 0
     for (k, var_array) in IS.get_optimization_container(get_internal(model)).variables
-        if PSI.encode_key(k) in reserve_variables
+        if IS.Optimization.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -65,7 +65,7 @@ end
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11,
     ]
     for (k, var_array) in IS.get_optimization_container(get_internal(model)).variables
-        if PSI.encode_key(k) in reserve_variables
+        if IS.Optimization.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -364,7 +364,7 @@ end
     ]
     found_vars = 0
     for (k, var_array) in IS.get_optimization_container(get_internal(model)).variables
-        if PSI.encode_key(k) in reserve_variables
+        if IS.Optimization.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -382,7 +382,7 @@ end
     found_constraints = 0
 
     for (k, _) in IS.get_optimization_container(get_internal(model)).constraints
-        if PSI.encode_key(k) in participation_constraints
+        if IS.Optimization.encode_key(k) in participation_constraints
             found_constraints += 1
         end
     end

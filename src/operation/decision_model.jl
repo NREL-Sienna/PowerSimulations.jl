@@ -266,7 +266,7 @@ function init_model_store_params!(model::DecisionModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
-    IS.set_store_params!(get_internal(model), store_parameters)
+    IS.Optimization.set_store_params!(get_internal(model), store_params)
     return
 end
 
@@ -394,7 +394,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     IS.get_optimization_container(get_internal(model)).built_for_recurrent_solves =
         was_built_for_recurrent_solves
     internal = get_internal(model)
-    IS.set_ic_model_container!(internal, nothing)
+    IS.Optimization.set_ic_model_container!(internal, nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
@@ -446,7 +446,7 @@ function solve!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = configure_logging(get_internal(model), file_mode)
+    logger = IS.Optimization.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
     optimizer = get(kwargs, :optimizer, nothing)
     try
         Logging.with_logger(logger) do
@@ -454,7 +454,7 @@ function solve!(
                 initialize_storage!(
                     get_store(model),
                     get_optimization_container(model),
-                    get_store_parameters(model),
+                    get_store_params(model),
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)

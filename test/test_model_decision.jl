@@ -110,7 +110,7 @@ end
     var_index = get_all_variable_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
-        @test index_tuple[1] == PSI.encode_key(key)
+        @test index_tuple[1] == IS.Optimization.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
         val1 = get_variable_index(model, moi_index)
@@ -367,7 +367,7 @@ end
     for (constraint_key, constraint_bounds) in model_bounds
         _check_constraint_bounds(
             constraint_bounds,
-            valid_model_bounds[PSI.encode_key(constraint_key)],
+            valid_model_bounds[IS.Optimization.encode_key(constraint_key)],
         )
     end
 end
@@ -392,7 +392,7 @@ end
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(
             variable_bounds,
-            valid_model_bounds[PSI.encode_key(variable_key)],
+            valid_model_bounds[IS.Optimization.encode_key(variable_key)],
         )
     end
 end
