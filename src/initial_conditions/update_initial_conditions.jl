@@ -7,7 +7,7 @@ function _update_initial_conditions!(
         return
     end
     container = get_optimization_container(model)
-    model_resolution = get_resolution(get_store_parameters(model))
+    model_resolution = get_resolution(get_store_params(model))
     ini_conditions_vector = get_initial_condition(container, key)
     timestamp = get_current_timestamp(model)
     previous_values = get_condition.(ini_conditions_vector)

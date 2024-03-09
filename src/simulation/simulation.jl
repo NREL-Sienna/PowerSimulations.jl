@@ -434,7 +434,7 @@ function _initialize_problem_storage!(
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
-        decision_model_store_params[model_name] = get_store_parameters(model)
+        decision_model_store_params[model_name] = get_store_params(model)
         num_executions = executions_by_model[model_name]
         num_rows = num_executions * get_steps(sim)
         dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)
@@ -456,7 +456,7 @@ function _initialize_problem_storage!(
         )
     else
         emulation_model_store_params =
-            OrderedDict(Symbol(get_name(em)) => em.internal.store_parameters)
+            OrderedDict(Symbol(get_name(em)) => get_store_params(em))
     end
 
     em_model_req = _get_emulation_store_requirements(sim)

@@ -705,7 +705,7 @@ function compute_conflict!(container::OptimizationContainer)
                 @info "Conflict Index returned empty for $key"
                 continue
             else
-                conflict[encode_key(key)] = conflict_indices
+                conflict[IS.Optimization.encode_key(key)] = conflict_indices
             end
         end
 
@@ -752,14 +752,14 @@ function serialize_metadata!(container::OptimizationContainer, output_dir::Strin
         keys(container.expressions),
     ))
         encoded_key = encode_key_as_string(key)
-        if IS.has_container_key(container.metadata, encoded_key)
+        if IS.Optimization.has_container_key(container.metadata, encoded_key)
             # Constraints and Duals can store the same key.
             IS.@assert_op key == get_container_key(container.metadata, encoded_key)
         end
-        add_container_key!(container.metadata, encoded_key, key)
+        IS.Optimization.add_container_key!(container.metadata, encoded_key, key)
     end
 
-    filename = _make_metadata_filename(output_dir)
+    filename = IS.Optimization._make_metadata_filename(output_dir)
     Serialization.serialize(filename, container.metadata)
     @debug "Serialized container keys to $filename" _group = IS.LOG_GROUP_SERIALIZATION
 end
@@ -782,11 +782,11 @@ end
 
 function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
     if haskey(container, key)
-        @error "$(encode_key(key)) is already stored" sort!(encode_key.(keys(container)))
+        @error "$(IS.Optimization.encode_key(key)) is already stored" sort!(IS.Optimization.encode_key.(keys(container)))
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value
-    @debug "Added container entry $(typeof(key)) $(encode_key(key))" _group =
+    @debug "Added container entry $(typeof(key)) $(IS.Optimization.encode_key(key))" _group =
         LOG_GROUP_OPTIMZATION_CONTAINER
     return
 end
@@ -854,8 +854,8 @@ end
 function get_variable(container::OptimizationContainer, key::VariableKey)
     var = get(container.variables, key, nothing)
     if var === nothing
-        name = encode_key(key)
-        keys = encode_key.(get_variable_keys(container))
+        name = IS.Optimization.encode_key(key)
+        keys = IS.Optimization.encode_key.(get_variable_keys(container))
         throw(IS.InvalidValue("variable $name is not stored. $keys"))
     end
     return var
@@ -896,8 +896,8 @@ end
 function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     aux = get(container.aux_variables, key, nothing)
     if aux === nothing
-        name = encode_key(key)
-        keys = encode_key.(get_aux_variable_keys(container))
+        name = IS.Optimization.encode_key(key)
+        keys = IS.Optimization.encode_key.(get_aux_variable_keys(container))
         throw(IS.InvalidValue("Auxiliary variable $name is not stored. $keys"))
     end
     return aux
@@ -975,8 +975,8 @@ end
 function get_constraint(container::OptimizationContainer, key::ConstraintKey)
     var = get(container.constraints, key, nothing)
     if var === nothing
-        name = encode_key(key)
-        keys = encode_key.(get_constraint_keys(container))
+        name = IS.Optimization.encode_key(key)
+        keys = IS.Optimization.encode_key.(get_constraint_keys(container))
         throw(IS.InvalidValue("constraint $name is not stored. $keys"))
     end
 
@@ -1179,7 +1179,7 @@ end
 function get_parameter(container::OptimizationContainer, key::ParameterKey)
     param_container = get(container.parameters, key, nothing)
     if param_container === nothing
-        name = encode_key(key)
+        name = IS.Optimization.encode_key(key)
         throw(
             IS.InvalidValue(
                 "parameter $name is not stored. $(collect(keys(container.parameters)))",

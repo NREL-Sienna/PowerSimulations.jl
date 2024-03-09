@@ -7,14 +7,14 @@ warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
     get_optimization_container(model).built_for_recurrent_solves
-get_constraints(model::OperationModel) = IS.get_constraints(get_internal(model))
-get_execution_count(model::OperationModel) = IS.get_execution_count(get_internal(model))
-get_executions(model::OperationModel) = IS.get_executions(get_internal(model))
+get_constraints(model::OperationModel) = IS.Optimization.get_constraints(get_internal(model))
+get_execution_count(model::OperationModel) = IS.Optimization.get_execution_count(get_internal(model))
+get_executions(model::OperationModel) = IS.Optimization.get_executions(get_internal(model))
 get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
 get_internal(model::OperationModel) = model.internal
 
 function get_jump_model(model::OperationModel)
-    return get_jump_model(IS.get_container(get_internal(model)))
+    return get_jump_model(IS.Optimization.get_container(get_internal(model)))
 end
 
 get_name(model::OperationModel) = model.name
@@ -48,6 +48,7 @@ get_status(model::OperationModel) = IS.Optimization.get_status(get_internal(mode
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_log_file(model::OperationModel) = joinpath(get_output_dir(model), PROBLEM_LOG_FILENAME)
+get_store_params(model::OperationModel) = IS.Optimization.get_store_params(get_internal(model))
 get_output_dir(model::OperationModel) = IS.Optimization.get_output_dir(get_internal(model))
 get_initial_conditions_file(model::OperationModel) =
     joinpath(get_output_dir(model), "initial_conditions.bin")
@@ -59,7 +60,7 @@ get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
 get_initial_conditions(model::OperationModel) =
     get_initial_conditions(get_optimization_container(model))
 
-get_interval(model::OperationModel) = get_store_parameters(model).interval
+get_interval(model::OperationModel) = get_store_params(model).interval
 get_run_status(model::OperationModel) = model.simulation_info.run_status
 set_run_status!(model::OperationModel, status) = model.simulation_info.run_status = status
 get_time_series_cache(model::OperationModel) = IS.get_time_series_cache(get_internal(model))
@@ -142,7 +143,7 @@ function advance_execution_count!(model::OperationModel)
 end
 
 function build_initial_conditions!(model::OperationModel)
-    @assert IS.get_ic_model_container(get_internal(model)) === nothing
+    @assert IS.Optimization.get_ic_model_container(get_internal(model)) === nothing
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
@@ -162,7 +163,7 @@ end
 function write_initial_conditions_data!(model::OperationModel)
     write_initial_conditions_data!(
         get_optimization_container(model),
-        IS.get_ic_model_container(get_internal(model)),
+        IS.Optimization.get_ic_model_container(get_internal(model)),
     )
     return
 end
@@ -213,25 +214,25 @@ function handle_initial_conditions!(model::OperationModel)
             build_initial_conditions!(model)
             initialize!(model)
         end
-        IS.set_ic_model_container!(get_internal(model), nothing)
+        IS.Optimization.set_ic_model_container!(get_internal(model), nothing)
     end
     return
 end
 
 function initialize!(model::OperationModel)
     container = get_optimization_container(model)
-    if IS.get_ic_model_container(get_internal(model)) === nothing
+    if IS.Optimization.get_ic_model_container(get_internal(model)) === nothing
         return
     end
     @info "Solving Initialization Model for $(get_name(model))"
-    status = solve_impl!(IS.get_ic_model_container(get_internal(model)), get_system(model))
+    status = solve_impl!(IS.Optimization.get_ic_model_container(get_internal(model)), get_system(model))
     if status == RunStatus.FAILED
         error("Model failed to initialize")
     end
 
     write_initial_conditions_data!(
         container,
-        IS.get_ic_model_container(get_internal(model)),
+        IS.Optimization.get_ic_model_container(get_internal(model)),
     )
     init_file = get_initial_conditions_file(model)
     Serialization.serialize(init_file, get_initial_conditions_data(container))
