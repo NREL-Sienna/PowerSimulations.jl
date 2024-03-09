@@ -90,7 +90,7 @@ function ProblemResults(model::DecisionModel)
         expression_values,
         optimizer_stats,
         get_metadata(get_optimization_container(model)),
-        IS.strip_module_name(typeof(model)),
+        string(nameof(typeof(model))),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
@@ -131,7 +131,7 @@ function ProblemResults(model::EmulationModel)
         expression,
         optimizer_stats,
         get_metadata(container),
-        IS.strip_module_name(typeof(model)),
+        string((typeof(model))),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end

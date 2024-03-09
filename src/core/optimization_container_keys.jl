@@ -19,8 +19,8 @@ function encode_symbol(
     meta::String = CONTAINER_KEY_EMPTY_META,
 ) where {T <: Union{PSY.Component, PSY.System}, U}
     meta_ = isempty(meta) ? meta : _DELIMITER * meta
-    T_ = replace(replace(IS.strip_module_name(T), "{" => _DELIMITER), "}" => "")
-    return Symbol("$(IS.strip_module_name(string(U)))$(_DELIMITER)$(T_)" * meta_)
+    T_ = replace(replace(string(nameof(T)), "{" => _DELIMITER), "}" => "")
+    return Symbol("$(nameof(U))$(_DELIMITER)$(T_)" * meta_)
 end
 
 function check_meta_chars(meta)

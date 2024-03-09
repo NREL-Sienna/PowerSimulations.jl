@@ -280,7 +280,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
     table = Matrix{Any}(undef, length(sim_models.decision_models), length(header))
     for (ix, model) in enumerate(sim_models.decision_models)
         table[ix, 1] = string(get_name(model))
-        table[ix, 2] = IS.strip_module_name(string(_get_model_type(model)))
+        table[ix, 2] = string(nameof(_get_model_type(model)))
         table[ix, 3] = string(get_status(model))
         table[ix, 4] = get_output_dir(model)
     end
@@ -300,7 +300,7 @@ function _show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwa
         table = Matrix{Any}(undef, 1, length(header))
         table[1, 1] = string(get_name(sim_models.emulation_model))
         table[1, 2] =
-            IS.strip_module_name(string(_get_model_type(sim_models.emulation_model)))
+            string(nameof(_get_model_type(sim_models.emulation_model)))
         table[1, 3] = string(get_status(sim_models.emulation_model))
         table[1, 4] = get_output_dir(sim_models.emulation_model)
 
