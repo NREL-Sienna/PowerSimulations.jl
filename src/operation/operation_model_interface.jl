@@ -306,12 +306,14 @@ function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
     end
 
     optimizer_name = JuMP.solver_name(jump_model)
-    @info "Solving $(get_name(model)) with optimizer = $optimizer_name"
+    @info "$(get_name(model)) optimizer set to: $optimizer_name"
     settings = get_settings(model)
     if get_check_numerical_bounds(settings)
-        _check_numerical_bounds(model)
+        @info "Checking Numerical Bounds"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Numerical Bounds Check" begin
+            _check_numerical_bounds(model)
+        end
     end
-
     return
 end
 
