@@ -28,7 +28,7 @@ end
 function update_coefficient_bounds(
     v::ConstraintBounds,
     constraint::JuMP.ScalarConstraint,
-    idx::Idx,
+    idx::Int
 )
     update_numerical_bounds(v.coefficient, constraint.func, idx::Int)
     return
