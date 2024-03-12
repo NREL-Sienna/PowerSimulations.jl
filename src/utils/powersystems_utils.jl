@@ -83,7 +83,6 @@ function get_available_components(
 end
 
 make_system_filename(sys::PSY.System) = "system-$(IS.get_uuid(sys)).json"
-make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"
 
 function check_hvdc_line_limits_consistency(
     d::Union{PSY.TwoTerminalHVDCLine, PSY.TModelHVDCLine},

@@ -159,7 +159,7 @@ function get_system!(results::SimulationProblemResults; kwargs...)
         results.execution_path,
         "problems",
         results.problem,
-        make_system_filename(results.system_uuid),
+        IS.Optimization.make_system_filename(results.system_uuid),
     )
 
     # This flag should remain unpublished because it should never be needed
@@ -246,14 +246,6 @@ end
 
 get_container_fields(x::SimulationProblemResults) =
     (:aux_variables, :duals, :expressions, :parameters, :variables)
-
-function _validate_keys(existing_keys, result_keys)
-    diff = setdiff(result_keys, existing_keys)
-    if !isempty(diff)
-        throw(IS.InvalidValue("These keys are not stored: $diff"))
-    end
-    return
-end
 
 """
 Return the final values for the requested variables for each time step for a problem.
@@ -678,81 +670,6 @@ function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
         "r",
     ) do store
         _read_optimizer_stats(res, store)
-    end
-end
-
-"""
-Save the realized results to CSV files for all variables, paramaters, duals, auxiliary variables,
-expressions, and optimizer statistics.
-
-# Arguments
-
-  - `res::Union{OptimizationProblemResults, SimulationProblmeResults`: Results
-  - `save_path::AbstractString` : path to save results (defaults to simulation path)
-"""
-function export_realized_results(res::SimulationProblemResults)
-    save_path = mkpath(joinpath(res.results_output_folder, "export"))
-    return export_realized_results(res, save_path)
-end
-
-function export_realized_results(
-    res::Union{OptimizationProblemResults, SimulationProblemResults},
-    save_path::AbstractString,
-)
-    if !isdir(save_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid."))
-    end
-    write_data(read_results_with_keys(res, list_variable_keys(res)), save_path)
-    !isempty(list_dual_keys(res)) &&
-        write_data(
-            read_results_with_keys(res, list_dual_keys(res)),
-            save_path;
-            name = "dual",
-        )
-    !isempty(list_parameter_keys(res)) && write_data(
-        read_results_with_keys(res, list_parameter_keys(res)),
-        save_path;
-        name = "parameter",
-    )
-    !isempty(list_aux_variable_keys(res)) && write_data(
-        read_results_with_keys(res, list_aux_variable_keys(res)),
-        save_path;
-        name = "aux_variable",
-    )
-    !isempty(list_expression_keys(res)) && write_data(
-        read_results_with_keys(res, list_expression_keys(res)),
-        save_path;
-        name = "expression",
-    )
-    export_optimizer_stats(res, save_path)
-    files = readdir(save_path)
-    compute_file_hash(save_path, files)
-    @info("Files written to $save_path folder.")
-    return save_path
-end
-
-"""
-Save the optimizer statistics to CSV or JSON
-
-# Arguments
-
-  - `res::Union{OptimizationProblemResults, SimulationProblmeResults`: Results
-  - `directory::AbstractString` : target directory
-  - `format = "CSV"` : can be "csv" or "json
-"""
-function export_optimizer_stats(
-    res::Union{OptimizationProblemResults, SimulationProblemResults},
-    directory::AbstractString;
-    format = "csv",
-)
-    data = read_optimizer_stats(res)
-    isnothing(data) && return
-    if uppercase(format) == "CSV"
-        CSV.write(joinpath(directory, "optimizer_stats.csv"), data)
-    elseif uppercase(format) == "JSON"
-        JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(to_dict(data)))
-    else
-        throw(error("writing optimizer stats only supports csv or json formats"))
     end
 end
 

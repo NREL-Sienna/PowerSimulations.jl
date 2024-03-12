@@ -30,9 +30,9 @@ const NETWORKS_FOR_TESTING = [
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(model).pm !== nothing
         # TODO: Change test
-        # @test :nodal_balance_active in keys(ps_IS.get_optimization_container(get_internal(model)).expressions)
+        # @test :nodal_balance_active in keys(PSI.get_optimization_container(model).expressions)
     end
 end
 
@@ -381,7 +381,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(model).pm !== nothing
     end
 end
 
@@ -425,7 +425,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(model).pm !== nothing
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -728,6 +728,6 @@ end
         ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(model).pm !== nothing
     end
 end

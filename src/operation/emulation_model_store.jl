@@ -165,7 +165,9 @@ function write_optimizer_stats!(
 end
 
 function read_optimizer_stats(store::EmulationModelStore)
-    return DataFrames.DataFrame([to_namedtuple(x) for x in values(store.optimizer_stats)])
+    return DataFrames.DataFrame([
+        IS.to_namedtuple(x) for x in values(store.optimizer_stats)
+    ])
 end
 
 function get_last_recorded_row(x::EmulationModelStore, key::OptimizationContainerKey)

@@ -12,7 +12,7 @@ function OptimizationProblemResults(model::DecisionModel)
     end
 
     timestamps = get_timestamps(model)
-    optimizer_stats = to_dataframe(get_optimizer_stats(model))
+    optimizer_stats = IS.Optimization.to_dataframe(get_optimizer_stats(model))
 
     aux_variable_values =
         Dict(x => read_aux_variable(model, x) for x in list_aux_variable_keys(model))

@@ -28,7 +28,7 @@
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve11
     ]
     found_vars = 0
-    for (k, var_array) in IS.get_optimization_container(get_internal(model)).variables
+    for (k, var_array) in PSI.get_optimization_container(model).variables
         if IS.Optimization.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
@@ -64,7 +64,7 @@ end
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve1,
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11,
     ]
-    for (k, var_array) in IS.get_optimization_container(get_internal(model)).variables
+    for (k, var_array) in PSI.get_optimization_container(model).variables
         if IS.Optimization.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
@@ -324,7 +324,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     # set manually to test cases for simulation
-    IS.get_optimization_container(get_internal(model)).built_for_recurrent_solves = true
+    PSI.get_optimization_container(model).built_for_recurrent_solves = true
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, 456, 0, 120, 264, 24, false)
 end
@@ -363,7 +363,7 @@ end
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve11
     ]
     found_vars = 0
-    for (k, var_array) in IS.get_optimization_container(get_internal(model)).variables
+    for (k, var_array) in PSI.get_optimization_container(model).variables
         if IS.Optimization.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
@@ -381,7 +381,7 @@ end
 
     found_constraints = 0
 
-    for (k, _) in IS.get_optimization_container(get_internal(model)).constraints
+    for (k, _) in PSI.get_optimization_container(model).constraints
         if IS.Optimization.encode_key(k) in participation_constraints
             found_constraints += 1
         end

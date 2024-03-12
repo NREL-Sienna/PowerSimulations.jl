@@ -55,6 +55,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     template::AbstractProblemTemplate
     sys::PSY.System
     internal::IS.Optimization.ModelInternal
+    simulation_info::SimulationInfo
     store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
@@ -74,7 +75,15 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
         internal = IS.Optimization.ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
-        new{M}(name, template, sys, internal, EmulationModelStore(), Dict{String, Any}())
+        new{M}(
+            name,
+            template,
+            sys,
+            internal,
+            SimulationInfo(),
+            EmulationModelStore(),
+            Dict{String, Any}(),
+        )
     end
 end
 
@@ -221,7 +230,7 @@ validate_template(::EmulationModel{<:EmulationProblem}) = nothing
 validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
 
 function get_current_time(model::EmulationModel)
-    execution_count = IS.get_execution_count(get_internal(model))
+    execution_count = IS.Optimization.get_execution_count(get_internal(model))
     initial_time = get_initial_time(model)
     resolution = get_resolution(get_store_params(model))
     return initial_time + resolution * execution_count
@@ -233,15 +242,18 @@ function init_model_store_params!(model::EmulationModel)
     interval = resolution = PSY.get_time_series_resolution(system)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    set_store_params!(model, ModelStoreParams(
-        num_executions,
-        1,
-        interval,
-        resolution,
-        base_power,
-        sys_uuid,
-        get_metadata(get_optimization_container(model)),
-    ))
+    IS.Optimization.set_store_params!(
+        get_internal(model),
+        ModelStoreParams(
+            num_executions,
+            1,
+            interval,
+            resolution,
+            base_power,
+            sys_uuid,
+            get_metadata(get_optimization_container(model)),
+        ),
+    )
     return
 end
 
@@ -313,7 +325,11 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = IS.Optimization.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     try
         Logging.with_logger(logger) do
             try
@@ -350,7 +366,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
-    IS.set_optimization_container!(
+    IS.Optimization.set_container!(
         get_internal(model),
         OptimizationContainer(
             get_system(model),
@@ -379,7 +395,7 @@ function update_parameters!(model::EmulationModel, data::DatasetContainer{InMemo
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
         obj_func = get_objective_expression(get_optimization_container(model))
-        set_synchronized_status(obj_func, true)
+        set_synchronized_status!(obj_func, true)
     end
     return
 end
@@ -422,7 +438,7 @@ function run_impl!(
 )
     _pre_solve_model_checks(model, optimizer)
     internal = get_internal(model)
-    executions = IS.get_executions(internal)
+    executions = IS.Optimization.get_executions(internal)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
         error("Call build! again")
@@ -493,7 +509,11 @@ function run!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = IS.Optimization.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     try
         Logging.with_logger(logger) do
             try

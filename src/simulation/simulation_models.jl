@@ -159,14 +159,14 @@ end
 
 function initialize_simulation_internals!(models::SimulationModels, uuid::Base.UUID)
     for (ix, model) in enumerate(get_decision_models(models))
-        info = SimulationInfo(ix, uuid)
-        set_simulation_info!(model, info)
+        set_simulation_number!(model, ix)
+        set_sequence_uuid!(model, uuid)
     end
     em = get_emulation_model(models)
     if em !== nothing
         ix = length(get_decision_models(models)) + 1
-        info = SimulationInfo(ix, uuid)
-        set_simulation_info!(em, info)
+        set_simulation_number!(model, ix)
+        set_sequence_uuid!(model, uuid)
     end
     return
 end

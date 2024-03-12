@@ -61,9 +61,12 @@ end
 
 function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     internal = get_internal(model)
-    IS.set_ic_model_container(internal, deepcopy(get_optimization_container(model)))
+    IS.Optimization.set_ic_model_container!(
+        internal,
+        deepcopy(get_optimization_container(model)),
+    )
     ic_container = IS.Optimization.get_ic_model_container(internal)
-    ic_settings = deepcopy(ic_container)
+    ic_settings = deepcopy(get_settings(ic_container))
     main_problem_horizon = get_horizon(ic_settings)
     # TODO: add an interface to allow user to configure initial_conditions problem
     ic_container.JuMPmodel = _make_init_jump_model(ic_settings)
@@ -81,7 +84,11 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
         false,
     )
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
-        build_impl!(IS.Optimization.get_ic_model_container(internal), template, get_system(model))
+        build_impl!(
+            IS.Optimization.get_ic_model_container(internal),
+            template,
+            get_system(model),
+        )
     end
     return
 end
