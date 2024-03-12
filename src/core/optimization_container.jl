@@ -38,7 +38,7 @@ function get_objective_expression(v::ObjectiveFunction)
 end
 get_sense(v::ObjectiveFunction) = v.sense
 is_synchronized(v::ObjectiveFunction) = v.synchronized
-set_synchronized_status(v::ObjectiveFunction, value) = v.synchronized = value
+set_synchronized_status!(v::ObjectiveFunction, value) = v.synchronized = value
 reset_variant_terms(v::ObjectiveFunction) = v.variant_terms = zero(JuMP.AffExpr)
 has_variant_terms(v::ObjectiveFunction) = !iszero(v.variant_terms)
 set_sense!(v::ObjectiveFunction, sense::MOI.OptimizationSense) = v.sense = sense
@@ -129,10 +129,10 @@ get_base_power(container::OptimizationContainer) = container.base_power
 get_constraints(container::OptimizationContainer) = container.constraints
 
 function cost_function_unsynch(container::OptimizationContainer)
-    obj_func = PSI.get_objective_expression(container)
-    if has_variant_terms(obj_func) && PSI.is_synchronized(container)
-        PSI.set_synchronized_status(obj_func, false)
-        PSI.reset_variant_terms(obj_func)
+    obj_func = get_objective_expression(container)
+    if has_variant_terms(obj_func) && is_synchronized(container)
+        set_synchronized_status!(obj_func, false)
+        reset_variant_terms(obj_func)
     end
     return
 end
@@ -754,7 +754,8 @@ function serialize_metadata!(container::OptimizationContainer, output_dir::Strin
         encoded_key = encode_key_as_string(key)
         if IS.Optimization.has_container_key(container.metadata, encoded_key)
             # Constraints and Duals can store the same key.
-            IS.@assert_op key == get_container_key(container.metadata, encoded_key)
+            IS.@assert_op key ==
+                          IS.Optimization.get_container_key(container.metadata, encoded_key)
         end
         IS.Optimization.add_container_key!(container.metadata, encoded_key, key)
     end
@@ -782,7 +783,9 @@ end
 
 function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
     if haskey(container, key)
-        @error "$(IS.Optimization.encode_key(key)) is already stored" sort!(IS.Optimization.encode_key.(keys(container)))
+        @error "$(IS.Optimization.encode_key(key)) is already stored" sort!(
+            IS.Optimization.encode_key.(keys(container)),
+        )
         throw(IS.InvalidValue("$key is already stored"))
     end
     container[key] = value

@@ -257,7 +257,7 @@ end
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
+    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
     results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3

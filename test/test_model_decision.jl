@@ -219,15 +219,15 @@ end
     @test isa(get_objective_value(res), Float64)
     @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
     @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
-    @test isa(PSI.get_total_cost(res), Float64)
+    @test isa(IS.Optimization.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
     @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
     @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
     @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
-    @test isa(PSI.get_resolution(res), Dates.TimePeriod)
-    @test isa(get_system(res), PSY.System)
-    @test length(get_timestamps(res)) == 24
+    @test isa(IS.Optimization.get_resolution(res), Dates.TimePeriod)
+    @test isa(IS.Optimization.get_source_data(res), PSY.System)
+    @test length(IS.Optimization.get_timestamps(res)) == 24
 end
 
 @testset "Solve DecisionModelModel with auto-build" begin
@@ -325,13 +325,13 @@ end
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
+    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
     results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
-    @test get_system(results3) === nothing
-    set_system!(results3, get_system(results1))
-    @test get_system(results3) !== nothing
+    @test IS.Optimization.get_source_data(results3) === nothing
+    IS.Optimization.set_source_data!(results3, IS.Optimization.get_source_data(results1))
+    @test IS.Optimization.get_source_data(results3) !== nothing
 
     exp_file =
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
@@ -339,7 +339,7 @@ end
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
     @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
 
-    @test length(readdir(export_realized_results(results1))) === 6
+    @test length(readdir(IS.Optimization.export_realized_results(results1))) === 6
 end
 
 @testset "Test Numerical Stability of Constraints" begin

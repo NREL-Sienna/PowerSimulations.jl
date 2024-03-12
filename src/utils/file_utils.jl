@@ -17,15 +17,6 @@ function read_dataframe(filename::AbstractString)
 end
 
 """
-Return the SHA 256 hash of a file.
-"""
-function compute_sha256(filename::AbstractString)
-    return open(filename) do io
-        return bytes2hex(SHA.sha256(io))
-    end
-end
-
-"""
 Return the key for the given value
 """
 function find_key_with_value(d, value)
@@ -35,26 +26,8 @@ function find_key_with_value(d, value)
     error("dict does not have value == $value")
 end
 
-function compute_file_hash(path::String, files::Vector{String})
-    data = Dict("files" => [])
-    for file in files
-        file_path = joinpath(path, file)
-        # Don't put the path in the file so that we can move results directories.
-        file_info = Dict("filename" => file, "hash" => compute_sha256(file_path))
-        push!(data["files"], file_info)
-    end
-
-    open(joinpath(path, HASH_FILENAME), "w") do io
-        write(io, JSON.json(data))
-    end
-end
-
-function compute_file_hash(path::String, file::String)
-    return compute_file_hash(path, [file])
-end
-
 function read_file_hashes(path)
-    data = open(joinpath(path, HASH_FILENAME), "r") do io
+    data = open(joinpath(path, IS.HASH_FILENAME), "r") do io
         JSON.parse(io)
     end
 
@@ -81,7 +54,7 @@ function check_file_integrity(path::String)
         filename = file_info["filename"]
         @info "checking integrity of $filename"
         expected_hash = file_info["hash"]
-        actual_hash = compute_sha256(joinpath(path, filename))
+        actual_hash = IS.compute_sha256(joinpath(path, filename))
         if expected_hash != actual_hash
             @error "hash mismatch for file" filename expected_hash actual_hash
             matched = false
@@ -96,7 +69,5 @@ function check_file_integrity(path::String)
         )
     end
 end
-
-to_namedtuple(val) = (; (x => getfield(val, x) for x in fieldnames(typeof(val)))...)
 
 convert_for_path(x::Dates.DateTime) = replace(string(x), ":" => "-")

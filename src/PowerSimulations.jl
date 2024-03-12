@@ -188,7 +188,6 @@ export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
-export export_realized_results
 export get_num_partitions
 
 ## Enums
@@ -350,11 +349,19 @@ import InfrastructureSystems.Optimization: OptimizationContainerKey, VariableKey
 import InfrastructureSystems.Optimization: VariableType, ConstraintType, AuxVariableType,
     ParameterType, InitialConditionType, ExpressionType
 import InfrastructureSystems.Optimization:
-    OptimizerStats, ArgumentConstructStage, ModelConstructStage
+    get_entry_type, get_component_type, get_optimizer_stats
+import InfrastructureSystems.Optimization: read_variable, read_dual, read_parameter,
+    read_aux_variable, read_expression, read_variables, read_duals, read_parameters,
+    read_aux_variables, read_expressions, list_variable_names, list_dual_names,
+    list_parameter_names, list_aux_variable_names, list_expression_names
+import InfrastructureSystems.Optimization: ArgumentConstructStage, ModelConstructStage
 import InfrastructureSystems.Optimization: get_aux_variable_values, get_dual_values,
-    get_objective_value, get_variable_values, read_aux_variables, read_variables,
-    serialize_results
-import InfrastructureSystems.Optimization: encode_key_as_string, should_write_resulting_value
+    get_objective_value, get_variable_values, read_aux_variables, read_variables
+import InfrastructureSystems.Optimization: serialize_results, export_results
+import InfrastructureSystems.Optimization:
+    encode_key_as_string, should_write_resulting_value, convert_result_to_natural_units
+import InfrastructureSystems.Optimization:
+    get_model_base_power, export_realized_results, export_optimizer_stats
 export get_name
 export get_model_base_power
 export get_optimizer_stats
@@ -380,7 +387,6 @@ import TimeSeries
 import DataFrames
 import JSON
 import CSV
-import SHA
 import HDF5
 import PrettyTables
 

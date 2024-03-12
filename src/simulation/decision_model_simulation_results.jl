@@ -287,7 +287,7 @@ function _read_results(
 
     _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
-    _validate_keys(existing_keys, result_keys)
+    IS.Optimization._validate_keys(existing_keys, result_keys)
     cached_results = get_cached_results(res, eltype(result_keys))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
         @debug "reading results from SimulationsResults cache"  # NOTE tests match on this

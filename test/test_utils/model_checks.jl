@@ -102,7 +102,7 @@ function psi_ptdf_lmps(res::OptimizationProblemResults, ptdf)
     flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
     μ = Matrix{Float64}(flow_duals[:, PNM.get_branch_ax(ptdf)])
 
-    buses = get_components(Bus, get_system(res))
+    buses = get_components(Bus, IS.Optimization.get_source_data(res))
     lmps = OrderedDict()
     for bus in buses
         lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]
@@ -421,7 +421,7 @@ function check_initialization_constraint_count(
     filter_func = PSY.get_available,
     meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
-    container = IS.Optimization.get_ic_model_container(get_internal(model))
+    container = IS.Optimization.get_ic_model_container(PSI.get_internal(model))
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
     constraint = PSI.get_constraint(container, S(), T, meta)

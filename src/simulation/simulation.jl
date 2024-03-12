@@ -74,7 +74,7 @@ mutable struct Simulation
         initial_time = nothing,
     )
         for model in get_decision_models(models)
-            if model.simulation_info.sequence_uuid != sequence.uuid
+            if get_sequence_uuid(model) != sequence.uuid
                 model_name = get_name(model)
                 throw(
                     IS.ConflictingInputsError(
@@ -85,7 +85,7 @@ mutable struct Simulation
         end
         em = get_emulation_model(models)
         if em !== nothing
-            if em.simulation_info.sequence_uuid != sequence.uuid
+            if get_sequence_uuid(em) != sequence.uuid
                 model_name = get_name(em)
                 throw(
                     IS.ConflictingInputsError(
@@ -1086,7 +1086,7 @@ function execute!(sim::Simulation; kwargs...)
     end
 
     if !in_memory
-        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+        IS.compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     end
 
     serialize_status(sim)

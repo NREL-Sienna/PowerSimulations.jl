@@ -7,8 +7,10 @@ warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
     get_optimization_container(model).built_for_recurrent_solves
-get_constraints(model::OperationModel) = IS.Optimization.get_constraints(get_internal(model))
-get_execution_count(model::OperationModel) = IS.Optimization.get_execution_count(get_internal(model))
+get_constraints(model::OperationModel) =
+    IS.Optimization.get_constraints(get_internal(model))
+get_execution_count(model::OperationModel) =
+    IS.Optimization.get_execution_count(get_internal(model))
 get_executions(model::OperationModel) = IS.Optimization.get_executions(get_internal(model))
 get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
 get_internal(model::OperationModel) = model.internal
@@ -35,7 +37,7 @@ end
 
 function get_resolution(model::OperationModel)
     resolution = PSY.get_time_series_resolution(get_system(model))
-    return IS.Optimization.time_period_conversion(resolution)
+    return IS.time_period_conversion(resolution)
 end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
@@ -43,12 +45,18 @@ get_settings(model::OperationModel) = get_optimization_container(model).settings
 get_optimizer_stats(model::OperationModel) =
     get_optimizer_stats(get_optimization_container(model))
 get_simulation_info(model::OperationModel) = model.simulation_info
-get_simulation_number(model::OperationModel) = model.simulation_info.number
+get_simulation_number(model::OperationModel) = get_number(get_simulation_info(model))
+set_simulation_number!(model::OperationModel, val) =
+    set_number!(get_simulation_info(model), val)
+get_sequence_uuid(model::OperationModel) = get_sequence_uuid(get_simulation_info(model))
+set_sequence_uuid!(model::OperationModel, val) =
+    set_sequence_uuid!(get_simulation_info(model), val)
 get_status(model::OperationModel) = IS.Optimization.get_status(get_internal(model))
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_log_file(model::OperationModel) = joinpath(get_output_dir(model), PROBLEM_LOG_FILENAME)
-get_store_params(model::OperationModel) = IS.Optimization.get_store_params(get_internal(model))
+get_store_params(model::OperationModel) =
+    IS.Optimization.get_store_params(get_internal(model))
 get_output_dir(model::OperationModel) = IS.Optimization.get_output_dir(get_internal(model))
 get_initial_conditions_file(model::OperationModel) =
     joinpath(get_output_dir(model), "initial_conditions.bin")
@@ -61,9 +69,11 @@ get_initial_conditions(model::OperationModel) =
     get_initial_conditions(get_optimization_container(model))
 
 get_interval(model::OperationModel) = get_store_params(model).interval
-get_run_status(model::OperationModel) = model.simulation_info.run_status
-set_run_status!(model::OperationModel, status) = model.simulation_info.run_status = status
-get_time_series_cache(model::OperationModel) = IS.get_time_series_cache(get_internal(model))
+get_run_status(model::OperationModel) = get_run_status(get_simulation_info(model))
+set_run_status!(model::OperationModel, status) =
+    set_run_status!(get_simulation_info(model), status)
+get_time_series_cache(model::OperationModel) =
+    IS.Optimization.get_time_series_cache(get_internal(model))
 empty_time_series_cache!(x::OperationModel) = empty!(get_time_series_cache(x))
 
 function get_current_timestamp(model::OperationModel)
@@ -117,7 +127,7 @@ set_console_level!(model::OperationModel, val) =
 set_file_level!(model::OperationModel, val) =
     IS.Optimization.set_file_level!(get_internal(model), val)
 function set_executions!(model::OperationModel, val::Int)
-    IS.set_executions!(get_internal(model), val)
+    IS.Optimization.set_executions!(get_internal(model), val)
     return
 end
 
@@ -205,7 +215,7 @@ function handle_initial_conditions!(model::OperationModel)
 
         if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
             set_initial_conditions_data!(
-                IS.get_optimization_container(get_internal(model)),
+                get_optimization_container(model),
                 Serialization.deserialize(serialized_initial_conditions_file),
             )
             @info "Deserialized initial_conditions_data"
@@ -225,7 +235,10 @@ function initialize!(model::OperationModel)
         return
     end
     @info "Solving Initialization Model for $(get_name(model))"
-    status = solve_impl!(IS.Optimization.get_ic_model_container(get_internal(model)), get_system(model))
+    status = solve_impl!(
+        IS.Optimization.get_ic_model_container(get_internal(model)),
+        get_system(model),
+    )
     if status == RunStatus.FAILED
         error("Model failed to initialize")
     end
@@ -341,7 +354,9 @@ function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
 end
 
 function _list_names(model::OperationModel, container_type)
-    return encode_keys_as_strings(list_keys(get_store(model), container_type))
+    return encode_keys_as_strings(
+        IS.Optimization.list_keys(get_store(model), container_type),
+    )
 end
 
 read_dual(model::OperationModel, key::ConstraintKey) = _read_results(model, key)
@@ -424,16 +439,19 @@ function instantiate_network_model(model::OperationModel)
 end
 
 list_aux_variable_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
 list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
-list_variable_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
+list_variable_keys(x::OperationModel) =
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
 list_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
-list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
+list_parameter_keys(x::OperationModel) =
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
 list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
-list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
+list_dual_keys(x::OperationModel) =
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_DUALS)
 list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
 list_expression_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
 list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
 
 function list_all_keys(x::OperationModel)

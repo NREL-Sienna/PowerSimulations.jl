@@ -14,7 +14,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     template::AbstractProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, IS.Optimization.ModelInternal}
-    simulation_info::Union{Nothing, SimulationInfo}
+    simulation_info::SimulationInfo
     store::DecisionModelStore
     ext::Dict{String, Any}
 end
@@ -83,7 +83,7 @@ function DecisionModel{M}(
         template_,
         sys,
         internal,
-        nothing,
+        SimulationInfo(),
         DecisionModelStore(),
         Dict{String, Any}(),
     )
@@ -382,7 +382,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
-    IS.set_optimization_container!(
+    IS.Optimization.set_container!(
         get_internal(model),
         OptimizationContainer(
             get_system(model),
@@ -391,7 +391,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
             PSY.Deterministic,
         ),
     )
-    IS.get_optimization_container(get_internal(model)).built_for_recurrent_solves =
+    get_optimization_container(model).built_for_recurrent_solves =
         was_built_for_recurrent_solves
     internal = get_internal(model)
     IS.Optimization.set_ic_model_container!(internal, nothing)
@@ -446,7 +446,11 @@ function solve!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = IS.Optimization.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     optimizer = get(kwargs, :optimizer, nothing)
     try
         Logging.with_logger(logger) do
@@ -537,7 +541,7 @@ function update_parameters!(
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
         obj_func = get_objective_expression(get_optimization_container(model))
-        set_synchronized_status(obj_func, true)
+        set_synchronized_status!(obj_func, true)
     end
     return
 end
