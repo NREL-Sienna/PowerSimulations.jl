@@ -651,3 +651,19 @@ end
         rate_limit2w,
     )
 end
+
+@testset "Test Line and Monitored Line models with slacks" begin
+    system = PSB.build_system(PSITestSystems, "c_sys5_ml")
+    set_rate!(PSY.get_component(Line, system, "2"), 1.5)
+    for (model, optimizer) in NETWORKS_FOR_TESTING
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(model; PTDF_matrix = PTDF(system)),
+        )
+        set_device_model!(template, DeviceModel(Line, StaticBranch; use_slacks = true))
+        set_device_model!(template, DeviceModel(MonitoredLine, StaticBranch; use_slacks = true))
+        model_m = DecisionModel(template, system; optimizer = optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
+    end
+end
