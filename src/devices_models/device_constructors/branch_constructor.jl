@@ -208,14 +208,12 @@ function construct_device!(
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
-            network_model,
             devices,
             StaticBranch(),
         )
         add_variables!(
             container,
             FlowActivePowerSlackLowerBound,
-            network_model,
             devices,
             StaticBranch(),
         )
@@ -375,24 +373,24 @@ end
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(
-    ::OptimizationContainer,
-    system::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
+    devices = get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+
     if get_use_slacks(device_model)
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
-            network_model,
             devices,
             StaticBranch(),
         )
         add_variables!(
             container,
             FlowActivePowerSlackLowerBound,
-            network_model,
             devices,
             StaticBranch(),
         )
