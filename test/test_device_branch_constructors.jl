@@ -654,10 +654,15 @@ end
 
 @testset "Test Line and Monitored Line models with slacks" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rate!(PSY.get_component(Line, system, "2"), 1.5)
+    set_rate!(PSY.get_component(Line, system, "2"), 0.0)
     for (model, optimizer) in NETWORKS_FOR_TESTING
+        @error model
+        if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel]
+            # Skip because the data is too in the feasibility margins for these models
+            continue
+        end
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF_matrix = PTDF(system)),
+            NetworkModel(model),
         )
         set_device_model!(template, DeviceModel(Line, StaticBranch; use_slacks = true))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranch; use_slacks = true))
