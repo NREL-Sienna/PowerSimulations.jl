@@ -18,7 +18,7 @@ GLPK_optimizer =
 scs_solver = JuMP.optimizer_with_attributes(
     SCS.Optimizer,
     "max_iters" => 100000,
-    "eps" => 1e-4,
+    "eps_rel" => 1e-4,
     "verbose" => 0,
 )
 
