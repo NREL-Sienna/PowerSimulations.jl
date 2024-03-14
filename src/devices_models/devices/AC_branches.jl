@@ -297,7 +297,7 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, <:AbstractBranchFormulation},
+    device_model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
     rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
@@ -317,15 +317,30 @@ function add_constraints!(
     radial_network_reduction = get_radial_network_reduction(network_model)
     radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
 
-    for r in rating_data
-        if r[1] ∈ radial_branches_names
+    use_slacks = get_use_slacks(device_model)
+    if use_slacks
+        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
+    end
+
+    for (branch_name, branch_rate) in rating_data
+        if branch_name ∈ radial_branches_names
             continue
         end
-        for t in time_steps
-            constraint[r[1], t] = JuMP.@constraint(
-                get_jump_model(container),
-                var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
-            )
+        if use_slacks
+            for t in time_steps
+                constraint[branch_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    var1[branch_name, t]^2 + var2[branch_name, t]^2 -
+                    slack_ub[branch_name, t] <= branch_rate^2
+                )
+            end
+        else
+            for t in time_steps
+                constraint[branch_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
+                )
+            end
         end
     end
     return
@@ -571,6 +586,14 @@ function add_constraints!(
     U <: AbstractBranchFormulation,
     V <: PM.AbstractActivePowerModel,
 }
+    error("slacks here")
+
+    use_slacks = get_use_slacks(device_model)
+    if use_slacks
+        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
+    end
+
     add_range_constraints!(
         container,
         FlowLimitFromToConstraint,
@@ -676,6 +699,28 @@ function objective_function!(
     container::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, <:AbstractBranchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ACBranch}
+    if get_use_slacks(device_model)
+        variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        # Use device names because there might be a radial network reduction
+        for name in axes(variable_up, 1)
+            for t in get_time_steps(container)
+                add_to_objective_invariant_expression!(
+                    container,
+                    variable_up[name, t] * CONSTRAINT_VIOLATION_SLACK_COST,
+                )
+            end
+        end
+    end
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    ::IS.FlattenIteratorWrapper{T},
+    device_model::DeviceModel{T, <:AbstractBranchFormulation},
+    ::Type{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
     if get_use_slacks(device_model)
         variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
