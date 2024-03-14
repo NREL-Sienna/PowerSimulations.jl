@@ -242,10 +242,9 @@ validate_time_series(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
-    execution_count = IS.get_execution_count(get_internal(model))
+    execution_count = get_execution_count(model)
     initial_time = get_initial_time(model)
-    store_params = get_store_parameter(model)
-    interval = get_interval(store_params)
+    interval = get_interval(model)
     return initial_time + interval * execution_count
 end
 

@@ -161,5 +161,5 @@ function _should_export(exports::SimulationResultsExport, tstamp, model, field_n
     end
 
     problem_exports = get_problem_exports(exports, model)
-    return _should_export(problem_exports, field_name, name)
+    return IS.Optimization._should_export(problem_exports, field_name, name)
 end

@@ -20,11 +20,11 @@ function get_time_series_values!(
     end
 
     cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name, multiplier_id)
+    key = IS.TimeSeriesCacheKey(IS.get_uuid(component), T, name, multiplier_id)
     if haskey(cache, key)
         ts_cache = cache[key]
     else
-        ts_cache = make_time_series_cache(
+        ts_cache = IS.make_time_series_cache(
             time_series_type,
             component,
             name,
@@ -61,11 +61,11 @@ function get_time_series_values!(
     end
 
     cache = get_time_series_cache(model)
-    key = TimeSeriesCacheKey(IS.get_uuid(component), T, name, multiplier_id)
+    key = IS.TimeSeriesCacheKey(IS.get_uuid(component), T, name, multiplier_id)
     if haskey(cache, key)
         ts_cache = cache[key]
     else
-        ts_cache = make_time_series_cache(
+        ts_cache = IS.make_time_series_cache(
             T,
             component,
             name,

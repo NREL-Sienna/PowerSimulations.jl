@@ -69,6 +69,7 @@ get_system_uuid(results::PSI.SimulationProblemResults) = results.system_uuid
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
+get_output_dir(res::SimulationProblemResults) = res.results_output_folder
 
 get_results_timestamps(result::SimulationProblemResults) = result.results_timestamps
 function set_results_timestamps!(
@@ -241,7 +242,7 @@ function _deserialize_key(
     results::SimulationProblemResults,
     args...,
 ) where {T <: OptimizationContainerKey}
-    return make_key(T, args...)
+    return IS.Optimization.make_key(T, args...)
 end
 
 get_container_fields(x::SimulationProblemResults) =
