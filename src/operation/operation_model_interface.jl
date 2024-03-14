@@ -136,6 +136,11 @@ function set_execution_count!(model::OperationModel, val::Int)
     return
 end
 
+set_initial_time!(model::OperationModel, val::Dates.DateTime) =
+    set_initial_time!(get_settings(model), val)
+
+get_simulation_info(model::OperationModel, val) = model.simulation_info = val
+
 function set_status!(model::OperationModel, status::BuildStatus)
     IS.Optimization.set_status!(get_internal(model), status)
     return

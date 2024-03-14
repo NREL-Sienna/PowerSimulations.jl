@@ -69,5 +69,3 @@ function check_file_integrity(path::String)
         )
     end
 end
-
-convert_for_path(x::Dates.DateTime) = replace(string(x), ":" => "-")

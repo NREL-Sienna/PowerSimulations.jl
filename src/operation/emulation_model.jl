@@ -230,9 +230,9 @@ validate_template(::EmulationModel{<:EmulationProblem}) = nothing
 validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
 
 function get_current_time(model::EmulationModel)
-    execution_count = IS.Optimization.get_execution_count(get_internal(model))
+    execution_count = get_execution_count(model)
     initial_time = get_initial_time(model)
-    resolution = get_resolution(get_store_params(model))
+    resolution = get_resolution(model)
     return initial_time + resolution * execution_count
 end
 

@@ -379,8 +379,8 @@ import InfrastructureSystems.Optimization: should_export_variable, should_export
 import InfrastructureSystems.Optimization:
     get_entry_type, get_component_type, get_output_dir
 import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
-    encode_key_as_string, should_write_resulting_value, convert_result_to_natural_units,
-    to_matrix
+    encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
+    convert_result_to_natural_units, to_matrix
 
 export get_name
 export get_model_base_power

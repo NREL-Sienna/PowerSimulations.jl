@@ -165,8 +165,8 @@ function initialize_simulation_internals!(models::SimulationModels, uuid::Base.U
     em = get_emulation_model(models)
     if em !== nothing
         ix = length(get_decision_models(models)) + 1
-        set_simulation_number!(model, ix)
-        set_sequence_uuid!(model, uuid)
+        set_simulation_number!(em, ix)
+        set_sequence_uuid!(em, uuid)
     end
     return
 end
