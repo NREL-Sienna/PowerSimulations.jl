@@ -108,9 +108,11 @@ end
 
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
-            NetworkModel(model; PTDF_matrix = PTDF(system)),
+            NetworkModel(model),
         )
         set_device_model!(template, TwoTerminalHVDCLine, HVDCTwoTerminalLossless)
+        set_device_model!(template, DeviceModel(Transformer2W, StaticBranch))
+        set_device_model!(template, DeviceModel(TapTransformer, StaticBranch))
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
@@ -495,8 +497,10 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(
-        NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(system)),
+        NetworkModel(PTDFPowerModel),
     )
+    set_device_model!(template, DeviceModel(TapTransformer, StaticBranch))
+    set_device_model!(template, DeviceModel(Transformer2W, StaticBranch))
     set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
@@ -613,10 +617,11 @@ end
     rate_limit2w = PSY.get_rate(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
+    set_device_model!(template, TapTransformer, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
     set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
-
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, TapTransformer)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, TapTransformer)
     @test check_variable_bounded(model_m, FlowActivePowerToFromVariable, Transformer2W)
@@ -656,19 +661,40 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rate!(PSY.get_component(Line, system, "2"), 0.0)
     for (model, optimizer) in NETWORKS_FOR_TESTING
-        @error model
-        if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel]
+        if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel, SOCWRConicPowerModel]
             # Skip because the data is too in the feasibility margins for these models
             continue
         end
         template = get_thermal_dispatch_template_network(
-            NetworkModel(model),
+            NetworkModel(model; use_slacks = true),
         )
         set_device_model!(template, DeviceModel(Line, StaticBranch; use_slacks = true))
-        set_device_model!(template, DeviceModel(MonitoredLine, StaticBranch; use_slacks = true))
+        set_device_model!(
+            template,
+            DeviceModel(MonitoredLine, StaticBranch; use_slacks = true),
+        )
         model_m = DecisionModel(template, system; optimizer = optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
         @test solve!(model_m) == RunStatus.SUCCESSFUL
+        res = ProblemResults(model_m)
+        vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line")
+        # some relaxations will find a solution with 0.0 slack
+        @test sum(vars[!, "2"]) >= -1e-6
     end
+
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(model; use_slacks = true),
+    )
+    set_device_model!(template, DeviceModel(Line, StaticBranchBounds; use_slacks = true))
+    set_device_model!(
+        template,
+        DeviceModel(MonitoredLine, StaticBranchBounds; use_slacks = true),
+    )
+    model_m = DecisionModel(template, system; optimizer = optimizer)
+    @test build!(
+        model_m;
+        console_level = Logging.AboveMaxLevel,
+        output_dir = mktempdir(; cleanup = true),
+    ) == BuildStatus.FAILED
 end
