@@ -227,15 +227,15 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     device_model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ACBranch}
+    network_model::NetworkModel{U},
+) where {T <: PSY.ACBranch, U <: PM.AbstractActivePowerModel}
     @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
 
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
     add_feedforward_constraints!(container, device_model, devices)
-    objective_function!(container, devices, device_model)
+    objective_function!(container, devices, device_model, U)
     add_constraint_dual!(container, sys, device_model)
     return
 end
@@ -288,7 +288,7 @@ function construct_device!(
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
-    objective_function!(container, devices, device_model)
+    objective_function!(container, devices, device_model, PTDFPowerModel)
     add_constraint_dual!(container, sys, device_model)
     return
 end
@@ -379,18 +379,14 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
 
     if get_use_slacks(device_model)
+        # Only one slack is needed for this formulations in AC
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
-            devices,
-            StaticBranch(),
-        )
-        add_variables!(
-            container,
-            FlowActivePowerSlackLowerBound,
             devices,
             StaticBranch(),
         )
@@ -404,6 +400,53 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     device_model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{U},
+) where {T <: PSY.ACBranch, U <: PM.AbstractPowerModel}
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+    add_constraints!(
+        container,
+        RateLimitConstraintFromTo,
+        devices,
+        device_model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        RateLimitConstraintToFrom,
+        devices,
+        device_model,
+        network_model,
+    )
+    objective_function!(container, devices, device_model, U)
+    add_constraint_dual!(container, sys, device_model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, StaticBranchBounds},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ACBranch}
+    if get_use_slacks(device_model)
+        if get_use_slacks(device_model)
+            throw(
+                ArgumentError(
+                    "StaticBranchBounds is not compatible with the use of slacks",
+                ),
+            )
+        end
+    end
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
@@ -423,7 +466,6 @@ function construct_device!(
         device_model,
         network_model,
     )
-    objective_function!(container, devices, device_model)
     add_constraint_dual!(container, sys, device_model)
     return
 end
@@ -431,17 +473,9 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
-    ::DeviceModel{T, StaticBranchBounds},
-    ::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: PSY.ACBranch} end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
     ::ModelConstructStage,
     device_model::DeviceModel{T, StaticBranchBounds},
-    network_model::NetworkModel{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(T, sys, get_attribute(device_model, "filter_function"))
