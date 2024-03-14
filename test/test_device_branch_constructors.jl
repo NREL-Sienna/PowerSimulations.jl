@@ -684,14 +684,14 @@ end
     end
 
     template = get_thermal_dispatch_template_network(
-        NetworkModel(model; use_slacks = true),
+        NetworkModel(PTDFPowerModel; use_slacks = true),
     )
     set_device_model!(template, DeviceModel(Line, StaticBranchBounds; use_slacks = true))
     set_device_model!(
         template,
         DeviceModel(MonitoredLine, StaticBranchBounds; use_slacks = true),
     )
-    model_m = DecisionModel(template, system; optimizer = optimizer)
+    model_m = DecisionModel(template, system; optimizer = fast_ipopt_optimizer)
     @test build!(
         model_m;
         console_level = Logging.AboveMaxLevel,
