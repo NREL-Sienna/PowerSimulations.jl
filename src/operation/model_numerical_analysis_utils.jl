@@ -6,16 +6,16 @@
 mutable struct NumericalBounds
     min::Float64
     max::Float64
-    min_index::Int
-    max_index::Int
+    min_index::Any
+    max_index::Any
 end
 
 NumericalBounds() = NumericalBounds(Inf, -Inf, nothing, nothing)
 
 set_min!(v::NumericalBounds, value::Real) = v.min = value
 set_max!(v::NumericalBounds, value::Real) = v.max = value
-set_min_index!(v::NumericalBounds, idx::Int) = v.min_index = idx
-set_max_index!(v::NumericalBounds, idx::Int) = v.max_index = idx
+set_min_index!(v::NumericalBounds, idx) = v.min_index = idx
+set_max_index!(v::NumericalBounds, idx) = v.max_index = idx
 
 mutable struct ConstraintBounds
     coefficient::NumericalBounds
@@ -28,13 +28,13 @@ end
 function update_coefficient_bounds(
     v::ConstraintBounds,
     constraint::JuMP.ScalarConstraint,
-    idx::Int
+    idx,
 )
-    update_numerical_bounds(v.coefficient, constraint.func, idx::Int)
+    update_numerical_bounds(v.coefficient, constraint.func, idx)
     return
 end
 
-function update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx::Int)
+function update_rhs_bounds(v::ConstraintBounds, constraint::JuMP.ScalarConstraint, idx)
     update_numerical_bounds(v.rhs, constraint.set, idx)
     return
 end
@@ -46,7 +46,7 @@ mutable struct VariableBounds
     end
 end
 
-function update_variable_bounds(v::VariableBounds, variable::JuMP.VariableRef, idx::Int)
+function update_variable_bounds(v::VariableBounds, variable::JuMP.VariableRef, idx)
     if JuMP.is_binary(variable)
         set_min!(v.bounds, 0.0)
         update_numerical_bounds(v.bounds, 1.0, idx)
@@ -61,7 +61,7 @@ function update_variable_bounds(v::VariableBounds, variable::JuMP.VariableRef, i
     return
 end
 
-function update_numerical_bounds(v::NumericalBounds, value::Real, idx::Int)
+function update_numerical_bounds(v::NumericalBounds, value::Real, idx)
     if !isapprox(value, 0.0)
         if v.min > abs(value)
             set_min!(v, value)
@@ -74,37 +74,32 @@ function update_numerical_bounds(v::NumericalBounds, value::Real, idx::Int)
     return
 end
 
-function update_numerical_bounds(
-    bonuds::NumericalBounds,
-    func::JuMP.GenericAffExpr,
-    idx::Int,
-)
+function update_numerical_bounds(bonuds::NumericalBounds, func::JuMP.GenericAffExpr, idx)
     for coefficient in values(func.terms)
         update_numerical_bounds(bonuds, coefficient, idx)
     end
     return
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.LessThan, idx::Int)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.LessThan, idx)
     return update_numerical_bounds(bonuds, func.upper, idx)
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.GreaterThan, idx::Int)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.GreaterThan, idx)
     return update_numerical_bounds(bonuds, func.lower, idx)
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.EqualTo, idx::Int)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.EqualTo, idx)
     return update_numerical_bounds(bonuds, func.value, idx)
 end
 
-function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.Interval, idx::Int)
+function update_numerical_bounds(bonuds::NumericalBounds, func::MOI.Interval, idx)
     update_numerical_bounds(bonuds, func.upper, idx)
-    update_numerical_bounds(bonuds, func.lower, idx)
-    return
+    return update_numerical_bounds(bonuds, func.lower, idx)
 end
 
 # Default fallback for unsupported constraints.
-update_numerical_bounds(::NumericalBounds, func, idx::Int) = nothing
+update_numerical_bounds(::NumericalBounds, func, idx) = nothing
 
 function get_constraint_numerical_bounds(model::OperationModel)
     if !is_built(model)
@@ -112,6 +107,7 @@ function get_constraint_numerical_bounds(model::OperationModel)
     end
     bounds = ConstraintBounds()
     for (const_key, constraint_array) in get_constraints(get_optimization_container(model))
+        # TODO: handle this at compile and not at run time
         if isa(constraint_array, SparseAxisArray)
             for idx in eachindex(constraint_array)
                 constraint_array[idx] == 0.0 && continue
