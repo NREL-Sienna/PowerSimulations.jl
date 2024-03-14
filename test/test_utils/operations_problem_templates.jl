@@ -89,8 +89,8 @@ function get_template_dispatch_with_network(network = PTDFPowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(template, Line, StaticBranch)
-    set_device_model!(template, Transformer2W, StaticBranch)
-    set_device_model!(template, TapTransformer, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    set_device_model!(template, TapTransformer, StaticBranchBounds)
     set_device_model!(template, TwoTerminalHVDCLine, HVDCTwoTerminalLossless)
     return template
 end
