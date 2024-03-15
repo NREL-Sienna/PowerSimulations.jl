@@ -102,7 +102,7 @@ function psi_ptdf_lmps(res::OptimizationProblemResults, ptdf)
     flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
     μ = Matrix{Float64}(flow_duals[:, PNM.get_branch_ax(ptdf)])
 
-    buses = get_components(Bus, IS.Optimization.get_source_data(res))
+    buses = get_components(Bus, get_system(res))
     lmps = OrderedDict()
     for bus in buses
         lmps[get_name(bus)] = μ * ptdf[:, get_number(bus)]

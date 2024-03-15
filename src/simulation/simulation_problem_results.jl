@@ -166,7 +166,7 @@ function get_system!(
         system = PSY.System(file; time_series_read_only = true)
         @info "De-serialized the system from files."
     else
-        system = get_system_fallback!(results)
+        system = get_system_fallback(results)
     end
 
     set_system!(results, system)
