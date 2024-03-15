@@ -1,35 +1,79 @@
 function get_available_components(
-    ::Type{T},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     sys::PSY.System,
-    ::Nothing = nothing,
 ) where {T <: PSY.Component}
-    return PSY.get_components(PSY.get_available, T, sys)
+    subsystem = get_subsystem(model)
+    filter_function = get_attribute(model, "filter_function")
+    if filter_function === nothing
+        return PSY.get_components(
+            PSY.get_available,
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    else
+        return PSY.get_components(
+            x -> PSY.get_available(x) && filter_function(x),
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    end
 end
 
 function get_available_components(
-    ::Type{T},
+    model::ServiceModel{T, <:AbstractServiceFormulation},
     sys::PSY.System,
-    f::Function,
 ) where {T <: PSY.Component}
-    return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys)
+    subsystem = get_subsystem(model)
+    filter_function = get_attribute(model, "filter_function")
+    if filter_function === nothing
+        return PSY.get_components(
+            PSY.get_available,
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    else
+        return PSY.get_components(
+            x -> PSY.get_available(x) && filter_function(x),
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    end
 end
 
 function get_available_components(
+    model::NetworkModel,
     ::Type{PSY.ACBus},
     sys::PSY.System,
-    ::Nothing = nothing,
 )
+    subsystem = get_subsystem(model)
     return PSY.get_components(
         x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
         PSY.ACBus,
-        sys,
+        sys;
+        subsystem_name = subsystem,
+    )
+end
+
+function get_available_components(
+    model::NetworkModel,
+    ::Type{T},
+    sys::PSY.System,
+) where {T <: PSY.Component}
+    subsystem = get_subsystem(model)
+    return PSY.get_components(
+        T,
+        sys;
+        subsystem_name = subsystem,
     )
 end
 
 function get_available_components(
     ::Type{PSY.RegulationDevice{T}},
     sys::PSY.System,
-    ::Nothing,
 ) where {T <: PSY.Component}
     return PSY.get_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
@@ -85,10 +129,11 @@ end
 function _validate_compact_pwl_data(
     min::Float64,
     max::Float64,
-    data::Vector{Tuple{Float64, Float64}},
+    data::PSY.PiecewiseLinearPointData,
     base_power::Float64,
 )
-    if isapprox(max - min, data[end][2] / base_power) && iszero(data[1][2])
+    data = PSY.get_points(data)
+    if isapprox(max - min, last(data).x / base_power) && iszero(first(data).x)
         return COMPACT_PWL_STATUS.VALID
     else
         return COMPACT_PWL_STATUS.INVALID
@@ -97,7 +142,7 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.ThermalGen,
-    data::Vector{Tuple{Float64, Float64}},
+    data::PSY.PiecewiseLinearPointData,
     base_power::Float64,
 )
     min = PSY.get_active_power_limits(d).min
@@ -107,9 +152,11 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.Component,
-    ::Vector{Tuple{Float64, Float64}},
+    ::PSY.PiecewiseLinearPointData,
     ::Float64,
 )
     @warn "Validation of compact pwl data is not implemented for $(typeof(d))."
     return COMPACT_PWL_STATUS.UNDETERMINED
 end
+
+get_breakpoint_upper_bounds = PSY.get_x_lengths

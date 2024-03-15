@@ -117,8 +117,6 @@ export template_agc_reserve_deployment
 export EconomicDispatchProblem
 export UnitCommitmentProblem
 export AGCReserveDeployment
-export run_economic_dispatch
-export run_unit_commitment
 export set_device_model!
 export set_service_model!
 export set_network_model!
@@ -431,6 +429,7 @@ include("core/parameters.jl")
 include("core/service_model.jl")
 include("core/device_model.jl")
 include("core/variables.jl")
+include("core/event_keys.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/expressions.jl")
@@ -548,9 +547,6 @@ include("network_models/network_constructor.jl")
 # Templates for Operation Problems
 include("operation/operation_problem_templates.jl")
 
-# Operations Decision Problems
-include("operation/decision_problems.jl")
-
 # Utils
 include("utils/printing.jl")
 include("utils/file_utils.jl")
@@ -561,13 +557,5 @@ include("utils/powersystems_utils.jl")
 include("utils/recorder_events.jl")
 include("utils/datetime_utils.jl")
 include("utils/generate_valid_formulations.jl")
-
-# TODO: These exist for backward compatibility and need to be deprecated and removed.
-read_aux_variables_with_keys(args...; kwargs...) =
-    read_results_with_keys(args...; kwargs...)
-read_duals_with_keys(args...; kwargs...) = read_results_with_keys(args...; kwargs...)
-read_expressions_with_keys(args...; kwargs...) = read_results_with_keys(args...; kwargs...)
-read_parameters_with_keys(args...; kwargs...) = read_results_with_keys(args...; kwargs...)
-read_variables_with_keys(args...; kwargs...) = read_results_with_keys(args...; kwargs...)
 
 end

@@ -11,7 +11,7 @@ struct GenericOpProblem <: DefaultDecisionProblem end
 
 mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
-    template::ProblemTemplate
+    template::AbstractProblemTemplate
     sys::PSY.System
     internal::Union{Nothing, ModelInternal}
     store::DecisionModelStore
@@ -20,7 +20,7 @@ end
 
 """
     DecisionModel{M}(
-        template::ProblemTemplate,
+        template::AbstractProblemTemplate,
         sys::PSY.System,
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:DecisionProblem}
@@ -30,7 +30,7 @@ Build the optimization problem of type M with the specific system and template.
 # Arguments
 
   - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
+  - `template::AbstractProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
   - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
@@ -61,7 +61,7 @@ OpModel = DecisionModel(MockOperationProblem, template, system)
 ```
 """
 function DecisionModel{M}(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     settings::Settings,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
@@ -88,7 +88,7 @@ function DecisionModel{M}(
 end
 
 function DecisionModel{M}(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     name = nothing,
@@ -141,7 +141,7 @@ Build the optimization problem of type M with the specific system and template
 # Arguments
 
   - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
+  - `template::AbstractProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
 
@@ -154,7 +154,7 @@ problem = DecisionModel(MyOpProblemType, template, system, optimizer)
 """
 function DecisionModel(
     ::Type{M},
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
@@ -163,7 +163,7 @@ function DecisionModel(
 end
 
 function DecisionModel(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
@@ -268,8 +268,8 @@ end
 
 function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
-    _, _, forecast_count = PSY.get_time_series_counts(sys)
-    if forecast_count < 1
+    counts = PSY.get_time_series_counts(sys)
+    if counts.forecast_count < 1
         error(
             "The system does not contain forecast data. A DecisionModel can't be built.",
         )
@@ -290,7 +290,7 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         @info "Initializing Optimization Container For a DecisionModel"
         init_optimization_container!(
             get_optimization_container(model),
-            get_network_formulation(get_template(model)),
+            get_network_model(get_template(model)),
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
@@ -473,7 +473,6 @@ function solve!(
                 @info "\n$(RUN_OPERATION_MODEL_TIMER)\n"
             catch e
                 @error "Decision Problem solve failed" exception = (e, catch_backtrace())
-                # TODO: Run IIS here if the solve called failed
                 set_run_status!(model, RunStatus.FAILED)
             end
         end

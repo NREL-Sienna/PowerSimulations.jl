@@ -646,13 +646,17 @@ function _setup_simulation_partitions(sim::Simulation)
 
     open_store(HdfSimulationStore, get_store_dir(sim), "w") do store
         set_simulation_store!(sim, store)
-        _initialize_problem_storage!(
-            sim,
-            DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
-            MIN_CACHE_FLUSH_SIZE_MiB,
-        )
+        try
+            _initialize_problem_storage!(
+                sim,
+                DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
+                MIN_CACHE_FLUSH_SIZE_MiB,
+            )
+            _serialize_systems_to_store!(store, sim)
+        finally
+            set_simulation_store!(sim, nothing)
+        end
     end
-    set_simulation_store!(sim, nothing)
 end
 
 """
@@ -1056,6 +1060,10 @@ function execute!(sim::Simulation; kwargs...)
                     end
                     @info ("\n$(RUN_SIMULATION_TIMER)\n")
                     set_simulation_status!(sim, RunStatus.SUCCESSFUL)
+                    if isnothing(sim.internal.partitions)
+                        # Partitioned simulations serialize the systems once during build.
+                        _serialize_systems_to_store!(store, sim)
+                    end
                     log_cache_hit_percentages(store)
                 catch e
                     set_simulation_status!(sim, RunStatus.FAILED)
@@ -1138,6 +1146,18 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     Serialization.serialize(filename, obj)
     @info "Serialized simulation name = $(get_name(sim))" directory
     return directory
+end
+
+function _serialize_systems_to_store!(store::SimulationStore, sim::Simulation)
+    simulation_models = get_models(sim)
+    for dm in get_decision_models(simulation_models)
+        serialize_system!(store, get_system(dm))
+    end
+
+    em = get_emulation_model(simulation_models)
+    if !isnothing(em)
+        serialize_system!(store, get_system(em))
+    end
 end
 
 function deserialize_model(

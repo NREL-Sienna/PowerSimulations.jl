@@ -11,7 +11,7 @@ struct GenericEmulationProblem <: DefaultEmulationProblem end
 
 """
     EmulationModel{M}(
-        template::ProblemTemplate,
+        template::AbstractProblemTemplate,
         sys::PSY.System,
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:EmulationProblem}
@@ -21,7 +21,7 @@ Build the optimization problem of type M with the specific system and template.
 # Arguments
 
   - `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
+  - `template::AbstractProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
   - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
@@ -52,14 +52,14 @@ OpModel = EmulationModel(MockEmulationProblem, template, system)
 """
 mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
-    template::ProblemTemplate
+    template::AbstractProblemTemplate
     sys::PSY.System
     internal::ModelInternal
     store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
     function EmulationModel{M}(
-        template::ProblemTemplate,
+        template::AbstractProblemTemplate,
         sys::PSY.System,
         settings::Settings,
         jump_model::Union{Nothing, JuMP.Model} = nothing;
@@ -79,7 +79,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
 end
 
 function EmulationModel{M}(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     name = nothing,
@@ -131,7 +131,7 @@ Build the optimization problem of type M with the specific system and template
 # Arguments
 
   - `::Type{M} where M<:EmulationProblem`: The abstract Emulation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices,
+  - `template::AbstractProblemTemplate`: The model reference made up of transmission, devices,
     branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
@@ -145,7 +145,7 @@ problem = EmulationModel(MyEmProblemType, template, system, optimizer)
 """
 function EmulationModel(
     ::Type{M},
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
@@ -154,7 +154,7 @@ function EmulationModel(
 end
 
 function EmulationModel(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
@@ -247,8 +247,8 @@ end
 
 function validate_time_series(model::EmulationModel{<:DefaultEmulationProblem})
     sys = get_system(model)
-    _, ts_count, _ = PSY.get_time_series_counts(sys)
-    if ts_count < 1
+    counts = PSY.get_time_series_counts(sys)
+    if counts.static_time_series_count < 1
         error(
             "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
         )
@@ -270,7 +270,7 @@ function build_pre_step!(model::EmulationModel)
         @info "Initializing Optimization Container For an EmulationModel"
         init_optimization_container!(
             get_optimization_container(model),
-            get_network_formulation(get_template(model)),
+            get_network_model(get_template(model)),
             get_system(model),
         )
 

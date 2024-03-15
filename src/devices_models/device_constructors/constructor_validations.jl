@@ -1,9 +1,11 @@
 function validate_available_devices(
-    device_model::DeviceModel{T, <:AbstractDeviceFormulation},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     system::PSY.System,
 ) where {T <: PSY.Device}
     devices =
-        get_available_components(T, system, get_attribute(device_model, "filter_function"))
+        get_available_components(model,
+            system,
+        )
     if isempty(devices)
         return false
     end

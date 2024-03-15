@@ -336,7 +336,7 @@ end
 
 function init_optimization_container!(
     container::OptimizationContainer,
-    ::Type{T},
+    network_model::NetworkModel{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
     PSY.set_units_base_system!(sys, "SYSTEM_BASE")
@@ -358,10 +358,13 @@ function init_optimization_container!(
     container.time_steps = 1:get_horizon(settings)
 
     if T <: CopperPlatePowerModel || T <: AreaBalancePowerModel
-        total_number_of_devices = length(get_available_components(PSY.Device, sys))
+        total_number_of_devices =
+            length(get_available_components(network_model, PSY.Device, sys))
     else
-        total_number_of_devices = length(get_available_components(PSY.Device, sys))
-        total_number_of_devices += length(get_available_components(PSY.ACBranch, sys))
+        total_number_of_devices =
+            length(get_available_components(network_model, PSY.Device, sys))
+        total_number_of_devices +=
+            length(get_available_components(network_model, PSY.ACBranch, sys))
     end
 
     # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
@@ -671,23 +674,35 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     optimizer_stats = get_optimizer_stats(container)
 
     jump_model = get_jump_model(container)
-    _,
-    optimizer_stats.timed_solve_time,
-    optimizer_stats.solve_bytes_alloc,
-    optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
-    model_status = JuMP.primal_status(jump_model)
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        @error "Optimizer returned $model_status trying again"
-        JuMP.optimize!(jump_model)
-        model_status = JuMP.primal_status(jump_model)
-    end
 
-    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        @error "Optimizer returned $model_status getting conflict"
-        if get_calculate_conflict(get_settings(container))
-            compute_conflict!(container)
+    model_status = MOI.NO_SOLUTION::MOI.ResultStatusCode
+    conflict_status = MOI.COMPUTE_CONFLICT_NOT_CALLED
+
+    try_count = 0
+    while model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        _,
+        optimizer_stats.timed_solve_time,
+        optimizer_stats.solve_bytes_alloc,
+        optimizer_stats.sec_in_gc = @timed JuMP.optimize!(jump_model)
+        model_status = JuMP.primal_status(jump_model)
+
+        if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+            if get_calculate_conflict(get_settings(container))
+                @warn "Optimizer returned $model_status computing conflict"
+                conflict_status = compute_conflict!(container)
+                if conflict_status == MOI.CONFLICT_FOUND
+                    return RunStatus.FAILED
+                end
+            else
+                @warn "Optimizer returned $model_status trying optimize! again"
+            end
+
+            try_count += 1
+            if try_count > MAX_OPTIMIZE_TRIES
+                @error "Optimizer returned $model_status after $MAX_OPTIMIZE_TRIES optimize! attempts"
+                return RunStatus.FAILED
+            end
         end
-        return RunStatus.FAILED
     end
 
     status = RunStatus.SUCCESSFUL
@@ -705,15 +720,19 @@ end
 
 function compute_conflict!(container::OptimizationContainer)
     jump_model = get_jump_model(container)
+    settings = get_settings(container)
     JuMP.unset_silent(jump_model)
     jump_model.is_model_dirty = false
     conflict = container.infeasibility_conflict
     try
         JuMP.compute_conflict!(jump_model)
-        if MOI.get(jump_model, MOI.ConflictStatus()) != MOI.CONFLICT_FOUND
-            @error "No conflict could be found for the model. $(MOI.get(jump_model, MOI.ConflictStatus()))"
-
-            return
+        conflict_status = MOI.get(jump_model, MOI.ConflictStatus())
+        if conflict_status != MOI.CONFLICT_FOUND
+            @error "No conflict could be found for the model. Status: $conflict_status"
+            if !get_optimizer_solve_log_print(settings)
+                JuMP.set_silent(jump_model)
+            end
+            return conflict_status
         end
 
         for (key, field_container) in get_constraints(container)
@@ -725,7 +744,15 @@ function compute_conflict!(container::OptimizationContainer)
                 conflict[encode_key(key)] = conflict_indices
             end
         end
-        @error "$(conflict)"
+
+        msg = IOBuffer()
+        for (k, v) in conflict
+            PrettyTables.pretty_table(msg, v; header = [k])
+        end
+
+        @error "Constraints participating in conflict basis (IIS) \n\n$(String(take!(msg)))"
+
+        return conflict_status
     catch e
         jump_model.is_model_dirty = true
         if isa(e, MethodError)
@@ -735,7 +762,7 @@ function compute_conflict!(container::OptimizationContainer)
         end
     end
 
-    return
+    return MOI.NO_CONFLICT_EXISTS
 end
 
 function write_optimizer_stats!(container::OptimizationContainer)
@@ -908,7 +935,7 @@ function get_aux_variable(container::OptimizationContainer, key::AuxVarKey)
     aux = get(container.aux_variables, key, nothing)
     if aux === nothing
         name = encode_key(key)
-        keys = encode_key.(get_variable_keys(container))
+        keys = encode_key.(get_aux_variable_keys(container))
         throw(IS.InvalidValue("Auxiliary variable $name is not stored. $keys"))
     end
     return aux
