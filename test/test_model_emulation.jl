@@ -252,9 +252,9 @@ end
     results2 = OptimizationProblemResults(PSI.get_output_dir(model))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
-    @test IS.Optimization.get_source_data(results2) === nothing
+    @test get_system(results2) === nothing
     get_system!(results2)
-    @test IS.Optimization.get_source_data(results2) isa PSY.System
+    @test get_system(results2) isa PSY.System
 
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
@@ -263,9 +263,9 @@ end
     results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
-    @test IS.Optimization.get_source_data(results3) === nothing
-    IS.Optimization.set_source_data!(results3, IS.Optimization.get_source_data(results1))
-    @test IS.Optimization.get_source_data(results3) !== nothing
+    @test get_system(results3) === nothing
+    set_system!(results3, get_system(results1))
+    @test get_system(results3) !== nothing
 
     exp_file =
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
