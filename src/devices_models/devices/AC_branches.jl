@@ -290,6 +290,53 @@ function add_constraints!(
     return
 end
 
+function _constraint_without_slacks!(
+    container::OptimizationContainer,
+    constraint::JuMPConstraintArray,
+    rating_data::Vector{Tuple{String, Float64}},
+    time_steps::UnitRange{Int64},
+    radial_branches_names::Set{String},
+    var1::JuMPVariableArray,
+    var2::JuMPVariableArray,
+)
+    for (branch_name, branch_rate) in rating_data
+        if branch_name ∈ radial_branches_names
+            continue
+        end
+        for t in time_steps
+            constraint[branch_name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
+            )
+        end
+    end
+    return
+end
+
+function _constraint_with_slacks!(
+    container::OptimizationContainer,
+    constraint::JuMPConstraintArray,
+    rating_data::Vector{Tuple{String, Float64}},
+    time_steps::UnitRange{Int64},
+    radial_branches_names::Set{String},
+    var1::JuMPVariableArray,
+    var2::JuMPVariableArray,
+    slack_ub::JuMPVariableArray,
+)
+    for (branch_name, branch_rate) in rating_data
+        if branch_name ∈ radial_branches_names
+            continue
+        end
+        for t in time_steps
+            constraint[branch_name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var1[branch_name, t]^2 + var2[branch_name, t]^2 -
+                slack_ub[branch_name, t] <= branch_rate^2
+            )
+        end
+    end
+end
+
 """
 Add rate limit from to constraints for ACBranch with AbstractPowerModel
 """
@@ -320,29 +367,28 @@ function add_constraints!(
     use_slacks = get_use_slacks(device_model)
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
+        _constraint_with_slacks!(
+            container,
+            constraint,
+            rating_data,
+            time_steps,
+            radial_branches_names,
+            var1,
+            var2,
+            slack_ub,
+        )
     end
 
-    for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ radial_branches_names
-            continue
-        end
-        if use_slacks
-            for t in time_steps
-                constraint[branch_name, t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[branch_name, t]^2 + var2[branch_name, t]^2 -
-                    slack_ub[branch_name, t] <= branch_rate^2
-                )
-            end
-        else
-            for t in time_steps
-                constraint[branch_name, t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
-                )
-            end
-        end
-    end
+    _constraint_without_slacks!(
+        container,
+        constraint,
+        rating_data,
+        time_steps,
+        radial_branches_names,
+        var1,
+        var2,
+    )
+
     return
 end
 
