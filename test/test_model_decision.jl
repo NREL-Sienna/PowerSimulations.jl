@@ -331,7 +331,7 @@ end
     @test var1_a == var3
     @test IS.Optimization.get_source_data(results3) === nothing
     IS.Optimization.set_source_data!(results3, IS.Optimization.get_source_data(results1))
-    @test IS.Optimization.get_source_data(results3) !== nothing
+    @test IS.Optimization.get_source_data(results3) isa PSY.System
 
     exp_file =
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")

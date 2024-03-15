@@ -152,28 +152,46 @@ If the simulation was configured to serialize all systems to file then the retur
 will include all data. If that was not configured then the returned system will include
 all data except time series data.
 """
-function get_system!(results::SimulationProblemResults; kwargs...)
-    !isnothing(results.system) && return results.system
+function get_system!(
+    results::Union{OptimizationProblemResults, SimulationProblemResults};
+    kwargs...,
+)
+    !isnothing(get_system(results)) && return get_system(results)
 
-    file = joinpath(
-        results.execution_path,
-        "problems",
-        results.problem,
-        IS.Optimization.make_system_filename(results.system_uuid),
-    )
-
+    file = locate_system_file(results)
     # This flag should remain unpublished because it should never be needed
     # by the general audience.
-    if !get(kwargs, :use_h5_system, false) && isfile(file)
+    if !get(kwargs, :use_system_fallback, false) && isfile(file)
         system = PSY.System(file; time_series_read_only = true)
         @info "De-serialized the system from files."
     else
-        system = _deserialize_system(results, results.store)
+        system = get_system_fallback!(results)
     end
 
-    results.system = system
-    return results.system
+    set_system!(results, system)
+    return get_system(results)
 end
+
+get_system_fallback(results::SimulationProblemResults) =
+    _deserialize_system(results, results.store)
+get_system_fallback(results::OptimizationProblemResults) = error("Could not locate system")
+
+locate_system_file(results::SimulationProblemResults) = joinpath(
+    get_execution_path(results),
+    "problems",
+    get_model_name(results),
+    make_system_filename(results.system_uuid),
+)
+
+locate_system_file(results::OptimizationProblemResults) = joinpath(
+    IS.Optimization.get_results_dir(results),
+    make_system_filename(IS.Optimization.get_source_data_uuid(results)),
+)
+
+get_system(results::OptimizationProblemResults) = IS.Optimization.get_source_data(results)
+
+set_system!(results::OptimizationProblemResults, system) =
+    IS.Optimization.set_source_data!(results, system)
 
 function _deserialize_system(results::SimulationProblemResults, ::Nothing)
     open_store(
