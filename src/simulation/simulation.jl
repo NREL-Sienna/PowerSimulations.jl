@@ -274,7 +274,6 @@ function _initial_conditions_reconciliation!(
     has_mismatches = false
     @info "Reconciling initial conditions across models $(join(model_names, ", "))"
     # all_ic_keys: all the `ICKey`s that appear in any of the models
-    # TODO: incorporate requires_reconciliation
     all_ic_keys = union(keys.(get_initial_conditions.(models))...)
     # all_ic_values: Dict{ICKey, Dict{model_index, Dict{component_name, ic_value}}}
     all_ic_values = Dict()
@@ -298,7 +297,7 @@ function _initial_conditions_reconciliation!(
         @assert allequal(Set.(keys.(values(ic_vals_per_model)))) "For IC key $ic_key, not all models have the same components"
 
         # For each component in current ic_key, compare values across models
-        component_names = collect(keys(first(values(ic_vals_per_model))))
+        component_names = keys(first(values(ic_vals_per_model)))
         for component_name in component_names
             all_values = [result[component_name] for result in values(ic_vals_per_model)]
             ref_value = first(all_values)
