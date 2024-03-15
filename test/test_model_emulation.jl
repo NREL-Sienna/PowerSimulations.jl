@@ -249,10 +249,12 @@ end
     @test var1_a == var1_b
 
     # Results were automatically serialized here.
-    results2 = OptimizationProblemResults(joinpath(PSI.get_output_dir(model)))
+    results2 = OptimizationProblemResults(PSI.get_output_dir(model))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
-    @test get_system(results2) !== nothing
+    @test IS.Optimization.get_source_data(results2) === nothing
+    get_system!(results2)
+    @test IS.Optimization.get_source_data(results2) isa PSY.System
 
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")

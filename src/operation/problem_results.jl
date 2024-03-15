@@ -38,6 +38,7 @@ function OptimizationProblemResults(model::DecisionModel)
         optimizer_stats,
         get_metadata(get_optimization_container(model)),
         IS.strip_module_name(typeof(model)),
+        get_output_dir(model),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
@@ -79,6 +80,7 @@ function OptimizationProblemResults(model::EmulationModel)
         optimizer_stats,
         get_metadata(container),
         IS.strip_module_name(typeof(model)),
+        get_output_dir(model),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
