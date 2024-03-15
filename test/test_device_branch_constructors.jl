@@ -697,4 +697,21 @@ end
         console_level = Logging.AboveMaxLevel,
         output_dir = mktempdir(; cleanup = true),
     ) == BuildStatus.FAILED
+
+    template = get_thermal_dispatch_template_network(
+            NetworkModel(PTDFPowerModel; use_slacks = true),
+        )
+        set_device_model!(template, DeviceModel(Line, StaticBranch; use_slacks = true))
+        set_device_model!(
+            template,
+            DeviceModel(MonitoredLine, StaticBranch; use_slacks = true),
+        )
+        model_m = DecisionModel(template, system; optimizer = fast_ipopt_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.BuildStatus.BUILT
+        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        res = ProblemResults(model_m)
+        vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line")
+        # some relaxations will find a solution with 0.0 slack
+        @test sum(vars[!, "2"]) >= -1e-6
 end
