@@ -573,47 +573,6 @@ function get_min_max_limits(
 end
 
 """
-Add branch flow constraints for monitored lines
-"""
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{FlowLimitFromToConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
-    ::NetworkModel{V},
-) where {
-    T <: PSY.MonitoredLine,
-    U <: AbstractBranchFormulation,
-    V <: PM.AbstractActivePowerModel,
-}
-    error("slacks here")
-
-    use_slacks = get_use_slacks(device_model)
-    if use_slacks
-        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
-        slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
-    end
-
-    add_range_constraints!(
-        container,
-        FlowLimitFromToConstraint,
-        FlowActivePowerFromToVariable,
-        devices,
-        model,
-        X,
-    )
-    add_range_constraints!(
-        container,
-        FlowLimitToFromConstraint,
-        FlowActivePowerToFromVariable,
-        devices,
-        model,
-        X,
-    )
-    return
-end
-
-"""
 Don't add branch flow constraints for monitored lines if formulation is StaticBranchUnbounded
 """
 function add_constraints!(
