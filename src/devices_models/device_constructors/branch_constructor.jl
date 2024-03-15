@@ -431,13 +431,11 @@ function construct_device!(
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
     if get_use_slacks(device_model)
-        if get_use_slacks(device_model)
-            throw(
-                ArgumentError(
-                    "StaticBranchBounds is not compatible with the use of slacks",
-                ),
-            )
-        end
+        throw(
+            ArgumentError(
+                "StaticBranchBounds is not compatible with the use of slacks",
+            ),
+        )
     end
     return
 end
