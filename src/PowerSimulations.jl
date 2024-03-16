@@ -343,7 +343,8 @@ import PowerNetworkMatrices: PTDF, VirtualPTDF
 export PTDF
 export VirtualPTDF
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name,
-    OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats
+    OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats,
+    RightHandSideParameter, ObjectiveFunctionParameter, TimeSeriesParameter
 export get_name
 export get_model_base_power
 export get_optimizer_stats
