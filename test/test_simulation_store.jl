@@ -3,7 +3,7 @@ import PowerSimulations:
     HdfSimulationStore,
     HDF_FILENAME,
     SimulationStoreParams,
-    IS.ModelStoreParams,
+    ModelStoreParams,
     SimulationModelStoreRequirements,
     CacheFlushRules,
     KiB,
@@ -18,7 +18,7 @@ import PowerSimulations:
     get_cache_hit_percentage
 
 function _initialize!(store, sim, variables, model_defs, cache_rules)
-    models = OrderedDict{Symbol, IS.ModelStoreParams}()
+    models = OrderedDict{Symbol, ModelStoreParams}()
     model_reqs = Dict{Symbol, SimulationModelStoreRequirements}()
     num_param_containers = 0
     for model in keys(model_defs)
@@ -26,7 +26,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         horizon = model_defs[model]["horizon"]
         num_rows = execution_count * sim["num_steps"]
 
-        model_params = IS.ModelStoreParams(
+        model_params = ModelStoreParams(
             execution_count,
             horizon,
             model_defs[model]["interval"],
@@ -57,7 +57,7 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         models,
         # Emulation Model Store requirements. No tests yet
         OrderedDict(
-            :Emulator => IS.ModelStoreParams(
+            :Emulator => ModelStoreParams(
                 100, # Num Executions
                 1,
                 Minute(5), # Interval
@@ -159,13 +159,13 @@ end
         "num_steps" => 50,
     )
     variables = Dict(
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard) =>
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard) =>
             Dict("keep_in_cache" => true),
-        PSI.IS.VariableKey(ActivePowerVariable, RenewableDispatch) =>
+        PSI.VariableKey(ActivePowerVariable, RenewableDispatch) =>
             Dict("keep_in_cache" => true),
-        PSI.IS.VariableKey(ActivePowerVariable, InterruptiblePowerLoad) =>
+        PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad) =>
             Dict("keep_in_cache" => false),
-        PSI.IS.VariableKey(ActivePowerVariable, RenewableFix) =>
+        PSI.VariableKey(ActivePowerVariable, RenewableFix) =>
             Dict("keep_in_cache" => false),
     )
     model_defs = OrderedDict(
@@ -203,7 +203,7 @@ end
 @testset "Test OptimizationOutputCache" begin
     key = PSI.OptimizationResultCacheKey(
         :ED,
-        PSI.IS.VariableKey(ActivePowerVariable, InterruptiblePowerLoad),
+        PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad),
     )
     cache = PSI.OptimizationOutputCache(key, PSI.CacheFlushRule(true))
     @test !PSI.has_clean(cache)

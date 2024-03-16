@@ -40,12 +40,12 @@ end
 
 _get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[name]
 
-struct VariableValueAttributes{T <: IS.OptimizationContainerKey} <: ParameterAttributes
+struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
     affected_keys::Set
 end
 
-function VariableValueAttributes(key::T) where {T <: IS.OptimizationContainerKey}
+function VariableValueAttributes(key::T) where {T <: OptimizationContainerKey}
     return VariableValueAttributes{T}(key, Set())
 end
 
@@ -161,7 +161,7 @@ get_attributes(c::ParameterContainer) = c.attributes
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
-function get_column_names(key::IS.ParameterKey, c::ParameterContainer)
+function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
@@ -276,12 +276,12 @@ struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-struct EventParameter <: IS.ParameterType end
+struct EventParameter <: ParameterType end
 
-should_write_resulting_value(::Type{<:IS.ParameterType}) = false
+should_write_resulting_value(::Type{<:ParameterType}) = false
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
-convert_result_to_natural_units(::Type{<:IS.ParameterType}) = false
+convert_result_to_natural_units(::Type{<:ParameterType}) = false
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

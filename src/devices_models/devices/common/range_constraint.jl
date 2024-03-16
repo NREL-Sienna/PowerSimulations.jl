@@ -3,7 +3,7 @@
 # Generic fallback functions
 function get_startup_shutdown(
     device,
-    ::Type{<:IS.VariableType},
+    ::Type{<:VariableType},
     ::Type{<:AbstractDeviceFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}}
     nothing
@@ -37,8 +37,8 @@ function add_range_constraints!(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.VariableType,
+    T <: ConstraintType,
+    U <: VariableType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -57,7 +57,7 @@ function add_range_constraints!(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
+    T <: ConstraintType,
     U <: RangeConstraintLBExpressions,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
@@ -76,7 +76,7 @@ function add_range_constraints!(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
+    T <: ConstraintType,
     U <: RangeConstraintUBExpressions,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
@@ -93,7 +93,7 @@ function _add_lower_bound_range_constraints_impl!(
     array,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-) where {T <: IS.ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
@@ -115,7 +115,7 @@ function _add_upper_bound_range_constraints_impl!(
     array,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-) where {T <: IS.ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
@@ -163,8 +163,8 @@ function add_semicontinuous_range_constraints!(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.VariableType,
+    T <: ConstraintType,
+    U <: VariableType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -195,7 +195,7 @@ function add_semicontinuous_range_constraints!(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
+    T <: ConstraintType,
     U <: RangeConstraintLBExpressions,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
@@ -220,7 +220,7 @@ function add_semicontinuous_range_constraints!(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
+    T <: ConstraintType,
     U <: RangeConstraintUBExpressions,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
@@ -243,7 +243,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     array,
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-) where {T <: IS.ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [OnVariable()]
@@ -270,7 +270,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     array,
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-) where {T <: IS.ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     binary_variables = [OnVariable()]
@@ -317,7 +317,7 @@ function add_reserve_range_constraints!(
     ::Type{X},
 ) where {
     T <: InputActivePowerVariableLimitsConstraint,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -337,7 +337,7 @@ function add_reserve_range_constraints!(
     ::Type{X},
 ) where {
     T <: InputActivePowerVariableLimitsConstraint,
-    U <: IS.ExpressionType,
+    U <: ExpressionType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -441,7 +441,7 @@ function add_reserve_range_constraints!(
 ) where {
     T <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
-    U <: IS.VariableType,
+    U <: VariableType,
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
     Y <: PM.AbstractPowerModel,
@@ -477,7 +477,7 @@ function add_reserve_range_constraints!(
 ) where {
     T <:
     Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
-    U <: IS.ExpressionType,
+    U <: ExpressionType,
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
     Y <: PM.AbstractPowerModel,
@@ -561,9 +561,9 @@ function add_parameterized_lower_bound_range_constraints(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.ExpressionType,
-    P <: IS.ParameterType,
+    T <: ConstraintType,
+    U <: ExpressionType,
+    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -589,9 +589,9 @@ function add_parameterized_lower_bound_range_constraints(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.VariableType,
-    P <: IS.ParameterType,
+    T <: ConstraintType,
+    U <: VariableType,
+    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -616,7 +616,7 @@ function lower_bound_range_with_parameter!(
     ::Type{P},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-) where {P <: IS.ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     param_array = get_parameter_array(container, P(), V)
     param_multiplier = get_parameter_multiplier_array(container, P(), V)
     jump_model = get_jump_model(container)
@@ -662,8 +662,8 @@ function _add_parameterized_lower_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.ParameterType,
+    T <: ConstraintType,
+    U <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
@@ -696,9 +696,9 @@ function add_parameterized_upper_bound_range_constraints(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.ExpressionType,
-    P <: IS.ParameterType,
+    T <: ConstraintType,
+    U <: ExpressionType,
+    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -724,9 +724,9 @@ function add_parameterized_upper_bound_range_constraints(
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: IS.ConstraintType,
-    U <: IS.VariableType,
-    P <: IS.ParameterType,
+    T <: ConstraintType,
+    U <: VariableType,
+    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
@@ -751,7 +751,7 @@ function upper_bound_range_with_parameter!(
     param::P,
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-) where {P <: IS.ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
+) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     param_array = get_parameter_array(container, param, V)
     param_multiplier = get_parameter_multiplier_array(container, P(), V)
     jump_model = get_jump_model(container)
@@ -797,8 +797,8 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
-    T <: IS.ConstraintType,
-    P <: IS.ParameterType,
+    T <: ConstraintType,
+    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }

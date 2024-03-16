@@ -65,7 +65,6 @@ const MAX_OPTIMIZE_TRIES = 2
 # File Names definitions
 const PROBLEM_SERIALIZATION_FILENAME = "operation_problem.bin"
 const PROBLEM_LOG_FILENAME = "operation_problem.log"
-const HASH_FILENAME = "check.sha256"
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = (:simulation_status, :execution)
@@ -82,9 +81,9 @@ const KNOWN_SIMULATION_PATHS = [
 const RESULTS_DIR = "results"
 
 # Enums
-BuildStatus = IS.BuildStatus
+BuildStatus = IS.Optimization.BuildStatus
 
-@scoped_enum(
+IS.@scoped_enum(
     RunStatus,
     NOT_READY = -2,
     READY = -1,

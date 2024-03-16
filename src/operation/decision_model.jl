@@ -13,8 +13,8 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, IS.ModelInternal}
-    simulation_info::Union{Nothing, SimulationInfo}
+    internal::Union{Nothing, IS.Optimization.ModelInternal}
+    simulation_info::SimulationInfo
     store::DecisionModelStore
     ext::Dict{String, Any}
 end
@@ -73,7 +73,7 @@ function DecisionModel{M}(
     elseif name isa String
         name = Symbol(name)
     end
-    internal = IS.ModelInternal(
+    internal = IS.Optimization.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
     )
     template_ = deepcopy(template)
@@ -83,7 +83,7 @@ function DecisionModel{M}(
         template_,
         sys,
         internal,
-        nothing,
+        SimulationInfo(),
         DecisionModelStore(),
         Dict{String, Any}(),
     )
@@ -242,10 +242,9 @@ validate_time_series(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
-    execution_count = IS.get_execution_count(get_internal(model))
+    execution_count = get_execution_count(model)
     initial_time = get_initial_time(model)
-    store_params = get_store_parameter(model)
-    interval = get_interval(store_params)
+    interval = get_interval(model)
     return initial_time + interval * execution_count
 end
 
@@ -257,7 +256,7 @@ function init_model_store_params!(model::DecisionModel)
     resolution = PSY.get_time_series_resolution(system)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    store_params = IS.ModelStoreParams(
+    store_params = ModelStoreParams(
         num_executions,
         horizon,
         iszero(interval) ? resolution : interval,
@@ -266,7 +265,7 @@ function init_model_store_params!(model::DecisionModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
-    IS.set_store_params!(get_internal(model), store_parameters)
+    IS.Optimization.set_store_params!(get_internal(model), store_params)
     return
 end
 
@@ -294,10 +293,10 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         @info "Initializing Optimization Container For a DecisionModel"
         init_optimization_container!(
             get_optimization_container(model),
-            get_network_formulation(get_template(model)),
+            get_network_model(get_template(model)),
             get_system(model),
         )
-        @info "Initializing IS.ModelStoreParams"
+        @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
         set_status!(model, BuildStatus.IN_PROGRESS)
     end
@@ -346,7 +345,7 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = configure_logging(get_internal(model), file_mode)
+    logger = IS.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
     try
         Logging.with_logger(logger) do
             try
@@ -382,16 +381,19 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
-    IS.get_optimization_container(get_internal(model)) = OptimizationContainer(
-        get_system(model),
-        get_settings(model),
-        nothing,
-        PSY.Deterministic,
+    IS.Optimization.set_container!(
+        get_internal(model),
+        OptimizationContainer(
+            get_system(model),
+            get_settings(model),
+            nothing,
+            PSY.Deterministic,
+        ),
     )
-    IS.get_optimization_container(get_internal(model)).built_for_recurrent_solves =
+    get_optimization_container(model).built_for_recurrent_solves =
         was_built_for_recurrent_solves
     internal = get_internal(model)
-    IS.set_ic_model_container!(internal, nothing)
+    IS.Optimization.set_ic_model_container!(internal, nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
@@ -443,7 +445,11 @@ function solve!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = configure_logging(get_internal(model), file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     optimizer = get(kwargs, :optimizer, nothing)
     try
         Logging.with_logger(logger) do
@@ -451,7 +457,7 @@ function solve!(
                 initialize_storage!(
                     get_store(model),
                     get_optimization_container(model),
-                    get_store_parameters(model),
+                    get_store_params(model),
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)
@@ -534,7 +540,7 @@ function update_parameters!(
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
         obj_func = get_objective_expression(get_optimization_container(model))
-        set_synchronized_status(obj_func, true)
+        set_synchronized_status!(obj_func, true)
     end
     return
 end

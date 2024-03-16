@@ -30,9 +30,9 @@ const NETWORKS_FOR_TESTING = [
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
         # TODO: Change test
-        # @test :nodal_balance_active in keys(ps_IS.get_optimization_container(get_internal(model)).expressions)
+        # @test :nodal_balance_active in keys(PSI.get_optimization_container(ps_model).expressions)
     end
 end
 
@@ -47,7 +47,7 @@ end
         c_sys14 => [120, 0, 120, 120, 24],
         c_sys14_dc => [120, 0, 120, 120, 24],
     )
-    constraint_keys = [PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)]
+    constraint_keys = [PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 240000.0,
@@ -94,10 +94,10 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.IS.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-        PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.IS.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
@@ -156,10 +156,10 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.IS.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.IS.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-        PSI.IS.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.IS.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
     PTDF_ref = IdDict{System, VirtualPTDF}(
         c_sys5 => VirtualPTDF(c_sys5),
@@ -212,9 +212,9 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.IS.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
-        PSI.IS.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
-        PSI.IS.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [384, 144, 264, 264, 288],
@@ -259,10 +259,10 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     # Check for voltage and angle constraints
     constraint_keys = [
-        PSI.IS.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
-        PSI.IS.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
-        PSI.IS.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
-        PSI.IS.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
+        PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [1056, 144, 240, 240, 264],
@@ -305,7 +305,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_keys = [PSI.IS.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 120],
         c_sys14 => [600, 0, 600, 600, 336],
@@ -352,8 +352,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Voltages, etc.
     constraint_keys = [
-        PSI.IS.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
-        PSI.IS.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
+        PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
     ACR_test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 240, 240, 264],
@@ -381,7 +381,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end
 
@@ -393,7 +393,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     # TODO: add model specific constraints to this list. Bi-directional flows etc
-    constraint_keys = [PSI.IS.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
+    constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 340000.0,
         c_sys14 => 142000.0,
@@ -425,7 +425,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -728,6 +728,6 @@ end
         ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
-        @test ps_IS.get_optimization_container(get_internal(model)).pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end

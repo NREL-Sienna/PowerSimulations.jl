@@ -58,7 +58,7 @@ If t > 1:
 """
 function add_linear_ramp_constraints!(
     container::OptimizationContainer,
-    T::Type{<:IS.ConstraintType},
+    T::Type{<:ConstraintType},
     U::Type{S},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
@@ -118,8 +118,8 @@ end
 
 function add_linear_ramp_constraints!(
     container::OptimizationContainer,
-    T::Type{<:IS.ConstraintType},
-    U::Type{<:IS.VariableType},
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},
@@ -194,7 +194,7 @@ If t > 1:
 """
 function add_semicontinuous_ramp_constraints!(
     container::OptimizationContainer,
-    T::Type{<:IS.ConstraintType},
+    T::Type{<:ConstraintType},
     U::Type{S},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
@@ -261,8 +261,8 @@ end
 
 function add_semicontinuous_ramp_constraints!(
     container::OptimizationContainer,
-    T::Type{<:IS.ConstraintType},
-    U::Type{<:IS.VariableType},
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     X::Type{<:PM.AbstractPowerModel},

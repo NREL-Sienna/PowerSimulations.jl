@@ -11,9 +11,9 @@ end
     # The to_dataframe test the use of the `to_matrix` and `get_column_names` methods
     one = PSI.DenseAxisArray{Float64}(undef, 1:2)
     fill!(one, 1.0)
-    mock_key = PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard)
+    mock_key = PSI.VariableKey(ActivePowerVariable, ThermalStandard)
     one_df = PSI.to_dataframe(one, mock_key)
-    test_df = DataFrames.DataFrame(PSI.encode_key(mock_key) => [1.0, 1.0])
+    test_df = DataFrames.DataFrame(IS.Optimization.encode_key(mock_key) => [1.0, 1.0])
     @test one_df == test_df
 
     two = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2)

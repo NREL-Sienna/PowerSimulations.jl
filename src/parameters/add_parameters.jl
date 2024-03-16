@@ -23,7 +23,7 @@ function add_parameters!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <: IS.ParameterType,
+    T <: ParameterType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -198,7 +198,7 @@ function _add_time_series_parameters!(
     initial_values = Dict{String, AbstractArray}()
     for device in devices
         push!(device_names, PSY.get_name(device))
-        ts_uuid = get_time_series_uuid(ts_type, device, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(ts_type, device, ts_name))
         if !(ts_uuid in keys(initial_values))
             initial_values[ts_uuid] =
                 get_time_series_initial_values!(container, ts_type, device, ts_name)
@@ -233,7 +233,7 @@ function _add_time_series_parameters!(
         add_component_name!(
             get_attributes(param_container),
             name,
-            get_time_series_uuid(ts_type, device, ts_name),
+            string(IS.get_time_series_uuid(ts_type, device, ts_name)),
         )
     end
     return
@@ -267,7 +267,7 @@ function _add_parameters!(
     time_series_mult_id = _create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    ts_uuid = get_time_series_uuid(ts_type, service, ts_name)
+    ts_uuid = string(IS.get_time_series_uuid(ts_type, service, ts_name))
     @debug "adding" T U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container = add_param_container!(
         container,
@@ -296,12 +296,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.VariableKey{U, D},
+    key::VariableKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -339,12 +339,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.VariableKey{U, D},
+    key::VariableKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: FixValueParameter,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -383,12 +383,12 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.AuxVarKey{U, D},
+    key::AuxVarKey{U, D},
     model::DeviceModel{D, W},
     devices::V,
 ) where {
     T <: VariableValueParameter,
-    U <: IS.AuxVariableType,
+    U <: AuxVariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -449,7 +449,7 @@ function _add_parameters!(
         container,
         T(),
         D,
-        IS.VariableKey(OnVariable, D),
+        VariableKey(OnVariable, D),
         names,
         time_steps,
     )
@@ -479,13 +479,13 @@ end
 function _add_parameters!(
     container::OptimizationContainer,
     ::T,
-    key::IS.VariableKey{U, S},
+    key::VariableKey{U, S},
     model::ServiceModel{S, W},
     devices::V,
 ) where {
     S <: PSY.AbstractReserve,
     T <: VariableValueParameter,
-    U <: IS.VariableType,
+    U <: VariableType,
     V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}

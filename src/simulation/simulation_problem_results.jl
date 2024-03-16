@@ -29,7 +29,7 @@ end
 function SimulationProblemResults{T}(
     store::SimulationStore,
     model_name::AbstractString,
-    problem_params::IS.ModelStoreParams,
+    problem_params::ModelStoreParams,
     sim_params::SimulationStoreParams,
     path,
     vals::T;
@@ -65,18 +65,50 @@ get_system(res::SimulationProblemResults) = res.system
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
+get_system_uuid(results::PSI.SimulationProblemResults) = results.system_uuid
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
+get_output_dir(res::SimulationProblemResults) = res.results_output_folder
 
-list_result_keys(res::SimulationProblemResults, ::IS.AuxVarKey) =
+get_results_timestamps(result::SimulationProblemResults) = result.results_timestamps
+function set_results_timestamps!(
+    result::SimulationProblemResults,
+    results_timestamps::Vector{Dates.DateTime},
+)
+    result.results_timestamps = results_timestamps
+end
+
+list_result_keys(res::SimulationProblemResults, ::AuxVarKey) =
     list_aux_variable_keys(res)
-list_result_keys(res::SimulationProblemResults, ::IS.ConstraintKey) = list_dual_keys(res)
-list_result_keys(res::SimulationProblemResults, ::IS.ExpressionKey) =
+list_result_keys(res::SimulationProblemResults, ::ConstraintKey) = list_dual_keys(res)
+list_result_keys(res::SimulationProblemResults, ::ExpressionKey) =
     list_expression_keys(res)
-list_result_keys(res::SimulationProblemResults, ::IS.ParameterKey) =
+list_result_keys(res::SimulationProblemResults, ::ParameterKey) =
     list_parameter_keys(res)
-list_result_keys(res::SimulationProblemResults, ::IS.VariableKey) = list_variable_keys(res)
+list_result_keys(res::SimulationProblemResults, ::VariableKey) = list_variable_keys(res)
+
+get_cached_results(res::SimulationProblemResults, ::Type{<:AuxVarKey}) =
+    get_cached_aux_variables(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ConstraintKey}) =
+    get_cached_duals(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ExpressionKey}) =
+    get_cached_expressions(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:ParameterKey}) =
+    get_cached_parameters(res)
+get_cached_results(res::SimulationProblemResults, ::Type{<:VariableKey}) =
+    get_cached_variables(res)
+get_cached_results(
+    res::SimulationProblemResults,
+    ::Type{<:OptimizationContainerKey} = OptimizationContainerKey,
+) =
+    merge(  # PERF: could be done lazily
+        get_cached_aux_variables(res),
+        get_cached_duals(res),
+        get_cached_expressions(res),
+        get_cached_parameters(res),
+        get_cached_variables(res),
+    )
 
 """
 Return an array of variable names (strings) that are available for reads.
@@ -121,28 +153,46 @@ If the simulation was configured to serialize all systems to file then the retur
 will include all data. If that was not configured then the returned system will include
 all data except time series data.
 """
-function get_system!(results::SimulationProblemResults; kwargs...)
-    !isnothing(results.system) && return results.system
+function get_system!(
+    results::Union{OptimizationProblemResults, SimulationProblemResults};
+    kwargs...,
+)
+    !isnothing(get_system(results)) && return get_system(results)
 
-    file = joinpath(
-        results.execution_path,
-        "problems",
-        results.problem,
-        make_system_filename(results.system_uuid),
-    )
-
+    file = locate_system_file(results)
     # This flag should remain unpublished because it should never be needed
     # by the general audience.
-    if !get(kwargs, :use_h5_system, false) && isfile(file)
+    if !get(kwargs, :use_system_fallback, false) && isfile(file)
         system = PSY.System(file; time_series_read_only = true)
         @info "De-serialized the system from files."
     else
-        system = _deserialize_system(results, results.store)
+        system = get_system_fallback(results)
     end
 
-    results.system = system
-    return results.system
+    set_system!(results, system)
+    return get_system(results)
 end
+
+get_system_fallback(results::SimulationProblemResults) =
+    _deserialize_system(results, results.store)
+get_system_fallback(results::OptimizationProblemResults) = error("Could not locate system")
+
+locate_system_file(results::SimulationProblemResults) = joinpath(
+    get_execution_path(results),
+    "problems",
+    get_model_name(results),
+    make_system_filename(results.system_uuid),
+)
+
+locate_system_file(results::OptimizationProblemResults) = joinpath(
+    IS.Optimization.get_results_dir(results),
+    make_system_filename(IS.Optimization.get_source_data_uuid(results)),
+)
+
+get_system(results::OptimizationProblemResults) = IS.Optimization.get_source_data(results)
+
+set_system!(results::OptimizationProblemResults, system) =
+    IS.Optimization.set_source_data!(results, system)
 
 function _deserialize_system(results::SimulationProblemResults, ::Nothing)
     open_store(
@@ -197,7 +247,7 @@ function set_system!(results::SimulationProblemResults, system::PSY.System)
 end
 
 function _deserialize_key(
-    ::Type{<:IS.OptimizationContainerKey},
+    ::Type{<:OptimizationContainerKey},
     results::SimulationProblemResults,
     name::AbstractString,
 )
@@ -209,20 +259,12 @@ function _deserialize_key(
     ::Type{T},
     results::SimulationProblemResults,
     args...,
-) where {T <: IS.OptimizationContainerKey}
-    return make_key(T, args...)
+) where {T <: OptimizationContainerKey}
+    return IS.Optimization.make_key(T, args...)
 end
 
 get_container_fields(x::SimulationProblemResults) =
     (:aux_variables, :duals, :expressions, :parameters, :variables)
-
-function _validate_keys(existing_keys, result_keys)
-    diff = setdiff(result_keys, existing_keys)
-    if !isempty(diff)
-        throw(IS.InvalidValue("These keys are not stored: $diff"))
-    end
-    return
-end
 
 """
 Return the final values for the requested variables for each time step for a problem.
@@ -272,7 +314,7 @@ function read_realized_variables(
 )
     return read_realized_variables(
         res,
-        [IS.VariableKey(x...) for x in variables];
+        [VariableKey(x...) for x in variables];
         kwargs...,
     )
 end
@@ -284,14 +326,14 @@ function read_realized_variables(
 )
     return read_realized_variables(
         res,
-        [_deserialize_key(IS.VariableKey, res, x) for x in variables];
+        [_deserialize_key(VariableKey, res, x) for x in variables];
         kwargs...,
     )
 end
 
 function read_realized_variables(
     res::SimulationProblemResults,
-    variables::Vector{<:IS.OptimizationContainerKey};
+    variables::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
     result_values = read_results_with_keys(res, variables; kwargs...)
@@ -337,7 +379,7 @@ function read_realized_variable(
         values(
             read_realized_variables(
                 res,
-                [_deserialize_key(IS.VariableKey, res, variable)];
+                [_deserialize_key(VariableKey, res, variable)];
                 kwargs...,
             ),
         ),
@@ -346,7 +388,7 @@ end
 
 function read_realized_variable(res::SimulationProblemResults, variable...; kwargs...)
     return first(
-        values(read_realized_variables(res, [IS.VariableKey(variable...)]; kwargs...)),
+        values(read_realized_variables(res, [VariableKey(variable...)]; kwargs...)),
     )
 end
 
@@ -370,7 +412,7 @@ function read_realized_aux_variables(
 )
     return read_realized_aux_variables(
         res,
-        [IS.AuxVarKey(x...) for x in aux_variables];
+        [AuxVarKey(x...) for x in aux_variables];
         kwargs...,
     )
 end
@@ -382,14 +424,14 @@ function read_realized_aux_variables(
 )
     return read_realized_aux_variables(
         res,
-        [_deserialize_key(IS.AuxVarKey, res, x) for x in aux_variables];
+        [_deserialize_key(AuxVarKey, res, x) for x in aux_variables];
         kwargs...,
     )
 end
 
 function read_realized_aux_variables(
     res::SimulationProblemResults,
-    aux_variables::Vector{<:IS.OptimizationContainerKey};
+    aux_variables::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
     result_values = read_results_with_keys(res, aux_variables; kwargs...)
@@ -410,7 +452,7 @@ function read_realized_aux_variable(
         values(
             read_realized_aux_variables(
                 res,
-                [_deserialize_key(IS.AuxVarKey, res, aux_variable)];
+                [_deserialize_key(AuxVarKey, res, aux_variable)];
                 kwargs...,
             ),
         ),
@@ -424,7 +466,7 @@ function read_realized_aux_variable(
 )
     return first(
         values(
-            read_realized_aux_variables(res, [IS.AuxVarKey(aux_variable...)]; kwargs...),
+            read_realized_aux_variables(res, [AuxVarKey(aux_variable...)]; kwargs...),
         ),
     )
 end
@@ -445,7 +487,7 @@ function read_realized_parameters(
 )
     return read_realized_parameters(
         res,
-        [IS.ParameterKey(x...) for x in parameters];
+        [ParameterKey(x...) for x in parameters];
         kwargs...,
     )
 end
@@ -457,14 +499,14 @@ function read_realized_parameters(
 )
     return read_realized_parameters(
         res,
-        [_deserialize_key(IS.ParameterKey, res, x) for x in parameters];
+        [_deserialize_key(ParameterKey, res, x) for x in parameters];
         kwargs...,
     )
 end
 
 function read_realized_parameters(
     res::SimulationProblemResults,
-    parameters::Vector{<:IS.OptimizationContainerKey};
+    parameters::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
     result_values = read_results_with_keys(res, parameters; kwargs...)
@@ -485,7 +527,7 @@ function read_realized_parameter(
         values(
             read_realized_parameters(
                 res,
-                [_deserialize_key(IS.ParameterKey, res, parameter)];
+                [_deserialize_key(ParameterKey, res, parameter)];
                 kwargs...,
             ),
         ),
@@ -494,7 +536,7 @@ end
 
 function read_realized_parameter(res::SimulationProblemResults, parameter...; kwargs...)
     return first(
-        values(read_realized_parameters(res, [IS.ParameterKey(parameter...)]; kwargs...)),
+        values(read_realized_parameters(res, [ParameterKey(parameter...)]; kwargs...)),
     )
 end
 
@@ -512,7 +554,7 @@ function read_realized_duals(
     duals::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
-    return read_realized_duals(res, [IS.ConstraintKey(x...) for x in duals]; kwargs...)
+    return read_realized_duals(res, [ConstraintKey(x...) for x in duals]; kwargs...)
 end
 
 function read_realized_duals(
@@ -522,14 +564,14 @@ function read_realized_duals(
 )
     return read_realized_duals(
         res,
-        [_deserialize_key(IS.ConstraintKey, res, x) for x in duals];
+        [_deserialize_key(ConstraintKey, res, x) for x in duals];
         kwargs...,
     )
 end
 
 function read_realized_duals(
     res::SimulationProblemResults,
-    duals::Vector{<:IS.OptimizationContainerKey};
+    duals::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
     result_values = read_results_with_keys(res, duals; kwargs...)
@@ -546,7 +588,7 @@ function read_realized_dual(res::SimulationProblemResults, dual::AbstractString;
         values(
             read_realized_duals(
                 res,
-                [_deserialize_key(IS.ConstraintKey, res, dual)];
+                [_deserialize_key(ConstraintKey, res, dual)];
                 kwargs...,
             ),
         ),
@@ -554,7 +596,7 @@ function read_realized_dual(res::SimulationProblemResults, dual::AbstractString;
 end
 
 function read_realized_dual(res::SimulationProblemResults, dual...; kwargs...)
-    return first(values(read_realized_duals(res, [IS.ConstraintKey(dual...)]; kwargs...)))
+    return first(values(read_realized_duals(res, [ConstraintKey(dual...)]; kwargs...)))
 end
 
 """
@@ -573,7 +615,7 @@ function read_realized_expressions(
 )
     return read_realized_expressions(
         res,
-        [IS.ExpressionKey(x...) for x in expressions];
+        [ExpressionKey(x...) for x in expressions];
         kwargs...,
     )
 end
@@ -585,14 +627,14 @@ function read_realized_expressions(
 )
     return read_realized_expressions(
         res,
-        [_deserialize_key(IS.ExpressionKey, res, x) for x in expressions];
+        [_deserialize_key(ExpressionKey, res, x) for x in expressions];
         kwargs...,
     )
 end
 
 function read_realized_expressions(
     res::SimulationProblemResults,
-    expressions::Vector{<:IS.OptimizationContainerKey};
+    expressions::Vector{<:OptimizationContainerKey};
     kwargs...,
 )
     result_values = read_results_with_keys(res, expressions; kwargs...)
@@ -613,7 +655,7 @@ function read_realized_expression(
         values(
             read_realized_expressions(
                 res,
-                [_deserialize_key(IS.ExpressionKey, res, expression)];
+                [_deserialize_key(ExpressionKey, res, expression)];
                 kwargs...,
             ),
         ),
@@ -623,7 +665,7 @@ end
 function read_realized_expression(res::SimulationProblemResults, expression...; kwargs...)
     return first(
         values(
-            read_realized_expressions(res, [IS.ExpressionKey(expression...)]; kwargs...),
+            read_realized_expressions(res, [ExpressionKey(expression...)]; kwargs...),
         ),
     )
 end
@@ -650,77 +692,8 @@ function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
     end
 end
 
-"""
-Save the realized results to CSV files for all variables, paramaters, duals, auxiliary variables,
-expressions, and optimizer statistics.
-
-# Arguments
-
-  - `res::Union{ProblemResults, SimulationProblmeResults`: Results
-  - `save_path::AbstractString` : path to save results (defaults to simulation path)
-"""
-function export_realized_results(res::SimulationProblemResults)
-    save_path = mkpath(joinpath(res.results_output_folder, "export"))
-    return export_realized_results(res, save_path)
-end
-
-function export_realized_results(
-    res::Union{ProblemResults, SimulationProblemResults},
-    save_path::AbstractString,
-)
-    if !isdir(save_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid."))
-    end
-    write_data(read_results_with_keys(res, list_variable_keys(res)), save_path)
-    !isempty(list_dual_keys(res)) &&
-        write_data(
-            read_results_with_keys(res, list_dual_keys(res)),
-            save_path;
-            name = "dual",
-        )
-    !isempty(list_parameter_keys(res)) && write_data(
-        read_results_with_keys(res, list_parameter_keys(res)),
-        save_path;
-        name = "parameter",
-    )
-    !isempty(list_aux_variable_keys(res)) && write_data(
-        read_results_with_keys(res, list_aux_variable_keys(res)),
-        save_path;
-        name = "aux_variable",
-    )
-    !isempty(list_expression_keys(res)) && write_data(
-        read_results_with_keys(res, list_expression_keys(res)),
-        save_path;
-        name = "expression",
-    )
-    export_optimizer_stats(res, save_path)
-    files = readdir(save_path)
-    compute_file_hash(save_path, files)
-    @info("Files written to $save_path folder.")
-    return save_path
-end
-
-"""
-Save the optimizer statistics to CSV or JSON
-
-# Arguments
-
-  - `res::Union{ProblemResults, SimulationProblmeResults`: Results
-  - `directory::AbstractString` : target directory
-  - `format = "CSV"` : can be "csv" or "json
-"""
-function export_optimizer_stats(
-    res::Union{ProblemResults, SimulationProblemResults},
-    directory::AbstractString;
-    format = "csv",
-)
-    data = read_optimizer_stats(res)
-    isnothing(data) && return
-    if uppercase(format) == "CSV"
-        CSV.write(joinpath(directory, "optimizer_stats.csv"), data)
-    elseif uppercase(format) == "JSON"
-        JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(to_dict(data)))
-    else
-        throw(error("writing optimizer stats only supports csv or json formats"))
-    end
-end
+# Chooses the user-passed store or results store for reading values. Either could be
+# something or nothing. If both are nothing, we must open the HDF5 store.
+try_resolve_store(user::SimulationStore, results::Union{Nothing, SimulationStore}) = user
+try_resolve_store(user::Nothing, results::SimulationStore) = results
+try_resolve_store(user::Nothing, results::Nothing) = nothing

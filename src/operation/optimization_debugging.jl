@@ -2,7 +2,7 @@
 Each Tuple corresponds to (con_name, internal_index, moi_index)
 """
 function get_all_constraint_index(model::OperationModel)
-    con_index = Vector{Tuple{IS.ConstraintKey, Int, Int}}()
+    con_index = Vector{Tuple{ConstraintKey, Int, Int}}()
     container = get_optimization_container(model)
     for (key, value) in get_constraints(container)
         for (idx, constraint) in enumerate(value)
@@ -18,11 +18,11 @@ Each Tuple corresponds to (con_name, internal_index, moi_index)
 """
 function get_all_variable_index(model::OperationModel)
     var_keys = get_all_variable_keys(model)
-    return [(encode_key(v[1]), v[2], v[3]) for v in var_keys]
+    return [(IS.Optimization.encode_key(v[1]), v[2], v[3]) for v in var_keys]
 end
 
 function get_all_variable_keys(model::OperationModel)
-    var_index = Vector{Tuple{IS.VariableKey, Int, Int}}()
+    var_index = Vector{Tuple{VariableKey, Int, Int}}()
     container = get_optimization_container(model)
     for (key, value) in get_variables(container)
         for (idx, variable) in enumerate(value)

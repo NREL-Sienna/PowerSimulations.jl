@@ -13,7 +13,7 @@ function get_available_components(
         )
     else
         return PSY.get_components(
-            x -> PSY.get_available(x) && f(x),
+            x -> PSY.get_available(x) && filter_function(x),
             T,
             sys;
             subsystem_name = subsystem,
@@ -36,7 +36,7 @@ function get_available_components(
         )
     else
         return PSY.get_components(
-            x -> PSY.get_available(x) && f(x),
+            x -> PSY.get_available(x) && filter_function(x),
             T,
             sys;
             subsystem_name = subsystem,
@@ -82,7 +82,7 @@ function get_available_components(
     )
 end
 
-make_system_filename(sys::PSY.System) = "system-$(IS.get_uuid(sys)).json"
+make_system_filename(sys::PSY.System) = make_system_filename(IS.get_uuid(sys))
 make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"
 
 function check_hvdc_line_limits_consistency(

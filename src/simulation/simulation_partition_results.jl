@@ -186,6 +186,6 @@ end
 function _complete(results::SimulationPartitionResults, status)
     serialize_status(status, joinpath(results.path, "results"))
     store_path = _store_path(results)
-    compute_file_hash(dirname(store_path), basename(store_path))
+    IS.compute_file_hash(dirname(store_path), basename(store_path))
     return
 end

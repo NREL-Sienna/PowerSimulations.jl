@@ -51,7 +51,7 @@ function _make_dataframe(
     results_by_time::ResultsByTime{Matrix{Float64}, 1},
     num_rows::Int,
     meta::RealizedMeta,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     num_cols = length(columns[1])
     matrix = Matrix{Float64}(undef, num_rows, num_cols)
@@ -80,10 +80,10 @@ function _make_dataframe(
 end
 
 function get_realization(
-    results::Dict{IS.OptimizationContainerKey, ResultsByTime{Matrix{Float64}}},
+    results::Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}},
     meta::RealizedMeta,
 )
-    realized_values = Dict{IS.OptimizationContainerKey, DataFrames.DataFrame}()
+    realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     lk = ReentrantLock()
     num_rows = length(meta.realized_timestamps)
     start = time()

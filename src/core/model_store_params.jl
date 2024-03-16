@@ -1,11 +1,11 @@
-struct ModelStoreParams <: IS.AbstractModelStoreParams
+struct ModelStoreParams <: IS.Optimization.AbstractModelStoreParams
     num_executions::Int
     horizon::Int
     interval::Dates.Millisecond
     resolution::Dates.Millisecond
     base_power::Float64
     system_uuid::Base.UUID
-    container_metadata::OptimizationContainerMetadata
+    container_metadata::IS.Optimization.OptimizationContainerMetadata
 
     function ModelStoreParams(
         num_executions,
@@ -14,7 +14,7 @@ struct ModelStoreParams <: IS.AbstractModelStoreParams
         resolution,
         base_power,
         system_uuid,
-        container_metadata = OptimizationContainerMetadata(),
+        container_metadata = IS.Optimization.OptimizationContainerMetadata(),
     )
         new(
             num_executions,

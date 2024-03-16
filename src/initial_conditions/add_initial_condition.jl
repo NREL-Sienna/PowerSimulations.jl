@@ -8,7 +8,7 @@ function _get_initial_conditions_value(
     T <: InitialCondition{U, Float64},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
-} where {U <: IS.InitialConditionType}
+} where {U <: InitialConditionType}
     ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
@@ -31,7 +31,7 @@ function _get_initial_conditions_value(
     T <: InitialCondition{U, JuMP.VariableRef},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
-} where {U <: IS.InitialConditionType}
+} where {U <: InitialConditionType}
     ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
@@ -196,7 +196,7 @@ function add_initial_condition!(
 ) where {
     T <: PSY.Component,
     U <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
-    D <: IS.InitialConditionType,
+    D <: InitialConditionType,
 }
     if get_rebuild_model(get_settings(container)) && has_container_key(container, D, T)
         return

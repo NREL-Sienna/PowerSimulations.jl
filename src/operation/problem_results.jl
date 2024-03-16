@@ -12,7 +12,7 @@ function OptimizationProblemResults(model::DecisionModel)
     end
 
     timestamps = get_timestamps(model)
-    optimizer_stats = to_dataframe(get_optimizer_stats(model))
+    optimizer_stats = IS.Optimization.to_dataframe(get_optimizer_stats(model))
 
     aux_variable_values =
         Dict(x => read_aux_variable(model, x) for x in list_aux_variable_keys(model))
@@ -38,6 +38,7 @@ function OptimizationProblemResults(model::DecisionModel)
         optimizer_stats,
         get_metadata(get_optimization_container(model)),
         IS.strip_module_name(typeof(model)),
+        get_output_dir(model),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end
@@ -79,6 +80,7 @@ function OptimizationProblemResults(model::EmulationModel)
         optimizer_stats,
         get_metadata(container),
         IS.strip_module_name(typeof(model)),
+        get_output_dir(model),
         mkpath(joinpath(get_output_dir(model), "results")),
     )
 end

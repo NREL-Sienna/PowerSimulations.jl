@@ -54,26 +54,26 @@ function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     )
 end
 
-function get_column_names(key::IS.OptimizationContainerKey)
+function get_column_names(key::OptimizationContainerKey)
     return ([encode_key_as_string(key)],)
 end
 
 function get_column_names(
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     ::DenseAxisArray{T, 1, K},
 ) where {T, K <: NTuple{1, Any}}
     return get_column_names(key)
 end
 
 function get_column_names(
-    k::IS.OptimizationContainerKey,
+    k::OptimizationContainerKey,
     array::DenseAxisArray{T, 2, K},
 ) where {T, K <: NTuple{2, Any}}
     return (string.(axes(array)[1]),)
 end
 
 function get_column_names(
-    k::IS.OptimizationContainerKey,
+    k::OptimizationContainerKey,
     array::DenseAxisArray{T, 3, K},
 ) where {T, K <: NTuple{3, Any}}
     return (string.(axes(array)[1]), string.(axes(array)[2]))
@@ -84,7 +84,7 @@ function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTup
 end
 
 function get_column_names(
-    ::IS.OptimizationContainerKey,
+    ::OptimizationContainerKey,
     array::SparseAxisArray{T, N, K},
 ) where {T, N, K <: NTuple{N, Any}}
     return (get_column_names(array),)
@@ -186,7 +186,7 @@ remove_undef!(expression_array::SparseAxisArray) = expression_array
 
 function _calc_dimensions(
     array::DenseAxisArray,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     num_rows::Int,
     horizon::Int,
 )
@@ -220,7 +220,7 @@ end
 
 function _calc_dimensions(
     array::SparseAxisArray,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     num_rows::Int,
     horizon::Int,
 )
@@ -232,7 +232,7 @@ end
 """
 Run this function only when getting detailed solver stats
 """
-function _summary_to_dict!(optimizer_stats::IS.OptimizerStats, jump_model::JuMP.Model)
+function _summary_to_dict!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
     # JuMP.solution_summary uses a lot of try-catch so it has a performance hit and should be opt-in
     jump_summary = JuMP.solution_summary(jump_model; verbose = false)
     # Note we don't grab all the fields from the summary because not all can be encoded as Float for HDF store
@@ -287,7 +287,7 @@ function _get_solver_time(jump_model::JuMP.Model)
     return solver_solve_time
 end
 
-function write_optimizer_stats!(optimizer_stats::IS.OptimizerStats, jump_model::JuMP.Model)
+function write_optimizer_stats!(optimizer_stats::OptimizerStats, jump_model::JuMP.Model)
     if JuMP.primal_status(jump_model) == MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         optimizer_stats.objective_value = JuMP.objective_value(jump_model)
     else

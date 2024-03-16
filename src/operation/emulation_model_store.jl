@@ -1,9 +1,9 @@
 """
 Stores results data for one EmulationModel
 """
-mutable struct EmulationModelStore <: IS.AbstractModelStore
+mutable struct EmulationModelStore <: IS.Optimization.AbstractModelStore
     data_container::DatasetContainer{InMemoryDataset}
-    optimizer_stats::OrderedDict{Int, IS.OptimizerStats}
+    optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
 
 get_data_field(store::EmulationModelStore, type::Symbol) =
@@ -12,7 +12,7 @@ get_data_field(store::EmulationModelStore, type::Symbol) =
 function EmulationModelStore()
     return EmulationModelStore(
         DatasetContainer{InMemoryDataset}(),
-        OrderedDict{Int, IS.OptimizerStats}(),
+        OrderedDict{Int, OptimizerStats}(),
     )
 end
 
@@ -65,7 +65,7 @@ end
 function initialize_storage!(
     store::EmulationModelStore,
     container::OptimizationContainer,
-    params::IS.ModelStoreParams,
+    params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
     for type in STORE_CONTAINERS
@@ -89,7 +89,7 @@ end
 function write_result!(
     store::EmulationModelStore,
     name::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 2},
@@ -102,7 +102,7 @@ end
 function write_result!(
     store::EmulationModelStore,
     ::Symbol,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 1},
@@ -120,7 +120,7 @@ end
 
 function read_results(
     store::EmulationModelStore,
-    key::IS.OptimizationContainerKey;
+    key::OptimizationContainerKey;
     index::Union{Int, Nothing} = nothing,
     len::Union{Int, Nothing} = nothing,
 )
@@ -137,26 +137,26 @@ function read_results(
     end
 end
 
-function get_column_names(store::EmulationModelStore, key::IS.OptimizationContainerKey)
+function get_column_names(store::EmulationModelStore, key::OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
     return get_column_names(key, container[key].values)
 end
 
-function get_dataset_size(store::EmulationModelStore, key::IS.OptimizationContainerKey)
+function get_dataset_size(store::EmulationModelStore, key::OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
     return size(container[key].values)
 end
 
 function get_last_updated_timestamp(
     store::EmulationModelStore,
-    key::IS.OptimizationContainerKey,
+    key::OptimizationContainerKey,
 )
     container = get_data_field(store, get_store_container_type(key))
     return get_update_timestamp(container[key])
 end
 function write_optimizer_stats!(
     store::EmulationModelStore,
-    stats::IS.OptimizerStats,
+    stats::OptimizerStats,
     index::EmulationModelIndexType,
 )
     @assert !(index in keys(store.optimizer_stats))
@@ -165,9 +165,11 @@ function write_optimizer_stats!(
 end
 
 function read_optimizer_stats(store::EmulationModelStore)
-    return DataFrames.DataFrame([to_namedtuple(x) for x in values(store.optimizer_stats)])
+    return DataFrames.DataFrame([
+        IS.to_namedtuple(x) for x in values(store.optimizer_stats)
+    ])
 end
 
-function get_last_recorded_row(x::EmulationModelStore, key::IS.OptimizationContainerKey)
+function get_last_recorded_row(x::EmulationModelStore, key::OptimizationContainerKey)
     return get_last_recorded_row(x.data_container, key)
 end

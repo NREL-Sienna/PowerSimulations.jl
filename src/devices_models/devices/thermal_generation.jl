@@ -83,7 +83,7 @@ proportional_cost(cost::PSY.MultiStartCost, ::OnVariable, ::PSY.ThermalMultiStar
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
 
-objective_function_multiplier(::IS.VariableType, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
+objective_function_multiplier(::VariableType, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
 shut_down_cost(cost::PSY.OperationalCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
 shut_down_cost(cost::PSY.TwoPartCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=0.0
@@ -207,7 +207,7 @@ Range constraints for thermal compact dispatch
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
-    U::Type{<:Union{PowerAboveMinimumVariable, IS.ExpressionType}},
+    U::Type{<:Union{PowerAboveMinimumVariable, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     network_model::NetworkModel{X},
@@ -250,7 +250,7 @@ Semicontinuous range constraints for thermal dispatch formulations
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
-    U::Type{<:Union{IS.VariableType, IS.ExpressionType}},
+    U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::NetworkModel{X},
@@ -330,7 +330,7 @@ Semicontinuous range constraints for unit commitment formulations
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:PowerVariableLimitsConstraint},
-    U::Type{<:Union{IS.VariableType, IS.ExpressionType}},
+    U::Type{<:Union{VariableType, ExpressionType}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     ::NetworkModel{X},
@@ -418,7 +418,7 @@ This function adds range constraint for the first time period. Constraint (10) f
 function add_constraints!(
     container::OptimizationContainer,
     T::Type{<:ActivePowerVariableLimitsConstraint},
-    U::Type{<:IS.VariableType},
+    U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     ::NetworkModel{X},
@@ -779,7 +779,7 @@ end
 ############################ Auxiliary Variables Calculation ################################
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::IS.AuxVarKey{TimeDurationOn, T},
+    ::AuxVarKey{TimeDurationOn, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_variable_results = get_variable(container, OnVariable(), T)
@@ -821,7 +821,7 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::IS.AuxVarKey{TimeDurationOff, T},
+    ::AuxVarKey{TimeDurationOff, T},
     ::PSY.System,
 ) where {T <: PSY.ThermalGen}
     on_variable_results = get_variable(container, OnVariable(), T)
@@ -862,10 +862,9 @@ end
 
 function calculate_aux_variable_value!(
     container::OptimizationContainer,
-    ::IS.AuxVarKey{PowerOutput, T},
+    ::AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
     if has_container_key(container, OnVariable, T)
         on_variable_results = get_variable(container, OnVariable(), T)
@@ -878,13 +877,17 @@ function calculate_aux_variable_value!(
         )
     end
     p_variable_results = get_variable(container, PowerAboveMinimumVariable(), T)
+    device_name = axes(p_variable_results, 1)
     aux_variable_container = get_aux_variable(container, PowerOutput(), T)
-    for d in devices, t in time_steps
+    for d_name in device_name
+        d = PSY.get_component(T, system, d_name)
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
-        aux_variable_container[name, t] =
-            jump_value(on_variable_results[name, t]) * min +
-            jump_value(p_variable_results[name, t])
+        for t in time_steps
+            aux_variable_container[name, t] =
+                jump_value(on_variable_results[name, t]) * min +
+                jump_value(p_variable_results[name, t])
+        end
     end
 
     return

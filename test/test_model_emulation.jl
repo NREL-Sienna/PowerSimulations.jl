@@ -167,18 +167,18 @@ end
     @test list_aux_variable_keys(results) == []
     @test list_variable_names(results) == ["ActivePowerVariable__ThermalStandard"]
     @test list_variable_keys(results) ==
-          [PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard)]
+          [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
     @test list_dual_names(results) == []
     @test list_dual_keys(results) == []
     @test list_parameter_names(results) == ["ActivePowerTimeSeriesParameter__PowerLoad"]
     @test list_parameter_keys(results) ==
-          [PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad)]
+          [PSI.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad)]
 
     @test read_variable(results, "ActivePowerVariable__ThermalStandard") isa DataFrame
     @test read_variable(results, ActivePowerVariable, ThermalStandard) isa DataFrame
     @test read_variable(
         results,
-        PSI.IS.VariableKey(ActivePowerVariable, ThermalStandard),
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
     ) isa
           DataFrame
 
@@ -186,7 +186,7 @@ end
     @test read_parameter(results, ActivePowerTimeSeriesParameter, PowerLoad) isa DataFrame
     @test read_parameter(
         results,
-        PSI.IS.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad),
+        PSI.ParameterKey(ActivePowerTimeSeriesParameter, PowerLoad),
     ) isa DataFrame
 
     @test read_optimizer_stats(model) isa DataFrame
@@ -249,15 +249,17 @@ end
     @test var1_a == var1_b
 
     # Results were automatically serialized here.
-    results2 = OptimizationProblemResults(joinpath(PSI.get_output_dir(model)))
+    results2 = OptimizationProblemResults(PSI.get_output_dir(model))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
-    @test get_system(results2) !== nothing
+    @test get_system(results2) === nothing
+    get_system!(results2)
+    @test get_system(results2) isa PSY.System
 
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
+    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
     results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
