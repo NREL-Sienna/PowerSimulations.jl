@@ -58,13 +58,8 @@ function OptimizerStats(data::Vector{Float64})
     stats_field_count = fieldcount(OptimizerStats)
 
     vals = Vector(undef, stats_field_count)
-    # This conditions is for backwards compatibility with other versions of
-    if length(data) < stats_field_count
-        missing_gap_field_data = true
-    else
-        missing_gap_field_data = false
-    end
-
+    # This condition is for backwards compatibility with PSI versions prior to 0.27.1
+    missing_gap_field_data = length(data) < stats_field_count
     to_missing = Set((
         :objective_bound,
         :dual_objective_value,
