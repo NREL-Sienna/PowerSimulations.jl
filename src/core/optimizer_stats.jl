@@ -55,22 +55,39 @@ end
 Construct OptimizerStats from a vector that was serialized to HDF5.
 """
 function OptimizerStats(data::Vector{Float64})
-    vals = Vector(undef, length(data))
+    stats_field_count = fieldcount(OptimizerStats)
+
+    vals = Vector(undef, stats_field_count)
+    # This conditions is for backwards compatibility with other versions of
+    if length(data) < stats_field_count
+        missing_gap_field_data = true
+    else
+        missing_gap_field_data = false
+    end
+
     to_missing = Set((
         :objective_bound,
         :dual_objective_value,
         :barrier_iterations,
         :simplex_iterations,
         :node_count,
+        :relative_gap,
         :solve_bytes_alloc,
         :sec_in_gc,
     ))
+    ix = 1
     for (i, name) in enumerate(fieldnames(OptimizerStats))
-        if name in to_missing && isnan(data[i])
+        if missing_gap_field_data && name == :relative_gap
+            vals[i] = missing
+            continue
+        end
+
+        if name in to_missing && isnan(data[ix])
             vals[i] = missing
         else
-            vals[i] = data[i]
+            vals[i] = data[ix]
         end
+        ix += 1
     end
     return OptimizerStats(vals...)
 end
