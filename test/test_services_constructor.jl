@@ -422,4 +422,15 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     moi_tests(model, 312, 0, 288, 288, 168, false)
+
+    #= TODO: Fix this test
+    template = get_thermal_dispatch_template_network(ACPPowerModel; use_slacks = true) where
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, 312, 0, 288, 288, 168, false)
+    =#
 end
