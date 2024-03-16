@@ -389,3 +389,37 @@ end
 
     @test found_constraints == 2
 end
+
+@testset "Test Transmission Interface" begin
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    interface = TransmissionInterface(;
+        name = "west_east",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 400.0),
+    )
+    interface_lines = [
+        get_component(Line, c_sys5_uc, "1"),
+        get_component(Line, c_sys5_uc, "2"),
+        get_component(Line, c_sys5_uc, "6"),
+    ]
+    add_service!(c_sys5_uc, interface, interface_lines)
+
+    template = get_thermal_dispatch_template_network(DCPPowerModel)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, 432, 144, 288, 288, 288, false)
+
+    template = get_thermal_dispatch_template_network(PTDFPowerModel)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    moi_tests(model, 312, 0, 288, 288, 168, false)
+end
