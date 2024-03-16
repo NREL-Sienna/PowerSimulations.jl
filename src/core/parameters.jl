@@ -233,14 +233,6 @@ function set_parameter!(
 end
 
 """
-Parameters implemented through VariableRef
-"""
-abstract type RightHandSideParameter <: IS.ParameterType end
-abstract type ObjectiveFunctionParameter <: IS.ParameterType end
-
-abstract type TimeSeriesParameter <: RightHandSideParameter end
-
-"""
 Parameter to define active power time series
 """
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
