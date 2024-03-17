@@ -48,6 +48,7 @@ function construct_services!(
         services_template[groupservice],
         devices_template,
         incompatible_device_types,
+        network_model
     )
     return
 end
@@ -87,6 +88,7 @@ function construct_services!(
         services_template[groupservice],
         devices_template,
         incompatible_device_types,
+        network_model,
     )
     return
 end
