@@ -133,6 +133,20 @@ try
                 write(io, "| $(ARGS[1])- Build Time $name | FAILED TO TEST |\n")
             end
         end
+
+        solve_out, time_solve, _, _ = execute!(sim; enable_progress_bar = false)
+
+        if solve_out == PSI.RunStatus.SUCCESSFUL
+            name = i > 1 ? "Postcompile" : "Precompile"
+            open("solve_time.txt", "a") do io
+                write(io, "| $(ARGS[1])-Solve Time $name | $(time_solve) |\n")
+            end
+        else
+            open("solve_time.txt", "a") do io
+                write(io, "| $(ARGS[1])- Solve Time $name | FAILED TO TEST |\n")
+            end
+        end
+
     end
 catch e
     rethrow(e)
