@@ -48,7 +48,7 @@ function construct_services!(
         services_template[groupservice],
         devices_template,
         incompatible_device_types,
-        network_model
+        network_model,
     )
     return
 end
