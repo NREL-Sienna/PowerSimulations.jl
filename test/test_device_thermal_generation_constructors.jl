@@ -816,3 +816,14 @@ end
     on_sundance = on[!, "Sundance"]
     @test all(isapprox.(on_sundance, 1.0))
 end
+
+# NOTE not a comprehensive test, should expand as part of the cost refactor
+@testset "Test no_load_cost" begin
+    sys = build_system(PSITestSystems, "c_sys5_uc")
+    comp = get_component(ThermalStandard, sys, "Sundance")
+    sys_base_power = get_base_power(sys)
+    set_base_power!(comp, 123.4)
+    min_limit = PSY.get_active_power_limits(comp).min
+    @test isapprox(PSI.no_load_cost(VariableCost(5.0), OnVariable(), comp, ThermalBasicUnitCommitment()), 5.0 * min_limit * sys_base_power)
+    @test isapprox(PSI.no_load_cost(VariableCost((3.0, 5.0)), OnVariable(), comp, ThermalBasicUnitCommitment()), (3.0*min_limit^2 + 5.0*min_limit) * sys_base_power)
+end
