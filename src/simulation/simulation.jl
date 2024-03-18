@@ -269,7 +269,7 @@ end
 # Compare initial conditions for all `InitialConditionType`s with the
 # `requires_reconciliation` trait across `models`, log @info messages for mismatches
 function _initial_conditions_reconciliation!(
-    models::Vector{DecisionModel{GenericOpProblem}})
+    models::Vector{<:OperationModel})
     model_names = get_name.(models)
     has_mismatches = false
     @info "Reconciling initial conditions across models $(join(model_names, ", "))"
