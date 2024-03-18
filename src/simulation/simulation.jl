@@ -266,6 +266,61 @@ function _check_folder(sim::Simulation)
     end
 end
 
+# Compare initial conditions for all `InitialConditionType`s with the
+# `requires_reconciliation` trait across `models`, log @info messages for mismatches
+function _initial_conditions_reconciliation!(
+    models::Vector{<:OperationModel})
+    model_names = get_name.(models)
+    has_mismatches = false
+    @info "Reconciling initial conditions across models $(join(model_names, ", "))"
+    # all_ic_keys: all the `ICKey`s that appear in any of the models
+    all_ic_keys = union(keys.(get_initial_conditions.(models))...)
+    # all_ic_values: Dict{ICKey, Dict{model_index, Dict{component_name, ic_value}}}
+    all_ic_values = Dict()
+    for ic_key in all_ic_keys
+        if !requires_reconciliation(get_entry_type(ic_key))
+            @debug "Skipping initial conditions reconciliation for $(get_entry_type(ic_key)) due to false requires_reconciliation"
+            continue
+        end
+        # ic_vals_per_model: Dict{model_index, Dict{component_name, ic_value}}
+        ic_vals_per_model = Dict()
+        for (i, model) in enumerate(models)
+            ics = PSI.get_initial_conditions(model)
+            haskey(ics, ic_key) || continue
+            # ic_vals_per_component: Dict{component_name, ic_value}
+            ic_vals_per_component =
+                Dict(get_name(get_component(ic)) => get_condition(ic) for ic in ics[ic_key])
+            ic_vals_per_model[i] = ic_vals_per_component
+        end
+
+        # Assert that all models have the same components for current ic_key
+        @assert allequal(Set.(keys.(values(ic_vals_per_model)))) "For IC key $ic_key, not all models have the same components"
+
+        # For each component in current ic_key, compare values across models
+        component_names = keys(first(values(ic_vals_per_model)))
+        for component_name in component_names
+            all_values = [result[component_name] for result in values(ic_vals_per_model)]
+            ref_value = first(all_values)
+            if !allequal(isapprox.(all_values, ref_value; atol = ABSOLUTE_TOLERANCE))
+                has_mismatches = true
+                mismatch_msg = "For IC key $ic_key, mismatch on component $component_name:"
+                for (model_i, result) in sort(pairs(ic_vals_per_model); by = first)
+                    mismatch_msg *= "\n\t$(model_names[model_i]): $(result[component_name])"
+                end
+                @info mismatch_msg
+            end
+        end
+        all_ic_values[ic_key] = ic_vals_per_model
+    end
+
+    # TODO now that we have found the initial conditions mismatches, we must fix them
+    if has_mismatches
+        @warn "Models have initial condition mismatches; reconciliation is not yet implemented"
+    end
+
+    return all_ic_values
+end
+
 function _build_decision_models!(sim::Simulation)
     for (model_number, model) in enumerate(get_decision_models(get_models(sim)))
         @info("Building problem $(get_name(model))")
@@ -290,6 +345,7 @@ function _build_decision_models!(sim::Simulation)
             rethrow()
         end
     end
+    _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
     return
 end
 
