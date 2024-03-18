@@ -824,6 +824,22 @@ end
     sys_base_power = get_base_power(sys)
     set_base_power!(comp, 123.4)
     min_limit = PSY.get_active_power_limits(comp).min
-    @test isapprox(PSI.no_load_cost(VariableCost(5.0), OnVariable(), comp, ThermalBasicUnitCommitment()), 5.0 * min_limit * sys_base_power)
-    @test isapprox(PSI.no_load_cost(VariableCost((3.0, 5.0)), OnVariable(), comp, ThermalBasicUnitCommitment()), (3.0*min_limit^2 + 5.0*min_limit) * sys_base_power)
+    @test isapprox(
+        PSI.no_load_cost(
+            VariableCost(5.0),
+            OnVariable(),
+            comp,
+            ThermalBasicUnitCommitment(),
+        ),
+        5.0 * min_limit * sys_base_power,
+    )
+    @test isapprox(
+        PSI.no_load_cost(
+            VariableCost((3.0, 5.0)),
+            OnVariable(),
+            comp,
+            ThermalBasicUnitCommitment(),
+        ),
+        (3.0 * min_limit^2 + 5.0 * min_limit) * sys_base_power,
+    )
 end
