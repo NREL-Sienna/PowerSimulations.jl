@@ -338,15 +338,26 @@ function _add_service_bid_cost!(
         start_time = initial_time,
         len = length(time_steps),
     )
-    forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data)) .* base_power
+    forecast_data_values = PSY.get_cost.(TimeSeries.values(forecast_data))
+    # Single Price Bid
+    if eltype(forecast_data_values) == Float64
+        data_values = forecast_data_values
+        # Single Price/Quantity Bid
+    elseif eltype(forecast_data_values) == NTuple{2, Float64}
+        data_values = [v[1] for v in forecast_data_values]
+    else
+        error("$(eltype(forecast_data_values)) not supported for MarketBidCost")
+    end
+
     reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
     component_name = PSY.get_name(component)
     for t in time_steps
         add_to_objective_invariant_expression!(
             container,
-            forecast_data_values[t] * reserve_variable[component_name, t],
+            data_values[t] * base_power * reserve_variable[component_name, t],
         )
     end
+    return
 end
 
 function _add_service_bid_cost!(::OptimizationContainer, ::PSY.Component, ::PSY.Service) end
