@@ -329,15 +329,12 @@ function _build_single_model_for_simulation(model::DecisionModel, sim::Simulatio
     mkpath(output_dir)
     set_output_dir!(model, output_dir)
     try
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-            # TODO-PJ: Temporary while are able to switch from PJ to POI
-            container = get_optimization_container(model)
-            container.built_for_recurrent_solves = true
-            build_impl!(model)
-        end
+        # TODO-PJ: Temporary while are able to switch from PJ to POI
+        container = get_optimization_container(model)
+        container.built_for_recurrent_solves = true
+        build_impl!(model)
         sim.internal.date_ref[model_number] = initial_time
         set_status!(model, BuildStatus.BUILT)
-        # TODO: Disable check of variable bounds ?
         _pre_solve_model_checks(model)
     catch
         set_status!(model, BuildStatus.FAILED)
@@ -347,9 +344,13 @@ function _build_single_model_for_simulation(model::DecisionModel, sim::Simulatio
 end
 
 function _build_decision_models!(sim::Simulation)
-    decision_models = get_decision_models(get_models(sim))
-    Threads.@threads for model_n in 1:length(decision_models)
-        _build_single_model_for_simulation(decision_models[model_n], sim, model_n)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Decision Problems" begin
+        decision_models = get_decision_models(get_models(sim))
+        Threads.@threads for model_n in 1:length(decision_models)
+            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(decision_models[model_n]))" begin
+                _build_single_model_for_simulation(decision_models[model_n], sim, model_n)
+            end
+        end
     end
     _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
     return
@@ -368,7 +369,7 @@ function _build_emulation_model!(sim::Simulation)
         output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
         mkpath(output_dir)
         set_output_dir!(model, output_dir)
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem Emulation $(get_name(model))" begin
             build_impl!(model)
         end
         sim.internal.date_ref[length(sim.internal.date_ref) + 1] = initial_time
@@ -592,10 +593,8 @@ function _build!(
         _check_steps(sim, problem_initial_times)
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
-        _build_decision_models!(sim)
-        _build_emulation_model!(sim)
-    end
+    _build_decision_models!(sim)
+    _build_emulation_model!(sim)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
