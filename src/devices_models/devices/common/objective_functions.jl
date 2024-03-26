@@ -346,7 +346,8 @@ function _add_service_bid_cost!(
         error("$(eltype(forecast_data_values)) not supported for MarketBidCost")
     end
 
-    reserve_variable = get_variable(container, ActivePowerReserveVariable(), T, PSY.get_name(service))
+    reserve_variable =
+        get_variable(container, ActivePowerReserveVariable(), T, PSY.get_name(service))
     component_name = PSY.get_name(component)
     for t in time_steps
         add_to_objective_invariant_expression!(
