@@ -507,7 +507,7 @@ function _read_result(
     #end
     columns = get_column_names(key, dataset)
     data = permutedims(data)
-    @assert_op size(data)[2] == length(columns)
+    @assert_op size(data)[2] == length(columns[1])
     @assert_op size(data)[1] == 1
     return data, columns
 end
@@ -644,38 +644,12 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    data::Array{Float64},
+    data::DenseAxisArray,
 )
     dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, data, index)
+    _write_dataset!(dataset.values, to_matrix(data), index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
-    return
-end
-
-function write_result!(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    data::DenseAxisArray{Float64, 2},
-)
-    data_array = Array{Float64, 3}(undef, size(data)[1], size(data)[2], 1)
-    data_array[:, :, 1] = data
-    write_result!(store, model_name, key, index, simulation_time, data_array)
-    return
-end
-
-function write_result!(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    data::DenseAxisArray{Float64, 1},
-)
-    write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
     return
 end
 
@@ -1014,51 +988,14 @@ function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _write_dataset!(
-    dataset::HDF5.Dataset,
-    array::Matrix{Float64},
-    row_range::UnitRange{Int64},
-    ::Val{3},
-)
-    dataset[:, 1, row_range] = array
-    @debug "wrote dataset" dataset row_range
-    return
-end
-
-function _write_dataset!(
-    dataset::HDF5.Dataset,
-    array::Matrix{Float64},
-    row_range::UnitRange{Int64},
-    ::Val{2},
-)
-    dataset[row_range, :] = array
-    @debug "wrote dataset" dataset row_range
-    return
-end
-
-function _write_dataset!(
-    dataset::HDF5.Dataset,
-    array::Array{Float64, 3},
-    row_range::UnitRange{Int64},
-    ::Val{3},
-)
-    dataset[row_range, :, :] = array
-    @debug "wrote dataset" dataset row_range
-    return
-end
-
-function _write_dataset!(dataset::HDF5.Dataset, array::Array{Float64}, index::Int)
-    _write_dataset!(dataset, array, index:index, Val{ndims(dataset)}())
-    return
-end
-
+# Specific data set writing function that writes decision model data. It dispatches on the index type of the dataset as a range
 function _write_dataset!(
     dataset::HDF5.Dataset,
     array::Array{Float64, 3},
     row_range::UnitRange{Int64},
 )
     dataset[:, :, row_range] = array
-    @debug "wrote dataset" dataset row_range
+    @debug "wrote dm dataset" dataset row_range
     return
 end
 
@@ -1068,6 +1005,27 @@ function _write_dataset!(
     row_range::UnitRange{Int64},
 )
     dataset[:, :, :, row_range] = array
-    @debug "wrote dataset" dataset row_range
+    @debug "wrote dm dataset" dataset row_range
+    return
+end
+
+# Specific data set writing function that writes emulation model data. It dispatches on the index type of the dataset
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 2},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :] = array
+    @debug "wrote em dataset" dataset index
+    return
+end
+
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 4},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :, :] = array
+    @debug "wrote em dataset" dataset index
     return
 end
