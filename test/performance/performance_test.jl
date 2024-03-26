@@ -136,7 +136,7 @@ try
             end
         end
 
-        solve_out, time_solve, _, _ = execute!(sim; enable_progress_bar = false)
+        solve_out, time_solve, _, _ = @timed execute!(sim; enable_progress_bar = false)
 
         if solve_out == PSI.RunStatus.SUCCESSFUL
             name = i > 1 ? "Postcompile" : "Precompile"
