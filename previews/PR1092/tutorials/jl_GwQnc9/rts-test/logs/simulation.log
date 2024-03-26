@@ -1,0 +1,108 @@
+┌ Info: 2024-03-26T16:47:45.788 [3273:1]: Building problem UC Thread: 1
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:270
+┌ Info: 2024-03-26T16:47:45.793 [3273:1]: Initializing Optimization Container For a DecisionModel
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:290
+┌ Info: 2024-03-26T16:47:45.794 [3273:1]: Initializing ModelStoreParams
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:296
+┌ Info: 2024-03-26T16:47:45.794 [3273:1]: Instantiating Network Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:305
+┌ Info: 2024-03-26T16:47:45.795 [3273:1]: Validating connectivity with depth first search (network traversal)
+└ @ PowerNetworkMatrices /home/runner/.julia/packages/PowerNetworkMatrices/xrfxR/src/system_utils.jl:12
+┌ Info: 2024-03-26T16:47:45.795 [3273:1]: Make Initial Conditions Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:193
+┌ Warning: 2024-03-26T16:47:45.900 [3273:1]: Overwriting ("", Symbol("VariableReserve{ReserveUp}")) existing model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/service_model.jl:122
+┌ Warning: 2024-03-26T16:47:45.901 [3273:1]: Overwriting ("", Symbol("VariableReserve{ReserveUp}")) existing model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/service_model.jl:122
+┌ Warning: 2024-03-26T16:47:45.901 [3273:1]: Overwriting ("", Symbol("VariableReserve{ReserveUp}")) existing model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/service_model.jl:122
+┌ Warning: 2024-03-26T16:47:46.937 [3273:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:772
+┌ Info: 2024-03-26T16:47:46.937 [3273:1]: Solving Initialization Model for UC
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:207
+┌ Info: 2024-03-26T16:47:47.124 [3273:1]: Serialized initial conditions to ./jl_GwQnc9/rts-test/problems/UC/initial_conditions.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:216
+┌ Warning: 2024-03-26T16:47:48.470 [3273:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:772
+┌ Info: 2024-03-26T16:47:48.557 [3273:1]: UC optimizer set to: HiGHS
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:309
+┌ Info: 2024-03-26T16:47:48.557 [3273:1]: Checking Numerical Bounds
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:312
+┌ Info: 2024-03-26T16:47:48.634 [3273:1]: Variable bounds range is [0.0 8.47]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:270
+┌ Info: 2024-03-26T16:47:48.702 [3273:1]: Constraint coefficient bounds range is [-1.26 4380.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:280
+┌ Info: 2024-03-26T16:47:48.702 [3273:1]: Constraint right-hand-side bounds [0.06 48.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:289
+┌ Info: 2024-03-26T16:47:48.702 [3273:1]: Building problem ED Thread: 1
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:270
+┌ Info: 2024-03-26T16:47:48.703 [3273:1]: Initializing Optimization Container For a DecisionModel
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:290
+┌ Info: 2024-03-26T16:47:48.741 [3273:1]: Initializing ModelStoreParams
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:296
+┌ Info: 2024-03-26T16:47:48.751 [3273:1]: Instantiating Network Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:305
+┌ Info: 2024-03-26T16:47:48.751 [3273:1]: PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/network_model.jl:118
+┌ Info: 2024-03-26T16:47:48.993 [3273:1]: Make Initial Conditions Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:193
+┌ Info: 2024-03-26T16:47:48.993 [3273:1]: No initial conditions in the model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:138
+┌ Info: 2024-03-26T16:47:55.252 [3273:1]: ED optimizer set to: HiGHS
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:309
+┌ Info: 2024-03-26T16:47:55.252 [3273:1]: Checking Numerical Bounds
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:312
+┌ Info: 2024-03-26T16:47:55.354 [3273:1]: Variable bounds range is [0.0 8.47]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:270
+┌ Info: 2024-03-26T16:47:55.711 [3273:1]: Constraint coefficient bounds range is [-0.18461417147837061 1.0e6]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:280
+┌ Info: 2024-03-26T16:47:55.711 [3273:1]: Constraint right-hand-side bounds [1.0 1.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:289
+┌ Info: 2024-03-26T16:48:00.600 [3273:1]: Serialized simulation name = rts-test
+│   directory = ./jl_GwQnc9/rts-test/simulation_files
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:1089
+┌ Info: 2024-03-26T16:48:00.624 [3273:1]: Serialized time series data to ./jl_GwQnc9/rts-test/problems/UC/system-750c912c-b62e-4fed-ad0f-9d158ea1a858_time_series_storage.h5.
+└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/9btGb/src/time_series_storage.jl:98
+┌ Info: 2024-03-26T16:48:00.702 [3273:1]: Serialized System to ./jl_GwQnc9/rts-test/problems/UC/system-750c912c-b62e-4fed-ad0f-9d158ea1a858.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/xh3fM/src/base.jl:299
+┌ Info: 2024-03-26T16:48:00.710 [3273:1]: Serialized System metadata to ./jl_GwQnc9/rts-test/problems/UC/system-750c912c-b62e-4fed-ad0f-9d158ea1a858_metadata.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/xh3fM/src/base.jl:324
+┌ Info: 2024-03-26T16:48:00.715 [3273:1]: Serialized OperationModel to
+│   bin_file_name = ./jl_GwQnc9/rts-test/problems/UC/model.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_serialization.jl:67
+┌ Info: 2024-03-26T16:48:00.791 [3273:1]: Serialized time series data to ./jl_GwQnc9/rts-test/problems/ED/system-75d07ed8-e723-45cd-a0b3-492a378c1d18_time_series_storage.h5.
+└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/9btGb/src/time_series_storage.jl:98
+┌ Info: 2024-03-26T16:48:00.868 [3273:1]: Serialized System to ./jl_GwQnc9/rts-test/problems/ED/system-75d07ed8-e723-45cd-a0b3-492a378c1d18.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/xh3fM/src/base.jl:299
+┌ Info: 2024-03-26T16:48:00.870 [3273:1]: Serialized System metadata to ./jl_GwQnc9/rts-test/problems/ED/system-75d07ed8-e723-45cd-a0b3-492a378c1d18_metadata.json
+└ @ PowerSystems /home/runner/.julia/packages/PowerSystems/xh3fM/src/base.jl:324
+┌ Info: 2024-03-26T16:48:00.951 [3273:1]: Serialized OperationModel to
+│   bin_file_name = ./jl_GwQnc9/rts-test/problems/ED/model.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_serialization.jl:67
+┌ Info: 2024-03-26T16:48:04.032 [3273:1]: Initialize store cache
+│   get_min_flush_size(store.cache) = 1048576
+│   get_max_size(store.cache) = 1073741824
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:249
+┌ Info: 2024-03-26T16:49:11.130 [3273:1]: 
+│  ────────────────────────────────────────────────────────────────────────────────
+│                                         Time                    Allocations      
+│                                ───────────────────────   ────────────────────────
+│        Tot / % measured:            69.5s / 100.0%           3.11GiB / 100.0%    
+│ 
+│  Section               ncalls     time    %tot     avg     alloc    %tot      avg
+│  ────────────────────────────────────────────────────────────────────────────────
+│  Execute Simulation         1    69.5s  100.0%   69.5s   3.11GiB  100.0%  3.11GiB
+│    Execute ED             192    55.4s   79.7%   288ms   2.40GiB   77.2%  12.8MiB
+│      Solve ED             192    46.8s   67.3%   244ms    835MiB   26.2%  4.35MiB
+│      Update State         192    4.37s    6.3%  22.8ms    446MiB   14.0%  2.32MiB
+│      Update ED            192    3.07s    4.4%  16.0ms    403MiB   12.6%  2.10MiB
+│        Parameter Up...    192    2.91s    4.2%  15.2ms    400MiB   12.5%  2.08MiB
+│        Ini Cond Upd...    192   94.7μs    0.0%   493ns     0.00B    0.0%    0.00B
+│    Execute UC               2    8.91s   12.8%   4.46s    458MiB   14.4%   229MiB
+│      Solve UC               2    5.34s    7.7%   2.67s    158MiB    5.0%  79.0MiB
+│      Update State           2    2.44s    3.5%   1.22s    181MiB    5.7%  90.7MiB
+│      Update UC              2    1.03s    1.5%   513ms   84.3MiB    2.6%  42.1MiB
+│        Ini Cond Upd...      1    616ms    0.9%   616ms   46.7MiB    1.5%  46.7MiB
+│        Parameter Up...      1    411ms    0.6%   411ms   37.5MiB    1.2%  37.5MiB
+│  ────────────────────────────────────────────────────────────────────────────────
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:1007
