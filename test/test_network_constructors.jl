@@ -552,8 +552,8 @@ end
 
     results = ProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
-    @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
-    @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
+    @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
+    @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
 
     load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
     thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
