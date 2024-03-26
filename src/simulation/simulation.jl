@@ -321,7 +321,7 @@ function _initial_conditions_reconciliation!(
     return all_ic_values
 end
 
-function _build_single_model_for_simulation(model::DecisionModel, model_number::Int)
+function _build_single_model_for_simulation(model::DecisionModel, sim::Simulation, model_number::Int)
     @error("Building problem $(get_name(model)) $(Threads.threadid())")
     initial_time = get_initial_time(sim)
     set_initial_time!(model, initial_time)
@@ -347,8 +347,9 @@ function _build_single_model_for_simulation(model::DecisionModel, model_number::
 end
 
 function _build_decision_models!(sim::Simulation)
-    for (model_number, model) in enumerate(get_decision_models(get_models(sim)))
-        Threads.@spawn _build_single_model_for_simulation(model, model_number)
+    decision_models = get_decision_models(get_models(sim))
+    Threads.@threads for model_n in 1:length(decision_models)
+        _build_single_model_for_simulation(decision_models[model_n], sim, model_n)
     end
     _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
     return
