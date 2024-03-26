@@ -313,6 +313,6 @@ end
 
 function set_value!(s::HDF5Dataset, vals, index::Int)
     # Temporary while there is no implementation of caching of em_data
-    _write_dataset!(s.values, vals, index:index)
+    _write_dataset!(s.values, vals, index)
     return
 end
