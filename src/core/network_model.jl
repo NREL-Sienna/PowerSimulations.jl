@@ -34,6 +34,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     duals::Vector{DataType}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
+    power_flow_evaluation::Union{Nothing, PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
 
     function NetworkModel(
@@ -43,6 +44,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         reduce_radial_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
+        power_flow_evaluation = nothing,
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(
@@ -53,6 +55,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
+            power_flow_evaluation,
             nothing,
         )
     end
@@ -68,6 +71,7 @@ get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
     collect(keys(m.subnetworks))
 get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
+get_power_flow_evaluation(m::NetworkModel) = m.power_flow_evaluation
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
 get_subsystem(m::NetworkModel) = m.subsystem
 

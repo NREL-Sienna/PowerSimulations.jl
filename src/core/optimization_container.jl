@@ -110,6 +110,7 @@ mutable struct OptimizationContainer <: AbstractModelContainer
     built_for_recurrent_solves::Bool
     metadata::OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
+    power_flow_evaluation_data::Union{<:PowerFlowEvaluationData, Nothing}
 end
 
 function OptimizationContainer(
@@ -154,6 +155,7 @@ function OptimizationContainer(
         false,
         OptimizationContainerMetadata(),
         T,
+        nothing,
     )
 end
 
@@ -191,6 +193,8 @@ get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_parameters(container::OptimizationContainer) = container.parameters
+get_power_flow_evaluation_data(container::OptimizationContainer) =
+    container.power_flow_evaluation_data
 get_resolution(container::OptimizationContainer) = container.resolution
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
@@ -653,8 +657,8 @@ function build_impl!(
     @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
+    add_power_flow_data!(container, get_power_flow_evaluation(transmission_model), sys)
     check_optimization_container(container)
-
     return
 end
 
@@ -705,8 +709,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         end
     end
 
-    status = RunStatus.SUCCESSFUL
-
+    # Order is important because if a dual is needed then it could move the results to the
+    # temporary primal container
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
 
@@ -715,7 +719,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system, is_milp(container))
-    return status
+
+    return RunStatus.SUCCESSFUL
 end
 
 function compute_conflict!(container::OptimizationContainer)
@@ -1538,6 +1543,10 @@ function deserialize_key(container::OptimizationContainer, name::AbstractString)
 end
 
 function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
+    if !isnothing(get_power_flow_data(container))
+        solve_power_flow!(container, system)
+    end
+
     aux_vars = get_aux_variables(container)
     for key in keys(aux_vars)
         calculate_aux_variable_value!(container, key, system)
