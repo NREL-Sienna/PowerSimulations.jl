@@ -340,8 +340,8 @@ function _add_service_bid_cost!(
     if eltype(forecast_data_values) == Float64
         data_values = forecast_data_values
         # Single Price/Quantity Bid
-    elseif eltype(forecast_data_values) == NTuple{2, Float64}
-        data_values = [v[1] for v in forecast_data_values]
+    elseif eltype(forecast_data_values) == Vector{NTuple{2, Float64}}
+        data_values = [v[1][1] for v in forecast_data_values]
     else
         error("$(eltype(forecast_data_values)) not supported for MarketBidCost")
     end
