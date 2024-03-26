@@ -49,7 +49,7 @@ try
         )
 
         template_ed = deepcopy(template_uc)
-        set_device_model!(template_ed, ThermalMultiStart, ThermalStandardDispatch)
+        set_device_model!(template_ed, ThermalMultiStart, ThermalBasicDispatch)
         set_device_model!(template_ed, ThermalStandard, ThermalBasicDispatch)
         set_device_model!(template_ed, HydroDispatch, HydroDispatchRunOfRiver)
         set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchRunOfRiver)
@@ -64,7 +64,8 @@ try
                     template_uc,
                     sys_rts_da;
                     name = "UC",
-                    optimizer = optimizer_with_attributes(HiGHS.Optimizer),
+                    optimizer = optimizer_with_attributes(HiGHS.Optimizer,
+                        "mip_rel_gap" => 0.01),
                     system_to_file = false,
                     initialize_model = true,
                     optimizer_solve_log_print = true,
@@ -75,7 +76,8 @@ try
                     template_ed,
                     sys_rts_rt;
                     name = "ED",
-                    optimizer = optimizer_with_attributes(HiGHS.Optimizer),
+                    optimizer = optimizer_with_attributes(HiGHS.Optimizer,
+                        "mip_rel_gap" => 0.01),
                     system_to_file = false,
                     initialize_model = true,
                     check_numerical_bounds = false,
@@ -131,6 +133,19 @@ try
         else
             open("build_time.txt", "a") do io
                 write(io, "| $(ARGS[1])- Build Time $name | FAILED TO TEST |\n")
+            end
+        end
+
+        solve_out, time_solve, _, _ = @timed execute!(sim; enable_progress_bar = false)
+
+        if solve_out == PSI.RunStatus.SUCCESSFUL
+            name = i > 1 ? "Postcompile" : "Precompile"
+            open("solve_time.txt", "a") do io
+                write(io, "| $(ARGS[1])-Solve Time $name | $(time_solve) |\n")
+            end
+        else
+            open("solve_time.txt", "a") do io
+                write(io, "| $(ARGS[1])- Solve Time $name | FAILED TO TEST |\n")
             end
         end
     end
