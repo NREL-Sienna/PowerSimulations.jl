@@ -326,8 +326,8 @@ end
 function _add_service_bid_cost!(
     container::OptimizationContainer,
     component::PSY.Component,
-    service::PSY.Reserve{T},
-) where {T <: PSY.ReserveDirection}
+    service::T,
+) where {T <: PSY.Reserve{<:PSY.ReserveDirection}}
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
     base_power = get_base_power(container)
