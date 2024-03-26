@@ -64,7 +64,7 @@ function write_model_dual_results!(
             df = to_dataframe(jump_value.(constraint), key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -99,7 +99,7 @@ function write_model_parameter_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -138,7 +138,7 @@ function write_model_variable_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -171,7 +171,7 @@ function write_model_aux_variable_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -210,7 +210,7 @@ function write_model_expression_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return

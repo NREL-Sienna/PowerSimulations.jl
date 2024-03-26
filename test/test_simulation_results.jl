@@ -109,7 +109,7 @@ NATURAL_UNITS_VALUES = [
 ]
 
 function compare_results(rpath, epath, model, field, name, timestamp)
-    filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
+    filename = string(name) * "_" * IS.convert_for_path(timestamp) * ".csv"
     rp = joinpath(rpath, model, field, filename)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
@@ -138,7 +138,7 @@ end
 
 function make_export_all(problems)
     return [
-        ProblemResultsExport(
+        OptimizationProblemResultsExport(
             x;
             store_all_duals = true,
             store_all_variables = true,

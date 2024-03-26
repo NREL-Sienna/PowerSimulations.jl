@@ -407,8 +407,16 @@ end
             PSY.ThermalMultiStart,
             "hot",
         ),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "lb",
+        ),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "ub",
+        ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 334, false => 282)
@@ -434,8 +442,16 @@ end
             PSY.ThermalMultiStart,
             "hot",
         ),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "lb",
+        ),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "ub",
+        ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 382, false => 330)
@@ -811,7 +827,7 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    ptdf_vars = get_variable_values(ProblemResults(model))
+    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
     on_sundance = on[!, "Sundance"]
     @test all(isapprox.(on_sundance, 1.0))

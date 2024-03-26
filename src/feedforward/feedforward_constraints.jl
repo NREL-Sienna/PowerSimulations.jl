@@ -43,7 +43,12 @@ function _add_feedforward_constraints!(
     ::VariableKey{U, V},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel,
-) where {T <: ConstraintType, P <: ParameterType, U <: VariableType, V <: PSY.Component}
+) where {
+    T <: ConstraintType,
+    P <: ParameterType,
+    U <: VariableType,
+    V <: PSY.Component,
+}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     constraint_lb =

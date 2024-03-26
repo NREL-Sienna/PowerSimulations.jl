@@ -1,36 +1,3 @@
-abstract type SubComponentVariableType <: VariableType end
-
-struct VariableKey{T <: VariableType, U <: Union{PSY.Component, PSY.System}} <:
-       OptimizationContainerKey
-    meta::String
-end
-
-function VariableKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    if isabstracttype(U)
-        error("Type $U can't be abstract")
-    end
-    check_meta_chars(meta)
-    return VariableKey{T, U}(meta)
-end
-
-function VariableKey(
-    ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType}
-    return VariableKey(T, PSY.Component, meta)
-end
-
-get_entry_type(
-    ::VariableKey{T, U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = T
-get_component_type(
-    ::VariableKey{T, U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = U
-
 """
 Struct to dispatch the creation of Active Power Variables
 

@@ -18,7 +18,7 @@ Each Tuple corresponds to (con_name, internal_index, moi_index)
 """
 function get_all_variable_index(model::OperationModel)
     var_keys = get_all_variable_keys(model)
-    return [(encode_key(v[1]), v[2], v[3]) for v in var_keys]
+    return [(IS.Optimization.encode_key(v[1]), v[2], v[3]) for v in var_keys]
 end
 
 function get_all_variable_keys(model::OperationModel)

@@ -231,7 +231,7 @@ Return the optimizer stats for a problem as a DataFrame.
 function read_optimizer_stats(store::HdfSimulationStore, model_name)
     dataset = _get_dataset(OptimizerStats, store, model_name)
     data = permutedims(dataset[:, :])
-    stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
+    stats = [IS.to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
     return DataFrames.DataFrame(stats)
 end
 

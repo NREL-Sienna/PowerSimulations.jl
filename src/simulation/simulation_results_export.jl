@@ -2,7 +2,7 @@
 const _SUPPORTED_FORMATS = ("csv",)
 
 mutable struct SimulationResultsExport
-    models::Dict{Symbol, ProblemResultsExport}
+    models::Dict{Symbol, OptimizationProblemResultsExport}
     start_time::Dates.DateTime
     end_time::Dates.DateTime
     path::Union{Nothing, String}
@@ -10,7 +10,7 @@ mutable struct SimulationResultsExport
 end
 
 function SimulationResultsExport(
-    models::Vector{ProblemResultsExport},
+    models::Vector{OptimizationProblemResultsExport},
     params::SimulationStoreParams;
     start_time = nothing,
     end_time = nothing,
@@ -55,7 +55,7 @@ function SimulationResultsExport(filename::AbstractString, params::SimulationSto
 end
 
 function SimulationResultsExport(data::AbstractDict, params::SimulationStoreParams)
-    models = Vector{ProblemResultsExport}()
+    models = Vector{OptimizationProblemResultsExport}()
     for model in get(data, "models", [])
         if !haskey(model, "name")
             throw(IS.InvalidValue("model data does not define 'name'"))
@@ -78,7 +78,7 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
             deserialize_key(problem_params, x) for
             x in get(model, "variables", Set{AuxVarKey}())
         )
-        problem_export = ProblemResultsExport(
+        problem_export = OptimizationProblemResultsExport(
             model["name"];
             duals = duals,
             parameters = parameters,
@@ -161,5 +161,5 @@ function _should_export(exports::SimulationResultsExport, tstamp, model, field_n
     end
 
     problem_exports = get_problem_exports(exports, model)
-    return _should_export(problem_exports, field_name, name)
+    return IS.Optimization._should_export(problem_exports, field_name, name)
 end

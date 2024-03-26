@@ -58,7 +58,6 @@ const PSI_NAME_DELIMITER = "__"
 const M_VALUE = 1e6
 
 const NO_SERVICE_NAME_PROVIDED = ""
-const CONTAINER_KEY_EMPTY_META = ""
 const UPPER_BOUND = "ub"
 const LOWER_BOUND = "lb"
 const MAX_OPTIMIZE_TRIES = 2
@@ -66,7 +65,6 @@ const MAX_OPTIMIZE_TRIES = 2
 # File Names definitions
 const PROBLEM_SERIALIZATION_FILENAME = "operation_problem.bin"
 const PROBLEM_LOG_FILENAME = "operation_problem.log"
-const HASH_FILENAME = "check.sha256"
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
 const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = (:simulation_status, :execution)
@@ -83,7 +81,8 @@ const KNOWN_SIMULATION_PATHS = [
 const RESULTS_DIR = "results"
 
 # Enums
-IS.@scoped_enum(BuildStatus, IN_PROGRESS = -1, BUILT = 0, FAILED = 1, EMPTY = 2,)
+BuildStatus = IS.Optimization.BuildStatus
+
 IS.@scoped_enum(
     RunStatus,
     NOT_READY = -2,
@@ -92,6 +91,7 @@ IS.@scoped_enum(
     RUNNING = 1,
     FAILED = 2,
 )
+
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 IS.@scoped_enum(COMPACT_PWL_STATUS, VALID = 1, INVALID = 2, UNDETERMINED = 3)

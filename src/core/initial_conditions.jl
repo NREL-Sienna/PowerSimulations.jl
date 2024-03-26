@@ -1,21 +1,3 @@
-struct ICKey{T <: InitialConditionType, U <: PSY.Component} <: OptimizationContainerKey
-    meta::String
-end
-
-function ICKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: InitialConditionType, U <: PSY.Component}
-    if isabstracttype(U)
-        error("Type $U can't be abstract")
-    end
-    return ICKey{T, U}(meta)
-end
-
-get_entry_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Component} = T
-get_component_type(::ICKey{T, U}) where {T <: InitialConditionType, U <: PSY.Component} = U
-
 """
 Container for the initial condition data
 """
@@ -36,7 +18,7 @@ function InitialCondition(
 end
 
 function InitialCondition(
-    ::ICKey{T, U},
+    ::InitialConditionKey{T, U},
     component::U,
     value::V,
 ) where {

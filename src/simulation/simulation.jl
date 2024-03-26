@@ -74,7 +74,7 @@ mutable struct Simulation
         initial_time = nothing,
     )
         for model in get_decision_models(models)
-            if model.internal.simulation_info.sequence_uuid != sequence.uuid
+            if get_sequence_uuid(model) != sequence.uuid
                 model_name = get_name(model)
                 throw(
                     IS.ConflictingInputsError(
@@ -85,7 +85,7 @@ mutable struct Simulation
         end
         em = get_emulation_model(models)
         if em !== nothing
-            if em.internal.simulation_info.sequence_uuid != sequence.uuid
+            if get_sequence_uuid(em) != sequence.uuid
                 model_name = get_name(em)
                 throw(
                     IS.ConflictingInputsError(
@@ -490,7 +490,7 @@ function _initialize_problem_storage!(
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
-        decision_model_store_params[model_name] = model.internal.store_parameters
+        decision_model_store_params[model_name] = get_store_params(model)
         num_executions = executions_by_model[model_name]
         num_rows = num_executions * get_steps(sim)
         dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)
@@ -512,7 +512,7 @@ function _initialize_problem_storage!(
         )
     else
         emulation_model_store_params =
-            OrderedDict(Symbol(get_name(em)) => em.internal.store_parameters)
+            OrderedDict(Symbol(get_name(em)) => get_store_params(em))
     end
 
     em_model_req = _get_emulation_store_requirements(sim)
@@ -1078,7 +1078,7 @@ function execute!(sim::Simulation; kwargs...)
     end
 
     if !in_memory
-        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+        IS.compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     end
 
     serialize_status(sim)

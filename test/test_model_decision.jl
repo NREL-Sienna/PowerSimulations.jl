@@ -49,7 +49,7 @@ end
     output_dir = mktempdir(; cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
-    res = ProblemResults(UC)
+    res = OptimizationProblemResults(UC)
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
@@ -110,7 +110,7 @@ end
     var_index = get_all_variable_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
-        @test index_tuple[1] == PSI.encode_key(key)
+        @test index_tuple[1] == IS.Optimization.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
         val1 = get_variable_index(model, moi_index)
@@ -155,7 +155,7 @@ end
         @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.BuildStatus.BUILT
         @test solve!(model) == RunStatus.SUCCESSFUL
-        res = ProblemResults(model)
+        res = OptimizationProblemResults(model)
 
         # These tests require results to be working
         if network == PTDFPowerModel
@@ -169,7 +169,7 @@ end
     @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
 end
 
-@testset "Test ProblemResults interfaces" begin
+@testset "Test OptimizationProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
     template = get_template_dispatch_with_network(
         NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
@@ -178,7 +178,7 @@ end
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
 
-    res = ProblemResults(model)
+    res = OptimizationProblemResults(model)
     container = PSI.get_optimization_container(model)
     constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
@@ -212,22 +212,22 @@ end
         @test all(vals .== param_vals[!, name])
     end
 
-    res = ProblemResults(model)
+    res = OptimizationProblemResults(model)
     @test length(list_variable_names(res)) == 1
     @test length(list_dual_names(res)) == 1
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
     @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
     @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
-    @test isa(PSI.get_total_cost(res), Float64)
+    @test isa(IS.Optimization.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
     @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
     @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
     @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
-    @test isa(PSI.get_resolution(res), Dates.TimePeriod)
-    @test isa(get_system(res), PSY.System)
-    @test length(get_timestamps(res)) == 24
+    @test isa(IS.Optimization.get_resolution(res), Dates.TimePeriod)
+    @test isa(IS.Optimization.get_source_data(res), PSY.System)
+    @test length(IS.Optimization.get_timestamps(res)) == 24
 end
 
 @testset "Solve DecisionModelModel with auto-build" begin
@@ -292,7 +292,7 @@ end
     output_dir = mktempdir(; cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(UC) == RunStatus.SUCCESSFUL
-    res = ProblemResults(UC)
+    res = OptimizationProblemResults(UC)
     @test isapprox(get_objective_value(res), 247448.0; atol = 10000.0)
     vars = res.variable_values
     service_key = PSI.VariableKey(
@@ -312,26 +312,26 @@ end
     model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = path) == PSI.BuildStatus.BUILT
     @test solve!(model; export_problem_results = true) == RunStatus.SUCCESSFUL
-    results1 = ProblemResults(model)
+    results1 = OptimizationProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
     var1_b = read_variable(results1, "ActivePowerVariable__ThermalStandard")
 
     # Results were automatically serialized here.
-    results2 = ProblemResults(PSI.get_output_dir(model))
+    results2 = OptimizationProblemResults(PSI.get_output_dir(model))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
 
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
-    results3 = ProblemResults(results_path)
+    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
+    results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
     @test get_system(results3) === nothing
     set_system!(results3, get_system(results1))
-    @test get_system(results3) !== nothing
+    @test get_system(results3) isa PSY.System
 
     exp_file =
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
@@ -339,7 +339,7 @@ end
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
     @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
 
-    @test length(readdir(export_realized_results(results1))) === 6
+    @test length(readdir(IS.Optimization.export_realized_results(results1))) === 6
 end
 
 @testset "Test Numerical Stability of Constraints" begin
@@ -367,7 +367,7 @@ end
     for (constraint_key, constraint_bounds) in model_bounds
         _check_constraint_bounds(
             constraint_bounds,
-            valid_model_bounds[PSI.encode_key(constraint_key)],
+            valid_model_bounds[IS.Optimization.encode_key(constraint_key)],
         )
     end
 end
@@ -392,7 +392,7 @@ end
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(
             variable_bounds,
-            valid_model_bounds[PSI.encode_key(variable_key)],
+            valid_model_bounds[IS.Optimization.encode_key(variable_key)],
         )
     end
 end
@@ -659,7 +659,7 @@ end
     )
     @test build!(model; output_dir = output_dir) == PSI.BuildStatus.BUILT
     @test solve!(model) == RunStatus.SUCCESSFUL
-    res = ProblemResults(model)
+    res = OptimizationProblemResults(model)
     shortage = read_variable(res, "StorageEnergyShortageVariable__BatteryEMS")
     @test nrow(shortage) == 1
 end
