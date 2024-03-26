@@ -266,29 +266,34 @@ function _check_folder(sim::Simulation)
     end
 end
 
+function _build_single_model_for_simulation(model::DecisionModel, model_number::Int)
+    @error("Building problem $(get_name(model)) $(Threads.threadid())")
+    initial_time = get_initial_time(sim)
+    set_initial_time!(model, initial_time)
+    output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
+    mkpath(output_dir)
+    set_output_dir!(model, output_dir)
+    try
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+            # TODO-PJ: Temporary while are able to switch from PJ to POI
+            container = get_optimization_container(model)
+            container.built_for_recurrent_solves = true
+            build_impl!(model)
+        end
+        sim.internal.date_ref[model_number] = initial_time
+        set_status!(model, BuildStatus.BUILT)
+        # TODO: Disable check of variable bounds ?
+        _pre_solve_model_checks(model)
+    catch
+        set_status!(model, BuildStatus.FAILED)
+        rethrow()
+    end
+    return
+end
+
 function _build_decision_models!(sim::Simulation)
     for (model_number, model) in enumerate(get_decision_models(get_models(sim)))
-        @info("Building problem $(get_name(model))")
-        initial_time = get_initial_time(sim)
-        set_initial_time!(model, initial_time)
-        output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
-        mkpath(output_dir)
-        set_output_dir!(model, output_dir)
-        try
-            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-                # TODO-PJ: Temporary while are able to switch from PJ to POI
-                container = get_optimization_container(model)
-                container.built_for_recurrent_solves = true
-                build_impl!(model)
-            end
-            sim.internal.date_ref[model_number] = initial_time
-            set_status!(model, BuildStatus.BUILT)
-            # TODO: Disable check of variable bounds ?
-            _pre_solve_model_checks(model)
-        catch
-            set_status!(model, BuildStatus.FAILED)
-            rethrow()
-        end
+        Threads.@spawn _build_single_model_for_simulation(model, model_number)
     end
     return
 end
