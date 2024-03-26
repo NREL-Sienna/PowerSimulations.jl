@@ -68,7 +68,7 @@ try
                         "mip_rel_gap" => 0.01),
                     system_to_file = false,
                     initialize_model = true,
-                    optimizer_solve_log_print = true,
+                    optimizer_solve_log_print = false,
                     direct_mode_optimizer = true,
                     check_numerical_bounds = false,
                 ),
