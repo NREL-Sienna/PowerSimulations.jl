@@ -78,8 +78,8 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
         get_jump_model(model.internal.ic_model_container),
         false,
     )
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
-        build_impl!(model.internal.ic_model_container, template, get_system(model))
-    end
+    TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
+    build_impl!(model.internal.ic_model_container, template, get_system(model))
+    TimerOutputs.enable_timer!(BUILD_PROBLEMS_TIMER)
     return
 end
