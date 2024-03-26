@@ -11,6 +11,8 @@ using HydroPowerSimulations
 using HiGHS
 using Dates
 
+@info pkgdir(PowerSimulations)
+
 open("precompile_time.txt", "a") do io
     write(io, "| $(ARGS[1]) | $(precompile_time.time) |\n")
 end
