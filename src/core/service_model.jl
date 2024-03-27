@@ -38,7 +38,6 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
     time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
     attributes::Dict{String, Any}
     contributing_devices_map::Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}}
-    subsystem::Union{Nothing, String}
     function ServiceModel(
         ::Type{D},
         ::Type{B},
@@ -65,7 +64,6 @@ mutable struct ServiceModel{D <: PSY.Service, B <: AbstractServiceFormulation}
             time_series_names,
             attributes_for_model,
             contributing_devices_map,
-            nothing,
         )
     end
 end
@@ -88,9 +86,6 @@ get_contributing_devices_map(m::ServiceModel, key) =
     get(m.contributing_devices_map, key, nothing)
 get_contributing_devices(m::ServiceModel) =
     [z for x in values(m.contributing_devices_map) for z in x]
-get_subsystem(m::ServiceModel) = m.subsystem
-
-set_subsystem!(m::ServiceModel, id::String) = m.subsystem = id
 
 function ServiceModel(
     service_type::Type{D},

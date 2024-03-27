@@ -11,8 +11,6 @@ using HydroPowerSimulations
 using HiGHS
 using Dates
 
-@info pkgdir(PowerSimulations)
-
 open("precompile_time.txt", "a") do io
     write(io, "| $(ARGS[1]) | $(precompile_time.time) |\n")
 end
@@ -70,7 +68,7 @@ try
                         "mip_rel_gap" => 0.01),
                     system_to_file = false,
                     initialize_model = true,
-                    optimizer_solve_log_print = false,
+                    optimizer_solve_log_print = true,
                     direct_mode_optimizer = true,
                     check_numerical_bounds = false,
                 ),

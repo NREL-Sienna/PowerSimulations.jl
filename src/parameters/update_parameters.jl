@@ -42,7 +42,8 @@ function _update_parameter_values!(
     multiplier_id = get_time_series_multiplier_id(attributes)
     template = get_template(model)
     device_model = get_model(template, V)
-    components = get_available_components(device_model, get_system(model))
+    filter_func = get_attribute(device_model, "filter_function")
+    components = get_available_components(V, get_system(model), filter_func)
     ts_uuids = Set{String}()
     for component in components
         ts_uuid = get_time_series_uuid(U, component, ts_name)
@@ -111,7 +112,8 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
     device_model = get_model(template, V)
-    components = get_available_components(device_model, get_system(model))
+    filter_func = get_attribute(device_model, "filter_function")
+    components = get_available_components(V, get_system(model), filter_func)
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
@@ -527,7 +529,8 @@ function _update_parameter_values!(
     @assert !is_synchronized(container)
     template = get_template(model)
     device_model = get_model(template, V)
-    components = get_available_components(device_model, get_system(model))
+    filter_func = get_attribute(device_model, "filter_function")
+    components = get_available_components(V, get_system(model), filter_func)
 
     for component in components
         if _has_variable_cost_parameter(component)
@@ -541,11 +544,9 @@ function _update_parameter_values!(
             variable_cost_forecast_values = TimeSeries.values(ts_vector)
             for (t, value) in enumerate(variable_cost_forecast_values)
                 if attributes.uses_compact_power
-                    # TODO implement this
                     value, _ = _convert_variable_cost(value)
                 end
-                # TODO removed an apparently unused block of code here?
-                _set_param_value!(parameter_array, PSY.get_raw_data(value), name, t)
+                _set_param_value!(parameter_array, PSY.get_cost(value), name, t)
                 update_variable_cost!(
                     container,
                     parameter_array,
@@ -570,14 +571,14 @@ function _update_pwl_cost_expression(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::PSY.PiecewiseLinearPointData,
+    cost_data::Vector{NTuple{2, Float64}},
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
-    upb = get_breakpoint_upper_bounds(cost_data)
+    upb = PSY.get_breakpoint_upperbounds(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
@@ -599,7 +600,7 @@ function update_variable_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
-    cost_data = parameter_array[component_name, time_period]  # TODO is this a new-style cost?
+    cost_data = parameter_array[component_name, time_period]
     if iszero(cost_data)
         return
     end
@@ -626,13 +627,7 @@ function update_variable_cost!(
     end
     mult_ = parameter_multiplier[component_name, time_period]
     gen_cost =
-        _update_pwl_cost_expression(
-            container,
-            T,
-            component_name,
-            time_period,
-            PSY.PiecewiseLinearPointData(cost_data),
-        )
+        _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return

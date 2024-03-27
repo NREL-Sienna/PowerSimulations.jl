@@ -91,7 +91,8 @@ function write_result!(
         columns = string.(columns)
     end
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns)
+    container[key][index] =
+        DenseAxisArray(reshape(array.data, 1, length(columns)), ["1"], columns)
     return
 end
 

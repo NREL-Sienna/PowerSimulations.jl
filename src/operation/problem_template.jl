@@ -3,8 +3,6 @@ const DevicesModelContainer = Dict{Symbol, DeviceModel}
 const BranchModelContainer = Dict{Symbol, DeviceModelForBranches}
 const ServicesModelContainer = Dict{Tuple{String, Symbol}, ServiceModel}
 
-abstract type AbstractProblemTemplate end
-
 """
     ProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
@@ -18,7 +16,7 @@ Creates a model reference of the PowerSimulations Optimization Problem.
 
 template = ProblemTemplate(CopperPlatePowerModel)
 """
-mutable struct ProblemTemplate <: AbstractProblemTemplate
+mutable struct ProblemTemplate
     network_model::NetworkModel{<:PM.AbstractPowerModel}
     devices::DevicesModelContainer
     branches::BranchModelContainer
@@ -287,10 +285,11 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
             delete!(services_template, key)
             D = get_component_type(service_model)
             B = get_formulation(service_model)
-            for service in get_available_components(service_model, sys)
+            for service in get_available_components(D, sys)
                 new_key = (PSY.get_name(service), Symbol(D))
                 if !haskey(services_template, new_key)
-                    template.services[new_key] =
+                    set_service_model!(
+                        template,
                         ServiceModel(
                             D,
                             B,
@@ -298,9 +297,8 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
                             use_slacks = use_slacks,
                             duals = duals,
                             attributes = attributes,
-                        )
-                else
-                    error("Key $new_key already assigned in ServiceModel")
+                        ),
+                    )
                 end
             end
         end
