@@ -266,30 +266,93 @@ function _check_folder(sim::Simulation)
     end
 end
 
-function _build_decision_models!(sim::Simulation)
-    for (model_number, model) in enumerate(get_decision_models(get_models(sim)))
-        @info("Building problem $(get_name(model))")
-        initial_time = get_initial_time(sim)
-        set_initial_time!(model, initial_time)
-        output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
-        mkpath(output_dir)
-        set_output_dir!(model, output_dir)
-        try
-            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
-                # TODO-PJ: Temporary while are able to switch from PJ to POI
-                container = get_optimization_container(model)
-                container.built_for_recurrent_solves = true
-                build_impl!(model)
+# Compare initial conditions for all `InitialConditionType`s with the
+# `requires_reconciliation` trait across `models`, log @info messages for mismatches
+function _initial_conditions_reconciliation!(
+    models::Vector{<:OperationModel})
+    model_names = get_name.(models)
+    has_mismatches = false
+    @info "Reconciling initial conditions across models $(join(model_names, ", "))"
+    # all_ic_keys: all the `ICKey`s that appear in any of the models
+    all_ic_keys = union(keys.(get_initial_conditions.(models))...)
+    # all_ic_values: Dict{ICKey, Dict{model_index, Dict{component_name, ic_value}}}
+    all_ic_values = Dict()
+    for ic_key in all_ic_keys
+        if !requires_reconciliation(get_entry_type(ic_key))
+            @debug "Skipping initial conditions reconciliation for $(get_entry_type(ic_key)) due to false requires_reconciliation"
+            continue
+        end
+        # ic_vals_per_model: Dict{model_index, Dict{component_name, ic_value}}
+        ic_vals_per_model = Dict()
+        for (i, model) in enumerate(models)
+            ics = PSI.get_initial_conditions(model)
+            haskey(ics, ic_key) || continue
+            # ic_vals_per_component: Dict{component_name, ic_value}
+            ic_vals_per_component =
+                Dict(get_name(get_component(ic)) => get_condition(ic) for ic in ics[ic_key])
+            ic_vals_per_model[i] = ic_vals_per_component
+        end
+
+        # Assert that all models have the same components for current ic_key
+        @assert allequal(Set.(keys.(values(ic_vals_per_model)))) "For IC key $ic_key, not all models have the same components"
+
+        # For each component in current ic_key, compare values across models
+        component_names = keys(first(values(ic_vals_per_model)))
+        for component_name in component_names
+            all_values = [result[component_name] for result in values(ic_vals_per_model)]
+            ref_value = first(all_values)
+            if !allequal(isapprox.(all_values, ref_value; atol = ABSOLUTE_TOLERANCE))
+                has_mismatches = true
+                mismatch_msg = "For IC key $ic_key, mismatch on component $component_name:"
+                for (model_i, result) in sort(pairs(ic_vals_per_model); by = first)
+                    mismatch_msg *= "\n\t$(model_names[model_i]): $(result[component_name])"
+                end
+                @info mismatch_msg
             end
-            sim.internal.date_ref[model_number] = initial_time
-            set_status!(model, BuildStatus.BUILT)
-            # TODO: Disable check of variable bounds ?
-            _pre_solve_model_checks(model)
-        catch
-            set_status!(model, BuildStatus.FAILED)
-            rethrow()
+        end
+        all_ic_values[ic_key] = ic_vals_per_model
+    end
+
+    # TODO now that we have found the initial conditions mismatches, we must fix them
+    if has_mismatches
+        @warn "Models have initial condition mismatches; reconciliation is not yet implemented"
+    end
+
+    return all_ic_values
+end
+
+function _build_single_model_for_simulation(model::DecisionModel, sim::Simulation, model_number::Int)
+    @error("Building problem $(get_name(model)) $(Threads.threadid())")
+    initial_time = get_initial_time(sim)
+    set_initial_time!(model, initial_time)
+    output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
+    mkpath(output_dir)
+    set_output_dir!(model, output_dir)
+    try
+        # TODO-PJ: Temporary while are able to switch from PJ to POI
+        container = get_optimization_container(model)
+        container.built_for_recurrent_solves = true
+        build_impl!(model)
+        sim.internal.date_ref[model_number] = initial_time
+        set_status!(model, BuildStatus.BUILT)
+        _pre_solve_model_checks(model)
+    catch
+        set_status!(model, BuildStatus.FAILED)
+        rethrow()
+    end
+    return
+end
+
+function _build_decision_models!(sim::Simulation)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Decision Problems" begin
+        decision_models = get_decision_models(get_models(sim))
+        Threads.@threads for model_n in 1:length(decision_models)
+            TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(decision_models[model_n]))" begin
+                _build_single_model_for_simulation(decision_models[model_n], sim, model_n)
+            end
         end
     end
+    _initial_conditions_reconciliation!(get_decision_models(get_models(sim)))
     return
 end
 
@@ -306,7 +369,7 @@ function _build_emulation_model!(sim::Simulation)
         output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
         mkpath(output_dir)
         set_output_dir!(model, output_dir)
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem Emulation $(get_name(model))" begin
             build_impl!(model)
         end
         sim.internal.date_ref[length(sim.internal.date_ref) + 1] = initial_time
@@ -530,10 +593,8 @@ function _build!(
         _check_steps(sim, problem_initial_times)
     end
 
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Problems" begin
-        _build_decision_models!(sim)
-        _build_emulation_model!(sim)
-    end
+    _build_decision_models!(sim)
+    _build_emulation_model!(sim)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
@@ -590,13 +651,17 @@ function _setup_simulation_partitions(sim::Simulation)
 
     open_store(HdfSimulationStore, get_store_dir(sim), "w") do store
         set_simulation_store!(sim, store)
-        _initialize_problem_storage!(
-            sim,
-            DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
-            MIN_CACHE_FLUSH_SIZE_MiB,
-        )
+        try
+            _initialize_problem_storage!(
+                sim,
+                DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
+                MIN_CACHE_FLUSH_SIZE_MiB,
+            )
+            _serialize_systems_to_store!(store, sim)
+        finally
+            set_simulation_store!(sim, nothing)
+        end
     end
-    set_simulation_store!(sim, nothing)
 end
 
 """
@@ -1000,6 +1065,10 @@ function execute!(sim::Simulation; kwargs...)
                     end
                     @info ("\n$(RUN_SIMULATION_TIMER)\n")
                     set_simulation_status!(sim, RunStatus.SUCCESSFUL)
+                    if isnothing(sim.internal.partitions)
+                        # Partitioned simulations serialize the systems once during build.
+                        _serialize_systems_to_store!(store, sim)
+                    end
                     log_cache_hit_percentages(store)
                 catch e
                     set_simulation_status!(sim, RunStatus.FAILED)
@@ -1082,6 +1151,18 @@ function serialize_simulation(sim::Simulation; path = nothing, force = false)
     Serialization.serialize(filename, obj)
     @info "Serialized simulation name = $(get_name(sim))" directory
     return directory
+end
+
+function _serialize_systems_to_store!(store::SimulationStore, sim::Simulation)
+    simulation_models = get_models(sim)
+    for dm in get_decision_models(simulation_models)
+        serialize_system!(store, get_system(dm))
+    end
+
+    em = get_emulation_model(simulation_models)
+    if !isnothing(em)
+        serialize_system!(store, get_system(em))
+    end
 end
 
 function deserialize_model(

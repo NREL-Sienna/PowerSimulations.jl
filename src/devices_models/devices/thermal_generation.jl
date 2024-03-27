@@ -115,11 +115,17 @@ function no_load_cost(cost::Union{PSY.ThreePartCost, PSY.TwoPartCost}, S::OnVari
     return no_load_cost(PSY.get_variable(cost), S, T, U)
 end
 
-no_load_cost(cost::PSY.VariableCost{Vector{NTuple{2, Float64}}}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = first(PSY.get_cost(cost))[1]
-no_load_cost(cost::PSY.VariableCost{Float64}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_cost(cost) * PSY.get_active_power_limits(d).min * PSY.get_system_base_power(d)
+# TODO given the old implementations, these functions seem to get the cost at *minimum* load, not *zero* load. Is that correct?
+no_load_cost(cost::PSY.PiecewiseLinearPointData, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = last(first(PSY.get_points(cost)))
+no_load_cost(cost::PSY.LinearFunctionData, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_proportional_term(cost) * PSY.get_active_power_limits(d).min * PSY.get_system_base_power(d)
 
-function no_load_cost(cost::PSY.VariableCost{Tuple{Float64, Float64}}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
-    return (PSY.get_cost(cost)[1] * (PSY.get_active_power_limits(d).min)^2 + PSY.get_cost(cost)[2] * PSY.get_active_power_limits(d).min)* PSY.get_system_base_power(d)
+function no_load_cost(cost::PSY.QuadraticFunctionData, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+    min_power = PSY.get_active_power_limits(d).min
+    evaluated = LinearAlgebra.dot(
+        [PSY.get_quadratic_term(cost), PSY.get_proportional_term(cost), PSY.get_constant_term(cost)],
+        [min_power^2, min_power, 1]
+    )
+    return evaluated * PSY.get_base_power(d)
 end
 
 #! format: on
@@ -859,7 +865,6 @@ function calculate_aux_variable_value!(
     ::AuxVarKey{PowerOutput, T},
     system::PSY.System,
 ) where {T <: PSY.ThermalGen}
-    devices = get_available_components(T, system)
     time_steps = get_time_steps(container)
     if has_container_key(container, OnVariable, T)
         on_variable_results = get_variable(container, OnVariable(), T)
@@ -872,13 +877,17 @@ function calculate_aux_variable_value!(
         )
     end
     p_variable_results = get_variable(container, PowerAboveMinimumVariable(), T)
+    device_name = axes(p_variable_results, 1)
     aux_variable_container = get_aux_variable(container, PowerOutput(), T)
-    for d in devices, t in time_steps
+    for d_name in device_name
+        d = PSY.get_component(T, system, d_name)
         name = PSY.get_name(d)
         min = PSY.get_active_power_limits(d).min
-        aux_variable_container[name, t] =
-            jump_value(on_variable_results[name, t]) * min +
-            jump_value(p_variable_results[name, t])
+        for t in time_steps
+            aux_variable_container[name, t] =
+                jump_value(on_variable_results[name, t]) * min +
+                jump_value(p_variable_results[name, t])
+        end
     end
 
     return

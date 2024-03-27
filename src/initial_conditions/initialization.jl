@@ -71,15 +71,15 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     set_horizon!(ic_settings, min(INITIALIZATION_PROBLEM_HORIZON, main_problem_horizon))
     init_optimization_container!(
         model.internal.ic_model_container,
-        get_network_formulation(get_template(model)),
+        get_network_model(get_template(model)),
         get_system(model),
     )
     JuMP.set_string_names_on_creation(
         get_jump_model(model.internal.ic_model_container),
         false,
     )
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
-        build_impl!(model.internal.ic_model_container, template, get_system(model))
-    end
+    TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
+    build_impl!(model.internal.ic_model_container, template, get_system(model))
+    TimerOutputs.enable_timer!(BUILD_PROBLEMS_TIMER)
     return
 end
