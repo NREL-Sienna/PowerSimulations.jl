@@ -70,9 +70,9 @@ PowerSimulations can represent variable costs using a variety of different metho
 \end{aligned}
 ```
 
-### `QuadraticFunctionData` and `PolynomialFunctionData`
+### `QuadraticFunctionData`
 
-`variable_cost::QuadraticFunctionData` and `variable_cost::PolynomialFunctionData`: create a polynomial cost term in the objective function
+`variable_cost::QuadraticFunctionData`: creates a polynomial cost term in the objective function
 
 ```math
 \begin{aligned}
@@ -81,13 +81,9 @@ PowerSimulations can represent variable costs using a variety of different metho
 ```
 
 where
-
-- For `QuadraticFunctionData`:
-  - ``C_0`` = `get_constant_term(variable_cost)`
-  - ``C_1`` = `get_proportional_term(variable_cost)`
-  - ``C_2`` = `get_quadratic_term(variable_cost)`
-- For `PolynomialFunctionData`:
-  - ``C_n`` = `get_coefficients(variable_cost)[n]`
+ - ``C_0`` = `get_constant_term(variable_cost)`
+ - ``C_1`` = `get_proportional_term(variable_cost)`
+ - ``C_2`` = `get_quadratic_term(variable_cost)`
 
 ### `PiecewiseLinearPointData` and `PiecewiseLinearSlopeData`
 
