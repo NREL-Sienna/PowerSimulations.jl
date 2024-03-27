@@ -321,7 +321,11 @@ function _initial_conditions_reconciliation!(
     return all_ic_values
 end
 
-function _build_single_model_for_simulation(model::DecisionModel, sim::Simulation, model_number::Int)
+function _build_single_model_for_simulation(
+    model::DecisionModel,
+    sim::Simulation,
+    model_number::Int,
+)
     @error("Building problem $(get_name(model)) $(Threads.threadid())")
     initial_time = get_initial_time(sim)
     set_initial_time!(model, initial_time)

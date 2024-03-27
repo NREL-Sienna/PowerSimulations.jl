@@ -30,7 +30,6 @@ function construct_device!(
             )
         end
 
-
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -218,7 +217,6 @@ function construct_device!(
         )
     end
     add_feedforward_arguments!(container, device_model, devices)
-
 
     add_feedforward_arguments!(container, model, devices)
 end
