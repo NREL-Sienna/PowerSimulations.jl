@@ -39,8 +39,7 @@ function add_variables!(
     time_steps = get_time_steps(container)
     radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
-        bus_numbers =
-            PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
+        bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     else
         bus_numbers = collect(keys(PNM.get_bus_reduction_map(radial_network_reduction)))
     end
@@ -68,8 +67,7 @@ function add_variables!(
     time_steps = get_time_steps(container)
     radial_network_reduction = get_radial_network_reduction(network_model)
     if isempty(radial_network_reduction)
-        bus_numbers =
-            PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
+        bus_numbers = PSY.get_number.(get_available_components(PSY.ACBus, sys))
     else
         bus_numbers = collect(keys(PNM.get_bus_reduction_map(radial_network_reduction)))
     end

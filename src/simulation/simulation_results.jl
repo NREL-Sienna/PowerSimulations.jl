@@ -193,54 +193,12 @@ Base.length(res::SimulationResults) =
     mapreduce(length, +, values(res.decision_problem_results))
 get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
-"""
-Return SimulationProblemResults corresponding to a SimulationResults
-
-# Arguments
- - `sim_results::PSI.SimulationResults`: the simulation results to read from
- - `problem::String`: the name of the problem (e.g., "UC", "ED")
- - `populate_system::Bool = true`: whether to set the results' system using
- [`read_serialized_system`](@ref)
- - `populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS`:
-   the units system with which to populate the results' system, if any (requires
-   `populate_system=true`)
-"""
-
-function get_decision_problem_results(
-    results::SimulationResults,
-    problem::String;
-    populate_system::Bool = false,
-    populate_units::Union{IS.UnitSystem, String, Nothing} = nothing,
-)
+function get_decision_problem_results(results::SimulationResults, problem)
     if !haskey(results.decision_problem_results, problem)
         throw(IS.InvalidValue("$problem is not stored"))
     end
 
-    results = results.decision_problem_results[problem]
-
-    if populate_system
-        try
-            get_system!(results)
-        catch e
-            error("Can't find the system file or retrieve the system error=$e")
-        end
-
-        if populate_units !== nothing
-            PSY.set_units_base_system!(PSI.get_system(results), populate_units)
-        else
-            PSY.set_units_base_system!(PSI.get_system(results), IS.UnitSystem.NATURAL_UNITS)
-        end
-
-    else
-        (populate_units === nothing) ||
-            throw(
-                ArgumentError(
-                    "populate_units=$populate_units is unaccepted when populate_system=$populate_system",
-                ),
-            )
-    end
-
-    return results
+    return results.decision_problem_results[problem]
 end
 
 function get_emulation_problem_results(results::SimulationResults)

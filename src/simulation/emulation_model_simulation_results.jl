@@ -72,6 +72,27 @@ get_cached_parameters(res::SimulationProblemResults{EmulationModelSimulationResu
 get_cached_variables(res::SimulationProblemResults{EmulationModelSimulationResults}) =
     res.values.variables
 
+get_cached_results(
+    res::SimulationProblemResults{EmulationModelSimulationResults},
+    ::AuxVarKey,
+) = get_cached_aux_variables(res)
+get_cached_results(
+    res::SimulationProblemResults{EmulationModelSimulationResults},
+    ::ConstraintKey,
+) = get_cached_duals(res)
+get_cached_results(
+    res::SimulationProblemResults{EmulationModelSimulationResults},
+    ::ExpressionKey,
+) = get_cached_expressions(res)
+get_cached_results(
+    res::SimulationProblemResults{EmulationModelSimulationResults},
+    ::ParameterKey,
+) = get_cached_parameters(res)
+get_cached_results(
+    res::SimulationProblemResults{EmulationModelSimulationResults},
+    ::VariableKey,
+) = get_cached_variables(res)
+
 function _list_containers(res::SimulationProblemResults)
     return (getfield(res.values, x) for x in get_container_fields(res))
 end
@@ -197,12 +218,15 @@ function _read_results(
     len = nothing,
 )
     isempty(result_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
-    _store = try_resolve_store(store, res.store)
+    if store === nothing && res.store !== nothing
+        # In this case we have an InMemorySimulationStore.
+        store = res.store
+    end
+
     existing_keys = list_result_keys(res, first(result_keys))
     _validate_keys(existing_keys, result_keys)
     cached_results = Dict(
-        k => v for
-        (k, v) in get_cached_results(res, eltype(result_keys)) if !isempty(v)
+        k => v for (k, v) in get_cached_results(res, first(result_keys)) if !isempty(v)
     )
     if isempty(setdiff(result_keys, keys(cached_results)))
         @debug "reading aux_variables from SimulationsResults"
@@ -213,7 +237,7 @@ function _read_results(
             _get_store_value(
                 res,
                 result_keys,
-                _store;
+                store;
                 start_time = start_time,
                 len = len,
             )
@@ -231,8 +255,9 @@ function read_results_with_keys(
 end
 
 """
-Load the simulation results into memory for repeated reads. This is useful when loading
-results from remote locations over network connections.
+Load the simulation results into memory for repeated reads. Running this function twice
+overwrites the previously loaded results. This is useful when loading results from remote
+locations over network connections.
 
 For each variable/parameter/dual, etc., each element must be the name encoded as a string,
 like `"ActivePowerVariable__ThermalStandard"`` or a Tuple with its constituent types, like

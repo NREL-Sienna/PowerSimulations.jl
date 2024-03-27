@@ -4,14 +4,15 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranch},
+    device_model::DeviceModel{T, StaticBranch},
     network_model::Union{
         NetworkModel{CopperPlatePowerModel},
         NetworkModel{AreaBalancePowerModel},
     },
 ) where {T <: PSY.ACBranch}
     if has_subnetworks(network_model)
-        devices = get_available_components(model, sys)
+        devices =
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
 
         if get_use_slacks(device_model)
             add_variables!(
@@ -30,7 +31,6 @@ function construct_device!(
             )
         end
 
-
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -43,7 +43,7 @@ function construct_device!(
             ActivePowerBalance,
             FlowActivePowerVariable,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -54,7 +54,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranch},
+    device_model::DeviceModel{T, StaticBranch},
     network_model::Union{
         NetworkModel{CopperPlatePowerModel},
         NetworkModel{AreaBalancePowerModel},
@@ -62,15 +62,15 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     if has_subnetworks(network_model)
         devices =
-            get_available_components(model, sys)
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
         add_constraints!(
             container,
             RateLimitConstraint,
             devices,
-            model,
+            device_model,
             network_model,
         )
-        add_constraint_dual!(container, sys, model)
+        add_constraint_dual!(container, sys, device_model)
     end
     return
 end
@@ -79,7 +79,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::Union{
         NetworkModel{CopperPlatePowerModel},
         NetworkModel{AreaBalancePowerModel},
@@ -90,7 +90,7 @@ function construct_device!(
     end
     if has_subnetworks(network_model)
         devices =
-            get_available_components(model, sys)
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -103,7 +103,7 @@ function construct_device!(
             ActivePowerBalance,
             FlowActivePowerVariable,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -114,7 +114,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::Union{
         NetworkModel{CopperPlatePowerModel},
         NetworkModel{AreaBalancePowerModel},
@@ -122,11 +122,11 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     if has_subnetworks(network_model)
         devices =
-            get_available_components(model, sys)
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
         branch_rate_bounds!(
             container,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -137,7 +137,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranchUnbounded},
+    device_model::DeviceModel{T, StaticBranchUnbounded},
     network_model::Union{
         NetworkModel{CopperPlatePowerModel},
         NetworkModel{AreaBalancePowerModel},
@@ -145,7 +145,7 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     if has_subnetworks(network_model)
         devices =
-            get_available_components(model, sys)
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -158,7 +158,7 @@ function construct_device!(
             ActivePowerBalance,
             FlowActivePowerVariable,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -202,7 +202,8 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     if get_use_slacks(device_model)
         add_variables!(
             container,
@@ -218,9 +219,6 @@ function construct_device!(
         )
     end
     add_feedforward_arguments!(container, device_model, devices)
-
-
-    add_feedforward_arguments!(container, model, devices)
 end
 
 # For DC Power only. Implements constraints
@@ -233,7 +231,8 @@ function construct_device!(
 ) where {T <: PSY.ACBranch, U <: PM.AbstractActivePowerModel}
     @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
 
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
     add_feedforward_constraints!(container, device_model, devices)
     objective_function!(container, devices, device_model, U)
@@ -246,10 +245,11 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranch},
+    device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     if get_use_slacks(device_model)
         add_variables!(
             container,
@@ -281,10 +281,11 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranch},
+    device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
     objective_function!(container, devices, device_model, PTDFPowerModel)
@@ -296,10 +297,11 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
 
     if get_use_slacks(device_model)
         throw(ArgumentError("StaticBranchBounds is not compatible with the use of slacks"))
@@ -319,19 +321,19 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
-        get_available_components(model, sys)
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+    add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
     branch_rate_bounds!(
         container,
         devices,
-        model,
+        device_model,
         network_model,
     )
-    add_constraint_dual!(container, sys, model)
+    add_constraint_dual!(container, sys, device_model)
     return
 end
 
@@ -339,11 +341,11 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranchUnbounded},
+    device_model::DeviceModel{T, StaticBranchUnbounded},
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_variables!(
         container,
         FlowActivePowerVariable,
@@ -362,7 +364,7 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
 
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
@@ -400,7 +402,8 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{U},
 ) where {T <: PSY.ACBranch, U <: PM.AbstractPowerModel}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     add_constraints!(
         container,
         RateLimitConstraintFromTo,
@@ -444,7 +447,8 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     branch_rate_bounds!(container, devices, device_model, network_model)
     add_constraints!(
         container,
@@ -471,7 +475,8 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices =
+        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
     branch_rate_bounds!(container, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
     return
@@ -482,11 +487,12 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, HVDCTwoTerminalLossless},
+    device_model::DeviceModel{T, HVDCTwoTerminalLossless},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     if has_subnetworks(network_model)
-        devices = get_available_components(model, sys)
+        devices =
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -499,7 +505,7 @@ function construct_device!(
             ActivePowerBalance,
             FlowActivePowerVariable,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -510,20 +516,20 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, HVDCTwoTerminalLossless},
+    device_model::DeviceModel{T, HVDCTwoTerminalLossless},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     if has_subnetworks(network_model)
         devices =
-            get_available_components(model, sys)
+            get_available_components(T, sys, get_attribute(device_model, "filter_function"))
         add_constraints!(
             container,
             FlowRateConstraint,
             devices,
-            model,
+            device_model,
             network_model,
         )
-        add_constraint_dual!(container, sys, model)
+        add_constraint_dual!(container, sys, device_model)
     end
     return
 end
@@ -557,7 +563,7 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalUnbounded())
     add_to_expression!(
         container,
@@ -600,7 +606,7 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
@@ -615,7 +621,7 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalLossless())
     add_to_expression!(
         container,
@@ -640,7 +646,7 @@ function construct_device!(
     U <: PTDFPowerModel,
 }
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
@@ -654,7 +660,7 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_variables!(
         container,
         FlowActivePowerToFromVariable,
@@ -704,7 +710,7 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
@@ -720,7 +726,7 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_variables!(
         container,
         FlowActivePowerToFromVariable,
@@ -762,7 +768,7 @@ function construct_device!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     @warn "CopperPlatePowerModel models with HVDC ignores inter-area losses"
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
@@ -778,7 +784,7 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     devices =
-        get_available_components(model, sys)
+        get_available_components(T, sys, get_attribute(model, "filter_function"))
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
@@ -798,8 +804,9 @@ function construct_device!(
     network_model::NetworkModel{PM.DCPPowerModel},
 )
     devices = get_available_components(
-        model,
+        PSY.PhaseShiftingTransformer,
         sys,
+        get_attribute(model, "filter_function"),
     )
     add_variables!(container, FlowActivePowerVariable, devices, PhaseAngleControl())
     add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
@@ -822,8 +829,9 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 )
     devices = get_available_components(
-        model,
+        PSY.PhaseShiftingTransformer,
         sys,
+        get_attribute(model, "filter_function"),
     )
     add_variables!(container, FlowActivePowerVariable, devices, PhaseAngleControl())
     add_variables!(container, PhaseShifterAngle, devices, PhaseAngleControl())
@@ -846,8 +854,9 @@ function construct_device!(
     network_model::NetworkModel{PM.DCPPowerModel},
 )
     devices = get_available_components(
-        model,
+        PSY.PhaseShiftingTransformer,
         sys,
+        get_attribute(model, "filter_function"),
     )
     add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
     add_constraints!(container, PhaseAngleControlLimit, devices, model, network_model)
@@ -864,8 +873,9 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 )
     devices = get_available_components(
-        model,
+        PSY.PhaseShiftingTransformer,
         sys,
+        get_attribute(model, "filter_function"),
     )
     add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
     add_constraints!(container, PhaseAngleControlLimit, devices, model, network_model)
