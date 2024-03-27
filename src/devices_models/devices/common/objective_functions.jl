@@ -326,8 +326,8 @@ end
 function _add_service_bid_cost!(
     container::OptimizationContainer,
     component::PSY.Component,
-    service::PSY.Reserve{T},
-) where {T <: PSY.ReserveDirection}
+    service::T,
+) where {T <: PSY.Reserve{<:PSY.ReserveDirection}}
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
     base_power = get_base_power(container)
@@ -343,13 +343,14 @@ function _add_service_bid_cost!(
     if eltype(forecast_data_values) == Float64
         data_values = forecast_data_values
         # Single Price/Quantity Bid
-    elseif eltype(forecast_data_values) == NTuple{2, Float64}
-        data_values = [v[1] for v in forecast_data_values]
+    elseif eltype(forecast_data_values) == Vector{NTuple{2, Float64}}
+        data_values = [v[1][1] for v in forecast_data_values]
     else
         error("$(eltype(forecast_data_values)) not supported for MarketBidCost")
     end
 
-    reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
+    reserve_variable =
+        get_variable(container, ActivePowerReserveVariable(), T, PSY.get_name(service))
     component_name = PSY.get_name(component)
     for t in time_steps
         add_to_objective_invariant_expression!(
