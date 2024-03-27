@@ -326,7 +326,6 @@ function _build_single_model_for_simulation(
     sim::Simulation,
     model_number::Int,
 )
-    @error("Building problem $(get_name(model)) $(Threads.threadid())")
     initial_time = get_initial_time(sim)
     set_initial_time!(model, initial_time)
     output_dir = joinpath(get_models_dir(sim), string(get_name(model)))
