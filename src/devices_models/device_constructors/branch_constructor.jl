@@ -471,8 +471,7 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
-    devices =
-        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+    devices = get_available_components(model, sys)
     branch_rate_bounds!(container, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
     return
@@ -487,8 +486,7 @@ function construct_device!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
     if has_subnetworks(network_model)
-        devices =
-            get_available_components(model, sys)
+        devices = get_available_components(model, sys)
         add_variables!(
             container,
             FlowActivePowerVariable,
