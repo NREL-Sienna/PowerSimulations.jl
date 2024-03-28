@@ -835,7 +835,7 @@ end
     )
     @test isapprox(
         PSI.no_load_cost(
-            VariableCost((3.0, 5.0)),
+            QuadraticFunctionData(3.0, 5.0, 0.0),
             OnVariable(),
             comp,
             ThermalBasicUnitCommitment(),
