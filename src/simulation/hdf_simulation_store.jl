@@ -653,32 +653,6 @@ function write_result!(
     return
 end
 
-function write_result!(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    data::DenseAxisArray{Float64, 2},
-)
-    data_array = Array{Float64, 3}(undef, size(data)[1], size(data)[2], 1)
-    data_array[:, :, 1] = data
-    write_result!(store, model_name, key, index, simulation_time, data_array)
-    return
-end
-
-function write_result!(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    data::DenseAxisArray{Float64, 1},
-)
-    write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
-    return
-end
-
 function serialize_system!(store::HdfSimulationStore, sys::PSY.System)
     root = store.file[HDF_SIMULATION_ROOT_PATH]
     systems_group = _get_group_or_create(root, "systems")
