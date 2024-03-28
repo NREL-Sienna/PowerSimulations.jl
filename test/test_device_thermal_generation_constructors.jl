@@ -826,7 +826,7 @@ end
     min_limit = PSY.get_active_power_limits(comp).min
     @test isapprox(
         PSI.no_load_cost(
-            VariableCost(5.0),
+            PSY.LinearFunctionData(5.0),
             OnVariable(),
             comp,
             ThermalBasicUnitCommitment(),
@@ -835,7 +835,7 @@ end
     )
     @test isapprox(
         PSI.no_load_cost(
-            VariableCost((3.0, 5.0)),
+            QuadraticFunctionData(3.0, 5.0, 0.0),
             OnVariable(),
             comp,
             ThermalBasicUnitCommitment(),

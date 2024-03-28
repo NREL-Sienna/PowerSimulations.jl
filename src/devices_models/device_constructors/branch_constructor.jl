@@ -13,7 +13,7 @@ function construct_device!(
     if has_subnetworks(network_model)
         devices = get_available_components(model, sys)
 
-        if get_use_slacks(device_model)
+        if get_use_slacks(model)
             add_variables!(
                 container,
                 FlowActivePowerSlackUpperBound,
@@ -84,7 +84,7 @@ function construct_device!(
         NetworkModel{AreaBalancePowerModel},
     },
 ) where {T <: PSY.ACBranch}
-    if get_use_slacks(device_model)
+    if get_use_slacks(model)
         throw(ArgumentError("StaticBranchBounds is not compatible with the use of slacks"))
     end
     if has_subnetworks(network_model)
@@ -201,7 +201,7 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
     if get_use_slacks(device_model)
         add_variables!(
             container,
@@ -218,7 +218,7 @@ function construct_device!(
     end
     add_feedforward_arguments!(container, device_model, devices)
 
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
 end
 
 # For DC Power only. Implements constraints
@@ -231,7 +231,7 @@ function construct_device!(
 ) where {T <: PSY.ACBranch, U <: PM.AbstractActivePowerModel}
     @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
 
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
     add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
     add_feedforward_constraints!(container, device_model, devices)
     objective_function!(container, devices, device_model, U)
@@ -248,7 +248,7 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices = get_available_components(model, sys)
-    if get_use_slacks(device_model)
+    if get_use_slacks(model)
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
@@ -283,10 +283,10 @@ function construct_device!(
     network_model::NetworkModel{PTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     devices = get_available_components(model, sys)
-    add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
-    add_constraints!(container, RateLimitConstraint, devices, device_model, network_model)
-    objective_function!(container, devices, device_model, PTDFPowerModel)
-    add_constraint_dual!(container, sys, device_model)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+    add_constraints!(container, RateLimitConstraint, devices, model, network_model)
+    objective_function!(container, devices, model, PTDFPowerModel)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -299,7 +299,7 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     devices = get_available_components(model, sys)
 
-    if get_use_slacks(device_model)
+    if get_use_slacks(model)
         throw(ArgumentError("StaticBranchBounds is not compatible with the use of slacks"))
     end
 
@@ -375,8 +375,7 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices =
-        get_available_components(T, sys, get_attribute(device_model, "filter_function"))
+    devices = get_available_components(device_model, sys)
 
     if get_use_slacks(device_model)
         # Only one slack is needed for this formulations in AC
@@ -398,7 +397,7 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{U},
 ) where {T <: PSY.ACBranch, U <: PM.AbstractPowerModel}
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
     add_constraints!(
         container,
         RateLimitConstraintFromTo,
@@ -442,7 +441,7 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
     branch_rate_bounds!(container, devices, device_model, network_model)
     add_constraints!(
         container,
@@ -469,7 +468,7 @@ function construct_device!(
     device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
     branch_rate_bounds!(container, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
     return

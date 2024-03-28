@@ -125,7 +125,7 @@ function no_load_cost(cost::PSY.QuadraticFunctionData, ::OnVariable, d::PSY.Ther
         [PSY.get_quadratic_term(cost), PSY.get_proportional_term(cost), PSY.get_constant_term(cost)],
         [min_power^2, min_power, 1]
     )
-    return evaluated * PSY.get_base_power(d)
+    return evaluated * PSY.get_system_base_power(d)
 end
 
 #! format: on
