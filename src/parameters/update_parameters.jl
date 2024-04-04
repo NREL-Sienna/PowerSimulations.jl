@@ -331,38 +331,26 @@ end
 """
 Update parameter function an OperationModel
 """
-function update_parameter_values!(
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
-    IS.@record :execution ParameterUpdateEvent(
-        T,
-        U,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    # end
     return
 end
 
-function update_parameter_values!(
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
@@ -377,39 +365,53 @@ function update_parameter_values!(
         model,
         input,
     )
-    IS.@record :execution ParameterUpdateEvent(
-        T,
-        U,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    # end
     return
 end
 
-function update_parameter_values!(
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
     model::OperationModel,
-    key::ParameterKey{FixValueParameter, T},
+    key::ParameterKey{FixValueParameter, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
+) where {U <: PSY.Component}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
-    IS.@record :execution ParameterUpdateEvent(
-        FixValueParameter,
-        T,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    # end
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: ParameterType, U <: PSY.Service}
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    service = PSY.get_component(U, get_system(model), key.meta)
+    @assert service !== nothing
+    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    service = PSY.get_component(U, get_system(model), key.meta)
+    @assert service !== nothing
+    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     return
 end
 
@@ -420,43 +422,12 @@ function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: ParameterType, U <: PSY.Service}
+) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     optimization_container = get_optimization_container(model)
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
-    # if the keys have strings in the meta fields
-    parameter_array = get_parameter_array(optimization_container, key)
+    update_container_parameter_values!(optimization_container, model, key, input)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    service = PSY.get_component(U, get_system(model), key.meta)
-    @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
-    IS.@record :execution ParameterUpdateEvent(
-        T,
-        U,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    #end
-    return
-end
-
-function update_parameter_values!(
-    model::OperationModel,
-    key::ParameterKey{T, U},
-    input::DatasetContainer{InMemoryDataset},
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
-    # if the keys have strings in the meta fields
-    parameter_array = get_parameter_array(optimization_container, key)
-    parameter_attributes = get_parameter_attributes(optimization_container, key)
-    service = PSY.get_component(U, get_system(model), key.meta)
-    @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
