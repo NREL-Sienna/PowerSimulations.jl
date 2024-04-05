@@ -160,6 +160,7 @@ function _add_feedforward_to_model(
                 ),
             )
         end
+        @debug "attaching $T to $(PSI.get_component_type(ff)) $(PSI.get_feedforward_meta(ff))"
         attach_feedforward!(service_model, ff)
     else
         service_found = false
