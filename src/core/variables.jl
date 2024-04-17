@@ -211,10 +211,7 @@ struct LowerBoundFeedForwardSlack <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
-should_write_resulting_value(::Type{<:VariableType}) = true
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
-
-convert_result_to_natural_units(::Type{<:VariableType}) = false
 
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true

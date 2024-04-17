@@ -278,10 +278,7 @@ abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 struct EventParameter <: ParameterType end
 
-should_write_resulting_value(::Type{<:ParameterType}) = false
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
-
-convert_result_to_natural_units(::Type{<:ParameterType}) = false
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
