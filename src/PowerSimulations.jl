@@ -382,6 +382,9 @@ import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_k
     encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
     convert_result_to_natural_units, to_matrix
 
+# IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
+import InfrastructureSystems: TimeSeriesParameter
+
 export get_name
 export get_model_base_power
 export get_optimizer_stats
