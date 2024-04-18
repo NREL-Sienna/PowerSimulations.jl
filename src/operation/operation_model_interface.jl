@@ -158,7 +158,8 @@ function advance_execution_count!(model::OperationModel)
 end
 
 function build_initial_conditions!(model::OperationModel)
-    @assert IS.Optimization.get_ic_model_container(get_internal(model)) === nothing
+    @assert IS.Optimization.get_initial_conditions_model_container(get_internal(model)) ===
+            nothing
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
@@ -178,7 +179,7 @@ end
 function write_initial_conditions_data!(model::OperationModel)
     write_initial_conditions_data!(
         get_optimization_container(model),
-        IS.Optimization.get_ic_model_container(get_internal(model)),
+        IS.Optimization.get_initial_conditions_model_container(get_internal(model)),
     )
     return
 end
@@ -229,19 +230,23 @@ function handle_initial_conditions!(model::OperationModel)
             build_initial_conditions!(model)
             initialize!(model)
         end
-        IS.Optimization.set_ic_model_container!(get_internal(model), nothing)
+        IS.Optimization.set_initial_conditions_model_container!(
+            get_internal(model),
+            nothing,
+        )
     end
     return
 end
 
 function initialize!(model::OperationModel)
     container = get_optimization_container(model)
-    if IS.Optimization.get_ic_model_container(get_internal(model)) === nothing
+    if IS.Optimization.get_initial_conditions_model_container(get_internal(model)) ===
+       nothing
         return
     end
     @info "Solving Initialization Model for $(get_name(model))"
     status = solve_impl!(
-        IS.Optimization.get_ic_model_container(get_internal(model)),
+        IS.Optimization.get_initial_conditions_model_container(get_internal(model)),
         get_system(model),
     )
     if status == RunStatus.FAILED
@@ -250,7 +255,7 @@ function initialize!(model::OperationModel)
 
     write_initial_conditions_data!(
         container,
-        IS.Optimization.get_ic_model_container(get_internal(model)),
+        IS.Optimization.get_initial_conditions_model_container(get_internal(model)),
     )
     init_file = get_initial_conditions_file(model)
     Serialization.serialize(init_file, get_initial_conditions_data(container))
