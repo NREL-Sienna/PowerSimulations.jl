@@ -375,7 +375,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
             PSY.SingleTimeSeries,
         ),
     )
-    IS.Optimization.set_ic_model_container!(get_internal(model), nothing)
+    IS.Optimization.set_initial_conditions_model_container!(get_internal(model), nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)

@@ -393,7 +393,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     get_optimization_container(model).built_for_recurrent_solves =
         was_built_for_recurrent_solves
     internal = get_internal(model)
-    IS.Optimization.set_ic_model_container!(internal, nothing)
+    IS.Optimization.set_initial_conditions_model_container!(internal, nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, BuildStatus.EMPTY)
