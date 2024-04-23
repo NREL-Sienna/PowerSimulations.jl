@@ -153,11 +153,11 @@ struct LossLessLine <: AbstractBranchFormulation end
 
 abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
 """
-Linear active power approximation using the power transfer distribution factor ((PTDF)[https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/]) matrix.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
 """
 struct PTDFPowerModel <: AbstractPTDFModel end
 """
-Infinate capacity approximation of network flow to represent entire system with a single node.
+Infinite capacity approximation of network flow to represent entire system with a single node.
 """
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
 """

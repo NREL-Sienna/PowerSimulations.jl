@@ -34,28 +34,28 @@ get_component_type(
 """
 Struct to dispatch the creation of Active Power Variables
 
-Docs abbreviation: ``Pg``
+Docs abbreviation: ``p``
 """
 struct ActivePowerVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
 
-Docs abbreviation: ``\\hat{Pg}``
+Docs abbreviation: ``\\hat{p}``
 """
 struct PowerAboveMinimumVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``Pg^{in}``
+Docs abbreviation: ``P^\text{in}``
 """
 struct ActivePowerInVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``Pg^{out}``
+Docs abbreviation: ``P^\text{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
@@ -83,7 +83,7 @@ struct ColdStartVariable <: VariableType end
 """
 Struct to dispatch the creation of a variable for energy storage level (state of charge)
 
-Docs abbreviation: ``E``
+Docs abbreviation: ``e``
 """
 struct EnergyVariable <: VariableType end
 
@@ -99,7 +99,7 @@ struct OnVariable <: VariableType end
 """
 Struct to dispatch the creation of Reactive Power Variables
 
-Docs abbreviation: ``Qg``
+Docs abbreviation: ``q``
 """
 struct ReactivePowerVariable <: VariableType end
 
@@ -147,8 +147,18 @@ struct AdditionalDeltaActivePowerDownVariable <: VariableType end
 
 struct SmoothACE <: VariableType end
 
+"""
+Struct to dispatch the creation of System-wide slack up variables. Used when there is not enough generation.
+
+Docs abbreviation: ``p^\text{sl,up}``
+"""
 struct SystemBalanceSlackUp <: VariableType end
 
+"""
+Struct to dispatch the creation of System-wide slack down variables. Used when there is not enough load curtailment.
+
+Docs abbreviation: ``p^\text{sl,dn}``
+"""
 struct SystemBalanceSlackDown <: VariableType end
 
 struct ReserveRequirementSlack <: VariableType end
