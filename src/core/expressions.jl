@@ -18,10 +18,8 @@ struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end
 struct InterfaceTotalFlow <: ExpressionType end
 
-should_write_resulting_value(::Type{<:ExpressionType}) = false
 should_write_resulting_value(::Type{<:CostExpressions}) = true
 should_write_resulting_value(::Type{InterfaceTotalFlow}) = true
 should_write_resulting_value(::Type{RawACE}) = true
 
-convert_result_to_natural_units(::Type{<:ExpressionType}) = false
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true

@@ -352,7 +352,7 @@ import InfrastructureSystems.Optimization:
 import InfrastructureSystems.Optimization:
     read_variables, read_duals, read_parameters, read_aux_variables, read_expressions
 import InfrastructureSystems.Optimization: get_variable_values, get_dual_values,
-    get_parameter_values, get_aux_variable_values, get_expression_values
+    get_parameter_values, get_aux_variable_values, get_expression_values, get_value
 import InfrastructureSystems.Optimization:
     get_objective_value, export_realized_results, export_optimizer_stats
 
@@ -374,8 +374,6 @@ import InfrastructureSystems.Optimization:
     RightHandSideParameter, ObjectiveFunctionParameter, TimeSeriesParameter
 import InfrastructureSystems.Optimization: VariableType, ConstraintType, AuxVariableType,
     ParameterType, InitialConditionType, ExpressionType
-import InfrastructureSystems.Optimization: get_variable_value, get_dual_value,
-    get_parameter_value, get_aux_variable_value, get_expression_value
 import InfrastructureSystems.Optimization: should_export_variable, should_export_dual,
     should_export_parameter, should_export_aux_variable, should_export_expression
 import InfrastructureSystems.Optimization:
@@ -383,6 +381,9 @@ import InfrastructureSystems.Optimization:
 import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
     encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
     convert_result_to_natural_units, to_matrix
+
+# IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
+import InfrastructureSystems: TimeSeriesParameter
 
 export get_name
 export get_model_base_power
