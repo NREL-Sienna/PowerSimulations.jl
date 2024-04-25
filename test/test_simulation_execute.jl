@@ -25,7 +25,7 @@ function test_single_stage_sequential(in_memory, rebuild)
     build_out = build!(sim_single)
     @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim_single; in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "Single stage sequential tests" begin
@@ -94,7 +94,7 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
     build_out = build!(sim; console_level = Logging.Error)
     @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim; in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "2-Stage Decision Models with FeedForwards" begin
@@ -164,7 +164,7 @@ end
     build_out = build!(sim; console_level = Logging.Error)
     @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     @testset "Verify simulation events" begin
         file = joinpath(PSI.get_simulation_dir(sim), "recorder", "simulation_status.log")
@@ -295,7 +295,7 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
     build_out = build!(sim)
     @test build_out == PSI.SimulationBuildStatus.BUILT
     # execute_out = execute!(sim, in_memory = in_memory)
-    # @test execute_out == PSI.RunStatus.SUCCESSFUL
+    # @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "Test 3 stage simulation with FeedForwards" begin
@@ -338,6 +338,6 @@ end
     )
 
     @test build!(sim) == PSI.SimulationBuildStatus.BUILT
-    @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
+    @test execute!(sim) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     # TODO: Add more testing of resulting values
 end

@@ -25,7 +25,8 @@ end
     dm_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(dm_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    @test solve!(dm_model; optimizer = GLPK_optimizer) == RunStatus.SUCCESSFUL
+    @test solve!(dm_model; optimizer = GLPK_optimizer) ==
+          PSI.RunStatus.SUCCESSFULLY_FINALIZED
     results = OptimizationProblemResults(dm_model)
     variables = read_variables(results)
 

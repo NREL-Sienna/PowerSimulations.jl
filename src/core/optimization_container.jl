@@ -669,7 +669,7 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         end
     end
 
-    status = RunStatus.SUCCESSFUL
+    status = RunStatus.SUCCESSFULLY_FINALIZED
 
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
@@ -1507,7 +1507,7 @@ function calculate_aux_variables!(container::OptimizationContainer, system::PSY.
     for key in keys(aux_vars)
         calculate_aux_variable_value!(container, key, system)
     end
-    return RunStatus.SUCCESSFUL
+    return RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 function _calculate_dual_variable_value!(
@@ -1549,7 +1549,7 @@ function _calculate_dual_variables_continous_model!(
     for key in keys(duals_vars)
         _calculate_dual_variable_value!(container, key, system)
     end
-    return RunStatus.SUCCESSFUL
+    return RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 function _process_duals(container::OptimizationContainer, lp_optimizer)
@@ -1646,7 +1646,7 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
             =#
         end
     end
-    return RunStatus.SUCCESSFUL
+    return RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 function _calculate_dual_variables_discrete_model!(
@@ -1661,7 +1661,7 @@ function calculate_dual_variables!(
     sys::PSY.System,
     is_milp::Bool,
 )
-    isempty(get_duals(container)) && return RunStatus.SUCCESSFUL
+    isempty(get_duals(container)) && return RunStatus.SUCCESSFULLY_FINALIZED
     if is_milp
         status = _calculate_dual_variables_discrete_model!(container, sys)
     else

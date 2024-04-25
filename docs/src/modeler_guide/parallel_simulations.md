@@ -52,7 +52,7 @@ Here is example code to construct the `Simulation` with these parameters:
 ```
 function execute_simulation(sim, args...; kwargs...)
     status = execute!(sim)
-    if status != PSI.RunStatus.SUCCESSFUL
+    if status != PSI.RunStatus.SUCCESSFULLY_FINALIZED
         error("Simulation failed to execute: status=$status")
     end
 end
@@ -194,7 +194,7 @@ Here is example code to construct the `Simulation` with these parameters:
 ```
 function execute_simulation(sim, args...; kwargs...)
     status = execute!(sim)
-    if status != PSI.RunStatus.SUCCESSFUL
+    if status != PSI.RunStatus.SUCCESSFULLY_FINALIZED
         error("Simulation failed to execute: status=$status")
     end
 end

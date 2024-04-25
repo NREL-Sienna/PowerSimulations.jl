@@ -11,7 +11,7 @@
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           ModelBuildStatus.BUILT
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     recorder_log = joinpath(PSI.get_recorder_dir(model), "execution.log")
     events = list_recorder_events(PSI.ParameterUpdateEvent, recorder_log)

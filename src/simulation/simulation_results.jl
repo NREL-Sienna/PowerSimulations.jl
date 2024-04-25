@@ -435,7 +435,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
 end
 
 function _check_status(status::RunStatus, ignore_status)
-    status == RunStatus.SUCCESSFUL && return
+    status == RunStatus.SUCCESSFULLY_FINALIZED && return
 
     if ignore_status
         @warn "Simulation was not successful: $status. Results may not be valid."

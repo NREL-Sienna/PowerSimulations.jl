@@ -669,7 +669,8 @@ end
         )
         set_device_model!(template, ThermalStandard, model)
         UC = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-        @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+        @test build!(UC; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end

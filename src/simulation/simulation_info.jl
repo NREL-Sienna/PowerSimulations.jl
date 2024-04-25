@@ -4,7 +4,7 @@ mutable struct SimulationInfo
     run_status::RunStatus
 end
 
-SimulationInfo() = SimulationInfo(nothing, nothing, RunStatus.READY)
+SimulationInfo() = SimulationInfo(nothing, nothing, RunStatus.INITIALIZED)
 
 get_number(si::SimulationInfo) = si.number
 set_number!(si::SimulationInfo, val::Int) = si.number = val

@@ -2,7 +2,7 @@
 is_built(model::OperationModel) =
     IS.Optimization.get_status(get_internal(model)) == ModelBuildStatus.BUILT
 isempty(model::OperationModel) =
-    IS.Optimization.get_status(get_internal(model)) == ModeluildStatus.EMPTY
+    IS.Optimization.get_status(get_internal(model)) == ModelBuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
@@ -105,7 +105,7 @@ function solve_impl!(model::OperationModel)
     container = get_optimization_container(model)
     status = solve_impl!(container, get_system(model))
     set_run_status!(model, status)
-    if status != RunStatus.SUCCESSFUL
+    if status != RunStatus.SUCCESSFULLY_FINALIZED
         settings = get_settings(model)
         model_name = get_name(model)
         ts = get_current_timestamp(model)

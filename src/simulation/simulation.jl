@@ -717,7 +717,7 @@ function build!(
                         index = index,
                     )
                     set_simulation_build_status!(sim, SimulationBuildStatus.BUILT)
-                    set_simulation_status!(sim, RunStatus.READY)
+                    set_simulation_status!(sim, RunStatus.INITIALIZED)
                 catch e
                     @error "Simulation build failed" exception = (e, catch_backtrace())
                     set_simulation_build_status!(sim, SimulationBuildStatus.FAILED)
@@ -985,7 +985,7 @@ function _execute!(
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
-                    if status == RunStatus.SUCCESSFUL
+                    if status == RunStatus.SUCCESSFULLY_FINALIZED
                         # TODO: _update_simulation_state! can use performance improvements
                         _update_simulation_state!(sim, model)
                         if model_number == execution_order[end]
@@ -1054,8 +1054,10 @@ function execute!(sim::Simulation; kwargs...)
     store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
 
     sim_status = get_simulation_build_status(sim)
-    if (sim_status != SimulationBuildStatus.BUILT) || (sim_status != RunStatus.READY)
-        error("Simulation status $sim_status is invalid, you need to rebuild the simulation")
+    if (sim_status != SimulationBuildStatus.BUILT) || (sim_status != RunStatus.INITIALIZED)
+        error(
+            "Simulation status $sim_status is invalid, you need to rebuild the simulation",
+        )
     end
     try
         Logging.with_logger(logger) do
@@ -1067,7 +1069,7 @@ function execute!(sim::Simulation; kwargs...)
                         _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
                     end
                     @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                    set_simulation_status!(sim, RunStatus.SUCCESSFUL)
+                    set_simulation_status!(sim, RunStatus.SUCCESSFULLY_FINALIZED)
                     if isnothing(sim.internal.partitions)
                         # Partitioned simulations serialize the systems once during build.
                         _serialize_systems_to_store!(store, sim)

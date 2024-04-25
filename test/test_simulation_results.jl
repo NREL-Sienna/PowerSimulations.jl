@@ -235,7 +235,7 @@ function run_simulation(
         "optimizer_stats" => true,
     )
     execute_out = execute!(sim; exports = exports, in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     return sim
 end

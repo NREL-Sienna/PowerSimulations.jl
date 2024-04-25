@@ -16,7 +16,7 @@
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
     moi_tests(model, 1656, 288, 1248, 528, 888, true)
-    @test solve!(model) == RunStatus.SUCCESSFUL
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     template_uc = ProblemTemplate(NetworkModel(
         PTDFPowerModel;
@@ -34,5 +34,5 @@
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
     moi_tests(model, 1416, 0, 1248, 528, 672, true)
-    @test solve!(model) == RunStatus.SUCCESSFUL
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end

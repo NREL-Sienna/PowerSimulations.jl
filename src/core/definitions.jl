@@ -118,7 +118,8 @@ function get_enum_value(enum, value::String)
     return ENUM_MAPPINGS[enum][val]
 end
 
-Base.convert(::Type{SimulationBuildStatus}, val::String) = get_enum_value(SimulationBuildStatus, val)
+Base.convert(::Type{SimulationBuildStatus}, val::String) =
+    get_enum_value(SimulationBuildStatus, val)
 Base.convert(::Type{ModelBuildStatus}, val::String) = get_enum_value(ModelBuildStatus, val)
 Base.convert(::Type{RunStatus}, val::String) = get_enum_value(RunStatus, val)
 Base.convert(::Type{SOSStatusVariable}, x::String) = get_enum_value(SOSStatusVariable, x)

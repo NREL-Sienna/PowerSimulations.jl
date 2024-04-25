@@ -3,7 +3,8 @@ Construct OptimizationProblemResults from a solved DecisionModel.
 """
 function OptimizationProblemResults(model::DecisionModel)
     status = get_run_status(model)
-    status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
+    status != RunStatus.SUCCESSFULLY_FINALIZED &&
+        error("problem was not solved successfully: $status")
 
     model_store = get_store(model)
 
@@ -48,7 +49,8 @@ Construct OptimizationProblemResults from a solved EmulationModel.
 """
 function OptimizationProblemResults(model::EmulationModel)
     status = get_run_status(model)
-    status != RunStatus.SUCCESSFUL && error("problem was not solved successfully: $status")
+    status != RunStatus.SUCCESSFULLY_FINALIZED &&
+        error("problem was not solved successfully: $status")
 
     model_store = get_store(model)
 

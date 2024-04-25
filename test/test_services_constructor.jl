@@ -19,7 +19,8 @@
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 648, 0, 120, 216, 72, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
@@ -57,7 +58,8 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 384, 0, 336, 192, 24, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve_ReserveDown_Reserve2,
@@ -95,7 +97,8 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
     model = DecisionModel(template, c_sys5_uc; optimizer = cbc_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 1008, 0, 480, 216, 192, true)
 end
 
@@ -112,7 +115,8 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc_non_spin"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 1032, 0, 888, 192, 288, true)
 end
 
@@ -131,7 +135,8 @@ end
 
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re"; add_reserves = true)
     model = DecisionModel(template, c_sys5_re)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 360, 0, 72, 120, 72, false)
 end
 
@@ -154,7 +159,8 @@ end
 
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; add_reserves = true)
     model = DecisionModel(template, c_sys5_hyd)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 240, 0, 48, 96, 72, false)
 end
 
@@ -192,7 +198,8 @@ end
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     model = DecisionModel(template, c_sys5_uc;)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 504, 0, 120, 192, 24, false)
 end
 
@@ -249,7 +256,8 @@ end
     add_service!(c_sys5_uc, groupservice, contributing_services)
 
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 648, 0, 120, 240, 72, false)
 end
 
@@ -304,7 +312,8 @@ end
     static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end
 
@@ -325,7 +334,8 @@ end
     model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     # set manually to test cases for simulation
     PSI.get_optimization_container(model).built_for_recurrent_solves = true
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 456, 0, 120, 264, 24, false)
 end
 
@@ -354,7 +364,8 @@ end
     )
 
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 648, 0, 384, 216, 72, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1

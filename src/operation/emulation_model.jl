@@ -524,7 +524,7 @@ function run!(
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                     run_impl!(model; kwargs...)
-                    set_run_status!(model, RunStatus.SUCCESSFUL)
+                    set_run_status!(model, RunStatus.SUCCESSFULLY_FINALIZED)
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -573,7 +573,7 @@ function solve!(
     # other logic used when solving the models separate from a simulation
     solve_impl!(model)
     @assert get_current_time(model) == start_time
-    if get_run_status(model) == RunStatus.SUCCESSFUL
+    if get_run_status(model) == RunStatus.SUCCESSFULLY_FINALIZED
         advance_execution_count!(model)
         write_results!(
             store,
