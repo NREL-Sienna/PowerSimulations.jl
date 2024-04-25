@@ -84,7 +84,11 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
         false,
     )
     TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
-    build_impl!(model.internal.ic_model_container, template, get_system(model))
+    build_impl!(
+        model.internal.initial_conditions_model_container,
+        template,
+        get_system(model),
+    )
     TimerOutputs.enable_timer!(BUILD_PROBLEMS_TIMER)
     return
 end
