@@ -587,7 +587,7 @@ end
         optimizer = HiGHS_optimizer,
         initialize_model = false,
     )
-    @test build!(ED; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(ED; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(ED, 10, 0, 15, 15, 5, false)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
 end
@@ -602,7 +602,7 @@ end
         optimizer = HiGHS_optimizer,
         initialize_model = false,
     )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 56, 0, 56, 14, 21, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
@@ -617,7 +617,7 @@ end
         optimizer = HiGHS_optimizer,
         initialize_model = false,
     )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 32, 0, 8, 4, 14, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
 end
@@ -631,7 +631,7 @@ end
         optimizer = cbc_optimizer,
         initialize_model = false,
     )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 32, 0, 8, 4, 14, true)
     # Cbc can have reliability issues with SoS. The objective function target in the this
     # test was calculated with CPLEX do not change if Cbc gets a bad result
@@ -651,7 +651,7 @@ end
         optimizer = cbc_optimizer,
         initialize_model = false,
     )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 38, 0, 16, 8, 16, true)
 end
 
@@ -669,7 +669,7 @@ end
         )
         set_device_model!(template, ThermalStandard, model)
         UC = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-        @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+        @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end

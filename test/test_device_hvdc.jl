@@ -14,7 +14,7 @@
     set_device_model!(template_uc, DeviceModel(InterconnectingConverter, LossLessConverter))
     set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LossLessLine))
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir()) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
     moi_tests(model, 1656, 288, 1248, 528, 888, true)
     @test solve!(model) == RunStatus.SUCCESSFUL
 
@@ -32,7 +32,7 @@
     set_device_model!(template_uc, DeviceModel(InterconnectingConverter, LossLessConverter))
     set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LossLessLine))
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir()) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
     moi_tests(model, 1416, 0, 1248, 528, 672, true)
     @test solve!(model) == RunStatus.SUCCESSFUL
 end

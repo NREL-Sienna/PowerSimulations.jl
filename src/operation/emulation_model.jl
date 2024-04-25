@@ -273,7 +273,7 @@ function build_pre_step!(model::EmulationModel)
         validate_template(model)
         validate_time_series(model)
         if !isempty(model)
-            @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "EmulationProblem status not ModelBuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         container = get_optimization_container(model)
@@ -288,7 +288,7 @@ function build_pre_step!(model::EmulationModel)
 
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-        set_status!(model, BuildStatus.IN_PROGRESS)
+        set_status!(model, ModelBuildStatus.IN_PROGRESS)
     end
     return
 end
@@ -337,10 +337,10 @@ function build!(
                 TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
                     build_impl!(model)
                 end
-                set_status!(model, BuildStatus.BUILT)
+                set_status!(model, ModelBuildStatus.BUILT)
                 @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
-                set_status!(model, BuildStatus.FAILED)
+                set_status!(model, ModelBuildStatus.FAILED)
                 bt = catch_backtrace()
                 @error "EmulationModel Build Failed" exception = e, bt
             end
@@ -378,7 +378,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     IS.Optimization.set_initial_conditions_model_container!(get_internal(model), nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
-    set_status!(model, BuildStatus.EMPTY)
+    set_status!(model, ModelBuildStatus.EMPTY)
     return
 end
 

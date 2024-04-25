@@ -285,7 +285,8 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         validate_template(model)
         validate_time_series(model)
         if !isempty(model)
-            @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "OptimizationProblem status not ModelBuildStatus.EMPTY. Resetting"
+
             reset!(model)
         end
         # Initial time are set here because the information is specified in the
@@ -298,7 +299,7 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         )
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-        set_status!(model, BuildStatus.IN_PROGRESS)
+        set_status!(model, ModelBuildStatus.IN_PROGRESS)
     end
     return
 end
@@ -352,10 +353,10 @@ function build!(
                 TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
                     build_impl!(model)
                 end
-                set_status!(model, BuildStatus.BUILT)
+                set_status!(model, ModelBuildStatus.BUILT)
                 @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
-                set_status!(model, BuildStatus.FAILED)
+                set_status!(model, ModelBuildStatus.FAILED)
                 bt = catch_backtrace()
                 @error "DecisionModel Build Failed" exception = e, bt
             end
@@ -396,7 +397,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     IS.Optimization.set_initial_conditions_model_container!(internal, nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
-    set_status!(model, BuildStatus.EMPTY)
+    set_status!(model, ModelBuildStatus.EMPTY)
     return
 end
 

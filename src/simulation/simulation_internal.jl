@@ -10,7 +10,7 @@ mutable struct SimulationInternal
     run_count::OrderedDict{Int, OrderedDict{Int, Int}}
     date_ref::OrderedDict{Int, Dates.DateTime}
     status::RunStatus
-    build_status::BuildStatus
+    build_status::SimulationBuildStatus
     simulation_state::SimulationState
     store::Union{Nothing, SimulationStore}
     recorders::Vector{Symbol}
@@ -73,7 +73,7 @@ function SimulationInternal(
         count_dict,
         OrderedDict{Int, Dates.DateTime}(),
         RunStatus.NOT_READY,
-        BuildStatus.EMPTY,
+        SimulationBuildStatus.EMPTY,
         SimulationState(),
         nothing,
         collect(unique_recorders),

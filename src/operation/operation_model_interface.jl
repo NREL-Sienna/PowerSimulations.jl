@@ -1,8 +1,8 @@
 # Default implementations of getter/setter functions for OperationModel.
 is_built(model::OperationModel) =
-    IS.Optimization.get_status(get_internal(model)) == BuildStatus.BUILT
+    IS.Optimization.get_status(get_internal(model)) == ModelBuildStatus.BUILT
 isempty(model::OperationModel) =
-    IS.Optimization.get_status(get_internal(model)) == BuildStatus.EMPTY
+    IS.Optimization.get_status(get_internal(model)) == ModeluildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
@@ -141,7 +141,7 @@ set_initial_time!(model::OperationModel, val::Dates.DateTime) =
 
 get_simulation_info(model::OperationModel, val) = model.simulation_info = val
 
-function set_status!(model::OperationModel, status::BuildStatus)
+function set_status!(model::OperationModel, status::ModelBuildStatus)
     IS.Optimization.set_status!(get_internal(model), status)
     return
 end
@@ -287,9 +287,9 @@ function validate_template(model::OperationModel)
     return
 end
 
-function build_if_not_already_built!(model; kwargs...)
+function build_if_not_already_built!(model::OperationModel; kwargs...)
     status = get_status(model)
-    if status == BuildStatus.EMPTY
+    if status == ModelBuildStatus.EMPTY
         if !haskey(kwargs, :output_dir)
             error(
                 "'output_dir' must be provided as a kwarg if the model build status is $status",
@@ -299,7 +299,7 @@ function build_if_not_already_built!(model; kwargs...)
             status = build!(model; new_kwargs...)
         end
     end
-    if status != BuildStatus.BUILT
+    if status != ModelBuildStatus.BUILT
         error("build! of the $(typeof(model)) $(get_name(model)) failed: $status")
     end
     return

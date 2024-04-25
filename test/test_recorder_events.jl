@@ -10,7 +10,7 @@
     model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          ModelBuildStatus.BUILT
     @test run!(model) == RunStatus.SUCCESSFUL
 
     recorder_log = joinpath(PSI.get_recorder_dir(model), "execution.log")

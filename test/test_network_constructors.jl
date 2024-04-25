@@ -9,7 +9,7 @@
         )
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         @test PSI.get_optimization_container(ps_model).pm !== nothing
         # TODO: Change test
         # @test :nodal_balance_active in keys(PSI.get_optimization_container(ps_model).expressions)
@@ -39,7 +39,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -62,7 +62,7 @@ end
         optimizer = GLPK_optimizer,
     )
     @test build!(ps_model_re; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
@@ -101,7 +101,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -164,7 +164,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -210,7 +210,7 @@ end
         template = get_thermal_dispatch_template_network(DCPPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -258,7 +258,7 @@ end
         template = get_thermal_dispatch_template_network(ACPPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -300,7 +300,7 @@ end
         template = get_thermal_dispatch_template_network(NFAPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -350,7 +350,7 @@ end
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -394,7 +394,7 @@ end
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -438,7 +438,7 @@ end
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 264, 0, 288, 240, 48, false)
@@ -496,7 +496,7 @@ end
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
@@ -538,7 +538,7 @@ end
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 552, 0, 576, 528, 336, false)
@@ -596,7 +596,7 @@ end
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
@@ -654,7 +654,7 @@ end
         )
 
         @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         solve!(uc_model_red)
 
         res_red = OptimizationProblemResults(uc_model_red)
@@ -680,7 +680,7 @@ end
         )
 
         @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         solve!(uc_model_orig)
 
         res_orig = OptimizationProblemResults(uc_model_orig)
@@ -707,7 +707,7 @@ end
         )
         ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end

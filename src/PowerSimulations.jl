@@ -190,10 +190,6 @@ export list_simulation_events
 export show_simulation_events
 export get_num_partitions
 
-## Enums
-export BuildStatus
-export RunStatus
-
 # Variables
 export ActivePowerVariable
 export ActivePowerInVariable

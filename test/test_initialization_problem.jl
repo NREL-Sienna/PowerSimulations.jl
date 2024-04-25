@@ -18,7 +18,7 @@ sys_rts = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
             initial_time = init_time,
             horizon = 48,
         )
-        @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) == ModelBuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(model, ActivePowerVariable(), ThermalStandard)
@@ -91,7 +91,7 @@ end
             initial_time = init_time,
             horizon = 48,
         )
-        @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) == ModelBuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(model, ActivePowerVariable(), ThermalStandard)
@@ -223,7 +223,7 @@ end
             meta = "ub",
         )
         PSI.reset!(model)
-        @test build!(model; output_dir = mktempdir(; cleanup = true)) == BuildStatus.BUILT
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) == ModelBuildStatus.BUILT
 
         ####### Check initialization problem
         check_initialization_variable_count(

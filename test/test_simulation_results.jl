@@ -212,7 +212,7 @@ function run_simulation(
     )
 
     build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
 
     exports = Dict(
         "models" => [

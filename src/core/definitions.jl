@@ -82,22 +82,16 @@ const KNOWN_SIMULATION_PATHS = [
 const RESULTS_DIR = "results"
 
 # Enums
-BuildStatus = IS.Optimization.BuildStatus
+ModelBuildStatus = IS.Optimization.ModelBuildStatus
+SimulationBuildStatus = IS.Simulation.SimulationBuildStatus
 
-IS.@scoped_enum(
-    RunStatus,
-    NOT_READY = -2,
-    READY = -1,
-    SUCCESSFUL = 0,
-    RUNNING = 1,
-    FAILED = 2,
-)
+RunStatus = IS.Simulation.RunStatus
 
 IS.@scoped_enum(SOSStatusVariable, NO_VARIABLE = 1, PARAMETER = 2, VARIABLE = 3,)
 
 IS.@scoped_enum(COMPACT_PWL_STATUS, VALID = 1, INVALID = 2, UNDETERMINED = 3)
 
-const ENUMS = (BuildStatus, RunStatus, SOSStatusVariable)
+const ENUMS = (ModelBuildStatus, SimulationBuildStatus, RunStatus, SOSStatusVariable)
 
 const ENUM_MAPPINGS = Dict()
 
@@ -124,6 +118,7 @@ function get_enum_value(enum, value::String)
     return ENUM_MAPPINGS[enum][val]
 end
 
-Base.convert(::Type{BuildStatus}, val::String) = get_enum_value(BuildStatus, val)
+Base.convert(::Type{SimulationBuildStatus}, val::String) = get_enum_value(SimulationBuildStatus, val)
+Base.convert(::Type{ModelBuildStatus}, val::String) = get_enum_value(ModelBuildStatus, val)
 Base.convert(::Type{RunStatus}, val::String) = get_enum_value(RunStatus, val)
 Base.convert(::Type{SOSStatusVariable}, x::String) = get_enum_value(SOSStatusVariable, x)
