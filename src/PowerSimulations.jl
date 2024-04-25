@@ -364,6 +364,9 @@ import InfrastructureSystems.Optimization: read_optimizer_stats, get_optimizer_s
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
 import InfrastructureSystems.Optimization: ArgumentConstructStage, ModelConstructStage
+import InfrastructureSystems.Optimization: STORE_CONTAINERS, STORE_CONTAINER_DUALS,
+    STORE_CONTAINER_EXPRESSIONS, STORE_CONTAINER_PARAMETERS, STORE_CONTAINER_VARIABLES,
+    STORE_CONTAINER_AUX_VARIABLES
 import InfrastructureSystems.Optimization: OptimizationContainerKey, VariableKey,
     ConstraintKey, ExpressionKey, AuxVarKey, InitialConditionKey, ParameterKey
 import InfrastructureSystems.Optimization:
@@ -376,10 +379,9 @@ import InfrastructureSystems.Optimization:
     get_entry_type, get_component_type, get_output_dir
 import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
     encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
-    convert_result_to_natural_units, to_matrix
+    convert_result_to_natural_units, to_matrix, get_store_container_type
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
-import InfrastructureSystems: TimeSeriesParameter
 
 export get_name
 export get_model_base_power
