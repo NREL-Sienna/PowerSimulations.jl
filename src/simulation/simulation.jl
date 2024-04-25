@@ -1053,10 +1053,12 @@ function execute!(sim::Simulation; kwargs...)
     in_memory = get(kwargs, :in_memory, false)
     store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
 
-    sim_status = get_simulation_build_status(sim)
-    if (sim_status != SimulationBuildStatus.BUILT) || (sim_status != RunStatus.INITIALIZED)
+    sim_build_status = get_simulation_build_status(sim)
+    sim_run_status = get_simulation_status(sim)
+    if (sim_build_status != SimulationBuildStatus.BUILT) ||
+       (sim_run_status != RunStatus.INITIALIZED)
         error(
-            "Simulation status $sim_status is invalid, you need to rebuild the simulation",
+            "Simulation build status $sim_build_status, or Simulation run status $sim_run_status, are invalid, you need to rebuild the simulation",
         )
     end
     try
