@@ -226,9 +226,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ACBranch}
+    device_model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{U},
+) where {T <: PSY.ACBranch, U <: PM.AbstractActivePowerModel}
     @debug "construct_device" _group = LOG_GROUP_BRANCH_CONSTRUCTIONS
 
     devices = get_available_components(device_model, sys)
@@ -428,7 +428,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
     devices = get_available_components(device_model, sys)
