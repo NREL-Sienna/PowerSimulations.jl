@@ -279,9 +279,9 @@ function test_simulation_results(
         @test length(readdir(export_realized_results(results_ed))) === 17
 
         # Test that you can't read a failed simulation.
-        PSI.set_simulation_status!(sim, RunStatus.FAILED)
+        PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)
         PSI.serialize_status(sim)
-        @test PSI.deserialize_status(sim) == RunStatus.FAILED
+        @test PSI.deserialize_status(sim) == PSI.RunStatus.FAILED
         @test_throws ErrorException SimulationResults(sim)
         @test_logs(
             match_mode = :any,

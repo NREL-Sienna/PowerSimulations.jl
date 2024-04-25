@@ -298,7 +298,7 @@ end
         model;
         output_dir = mktempdir(; cleanup = true),
         console_level = Logging.AboveMaxLevel,
-    ) == BuildStatus.FAILED
+    ) == PSI.ModelBuildStatus.FAILED
 end
 
 @testset "Test StaticReserve" begin

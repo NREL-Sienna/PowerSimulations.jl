@@ -126,7 +126,7 @@ end
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
         output_dir = mktempdir(; cleanup = true),
-    ) == PSI.BuildStatus.FAILED
+    ) == PSI.ModelBuildStatus.FAILED
 end
 
 @testset "Network DC-PF with VirtualPTDF Model" begin
@@ -427,7 +427,7 @@ end
             ps_model;
             console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
             output_dir = mktempdir(; cleanup = true),
-        ) == PSI.BuildStatus.FAILED
+        ) == PSI.ModelBuildStatus.FAILED
     end
 end
 
