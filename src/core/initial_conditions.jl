@@ -134,16 +134,16 @@ function has_initial_condition_value(
 end
 
 ######################### Initial Conditions Definitions#####################################
-struct DevicePower <: IS.InitialConditionType end
-struct DeviceAboveMinPower <: IS.InitialConditionType end
-struct DeviceStatus <: IS.InitialConditionType end
-struct InitialTimeDurationOn <: IS.InitialConditionType end
-struct InitialTimeDurationOff <: IS.InitialConditionType end
-struct InitialEnergyLevel <: IS.InitialConditionType end
-struct AreaControlError <: IS.InitialConditionType end
+struct DevicePower <: InitialConditionType end
+struct DeviceAboveMinPower <: InitialConditionType end
+struct DeviceStatus <: InitialConditionType end
+struct InitialTimeDurationOn <: InitialConditionType end
+struct InitialTimeDurationOff <: InitialConditionType end
+struct InitialEnergyLevel <: InitialConditionType end
+struct AreaControlError <: InitialConditionType end
 
 # Decide whether to run the initial conditions reconciliation algorithm based on the presence of any of these
-requires_reconciliation(::Type{<:IS.InitialConditionType}) = false
+requires_reconciliation(::Type{<:InitialConditionType}) = false
 
 requires_reconciliation(::Type{InitialTimeDurationOn}) = true
 requires_reconciliation(::Type{InitialTimeDurationOff}) = true

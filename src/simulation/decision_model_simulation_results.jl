@@ -262,7 +262,7 @@ function _read_results(
     cols::Union{Colon, Vector{String}} = (:),
 )
     vals = _read_results(res, result_keys, timestamps, store)
-    converted_vals = Dict{IS.OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
     for (result_key, result_data) in vals
         inner_converted = SortedDict(
             (date_key, Matrix{Float64}(permutedims(inner_data[cols, :].data)))
