@@ -75,7 +75,7 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     ic_container.built_for_recurrent_solves = false
     set_horizon!(ic_settings, min(INITIALIZATION_PROBLEM_HORIZON, main_problem_horizon))
     init_optimization_container!(
-        model.internal.ic_model_container,
+        IS.Optimization.get_initial_conditions_model_container(internal),
         get_network_model(get_template(model)),
         get_system(model),
     )

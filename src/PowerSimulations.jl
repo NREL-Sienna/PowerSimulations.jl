@@ -370,6 +370,8 @@ import InfrastructureSystems.Optimization: read_optimizer_stats, get_optimizer_s
 import InfrastructureSystems.Optimization: ArgumentConstructStage, ModelConstructStage
 import InfrastructureSystems.Optimization: OptimizationContainerKey, VariableKey,
     ConstraintKey, ExpressionKey, AuxVarKey, InitialConditionKey, ParameterKey
+import InfrastructureSystems.Optimization:
+    RightHandSideParameter, ObjectiveFunctionParameter, TimeSeriesParameter
 import InfrastructureSystems.Optimization: VariableType, ConstraintType, AuxVariableType,
     ParameterType, InitialConditionType, ExpressionType
 import InfrastructureSystems.Optimization: should_export_variable, should_export_dual,
