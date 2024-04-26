@@ -38,7 +38,7 @@ Now, we assign the following `DeviceModel` to each `PowerSystems.jl` with:
 | `RenewableDispatch`  | `RenewableFullDispatch` |
 | `PowerLoad`  | `StaticPowerLoad` |
 
-Note that we did not assigned any `DeviceModel` to `Line` since the `CopperPlatePowerModel` used for the network assumes that everything is lumped in the same node (like a copper plate with infinite capacity), and hence there are no flows between buses that branches can limit.
+Note that we did not assign any `DeviceModel` to `Line` since the `CopperPlatePowerModel` used for the network assumes that everything is lumped in the same node (like a copper plate with infinite capacity), and hence there are no flows between buses that branches can limit.
 
 Each `DeviceModel` formulation is described in specific in their respective page, but the overall optimization problem will end-up as:
 
