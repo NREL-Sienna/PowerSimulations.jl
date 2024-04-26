@@ -8,7 +8,6 @@ module PowerSimulations
 export Simulation
 export DecisionModel
 export EmulationModel
-export ProblemResults
 export ProblemTemplate
 export InitialCondition
 export SimulationModels
@@ -123,7 +122,6 @@ export set_network_model!
 export get_network_formulation
 ## Results interfaces
 export SimulationResultsExport
-export ProblemResultsExport
 export export_results
 export export_realized_results
 export export_optimizer_stats
@@ -179,6 +177,9 @@ export read_optimizer_stats
 export serialize_optimization_model
 
 ## Utils Exports
+export OptimizationProblemResults
+export OptimizationProblemResultsExport
+export OptimizerStats
 export get_all_constraint_index
 export get_all_variable_index
 export get_constraint_index
@@ -187,12 +188,7 @@ export list_recorder_events
 export show_recorder_events
 export list_simulation_events
 export show_simulation_events
-export export_realized_results
 export get_num_partitions
-
-## Enums
-export BuildStatus
-export RunStatus
 
 # Variables
 export ActivePowerVariable
@@ -342,6 +338,51 @@ import PowerNetworkMatrices: PTDF, VirtualPTDF
 export PTDF
 export VirtualPTDF
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name
+
+# IS.Optimization imports: functions that have PSY methods that IS needs to access (therefore necessary)
+import InfrastructureSystems.Optimization: get_data_field
+
+# IS.Optimization imports that get reexported: no additional methods in PowerSimulations (therefore necessary)
+import InfrastructureSystems.Optimization:
+    OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats
+import InfrastructureSystems.Optimization:
+    read_variables, read_duals, read_parameters, read_aux_variables, read_expressions
+import InfrastructureSystems.Optimization: get_variable_values, get_dual_values,
+    get_parameter_values, get_aux_variable_values, get_expression_values, get_value
+import InfrastructureSystems.Optimization:
+    get_objective_value, export_realized_results, export_optimizer_stats
+
+# IS.Optimization imports that get reexported: yes additional methods in PowerSimulations (therefore may or may not be desired)
+import InfrastructureSystems.Optimization:
+    read_variable, read_dual, read_parameter, read_aux_variable, read_expression
+import InfrastructureSystems.Optimization: list_variable_keys, list_dual_keys,
+    list_parameter_keys, list_aux_variable_keys, list_expression_keys
+import InfrastructureSystems.Optimization: list_variable_names, list_dual_names,
+    list_parameter_names, list_aux_variable_names, list_expression_names
+import InfrastructureSystems.Optimization: read_optimizer_stats, get_optimizer_stats,
+    export_results, serialize_results, get_timestamps, get_model_base_power
+
+# IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
+import InfrastructureSystems.Optimization: ArgumentConstructStage, ModelConstructStage
+import InfrastructureSystems.Optimization: STORE_CONTAINERS, STORE_CONTAINER_DUALS,
+    STORE_CONTAINER_EXPRESSIONS, STORE_CONTAINER_PARAMETERS, STORE_CONTAINER_VARIABLES,
+    STORE_CONTAINER_AUX_VARIABLES
+import InfrastructureSystems.Optimization: OptimizationContainerKey, VariableKey,
+    ConstraintKey, ExpressionKey, AuxVarKey, InitialConditionKey, ParameterKey
+import InfrastructureSystems.Optimization:
+    RightHandSideParameter, ObjectiveFunctionParameter, TimeSeriesParameter
+import InfrastructureSystems.Optimization: VariableType, ConstraintType, AuxVariableType,
+    ParameterType, InitialConditionType, ExpressionType
+import InfrastructureSystems.Optimization: should_export_variable, should_export_dual,
+    should_export_parameter, should_export_aux_variable, should_export_expression
+import InfrastructureSystems.Optimization:
+    get_entry_type, get_component_type, get_output_dir
+import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
+    encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
+    convert_result_to_natural_units, to_matrix, get_store_container_type
+
+# IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
+
 export get_name
 export get_model_base_power
 export get_optimizer_stats
@@ -367,7 +408,6 @@ import TimeSeries
 import DataFrames
 import JSON
 import CSV
-import SHA
 import HDF5
 import PrettyTables
 
@@ -421,9 +461,7 @@ include("core/definitions.jl")
 include("core/formulations.jl")
 include("core/abstract_simulation_store.jl")
 include("core/operation_model_abstract_types.jl")
-include("core/optimization_container_types.jl")
 include("core/abstract_feedforward.jl")
-include("core/optimization_container_keys.jl")
 include("core/network_model.jl")
 include("core/parameters.jl")
 include("core/service_model.jl")
@@ -436,7 +474,6 @@ include("core/expressions.jl")
 include("core/initial_conditions.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")
-include("core/optimizer_stats.jl")
 include("core/dataset.jl")
 include("core/dataset_container.jl")
 include("core/results_by_time.jl")
@@ -447,15 +484,14 @@ include("core/optimization_container.jl")
 include("core/store_common.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
 include("operation/operation_model_interface.jl")
-include("operation/model_store_params.jl")
-include("operation/abstract_model_store.jl")
+include("core/model_store_params.jl")
+include("simulation/simulation_store_requirements.jl")
 include("operation/decision_model_store.jl")
 include("operation/emulation_model_store.jl")
 include("operation/initial_conditions_update_in_memory_store.jl")
-include("operation/model_internal.jl")
+include("simulation/simulation_info.jl")
 include("operation/decision_model.jl")
 include("operation/emulation_model.jl")
-include("operation/problem_results_export.jl")
 include("operation/problem_results.jl")
 include("operation/operation_model_serialization.jl")
 include("operation/time_series_interface.jl")

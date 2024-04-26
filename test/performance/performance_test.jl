@@ -127,7 +127,7 @@ try
         build_out, time_build, _, _ =
             @timed build!(sim; console_level = Logging.Error, serialize = false)
 
-        if build_out == PSI.BuildStatus.BUILT
+        if build_out == PSI.SimulationBuildStatus.BUILT
             name = i > 1 ? "Postcompile" : "Precompile"
             open("build_time.txt", "a") do io
                 write(io, "| $(ARGS[1])-Build Time $name | $(time_build) |\n")
@@ -140,7 +140,7 @@ try
 
         solve_out, time_solve, _, _ = @timed execute!(sim; enable_progress_bar = false)
 
-        if solve_out == PSI.RunStatus.SUCCESSFUL
+        if solve_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             name = i > 1 ? "Postcompile" : "Precompile"
             open("solve_time.txt", "a") do io
                 write(io, "| $(ARGS[1])-Solve Time $name | $(time_solve) |\n")

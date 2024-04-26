@@ -45,7 +45,7 @@ function _update_parameter_values!(
     components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
-        ts_uuid = get_time_series_uuid(U, component, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(U, component, ts_name))
         if !(ts_uuid in ts_uuids)
             ts_vector = get_time_series_values!(
                 U,
@@ -82,7 +82,7 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
-    ts_uuid = get_time_series_uuid(U, service, ts_name)
+    ts_uuid = string(IS.get_time_series_uuid(U, service, ts_name))
     ts_vector = get_time_series_values!(
         U,
         model,
@@ -115,7 +115,7 @@ function _update_parameter_values!(
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
-        ts_uuid = get_time_series_uuid(U, component, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(U, component, ts_name))
         if !(ts_uuid in ts_uuids)
             # Note: This interface reads one single value per component at a time.
             value = get_time_series_values!(
@@ -337,6 +337,8 @@ function update_container_parameter_values!(
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
@@ -380,22 +382,6 @@ function update_container_parameter_values!(
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
-    return
-end
-
-function update_container_parameter_values!(
-    optimization_container::OptimizationContainer,
-    model::OperationModel,
-    key::ParameterKey{T, U},
-    input::DatasetContainer{InMemoryDataset},
-) where {T <: ParameterType, U <: PSY.Service}
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
-    # if the keys have strings in the meta fields
-    parameter_array = get_parameter_array(optimization_container, key)
-    parameter_attributes = get_parameter_attributes(optimization_container, key)
-    service = PSY.get_component(U, get_system(model), key.meta)
-    @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     return
 end
 

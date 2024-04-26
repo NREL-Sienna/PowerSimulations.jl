@@ -88,6 +88,27 @@ get_cached_parameters(res::SimulationProblemResults{DecisionModelSimulationResul
 get_cached_variables(res::SimulationProblemResults{DecisionModelSimulationResults}) =
     res.values.variables.cached_results
 
+get_cached_results(
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    ::AuxVarKey,
+) = get_cached_aux_variables(res)
+get_cached_results(
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    ::ConstraintKey,
+) = get_cached_duals(res)
+get_cached_results(
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    ::ExpressionKey,
+) = get_cached_expressions(res)
+get_cached_results(
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    ::ParameterKey,
+) = get_cached_parameters(res)
+get_cached_results(
+    res::SimulationProblemResults{DecisionModelSimulationResults},
+    ::VariableKey,
+) = get_cached_variables(res)
+
 function get_forecast_horizon(res::SimulationProblemResults{DecisionModelSimulationResults})
     return res.values.forecast_horizon
 end
@@ -266,7 +287,7 @@ function _read_results(
 
     _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
-    _validate_keys(existing_keys, result_keys)
+    IS.Optimization._validate_keys(existing_keys, result_keys)
     cached_results = get_cached_results(res, eltype(result_keys))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
         @debug "reading results from SimulationsResults cache"  # NOTE tests match on this

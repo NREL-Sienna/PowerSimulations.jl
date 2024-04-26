@@ -74,7 +74,7 @@ mutable struct Simulation
         initial_time = nothing,
     )
         for model in get_decision_models(models)
-            if model.internal.simulation_info.sequence_uuid != sequence.uuid
+            if get_sequence_uuid(model) != sequence.uuid
                 model_name = get_name(model)
                 throw(
                     IS.ConflictingInputsError(
@@ -85,7 +85,7 @@ mutable struct Simulation
         end
         em = get_emulation_model(models)
         if em !== nothing
-            if em.internal.simulation_info.sequence_uuid != sequence.uuid
+            if get_sequence_uuid(em) != sequence.uuid
                 model_name = get_name(em)
                 throw(
                     IS.ConflictingInputsError(
@@ -159,7 +159,7 @@ get_console_level(sim::Simulation) = sim.internal.console_level
 get_file_level(sim::Simulation) = sim.internal.file_level
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
-set_simulation_build_status!(sim::Simulation, status::BuildStatus) =
+set_simulation_build_status!(sim::Simulation, status::SimulationBuildStatus) =
     sim.internal.build_status = status
 
 function set_current_time!(sim::Simulation, val::Dates.DateTime)
@@ -337,10 +337,10 @@ function _build_single_model_for_simulation(
         container.built_for_recurrent_solves = true
         build_impl!(model)
         sim.internal.date_ref[model_number] = initial_time
-        set_status!(model, BuildStatus.BUILT)
+        set_status!(model, ModelBuildStatus.BUILT)
         _pre_solve_model_checks(model)
     catch
-        set_status!(model, BuildStatus.FAILED)
+        set_status!(model, ModelBuildStatus.FAILED)
         rethrow()
     end
     return
@@ -376,9 +376,9 @@ function _build_emulation_model!(sim::Simulation)
             build_impl!(model)
         end
         sim.internal.date_ref[length(sim.internal.date_ref) + 1] = initial_time
-        set_status!(model, BuildStatus.BUILT)
+        set_status!(model, ModelBuildStatus.BUILT)
     catch
-        set_status!(model, BuildStatus.FAILED)
+        set_status!(model, ModelBuildStatus.FAILED)
         rethrow()
     end
     return
@@ -500,7 +500,7 @@ function _initialize_problem_storage!(
     )
     for model in get_decision_models(models)
         model_name = get_name(model)
-        decision_model_store_params[model_name] = model.internal.store_parameters
+        decision_model_store_params[model_name] = get_store_params(model)
         num_executions = executions_by_model[model_name]
         num_rows = num_executions * get_steps(sim)
         dm_model_req[model_name] = _get_model_store_requirements!(rules, model, num_rows)
@@ -522,7 +522,7 @@ function _initialize_problem_storage!(
         )
     else
         emulation_model_store_params =
-            OrderedDict(Symbol(get_name(em)) => em.internal.store_parameters)
+            OrderedDict(Symbol(get_name(em)) => get_store_params(em))
     end
 
     em_model_req = _get_emulation_store_requirements(sim)
@@ -554,7 +554,7 @@ function _build!(
     partitions = nothing,
     index = nothing,
 )
-    set_simulation_build_status!(sim, BuildStatus.IN_PROGRESS)
+    set_simulation_build_status!(sim, SimulationBuildStatus.IN_PROGRESS)
     problem_initial_times = _get_simulation_initial_times!(sim)
     sequence = get_sequence(sim)
     step_resolution = get_step_resolution(sequence)
@@ -716,11 +716,11 @@ function build!(
                         partitions = partitions,
                         index = index,
                     )
-                    set_simulation_build_status!(sim, BuildStatus.BUILT)
-                    set_simulation_status!(sim, RunStatus.READY)
+                    set_simulation_build_status!(sim, SimulationBuildStatus.BUILT)
+                    set_simulation_status!(sim, RunStatus.INITIALIZED)
                 catch e
                     @error "Simulation build failed" exception = (e, catch_backtrace())
-                    set_simulation_build_status!(sim, BuildStatus.FAILED)
+                    set_simulation_build_status!(sim, SimulationBuildStatus.FAILED)
                     set_simulation_status!(sim, RunStatus.NOT_READY)
                     rethrow(e)
                 end
@@ -971,7 +971,7 @@ function _execute!(
             start_time = time()
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute $(model_name)" begin
                 if !is_built(model)
-                    error("$(model_name) status is not BuildStatus.BUILT")
+                    error("$(model_name) status is not ModelBuildStatus.BUILT")
                 end
 
                 # Is first run of first problem? Yes -> don't update problem
@@ -985,7 +985,7 @@ function _execute!(
                 end # Run problem Timer
 
                 TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update State" begin
-                    if status == RunStatus.SUCCESSFUL
+                    if status == RunStatus.SUCCESSFULLY_FINALIZED
                         # TODO: _update_simulation_state! can use performance improvements
                         _update_simulation_state!(sim, model)
                         if model_number == execution_order[end]
@@ -1053,9 +1053,13 @@ function execute!(sim::Simulation; kwargs...)
     in_memory = get(kwargs, :in_memory, false)
     store_type = in_memory ? InMemorySimulationStore : HdfSimulationStore
 
-    if (get_simulation_build_status(sim) != BuildStatus.BUILT) ||
-       (get_simulation_status(sim) != RunStatus.READY)
-        error("Simulation status is invalid, you need to rebuild the simulation")
+    sim_build_status = get_simulation_build_status(sim)
+    sim_run_status = get_simulation_status(sim)
+    if (sim_build_status != SimulationBuildStatus.BUILT) ||
+       (sim_run_status != RunStatus.INITIALIZED)
+        error(
+            "Simulation build status $sim_build_status, or Simulation run status $sim_run_status, are invalid, you need to rebuild the simulation",
+        )
     end
     try
         Logging.with_logger(logger) do
@@ -1067,7 +1071,7 @@ function execute!(sim::Simulation; kwargs...)
                         _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
                     end
                     @info ("\n$(RUN_SIMULATION_TIMER)\n")
-                    set_simulation_status!(sim, RunStatus.SUCCESSFUL)
+                    set_simulation_status!(sim, RunStatus.SUCCESSFULLY_FINALIZED)
                     if isnothing(sim.internal.partitions)
                         # Partitioned simulations serialize the systems once during build.
                         _serialize_systems_to_store!(store, sim)
@@ -1086,7 +1090,7 @@ function execute!(sim::Simulation; kwargs...)
     end
 
     if !in_memory
-        compute_file_hash(get_store_dir(sim), HDF_FILENAME)
+        IS.compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     end
 
     serialize_status(sim)

@@ -6,7 +6,7 @@ import PowerSimulations:
     should_export_dual,
     should_export_parameter,
     should_export_variable,
-    OptimizationContainerMetadata
+    IS.Optimization.OptimizationContainerMetadata
 
 function _make_params()
     sim = Dict(
@@ -32,7 +32,7 @@ function _make_params()
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
-    container_metadata = OptimizationContainerMetadata(
+    container_metadata = IS.Optimization.OptimizationContainerMetadata(
         Dict(
             "ActivePowerVariable__ThermalStandard" =>
                 PSI.VariableKey(ActivePowerVariable, ThermalStandard),

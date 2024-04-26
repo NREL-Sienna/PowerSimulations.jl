@@ -7,11 +7,11 @@
         )
         model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
 
-        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         @test check_flow_variable_values(
             model_m,
             FlowActivePowerVariable,
@@ -27,12 +27,13 @@ end
     limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
     template = get_thermal_dispatch_template_network(ACPPowerModel)
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
 
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, MonitoredLine)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, MonitoredLine)
 
-    @test solve!(model_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     @test check_flow_variable_values(
         model_m,
         FlowActivePowerFromToVariable,
@@ -55,11 +56,11 @@ end
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
         model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
 
-        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         @test check_flow_variable_values(model_m, FlowActivePowerVariable, Line, "2", 1.5)
     end
 end
@@ -75,12 +76,12 @@ end
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
         model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, Line)
 
-        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         @test check_flow_variable_values(model_m, FlowActivePowerVariable, Line, "2", 1.5)
     end
 end
@@ -115,14 +116,14 @@ end
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranch))
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
 
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer2W)
 
         psi_constraint_test(model_m, ratelimit_constraint_keys)
 
-        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
         @test check_flow_variable_values(
             model_m,
@@ -177,7 +178,7 @@ end
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
 
         @test check_variable_unbounded(
             model_m,
@@ -187,7 +188,7 @@ end
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
 
-        @test solve!(model_m) == RunStatus.SUCCESSFUL
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
         @test check_flow_variable_values(
             model_m,
@@ -262,12 +263,15 @@ end
 
     solve!(model)
 
-    ptdf_vars = get_variable_values(ProblemResults(model))
+    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     ptdf_values =
-        ptdf_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine}(
+        ptdf_vars[PowerSimulations.VariableKey{
+            FlowActivePowerVariable,
+            TwoTerminalHVDCLine,
+        }(
             "",
         )]
-    ptdf_objective = model.internal.container.optimizer_stats.objective_value
+    ptdf_objective = PSI.get_optimization_container(model).optimizer_stats.objective_value
 
     set_network_model!(template_uc, NetworkModel(DCPPowerModel))
 
@@ -280,12 +284,16 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    dcp_vars = get_variable_values(ProblemResults(model))
+    dcp_vars = get_variable_values(OptimizationProblemResults(model))
     dcp_values =
-        dcp_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, TwoTerminalHVDCLine}(
+        dcp_vars[PowerSimulations.VariableKey{
+            FlowActivePowerVariable,
+            TwoTerminalHVDCLine,
+        }(
             "",
         )]
-    dcp_objective = model.internal.container.optimizer_stats.objective_value
+    dcp_objective =
+        PSI.get_optimization_container(model).optimizer_stats.objective_value
 
     @test isapprox(dcp_objective, ptdf_objective; atol = 0.1)
     # Resulting solution is in the 4e5 order of magnitude
@@ -338,7 +346,7 @@ end
             )
 
             solve!(model_ref; output_dir = mktempdir())
-            ref_vars = get_variable_values(ProblemResults(model_ref))
+            ref_vars = get_variable_values(OptimizationProblemResults(model_ref))
             ref_values =
                 ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
             hvdc_ref_values = ref_vars[PowerSimulations.VariableKey{
@@ -374,7 +382,7 @@ end
             )
 
             solve!(model; output_dir = mktempdir())
-            no_loss_vars = get_variable_values(ProblemResults(model))
+            no_loss_vars = get_variable_values(OptimizationProblemResults(model))
             no_loss_values =
                 no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}(
                     "",
@@ -391,7 +399,8 @@ end
             }(
                 "",
             )]
-            no_loss_objective = model.internal.container.optimizer_stats.objective_value
+            no_loss_objective =
+                PSI.get_optimization_container(model).optimizer_stats.objective_value
             no_loss_total_gen = sum(
                 sum.(
                     eachrow(
@@ -432,7 +441,7 @@ end
             )
 
             solve!(model_wl; output_dir = mktempdir())
-            dispatch_vars = get_variable_values(ProblemResults(model_wl))
+            dispatch_vars = get_variable_values(OptimizationProblemResults(model_wl))
             dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
                 TwoTerminalHVDCLine,
@@ -503,7 +512,8 @@ end
     set_device_model!(template, DeviceModel(Transformer2W, StaticBranch))
     set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
 
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
     @test !check_variable_bounded(model_m, FlowActivePowerVariable, Transformer2W)
@@ -511,7 +521,7 @@ end
 
     psi_constraint_test(model_m, ratelimit_constraint_keys)
 
-    @test solve!(model_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     @test check_flow_variable_values(
         model_m,
@@ -563,7 +573,8 @@ end
     )
     set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
 
     @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
     @test check_variable_unbounded(
@@ -572,7 +583,7 @@ end
         PhaseShiftingTransformer,
     )
 
-    @test solve!(model_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     @test check_flow_variable_values(
         model_m,
@@ -621,7 +632,8 @@ end
     set_device_model!(template, Transformer2W, StaticBranchBounds)
     set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     @test check_variable_bounded(model_m, FlowActivePowerFromToVariable, TapTransformer)
     @test check_variable_unbounded(model_m, FlowReactivePowerFromToVariable, TapTransformer)
     @test check_variable_bounded(model_m, FlowActivePowerToFromVariable, Transformer2W)
@@ -629,7 +641,7 @@ end
 
     psi_constraint_test(model_m, ratelimit_constraint_keys)
 
-    @test solve!(model_m) == RunStatus.SUCCESSFUL
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     @test check_flow_variable_values(
         model_m,
@@ -675,9 +687,9 @@ end
         )
         model_m = DecisionModel(template, system; optimizer = optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test solve!(model_m) == RunStatus.SUCCESSFUL
-        res = ProblemResults(model_m)
+              PSI.ModelBuildStatus.BUILT
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+        res = OptimizationProblemResults(model_m)
         vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line")
         # some relaxations will find a solution with 0.0 slack
         @test sum(vars[!, "2"]) >= -1e-6
@@ -696,7 +708,7 @@ end
         model_m;
         console_level = Logging.AboveMaxLevel,
         output_dir = mktempdir(; cleanup = true),
-    ) == BuildStatus.FAILED
+    ) == PSI.ModelBuildStatus.FAILED
 
     template = get_thermal_dispatch_template_network(
         NetworkModel(PTDFPowerModel; use_slacks = true),
@@ -708,9 +720,9 @@ end
     )
     model_m = DecisionModel(template, system; optimizer = fast_ipopt_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
-    @test solve!(model_m) == RunStatus.SUCCESSFUL
-    res = ProblemResults(model_m)
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    res = OptimizationProblemResults(model_m)
     vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line")
     # some relaxations will find a solution with 0.0 slack
     @test sum(vars[!, "2"]) >= -1e-6

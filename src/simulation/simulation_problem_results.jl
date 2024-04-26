@@ -69,6 +69,7 @@ get_system_uuid(results::PSI.SimulationProblemResults) = results.system_uuid
 IS.get_timestamp(result::SimulationProblemResults) = result.results_timestamps
 get_interval(res::SimulationProblemResults) = res.timestamps.step
 IS.get_base_power(result::SimulationProblemResults) = result.base_power
+get_output_dir(res::SimulationProblemResults) = res.results_output_folder
 
 get_results_timestamps(result::SimulationProblemResults) = result.results_timestamps
 function set_results_timestamps!(
@@ -80,8 +81,10 @@ end
 
 list_result_keys(res::SimulationProblemResults, ::AuxVarKey) = list_aux_variable_keys(res)
 list_result_keys(res::SimulationProblemResults, ::ConstraintKey) = list_dual_keys(res)
-list_result_keys(res::SimulationProblemResults, ::ExpressionKey) = list_expression_keys(res)
-list_result_keys(res::SimulationProblemResults, ::ParameterKey) = list_parameter_keys(res)
+list_result_keys(res::SimulationProblemResults, ::ExpressionKey) =
+    list_expression_keys(res)
+list_result_keys(res::SimulationProblemResults, ::ParameterKey) =
+    list_parameter_keys(res)
 list_result_keys(res::SimulationProblemResults, ::VariableKey) = list_variable_keys(res)
 
 get_cached_results(res::SimulationProblemResults, ::Type{<:AuxVarKey}) =
@@ -149,28 +152,46 @@ If the simulation was configured to serialize all systems to file then the retur
 will include all data. If that was not configured then the returned system will include
 all data except time series data.
 """
-function get_system!(results::SimulationProblemResults; kwargs...)
-    !isnothing(results.system) && return results.system
+function get_system!(
+    results::Union{OptimizationProblemResults, SimulationProblemResults};
+    kwargs...,
+)
+    !isnothing(get_system(results)) && return get_system(results)
 
-    file = joinpath(
-        results.execution_path,
-        "problems",
-        results.problem,
-        make_system_filename(results.system_uuid),
-    )
-
+    file = locate_system_file(results)
     # This flag should remain unpublished because it should never be needed
     # by the general audience.
-    if !get(kwargs, :use_h5_system, false) && isfile(file)
+    if !get(kwargs, :use_system_fallback, false) && isfile(file)
         system = PSY.System(file; time_series_read_only = true)
         @info "De-serialized the system from files."
     else
-        system = _deserialize_system(results, results.store)
+        system = get_system_fallback(results)
     end
 
-    results.system = system
-    return results.system
+    set_system!(results, system)
+    return get_system(results)
 end
+
+get_system_fallback(results::SimulationProblemResults) =
+    _deserialize_system(results, results.store)
+get_system_fallback(results::OptimizationProblemResults) = error("Could not locate system")
+
+locate_system_file(results::SimulationProblemResults) = joinpath(
+    get_execution_path(results),
+    "problems",
+    get_model_name(results),
+    make_system_filename(results.system_uuid),
+)
+
+locate_system_file(results::OptimizationProblemResults) = joinpath(
+    IS.Optimization.get_results_dir(results),
+    make_system_filename(IS.Optimization.get_source_data_uuid(results)),
+)
+
+get_system(results::OptimizationProblemResults) = IS.Optimization.get_source_data(results)
+
+set_system!(results::OptimizationProblemResults, system) =
+    IS.Optimization.set_source_data!(results, system)
 
 function _deserialize_system(results::SimulationProblemResults, ::Nothing)
     open_store(
@@ -238,19 +259,11 @@ function _deserialize_key(
     results::SimulationProblemResults,
     args...,
 ) where {T <: OptimizationContainerKey}
-    return make_key(T, args...)
+    return IS.Optimization.make_key(T, args...)
 end
 
 get_container_fields(x::SimulationProblemResults) =
     (:aux_variables, :duals, :expressions, :parameters, :variables)
-
-function _validate_keys(existing_keys, result_keys)
-    diff = setdiff(result_keys, existing_keys)
-    if !isempty(diff)
-        throw(IS.InvalidValue("These keys are not stored: $diff"))
-    end
-    return
-end
 
 """
 Return the final values for the requested variables for each time step for a problem.
@@ -298,7 +311,11 @@ function read_realized_variables(
     variables::Vector{Tuple{DataType, DataType}};
     kwargs...,
 )
-    return read_realized_variables(res, [VariableKey(x...) for x in variables]; kwargs...)
+    return read_realized_variables(
+        res,
+        [VariableKey(x...) for x in variables];
+        kwargs...,
+    )
 end
 
 function read_realized_variables(
@@ -646,7 +663,9 @@ end
 
 function read_realized_expression(res::SimulationProblemResults, expression...; kwargs...)
     return first(
-        values(read_realized_expressions(res, [ExpressionKey(expression...)]; kwargs...)),
+        values(
+            read_realized_expressions(res, [ExpressionKey(expression...)]; kwargs...),
+        ),
     )
 end
 
@@ -669,81 +688,6 @@ function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
         "r",
     ) do store
         _read_optimizer_stats(res, store)
-    end
-end
-
-"""
-Save the realized results to CSV files for all variables, paramaters, duals, auxiliary variables,
-expressions, and optimizer statistics.
-
-# Arguments
-
-  - `res::Union{ProblemResults, SimulationProblmeResults`: Results
-  - `save_path::AbstractString` : path to save results (defaults to simulation path)
-"""
-function export_realized_results(res::SimulationProblemResults)
-    save_path = mkpath(joinpath(res.results_output_folder, "export"))
-    return export_realized_results(res, save_path)
-end
-
-function export_realized_results(
-    res::Union{ProblemResults, SimulationProblemResults},
-    save_path::AbstractString,
-)
-    if !isdir(save_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid."))
-    end
-    write_data(read_results_with_keys(res, list_variable_keys(res)), save_path)
-    !isempty(list_dual_keys(res)) &&
-        write_data(
-            read_results_with_keys(res, list_dual_keys(res)),
-            save_path;
-            name = "dual",
-        )
-    !isempty(list_parameter_keys(res)) && write_data(
-        read_results_with_keys(res, list_parameter_keys(res)),
-        save_path;
-        name = "parameter",
-    )
-    !isempty(list_aux_variable_keys(res)) && write_data(
-        read_results_with_keys(res, list_aux_variable_keys(res)),
-        save_path;
-        name = "aux_variable",
-    )
-    !isempty(list_expression_keys(res)) && write_data(
-        read_results_with_keys(res, list_expression_keys(res)),
-        save_path;
-        name = "expression",
-    )
-    export_optimizer_stats(res, save_path)
-    files = readdir(save_path)
-    compute_file_hash(save_path, files)
-    @info("Files written to $save_path folder.")
-    return save_path
-end
-
-"""
-Save the optimizer statistics to CSV or JSON
-
-# Arguments
-
-  - `res::Union{ProblemResults, SimulationProblmeResults`: Results
-  - `directory::AbstractString` : target directory
-  - `format = "CSV"` : can be "csv" or "json
-"""
-function export_optimizer_stats(
-    res::Union{ProblemResults, SimulationProblemResults},
-    directory::AbstractString;
-    format = "csv",
-)
-    data = read_optimizer_stats(res)
-    isnothing(data) && return
-    if uppercase(format) == "CSV"
-        CSV.write(joinpath(directory, "optimizer_stats.csv"), data)
-    elseif uppercase(format) == "JSON"
-        JSON.write(joinpath(directory, "optimizer_stats.json"), JSON.json(to_dict(data)))
-    else
-        throw(error("writing optimizer stats only supports csv or json formats"))
     end
 end
 

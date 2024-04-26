@@ -394,26 +394,16 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    device_model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{U},
-) where {T <: PSY.ACBranch, U <: PM.AbstractPowerModel}
-    devices = get_available_components(device_model, sys)
-    add_constraints!(
-        container,
-        RateLimitConstraintFromTo,
-        devices,
-        device_model,
-        network_model,
-    )
-    add_constraints!(
-        container,
-        RateLimitConstraintToFrom,
-        devices,
-        device_model,
-        network_model,
-    )
-    objective_function!(container, devices, device_model, U)
-    add_constraint_dual!(container, sys, device_model)
+    model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: PSY.ACBranch}
+    devices =
+        get_available_components(model, sys)
+    branch_rate_bounds!(container, devices, model, network_model)
+
+    add_constraints!(container, RateLimitConstraintFromTo, devices, model, network_model)
+    add_constraints!(container, RateLimitConstraintToFrom, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
     return
 end
 
@@ -543,6 +533,7 @@ function construct_device!(
     ::NetworkModel{<:PM.AbstractPowerModel},
 )
     add_constraint_dual!(container, sys, device_model)
+    return
 end
 
 # Repeated method to avoid ambiguity between HVDCTwoTerminalUnbounded and HVDCTwoTerminalLossless

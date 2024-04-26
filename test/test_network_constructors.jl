@@ -9,10 +9,10 @@
         )
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test ps_model.internal.container.pm !== nothing
+              PSI.ModelBuildStatus.BUILT
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
         # TODO: Change test
-        # @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
+        # @test :nodal_balance_active in keys(PSI.get_optimization_container(ps_model).expressions)
     end
 end
 
@@ -39,7 +39,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -62,7 +62,7 @@ end
         optimizer = GLPK_optimizer,
     )
     @test build!(ps_model_re; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
@@ -101,7 +101,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -126,7 +126,7 @@ end
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
         output_dir = mktempdir(; cleanup = true),
-    ) == PSI.BuildStatus.FAILED
+    ) == PSI.ModelBuildStatus.FAILED
 end
 
 @testset "Network DC-PF with VirtualPTDF Model" begin
@@ -164,7 +164,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -210,7 +210,7 @@ end
         template = get_thermal_dispatch_template_network(DCPPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -258,7 +258,7 @@ end
         template = get_thermal_dispatch_template_network(ACPPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -300,7 +300,7 @@ end
         template = get_thermal_dispatch_template_network(NFAPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -350,7 +350,7 @@ end
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -361,7 +361,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_model.internal.container.pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end
 
@@ -394,7 +394,7 @@ end
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -405,7 +405,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_model.internal.container.pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -427,7 +427,7 @@ end
             ps_model;
             console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
             output_dir = mktempdir(; cleanup = true),
-        ) == PSI.BuildStatus.FAILED
+        ) == PSI.ModelBuildStatus.FAILED
     end
 end
 
@@ -438,7 +438,7 @@ end
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 264, 0, 288, 240, 48, false)
@@ -450,7 +450,7 @@ end
 
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
@@ -496,14 +496,14 @@ end
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
@@ -538,7 +538,7 @@ end
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 552, 0, 576, 528, 336, false)
@@ -550,7 +550,7 @@ end
 
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
@@ -596,14 +596,14 @@ end
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
@@ -654,10 +654,10 @@ end
         )
 
         @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         solve!(uc_model_red)
 
-        res_red = ProblemResults(uc_model_red)
+        res_red = OptimizationProblemResults(uc_model_red)
 
         flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
         line_names = DataFrames.names(flow_lines)[2:end]
@@ -680,10 +680,10 @@ end
         )
 
         @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         solve!(uc_model_orig)
 
-        res_orig = ProblemResults(uc_model_orig)
+        res_orig = OptimizationProblemResults(uc_model_orig)
 
         flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
 
@@ -707,7 +707,7 @@ end
         )
         ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test ps_model.internal.container.pm !== nothing
+              PSI.ModelBuildStatus.BUILT
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end

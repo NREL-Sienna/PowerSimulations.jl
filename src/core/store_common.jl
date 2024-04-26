@@ -1,10 +1,3 @@
-# Keep these in sync with the Symbols in src/core/definitions.
-get_store_container_type(::AuxVarKey) = STORE_CONTAINER_AUX_VARIABLES
-get_store_container_type(::ConstraintKey) = STORE_CONTAINER_DUALS
-get_store_container_type(::ExpressionKey) = STORE_CONTAINER_EXPRESSIONS
-get_store_container_type(::ParameterKey) = STORE_CONTAINER_PARAMETERS
-get_store_container_type(::VariableKey) = STORE_CONTAINER_VARIABLES
-
 # Aliases used for clarity in the method dispatches so it is possible to know if writing to
 # DecisionModel data or EmulationModel data
 const DecisionModelIndexType = Dates.DateTime
@@ -64,7 +57,7 @@ function write_model_dual_results!(
             df = to_dataframe(jump_value.(constraint), key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -99,7 +92,7 @@ function write_model_parameter_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -138,7 +131,7 @@ function write_model_variable_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -171,7 +164,7 @@ function write_model_aux_variable_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
@@ -210,7 +203,7 @@ function write_model_expression_results!(
             df = to_dataframe(data, key)
             time_col = range(index; length = horizon, step = resolution)
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_result(file_type, exports_path, key, index, df)
+            IS.Optimization.export_result(file_type, exports_path, key, index, df)
         end
     end
     return
