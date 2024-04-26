@@ -48,35 +48,35 @@ struct PowerAboveMinimumVariable <: VariableType end
 """
 Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``P^\text{in}``
+Docs abbreviation: ``p^\text{in}``
 """
 struct ActivePowerInVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``P^\text{out}``
+Docs abbreviation: ``p^\text{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Hot Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``z^\text{th}``
 """
 struct HotStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Warm Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``y^\text{th}``
 """
 struct WarmStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Cold Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``x^\text{th}``
 """
 struct ColdStartVariable <: VariableType end
 
@@ -122,14 +122,14 @@ struct ServiceRequirementVariable <: VariableType end
 """
 Struct to dispatch the creation of Binary Start Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``v``
 """
 struct StartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Binary Stop Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``w``
 """
 struct StopVariable <: VariableType end
 
