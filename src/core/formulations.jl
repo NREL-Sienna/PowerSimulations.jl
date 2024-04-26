@@ -33,7 +33,7 @@ Formulation type to enable standard dispatch with a range and enforce intertempo
 """
 struct ThermalStandardDispatch <: AbstractThermalDispatchFormulation end
 """
-Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *may not work with PWL cost definitions*
+Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *May not work with PWL cost definitions*
 """
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
