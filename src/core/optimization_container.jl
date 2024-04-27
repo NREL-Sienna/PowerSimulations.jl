@@ -534,6 +534,7 @@ function build_impl!(
             ArgumentConstructStage(),
             get_service_models(template),
             get_device_models(template),
+            transmission_model,
         )
     end
 
@@ -553,16 +554,6 @@ function build_impl!(
             @debug "Problem size:" get_problem_size(container) _group =
                 LOG_GROUP_OPTIMIZATION_CONTAINER
         end
-    end
-
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
-        construct_services!(
-            container,
-            sys,
-            ModelConstructStage(),
-            get_service_models(template),
-            get_device_models(template),
-        )
     end
 
     for device_model in values(template.devices)
@@ -608,6 +599,17 @@ function build_impl!(
             @debug "Problem size:" get_problem_size(container) _group =
                 LOG_GROUP_OPTIMIZATION_CONTAINER
         end
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Services" begin
+        construct_services!(
+            container,
+            sys,
+            ModelConstructStage(),
+            get_service_models(template),
+            get_device_models(template),
+            transmission_model,
+        )
     end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Objective" begin
