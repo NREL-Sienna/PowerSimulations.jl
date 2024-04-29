@@ -41,42 +41,42 @@ struct ActivePowerVariable <: VariableType end
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
 
-Docs abbreviation: ``\\hat{p}``
+Docs abbreviation: ``\\Delta p``
 """
 struct PowerAboveMinimumVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``p^\text{in}``
+Docs abbreviation: ``p^\\text{in}``
 """
 struct ActivePowerInVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``p^\text{out}``
+Docs abbreviation: ``p^\\text{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Hot Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: ``z^\text{th}``
+Docs abbreviation: ``z^\\text{th}``
 """
 struct HotStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Warm Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: ``y^\text{th}``
+Docs abbreviation: ``y^\\text{th}``
 """
 struct WarmStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Cold Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: ``x^\text{th}``
+Docs abbreviation: ``x^\\text{th}``
 """
 struct ColdStartVariable <: VariableType end
 
@@ -150,21 +150,31 @@ struct SmoothACE <: VariableType end
 """
 Struct to dispatch the creation of System-wide slack up variables. Used when there is not enough generation.
 
-Docs abbreviation: ``p^\text{sl,up}``
+Docs abbreviation: ``p^\\text{sl,up}``
 """
 struct SystemBalanceSlackUp <: VariableType end
 
 """
 Struct to dispatch the creation of System-wide slack down variables. Used when there is not enough load curtailment.
 
-Docs abbreviation: ``p^\text{sl,dn}``
+Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct SystemBalanceSlackDown <: VariableType end
 
 struct ReserveRequirementSlack <: VariableType end
 
+"""
+Struct to dispatch the creation of active power flow upper bound slack variables. Used when there is not enough flow through the branch in the forward direction.
+
+Docs abbreviation: ``f^\\text{sl,up}``
+"""
 struct FlowActivePowerSlackUpperBound <: VariableType end
 
+"""
+Struct to dispatch the creation of active power flow lower bound slack variables. Used when there is not enough flow through the branch in the reverse direction.
+
+Docs abbreviation: ``f^\\text{sl,lo}``
+"""
 struct FlowActivePowerSlackLowerBound <: VariableType end
 
 """
@@ -184,7 +194,7 @@ struct VoltageAngle <: VariableType end
 """
 Struct to dispatch the creation of bidirectional Active Power Flow Variables
 
-Docs abbreviation: ``P``
+Docs abbreviation: ``f``
 """
 struct FlowActivePowerVariable <: VariableType end
 
