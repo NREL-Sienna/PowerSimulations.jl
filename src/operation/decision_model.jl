@@ -37,7 +37,8 @@ Build the optimization problem of type M with the specific system and template.
   - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
   - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes} = nothing` : The optimizer does
     not get serialized. Callers should pass whatever they passed to the original problem.
-  - `horizon::Int = UNSET_HORIZON`: Manually specify the length of the forecast Horizon
+  - `horizon::Dates.Period = UNSET_HORIZON`: Manually specify the length of the forecast Horizon
+  - `resolution::Dates.Period = UNSET_RESOLUTION`: Manually specify the model's resolution
   - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
   - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
   - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
@@ -96,6 +97,7 @@ function DecisionModel{M}(
     name = nothing,
     optimizer = nothing,
     horizon = UNSET_HORIZON,
+    resolution = UNSET_RESOLUTION,
     warm_start = true,
     system_to_file = true,
     initialize_model = true,
@@ -116,6 +118,7 @@ function DecisionModel{M}(
     settings = Settings(
         sys;
         horizon = horizon,
+        resolution = resolution,
         initial_time = initial_time,
         optimizer = optimizer,
         time_series_cache_size = time_series_cache_size,

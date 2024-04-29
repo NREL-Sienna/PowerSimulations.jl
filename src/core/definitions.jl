@@ -30,7 +30,8 @@ const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 
 const TwoTerminalHVDCTypes = Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCDCLine}
 # Settings constants
-const UNSET_HORIZON = 0
+const UNSET_HORIZON = Dates.Millisecond(0)
+const UNSET_RESOLUTION = Dates.Millisecond(0)
 const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons

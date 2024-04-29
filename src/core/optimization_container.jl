@@ -54,7 +54,6 @@ end
 mutable struct OptimizationContainer <: IS.Optimization.AbstractOptimizationContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
-    resolution::Dates.TimePeriod
     settings::Settings
     settings_copy::Settings
     variables::Dict{VariableKey, AbstractArray}
@@ -82,7 +81,7 @@ function OptimizationContainer(
     jump_model::Union{Nothing, JuMP.Model},
     ::Type{T},
 ) where {T <: PSY.TimeSeriesData}
-    resolution = PSY.get_time_series_resolution(sys)
+
     if isabstracttype(T)
         error("Default Time Series Type $V can't be abstract")
     end
@@ -98,7 +97,6 @@ function OptimizationContainer(
     return OptimizationContainer(
         jump_model === nothing ? JuMP.Model() : jump_model,
         1:1,
-        IS.time_period_conversion(resolution),
         settings,
         copy_for_serialization(settings),
         Dict{VariableKey, AbstractArray}(),
@@ -155,7 +153,7 @@ get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_parameters(container::OptimizationContainer) = container.parameters
-get_resolution(container::OptimizationContainer) = container.resolution
+get_resolution(container::OptimizationContainer) = get_resolution(container.settings)
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
 get_variables(container::OptimizationContainer) = container.variables
@@ -307,6 +305,26 @@ function init_optimization_container!(
     # The order of operations matter
     settings = get_settings(container)
 
+    available_resolutions = PSY.list_time_series_resolutions(sys)
+
+    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
+        throw(
+            IS.ConflictingInputsError(
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+            ),
+        )
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+        if get_resolution(settings) ∉ available_resolutions
+            throw(
+                IS.ConflictingInputsError(
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                ),
+            )
+        end
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end
+
     if get_initial_time(settings) == UNSET_INI_TIME
         if get_default_time_series_type(container) <: PSY.AbstractDeterministic
             set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
@@ -317,9 +335,12 @@ function init_optimization_container!(
     end
 
     if get_horizon(settings) == UNSET_HORIZON
-        set_horizon!(settings, PSY.get_forecast_horizon(sys))
+        # TODO: forecast horizon needs to return a TimePeriod value
+        resolution = get_resolution(settings)
+        set_horizon!(settings, PSY.get_forecast_horizon(sys)*resolution)
     end
-    container.time_steps = 1:get_horizon(settings)
+    horizon_step_count = (get_horizon(settings) ÷ get_resolution(settings))
+    container.time_steps = 1:horizon_step_count
 
     if T <: CopperPlatePowerModel || T <: AreaBalancePowerModel
         total_number_of_devices =
