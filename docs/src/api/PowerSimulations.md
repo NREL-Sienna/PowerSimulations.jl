@@ -134,6 +134,8 @@ ReservationVariable
 
 ```@docs
 FlowActivePowerVariable
+FlowActivePowerSlackUpperBound
+FlowActivePowerSlackLowerBound
 FlowActivePowerFromToVariable
 FlowActivePowerToFromVariable
 FlowReactivePowerFromToVariable
