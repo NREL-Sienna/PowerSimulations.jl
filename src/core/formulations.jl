@@ -33,7 +33,7 @@ Formulation type to enable standard dispatch with a range and enforce intertempo
 """
 struct ThermalStandardDispatch <: AbstractThermalDispatchFormulation end
 """
-Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *May not work with PWL cost definitions*
+Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *May not work with non-convex PWL cost definitions*
 """
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
@@ -58,7 +58,7 @@ abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
 
 """
-Formulation type to add a time series parameter for non-dispatchable `ElectricLoad` withdrawls to power balance constraints
+Formulation type to add a time series parameter for non-dispatchable `ElectricLoad` withdrawals to power balance constraints
 """
 struct StaticPowerLoad <: AbstractLoadFormulation end
 
