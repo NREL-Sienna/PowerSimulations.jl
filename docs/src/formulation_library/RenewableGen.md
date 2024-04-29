@@ -1,23 +1,12 @@
 # `PowerSystems.RenewableGen` Formulations
 
-Valid `DeviceModel`s for subtypes of `RenewableGen` include the following:
+Renewable generation formulations define the optimization models that describe renewable units mathematical model in different operational settings, such as economic dispatch and unit commitment.
 
-```@eval
-using PowerSimulations
-using PowerSystems
-using DataFrames
-using Latexify
-combos = PowerSimulations.generate_device_formulation_combinations()
-filter!(x -> x["device_type"] <: RenewableGen, combos)
-combo_table = DataFrame(
-    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
-    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
-    "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
-    )
-mdtable(combo_table, latex = false)
-```
+!!! note
+    The usage of reactive power variables and constraints will depend on the network model used, i.e. if it uses (or not) reactive power. If the network model is purely active power based, then no variables and constraints related to reactive power are created. For the sake of completion, if the formulation allows the usage of reactive power it will be included.
 
----
+!!! note
+    Reserve variables for services are not included in the formulation, albeit their inclusion change the variables, expressions, constraints and objective functions created. A detailed description of the implications in the optimization models is described in the [Service formulation](@ref service_formulation) section.
 
 ## `RenewableFullDispatch`
 
@@ -29,18 +18,20 @@ RenewableFullDispatch
 
 - [`ActivePowerVariable`](@ref):
   - Bounds: [0.0, ]
-  - Default initial value: `PowerSystems.get_active_power(device)`
+  - Symbol: ``p^\text{re}``
 - [`ReactivePowerVariable`](@ref):
   - Bounds: [0.0, ]
-  - Default initial value: `PowerSystems.get_reactive_power(device)`
+  - Symbol: ``q^\text{re}``
 
 **Static Parameters:**
 
-- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+- ``P^\text{re,min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Q^\text{re,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Q^\text{re,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Time Series Parameters:**
+
+Uses the `max_active_power` timeseries parameter to limit the available active power at each time-step.
 
 ```@eval
 using PowerSimulations
@@ -57,18 +48,18 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- Pg_t`` to incentivize generation from `RenewableGen` devices.
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- p^\text{re}`` to incentivize generation from `RenewableGen` devices.
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+Adds ``p^\text{re}`` and ``q^\text{re}`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations).
 
 **Constraints:**
 
 ```math
 \begin{aligned}
-&  Pg^\text{min} \le Pg_t \le ActivePowerTimeSeriesParameter_t \\
-&  Qg^\text{min} \le Qg_t \le Qg^\text{max}
+&  P^\text{re,min} \le p_t^\text{re} \le \text{ActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
+&  Q^\text{re,min} \le q_t^\text{re} \le Q^\text{re,max}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
 ```
 
@@ -85,16 +76,18 @@ RenewableConstantPowerFactor
 - [`ActivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: `PowerSystems.get_active_power(device)`
+  - Symbol: ``p^\text{re}``
 - [`ReactivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: `PowerSystems.get_reactive_power(device)`
+  - Symbol: ``q^\text{re}``
 
 **Static Parameters:**
 
-- ``Pg^\text{min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``Qg^\text{min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Qg^\text{max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-- ``pf`` = `PowerSystems.get_power_factor(device)`
+- ``P^\text{re,min}`` = `PowerSystems.get_active_power_limits(device).min`
+- ``Q^\text{re,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+- ``Q^\text{re,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+- ``\text{pf}`` = `PowerSystems.get_power_factor(device)`
 
 **Time Series Parameters:**
 
@@ -113,18 +106,39 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- Pg_t`` to incentivize generation from `RenewableGen` devices.
+Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``- p_t^\text{re}`` to incentivize generation from `RenewableGen` devices.
 
 **Expressions:**
 
-Adds ``Pg`` and ``Qg`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+Adds ``p^\text{re}`` and ``q^\text{re}`` terms to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
 ```math
 \begin{aligned}
-&  Pg^\text{min} \le Pg_t \le ActivePowerTimeSeriesParameter_t \\
-&  Qg^\text{min} \le Qg_t \le Qg^\text{max} \\
-&  Qg_t = pf * Pg_t
+&  P^\text{re,min} \le p_t^\text{re} \le \text{ActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
+&  q_t^\text{re} = \text{pf} \cdot p_t^\text{re}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
 ```
+
+---
+
+## Valid configurations
+
+Valid `DeviceModel`s for subtypes of `RenewableGen` include the following:
+
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.generate_device_formulation_combinations()
+filter!(x -> x["device_type"] <: RenewableGen, combos)
+combo_table = DataFrame(
+    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
+    "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
+    )
+mdtable(combo_table, latex = false)
+```
+
