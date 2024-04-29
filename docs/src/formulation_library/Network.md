@@ -110,7 +110,7 @@ Add a large proportional cost to the objective function if slack variables are u
 
 **Expressions:**
 
-Adds ``p^\text{sl,up}`` and ``p^\text{sl,dn}`` terms to the respective active power balance expressions `ActivePowerBalance` created by this `CopperPlatePowerModel` network formulation.
+Adds ``p^\text{sl,up}`` and ``p^\text{sl,dn}`` terms to the respective system-wide active power balance expressions `ActivePowerBalance` created by this `CopperPlatePowerModel` network formulation. In addition, it creates `ActivePowerBalance` expressions for each bus to be used in the calculation of branch flows.
 
 **Constraints:**
 
