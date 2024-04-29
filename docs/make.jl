@@ -38,6 +38,7 @@ pages = OrderedDict(
         "Renewable Generation" => "formulation_library/RenewableGen.md",
         "Load" => "formulation_library/Load.md",
         "Branch" => "formulation_library/Branch.md",
+        "Services" => "formulation_library/Service.md",
     ],
     "API Reference" => "api/PowerSimulations.md",
 )

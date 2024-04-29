@@ -1,3 +1,3 @@
-# [`PowerSystems.Service` Formulations][@id service_formulations]
+# [`PowerSystems.Service` Formulations](@id service_formulations)
 
 TODO
