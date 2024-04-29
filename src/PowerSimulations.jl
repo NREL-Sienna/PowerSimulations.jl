@@ -223,6 +223,8 @@ export ReserveRequirementSlack
 export VoltageMagnitude
 export VoltageAngle
 export FlowActivePowerVariable
+export FlowActivePowerSlackUpperBound
+export FlowActivePowerSlackLowerBound
 export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
