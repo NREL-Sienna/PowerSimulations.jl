@@ -106,14 +106,14 @@ struct ReactivePowerVariable <: VariableType end
 """
 Struct to dispatch the creation of binary storage charge reservation variable
 
-Docs abbreviation: ``r``
+Docs abbreviation: ``u^\\text{st}``
 """
 struct ReservationVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Reserve Variables
 
-Docs abbreviation: ``Pr``
+Docs abbreviation: ``r``
 """
 struct ActivePowerReserveVariable <: VariableType end
 
@@ -204,28 +204,28 @@ struct FlowActivePowerVariable <: VariableType end
 """
 Struct to dispatch the creation of unidirectional Active Power Flow Variables
 
-Docs abbreviation: ``\\overrightarrow{P}``
+Docs abbreviation: ``f^\\text{from-to}``
 """
 struct FlowActivePowerFromToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of unidirectional Active Power Flow Variables
 
-Docs abbreviation: ``\\overleftarrow{P}``
+Docs abbreviation: ``f^\\text{to-from}``
 """
 struct FlowActivePowerToFromVariable <: VariableType end
 
 """
 Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
 
-Docs abbreviation: ``\\overrightarrow{Q}``
+Docs abbreviation: ``f^\\text{q,from-to}``
 """
 struct FlowReactivePowerFromToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
 
-Docs abbreviation: ``\\overleftarrow{Q}``
+Docs abbreviation: ``f^\\text{q,to-from}``
 """
 struct FlowReactivePowerToFromVariable <: VariableType end
 
@@ -240,14 +240,14 @@ struct PhaseShifterAngle <: VariableType end
 """
 Struct to dispatch the creation of HVDC Losses Auxiliary Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\ell``
 """
 struct HVDCLosses <: VariableType end
 
 """
 Struct to dispatch the creation of HVDC Flow Direction Auxiliary Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``u^\\text{dir}``
 """
 struct HVDCFlowDirectionVariable <: VariableType end
 
