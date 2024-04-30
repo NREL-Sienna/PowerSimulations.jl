@@ -212,7 +212,7 @@ Manually provided initial times have to be compatible with the specified interva
         system = get_system(get_models(sim).emulation_model)
         ini_time, ts_length =
             PSY.check_time_series_consistency(system, PSY.SingleTimeSeries)
-        resolution = PSY.get_time_series_resolution(system)
+        resolution = get_resolution(em)
         em_available_times = range(ini_time; step = resolution, length = ts_length)
         if get_initial_time(sim) ∉ em_available_times
             throw(
@@ -587,8 +587,7 @@ function _build!(
 
     em = get_emulation_model(simulation_models)
     if em !== nothing
-        system = get_system(em)
-        em_resolution = PSY.get_time_series_resolution(system)
+        em_resolution = get_resolution(em)
         set_executions!(em, get_steps(sim) * Int(step_resolution / em_resolution))
     end
 

@@ -1,6 +1,6 @@
 struct ModelStoreParams <: IS.Optimization.AbstractModelStoreParams
     num_executions::Int
-    horizon::Int
+    horizon_count::Int
     interval::Dates.Millisecond
     resolution::Dates.Millisecond
     base_power::Float64
@@ -8,17 +8,17 @@ struct ModelStoreParams <: IS.Optimization.AbstractModelStoreParams
     container_metadata::IS.Optimization.OptimizationContainerMetadata
 
     function ModelStoreParams(
-        num_executions,
-        horizon,
-        interval,
-        resolution,
-        base_power,
-        system_uuid,
+        num_executions::Int,
+        horizon::Dates.Millisecond,
+        interval::Dates.Millisecond,
+        resolution::Dates.Millisecond,
+        base_power::Float64,
+        system_uuid::Base.UUID,
         container_metadata = IS.Optimization.OptimizationContainerMetadata(),
     )
         new(
             num_executions,
-            horizon,
+            horizon ÷ resolution,
             Dates.Millisecond(interval),
             Dates.Millisecond(resolution),
             base_power,
@@ -29,7 +29,7 @@ struct ModelStoreParams <: IS.Optimization.AbstractModelStoreParams
 end
 
 get_num_executions(params::ModelStoreParams) = params.num_executions
-get_horizon(params::ModelStoreParams) = params.horizon
+get_horizon_count(params::ModelStoreParams) = params.horizon_count
 get_interval(params::ModelStoreParams) = params.interval
 get_resolution(params::ModelStoreParams) = params.resolution
 get_base_power(params::ModelStoreParams) = params.base_power

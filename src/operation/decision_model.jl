@@ -256,7 +256,7 @@ function init_model_store_params!(model::DecisionModel)
     horizon = get_horizon(model)
     system = get_system(model)
     interval = PSY.get_forecast_interval(system)
-    resolution = PSY.get_time_series_resolution(system)
+    resolution = get_resolution(model)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     store_params = ModelStoreParams(

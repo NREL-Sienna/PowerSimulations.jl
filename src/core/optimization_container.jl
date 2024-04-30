@@ -339,8 +339,8 @@ function init_optimization_container!(
         resolution = get_resolution(settings)
         set_horizon!(settings, PSY.get_forecast_horizon(sys)*resolution)
     end
-    horizon_step_count = (get_horizon(settings) ÷ get_resolution(settings))
-    container.time_steps = 1:horizon_step_count
+    horizon_count = (get_horizon(settings) ÷ get_resolution(settings))
+    container.time_steps = 1:horizon_count
 
     if T <: CopperPlatePowerModel || T <: AreaBalancePowerModel
         total_number_of_devices =

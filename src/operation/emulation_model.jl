@@ -239,7 +239,8 @@ end
 function init_model_store_params!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
-    interval = resolution = PSY.get_time_series_resolution(system)
+    settings = get_settings(model)
+    interval = resolution = get_resolution(settings)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     IS.Optimization.set_store_params!(
