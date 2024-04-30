@@ -81,7 +81,6 @@ function OptimizationContainer(
     jump_model::Union{Nothing, JuMP.Model},
     ::Type{T},
 ) where {T <: PSY.TimeSeriesData}
-
     if isabstracttype(T)
         error("Default Time Series Type $V can't be abstract")
     end
@@ -337,7 +336,7 @@ function init_optimization_container!(
     if get_horizon(settings) == UNSET_HORIZON
         # TODO: forecast horizon needs to return a TimePeriod value
         resolution = get_resolution(settings)
-        set_horizon!(settings, PSY.get_forecast_horizon(sys)*resolution)
+        set_horizon!(settings, PSY.get_forecast_horizon(sys) * resolution)
     end
     horizon_count = (get_horizon(settings) ÷ get_resolution(settings))
     container.time_steps = 1:horizon_count
