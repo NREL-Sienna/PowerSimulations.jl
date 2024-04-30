@@ -527,7 +527,7 @@ function _update_pwl_cost_expression(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::PSY.PiecewiseLinearPointData,
+    cost_data::PSY.PiecewiseLinearData,
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     resolution = get_resolution(container)
@@ -588,7 +588,7 @@ function update_variable_cost!(
             T,
             component_name,
             time_period,
-            PSY.PiecewiseLinearPointData(cost_data),
+            PSY.PiecewiseLinearData(cost_data),
         )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
