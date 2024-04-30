@@ -1,4 +1,4 @@
-# Formulations Introduction
+# [Formulations Introduction](@id formulation_intro)
 
 PowerSimulations.jl enables modularity in its formulations by assigning a `DeviceModel` to each `PowerSystems.jl` component type existing in a defined system.
 
