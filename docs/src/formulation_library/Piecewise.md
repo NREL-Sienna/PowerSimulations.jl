@@ -13,6 +13,9 @@ A special ordered set (SOS) is an ordered set of variables used as an additional
 
 Piecewise-linear costs are defined by a sequence of points representing the line segments for each generator: ``(P_k^\text{max}, C_k)`` on which we assume ``C_k`` is the cost of generating ``P_k^\text{max}`` power, and ``k \in \{1,\dots, K\}`` are the number of segments each generator cost function has.
 
+!!!note
+    `PowerSystems` has more options to specify cost functions for each thermal unit. Independent of which form of the cost data is provided, `PowerSimulations.jl` will internally transform the data to use the λ-model formulation. See TODO: ADD PSY COST DOCS for more information.
+
 ### Commitment formulation
 
  With this the standard representation of PWL costs for a thermal unit commitment is given by:
