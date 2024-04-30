@@ -52,7 +52,7 @@ Each `DeviceModel` formulation is described in specific in their respective page
 \end{align*}
 ```
 
-Note that the `StaticPowerLoad` does not impose any cost to the objective function or any constraint, but add its power demand to the supply-balance demand of the `CopperPlatePowerModel` used. Since we are using the `ThermalDispatchNoMin` formulation for the thermal generation, the lower bound for the power is 0, instead of ``P^\text{th,min}``. In addition, we are assuming a linear cost ``c^\text{th}``. Finally, the `RenewableFullDispatch` formulation allows the dispatch of the renewable unit to be between 0 and its maximum injection time series ``p_t^\text{re,param}``.
+Note that the `StaticPowerLoad` does not impose any cost to the objective function or any constraint, but add its power demand to the supply-balance demand of the `CopperPlatePowerModel` used. Since we are using the `ThermalDispatchNoMin` formulation for the thermal generation, the lower bound for the power is 0, instead of ``P^\text{th,min}``. In addition, we are assuming a linear cost ``C^\text{th}``. Finally, the `RenewableFullDispatch` formulation allows the dispatch of the renewable unit to be between 0 and its maximum injection time series ``p_t^\text{re,param}``.
 
 # Nomenclature
 
