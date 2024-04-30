@@ -254,7 +254,7 @@ struct HVDCFlowDirectionVariable <: VariableType end
 """
 Struct to dispatch the creation of piecewise linear cost variables for objective function
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\delta``
 """
 struct PieceWiseLinearCostVariable <: VariableType end
 
