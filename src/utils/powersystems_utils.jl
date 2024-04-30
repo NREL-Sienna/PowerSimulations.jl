@@ -129,11 +129,11 @@ end
 function _validate_compact_pwl_data(
     min::Float64,
     max::Float64,
-    data::PSY.PiecewiseLinearPointData,
+    cost_data::PSY.PiecewiseStepData,
     base_power::Float64,
 )
-    data = PSY.get_points(data)
-    if isapprox(max - min, last(data).x / base_power) && iszero(first(data).x)
+    data = PSY.get_x_coords(cost_data)
+    if isapprox(max - min, last(data) / base_power) && iszero(first(data))
         return COMPACT_PWL_STATUS.VALID
     else
         return COMPACT_PWL_STATUS.INVALID
@@ -142,9 +142,11 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.ThermalGen,
-    data::PSY.PiecewiseLinearPointData,
+    cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     base_power::Float64,
 )
+    value_curve = PSY.get_value_curve(cost_function)
+    data = PSY.get_function_data(value_curve)
     min = PSY.get_active_power_limits(d).min
     max = PSY.get_active_power_limits(d).max
     return _validate_compact_pwl_data(min, max, data, base_power)
@@ -152,7 +154,7 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.Component,
-    ::PSY.PiecewiseLinearPointData,
+    ::PSY.PiecewiseLinearData,
     ::Float64,
 )
     @warn "Validation of compact pwl data is not implemented for $(typeof(d))."
