@@ -17,7 +17,6 @@ pages = OrderedDict(
         "modeler_guide/running_a_simulation.md",
         "modeler_guide/simulation_recorder.md",
         "modeler_guide/logging.md",
-        "modeler_guide/tips_and_tricks.md",
         "modeler_guide/debugging_infeasible_models.md",
         "modeler_guide/parallel_simulations.md",
         "modeler_guide/modeling_faq.md",
