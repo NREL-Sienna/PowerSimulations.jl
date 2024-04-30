@@ -15,11 +15,11 @@ No variables are created for `DeviceModel(<:DeviceType, FixedOutput)`
 **Static Parameters:**
 
 - ThermalGen:
-  - ``Pg^\text{max}`` = `PowerSystems.get_max_active_power(device)`
-  - ``Qg^\text{max}`` = `PowerSystems.get_max_reactive_power(device)`
+  - ``P^\text{th,max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_max_reactive_power(device)`
 - Storage:
-  - ``Pg^\text{max}`` = `PowerSystems.get_max_active_power(device)`
-  - ``Qg^\text{max}`` = `PowerSystems.get_max_reactive_power(device)`
+  - ``P^\text{st,max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{st,max}`` = `PowerSystems.get_max_reactive_power(device)`
 
 **Time Series Parameters:**
 
@@ -48,7 +48,7 @@ No objective terms are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 **Expressions:**
 
-Adds the active and reactive parameters listed for specific device types above to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+Adds the active and reactive parameters listed for specific device types above to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations).
 
 **Constraints:**
 
@@ -56,42 +56,13 @@ No constraints are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 ---
 
-## `VariableCost` Options
+## `Cost` Options
 
-PowerSimulations can represent variable costs using a variety of different methods depending on the data available in each device. The following describes the objective function terms that are populated for each variable cost option.
-
-### Scalar `VariableCost`
-
-`variable_cost <: Float64`: creates a fixed marginal cost term in the objective function
-
-```math
-\begin{aligned}
-&  \text{min} \sum_{t} C * G_t
-\end{aligned}
-```
-
-### Polynomial `VariableCost`
-
-`variable_cost <: Tuple{Float64, Float64}`: creates a polynomial cost term in the objective function where
-
-- ``C_g``=`variable_cost[1]`
-- ``C_g^\prime``=`variable_cost[2]`
-
-```math
-\begin{aligned}
-&  \text{min} \sum_{t} C * G_t + C^\prime * G_t^2
-\end{aligned}
-```
-
-### Piecewise Linear `VariableCost`
-
-`variable_cost <: Vector{Tuple{Float64, Float64}}`: creates a piecewise linear cost term in the objective function
-
-TODO: add formulation
+TODO
 
 ___
 
-### `StorageManagementCost`
+## `StorageManagementCost`
 
 Adds an objective function cost term according to:
 

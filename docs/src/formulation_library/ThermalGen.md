@@ -4,7 +4,7 @@ Thermal generation formulations define the optimization models that describe the
 
 
 !!! note
-    Thermal units can include multiple terms added to the objective function, such as no-load cost, turn-on/off cost, fixed cost and variable cost. In addition, variable costs can be linear, quadratic or piecewise-linear formulations. These methods are properly described in the cost function document: TODO. 
+    Thermal units can include multiple terms added to the objective function, such as no-load cost, turn-on/off cost, fixed cost and variable cost. In addition, variable costs can be linear, quadratic or piecewise-linear formulations. These methods are properly described in the [cost function page](@ref pwl_cost). 
 
 
 !!! note
