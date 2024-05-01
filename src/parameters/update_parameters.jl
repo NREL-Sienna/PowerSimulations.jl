@@ -502,7 +502,7 @@ function _update_parameter_values!(
                     value, _ = _convert_variable_cost(value)
                 end
                 # TODO removed an apparently unused block of code here?
-                _set_param_value!(parameter_array, PSY.get_raw_data(value), name, t)
+                _set_param_value!(parameter_array, value, name, t)
                 update_variable_cost!(
                     container,
                     parameter_array,
