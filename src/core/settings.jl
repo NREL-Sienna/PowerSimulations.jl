@@ -45,11 +45,7 @@ function Settings(
     ext = Dict{String, Any}(),
 )
 
-    # TODO: Implement getters in IS
-    time_series_manager = sys.data.time_series_manager
-    time_series_storage = time_series_manager.data_store
-
-    if time_series_cache_size > 0 && time_series_storage isa IS.InMemoryTimeSeriesStorage
+    if time_series_cache_size > 0 && PSY.stores_time_series_in_memory(sys)
         @info "Overriding time_series_cache_size because time series is stored in memory"
         time_series_cache_size = 0
     end
