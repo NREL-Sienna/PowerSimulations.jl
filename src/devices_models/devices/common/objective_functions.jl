@@ -164,10 +164,11 @@ function _add_variable_cost_to_objective!(
             t,
         )
 
+        value_curve = PSY.get_function_data(variable_cost_forecast_values[t])
         set_parameter!(
             parameter_container,
             jump_model,
-            PSY.get_raw_data(variable_cost_forecast_values[t]),
+            value_curve,
             component_name,
             t,
         )
@@ -224,7 +225,7 @@ function _add_variable_cost_to_objective!(
         set_parameter!(
             parameter_container,
             jump_model,
-            PSY.get_raw_data(variable_cost_forecast_values[t]),
+            variable_cost_forecast_values[t],
             component_name,
             t,
         )
@@ -272,7 +273,7 @@ function _add_start_up_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::Union{PSY.MultiStartCost, PSY.MarketBidCost},
+    op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
     ::U,
 ) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
     cost_terms = start_up_cost(op_cost, component, U())
@@ -291,12 +292,13 @@ function _get_cost_function_parameter_container(
     component::T,
     ::U,
     ::V,
-    cost_type::Type{<:PSY.FunctionData},
+    cost_type::Type{PSY.CostCurve{W}},
 ) where {
     S <: ObjectiveFunctionParameter,
     T <: PSY.Component,
     U <: VariableType,
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+    W,
 }
     if has_container_key(container, S, T)
         return get_parameter(container, S(), T)
@@ -314,7 +316,7 @@ function _get_cost_function_parameter_container(
             U,
             sos_val,
             uses_compact_power(component, V()),
-            PSY.get_raw_data_type(cost_type),
+            W,
             container_axes...,
         )
     end
@@ -381,18 +383,20 @@ Adds to the cost function cost terms for sum of variables with common factor to 
   - container::OptimizationContainer : the optimization_container model built in PowerSimulations
   - var_key::VariableKey: The variable name
   - component_name::String: The component_name of the variable container
-  - cost_component::PSY.LinearFunctionData : container for cost to be associated with variable
+  - cost_component::PSY.CostCurve{PSY.LinearFunctionData} : container for cost to be associated with variable
 """
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_component::PSY.LinearFunctionData,
+    cost_function::PSY.CostCurve{PSY.LinearCurve},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
-    cost_data = PSY.get_proportional_term(cost_component)
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    proportional_term = PSY.get_proportional_term(cost_component)
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for time_period in get_time_steps(container)
@@ -400,7 +404,7 @@ function _add_variable_cost_to_objective!(
             container,
             T(),
             component,
-            cost_data * multiplier * base_power * dt,
+            proportional_term * multiplier * base_power * dt,
             time_period,
         )
         add_to_expression!(
@@ -433,17 +437,19 @@ linear cost term `sum(variable)*cost_data[2]`
 * container::OptimizationContainer : the optimization_container model built in PowerSimulations
 * var_key::VariableKey: The variable name
 * component_name::String: The component_name of the variable container
-* cost_component::PSY.QuadraticFunctionData : container for quadratic factors
+* cost_component::PSY.CostCurve{PSY.QuadraticCurve} : container for quadratic factors
 """
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_component::PSY.QuadraticFunctionData,
+    cost_function::PSY.CostCurve{PSY.QuadraticCurve},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
     quadratic_term = PSY.get_quadratic_term(cost_component)
     proportional_term = PSY.get_proportional_term(cost_component)
     constant_term = PSY.get_constant_term(cost_component)
@@ -490,18 +496,20 @@ Creates piecewise linear cost function using a sum of variables and expression w
   - container::OptimizationContainer : the optimization_container model built in PowerSimulations
   - var_key::VariableKey: The variable name
   - component_name::String: The component_name of the variable container
-  - cost_component::PSY.PiecewiseLinearPointData: container for piecewise linear cost
+  - cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}: container for piecewise linear cost
 """
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_component::PSY.PiecewiseLinearPointData,
+    cost_function::PSY.CostCurve{PSY.PiecewisePointCurve},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     # If array is full of tuples with zeros return 0.0
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
     if all(iszero.((point -> point.y).(PSY.get_points(cost_component))))  # TODO I think this should have been first. before?
         @debug "All cost terms for component $(component_name) are 0.0" _group =
             LOG_GROUP_COST_FUNCTIONS
@@ -571,7 +579,7 @@ Add PWL cost terms for data coming from the MarketBidCost
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_data::AbstractVector{PSY.PiecewiseLinearPointData},
+    cost_data::AbstractVector{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
@@ -603,13 +611,15 @@ function _add_pwl_term!(
             @debug uses_compact_power(component, V()) compact_status name T V
         end
         cost_is_convex = PSY.is_convex(data)
-        break_points = PSY.get_x_coords(data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
-        _add_pwl_variables!(container, T, name, t, data)
+        value_data = PSY.get_function_data(data)
+        break_points = PSY.get_x_coords(value_data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
+        _add_pwl_variables!(container, T, name, t, value_data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !cost_is_convex
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
-        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost =
+            _get_pwl_cost_expression(container, component, t, value_data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
@@ -618,7 +628,7 @@ end
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_data::AbstractVector{PSY.PiecewiseLinearPointData},
+    cost_data::AbstractVector{PSY.PiecewiseLinearData},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
@@ -649,7 +659,7 @@ Add PWL cost terms for data coming from a constant PWL cost function
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    data::PSY.PiecewiseLinearPointData,
+    data::PSY.PiecewiseLinearData,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
@@ -695,7 +705,7 @@ end
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    data::PSY.PiecewiseLinearPointData,
+    data::PSY.PiecewiseLinearData,
     ::U,
     ::V,
 ) where {T <: PSY.ThermalGen, U <: VariableType, V <: ThermalDispatchNoMin}
@@ -723,7 +733,7 @@ function _add_pwl_term!(
         @debug "PWL has no 0.0 intercept for generator $(component_name)"
         # adds a first intercept a x = 0.0 and y below the intercept of the first tuple to make convex equivalent
         intercept_point = (x = 0.0, y = first(data).y - COST_EPSILON)
-        data = PSY.PiecewiseLinearPointData(vcat(intercept_point, get_points(data)))
+        data = PSY.PiecewiseLinearData(vcat(intercept_point, get_points(data)))
         @assert PSY.is_convex(slopes)
     end
 
@@ -740,15 +750,16 @@ function _add_pwl_term!(
     return pwl_cost_expressions
 end
 
+# This cases bounds the data by 1 - 0
 function _add_pwl_variables!(
     container::OptimizationContainer,
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::PSY.PiecewiseLinearPointData,
+    cost_data::PSY.PiecewiseLinearData,
 ) where {T <: PSY.Component}
     var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
-    # length(PiecewiseLinearPointData) gets number of segments, here we want number of points
+    # length(PiecewiseStepData) gets number of segments, here we want number of points
     pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
     for i in 1:(length(cost_data) + 1)
         pwlvars[i] =
@@ -757,6 +768,26 @@ function _add_pwl_variables!(
                 base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
                 lower_bound = 0.0,
                 upper_bound = 1.0
+            )
+    end
+    return pwlvars
+end
+
+function _add_pwl_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    component_name::String,
+    time_period::Int,
+    cost_data::PSY.PiecewiseStepData,
+) where {T <: PSY.Component}
+    var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
+    # length(PiecewiseStepData) gets number of segments, here we want number of points
+    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
+    for i in 1:(length(cost_data) + 1)
+        pwlvars[i] =
+            var_container[(component_name, i, time_period)] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
             )
     end
     return pwlvars
@@ -839,41 +870,55 @@ function _get_pwl_cost_expression(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_data::PSY.PiecewiseLinearPointData,
+    cost_data::PSY.PiecewiseLinearData,
     multiplier::Float64,
 ) where {T <: PSY.Component}
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     gen_cost = JuMP.AffExpr(0.0)
-    cost_data = PSY.get_points(cost_data)
+    cost_data = PSY.get_y_coords(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost_data[i].y * multiplier * pwl_var_container[(name, i, time_period)],
+            cost_data[i] * multiplier * pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
 end
 
-function _get_no_load_cost(
+function _get_pwl_cost_expression(
+    container::OptimizationContainer,
     component::T,
-    ::V,
-    ::U,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    return no_load_cost(PSY.get_operation_cost(component), U(), component, V())
+    time_period::Int,
+    cost_data::PSY.PiecewiseStepData,
+    multiplier::Float64,
+) where {T <: PSY.Component}
+    # TODO: This functions needs to be reimplemented for the new model. The code is repeated
+    # because the internals will be different
+    name = PSY.get_name(component)
+    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    gen_cost = JuMP.AffExpr(0.0)
+    cost_data = PSY.get_y_coords(cost_data)
+    for i in 1:length(cost_data)
+        JuMP.add_to_expression!(
+            gen_cost,
+            cost_data[i] * multiplier * pwl_var_container[(name, i, time_period)],
+        )
+    end
+    return gen_cost
 end
 
 function _convert_to_compact_variable_cost(
-    var_cost::PSY.PiecewiseLinearPointData,
+    var_cost::PSY.PiecewiseLinearData,
     p_min::Float64,
     no_load_cost::Float64,
 )
     points = PSY.get_points(var_cost)
     new_points = [(pp - p_min, c - no_load_cost) for (pp, c) in points]
-    return PSY.PiecewiseLinearPointData(new_points)
+    return PSY.PiecewiseLinearData(new_points)
 end
 
-function _convert_to_compact_variable_cost(var_cost::PSY.PiecewiseLinearPointData)
+function _convert_to_compact_variable_cost(var_cost::PSY.PiecewiseLinearData)
     p_min, no_load_cost = first(PSY.get_points(var_cost))
     return _convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
 end
