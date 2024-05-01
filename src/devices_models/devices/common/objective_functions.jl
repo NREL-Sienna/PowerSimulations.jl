@@ -250,8 +250,8 @@ end
 function _add_start_up_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
-    component::PSY.Component,
-    op_cost::PSY.OperationalCost,
+    component::PSY.ThermalGen,
+    op_cost::PSY.ThermalGenerationCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     cost_term = start_up_cost(op_cost, component, U())
@@ -272,8 +272,8 @@ const MULTI_START_COST_MAP = Dict{DataType, Int}(
 function _add_start_up_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
-    component::PSY.Component,
-    op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
+    component::PSY.ThermalMultiStart,
+    op_cost::PSY.ThermalGenerationCost,
     ::U,
 ) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
     cost_terms = start_up_cost(op_cost, component, U())
