@@ -49,7 +49,9 @@ Changing the attributes between `true` or `false` can enable/disable multiple as
 
 ## R
 
-* *Resolution*: The amount of time between timesteps in a simulation. For instance 1-hour or 5-minutes. In Julia these are defined using the syntax `Hour(1)` and `Minute(5)`. Check the time [Time Series Data Section in PowerSystems.jl](https://nrel-sienna.github.io/PowerSystems.jl/stable/modeler_guide/time_series/)
+* *Resolution*: The amount of time between time steps in a simulation. For instance 1-hour or 5-minutes. In Julia these are defined using the syntax `Hour(1)` and `Minute(5)`. Check the time [Time Series Data Section in PowerSystems.jl](https://nrel-sienna.github.io/PowerSystems.jl/stable/modeler_guide/time_series/)
+
+* *Results vs Realized Results*: In `PowerSimulations.jl` the term *results* is used to refer to the solution of all optimization problems in a *Simulation*. When using `read_variable(results, Variable)` in a `DecisionModel` of a simulation, the output is a dictionary with the values of such variable for every optimization problem solved, while `read_realized_variable(results, Variable)` will return the values of the specified interval and number of steps in the simulation. See the [Read Results page](@ref read_results) for more details.
 
 ## S
 
