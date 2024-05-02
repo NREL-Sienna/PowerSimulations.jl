@@ -102,7 +102,7 @@ function determine_horizons!(models::SimulationModels)
     for model in models.decision_models
         container = get_optimization_container(model)
         settings = get_settings(container)
-        @show horizon = get_horizon(settings)
+        horizon = get_horizon(settings)
         if horizon == UNSET_HORIZON
             sys = get_system(model)
             horizon = PSY.get_forecast_horizon(sys)
