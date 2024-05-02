@@ -3,21 +3,21 @@
         [
             DecisionModel(
                 MockOperationProblem;
-                horizon = 48,
+                horizon = Hour(48),
                 interval = Hour(24),
                 steps = 2,
                 name = "DAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 24,
+                horizon = Hour(24),
                 interval = Hour(1),
                 steps = 2 * 24,
                 name = "HAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 12,
+                horizon = Hour(12),
                 interval = Minute(5),
                 steps = 2 * 24 * 12,
                 name = "ED",
@@ -33,21 +33,21 @@
         [
             DecisionModel(
                 MockOperationProblem;
-                horizon = 48,
+                horizon = Hour(48),
                 interval = Hour(24),
                 steps = 2,
                 name = "DAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 24,
+                horizon = Hour(24),
                 interval = Hour(1),
                 steps = 2 * 24,
                 name = "DAUC",
             ),
             DecisionModel(
                 MockOperationProblem;
-                horizon = 12,
+                horizon = Hour(12),
                 interval = Minute(5),
                 steps = 2 * 24 * 12,
                 name = "ED",

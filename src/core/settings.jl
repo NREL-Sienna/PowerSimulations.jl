@@ -45,10 +45,10 @@ function Settings(
     ext = Dict{String, Any}(),
 )
 
-    if time_series_cache_size > 0 && PSY.stores_time_series_in_memory(sys)
-        @info "Overriding time_series_cache_size because time series is stored in memory"
-        time_series_cache_size = 0
-    end
+    #    if time_series_cache_size > 0 && PSY.stores_time_series_in_memory(sys)
+    #      @info "Overriding time_series_cache_size because time series is stored in memory"
+    #     time_series_cache_size = 0
+    #   end
 
     if isa(optimizer, MOI.OptimizerWithAttributes) || optimizer === nothing
         optimizer_ = optimizer

@@ -836,8 +836,8 @@ function _serialize_attributes(store::HdfSimulationStore)
         problem_group = store.file["simulation/decision_models/$problem"]
         HDF5.attributes(problem_group)["num_executions"] =
             params.decision_models_params[problem].num_executions
-        HDF5.attributes(problem_group)["horizon"] =
-            params.decision_models_params[problem].horizon
+        HDF5.attributes(problem_group)["horizon_count"] =
+            params.decision_models_params[problem].horizon_count
         HDF5.attributes(problem_group)["resolution_ms"] =
             Dates.Millisecond(params.decision_models_params[problem].resolution).value
         HDF5.attributes(problem_group)["interval_ms"] =
@@ -854,7 +854,7 @@ function _serialize_attributes(store::HdfSimulationStore)
         HDF5.attributes(emulation_group)["name"] =
             string(first(keys(params.emulation_model_params)))
         HDF5.attributes(emulation_group)["num_executions"] = em_params.num_executions
-        HDF5.attributes(emulation_group)["horizon"] = em_params.horizon
+        HDF5.attributes(emulation_group)["horizon_count"] = em_params.horizon_count
         HDF5.attributes(emulation_group)["resolution_ms"] =
             Dates.Millisecond(em_params.resolution).value
         HDF5.attributes(emulation_group)["interval_ms"] =

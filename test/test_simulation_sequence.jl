@@ -2,21 +2,24 @@
     models_array = [
         DecisionModel(
             MockOperationProblem;
-            horizon = 48,
+            horizon = Hour(48),
             interval = Hour(24),
+            resolution = Hour(1),
             steps = 2,
             name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon = 24,
+            horizon = Hour(24),
+            resolution = Minute(5),
             interval = Hour(1),
             steps = 2 * 24,
             name = "HAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon = 12,
+            horizon = Hour(12),
+            resolution = Minute(5),
             interval = Minute(5),
             steps = 2 * 24 * 12,
             name = "ED",
@@ -29,7 +32,12 @@
     )
     models = SimulationModels(
         models_array,
-        EmulationModel(MockEmulationProblem; resolution = Minute(1), name = "AGC"),
+        EmulationModel(
+            MockEmulationProblem;
+            interval = Minute(1),
+            resolution = Minute(1),
+            name = "AGC",
+        ),
     )
 
     test_sequence = SimulationSequence(;
@@ -63,7 +71,7 @@
     test_sequence = SimulationSequence(;
         models = SimulationModels(
         # TODO: support passing one model without making a vector
-            [DecisionModel(MockOperationProblem; horizon = 48, name = "DAUC")]),
+            [DecisionModel(MockOperationProblem; horizon = Hour(48), name = "DAUC")]),
         ini_cond_chronology = InterProblemChronology(),
     )
 
@@ -76,15 +84,17 @@ end
     models = SimulationModels([
         DecisionModel(
             MockOperationProblem;
-            horizon = 48,
+            horizon = Hour(48),
             interval = Hour(24),
+            resolution = Hour(1),
             steps = 2,
             name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon = 24,
+            horizon = Hour(24),
             interval = Hour(5),
+            resolution = Minute(5),
             steps = 2 * 24,
             name = "HAUC",
         ),
@@ -95,15 +105,17 @@ end
     models = SimulationModels([
         DecisionModel(
             MockOperationProblem;
-            horizon = 2,
+            horizon = Hour(2),
             interval = Hour(1),
+            resolution = Hour(1),
             steps = 2,
             name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon = 24,
+            horizon = Hour(24),
             interval = Hour(1),
+            resolution = Minute(5),
             steps = 2 * 24,
             name = "HAUC",
         ),
@@ -114,15 +126,17 @@ end
     models = SimulationModels([
         DecisionModel(
             MockOperationProblem;
-            horizon = 24,
+            horizon = Hour(24),
             interval = Hour(1),
+            resolution = Hour(1),
             steps = 2,
             name = "DAUC",
         ),
         DecisionModel(
             MockOperationProblem;
-            horizon = 24,
+            horizon = Hour(24),
             interval = Minute(22),
+            resolution = Hour(1),
             steps = 2 * 24,
             name = "HAUC",
         ),

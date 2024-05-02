@@ -16,7 +16,7 @@ sys_rts = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
             sys_rts;
             optimizer = HiGHS_optimizer,
             initial_time = init_time,
-            horizon = 48,
+            horizon = Hour(48),
         )
         @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
@@ -90,7 +90,7 @@ end
             sys_rts;
             optimizer = HiGHS_optimizer,
             initial_time = init_time,
-            horizon = 48,
+            horizon = Hour(48),
         )
         @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
@@ -172,7 +172,7 @@ end
             sys_rts;
             optimizer = HiGHS_optimizer,
             initial_time = init_time,
-            horizon = 48,
+            horizon = Hour(48),
         )
         PSI.instantiate_network_model(model)
         setup_ic_model_container!(model)

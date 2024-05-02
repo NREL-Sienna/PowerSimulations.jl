@@ -91,6 +91,7 @@ function EmulationModel{M}(
     template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
+    resolution = UNSET_RESOLUTION,
     name = nothing,
     optimizer = nothing,
     warm_start = true,
@@ -129,7 +130,8 @@ function EmulationModel{M}(
         check_numerical_bounds = check_numerical_bounds,
         store_variable_names = store_variable_names,
         rebuild_model = rebuild_model,
-        horizon = 1,
+        horizon = resolution,
+        resolution = resolution,
     )
     return EmulationModel{M}(template, sys, settings, jump_model; name = name)
 end
@@ -240,14 +242,14 @@ function init_model_store_params!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
     settings = get_settings(model)
-    interval = resolution = get_resolution(settings)
+    horizon = interval = resolution = get_resolution(settings)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     IS.Optimization.set_store_params!(
         get_internal(model),
         ModelStoreParams(
             num_executions,
-            1,
+            horizon,
             interval,
             resolution,
             base_power,

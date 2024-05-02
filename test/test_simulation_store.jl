@@ -25,21 +25,24 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         execution_count = model_defs[model]["execution_count"]
         horizon = model_defs[model]["horizon"]
         num_rows = execution_count * sim["num_steps"]
+        resolution = model_defs[model]["resolution"]
+        interval = model_defs[model]["interval"]
 
         model_params = ModelStoreParams(
             execution_count,
-            horizon,
-            model_defs[model]["interval"],
-            model_defs[model]["resolution"],
+            IS.time_period_conversion(horizon),
+            IS.time_period_conversion(interval),
+            IS.time_period_conversion(resolution),
             model_defs[model]["base_power"],
             model_defs[model]["system_uuid"],
         )
         reqs = SimulationModelStoreRequirements()
-
+        horizon_count = horizon ÷ resolution
         for (key, array) in model_defs[model]["variables"]
             reqs.variables[key] = Dict(
                 "columns" => model_defs[model]["names"],
-                "dims" => (horizon, length(model_defs[model]["names"][1]), num_rows),
+                "dims" =>
+                    (horizon_count, length(model_defs[model]["names"][1]), num_rows),
             )
             keep_in_cache = variables[key]["keep_in_cache"]
             add_rule!(cache_rules, model, key, keep_in_cache)
@@ -59,9 +62,9 @@ function _initialize!(store, sim, variables, model_defs, cache_rules)
         OrderedDict(
             :Emulator => ModelStoreParams(
                 100, # Num Executions
-                1,
-                Minute(5), # Interval
-                Minute(5), # Resolution
+                IS.time_period_conversion(Hour(1)),
+                IS.time_period_conversion(Minute(5)), # Interval
+                IS.time_period_conversion(Minute(5)), # Resolution
                 100.0,
                 Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
             ),
@@ -171,7 +174,7 @@ end
     model_defs = OrderedDict(
         :ED => Dict(
             "execution_count" => 24,
-            "horizon" => 12,
+            "horizon" => Hour(12),
             "names" => ([:dev1, :dev2, :dev3, :dev4, :dev5],),
             "variables" => Dict(x => ones(12, 5) for x in keys(variables)),
             "interval" => Dates.Hour(1),
@@ -181,11 +184,11 @@ end
         ),
         :UC => Dict(
             "execution_count" => 1,
-            "horizon" => 24,
+            "horizon" => Hour(24),
             "names" => ([:dev1, :dev2, :dev3],),
             "variables" => Dict(x => ones(24, 3) for x in keys(variables)),
             "interval" => Dates.Hour(1),
-            "resolution" => Dates.Hour(24),
+            "resolution" => Dates.Hour(1),
             "base_power" => 100.0,
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
