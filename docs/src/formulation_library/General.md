@@ -89,9 +89,9 @@ where
 - For `PolynomialFunctionData`:
   - ``C_n`` = `get_coefficients(variable_cost)[n]`
 
-### `PiecewiseLinearPointData` and `PiecewiseLinearSlopeData`
+### `` and `PiecewiseLinearSlopeData`
 
-`variable_cost::PiecewiseLinearPointData` and `variable_cost::PiecewiseLinearSlopeData`: create a piecewise linear cost term in the objective function
+`variable_cost::PiecewiseLinearData` and `variable_cost::PiecewiseLinearSlopeData`: create a piecewise linear cost term in the objective function
 
 ```math
 \begin{aligned}
@@ -101,7 +101,7 @@ where
 
 where
 
-- For `variable_cost::PiecewiseLinearPointData`, ``f(x)`` is the piecewise linear function obtained by connecting the `(x, y)` points `get_points(variable_cost)` in order.
+- For `variable_cost::PiecewiseLinearData`, ``f(x)`` is the piecewise linear function obtained by connecting the `(x, y)` points `get_points(variable_cost)` in order.
 - For `variable_cost = PiecewiseLinearSlopeData([x0, x1, x2, ...], y0, [s0, s1, s2, ...])`, ``f(x)`` is the piecewise linear function obtained by starting at `(x0, y0)`, drawing a segment at slope `s0` to `x=x1`, drawing a segment at slope `s1` to `x=x2`, etc.
 
 ___

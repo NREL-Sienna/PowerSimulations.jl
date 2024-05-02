@@ -75,7 +75,7 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 
 ########################Objective Function##################################################
 proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = no_load_cost(cost, S, T, U)
-proportional_cost(cost::PSY.MarketBidCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractCompactUnitCommitment)=no_load_cost(cost, S, T, U)
+proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
@@ -83,6 +83,7 @@ has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitm
 objective_function_multiplier(::VariableType, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
 shut_down_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
+shut_down_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
 
 sos_status(::PSY.ThermalGen, ::AbstractThermalDispatchFormulation)=SOSStatusVariable.NO_VARIABLE
 sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.VARIABLE

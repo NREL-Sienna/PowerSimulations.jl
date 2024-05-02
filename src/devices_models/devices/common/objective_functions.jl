@@ -163,12 +163,10 @@ function _add_variable_cost_to_objective!(
             component_name,
             t,
         )
-
-        value_curve = PSY.get_function_data(variable_cost_forecast_values[t])
         set_parameter!(
             parameter_container,
             jump_model,
-            value_curve,
+            variable_cost_forecast_values[t],
             component_name,
             t,
         )
@@ -183,7 +181,7 @@ function _add_variable_cost_to_objective!(
     end
 
     # Service Cost Bid
-    ancillary_services = PSY.get_ancillary_services(op_cost)
+    ancillary_services = PSY.get_ancillary_service_offers(op_cost)
     for service in ancillary_services
         _add_service_bid_cost!(container, component, service)
     end
@@ -251,7 +249,7 @@ function _add_start_up_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.ThermalGen,
-    op_cost::PSY.ThermalGenerationCost,
+    op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     cost_term = start_up_cost(op_cost, component, U())
@@ -292,7 +290,7 @@ function _get_cost_function_parameter_container(
     component::T,
     ::U,
     ::V,
-    cost_type::Type{PSY.CostCurve{W}},
+    cost_type::Type{W},
 ) where {
     S <: ObjectiveFunctionParameter,
     T <: PSY.Component,
@@ -579,7 +577,7 @@ Add PWL cost terms for data coming from the MarketBidCost
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_data::AbstractVector{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}},
+    cost_data::AbstractVector{PSY.PiecewiseStepData},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
@@ -611,15 +609,14 @@ function _add_pwl_term!(
             @debug uses_compact_power(component, V()) compact_status name T V
         end
         cost_is_convex = PSY.is_convex(data)
-        value_data = PSY.get_function_data(data)
-        break_points = PSY.get_x_coords(value_data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
-        _add_pwl_variables!(container, T, name, t, value_data)
+        break_points = PSY.get_x_coords(data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
+        _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         if !cost_is_convex
             _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
         end
         pwl_cost =
-            _get_pwl_cost_expression(container, component, t, value_data, multiplier * dt)
+            _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
@@ -908,6 +905,7 @@ function _get_pwl_cost_expression(
     return gen_cost
 end
 
+# These conversions are not properly done for the new models
 function _convert_to_compact_variable_cost(
     var_cost::PSY.PiecewiseLinearData,
     p_min::Float64,
@@ -916,6 +914,25 @@ function _convert_to_compact_variable_cost(
     points = PSY.get_points(var_cost)
     new_points = [(pp - p_min, c - no_load_cost) for (pp, c) in points]
     return PSY.PiecewiseLinearData(new_points)
+end
+
+# These conversions are not properly done for the new models
+function _convert_to_compact_variable_cost(
+    var_cost::PSY.PiecewiseStepData,
+    p_min::Float64,
+    no_load_cost::Float64,
+)
+    x = PSY.get_x_coords(var_cost)
+    y = vcat(PSY.get_y_coords(var_cost), PSY.get_y_coords(var_cost)[end])
+    points = [(x[i], y[i]) for i in length(x)]
+    new_points = [(x = pp - p_min, y = c - no_load_cost) for (pp, c) in points]
+    return PSY.PiecewiseLinearData(new_points)
+end
+
+# TODO: This method needs to be corrected to account for actual StepData. The TestData is point wise
+function _convert_to_compact_variable_cost(var_cost::PSY.PiecewiseStepData)
+    p_min, no_load_cost = (PSY.get_x_coords(var_cost)[1], PSY.get_y_coords(var_cost)[1])
+    return _convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
 end
 
 function _convert_to_compact_variable_cost(var_cost::PSY.PiecewiseLinearData)

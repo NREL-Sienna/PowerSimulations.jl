@@ -142,11 +142,9 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.ThermalGen,
-    cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
+    data::PSY.PiecewiseStepData,
     base_power::Float64,
 )
-    value_curve = PSY.get_value_curve(cost_function)
-    data = PSY.get_function_data(value_curve)
     min = PSY.get_active_power_limits(d).min
     max = PSY.get_active_power_limits(d).max
     return _validate_compact_pwl_data(min, max, data, base_power)
