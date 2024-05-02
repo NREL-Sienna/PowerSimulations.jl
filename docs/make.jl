@@ -15,6 +15,7 @@ pages = OrderedDict(
         "modeler_guide/psi_structure.md",
         "modeler_guide/problem_templates.md",
         "modeler_guide/running_a_simulation.md",
+        "modeler_guide/read_results.md",
         "modeler_guide/simulation_recorder.md",
         "modeler_guide/logging.md",
         "modeler_guide/debugging_infeasible_models.md",
