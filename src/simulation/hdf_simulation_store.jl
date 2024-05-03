@@ -740,11 +740,11 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     empty!(get_dm_data(store))
     for model in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/decision_models/$model"]
-        horizon = HDF5.read(HDF5.attributes(problem_group)["horizon"])
+        horizon_count = HDF5.read(HDF5.attributes(problem_group)["horizon_count"])
         model_name = Symbol(model)
         store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
-            horizon,
+            horizon_count,
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
@@ -759,7 +759,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                     column_dataset = group[_make_column_name(name)]
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
-                    dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                    dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
                     n_dims = max(1, ndims(dataset) - 2)
                     item = HDF5Dataset{n_dims}(
                         dataset,
@@ -785,12 +785,12 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     end
 
     em_group = _get_emulation_model_path(store)
-    horizon = HDF5.read(HDF5.attributes(em_group)["horizon"])
+    horizon_count = HDF5.read(HDF5.attributes(em_group)["horizon_count"])
     model_name = Symbol(HDF5.read(HDF5.attributes(em_group)["name"]))
     resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["resolution_ms"]))
     store.params.emulation_model_params[model_name] = ModelStoreParams(
         HDF5.read(HDF5.attributes(em_group)["num_executions"]),
-        HDF5.read(HDF5.attributes(em_group)["horizon"]),
+        horizon_count,
         Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["interval_ms"])),
         resolution,
         HDF5.read(HDF5.attributes(em_group)["base_power"]),
@@ -802,7 +802,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             if !endswith(name, "columns")
                 dataset = group[name]
                 column_dataset = group[_make_column_name(name)]
-                dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
                 n_dims = max(1, ndims(dataset) - 1)
                 item = HDF5Dataset{n_dims}(
                     dataset,
