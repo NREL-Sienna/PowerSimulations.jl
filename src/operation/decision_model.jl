@@ -77,9 +77,10 @@ function DecisionModel{M}(
     internal = IS.Optimization.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
     )
+
     template_ = deepcopy(template)
     finalize_template!(template_, sys)
-    return DecisionModel{M}(
+    model = DecisionModel{M}(
         name,
         template_,
         sys,
@@ -88,6 +89,8 @@ function DecisionModel{M}(
         DecisionModelStore(),
         Dict{String, Any}(),
     )
+    validate_time_series(model)
+    return model
 end
 
 function DecisionModel{M}(
@@ -274,6 +277,33 @@ end
 
 function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
+    settings = get_settings(model)
+    available_resolutions = PSY.list_time_series_resolutions(sys)
+
+    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
+        throw(
+            IS.ConflictingInputsError(
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+            ),
+        )
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+        if get_resolution(settings) ∉ available_resolutions
+            throw(
+                IS.ConflictingInputsError(
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                ),
+            )
+        end
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end
+
+    if get_horizon(settings) == UNSET_HORIZON
+        # TODO: forecast horizon needs to return a TimePeriod value
+        resolution = get_resolution(settings)
+        set_horizon!(settings, PSY.get_forecast_horizon(sys) * resolution)
+    end
+
     counts = PSY.get_time_series_counts(sys)
     if counts.forecast_count < 1
         error(
@@ -286,7 +316,6 @@ end
 function build_pre_step!(model::DecisionModel{<:DecisionProblem})
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         validate_template(model)
-        validate_time_series(model)
         if !isempty(model)
             @info "OptimizationProblem status not ModelBuildStatus.EMPTY. Resetting"
 

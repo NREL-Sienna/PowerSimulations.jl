@@ -133,7 +133,10 @@ function EmulationModel{M}(
         horizon = resolution,
         resolution = resolution,
     )
-    return EmulationModel{M}(template, sys, settings, jump_model; name = name)
+    model = EmulationModel{M}(template, sys, settings, jump_model; name = name)
+    validate_time_series(model)
+    return model
+
 end
 
 """
@@ -268,13 +271,44 @@ function validate_time_series(model::EmulationModel{<:DefaultEmulationProblem})
             "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
         )
     end
+    counts = PSY.get_time_series_counts(sys)
+
+    if counts.forecast_count < 1
+        error(
+            "The system does not contain time series data. A EmulationModel can't be built.",
+        )
+    end
+
+    settings = get_settings(model)
+    available_resolutions = PSY.list_time_series_resolutions(sys)
+
+    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
+        throw(
+            IS.ConflictingInputsError(
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+            ),
+        )
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+        if get_resolution(settings) ∉ available_resolutions
+            throw(
+                IS.ConflictingInputsError(
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                ),
+            )
+        end
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end
+
+    if get_horizon(settings) == UNSET_HORIZON
+        set_horizon!(settings, get_resolution(settings))
+    end
     return
 end
 
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         validate_template(model)
-        validate_time_series(model)
         if !isempty(model)
             @info "EmulationProblem status not ModelBuildStatus.EMPTY. Resetting"
             reset!(model)

@@ -175,6 +175,7 @@ end
             horizon = Hour(48),
         )
         PSI.instantiate_network_model(model)
+        PSI.build_pre_step!(model)
         setup_ic_model_container!(model)
         ####### Check initialization problem constraints #####
         check_initialization_constraint_count(

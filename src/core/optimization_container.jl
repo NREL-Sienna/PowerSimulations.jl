@@ -304,26 +304,6 @@ function init_optimization_container!(
     # The order of operations matter
     settings = get_settings(container)
 
-    available_resolutions = PSY.list_time_series_resolutions(sys)
-
-    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
-        throw(
-            IS.ConflictingInputsError(
-                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
-            ),
-        )
-    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
-        if get_resolution(settings) ∉ available_resolutions
-            throw(
-                IS.ConflictingInputsError(
-                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
-                ),
-            )
-        end
-    else
-        set_resolution!(settings, first(available_resolutions))
-    end
-
     if get_initial_time(settings) == UNSET_INI_TIME
         if get_default_time_series_type(container) <: PSY.AbstractDeterministic
             set_initial_time!(settings, PSY.get_forecast_initial_timestamp(sys))
@@ -333,12 +313,12 @@ function init_optimization_container!(
         end
     end
 
-    if get_horizon(settings) == UNSET_HORIZON
-        # TODO: forecast horizon needs to return a TimePeriod value
-        resolution = get_resolution(settings)
-        set_horizon!(settings, PSY.get_forecast_horizon(sys) * resolution)
+    if get_resolution(settings) == UNSET_RESOLUTION
+        error("Resolution not set in the model. Can't continue with the build.")
     end
+
     horizon_count = (get_horizon(settings) ÷ get_resolution(settings))
+    @assert horizon_count > 0
     container.time_steps = 1:horizon_count
 
     if T <: CopperPlatePowerModel || T <: AreaBalancePowerModel
