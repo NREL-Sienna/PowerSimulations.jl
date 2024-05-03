@@ -173,7 +173,9 @@ function _get_simulation_initial_times!(sim::Simulation)
     for (model_number, model) in enumerate(get_models(sim).decision_models)
         system = get_system(model)
         model_horizon = get_horizon(model)
-        system_horizon = PSY.get_forecast_horizon(system)
+        # TODO: Use PSY forecast horizon in time not count
+        resolution  = get_resolution(model)
+        system_horizon = PSY.get_forecast_horizon(system)*resolution
         system_interval = PSY.get_forecast_interval(system)
         if model_horizon > system_horizon
             throw(
@@ -403,37 +405,39 @@ function _get_model_store_requirements!(
 )
     model_name = get_name(model)
     horizon = get_horizon(model)
+    resolution = get_resolution(model)
+    horizon_count = horizon ÷ resolution
     reqs = SimulationModelStoreRequirements()
     container = get_optimization_container(model)
 
     for (key, array) in get_duals(container)
         !should_write_resulting_value(key) && continue
-        reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, true)
     end
 
     for (key, param_container) in get_parameters(container)
         !should_write_resulting_value(key) && continue
         array = get_multiplier_array(param_container)
-        reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, false)
     end
 
     for (key, array) in get_variables(container)
         !should_write_resulting_value(key) && continue
-        reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, true)
     end
 
     for (key, array) in get_aux_variables(container)
         !should_write_resulting_value(key) && continue
-        reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, true)
     end
 
     for (key, array) in get_expressions(container)
         !should_write_resulting_value(key) && continue
-        reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, false)
     end
 
@@ -513,7 +517,7 @@ function _initialize_problem_storage!(
         emulation_model_store_params = OrderedDict(
             :Emulator => ModelStoreParams(
                 get_step_resolution(sequence) ÷ resolution, # Num Executions
-                1,
+                resolution, # Horizon
                 resolution, # Interval
                 resolution, # Resolution
                 get_base_power(base_params),
