@@ -136,7 +136,6 @@ function EmulationModel{M}(
     model = EmulationModel{M}(template, sys, settings, jump_model; name = name)
     validate_time_series(model)
     return model
-
 end
 
 """

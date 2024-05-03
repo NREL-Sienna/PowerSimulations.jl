@@ -77,7 +77,6 @@ function write_model_parameter_results!(
         mkpath(exports_path)
     end
 
-
     horizon = get_horizon(get_settings(model))
     resolution = get_resolution(get_settings(model))
     horizon_count = horizon ÷ resolution

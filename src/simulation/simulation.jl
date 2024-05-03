@@ -174,8 +174,8 @@ function _get_simulation_initial_times!(sim::Simulation)
         system = get_system(model)
         model_horizon = get_horizon(model)
         # TODO: Use PSY forecast horizon in time not count
-        resolution  = get_resolution(model)
-        system_horizon = PSY.get_forecast_horizon(system)*resolution
+        resolution = get_resolution(model)
+        system_horizon = PSY.get_forecast_horizon(system) * resolution
         system_interval = PSY.get_forecast_interval(system)
         if model_horizon > system_horizon
             throw(

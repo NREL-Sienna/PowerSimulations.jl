@@ -44,7 +44,7 @@ function ModelStoreParams(
         Dates.Millisecond(resolution),
         base_power,
         system_uuid,
-        container_metadata
+        container_metadata,
     )
 end
 
