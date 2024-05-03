@@ -145,7 +145,9 @@ LossLess InterconnectingConverter Model
 """
 struct LossLessConverter <: AbstractConverterFormulation end
 
-# TODO: Think if this an ok abstraction for future use cases
+"""
+LossLess Line Abstract Model
+"""
 struct LossLessLine <: AbstractBranchFormulation end
 
 ############################## Network Model Formulations ##################################
