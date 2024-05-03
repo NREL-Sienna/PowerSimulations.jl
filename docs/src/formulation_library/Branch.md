@@ -3,7 +3,9 @@
 !!! note
     The usage of reactive power variables and constraints will depend on the network model used, i.e. if it uses (or not) reactive power. If the network model is purely active power based, then no variables and constraints related to reactive power are created. For the sake of completion, if the formulation allows the usage of reactive power it will be included.
 
-## `StaticBranch` for `PTDFPowerModel` Network model
+## `StaticBranch`
+
+Formulation valid for `PTDFPowerModel` Network model
 
 ```@docs
 StaticBranch
@@ -51,7 +53,9 @@ on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distributio
 
 ---
 
-## `StaticBranchBounds` for `PTDFPowerModel` Network model
+## `StaticBranchBounds`
+
+Formulation valid for `PTDFPowerModel` Network model
 
 ```@docs
 StaticBranchBounds
@@ -88,7 +92,9 @@ on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distributio
 
 ---
 
-## `StaticBranchUnbounded` for `PTDFPowerModel` Network model
+## `StaticBranchUnbounded`
+
+Formulation valid for `PTDFPowerModel` Network model
 
 ```@docs
 StaticBranchUnbounded
@@ -120,7 +126,9 @@ on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distributio
 
 ---
 
-## `HVDCTwoTerminalUnbounded` for `PTDFPowerModel` Network model
+## `HVDCTwoTerminalUnbounded`
+
+Formulation valid for `PTDFPowerModel` Network model
 
 ```@docs
 HVDCTwoTerminalUnbounded
@@ -150,7 +158,9 @@ No constraints are added.
 
 ---
 
-## `HVDCTwoTerminalLossless` for `PTDFPowerModel` Network model
+## `HVDCTwoTerminalLossless`
+
+Formulation valid for `PTDFPowerModel` Network model
 
 ```@docs
 HVDCTwoTerminalLossless
@@ -213,8 +223,9 @@ and
 ---
 
 
-## `HVDCTwoTerminalDispatch` for `PTDFPowerModel` Network model
+## `HVDCTwoTerminalDispatch` 
 
+Formulation valid for `PTDFPowerModel` Network model
 
 ```@docs
 HVDCTwoTerminalDispatch
@@ -279,7 +290,7 @@ using PowerSystems
 using DataFrames
 using Latexify
 combos = PowerSimulations.generate_device_formulation_combinations()
-filter!(x -> x["device_type"] <: Branch, combos)
+filter!(x -> (x["device_type"] <: Branch) && (x["device_type"] != TModelHVDCLine), combos)
 combo_table = DataFrame(
     "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
     "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],

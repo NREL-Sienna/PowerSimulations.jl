@@ -84,7 +84,7 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``p^\text{ld}``.
+Creates an objective function term based on the cost options, where the quantity term is defined as ``p^\text{ld}``.
 
 **Expressions:**
 
@@ -140,7 +140,7 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`VariableCost` Options](@ref) where the quantity term is defined as ``p^\text{re}``.
+Creates an objective function term based on the cost options, where the quantity term is defined as ``p^\text{re}``.
 
 **Expressions:**
 

@@ -122,6 +122,7 @@ HotStartVariable
 WarmStartVariable
 ColdStartVariable
 PowerAboveMinimumVariable
+PowerOutput
 ```
 
 ### Storage Unit Variables
