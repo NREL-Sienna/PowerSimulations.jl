@@ -117,6 +117,11 @@ Docs abbreviation: ``r``
 """
 struct ActivePowerReserveVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Service Requirement Variables
+
+Docs abbreviation: ``\\text{req}``
+"""
 struct ServiceRequirementVariable <: VariableType end
 
 """
