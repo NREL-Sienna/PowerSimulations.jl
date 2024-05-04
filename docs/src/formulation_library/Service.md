@@ -10,6 +10,10 @@ In this documentation, we first specify the available `Services` in the grid, an
 
 ## `RangeReserve`
 
+```@docs
+RangeReserve
+```
+
 For each service ``s`` of the model type `RangeReserve` the following variables are created:
 
 **Variables**:
@@ -20,6 +24,7 @@ For each service ``s`` of the model type `RangeReserve` the following variables 
 If slacks are enabled:
 - [`ReserveRequirementSlack`](@ref):
     - Bounds: [0.0, ]
+    - Default proportional cost: 1e5
     - Symbol: ``r^\text{sl}``
 
 Depending on the `PowerSystems.jl` type associated to the `RangeReserve` formulation model, the parameters are:
@@ -51,6 +56,10 @@ mdtable(combo_table, latex = false)
 
 ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
 
+**Objective:**
+
+Add a large proportional cost to the objective function if slack variables are used ``+ r^\text{sl} \cdot 10^5``
+
 **Expressions:**
 
 Adds the `ActivePowerReserveVariable` for upper/lower bound expressions of contributing devices.
@@ -67,7 +76,6 @@ similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
 \text{ActivePowerRangeExpressionLB}_{t} = p_t^\text{th} - r_{s_3,t}  \ge P^\text{th,min}
 ```
 
-
 **Constraints:** 
 
 A RangeReserve implements two fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `RangeReserve` requirement. Thus, for a service ``s``:
@@ -82,4 +90,61 @@ In addition, there is a restriction on how much each contributing device ``d`` c
 ```math
 r_{d,t} \le \text{Req} \cdot \text{PF} ,\quad \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\} \quad \text{(for a StaticReserve)} \\
 r_{d,t} \le \text{RequirementTimeSeriesParameter}_{t} \cdot \text{PF}\quad  \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\}, \quad \text{(for a VariableReserve)}
+```
+
+## `StepwiseCostReserve`
+
+```@docs
+StepwiseCostReserve
+```
+
+For each service ``s`` of the model type `RangeReserve` the following variables are created:
+
+**Variables**:
+
+- [`ActivePowerReserveVariable`](@ref):
+    - Bounds: [0.0, ]
+    - Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
+- [`ServiceRequirementVariable`](@ref):
+    - Bounds: [0.0, ]
+    - Symbol: ``\text{req}``
+
+**Static Parameters**
+
+TODO
+
+**Time Series Parameters** 
+
+TODO
+
+**Relevant Methods:**
+
+``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
+
+**Objective:**
+
+TODO
+
+**Expressions:**
+
+Adds the `ActivePowerReserveVariable` for upper/lower bound expressions of contributing devices.
+
+For `ReserveUp` types, the variable is added to `ActivePowerRangeExpressionUB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable. Similarly, For `ReserveDown` types, the variable is added to `ActivePowerRangeExpressionLB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable
+
+
+*Example*: for a thermal unit ``d`` contributing to two different `ReserveUp` ``s_1, s_2`` services (e.g. Reg-Up and Spin):
+```math
+\text{ActivePowerRangeExpressionUB}_{t} = p_t^\text{th} + r_{s_1,t} + r_{s_2, t} \le P^\text{th,max}
+```
+similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
+```math
+\text{ActivePowerRangeExpressionLB}_{t} = p_t^\text{th} - r_{s_3,t}  \ge P^\text{th,min}
+```
+
+**Constraints:** 
+
+A `StepwiseCostReserve` implements a single constraint, such that the sum of all reserves of contributing devices must be larger than the `ServiceRequirementVariable` variable. Thus, for a service ``s``:
+
+```math
+\sum_{d\in\mathcal{D}_s} r_{d,t}  \ge \text{req}_t,\quad \forall t\in \{1,\dots, T\}  
 ```

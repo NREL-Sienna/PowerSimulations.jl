@@ -14,9 +14,9 @@ end
 3. [Emulation Models](#emulation-models)
 4. [Service Models](#service-models)
 5. [Simulation Models](#simulation-models)
-6. [Variables](#variables)
-7. [Constraints](#constraints)
-8. [Parameters](#parameters)
+6. [Variables](#Variables)
+7. [Constraints](#Constraints)
+8. [Parameters](#Parameters)
 
 # Device Models
 
