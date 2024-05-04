@@ -153,13 +153,6 @@ VoltageAngle
 ```@docs
 ActivePowerReserveVariable
 ServiceRequirementVariable
-DeltaActivePowerUpVariable
-DeltaActivePowerDownVariable
-AdditionalDeltaActivePowerUpVariable
-AdditionalDeltaActivePowerDownVariable
-AreaMismatchVariable
-SteadyStateFrequencyDeviation
-SmoothACE
 SystemBalanceSlackUp
 SystemBalanceSlackDown
 ReserveRequirementSlack
