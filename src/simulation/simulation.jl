@@ -351,7 +351,8 @@ end
 function _build_decision_models!(sim::Simulation)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Decision Problems" begin
         decision_models = get_decision_models(get_models(sim))
-        Threads.@threads for model_n in 1:length(decision_models)
+        #TODO: Re-enable Threads.@threads with proper implementation of the timer.
+        for model_n in 1:length(decision_models)
             TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(decision_models[model_n]))" begin
                 _build_single_model_for_simulation(decision_models[model_n], sim, model_n)
             end
