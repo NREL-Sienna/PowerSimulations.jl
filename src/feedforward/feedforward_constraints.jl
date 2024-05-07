@@ -448,7 +448,7 @@ Constructs a equality constraint to a fix a variable in one model using the vari
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ff::FixValueFeedforward,
 ) where {T <: PSY.Component}
     time_steps = get_time_steps(container)
@@ -461,9 +461,9 @@ function add_feedforward_constraints!(
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
         IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
-        IS.@assert_op set_time == time_steps
+        #IS.@assert_op set_time == time_steps
 
-        for t in time_steps, name in set_name
+        for t in set_time, name in set_name
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
         end
     end
