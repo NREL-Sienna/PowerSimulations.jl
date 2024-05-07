@@ -294,3 +294,19 @@ function add_feedforward_constraints!(
     end
     return
 end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    agcs::IS.FlattenIteratorWrapper{T},
+    ::PIDSmoothACE,
+) where {T <: PSY.AGC, U <: LiftVariable}
+    lift_variable = get_variable(container, U(), T)
+    for index in Iterators.product(axes(lift_variable)...)
+        add_to_objective_invariant_expression!(
+            container,
+            SERVICES_SLACK_COST * lift_variable[index...],
+        )
+    end
+    return
+end
