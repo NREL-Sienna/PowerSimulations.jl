@@ -79,17 +79,28 @@ struct NetworkFlowConstraint <: ConstraintType end
 Struct to create the constraint to balance active power in nodal formulation.
 For more information check [Network Formulations](@ref network_formulations).
 
-The specified constraint depends on the network model choosen.
+The specified constraint depends on the network model chosen.
 """
 struct NodalBalanceActiveConstraint <: ConstraintType end
 """
 Struct to create the constraint to balance reactive power in nodal formulation.
 For more information check [Network Formulations](@ref network_formulations).
 
-The specified constraint depends on the network model choosen.
+The specified constraint depends on the network model chosen.
 """
 struct NodalBalanceReactiveConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
+"""
+Struct to create the constraint to participation assignments limits in the active power reserves.
+For more information check [Service Formulations](@ref service_formulations).
+
+The constraint is as follows:
+
+```math
+r_{d,t} \\le \\text{Req} \\cdot \\text{PF} ,\\quad \\forall d\\in \\mathcal{D}_s, \\forall t\\in \\{1,\\dots, T\\} \\quad \\text{(for a StaticReserve)} \\\\
+r_{d,t} \\le \\text{RequirementTimeSeriesParameter}_{t} \\cdot \\text{PF}\\quad  \\forall d\\in \\mathcal{D}_s, \\forall t\\in \\{1,\\dots, T\\}, \\quad \\text{(for a VariableReserve)}
+```
+"""
 struct ParticipationFractionConstraint <: ConstraintType end
 """
 Struct to create the PieceWiseLinearCostConstraint associated with a specified variable.
@@ -97,6 +108,21 @@ Struct to create the PieceWiseLinearCostConstraint associated with a specified v
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
 struct PieceWiseLinearCostConstraint <: ConstraintType end
+"""
+Struct to create the RampConstraint associated with a specified thermal device or reserve service.
+
+For thermal units, see more information in [Thermal Formulations](@ref ThermalGen-Formulations). The constraint is as follows:
+```math
+-R^\\text{th,dn} \\le p_t^\\text{th} - p_{t-1}^\\text{th} \\le R^\\text{th,up}, \\quad \\forall  t\\in \\{1, \\dots, T\\}
+```
+
+For Ramp Reserve, see more information in [Service Formulations](@ref service_formulations). The constraint is as follows:
+
+```math
+r_{d,t} \\le R^\\text{th,up} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D}_s, \\forall t\\in \\{1,\\dots, T\\}, \\quad \\text{(for ReserveUp)} \\\\
+r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D}_s, \\forall t\\in \\{1,\\dots, T\\}, \\quad \\text{(for ReserveDown)}
+```
+"""
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
@@ -104,8 +130,29 @@ struct RateLimitConstraint <: ConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
+"""
+Struct to create the constraint for satisfying active power reserve requirements.
+For more information check [Service Formulations](@ref service_formulations).
+
+The constraint is as follows:
+
+```math
+\\sum_{d\\in\\mathcal{D}_s} r_{d,t} + r_t^\\text{sl} \\ge \\text{Req},\\quad \\forall t\\in \\{1,\\dots, T\\} \\quad \\text{(for a StaticReserve)} \\\\
+\\sum_{d\\in\\mathcal{D}_s} r_{d,t} + r_t^\\text{sl} \\ge \\text{RequirementTimeSeriesParameter}_{t},\\quad \\forall t\\in \\{1,\\dots, T\\} \\quad \\text{(for a VariableReserve)}
+```
+"""
 struct RequirementConstraint <: ConstraintType end
 struct ReserveEnergyCoverageConstraint <: ConstraintType end
+"""
+Struct to create the constraint for ensuring that NonSpinning Reserve can be delivered from turn-off thermal units.
+For more information check [Service Formulations](@ref service_formulations) for NonSpinningReserve.
+
+The constraint is as follows:
+
+```math
+r_{d,t} \\le (1 - u_{d,t}^\\text{th}) \\cdot R^\\text{limit}_d, \\quad \\forall d \\in \\mathcal{D}_s, \\forall t \\in \\{1,\\dots, T\\}
+```
+"""
 struct ReservePowerConstraint <: ConstraintType end
 struct SACEPIDAreaConstraint <: ConstraintType end
 struct StartTypeConstraint <: ConstraintType end
@@ -117,7 +164,29 @@ struct HVDCDirection <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
+"""
+Struct to create the constraint to limit active power input expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+"""
+Struct to create the constraint to limit active power output expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t^\\text{out} \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct OutputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 """
 Struct to create the constraint to limit active power expressions.

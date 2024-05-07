@@ -196,13 +196,11 @@ InputActivePowerVariableLimitsConstraint
 OutputActivePowerVariableLimitsConstraint
 ```
 
-### Regulation and Services Constraints
+### Services Constraints
 
 ```@docs
-ParticipationAssignmentConstraint
-RegulationLimitsConstraint
 RequirementConstraint
-ReserveEnergyCoverageConstraint
+ParticipationFractionConstraint
 ReservePowerConstraint
 ```
 

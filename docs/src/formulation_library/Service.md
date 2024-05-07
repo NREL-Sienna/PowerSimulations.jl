@@ -399,7 +399,7 @@ P^\text{th,min}_d +  (\text{TF}_s - T^\text{st,up}_d) \cdot R^\text{th,up}_d \De
 Then, the constraint depends on the commitment variable ``u_t^\text{th}`` as:
 
 ```math
-r_{d,t} \le (1 - u_{d,t}^\text{th}) \cdot R^\text{limit}_d
+r_{d,t} \le (1 - u_{d,t}^\text{th}) \cdot R^\text{limit}_d, \quad \forall d \in \mathcal{D}_s, \forall t \in \{1,\dots, T\}
 ```
 
 ---
