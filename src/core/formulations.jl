@@ -229,7 +229,6 @@ abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
-
 """
 Struct to add reserves to be larger than a specified requirement for an aggregated collection of services
 """

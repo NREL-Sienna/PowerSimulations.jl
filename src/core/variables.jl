@@ -268,7 +268,6 @@ Docs abbreviation: ``\\delta``
 """
 struct PieceWiseLinearCostVariable <: VariableType end
 
-
 """
 Struct to dispatch the creation of Interface Flow Slack Up variables
 
