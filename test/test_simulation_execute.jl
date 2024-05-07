@@ -59,9 +59,7 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = HiGHS_optimizer,
-
-            ),
+                optimizer = HiGHS_optimizer),
             DecisionModel(
                 template_ed,
                 c_sys5_hy_ed;
