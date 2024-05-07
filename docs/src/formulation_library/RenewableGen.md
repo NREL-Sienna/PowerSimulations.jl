@@ -8,6 +8,14 @@ Renewable generation formulations define the optimization models that describe r
 !!! note
     Reserve variables for services are not included in the formulation, albeit their inclusion change the variables, expressions, constraints and objective functions created. A detailed description of the implications in the optimization models is described in the [Service formulation](@ref service_formulations) section.
 
+### Table of contents
+
+1. [`RenewableFullDispatch`](#RenewableFullDispatch)
+2. [`RenewableConstantPowerFactor`](#RenewableConstantPowerFactor)
+3. [Valid configurations](#Valid-configurations)
+
+---
+
 ## `RenewableFullDispatch`
 
 ```@docs

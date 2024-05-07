@@ -45,3 +45,7 @@ on which ``\delta_{k,t} \in [0,1]`` is the interpolation variable, ``p`` is the 
 \end{align*}
 ```
 on which ``\delta_{k,t} \in [0,1]`` is the interpolation variable, ``p`` is the active power of the generator and ``\text{on} \in \{0,1\}`` is the parameter that decides if the generator is available or not. In the case of a PWL convex costs, i.e. increasing slopes, the SOS constraint is omitted.
+
+## Compact representation of PWL costs
+
+TODO

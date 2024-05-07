@@ -13,6 +13,18 @@ Thermal generation formulations define the optimization models that describe the
 !!! note
     Reserve variables for services are not included in the formulation, albeit their inclusion change the variables, expressions, constraints and objective functions created. A detailed description of the implications in the optimization models is described in the [Service formulation](@ref service_formulations) section.
 
+### Table of Contents
+
+1. [`ThermalBasicDispatch`](#ThermalBasicDispatch)
+2. [`ThermalDispatchNoMin`](#ThermalDispatchNoMin)
+3. [`ThermalCompactDispatch`](#ThermalCompactDispatch)
+4. [`ThermalStandardDispatch`](#ThermalStandardDispatch)
+5. [`ThermalBasicUnitCommitment`](#ThermalBasicUnitCommitment)
+6. [`ThermalBasicCompactUnitCommitment`](#ThermalBasicCompactUnitCommitment)
+7. [`ThermalStandardUnitCommitment`](#ThermalStandardUnitCommitment)
+8. [`ThermalMultiStartUnitCommitment`](#ThermalMultiStartUnitCommitment)
+9. [Valid configurations](#Valid-configurations)
+
 ---
 
 ## `ThermalBasicDispatch`

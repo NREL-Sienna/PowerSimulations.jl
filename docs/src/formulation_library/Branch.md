@@ -3,6 +3,16 @@
 !!! note
     The usage of reactive power variables and constraints will depend on the network model used, i.e. if it uses (or not) reactive power. If the network model is purely active power based, then no variables and constraints related to reactive power are created. For the sake of completion, if the formulation allows the usage of reactive power it will be included.
 
+### Table of contents
+
+1. [`StaticBranch`](#StaticBranch)
+2. [`StaticBranchBounds`](#StaticBranchBounds)
+3. [`StaticBranchUnbounded`](#StaticBranchUnbounded)
+4. [`HVDCTwoTerminalUnbounded`](#HVDCTwoTerminalUnbounded)
+5. [`HVDCTwoTerminalLossless`](#HVDCTwoTerminalLossless)
+6. [`HVDCTwoTerminalDispatch`](#HVDCTwoTerminalDispatch)
+7. [Valid configurations](#Valid-configurations)
+
 ## `StaticBranch`
 
 Formulation valid for `PTDFPowerModel` Network model

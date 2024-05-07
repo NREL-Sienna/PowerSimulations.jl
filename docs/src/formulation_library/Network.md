@@ -17,6 +17,7 @@ Network formulations are used to describe how the network and buses are handled 
 
 All of these formulations are described in the [PowerModels.jl documentation](https://lanl-ansi.github.io/PowerModels.jl/stable/formulation-details/) and will not be described here.
 
+---
 
 ## `CopperPlatePowerModel`
 
@@ -56,6 +57,8 @@ Adds the `CopperPlateBalanceConstraint` to balance the active power of all compo
 \end{align}
 ```
 
+---
+
 ## `AreaBalancePowerModel`
 
 ```@docs
@@ -83,6 +86,8 @@ Adds the `AreaDispatchBalanceConstraint` to balance the active power of all comp
 &  \sum_{c \in \text{components}_a} p_t^c = 0, \quad \forall a\in \{1,\dots, A\}, t \in \{1, \dots, T\}
 \end{align}
 ```
+
+---
 
 ## `PTDFPowerModel`
 
