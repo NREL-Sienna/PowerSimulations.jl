@@ -307,7 +307,6 @@ end
 end
 
 # TODO: Re-enable once MarketBid Cost is re-implemented
-#=
 @testset "UC with MarketBid Cost in ThermalGenerators simulations" begin
     template = get_thermal_dispatch_template_network(
         NetworkModel(CopperPlatePowerModel; use_slacks = true),
