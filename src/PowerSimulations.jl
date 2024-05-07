@@ -530,6 +530,7 @@ include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 
 include("devices_models/devices/common/objective_functions.jl")
+include("devices_models/devices/common/market_bid_objective_function.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
