@@ -119,8 +119,41 @@ struct InterfaceFlowLimit <: ConstraintType end
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 struct OutputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+"""
+Struct to create the constraint to limit active power expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+"""
+Struct to create the constraint to limit reactive power expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+Q^\\text{min} \\le q_t \\le Q^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct ReactivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+"""
+Struct to create the constraint to limit active power expressions by a time series parameter.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+p_t \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
 # These apply to the processing of constraint duals

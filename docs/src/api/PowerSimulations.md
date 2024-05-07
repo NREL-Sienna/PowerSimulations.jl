@@ -181,9 +181,7 @@ PieceWiseLinearCostConstraint
 
 ```@docs
 AreaDispatchBalanceConstraint
-BalanceAuxConstraint
 CopperPlateBalanceConstraint
-FrequencyResponseConstraint
 NodalBalanceActiveConstraint
 NodalBalanceReactiveConstraint
 ```
