@@ -167,6 +167,37 @@ function _get_cost_function_parameter_container(
 end
 
 """
+Obtain proportional (marginal or slope) cost data in system base per unit
+depending on the specified power units
+"""
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{0}, # SystemBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{1}, # DeviceBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)
+end
+
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{2}, # Natural Units
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power
+end
+
+"""
 Adds to the cost function cost terms for sum of variables with common factor to be used for cost expression for optimization_container model.
 
 # Arguments
@@ -185,17 +216,25 @@ function _add_variable_cost_to_objective!(
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
+    power_units_value = PSY.get_power_units(cost_function).value
     cost_component = PSY.get_function_data(value_curve)
     proportional_term = PSY.get_proportional_term(cost_component)
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    proportional_cost_per_unit = get_proportional_cost_per_system_unit(
+        proportional_term,
+        Val{power_units_value},
+        base_power,
+        device_base_power,
+    )
     for time_period in get_time_steps(container)
         linear_cost = _add_proportional_term!(
             container,
             T(),
             component,
-            proportional_term * multiplier * base_power * dt,
+            proportional_cost_per_unit * multiplier * dt,
             time_period,
         )
         add_to_expression!(
