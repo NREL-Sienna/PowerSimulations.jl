@@ -9,11 +9,11 @@ end
 
 ### Table of Contents
 
-1. [Device Models](#device-models)
-2. [Decision Models](#decision-models)
-3. [Emulation Models](#emulation-models)
-4. [Service Models](#service-models)
-5. [Simulation Models](#simulation-models)
+1. [Device Models](#Device-Models)
+2. [Decision Models](#Decision-Models)
+3. [Emulation Models](#Emulation-Models)
+4. [Service Models](#Service-Models)
+5. [Simulation Models](#Simulation-Models)
 6. [Variables](#Variables)
 7. [Constraints](#Constraints)
 8. [Parameters](#Parameters)
@@ -43,14 +43,6 @@ Refer to the [Problem Templates Page](https://nrel-siip.github.io/PowerSimulatio
 &nbsp;
 ```
 
-# Service Models
-
-List of structures and methods for Service models
-
-```@docs
-ServiceModel
-```
-
 # Decision Models
 
 ```@docs
@@ -74,6 +66,19 @@ EmulationModel(::Type{M} where {M <: EmulationProblem}, ::ProblemTemplate, ::PSY
 EmulationModel(::AbstractString, ::MOI.OptimizerWithAttributes)
 build!(::EmulationModel)
 run!(::EmulationModel)
+```
+
+```@raw html
+&nbsp;
+&nbsp;
+```
+
+# Service Models
+
+List of structures and methods for Service models
+
+```@docs
+ServiceModel
 ```
 
 ```@raw html
