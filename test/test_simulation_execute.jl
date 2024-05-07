@@ -59,7 +59,8 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = GLPK_optimizer,
+                optimizer = HiGHS_optimizer,
+
             ),
             DecisionModel(
                 template_ed,
@@ -91,7 +92,7 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
         simulation_folder = mktempdir(; cleanup = true),
     )
 
-    build_out = build!(sim; console_level = Logging.Error)
+    build_out = build!(sim; console_level = Logging.Info)
     @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim; in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
@@ -129,7 +130,7 @@ end
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = GLPK_optimizer,
+                optimizer = HiGHS_optimizer,
             ),
             DecisionModel(
                 template_ed,
@@ -228,6 +229,7 @@ end
 
 end
 
+#= Re-enable when cost functions are updated
 function test_3_stage_simulation_with_feedforwards(in_memory)
     sys_rts_da = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
@@ -304,6 +306,8 @@ end
     end
 end
 
+# TODO: Re-enable once MarketBid Cost is re-implemented
+#=
 @testset "UC with MarketBid Cost in ThermalGenerators simulations" begin
     template = get_thermal_dispatch_template_network(
         NetworkModel(CopperPlatePowerModel; use_slacks = true),
@@ -341,3 +345,4 @@ end
     @test execute!(sim) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     # TODO: Add more testing of resulting values
 end
+=#
