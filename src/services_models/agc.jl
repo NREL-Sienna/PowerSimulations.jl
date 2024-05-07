@@ -56,7 +56,7 @@ function get_default_attributes(
     ::Type{PSY.AGC},
     ::Type{<:AbstractAGCFormulation},
 )
-    return Dict{String, Any}()
+    return Dict{String, Any}("aggregated_service_model" => false)
 end
 
 """
@@ -174,10 +174,10 @@ function add_constraints!(
     ::Type{T},
     ::Type{SteadyStateFrequencyDeviation},
     agcs::IS.FlattenIteratorWrapper{U},
-    ::ServiceModel{PSY.AGC, V},
+    model::ServiceModel{PSY.AGC, V},
     sys::PSY.System,
 ) where {T <: SACEPIDAreaConstraint, U <: PSY.AGC, V <: PIDSmoothACE}
-    services = get_available_components(PSY.AGC, sys)
+    services = get_available_components(model, sys)
     time_steps = get_time_steps(container)
     agc_names = PSY.get_name.(services)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
@@ -196,7 +196,7 @@ function add_constraints!(
         kp = PSY.get_K_p(service)
         ki = PSY.get_K_i(service)
         kd = PSY.get_K_d(service)
-        Δt = convert(Dates.Second, container.resolution).value
+        Δt = convert(Dates.Second, get_resolution(container)).value
         a = PSY.get_name(service)
         for t in time_steps
             if t == 1
