@@ -181,7 +181,6 @@ PieceWiseLinearCostConstraint
 
 ```@docs
 AreaDispatchBalanceConstraint
-AreaParticipationAssignmentConstraint
 BalanceAuxConstraint
 CopperPlateBalanceConstraint
 FrequencyResponseConstraint

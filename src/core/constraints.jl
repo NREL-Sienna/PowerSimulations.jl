@@ -27,6 +27,16 @@ Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(
 
 struct AbsoluteValueConstraint <: ConstraintType end
 struct ActiveRangeICConstraint <: ConstraintType end
+"""
+Struct to create the constraint to balance power across specified areas.
+For more information check [Network Formulations](@ref network_formulations).
+
+The specified constraint is generally formulated as:
+
+```math
+\\sum_{c \\in \\text{components}_a} p_t^c = 0, \\quad \\forall a\\in \\{1,\\dots, A\\}, t \\in \\{1, \\dots, T\\}
+```
+"""
 struct AreaDispatchBalanceConstraint <: ConstraintType end
 struct AreaParticipationAssignmentConstraint <: ConstraintType end
 struct BalanceAuxConstraint <: ConstraintType end
@@ -62,7 +72,7 @@ struct ParticipationFractionConstraint <: ConstraintType end
 """
 Struct to create the PieceWiseLinearCostConstraint associated with a specified variable.
 
-See [Piecewise linear cost functions](@id pwl_cost) for more information.
+See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
 struct PieceWiseLinearCostConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
