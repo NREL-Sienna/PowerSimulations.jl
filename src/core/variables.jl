@@ -190,14 +190,14 @@ struct FlowActivePowerSlackLowerBound <: VariableType end
 """
 Struct to dispatch the creation of Voltage Magnitude Variables for AC formulations
 
-Docs abbreviation: TODO
+Docs abbreviation: v
 """
 struct VoltageMagnitude <: VariableType end
 
 """
 Struct to dispatch the creation of Voltage Angle Variables for AC/DC formulations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\theta``
 """
 struct VoltageAngle <: VariableType end
 
@@ -268,8 +268,18 @@ Docs abbreviation: ``\\delta``
 """
 struct PieceWiseLinearCostVariable <: VariableType end
 
-struct InterfaceFlowSlackUp <: VariableType end
 
+"""
+Struct to dispatch the creation of Interface Flow Slack Up variables
+
+Docs abbreviation: ``f^\\text{sl,up}``
+"""
+struct InterfaceFlowSlackUp <: VariableType end
+"""
+Struct to dispatch the creation of Interface Flow Slack Down variables
+
+Docs abbreviation: ``f^\\text{sl,dn}``
+"""
 struct InterfaceFlowSlackDown <: VariableType end
 
 struct UpperBoundFeedForwardSlack <: VariableType end

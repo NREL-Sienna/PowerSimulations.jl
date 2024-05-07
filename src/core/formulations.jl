@@ -229,6 +229,10 @@ abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
+
+"""
+Struct to add reserves to be larger than a specified requirement for an aggregated collection of services
+"""
 struct GroupReserve <: AbstractReservesFormulation end
 
 """
@@ -239,7 +243,15 @@ struct RangeReserve <: AbstractReservesFormulation end
 Struct for to add reserves to be larger than a variable requirement depending of costs
 """
 struct StepwiseCostReserve <: AbstractReservesFormulation end
+"""
+Struct to add reserves to be larger than a specified requirement, with ramp constraints
+"""
 struct RampReserve <: AbstractReservesFormulation end
+"""
+Struct to add non spinning reserve requirements larger than specified requirement
+"""
 struct NonSpinningReserve <: AbstractReservesFormulation end
-
+"""
+Struct to add a constant maximum transmission flow for specified interface
+"""
 struct ConstantMaxInterfaceFlow <: AbstractServiceFormulation end

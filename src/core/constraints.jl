@@ -59,6 +59,11 @@ struct NodalBalanceActiveConstraint <: ConstraintType end
 struct NodalBalanceReactiveConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
 struct ParticipationFractionConstraint <: ConstraintType end
+"""
+Struct to create the PieceWiseLinearCostConstraint associated with a specified variable.
+
+See [Piecewise linear cost functions](@id pwl_cost) for more information.
+"""
 struct PieceWiseLinearCostConstraint <: ConstraintType end
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
