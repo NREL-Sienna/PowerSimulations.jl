@@ -41,6 +41,16 @@ struct AreaDispatchBalanceConstraint <: ConstraintType end
 struct AreaParticipationAssignmentConstraint <: ConstraintType end
 struct BalanceAuxConstraint <: ConstraintType end
 struct CommitmentConstraint <: ConstraintType end
+"""
+Struct to create the constraint to balance power in the copperplate model.
+For more information check [Network Formulations](@ref network_formulations).
+
+The specified constraint is generally formulated as:
+
+```math
+\\sum_{c \\in \\text{components}} p_t^c = 0, \\quad \\forall t \\in \\{1, \\dots, T\\}
+```
+"""
 struct CopperPlateBalanceConstraint <: ConstraintType end
 struct DurationConstraint <: ConstraintType end
 struct EnergyBalanceConstraint <: ConstraintType end
@@ -65,7 +75,19 @@ struct FlowReactivePowerToFromConstraint <: ConstraintType end #not being used
 struct HVDCPowerBalance <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
 struct NetworkFlowConstraint <: ConstraintType end
+"""
+Struct to create the constraint to balance active power in nodal formulation.
+For more information check [Network Formulations](@ref network_formulations).
+
+The specified constraint depends on the network model choosen.
+"""
 struct NodalBalanceActiveConstraint <: ConstraintType end
+"""
+Struct to create the constraint to balance reactive power in nodal formulation.
+For more information check [Network Formulations](@ref network_formulations).
+
+The specified constraint depends on the network model choosen.
+"""
 struct NodalBalanceReactiveConstraint <: ConstraintType end
 struct ParticipationAssignmentConstraint <: ConstraintType end
 struct ParticipationFractionConstraint <: ConstraintType end
