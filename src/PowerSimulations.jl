@@ -233,6 +233,8 @@ export PowerAboveMinimumVariable
 export PhaseShifterAngle
 export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
+export InterfaceFlowSlackUp
+export InterfaceFlowSlackDown
 
 # Auxiliary variables
 export TimeDurationOn

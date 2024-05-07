@@ -190,7 +190,7 @@ struct FlowActivePowerSlackLowerBound <: VariableType end
 """
 Struct to dispatch the creation of Voltage Magnitude Variables for AC formulations
 
-Docs abbreviation: v
+Docs abbreviation: ``v``
 """
 struct VoltageMagnitude <: VariableType end
 
