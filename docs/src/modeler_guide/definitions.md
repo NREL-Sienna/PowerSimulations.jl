@@ -55,6 +55,8 @@ Changing the attributes between `true` or `false` can enable/disable multiple as
 
 ## S
 
+* *Service Formulation*: The model of a service that is incorporated into a large system optimization models. `Services` (or ancillary services) are models used to ensure that there is necessary support to the power grid from generators to consumers, in order to ensure reliable operation of the system. The most common application for ancillary services are reserves, i.e., generation (or load) that is not currently being used, but can be quickly made available in case of unexpected changes of grid conditions, for example a sudden loss of load or generation. A service model needs to follow some requirements to be integrated into operation problems. For more information about valid `ServiceModel`s and their mathematical representations, check out the [Formulation Library](@ref service_formulations).
+
 * *Simulation*: A simulation is a pre-determined sequence of decision problems in a way that solving it, resembles the solution procedures commonly used by operators. The most common simulation model is the solution of a Unit Commitment and Economic Dispatch sequence of problems.
 
 * *Solver*: A solver is a software package that incorporates algorithms for finding solutions to one or more classes of optimization problem. For example, FICO Xpress is a commercial optimization solver for linear programming (LP), convex quadratic programming (QP) problems, convex quadratically constrained quadratic programming (QCQP), second-order cone programming (SOCP) and their mixed integer counterparts. **A solver is required to be specified** in order to solve any computer optimization problem.
