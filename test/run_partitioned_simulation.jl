@@ -58,8 +58,8 @@ function build_simulation(
         set_status!(th, false)
         set_active_power!(th, 0.0)
         c = get_operation_cost(th)
-        c.start_up = 1500
-        c.shut_down = 75
+        PSY.set_start_up!(c, 1500.0)
+        PSY.set_shut_down!(c, 75.0)
         set_time_at_status!(th, 1)
 
         th = get_component(ThermalStandard, sys, "Alta")
