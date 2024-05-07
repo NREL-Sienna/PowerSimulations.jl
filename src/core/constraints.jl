@@ -26,6 +26,16 @@ end
 Base.convert(::Type{ConstraintKey}, name::Symbol) = ConstraintKey(decode_symbol(name)...)
 
 struct AbsoluteValueConstraint <: ConstraintType end
+"""
+Struct to create the constraint for starting up ThermalMultiStart units.
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
+
+The specified constraint is formulated as:
+
+```math
+\\max\\{P^\\text{th,max} - P^\\text{th,shdown}, 0\\} \\cdot w_1^\\text{th} \\le u^\\text{th,init} (P^\\text{th,max} - P^\\text{th,min}) - P^\\text{th,init}
+```
+"""
 struct ActiveRangeICConstraint <: ConstraintType end
 """
 Struct to create the constraint to balance power across specified areas.
@@ -40,6 +50,18 @@ The specified constraint is generally formulated as:
 struct AreaDispatchBalanceConstraint <: ConstraintType end
 struct AreaParticipationAssignmentConstraint <: ConstraintType end
 struct BalanceAuxConstraint <: ConstraintType end
+"""
+Struct to create the commitment constraint between the on, start, and stop variables.
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
+
+The specified constraints are formulated as:
+
+```math
+u_1^\\text{th} = u^\\text{th,init} + v_1^\\text{th} - w_1^\\text{th} \\\\
+u_t^\\text{th} = u_{t-1}^\\text{th} + v_t^\\text{th} - w_t^\\text{th}, \\quad \\forall t \\in \\{2,\\dots,T\\} \\\\
+v_t^\\text{th} + w_t^\\text{th} \\le 1, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct CommitmentConstraint <: ConstraintType end
 """
 Struct to create the constraint to balance power in the copperplate model.
@@ -52,8 +74,26 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
+"""
+Struct to create the duration constraint for commitment formulations, i.e. min-up and min-down.
+
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
+"""
 struct DurationConstraint <: ConstraintType end
 struct EnergyBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that sets the reactive power to the power factor
+in the RenewableConstantPowerFactor formulation for renewable units.
+
+For more information check [RenewableGen Formulations](@ref RenewableGen-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+q_t^\\text{re} = \\text{pf} \\cdot p_t^\\text{re}, \\quad \\forall t \\in \\{1,\\dots, T\\}
+```
+"""
 struct EqualityConstraint <: ConstraintType end
 struct FeedforwardSemiContinousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
@@ -145,6 +185,7 @@ struct RequirementConstraint <: ConstraintType end
 struct ReserveEnergyCoverageConstraint <: ConstraintType end
 """
 Struct to create the constraint for ensuring that NonSpinning Reserve can be delivered from turn-off thermal units.
+
 For more information check [Service Formulations](@ref service_formulations) for NonSpinningReserve.
 
 The constraint is as follows:
@@ -156,7 +197,17 @@ r_{d,t} \\le (1 - u_{d,t}^\\text{th}) \\cdot R^\\text{limit}_d, \\quad \\forall 
 struct ReservePowerConstraint <: ConstraintType end
 struct SACEPIDAreaConstraint <: ConstraintType end
 struct StartTypeConstraint <: ConstraintType end
+"""
+Struct to create the start-up initial condition constraints for ThermalMultiStart.
+
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
+"""
 struct StartupInitialConditionConstraint <: ConstraintType end
+"""
+Struct to create the start-up time limit constraints for ThermalMultiStart.
+
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
+"""
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
 struct PhaseAngleControlLimit <: ConstraintType end
 struct HVDCLossesAbsoluteValue <: ConstraintType end

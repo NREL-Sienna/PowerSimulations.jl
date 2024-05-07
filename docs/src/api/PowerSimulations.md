@@ -161,6 +161,8 @@ ServiceRequirementVariable
 SystemBalanceSlackUp
 SystemBalanceSlackDown
 ReserveRequirementSlack
+InterfaceFlowSlackUp
+InterfaceFlowSlackDown
 ```
 
 ```@raw html
@@ -211,7 +213,6 @@ ActiveRangeICConstraint
 CommitmentConstraint
 DurationConstraint
 RampConstraint
-RampLimitConstraint
 StartupInitialConditionConstraint
 StartupTimeLimitTemperatureConstraint
 ```
@@ -220,7 +221,6 @@ StartupTimeLimitTemperatureConstraint
 
 ```@docs
 EqualityConstraint
-
 ```
 
 ### Branches Constraints
@@ -268,9 +268,7 @@ RequirementTimeSeriesParameter
 UpperBoundValueParameter
 LowerBoundValueParameter
 OnStatusParameter
-EnergyLimitParameter
 FixValueParameter
-EnergyTargetParameter
 ```
 
 ### Objective Function Parameters

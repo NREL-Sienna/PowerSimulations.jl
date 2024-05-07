@@ -586,6 +586,8 @@ ThermalMultiStartUnitCommitment
 - ``D^\text{cold}`` = `PowerSystems.get_start_time_limits(device).cold`
 - ``D^\text{warm}`` = `PowerSystems.get_start_time_limits(device).warm`
 - ``D^\text{hot}`` = `PowerSystems.get_start_time_limits(device).hot`
+- ``P^\text{th,startup}`` = `PowerSystems.get_power_trajectory(device).startup`
+- ``P^\text{th, shdown}`` = `PowerSystems.get_power_trajectory(device).shutdown`
 
 
 **Objective:**
@@ -608,7 +610,8 @@ For each thermal unit creates the range constraints for its active and reactive 
 & -R^\text{th,dn} \le \Delta p_t^\text{th} - \Delta p_{t-1}^\text{th} \le R^\text{th,up}, \quad \forall  t\in \{2, \dots, T\} \\
 & u_1^\text{th} = u^\text{th,init} + v_1^\text{th} - w_1^\text{th} \\
 & u_t^\text{th} = u_{t-1}^\text{th} + v_t^\text{th} - w_t^\text{th}, \quad \forall t \in \{2,\dots,T\} \\
-& v_t^\text{th} + w_t^\text{th} \le 1, \quad \forall t \in \{1,\dots,T\} 
+& v_t^\text{th} + w_t^\text{th} \le 1, \quad \forall t \in \{1,\dots,T\} \\
+& \max\{P^\text{th,max} - P^\text{th,shdown}, 0\} \cdot w_1^\text{th} \le u^\text{th,init} (P^\text{th,max} - P^\text{th,min}) - P^\text{th,init}
 \end{align*}
 ```
 
