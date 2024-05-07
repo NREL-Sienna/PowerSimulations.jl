@@ -376,6 +376,7 @@ function check_optimization_container(container::OptimizationContainer)
             error("The model container has invalid values in $(encode_key_as_string(k))")
         end
     end
+    container.settings_copy = copy_for_serialization(container.settings)
     return
 end
 
@@ -620,7 +621,6 @@ function build_impl!(
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
     check_optimization_container(container)
-
     return
 end
 

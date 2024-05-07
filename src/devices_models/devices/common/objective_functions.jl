@@ -625,7 +625,7 @@ end
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_data::AbstractVector{PSY.PiecewiseLinearData},
+    cost_data::AbstractVector{PSY.PiecewiseStepData},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
