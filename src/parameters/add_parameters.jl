@@ -401,8 +401,7 @@ function _add_parameters!(
         D,
         key,
         names,
-        time_steps;
-        meta = get_service_name(model),
+        time_steps,
     )
     jump_model = get_jump_model(container)
 
