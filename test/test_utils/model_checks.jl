@@ -69,7 +69,11 @@ function psi_checkobjfun_test(model::DecisionModel, exp_type)
     return
 end
 
-function moi_lbvalue_test(model::DecisionModel, con_key::PSI.ConstraintKey, value::Number)
+function moi_lbvalue_test(
+    model::DecisionModel,
+    con_key::PSI.ConstraintKey,
+    value::Number,
+)
     for con in PSI.get_constraints(model)[con_key]
         @test JuMP.constraint_object(con).set.lower == value
     end
@@ -90,8 +94,9 @@ function psi_checksolve_test(model::DecisionModel, status, expected_result, tol 
     @test isapprox(obj_value, expected_result, atol = tol)
 end
 
-function psi_ptdf_lmps(res::ProblemResults, ptdf)
-    cp_duals = read_dual(res, PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
+function psi_ptdf_lmps(res::OptimizationProblemResults, ptdf)
+    cp_duals =
+        read_dual(res, PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System))
     λ = Matrix{Float64}(cp_duals[:, propertynames(cp_duals) .!= :DateTime])
 
     flow_duals = read_dual(res, PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line))
@@ -414,9 +419,10 @@ function check_initialization_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.CONTAINER_KEY_EMPTY_META,
+    meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
-    container = model.internal.ic_model_container
+    container =
+        IS.Optimization.get_initial_conditions_model_container(PSI.get_internal(model))
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
     constraint = PSI.get_constraint(container, S(), T, meta)
@@ -428,7 +434,7 @@ function check_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.CONTAINER_KEY_EMPTY_META,
+    meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]

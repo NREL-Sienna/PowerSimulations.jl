@@ -11,16 +11,17 @@ struct GenericOpProblem <: DefaultDecisionProblem end
 
 mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
-    template::ProblemTemplate
+    template::AbstractProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, ModelInternal}
+    internal::Union{Nothing, IS.Optimization.ModelInternal}
+    simulation_info::SimulationInfo
     store::DecisionModelStore
     ext::Dict{String, Any}
 end
 
 """
     DecisionModel{M}(
-        template::ProblemTemplate,
+        template::AbstractProblemTemplate,
         sys::PSY.System,
         jump_model::Union{Nothing, JuMP.Model}=nothing;
         kwargs...) where {M<:DecisionProblem}
@@ -30,7 +31,7 @@ Build the optimization problem of type M with the specific system and template.
 # Arguments
 
   - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
+  - `template::AbstractProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}`: Enables passing a custom JuMP model. Use with care
   - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
@@ -61,7 +62,7 @@ OpModel = DecisionModel(MockOperationProblem, template, system)
 ```
 """
 function DecisionModel{M}(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     settings::Settings,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
@@ -72,7 +73,7 @@ function DecisionModel{M}(
     elseif name isa String
         name = Symbol(name)
     end
-    internal = ModelInternal(
+    internal = IS.Optimization.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
     )
     template_ = deepcopy(template)
@@ -82,13 +83,14 @@ function DecisionModel{M}(
         template_,
         sys,
         internal,
+        SimulationInfo(),
         DecisionModelStore(),
         Dict{String, Any}(),
     )
 end
 
 function DecisionModel{M}(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     name = nothing,
@@ -141,7 +143,7 @@ Build the optimization problem of type M with the specific system and template
 # Arguments
 
   - `::Type{M} where M<:DecisionProblem`: The abstract operation model type
-  - `template::ProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
+  - `template::AbstractProblemTemplate`: The model reference made up of transmission, devices, branches, and services.
   - `sys::PSY.System`: the system created using Power Systems
   - `jump_model::Union{Nothing, JuMP.Model}` = nothing: Enables passing a custom JuMP model. Use with care.
 
@@ -154,7 +156,7 @@ problem = DecisionModel(MyOpProblemType, template, system, optimizer)
 """
 function DecisionModel(
     ::Type{M},
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
@@ -163,7 +165,7 @@ function DecisionModel(
 end
 
 function DecisionModel(
-    template::ProblemTemplate,
+    template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
     kwargs...,
@@ -240,9 +242,9 @@ validate_time_series(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
-    execution_count = get_internal(model).execution_count
+    execution_count = get_execution_count(model)
     initial_time = get_initial_time(model)
-    interval = get_interval(model.internal.store_parameters)
+    interval = get_interval(model)
     return initial_time + interval * execution_count
 end
 
@@ -254,7 +256,7 @@ function init_model_store_params!(model::DecisionModel)
     resolution = PSY.get_time_series_resolution(system)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    model.internal.store_parameters = ModelStoreParams(
+    store_params = ModelStoreParams(
         num_executions,
         horizon,
         iszero(interval) ? resolution : interval,
@@ -263,13 +265,14 @@ function init_model_store_params!(model::DecisionModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
+    IS.Optimization.set_store_params!(get_internal(model), store_params)
     return
 end
 
 function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
-    _, _, forecast_count = PSY.get_time_series_counts(sys)
-    if forecast_count < 1
+    counts = PSY.get_time_series_counts(sys)
+    if counts.forecast_count < 1
         error(
             "The system does not contain forecast data. A DecisionModel can't be built.",
         )
@@ -282,7 +285,8 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         validate_template(model)
         validate_time_series(model)
         if !isempty(model)
-            @info "OptimizationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "OptimizationProblem status not ModelBuildStatus.EMPTY. Resetting"
+
             reset!(model)
         end
         # Initial time are set here because the information is specified in the
@@ -290,12 +294,12 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
         @info "Initializing Optimization Container For a DecisionModel"
         init_optimization_container!(
             get_optimization_container(model),
-            get_network_formulation(get_template(model)),
+            get_network_model(get_template(model)),
             get_system(model),
         )
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-        set_status!(model, BuildStatus.IN_PROGRESS)
+        set_status!(model, ModelBuildStatus.IN_PROGRESS)
     end
     return
 end
@@ -342,17 +346,17 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = configure_logging(model.internal, file_mode)
+    logger = IS.configure_logging(get_internal(model), PROBLEM_LOG_FILENAME, file_mode)
     try
         Logging.with_logger(logger) do
             try
                 TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
                     build_impl!(model)
                 end
-                set_status!(model, BuildStatus.BUILT)
+                set_status!(model, ModelBuildStatus.BUILT)
                 @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
-                set_status!(model, BuildStatus.FAILED)
+                set_status!(model, ModelBuildStatus.FAILED)
                 bt = catch_backtrace()
                 @error "DecisionModel Build Failed" exception = e, bt
             end
@@ -378,17 +382,22 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
-    model.internal.container = OptimizationContainer(
-        get_system(model),
-        get_settings(model),
-        nothing,
-        PSY.Deterministic,
+    IS.Optimization.set_container!(
+        get_internal(model),
+        OptimizationContainer(
+            get_system(model),
+            get_settings(model),
+            nothing,
+            PSY.Deterministic,
+        ),
     )
-    model.internal.container.built_for_recurrent_solves = was_built_for_recurrent_solves
-    model.internal.ic_model_container = nothing
+    get_optimization_container(model).built_for_recurrent_solves =
+        was_built_for_recurrent_solves
+    internal = get_internal(model)
+    IS.Optimization.set_initial_conditions_model_container!(internal, nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
-    set_status!(model, BuildStatus.EMPTY)
+    set_status!(model, ModelBuildStatus.EMPTY)
     return
 end
 
@@ -402,7 +411,7 @@ keyword arguments to that function.
 # Arguments
 
   - `model::OperationModel = model`: operation model
-  - `export_problem_results::Bool = false`: If true, export ProblemResults DataFrames to CSV files. Reduces solution times during simulation.
+  - `export_problem_results::Bool = false`: If true, export OptimizationProblemResults DataFrames to CSV files. Reduces solution times during simulation.
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
   - `disable_timer_outputs = false` : Enable/Disable timing outputs
@@ -437,7 +446,11 @@ function solve!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = configure_logging(model.internal, file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     optimizer = get(kwargs, :optimizer, nothing)
     try
         Logging.with_logger(logger) do
@@ -445,7 +458,7 @@ function solve!(
                 initialize_storage!(
                     get_store(model),
                     get_optimization_container(model),
-                    model.internal.store_parameters,
+                    get_store_params(model),
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Solve" begin
                     _pre_solve_model_checks(model, optimizer)
@@ -466,7 +479,7 @@ function solve!(
                 end
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
                     # TODO: This could be more complicated than it needs to be
-                    results = ProblemResults(model)
+                    results = OptimizationProblemResults(model)
                     serialize_results(results, get_output_dir(model))
                     export_problem_results && export_results(results)
                 end
@@ -509,7 +522,7 @@ function solve!(
     # other logic used when solving the models separate from a simulation
     solve_impl!(model)
     IS.@assert_op get_current_time(model) == start_time
-    if get_run_status(model) == RunStatus.SUCCESSFUL
+    if get_run_status(model) == RunStatus.SUCCESSFULLY_FINALIZED
         write_results!(store, model, start_time, start_time; exports = exports)
         write_optimizer_stats!(store, model, start_time)
         advance_execution_count!(model)
@@ -528,7 +541,7 @@ function update_parameters!(
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
         obj_func = get_objective_expression(get_optimization_container(model))
-        set_synchronized_status(obj_func, true)
+        set_synchronized_status!(obj_func, true)
     end
     return
 end

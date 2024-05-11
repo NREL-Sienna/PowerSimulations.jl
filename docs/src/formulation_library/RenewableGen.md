@@ -56,7 +56,8 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the cost options, where the quantity term is defined as ``- p^\text{re}`` to incentivize generation from `RenewableGen` devices.
+Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``- p^\text{re}`` to incentivize generation from `RenewableGen` devices.
+
 
 **Expressions:**
 
@@ -114,7 +115,7 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the cost options, where the quantity term is defined as ``- p_t^\text{re}`` to incentivize generation from `RenewableGen` devices.
+Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``- p_t^\text{re}`` to incentivize generation from `RenewableGen` devices.
 
 **Expressions:**
 

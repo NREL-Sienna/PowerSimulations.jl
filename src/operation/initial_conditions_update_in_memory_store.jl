@@ -9,7 +9,7 @@ function update_initial_conditions!(
     T <: InitialCondition{InitialTimeDurationOn, S},
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
-        var_val = get_aux_variable_value(store, TimeDurationOn(), get_component_type(ic))
+        var_val = get_value(store, TimeDurationOn(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return
@@ -23,7 +23,7 @@ function update_initial_conditions!(
     T <: InitialCondition{InitialTimeDurationOff, S},
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
-        var_val = get_aux_variable_value(store, TimeDurationOff(), get_component_type(ic))
+        var_val = get_value(store, TimeDurationOff(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return
@@ -37,7 +37,7 @@ function update_initial_conditions!(
     T <: InitialCondition{DevicePower, S},
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
-        var_val = get_variable_value(store, ActivePowerVariable(), get_component_type(ic))
+        var_val = get_value(store, ActivePowerVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return
@@ -51,7 +51,7 @@ function update_initial_conditions!(
     T <: InitialCondition{DeviceStatus, S},
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
-        var_val = get_variable_value(store, OnVariable(), get_component_type(ic))
+        var_val = get_value(store, OnVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return
@@ -66,7 +66,7 @@ function update_initial_conditions!(
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
         var_val =
-            get_variable_value(store, PowerAboveMinimumVariable(), get_component_type(ic))
+            get_value(store, PowerAboveMinimumVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return
@@ -80,7 +80,7 @@ function update_initial_conditions!(
     T <: InitialCondition{AreaControlError, S},
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
-        var_val = get_variable_value(store, AreaMismatchVariable(), get_component_type(ic))
+        var_val = get_value(store, AreaMismatchVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return
@@ -94,7 +94,7 @@ function update_initial_conditions!(
     T <: InitialCondition{InitialEnergyLevel, S},
 } where {S <: Union{Float64, JuMP.VariableRef}}
     for ic in ics
-        var_val = get_variable_value(store, EnergyVariable(), get_component_type(ic))
+        var_val = get_value(store, EnergyVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return

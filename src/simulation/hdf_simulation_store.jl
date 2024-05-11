@@ -231,7 +231,7 @@ Return the optimizer stats for a problem as a DataFrame.
 function read_optimizer_stats(store::HdfSimulationStore, model_name)
     dataset = _get_dataset(OptimizerStats, store, model_name)
     data = permutedims(dataset[:, :])
-    stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
+    stats = [IS.to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
     return DataFrames.DataFrame(stats)
 end
 
@@ -651,6 +651,33 @@ function write_result!(
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
+end
+
+function serialize_system!(store::HdfSimulationStore, sys::PSY.System)
+    root = store.file[HDF_SIMULATION_ROOT_PATH]
+    systems_group = _get_group_or_create(root, "systems")
+    uuid = string(IS.get_uuid(sys))
+    if haskey(systems_group, uuid)
+        @debug "System with UUID = $uuid is already stored" _group =
+            LOG_GROUP_SIMULATION_STORE
+        return
+    end
+
+    json_text = PSY.to_json(sys)
+    systems_group[uuid] = json_text
+    return
+end
+
+function deserialize_system(store::HdfSimulationStore, uuid::Base.UUID)
+    root = store.file[HDF_SIMULATION_ROOT_PATH]
+    systems_group = _get_group_or_create(root, "systems")
+    uuid_str = string(uuid)
+    if !haskey(systems_group, uuid_str)
+        error("No system with UUID $uuid_str is stored")
+    end
+
+    json_text = HDF5.read(systems_group[uuid_str])
+    return PSY.from_json(json_text, PSY.System)
 end
 
 function _check_state(store::HdfSimulationStore)

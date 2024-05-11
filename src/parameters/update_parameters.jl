@@ -42,11 +42,10 @@ function _update_parameter_values!(
     multiplier_id = get_time_series_multiplier_id(attributes)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
-    components = get_available_components(V, get_system(model), filter_func)
+    components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
-        ts_uuid = get_time_series_uuid(U, component, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(U, component, ts_name))
         if !(ts_uuid in ts_uuids)
             ts_vector = get_time_series_values!(
                 U,
@@ -83,7 +82,7 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
-    ts_uuid = get_time_series_uuid(U, service, ts_name)
+    ts_uuid = string(IS.get_time_series_uuid(U, service, ts_name))
     ts_vector = get_time_series_values!(
         U,
         model,
@@ -112,12 +111,11 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
-    components = get_available_components(V, get_system(model), filter_func)
+    components = get_available_components(device_model, get_system(model))
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
-        ts_uuid = get_time_series_uuid(U, component, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(U, component, ts_name))
         if !(ts_uuid in ts_uuids)
             # Note: This interface reads one single value per component at a time.
             value = get_time_series_values!(
@@ -333,38 +331,28 @@ end
 """
 Update parameter function an OperationModel
 """
-function update_parameter_values!(
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
-    IS.@record :execution ParameterUpdateEvent(
-        T,
-        U,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    # end
     return
 end
 
-function update_parameter_values!(
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
@@ -379,39 +367,37 @@ function update_parameter_values!(
         model,
         input,
     )
-    IS.@record :execution ParameterUpdateEvent(
-        T,
-        U,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    # end
     return
 end
 
-function update_parameter_values!(
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
     model::OperationModel,
-    key::ParameterKey{FixValueParameter, T},
+    key::ParameterKey{FixValueParameter, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
+) where {U <: PSY.Component}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
-    IS.@record :execution ParameterUpdateEvent(
-        FixValueParameter,
-        T,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    # end
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    service = PSY.get_component(U, get_system(model), key.meta)
+    @assert service !== nothing
+    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     return
 end
 
@@ -422,43 +408,12 @@ function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: ParameterType, U <: PSY.Service}
+) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     optimization_container = get_optimization_container(model)
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
-    # if the keys have strings in the meta fields
-    parameter_array = get_parameter_array(optimization_container, key)
+    update_container_parameter_values!(optimization_container, model, key, input)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    service = PSY.get_component(U, get_system(model), key.meta)
-    @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
-    IS.@record :execution ParameterUpdateEvent(
-        T,
-        U,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    #end
-    return
-end
-
-function update_parameter_values!(
-    model::OperationModel,
-    key::ParameterKey{T, U},
-    input::DatasetContainer{InMemoryDataset},
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
-    # if the keys have strings in the meta fields
-    parameter_array = get_parameter_array(optimization_container, key)
-    parameter_attributes = get_parameter_attributes(optimization_container, key)
-    service = PSY.get_component(U, get_system(model), key.meta)
-    @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
@@ -529,8 +484,7 @@ function _update_parameter_values!(
     @assert !is_synchronized(container)
     template = get_template(model)
     device_model = get_model(template, V)
-    filter_func = get_attribute(device_model, "filter_function")
-    components = get_available_components(V, get_system(model), filter_func)
+    components = get_available_components(device_model, get_system(model))
 
     for component in components
         if _has_variable_cost_parameter(component)
@@ -544,9 +498,11 @@ function _update_parameter_values!(
             variable_cost_forecast_values = TimeSeries.values(ts_vector)
             for (t, value) in enumerate(variable_cost_forecast_values)
                 if attributes.uses_compact_power
+                    # TODO implement this
                     value, _ = _convert_variable_cost(value)
                 end
-                _set_param_value!(parameter_array, PSY.get_cost(value), name, t)
+                # TODO removed an apparently unused block of code here?
+                _set_param_value!(parameter_array, PSY.get_raw_data(value), name, t)
                 update_variable_cost!(
                     container,
                     parameter_array,
@@ -571,14 +527,14 @@ function _update_pwl_cost_expression(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::Vector{NTuple{2, Float64}},
+    cost_data::PSY.PiecewiseLinearPointData,
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
-    upb = PSY.get_breakpoint_upperbounds(cost_data)
+    upb = get_breakpoint_upper_bounds(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
@@ -600,7 +556,7 @@ function update_variable_cost!(
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
-    cost_data = parameter_array[component_name, time_period]
+    cost_data = parameter_array[component_name, time_period]  # TODO is this a new-style cost?
     if iszero(cost_data)
         return
     end
@@ -627,7 +583,13 @@ function update_variable_cost!(
     end
     mult_ = parameter_multiplier[component_name, time_period]
     gen_cost =
-        _update_pwl_cost_expression(container, T, component_name, time_period, cost_data)
+        _update_pwl_cost_expression(
+            container,
+            T,
+            component_name,
+            time_period,
+            PSY.PiecewiseLinearPointData(cost_data),
+        )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return

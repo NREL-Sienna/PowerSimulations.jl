@@ -56,9 +56,53 @@ No constraints are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 ---
 
-## `Cost` Options
+## `FunctionData` Options
 
-TODO
+PowerSimulations can represent variable costs using a variety of different methods depending on the data available in each device. The following describes the objective function terms that are populated for each variable cost option.
+
+### `LinearFunctionData`
+
+`variable_cost = LinearFunctionData(c)`: creates a fixed marginal cost term in the objective function
+
+```math
+\begin{aligned}
+&  \text{min} \sum_{t} c * G_t
+\end{aligned}
+```
+
+### `QuadraticFunctionData` and `PolynomialFunctionData`
+
+`variable_cost::QuadraticFunctionData` and `variable_cost::PolynomialFunctionData`: create a polynomial cost term in the objective function
+
+```math
+\begin{aligned}
+&  \text{min} \sum_{t} \sum_{n} C_n * G_t^n
+\end{aligned}
+```
+
+where
+
+- For `QuadraticFunctionData`:
+  - ``C_0`` = `get_constant_term(variable_cost)`
+  - ``C_1`` = `get_proportional_term(variable_cost)`
+  - ``C_2`` = `get_quadratic_term(variable_cost)`
+- For `PolynomialFunctionData`:
+  - ``C_n`` = `get_coefficients(variable_cost)[n]`
+
+### `PiecewiseLinearPointData` and `PiecewiseLinearSlopeData`
+
+`variable_cost::PiecewiseLinearPointData` and `variable_cost::PiecewiseLinearSlopeData`: create a piecewise linear cost term in the objective function
+
+```math
+\begin{aligned}
+&  \text{min} \sum_{t} f(G_t)
+\end{aligned}
+```
+
+where
+
+- For `variable_cost::PiecewiseLinearPointData`, ``f(x)`` is the piecewise linear function obtained by connecting the `(x, y)` points `get_points(variable_cost)` in order.
+- For `variable_cost = PiecewiseLinearSlopeData([x0, x1, x2, ...], y0, [s0, s1, s2, ...])`, ``f(x)`` is the piecewise linear function obtained by starting at `(x0, y0)`, drawing a segment at slope `s0` to `x=x1`, drawing a segment at slope `s1` to `x=x2`, etc.
 
 ___
 

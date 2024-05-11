@@ -487,7 +487,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     )
 end
 
-ProblemResultsTypes = Union{ProblemResults, SimulationProblemResults}
+ProblemResultsTypes = Union{OptimizationProblemResults, SimulationProblemResults}
 function Base.show(io::IO, ::MIME"text/plain", input::ProblemResultsTypes)
     _show_method(io, input, :auto)
 end

@@ -73,11 +73,14 @@ function list_decision_model_keys(
     model_name::Symbol,
     container_type::Symbol,
 )
-    return list_fields(_get_model_results(store, model_name), container_type)
+    return IS.Optimization.list_fields(
+        _get_model_results(store, model_name),
+        container_type,
+    )
 end
 
 function list_emulation_model_keys(store::InMemorySimulationStore, container_type::Symbol)
-    return list_fields(store.em_data, container_type)
+    return IS.Optimization.list_fields(store.em_data, container_type)
 end
 
 function write_optimizer_stats!(
@@ -271,3 +274,5 @@ function write_optimizer_stats!(
     write_optimizer_stats!(em_data, stats, index)
     return
 end
+
+serialize_system!(::InMemorySimulationStore, ::PSY.System) = nothing

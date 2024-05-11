@@ -1,29 +1,3 @@
-struct ParameterKey{T <: ParameterType, U <: PSY.Component} <: OptimizationContainerKey
-    meta::String
-end
-
-function ParameterKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType, U <: PSY.Component}
-    if isabstracttype(U)
-        error("Type $U can't be abstract")
-    end
-    check_meta_chars(meta)
-    return ParameterKey{T, U}(meta)
-end
-
-function ParameterKey(
-    ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: ParameterType}
-    return ParameterKey(T, PSY.Component, meta)
-end
-
-get_entry_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = T
-get_component_type(::ParameterKey{T, U}) where {T <: ParameterType, U <: PSY.Component} = U
-
 abstract type ParameterAttributes end
 
 struct NoAttributes end
@@ -259,14 +233,6 @@ function set_parameter!(
 end
 
 """
-Parameters implemented through VariableRef
-"""
-abstract type RightHandSideParameter <: ParameterType end
-abstract type ObjectiveFunctionParameter <: ParameterType end
-
-abstract type TimeSeriesParameter <: RightHandSideParameter end
-
-"""
 Parameter to define active power time series
 """
 struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
@@ -310,10 +276,9 @@ struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-should_write_resulting_value(::Type{<:ParameterType}) = false
-should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
+struct EventParameter <: ParameterType end
 
-convert_result_to_natural_units(::Type{<:ParameterType}) = false
+should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

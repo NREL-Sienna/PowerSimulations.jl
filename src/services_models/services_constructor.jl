@@ -18,6 +18,7 @@ function construct_services!(
     stage::ArgumentConstructStage,
     services_template::ServicesModelContainer,
     devices_template::DevicesModelContainer,
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
@@ -37,6 +38,7 @@ function construct_services!(
             service_model,
             devices_template,
             incompatible_device_types,
+            network_model,
         )
     end
     groupservice === nothing || construct_service!(
@@ -46,6 +48,7 @@ function construct_services!(
         services_template[groupservice],
         devices_template,
         incompatible_device_types,
+        network_model,
     )
     return
 end
@@ -56,6 +59,7 @@ function construct_services!(
     stage::ModelConstructStage,
     services_template::ServicesModelContainer,
     devices_template::DevicesModelContainer,
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
     isempty(services_template) && return
     incompatible_device_types = get_incompatible_devices(devices_template)
@@ -74,6 +78,7 @@ function construct_services!(
             service_model,
             devices_template,
             incompatible_device_types,
+            network_model,
         )
     end
     groupservice === nothing || construct_service!(
@@ -83,6 +88,7 @@ function construct_services!(
         services_template[groupservice],
         devices_template,
         incompatible_device_types,
+        network_model,
     )
     return
 end
@@ -94,6 +100,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -119,6 +126,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -148,6 +156,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.StaticReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -172,6 +181,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.StaticReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -200,6 +210,7 @@ function construct_service!(
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -224,6 +235,7 @@ function construct_service!(
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -246,6 +258,7 @@ function construct_service!(
     model::ServiceModel{S, T},
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     services = get_available_components(S, sys)
     agc_areas = PSY.get_area.(services)
@@ -299,6 +312,7 @@ function construct_service!(
     model::ServiceModel{S, T},
     devices_template::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     areas = PSY.get_components(PSY.Area, sys)
     services = get_available_components(S, sys)
@@ -340,6 +354,7 @@ function construct_service!(
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.StaticReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -357,6 +372,7 @@ function construct_service!(
     model::ServiceModel{SR, GroupReserve},
     ::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.StaticReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -381,6 +397,7 @@ function construct_service!(
     model::ServiceModel{SR, RampReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -406,6 +423,7 @@ function construct_service!(
     model::ServiceModel{SR, RampReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -436,6 +454,7 @@ function construct_service!(
     model::ServiceModel{SR, NonSpinningReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.ReserveNonSpinning}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -460,6 +479,7 @@ function construct_service!(
     model::ServiceModel{SR, NonSpinningReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.ReserveNonSpinning}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -497,6 +517,7 @@ function construct_service!(
     model::ServiceModel{T, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.TransmissionInterface}
     interfaces = get_available_components(T, sys)
     if get_use_slacks(model)
@@ -524,6 +545,7 @@ function construct_service!(
     model::ServiceModel{T, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.TransmissionInterface}
     name = get_service_name(model)
     service = PSY.get_component(T, sys, name)

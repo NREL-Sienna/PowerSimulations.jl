@@ -1,3 +1,26 @@
+# Read the actual data of a result to see what the timestamps are
+actual_timestamps(result) = result |> values |> first |> x -> x.data |> keys |> collect
+
+# Test that a particular call to _read_results reads from outside the cache; pass through the results
+macro test_no_cache(expr)
+    :(@test_logs(
+        match_mode = :any,
+        (:debug, r"reading results from data store"),
+        min_level = Logging.Debug,
+        $(esc(expr))))
+end
+@test_no_cache((@debug "reading results from data store"; @debug "msg 2"))
+
+# Test that a particular call to _read_results reads from the cache; pass through the results
+macro test_yes_cache(expr)
+    :(@test_logs(
+        match_mode = :any,
+        (:debug, r"reading results from SimulationsResults cache"),
+        min_level = Logging.Debug,
+        $(esc(expr))))
+end
+@test_yes_cache((@debug "reading results from SimulationsResults cache"; @debug "msg 2"))
+
 ED_EXPECTED_VARS = [
     "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
@@ -86,7 +109,7 @@ NATURAL_UNITS_VALUES = [
 ]
 
 function compare_results(rpath, epath, model, field, name, timestamp)
-    filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
+    filename = string(name) * "_" * IS.convert_for_path(timestamp) * ".csv"
     rp = joinpath(rpath, model, field, filename)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
@@ -115,7 +138,7 @@ end
 
 function make_export_all(problems)
     return [
-        ProblemResultsExport(
+        OptimizationProblemResultsExport(
             x;
             store_all_duals = true,
             store_all_variables = true,
@@ -125,91 +148,124 @@ function make_export_all(problems)
     ]
 end
 
-function test_simulation_results(file_path::String, export_path; in_memory = false)
-    @testset "Test simulation results in_memory = $in_memory" begin
-        template_uc = get_template_basic_uc_simulation()
-        template_ed = get_template_nomin_ed_simulation()
-        set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-        set_network_model!(
-            template_uc,
-            NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
-        )
-        set_network_model!(
-            template_ed,
-            NetworkModel(
-                CopperPlatePowerModel;
-                duals = [CopperPlateBalanceConstraint],
-                use_slacks = true,
+function run_simulation(
+    c_sys5_hy_uc,
+    c_sys5_hy_ed,
+    file_path::String,
+    export_path;
+    in_memory = false,
+    system_to_file = true,
+)
+    template_uc = get_template_basic_uc_simulation()
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
+    set_network_model!(
+        template_uc,
+        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
+    )
+    set_network_model!(
+        template_ed,
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+            use_slacks = true,
+        ),
+    )
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = GLPK_optimizer,
+                system_to_file = system_to_file,
             ),
-        )
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = ipopt_optimizer,
+                system_to_file = system_to_file,
+            ),
+        ],
+    )
+
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+    sim = Simulation(;
+        name = "no_cache",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = file_path,
+    )
+
+    build_out = build!(sim; console_level = Logging.Error)
+    @test build_out == PSI.SimulationBuildStatus.BUILT
+
+    exports = Dict(
+        "models" => [
+            Dict(
+                "name" => "UC",
+                "store_all_variables" => true,
+                "store_all_parameters" => true,
+                "store_all_duals" => true,
+                "store_all_aux_variables" => true,
+            ),
+            Dict(
+                "name" => "ED",
+                "store_all_variables" => true,
+                "store_all_parameters" => true,
+                "store_all_duals" => true,
+                "store_all_aux_variables" => true,
+            ),
+        ],
+        "path" => export_path,
+        "optimizer_stats" => true,
+    )
+    execute_out = execute!(sim; exports = exports, in_memory = in_memory)
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    return sim
+end
+
+function test_simulation_results(
+    file_path::String,
+    export_path;
+    in_memory = false,
+    system_to_file = true,
+)
+    @testset "Test simulation results in_memory = $in_memory" begin
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-        models = SimulationModels(;
-            decision_models = [
-                DecisionModel(
-                    template_uc,
-                    c_sys5_hy_uc;
-                    name = "UC",
-                    optimizer = GLPK_optimizer,
-                ),
-                DecisionModel(
-                    template_ed,
-                    c_sys5_hy_ed;
-                    name = "ED",
-                    optimizer = ipopt_optimizer,
-                ),
-            ],
+        sim = run_simulation(
+            c_sys5_hy_uc,
+            c_sys5_hy_ed,
+            file_path,
+            export_path;
+            in_memory = in_memory,
+            system_to_file = system_to_file,
         )
-
-        sequence = SimulationSequence(;
-            models = models,
-            feedforwards = Dict(
-                "ED" => [
-                    SemiContinuousFeedforward(;
-                        component_type = ThermalStandard,
-                        source = OnVariable,
-                        affected_values = [ActivePowerVariable],
-                    ),
-                ],
-            ),
-            ini_cond_chronology = InterProblemChronology(),
-        )
-        sim = Simulation(;
-            name = "no_cache",
-            steps = 2,
-            models = models,
-            sequence = sequence,
-            simulation_folder = file_path,
-        )
-
-        build_out = build!(sim; console_level = Logging.Error)
-        @test build_out == PSI.BuildStatus.BUILT
-
-        exports = Dict(
-            "models" => [
-                Dict(
-                    "name" => "UC",
-                    "store_all_variables" => true,
-                    "store_all_parameters" => true,
-                    "store_all_duals" => true,
-                    "store_all_aux_variables" => true,
-                ),
-                Dict(
-                    "name" => "ED",
-                    "store_all_variables" => true,
-                    "store_all_parameters" => true,
-                    "store_all_duals" => true,
-                    "store_all_aux_variables" => true,
-                ),
-            ],
-            "path" => export_path,
-            "optimizer_stats" => true,
-        )
-        execute_out = execute!(sim; exports = exports, in_memory = in_memory)
-        @test execute_out == PSI.RunStatus.SUCCESSFUL
-
         results = SimulationResults(sim)
         test_decision_problem_results(results, c_sys5_hy_ed, c_sys5_hy_uc, in_memory)
+        if !in_memory
+            test_decision_problem_results_kwargs_handling(
+                dirname(results.path),
+                c_sys5_hy_ed,
+                c_sys5_hy_uc,
+            )
+        end
         test_emulation_problem_results(results, in_memory)
 
         results_ed = get_decision_problem_results(results, "ED")
@@ -220,13 +276,12 @@ function test_simulation_results(file_path::String, export_path; in_memory = fal
         @test isempty(results)
 
         verify_export_results(results, export_path)
-
         @test length(readdir(export_realized_results(results_ed))) === 17
 
         # Test that you can't read a failed simulation.
-        PSI.set_simulation_status!(sim, RunStatus.FAILED)
+        PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)
         PSI.serialize_status(sim)
-        @test PSI.deserialize_status(sim) == RunStatus.FAILED
+        @test PSI.deserialize_status(sim) == PSI.RunStatus.FAILED
         @test_throws ErrorException SimulationResults(sim)
         @test_logs(
             match_mode = :any,
@@ -497,6 +552,157 @@ function test_decision_problem_results_values(
             "",
         )].data,
     )
+
+    # Inspired by https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1072
+    @testset "Test cache behavior" begin
+        myres = deepcopy(results_ed)
+        initial_time = DateTime("2024-01-01T00:00:00")
+        timestamps = PSI._process_timestamps(myres, initial_time, 3)
+        variable_tuple = (ActivePowerVariable, ThermalStandard)
+        variable_key = PSI.VariableKey(variable_tuple...)
+
+        empty!(myres)
+        @test isempty(PSI.get_cached_variables(myres))
+
+        # With nothing cached, all reads should be from outside the cache
+        read = @test_no_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
+        @test actual_timestamps(read) == timestamps
+
+        # With 2 result windows cached, reading 2 windows should come from cache and reading 3 should come from outside
+        load_results!(myres, 2; initial_time = initial_time, variables = [variable_tuple])
+        @test haskey(PSI.get_cached_variables(myres), variable_key)
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
+        read = @test_no_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
+        @test actual_timestamps(read) == timestamps
+
+        # With 3 result windows cached, reading 2 and 3 windows should both come from cache
+        load_results!(myres, 3; initial_time = initial_time, variables = [variable_tuple])
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
+        read = @test_yes_cache PSI._read_results(myres, [variable_key], timestamps, nothing)
+        @test actual_timestamps(read) == timestamps
+
+        # Caching an additional variable should incur an additional read but not evict the old variable
+        @test_no_cache load_results!(
+            myres,
+            3;
+            initial_time = initial_time,
+            variables = [(ActivePowerVariable, RenewableDispatch)],
+        )
+        @test haskey(PSI.get_cached_variables(myres), variable_key)
+        @test haskey(
+            PSI.get_cached_variables(myres),
+            PSI.VariableKey(ActivePowerVariable, RenewableDispatch),
+        )
+
+        # Reset back down to 2 windows
+        empty!(myres)
+        @test_no_cache load_results!(
+            myres,
+            2;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+
+        # Loading a subset of what has already been loaded should not incur additional reads from outside the cache
+        @test_yes_cache load_results!(
+            myres,
+            2;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+        @test_yes_cache load_results!(
+            myres,
+            1;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+        # But loading a superset should
+        @test_no_cache load_results!(
+            myres,
+            3;
+            initial_time = initial_time,
+            variables = [variable_tuple],
+        )
+        empty!(myres)
+
+        # With windows 2-3 cached, reading 2-3 and 3-3 should be from cache, reading 1-2 should be from outside cache
+        @test_no_cache load_results!(
+            myres,
+            2;
+            initial_time = timestamps[2],
+            variables = [variable_tuple],
+        )
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[2:3],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[2:3]
+        read = @test_yes_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[3:3],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[3:3]
+        read = @test_no_cache PSI._read_results(
+            myres,
+            [variable_key],
+            timestamps[1:2],
+            nothing,
+        )
+        @test actual_timestamps(read) == timestamps[1:2]
+
+        empty!(myres)
+        @test isempty(PSI.get_cached_variables(myres))
+    end
+
+    @testset "Test read_results_with_keys" begin
+        myres = deepcopy(results_ed)
+        initial_time = DateTime("2024-01-01T00:00:00")
+        timestamps = PSI._process_timestamps(myres, initial_time, 3)
+        result_keys = [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
+
+        res1 = PSI.read_results_with_keys(myres, result_keys)
+        @test Set(keys(res1)) == Set(result_keys)
+        res1_df = res1[first(result_keys)]
+        @test size(res1_df) == (576, 6)
+        @test names(res1_df) ==
+              ["DateTime", "Solitude", "Park City", "Alta", "Brighton", "Sundance"]
+        @test first(eltype.(eachcol(res1_df))) === DateTime
+
+        res2 =
+            PSI.read_results_with_keys(myres, result_keys; cols = ["Park City", "Brighton"])
+        @test Set(keys(res2)) == Set(result_keys)
+        res2_df = res2[first(result_keys)]
+        @test size(res2_df) == (576, 3)
+        @test names(res2_df) ==
+              ["DateTime", "Park City", "Brighton"]
+        @test first(eltype.(eachcol(res2_df))) === DateTime
+
+        res3_df =
+            PSI.read_results_with_keys(myres, result_keys; start_time = timestamps[2])[first(
+                result_keys,
+            )]
+        @test res3_df[1, "DateTime"] == timestamps[2]
+
+        res4_df =
+            PSI.read_results_with_keys(myres, result_keys; len = 2)[first(result_keys)]
+        @test size(res4_df) == (2, 6)
+    end
 end
 
 function test_decision_problem_results(
@@ -697,10 +903,77 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
 end
 
+function test_decision_problem_results_kwargs_handling(
+    path::AbstractString,
+    c_sys5_hy_ed,
+    c_sys5_hy_uc,
+)
+    results = SimulationResults(path, "no_cache")
+    @test list_decision_problems(results) == ["ED", "UC"]
+    results_uc = get_decision_problem_results(results, "UC")
+    results_ed = get_decision_problem_results(results, "ED")
+
+    # Verify this works without system.
+    @test get_system(results_uc) === nothing
+
+    results_ed = get_decision_problem_results(results, "ED")
+    @test isnothing(get_system(results_ed))
+
+    results_ed = get_decision_problem_results(results, "ED"; populate_system = true)
+    @test !isnothing(get_system(results_ed))
+    @test PSY.get_units_base(get_system(results_ed)) == "NATURAL_UNITS"
+
+    @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+
+    set_system!(results_ed, c_sys5_hy_ed)
+    set_system!(results_uc, c_sys5_hy_uc)
+
+    results_ed = get_decision_problem_results(
+        results,
+        "ED";
+        populate_system = true,
+        populate_units = IS.UnitSystem.DEVICE_BASE,
+    )
+    @test !isnothing(PSI.get_system(results_ed))
+    @test PSY.get_units_base(get_system(results_ed)) == "DEVICE_BASE"
+
+    @test_throws ArgumentError get_decision_problem_results(
+        results,
+        "ED";
+        populate_system = false,
+        populate_units = IS.UnitSystem.DEVICE_BASE,
+    )
+
+    test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
+end
+
 @testset "Test simulation results" begin
     for in_memory in (false, true)
         file_path = mktempdir(; cleanup = true)
         export_path = mktempdir(; cleanup = true)
         test_simulation_results(file_path, export_path; in_memory = in_memory)
     end
+end
+
+@testset "Test simulation results with system from store" begin
+    file_path = mktempdir(; cleanup = true)
+    export_path = mktempdir(; cleanup = true)
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    in_memory = false
+    sim = run_simulation(
+        c_sys5_hy_uc,
+        c_sys5_hy_ed,
+        file_path,
+        export_path;
+        system_to_file = false,
+        in_memory = in_memory,
+    )
+    results = SimulationResults(PSI.get_simulation_folder(sim))
+    uc = get_decision_problem_results(results, "UC")
+    ed = get_decision_problem_results(results, "ED")
+    sys_uc = get_system!(uc)
+    sys_ed = get_system!(ed)
+    test_decision_problem_results(results, sys_ed, sys_uc, in_memory)
+    test_emulation_problem_results(results, in_memory)
 end

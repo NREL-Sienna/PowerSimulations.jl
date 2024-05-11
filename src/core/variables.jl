@@ -1,36 +1,3 @@
-abstract type SubComponentVariableType <: VariableType end
-
-struct VariableKey{T <: VariableType, U <: Union{PSY.Component, PSY.System}} <:
-       OptimizationContainerKey
-    meta::String
-end
-
-function VariableKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    if isabstracttype(U)
-        error("Type $U can't be abstract")
-    end
-    check_meta_chars(meta)
-    return VariableKey{T, U}(meta)
-end
-
-function VariableKey(
-    ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType}
-    return VariableKey(T, PSY.Component, meta)
-end
-
-get_entry_type(
-    ::VariableKey{T, U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = T
-get_component_type(
-    ::VariableKey{T, U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = U
-
 """
 Struct to dispatch the creation of Active Power Variables
 
@@ -296,10 +263,7 @@ struct LowerBoundFeedForwardSlack <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
-should_write_resulting_value(::Type{<:VariableType}) = true
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
-
-convert_result_to_natural_units(::Type{<:VariableType}) = false
 
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true

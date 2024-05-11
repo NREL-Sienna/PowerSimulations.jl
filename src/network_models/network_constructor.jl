@@ -31,7 +31,7 @@ function construct_network!(
     ::ProblemTemplate,
 )
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
-    branches = get_available_components(PSY.Branch, sys)
+    branches = get_available_components(model, PSY.Branch, sys)
     if get_use_slacks(model)
         throw(
             IS.ConflictingInputsError(
