@@ -11,7 +11,8 @@
 4. [`HVDCTwoTerminalUnbounded`](#HVDCTwoTerminalUnbounded)
 5. [`HVDCTwoTerminalLossless`](#HVDCTwoTerminalLossless)
 6. [`HVDCTwoTerminalDispatch`](#HVDCTwoTerminalDispatch)
-7. [Valid configurations](#Valid-configurations)
+7. [`PhaseAngleControl`](#PhaseAngleControl)
+8. [Valid configurations](#Valid-configurations)
 
 ## `StaticBranch`
 
@@ -56,7 +57,7 @@ For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the cons
 \begin{aligned}
 &  f_t = \sum_{i=1}^N \text{PTDF}_{i,b} \cdot \text{Bal}_{i,t}, \quad \forall t \in \{1,\dots, T\}\\
 &  f_t - f_t^\text{sl,up} \le R^\text{max},\quad \forall t \in \{1,\dots, T\} \\
-&  f_t + f_t^\text{sl,lo} \le -R^\text{max},\quad \forall t \in \{1,\dots, T\} \\
+&  f_t + f_t^\text{sl,lo} \ge -R^\text{max},\quad \forall t \in \{1,\dots, T\} 
 \end{aligned}
 ```
 on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``. 
@@ -286,6 +287,51 @@ In addition, the `HVDCLosses` are subtracted to the `from` bus in the `ActivePow
 & f_t^\text{from-to} - f_t^\text{to-from} \le \ell_t,\quad \forall t \in \{1,\dots, T\} 
 \end{align*}
 ```
+
+---
+
+## `PhaseAngleControl`
+
+Formulation valid for `PTDFPowerModel` Network model
+
+```@docs
+PhaseAngleControl
+```
+
+**Variables:**
+
+- [`FlowActivePowerVariable`](@ref):
+  - Bounds: ``(-\infty,\infty)``
+  - Symbol: ``f``
+- [`PhaseShifterAngle`](@ref):
+  - Symbol: ``\theta^\text{shift}``
+
+**Static Parameters**
+
+- ``R^\text{max}`` = `PowerSystems.get_rate(branch)`
+- ``\Theta^\text{min}`` = `PowerSystems.get_phase_angle_limits(branch).min`
+- ``\Theta^\text{max}`` = `PowerSystems.get_phase_angle_limits(branch).max`
+- ``X`` = `PowerSystems.get_x(branch)` (series reactance)
+
+**Objective:**
+
+No changes to objective function
+
+**Expressions:**
+
+Adds to the `ActivePowerBalance` expression the term ``-\theta^\text{shift} /X`` to the `from` bus and ``+\theta^\text{shift} /X`` to the `to` bus, that the `PhaseShiftingTransformer` is connected.
+
+**Constraints:**
+
+For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by: 
+
+```math
+\begin{aligned}
+&  f_t = \sum_{i=1}^N \text{PTDF}_{i,b} \cdot \text{Bal}_{i,t} + \frac{\theta^\text{shift}_t}{X}, \quad \forall t \in \{1,\dots, T\}\\
+&  -R^\text{max} \le f_t  \le R^\text{max},\quad \forall t \in \{1,\dots, T\} 
+\end{aligned}
+```
+on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``. 
 
 
 ---
