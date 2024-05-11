@@ -120,7 +120,7 @@ Error: Constraints participating in conflict basis (IIS)
 │ │                                                     ("119_PV_1", 26) │
 │ └──────────────────────────────────────────────────────────────────────┘
 │ ┌─────────────────────────────────────────────────────────────────────────────┐
-│ │ FeedforwardSemiContinousConstraint__ThermalStandard__ActivePowerVariable_ub │
+│ │ FeedforwardSemiContinuousConstraint__ThermalStandard__ActivePowerVariable_ub │
 │ ├─────────────────────────────────────────────────────────────────────────────┤
 │ │                                                            ("322_CT_6", 26) │
 │ │                                                            ("321_CC_1", 26) │

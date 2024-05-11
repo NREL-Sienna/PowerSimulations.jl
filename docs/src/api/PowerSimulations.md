@@ -22,6 +22,7 @@ end
     - [Storage Unit Variables](#Storage-Unit-Variables)
     - [Branches and Network Variables](#Branches-and-Network-Variables)
     - [Services Variables](#Services-Variables)
+    - [Feedforward Variables](#Feedforward-Variables)
 7. [Constraints](#Constraints)
     - [Common Constraints](#Common-Constraints)
     - [Network Constraints](#Network-Constraints)
@@ -195,6 +196,13 @@ InterfaceFlowSlackUp
 InterfaceFlowSlackDown
 ```
 
+### Feedforward Variables
+
+```@docs
+UpperBoundFeedForwardSlack
+LowerBoundFeedForwardSlack
+```
+
 ```@raw html
 &nbsp;
 &nbsp;
@@ -272,11 +280,9 @@ PhaseAngleControlLimit
 ### Feedforward Constraints
 
 ```@docs
-FeedforwardSemiContinousConstraint
-FeedforwardIntegralLimitConstraint
+FeedforwardSemiContinuousConstraint
 FeedforwardUpperBoundConstraint
 FeedforwardLowerBoundConstraint
-FeedforwardEnergyTargetConstraint
 ```
 
 ```@raw html

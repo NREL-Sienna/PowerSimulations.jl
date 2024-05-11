@@ -95,7 +95,7 @@ q_t^\\text{re} = \\text{pf} \\cdot p_t^\\text{re}, \\quad \\forall t \\in \\{1,\
 ```
 """
 struct EqualityConstraint <: ConstraintType end
-struct FeedforwardSemiContinousConstraint <: ConstraintType end
+struct FeedforwardSemiContinuousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
 struct FeedforwardUpperBoundConstraint <: ConstraintType end
 struct FeedforwardLowerBoundConstraint <: ConstraintType end

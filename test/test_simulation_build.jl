@@ -185,28 +185,28 @@ end
     ac_power_model = PSI.get_simulation_model(PSI.get_models(sim), :ED)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ActivePowerVariable_ub",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ActivePowerVariable_lb",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ReactivePowerVariable_ub",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ReactivePowerVariable_lb",
     )

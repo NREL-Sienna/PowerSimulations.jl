@@ -254,7 +254,7 @@ export CopperPlateBalanceConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EqualityConstraint
-export FeedforwardSemiContinousConstraint
+export FeedforwardSemiContinuousConstraint
 export FeedforwardUpperBoundConstraint
 export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
