@@ -39,6 +39,7 @@ pages = OrderedDict(
         "Load" => "formulation_library/Load.md",
         "Branch" => "formulation_library/Branch.md",
         "Services" => "formulation_library/Service.md",
+        "Feedforwards" => "formulation_library/Feedforward.md",
         "Piecewise Linear Cost" => "formulation_library/Piecewise.md",
     ],
     "API Reference" => "api/PowerSimulations.md",

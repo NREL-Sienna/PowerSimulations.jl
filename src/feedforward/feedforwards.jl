@@ -149,7 +149,16 @@ function attach_feedforward!(
 end
 
 """
-Adds a constraint to make the bounds of a variable 0.0. Effectively allows to "turn off" a value.
+    SemiContinuousFeedforward(
+        component_type::Type{<:PSY.Component},
+        source::Type{T},
+        affected_values::Vector{DataType},
+        meta = CONTAINER_KEY_EMPTY_META
+        ) where {T}
+
+It allows to enable/disable bounds to 0.0 for a specified variable. Commonly used to limit the
+`ActivePowerVariable` in an Economic Dispatch problem by the commitment decision taken in
+an another problem (typically a Unit Commitment problem).
 """
 struct SemiContinuousFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
@@ -203,7 +212,14 @@ function has_semicontinuous_feedforward(
 end
 
 """
-Fixes a Variable or Parameter Value in the model. Is the only Feed Forward that can be used
+    FixValueFeedforward(
+        component_type::Type{<:PSY.Component},
+        source::Type{T},
+        affected_values::Vector{DataType},
+        meta = CONTAINER_KEY_EMPTY_META
+        ) where {T}
+
+Fixes a Variable or Parameter Value in the model from another problem. Is the only Feed Forward that can be used
 with a Parameter or a Variable as the affected value.
 """
 struct FixValueFeedforward <: AbstractAffectFeedforward
