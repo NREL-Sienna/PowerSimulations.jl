@@ -281,8 +281,17 @@ Docs abbreviation: ``f^\\text{sl,dn}``
 """
 struct InterfaceFlowSlackDown <: VariableType end
 
-struct UpperBoundFeedForwardSlack <: VariableType end
+"""
+Struct to dispatch the creation of Slack variables for UpperBoundFeedforward
 
+Docs abbreviation: ``p^\\text{ff,ubsl}``
+"""
+struct UpperBoundFeedForwardSlack <: VariableType end
+"""
+Struct to dispatch the creation of Slack variables for LowerBoundFeedforward
+
+Docs abbreviation: ``p^\\text{ff,lbsl}``
+"""
 struct LowerBoundFeedForwardSlack <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
