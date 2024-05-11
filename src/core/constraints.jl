@@ -95,9 +95,49 @@ q_t^\\text{re} = \\text{pf} \\cdot p_t^\\text{re}, \\quad \\forall t \\in \\{1,\
 ```
 """
 struct EqualityConstraint <: ConstraintType end
+"""
+Struct to create the constraint for semicontinuous feedforward limits.
+
+For more information check [Feedforward Formulations](@ref ff_formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\begin{align*}
+&  \\text{ActivePowerRangeExpressionUB}_t := p_t^\\text{th} - \\text{on}_t^\\text{th}P^\\text{th,max} \\le 0, \\quad  \\forall t\\in \\{1, \\dots, T\\}  \\\\
+&  \\text{ActivePowerRangeExpressionLB}_t := p_t^\\text{th} - \\text{on}_t^\\text{th}P^\\text{th,min} \\ge 0, \\quad  \\forall t\\in \\{1, \\dots, T\\} 
+\\end{align*}
+```
+"""
 struct FeedforwardSemiContinuousConstraint <: ConstraintType end
 struct FeedforwardIntegralLimitConstraint <: ConstraintType end
+"""
+Struct to create the constraint for upper bound feedforward limits.
+
+For more information check [Feedforward Formulations](@ref ff_formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\begin{align*}
+&  \\text{AffectedVariable}_t - p_t^\\text{ff,ubsl} \\le \\text{SourceVariableParameter}_t, \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
 struct FeedforwardUpperBoundConstraint <: ConstraintType end
+"""
+Struct to create the constraint for lower bound feedforward limits.
+
+For more information check [Feedforward Formulations](@ref ff_formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\begin{align*}
+&  \\text{AffectedVariable}_t + p_t^\\text{ff,lbsl} \\ge \\text{SourceVariableParameter}_t, \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
 struct FeedforwardLowerBoundConstraint <: ConstraintType end
 struct FeedforwardEnergyTargetConstraint <: ConstraintType end
 struct FlowActivePowerConstraint <: ConstraintType end #not being used
