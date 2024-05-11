@@ -242,7 +242,7 @@ struct FlowReactivePowerToFromVariable <: VariableType end
 """
 Struct to dispatch the creation of Phase Shifters Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\theta^\\text{shift}``
 """
 struct PhaseShifterAngle <: VariableType end
 

@@ -103,17 +103,87 @@ struct FeedforwardEnergyTargetConstraint <: ConstraintType end
 struct FlowActivePowerConstraint <: ConstraintType end #not being used
 struct FlowActivePowerFromToConstraint <: ConstraintType end #not being used
 struct FlowActivePowerToFromConstraint <: ConstraintType end #not being used
-struct FlowLimitConstraint <: ConstraintType end #not being used
+"""
+Struct to create the constraint that set the flow limits through a PhaseShiftingTransformer.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+-R^\\text{max} \\le f_t \\le R^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct FlowLimitConstraint <: ConstraintType end
 struct FlowLimitFromToConstraint <: ConstraintType end
 struct FlowLimitToFromConstraint <: ConstraintType end
+"""
+Struct to create the constraint that set the flow limits through an HVDC two-terminal branch.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+R^\\text{min} \\le f_t \\le R^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct FlowRateConstraint <: ConstraintType end
+"""
+Struct to create the constraint that set the flow from-to limits through an HVDC two-terminal branch.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+R^\\text{from,min} \\le f_t^\\text{from-to}  \\le R^\\text{from,max}, \\forall t \\in \\{1,\\dots, T\\}
+```
+"""
 struct FlowRateConstraintFromTo <: ConstraintType end
+"""
+Struct to create the constraint that set the flow to-from limits through an HVDC two-terminal branch.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+R^\\text{to,min} \\le f_t^\\text{to-from}  \\le R^\\text{to,max},\\quad \\forall t \\in \\{1,\\dots, T\\} 
+```
+"""
 struct FlowRateConstraintToFrom <: ConstraintType end
 struct FlowReactivePowerConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerFromToConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerToFromConstraint <: ConstraintType end #not being used
+"""
+Struct to create the constraints that set the power balance across a lossy HVDC two-terminal line.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraints are formulated as:
+
+```math
+\\begin{align*}
+& f_t^\\text{to-from} - f_t^\\text{from-to} \\le L_1 \\cdot f_t^\\text{to-from} - L_0,\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& f_t^\\text{from-to} - f_t^\\text{to-from} \\ge L_1 \\cdot f_t^\\text{from-to} + L_0,\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& f_t^\\text{from-to} - f_t^\\text{to-from} \\ge - M^\\text{big} (1 - u^\\text{dir}_t),\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& f_t^\\text{to-from} - f_t^\\text{from-to} \\ge - M^\\text{big} u^\\text{dir}_t,\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
 struct HVDCPowerBalance <: ConstraintType end
 struct FrequencyResponseConstraint <: ConstraintType end
+"""
+Struct to create the constraint the AC branch flows depending on the network model.
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint depends on the network model chosen. The most common application is the StaticBranch in a PTDF Network Model:
+
+```math
+f_t = \\sum_{i=1}^N \\text{PTDF}_{i,b} \\cdot \\text{Bal}_{i,t}, \\quad \\forall t \\in \\{1,\\dots, T\\}
+```
+"""
 struct NetworkFlowConstraint <: ConstraintType end
 """
 Struct to create the constraint to balance active power in nodal formulation.
@@ -166,6 +236,20 @@ r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D
 struct RampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
+"""
+Struct to create the constraint that set the AC flow limits through branches.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\begin{align*}
+&  f_t - f_t^\\text{sl,up} \\le R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+&  f_t + f_t^\\text{sl,lo} \\ge -R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
 struct RateLimitConstraint <: ConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
@@ -209,7 +293,32 @@ Struct to create the start-up time limit constraints for ThermalMultiStart.
 For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
 """
 struct StartupTimeLimitTemperatureConstraint <: ConstraintType end
+"""
+Struct to create the constraint that set the angle limits through a PhaseShiftingTransformer.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\Theta^\\text{min} \\le \\theta^\\text{shift}_t \\le \\Theta^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct PhaseAngleControlLimit <: ConstraintType end
+"""
+Struct to create the constraints that set the losses through a lossy HVDC two-terminal line.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraints are formulated as:
+
+```math
+\\begin{align*}
+& f_t^\\text{to-from} - f_t^\\text{from-to} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& f_t^\\text{from-to} - f_t^\\text{to-from} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
