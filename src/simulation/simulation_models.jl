@@ -98,7 +98,7 @@ get_decision_models(models::SimulationModels) = models.decision_models
 get_emulation_model(models::SimulationModels) = models.emulation_model
 
 function determine_horizons!(models::SimulationModels)
-    horizons = OrderedDict{Symbol, Int}()
+    horizons = OrderedDict{Symbol, Dates.Millisecond}()
     for model in models.decision_models
         container = get_optimization_container(model)
         settings = get_settings(container)
@@ -106,13 +106,18 @@ function determine_horizons!(models::SimulationModels)
         if horizon == UNSET_HORIZON
             sys = get_system(model)
             horizon = PSY.get_forecast_horizon(sys)
-            set_horizon!(settings, horizon)
+            # TODO: PSY to return horizon in TimePeriod
+            resolution = get_resolution(settings)
+            set_horizon!(settings, horizon * resolution)
+            horizons[get_name(model)] = horizon * resolution
+        else
+            horizons[get_name(model)] = horizon
         end
-        horizons[get_name(model)] = horizon
     end
     em = models.emulation_model
     if em !== nothing
-        horizons[get_name(em)] = 1
+        resolution = get_resolution(em)
+        horizons[get_name(em)] = resolution
     end
     return horizons
 end
@@ -123,14 +128,16 @@ function determine_intervals(models::SimulationModels)
         system = get_system(model)
         interval = PSY.get_forecast_interval(system)
         if interval == Dates.Millisecond(0)
-            throw(IS.InvalidValue("Interval of model $(get_name(model)) not set correctly"))
+            throw(IS.InvalidValue("Model $(get_name(model)) interval not set correctly"))
         end
         intervals[get_name(model)] = IS.time_period_conversion(interval)
     end
     em = models.emulation_model
     if em !== nothing
-        emulator_system = get_system(em)
-        emulator_interval = PSY.get_time_series_resolution(emulator_system)
+        emulator_interval = get_resolution(em)
+        if emulator_interval == Dates.Millisecond(0)
+            throw(IS.InvalidValue("Emulator Resolution not set correctly"))
+        end
         intervals[get_name(em)] = IS.time_period_conversion(emulator_interval)
     end
     return intervals
@@ -139,9 +146,8 @@ end
 function determine_resolutions(models::SimulationModels)
     resolutions = OrderedDict{Symbol, Dates.Millisecond}()
     for model in models.decision_models
-        system = get_system(model)
-        resolution = PSY.get_time_series_resolution(system)
-        if resolution == Dates.Millisecond(0)
+        resolution = get_resolution(model)
+        if resolution == UNSET_RESOLUTION
             throw(
                 IS.InvalidValue("Resolution of model $(get_name(model)) not set correctly"),
             )
@@ -150,8 +156,7 @@ function determine_resolutions(models::SimulationModels)
     end
     em = models.emulation_model
     if em !== nothing
-        emulator_system = get_system(em)
-        emulator_resolution = PSY.get_time_series_resolution(emulator_system)
+        emulator_resolution = get_resolution(em)
         resolutions[get_name(em)] = IS.time_period_conversion(emulator_resolution)
     end
     return resolutions

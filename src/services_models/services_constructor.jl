@@ -260,7 +260,7 @@ function construct_service!(
     ::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
-    services = get_available_components(S, sys)
+    services = get_available_components(model, sys)
     agc_areas = PSY.get_area.(services)
     areas = PSY.get_components(PSY.Area, sys)
     if !isempty(setdiff(areas, agc_areas))
@@ -315,7 +315,7 @@ function construct_service!(
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {S <: PSY.AGC, T <: AbstractAGCFormulation}
     areas = PSY.get_components(PSY.Area, sys)
-    services = get_available_components(S, sys)
+    services = get_available_components(model, sys)
 
     add_constraints!(container, AbsoluteValueConstraint, LiftVariable, services, model)
     add_constraints!(
@@ -519,7 +519,7 @@ function construct_service!(
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.TransmissionInterface}
-    interfaces = get_available_components(T, sys)
+    interfaces = get_available_components(model, sys)
     if get_use_slacks(model)
         # Adding the slacks can be done in a cleaner fashion
         interface = PSY.get_component(T, sys, get_service_name(model))

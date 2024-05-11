@@ -173,7 +173,9 @@ function _get_simulation_initial_times!(sim::Simulation)
     for (model_number, model) in enumerate(get_models(sim).decision_models)
         system = get_system(model)
         model_horizon = get_horizon(model)
-        system_horizon = PSY.get_forecast_horizon(system)
+        # TODO: Use PSY forecast horizon in time not count
+        resolution = get_resolution(model)
+        system_horizon = PSY.get_forecast_horizon(system) * resolution
         system_interval = PSY.get_forecast_interval(system)
         if model_horizon > system_horizon
             throw(
@@ -212,7 +214,7 @@ Manually provided initial times have to be compatible with the specified interva
         system = get_system(get_models(sim).emulation_model)
         ini_time, ts_length =
             PSY.check_time_series_consistency(system, PSY.SingleTimeSeries)
-        resolution = PSY.get_time_series_resolution(system)
+        resolution = get_resolution(em)
         em_available_times = range(ini_time; step = resolution, length = ts_length)
         if get_initial_time(sim) ∉ em_available_times
             throw(
@@ -349,7 +351,8 @@ end
 function _build_decision_models!(sim::Simulation)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Decision Problems" begin
         decision_models = get_decision_models(get_models(sim))
-        Threads.@threads for model_n in 1:length(decision_models)
+        #TODO: Re-enable Threads.@threads with proper implementation of the timer.
+        for model_n in 1:length(decision_models)
             TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(decision_models[model_n]))" begin
                 _build_single_model_for_simulation(decision_models[model_n], sim, model_n)
             end
@@ -403,37 +406,39 @@ function _get_model_store_requirements!(
 )
     model_name = get_name(model)
     horizon = get_horizon(model)
+    resolution = get_resolution(model)
+    horizon_count = horizon ÷ resolution
     reqs = SimulationModelStoreRequirements()
     container = get_optimization_container(model)
 
     for (key, array) in get_duals(container)
         !should_write_resulting_value(key) && continue
-        reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.duals[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, true)
     end
 
     for (key, param_container) in get_parameters(container)
         !should_write_resulting_value(key) && continue
         array = get_multiplier_array(param_container)
-        reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.parameters[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, false)
     end
 
     for (key, array) in get_variables(container)
         !should_write_resulting_value(key) && continue
-        reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.variables[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, true)
     end
 
     for (key, array) in get_aux_variables(container)
         !should_write_resulting_value(key) && continue
-        reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.aux_variables[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, true)
     end
 
     for (key, array) in get_expressions(container)
         !should_write_resulting_value(key) && continue
-        reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon)
+        reqs.expressions[key] = _calc_dimensions(array, key, num_rows, horizon_count)
         add_rule!(rules, model_name, key, false)
     end
 
@@ -513,7 +518,7 @@ function _initialize_problem_storage!(
         emulation_model_store_params = OrderedDict(
             :Emulator => ModelStoreParams(
                 get_step_resolution(sequence) ÷ resolution, # Num Executions
-                1,
+                resolution, # Horizon
                 resolution, # Interval
                 resolution, # Resolution
                 get_base_power(base_params),
@@ -587,8 +592,7 @@ function _build!(
 
     em = get_emulation_model(simulation_models)
     if em !== nothing
-        system = get_system(em)
-        em_resolution = PSY.get_time_series_resolution(system)
+        em_resolution = get_resolution(em)
         set_executions!(em, get_steps(sim) * Int(step_resolution / em_resolution))
     end
 

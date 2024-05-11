@@ -458,3 +458,78 @@ function objective_function!(
     add_variable_cost!(container, ServiceRequirementVariable(), service, SR())
     return
 end
+
+function add_variable_cost!(
+    container::OptimizationContainer,
+    ::U,
+    service::T,
+    ::V,
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
+    _add_variable_cost_to_objective!(container, U(), service, V())
+    return
+end
+
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Reserve,
+    ::U,
+) where {T <: VariableType, U <: StepwiseCostReserve}
+    component_name = PSY.get_name(component)
+    @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    # If array is full of tuples with zeros return 0.0
+    time_steps = get_time_steps(container)
+    variable_cost_forecast = get_time_series(container, component, "variable_cost")
+    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
+    parameter_container = _get_cost_function_parameter_container(
+        container,
+        CostFunctionParameter(),
+        component,
+        T(),
+        U(),
+        eltype(variable_cost_forecast_values),
+    )
+    pwl_cost_expressions =
+        _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
+    jump_model = get_jump_model(container)
+    for t in time_steps
+        set_multiplier!(
+            parameter_container,
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
+            #  of base power times the time delta.
+            1.0,
+            component_name,
+            t,
+        )
+        set_parameter!(
+            parameter_container,
+            jump_model,
+            variable_cost_forecast_values[t],
+            component_name,
+            t,
+        )
+        add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+    end
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    service::T,
+    ::V,
+) where {
+    T <: Union{PSY.Reserve, PSY.ReserveNonSpinning},
+    U <: ActivePowerReserveVariable,
+    V <: AbstractReservesFormulation,
+}
+    base_p = get_base_power(container)
+    reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
+    for index in Iterators.product(axes(reserve_variable)...)
+        add_to_objective_invariant_expression!(
+            container,
+            DEFAULT_RESERVE_COST / base_p * reserve_variable[index...],
+        )
+    end
+    return
+end

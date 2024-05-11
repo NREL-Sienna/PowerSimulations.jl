@@ -36,8 +36,8 @@ function get_optimization_container(model::OperationModel)
 end
 
 function get_resolution(model::OperationModel)
-    resolution = PSY.get_time_series_resolution(get_system(model))
-    return IS.time_period_conversion(resolution)
+    resolution = get_resolution(get_settings(model))
+    return resolution
 end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
@@ -82,10 +82,11 @@ function get_current_timestamp(model::OperationModel)
 end
 
 function get_timestamps(model::OperationModel)
-    start_time = get_initial_time(get_optimization_container(model))
+    optimization_container = get_optimization_container(model)
+    start_time = get_initial_time(optimization_container)
     resolution = get_resolution(model)
-    horizon = get_horizon(model)
-    return range(start_time; length = horizon, step = resolution)
+    horizon_count = get_time_steps(optimization_container)[end]
+    return range(start_time; length = horizon_count, step = resolution)
 end
 
 function write_data(model::OperationModel, output_dir::AbstractString; kwargs...)
@@ -110,7 +111,7 @@ function solve_impl!(model::OperationModel)
         model_name = get_name(model)
         ts = get_current_timestamp(model)
         output_dir = get_output_dir(model)
-        infeasible_opt_path = joinpath(output_dir, "infeasible_$(model_name)_$(ts).json")
+        infeasible_opt_path = joinpath(output_dir, "infeasible_$(model_name).json")
         @error("Serializing Infeasible Problem at $(infeasible_opt_path)")
         serialize_optimization_model(container, infeasible_opt_path)
         if !get_allow_fails(settings)

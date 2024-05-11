@@ -113,7 +113,7 @@ The construction of an `DecisionModel` essentially applies an `ProblemTemplate`
 to `System` data to create a JuMP model.
 
 ```@example op_problem
-problem = DecisionModel(template_uc, sys; optimizer = solver, horizon = 24)
+problem = DecisionModel(template_uc, sys; optimizer = solver, horizon = Hour(24))
 build!(problem, output_dir = mktempdir())
 ```
 

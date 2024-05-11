@@ -58,8 +58,8 @@ function build_simulation(
         set_status!(th, false)
         set_active_power!(th, 0.0)
         c = get_operation_cost(th)
-        c.start_up = 1500
-        c.shut_down = 75
+        PSY.set_start_up!(c, 1500.0)
+        PSY.set_shut_down!(c, 75.0)
         set_time_at_status!(th, 1)
 
         th = get_component(ThermalStandard, sys, "Alta")
@@ -67,24 +67,24 @@ function build_simulation(
         set_active_power_limits!(th, (min = 0.05, max = 0.4))
         set_active_power!(th, 0.05)
         c = get_operation_cost(th)
-        c.start_up = 400
-        c.shut_down = 200
+        PSY.set_start_up!(c, 400.0)
+        PSY.set_shut_down!(c, 200.0)
         set_time_at_status!(th, 2)
 
         th = get_component(ThermalStandard, sys, "Brighton")
         set_active_power_limits!(th, (min = 2.0, max = 6.0))
         c = get_operation_cost(th)
         set_active_power!(th, 4.88041)
-        c.start_up = 5000
-        c.shut_down = 3000
+        PSY.set_start_up!(c, 5000.0)
+        PSY.set_shut_down!(c, 3000.0)
 
         th = get_component(ThermalStandard, sys, "Sundance")
         set_active_power_limits!(th, (min = 1.0, max = 2.0))
         set_time_limits!(th, (up = 5, down = 1))
         set_active_power!(th, 2.0)
         c = get_operation_cost(th)
-        c.start_up = 4000
-        c.shut_down = 2000
+        PSY.set_start_up!(c, 4000.0)
+        PSY.set_shut_down!(c, 2000.0)
         set_time_at_status!(th, 1)
 
         th = get_component(ThermalStandard, sys, "Solitude")
@@ -92,8 +92,8 @@ function build_simulation(
         set_ramp_limits!(th, (up = 0.0052, down = 0.0052))
         set_active_power!(th, 2.0)
         c = get_operation_cost(th)
-        c.start_up = 3000
-        c.shut_down = 1500
+        PSY.set_start_up!(c, 3000.0)
+        PSY.set_shut_down!(c, 1500.0)
     end
 
     to_json(

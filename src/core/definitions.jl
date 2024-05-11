@@ -30,7 +30,8 @@ const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 
 const TwoTerminalHVDCTypes = Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCDCLine}
 # Settings constants
-const UNSET_HORIZON = 0
+const UNSET_HORIZON = Dates.Millisecond(0)
+const UNSET_RESOLUTION = Dates.Millisecond(0)
 const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons
@@ -47,7 +48,7 @@ const SECONDS_IN_HOUR = 3600.0
 const MAX_START_STAGES = 3
 const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
-const INITIALIZATION_PROBLEM_HORIZON = 3
+const INITIALIZATION_PROBLEM_HORIZON_COUNT = 3
 # The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reserve cost isn't provided.
 const DEFAULT_RESERVE_COST = 1.0
 const KiB = 1024

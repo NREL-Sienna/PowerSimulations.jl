@@ -422,7 +422,8 @@ end
     )
 
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 432, 144, 288, 288, 288, false)
 
     template = get_thermal_dispatch_template_network(PTDFPowerModel)
@@ -431,7 +432,8 @@ end
         ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
     )
     model = DecisionModel(template, c_sys5_uc)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     moi_tests(model, 312, 0, 288, 288, 168, false)
 
     #= TODO: Fix this test

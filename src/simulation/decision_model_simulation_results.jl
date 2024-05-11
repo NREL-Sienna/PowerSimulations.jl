@@ -41,7 +41,7 @@ function SimulationProblemResults(
             ResultsByKeyAndTime(
                 list_decision_model_keys(store, name, STORE_CONTAINER_EXPRESSIONS),
             ),
-            get_horizon(problem_params),
+            get_horizon_count(problem_params),
             container_key_lookup,
         );
         kwargs...,

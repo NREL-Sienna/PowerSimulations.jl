@@ -1,5 +1,6 @@
 struct Settings
-    horizon::Base.RefValue{Int}
+    horizon::Base.RefValue{Dates.Millisecond}
+    resolution::Base.RefValue{Dates.Millisecond}
     time_series_cache_size::Int
     warm_start::Base.RefValue{Bool}
     initial_time::Base.RefValue{Dates.DateTime}
@@ -25,7 +26,8 @@ function Settings(
     initial_time::Dates.DateTime = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
     warm_start::Bool = true,
-    horizon::Int = UNSET_HORIZON,
+    horizon::Dates.Period = UNSET_HORIZON,
+    resolution::Dates.Period = UNSET_RESOLUTION,
     optimizer = nothing,
     direct_mode_optimizer::Bool = false,
     optimizer_solve_log_print::Bool = false,
@@ -42,11 +44,11 @@ function Settings(
     store_variable_names = false,
     ext = Dict{String, Any}(),
 )
-    if time_series_cache_size > 0 &&
-       sys.data.time_series_storage isa IS.InMemoryTimeSeriesStorage
-        @info "Overriding time_series_cache_size because time series is stored in memory"
-        time_series_cache_size = 0
-    end
+
+    #    if time_series_cache_size > 0 && PSY.stores_time_series_in_memory(sys)
+    #      @info "Overriding time_series_cache_size because time series is stored in memory"
+    #     time_series_cache_size = 0
+    #   end
 
     if isa(optimizer, MOI.OptimizerWithAttributes) || optimizer === nothing
         optimizer_ = optimizer
@@ -59,7 +61,8 @@ function Settings(
     end
 
     return Settings(
-        Ref(horizon),
+        Ref(IS.time_period_conversion(horizon)),
+        Ref(IS.time_period_conversion(resolution)),
         time_series_cache_size,
         Ref(warm_start),
         Ref(initial_time),
@@ -130,6 +133,7 @@ function restore_from_copy(
 end
 
 get_horizon(settings::Settings) = settings.horizon[]
+get_resolution(settings::Settings) = settings.resolution[]
 get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]
 get_optimizer(settings::Settings) = settings.optimizer
 get_ext(settings::Settings) = settings.ext
@@ -150,8 +154,13 @@ get_store_variable_names(settings::Settings) = settings.store_variable_names
 get_rebuild_model(settings::Settings) = settings.rebuild_model
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
 
-function set_horizon!(settings::Settings, horizon::Int)
-    settings.horizon[] = horizon
+function set_horizon!(settings::Settings, horizon::Dates.TimePeriod)
+    settings.horizon[] = IS.time_period_conversion(horizon)
+    return
+end
+
+function set_resolution!(settings::Settings, resolution::Dates.TimePeriod)
+    settings.resolution[] = IS.time_period_conversion(resolution)
     return
 end
 

@@ -400,7 +400,7 @@ function check_initialization_variable_count(
     no_component = length(PSY.get_components(PSY.get_available, T, model.sys))
     variable = PSI.get_initial_condition_value(initial_conditions_data, S(), T)
     rows, cols = size(variable)
-    @test rows * cols == no_component * PSI.INITIALIZATION_PROBLEM_HORIZON
+    @test rows * cols == no_component * PSI.INITIALIZATION_PROBLEM_HORIZON_COUNT
 end
 
 function check_variable_count(
