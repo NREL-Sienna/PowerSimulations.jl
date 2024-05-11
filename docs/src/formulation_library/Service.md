@@ -16,6 +16,7 @@ In this documentation, we first specify the available `Services` in the grid, an
 4. [`RampReserve`](#RampReserve)
 5. [`NonSpinningReserve`](#NonSpinningReserve)
 6. [`ConstantMaxInterfaceFlow`](#ConstantMaxInterfaceFlow)
+7. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
 
 ---
 
@@ -376,7 +377,7 @@ similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
 
 **Constraints:** 
 
-A NonSpinningReserve implements three fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `RampReserve` requirement. Thus, for a service ``s``:
+A NonSpinningReserve implements three fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `NonSpinningReserve` requirement. Thus, for a service ``s``:
 
 ```math
 \sum_{d\in\mathcal{D}_s} r_{d,t} + r_t^\text{sl} \ge \text{RequirementTimeSeriesParameter}_{t},\quad \forall t\in \{1,\dots, T\}
@@ -447,4 +448,48 @@ It adds the constraint to limit the `InterfaceTotalFlow` by the specified bounds
 
 ```math
 F^\text{min} \le f^\text{sl,up}_t - f^\text{sl,dn}_t + \sum_{d\in\mathcal{D}_s} \text{Dir}_d f_{d,t} \le F^\text{max}, \quad \forall t \in \{1,\dots,T\}
+```
+
+## Changes on Expressions due to Service models
+
+It is important to note that by adding a service to a Optimization Problem, variables for each contributing device must be created. For example, for every contributing generator ``d \in \mathcal{D}`` that is participating in services ``s_1,s_2,s_3``, it is required to create three set of `ActivePowerReserveVariable` variables:
+
+```math
+r_{s_1,d,t},~ r_{s_2,d,t},~ r_{s_3,d,t},\quad \forall d \in \mathcal{D}, \forall t \in \{1,\dots, T\}
+```
+
+### Changes on UpperBound (UB) and LowerBound (LB) limits
+
+Each contributing generator ``d`` has active power limits that the reserve variables affect. In simple terms, the limits are implemented using expressions `ActivePowerRangeExpressionUB` and `ActivePowerRangeExpressionLB` as:
+
+```math
+\text{ActivePowerRangeExpressionUB}_t \le P^\text{max} \\
+\text{ActivePowerRangeExpressionLB}_t \ge P^\text{min}
+```
+`ReserveUp` type variables contribute to the upper bound expression, while `ReserveDown` variables contribute to the lower bound expressions. So if ``s_1,s_2`` are `ReserveUp` services, and ``s_3`` is a `ReserveDown` service, then for a thermal generator ``d`` using a `ThermalStandardDispatch`:
+
+```math
+\begin{align*}
+& p_{d,t}^\text{th} + r_{s_1,d,t} + r_{s_2,d,t} \le P^\text{th,max},\quad \forall d\in \mathcal{D}^\text{th}, \forall t \in \{1,\dots,T\} \\
+& p_{d,t}^\text{th} - r_{s_3,d,t} \ge P^\text{th,min},\quad \forall d\in \mathcal{D}^\text{th}, \forall t \in \{1,\dots,T\}
+\end{align*}
+```
+
+while for a renewable generator ``d`` using a `RenewableFullDispatch`:
+
+```math
+\begin{align*}
+& p_{d,t}^\text{re} + r_{s_1,d,t} + r_{s_2,d,t} \le \text{ActivePowerTimeSeriesParameter}_t,\quad \forall d\in \mathcal{D}^\text{re}, \forall t \in \{1,\dots,T\}\\
+& p_{d,t}^\text{re} - r_{s_3,d,t} \ge 0,\quad \forall d\in \mathcal{D}^\text{re}, \forall t \in \{1,\dots,T\}
+\end{align*}
+```
+
+### Changes in Ramp limits
+
+For the case of Ramp Limits (of formulation that model these limits), the reserve variables only affect the current time, and not the previous time. Then, for the same example as before:
+```math
+\begin{align*}
+& p_{d,t}^\text{th} + r_{s_1,d,t} + r_{s_2,d,t} - p_{d,t-1}^\text{th}\le R^\text{th,up},\quad \forall d\in \mathcal{D}^\text{th}, \forall t \in \{1,\dots,T\}\\
+& p_{d,t}^\text{th} - r_{s_3,d,t} - p_{d,t-1}^\text{th}  \ge -R^\text{th,dn},\quad \forall d\in \mathcal{D}^\text{th}, \forall t \in \{1,\dots,T\}
+\end{align*}
 ```
