@@ -453,11 +453,11 @@ end
 Obtain the normalized PiecewiseLinear cost data in system base per unit
 depending on the specified power units.
 
-Note that the costs (y-axis) are always in $/h so
+Note that the costs (y-axis) are always in \$/h so
 they do not require transformation
 """
 function get_piecewise_pointcurve_per_system_unit(
-    cost_component::PiecewiseLinearData,
+    cost_component::PSY.PiecewiseLinearData,
     ::Val{0}, # SystemBase Units
     system_base_power::Float64,
     device_base_power::Float64,
@@ -466,7 +466,7 @@ function get_piecewise_pointcurve_per_system_unit(
 end
 
 function get_piecewise_pointcurve_per_system_unit(
-    cost_component::PiecewiseLinearData,
+    cost_component::PSY.PiecewiseLinearData,
     ::Val{1}, # DeviceBase Units
     system_base_power::Float64,
     device_base_power::Float64,
@@ -481,7 +481,7 @@ function get_piecewise_pointcurve_per_system_unit(
 end
 
 function get_piecewise_pointcurve_per_system_unit(
-    cost_component::PiecewiseLinearData,
+    cost_component::PSY.PiecewiseLinearData,
     ::Val{2}, # Natural Units
     system_base_power::Float64,
     device_base_power::Float64,

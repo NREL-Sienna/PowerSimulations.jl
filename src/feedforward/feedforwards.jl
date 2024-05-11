@@ -61,10 +61,10 @@ end
 Constructs a parameterized upper bound constraint to implement feedforward from other models.
 
 # Arguments:
-* component_type::Type{<:PSY.Component} : Specify the type of component on which the Feedforward will be applied
-* source::Type{T} : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
-* affected_values::Vector{DataType} : Specify the variable on which the upper bound will be applied using the source values
-* add_slacks::Bool = false : Add slacks variables to relax the upper bound constraint.
+* `component_type::Type{<:PSY.Component}` : Specify the type of component on which the Feedforward will be applied
+* `source::Type{T}` : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
+* `affected_values::Vector{DataType}` : Specify the variable on which the upper bound will be applied using the source values
+* `add_slacks::Bool = false` : Add slacks variables to relax the upper bound constraint.
 
 """
 struct UpperBoundFeedforward <: AbstractAffectFeedforward
@@ -113,10 +113,10 @@ get_slacks(ff::UpperBoundFeedforward) = ff.add_slacks
 Constructs a parameterized lower bound constraint to implement feedforward from other models.
 
 # Arguments:
-* component_type::Type{<:PSY.Component} : Specify the type of component on which the Feedforward will be applied
-* source::Type{T} : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
-* affected_values::Vector{DataType} : Specify the variable on which the lower bound will be applied using the source values
-* add_slacks::Bool = false : Add slacks variables to relax the lower bound constraint.
+* `component_type::Type{<:PSY.Component}` : Specify the type of component on which the Feedforward will be applied
+* `source::Type{T}` : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
+* `affected_values::Vector{DataType}` : Specify the variable on which the lower bound will be applied using the source values
+* `add_slacks::Bool = false` : Add slacks variables to relax the lower bound constraint.
 
 """
 struct LowerBoundFeedforward <: AbstractAffectFeedforward
@@ -191,9 +191,9 @@ It allows to enable/disable bounds to 0.0 for a specified variable. Commonly use
 an another problem (typically a Unit Commitment problem).
 
 # Arguments:
-* component_type::Type{<:PSY.Component} : Specify the type of component on which the Feedforward will be applied
-* source::Type{T} : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
-* affected_values::Vector{DataType} : Specify the variable on which the semicontinuous limit will be applied using the source values
+* `component_type::Type{<:PSY.Component}` : Specify the type of component on which the Feedforward will be applied
+* `source::Type{T}` : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
+* `affected_values::Vector{DataType}` : Specify the variable on which the semicontinuous limit will be applied using the source values
 """
 struct SemiContinuousFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey
@@ -258,9 +258,9 @@ Fixes a Variable or Parameter Value in the model from another problem. Is the on
 with a Parameter or a Variable as the affected value.
 
 # Arguments:
-* component_type::Type{<:PSY.Component} : Specify the type of component on which the Feedforward will be applied
-* source::Type{T} : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
-* affected_values::Vector{DataType} : Specify the variable on which the fix value will be applied using the source values
+* `component_type::Type{<:PSY.Component}` : Specify the type of component on which the Feedforward will be applied
+* `source::Type{T}` : Specify the VariableType, ParameterType or AuxVariableType as the source of values for the Feedforward
+* `affected_values::Vector{DataType}` : Specify the variable on which the fix value will be applied using the source values
 """
 struct FixValueFeedforward <: AbstractAffectFeedforward
     optimization_container_key::OptimizationContainerKey

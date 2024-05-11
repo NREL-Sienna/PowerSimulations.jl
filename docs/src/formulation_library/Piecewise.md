@@ -13,8 +13,8 @@ A special ordered set (SOS) is an ordered set of variables used as an additional
 
 Piecewise-linear costs are defined by a sequence of points representing the line segments for each generator: ``(P_k^\text{max}, C_k)`` on which we assume ``C_k`` is the cost of generating ``P_k^\text{max}`` power, and ``k \in \{1,\dots, K\}`` are the number of segments each generator cost function has.
 
-!!!note
-    `PowerSystems` has more options to specify cost functions for each thermal unit. Independent of which form of the cost data is provided, `PowerSimulations.jl` will internally transform the data to use the λ-model formulation. See TODO: ADD PSY COST DOCS for more information.
+!!! note
+    `PowerSystems` has more options to specify cost functions for each thermal unit. Independent of which form of the cost data is provided, `PowerSimulations.jl` will internally transform the data to use the λ-model formulation. See **TODO: ADD PSY COST DOCS** for more information.
 
 ### Commitment formulation
 
@@ -48,4 +48,30 @@ on which ``\delta_{k,t} \in [0,1]`` is the interpolation variable, ``p`` is the 
 
 ## Compact representation of PWL costs
 
-TODO
+### Commitment Formulation
+
+```math
+\begin{align*}
+ \min_{\substack{p_{t}, \delta_{k,t}}}
+ & \sum_{t \in \mathcal{T}} \left(\sum_{k \in \mathcal{K}} C_{k,t} \delta_{k,t} \right) \Delta t\\
+ & \sum_{k \in \mathcal{K}} P_{k}^{\text{max}} \delta_{k,t} = P^{\text{min}} u_{t} + \Delta p_{t} & \forall t \in \mathcal{T}\\
+ & \sum_{k \in \mathcal{K}} \delta_{k,t} = u_{t} & \forall t \in \mathcal{T}\\
+ & 0 \leq \Delta p_{t} \leq \left( P^{\text{max}} - P^{\text{min}} \right)u_{t} &  \forall t \in \mathcal{T}\\
+ &\left \{\delta_{i,t} \dots \delta_{k,t} \right \} \in \text{SOS}_{2} & \forall t \in \mathcal{T}
+\end{align*}
+```
+on which ``\delta_{k,t} \in [0,1]`` is the interpolation variable, ``\Delta p`` is the active power of the generator above the minimum power and ``u \in \{0,1\}`` is the commitment variable of the generator. In the case of a PWL convex costs, i.e. increasing slopes, the SOS constraint is omitted.
+
+### Dispatch formulation
+
+```math
+\begin{align*}
+ \min_{\substack{p_{t}, \delta_{k,t}}}
+ & \sum_{t \in \mathcal{T}} \left(\sum_{k \in \mathcal{K}} C_{k,t} \delta_{k,t} \right) \Delta t\\
+ & \sum_{k \in \mathcal{K}} P_{k}^{\text{max}} \delta_{k,t} = P^{\text{min}} \text{on}_{t} + \Delta p_{t} & \forall t \in \mathcal{T}\\
+ & \sum_{k \in \mathcal{K}} \delta_{k,t} = \text{on}_{t} & \forall t \in \mathcal{T}\\
+ & 0 \leq \Delta p_{t} \leq \left( P^{\text{max}} - P^{\text{min}} \right)\text{on}_{t} & \forall t \in \mathcal{T}\\
+ &\left \{\delta_{i,t} \dots \delta_{k,t} \right \} \in \text{SOS}_{2} & \forall t \in \mathcal{T}
+\end{align*}
+```
+on which ``\delta_{k,t} \in [0,1]`` is the interpolation variable,  ``\Delta p`` is the active power of the generator above the minimum power and ``u \in \{0,1\}`` is the commitment variable of the generator. In the case of a PWL convex costs, i.e. increasing slopes, the SOS constraint is omitted.
