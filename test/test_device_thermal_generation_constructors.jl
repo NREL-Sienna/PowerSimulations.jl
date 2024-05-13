@@ -14,7 +14,7 @@ test_path = mktempdir()
     ]
     for (i, cost_reference) in test_cases
         @testset "$i" begin
-            sys = build_system(PSITestSystems,"c_$(i)")
+            sys = build_system(PSITestSystems, "c_$(i)")
             template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
             set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
             set_device_model!(template, PowerLoad, StaticPowerLoad)
@@ -24,7 +24,7 @@ test_path = mktempdir()
                 name = "UC_$(i)",
                 optimizer = HiGHS_optimizer,
                 system_to_file = false,
-                optimizer_solve_log_print = true
+                optimizer_solve_log_print = true,
             )
             @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
@@ -46,7 +46,7 @@ end
     ]
     for i in test_cases
         @testset "$i" begin
-            sys = build_system(PSITestSystems,"c_$(i)")
+            sys = build_system(PSITestSystems, "c_$(i)")
             template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
             set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
             #=

@@ -161,7 +161,6 @@ function get_proportional_cost_per_system_unit(
     return cost_term * system_base_power
 end
 
-
 """
 Obtain quadratic cost data in system base per unit
 depending on the specified power units
