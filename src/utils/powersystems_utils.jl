@@ -136,25 +136,39 @@ depending on the specified power units
 """
 function get_proportional_cost_per_system_unit(
     cost_term::Float64,
-    ::Val{0}, # SystemBase Unit
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_proportional_cost_per_system_unit(
+        cost_term,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
     system_base_power::Float64,
     device_base_power::Float64,
 )
     return cost_term
 end
 
-function get_proportional_cost_per_system_unit(
+function _get_proportional_cost_per_system_unit(
     cost_term::Float64,
-    ::Val{1}, # DeviceBase Unit
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
     system_base_power::Float64,
     device_base_power::Float64,
 )
     return cost_term * (system_base_power / device_base_power)
 end
 
-function get_proportional_cost_per_system_unit(
+function _get_proportional_cost_per_system_unit(
     cost_term::Float64,
-    ::Val{2}, # Natural Units
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
     system_base_power::Float64,
     device_base_power::Float64,
 )
@@ -167,31 +181,103 @@ depending on the specified power units
 """
 function get_quadratic_cost_per_system_unit(
     cost_term::Float64,
-    ::Val{0}, # SystemBase Unit
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_quadratic_cost_per_system_unit(
+        cost_term,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE}, # SystemBase Unit
     system_base_power::Float64,
     device_base_power::Float64,
 )
     return cost_term
 end
 
-function get_quadratic_cost_per_system_unit(
+function _get_quadratic_cost_per_system_unit(
     cost_term::Float64,
-    ::Val{1}, # DeviceBase Unit
+    ::Val{PSY.UnitSystem.DEVICE_BASE}, # DeviceBase Unit
     system_base_power::Float64,
     device_base_power::Float64,
 )
     return cost_term * (system_base_power / device_base_power)^2
 end
 
-function get_quadratic_cost_per_system_unit(
+function _get_quadratic_cost_per_system_unit(
     cost_term::Float64,
-    ::Val{2}, # Natural Units
+    ::Val{PSY.UnitSystem.NATURAL_UNITS}, # Natural Units
     system_base_power::Float64,
     device_base_power::Float64,
 )
     return cost_term * system_base_power^2
 end
 
+"""
+Obtain the normalized PiecewiseLinear cost data in system base per unit
+depending on the specified power units.
+
+Note that the costs (y-axis) are always in \$/h so
+they do not require transformation
+"""
+function get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_piecewise_pointcurve_per_system_unit(
+        cost_component,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_component
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    points = cost_component.points
+    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
+    for (ix, point) in enumerate(points)
+        points_normalized[ix] =
+            (x = point.x * (device_base_power / system_base_power), y = point.y) # case for natural units
+    end
+    return typeof(cost_component)(points_normalized)
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    points = cost_component.points
+    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
+    for (ix, point) in enumerate(points)
+        points_normalized[ix] = (x = point.x / system_base_power, y = point.y) # case for natural units
+    end
+    return typeof(cost_component)(points_normalized)
+end
 ##################################################
 ############### Auxiliary Methods ################
 ##################################################

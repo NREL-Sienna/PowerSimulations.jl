@@ -281,12 +281,12 @@ function _add_variable_cost_to_objective!(
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
-    power_units_value = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     proportional_term = PSY.get_proportional_term(cost_component)
     proportional_term_per_unit = get_proportional_cost_per_system_unit(
         proportional_term,
-        Val{power_units_value}(),
+        power_units,
         base_power,
         device_base_power,
     )
@@ -331,12 +331,12 @@ function _add_variable_cost_to_objective!(
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
-    power_units_value = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     proportional_term = PSY.get_proportional_term(cost_component)
     fuel_curve_per_unit = get_proportional_cost_per_system_unit(
         proportional_term,
-        Val{power_units_value}(),
+        power_units,
         base_power,
         device_base_power,
     )
@@ -382,7 +382,7 @@ function _add_variable_cost_to_objective!(
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
-    power_units_value = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     quadratic_term = PSY.get_quadratic_term(cost_component)
     proportional_term = PSY.get_proportional_term(cost_component)
@@ -393,13 +393,13 @@ function _add_variable_cost_to_objective!(
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     proportional_term_per_unit = get_proportional_cost_per_system_unit(
         proportional_term,
-        Val{power_units_value}(),
+        power_units,
         base_power,
         device_base_power,
     )
     quadratic_term_per_unit = get_quadratic_cost_per_system_unit(
         quadratic_term,
-        Val{power_units_value}(),
+        power_units_value,
         base_power,
         device_base_power,
     )
@@ -481,51 +481,6 @@ end
 ##################################################
 
 """
-Obtain the normalized PiecewiseLinear cost data in system base per unit
-depending on the specified power units.
-
-Note that the costs (y-axis) are always in \$/h so
-they do not require transformation
-"""
-function _get_piecewise_pointcurve_per_system_unit(
-    cost_component::PSY.PiecewiseLinearData,
-    ::Val{0}, # SystemBase Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_component
-end
-
-function _get_piecewise_pointcurve_per_system_unit(
-    cost_component::PSY.PiecewiseLinearData,
-    ::Val{1}, # DeviceBase Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    points = cost_component.points
-    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
-    for (ix, point) in enumerate(points)
-        points_normalized[ix] =
-            (x = point.x * (device_base_power / system_base_power), y = point.y) # case for natural units
-    end
-    return typeof(cost_component)(points_normalized)
-end
-
-function _get_piecewise_pointcurve_per_system_unit(
-    cost_component::PSY.PiecewiseLinearData,
-    ::Val{2}, # Natural Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    points = cost_component.points
-    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
-    for (ix, point) in enumerate(points)
-        points_normalized[ix] = (x = point.x / system_base_power, y = point.y) # case for natural units
-    end
-    return typeof(cost_component)(points_normalized)
-end
-
-"""
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
 # Arguments
@@ -549,15 +504,15 @@ function _add_variable_cost_to_objective!(
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
-    power_units = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     if all(iszero.((point -> point.y).(PSY.get_points(cost_component))))  # TODO I think this should have been first. before?
         @debug "All cost terms for component $(component_name) are 0.0" _group =
             LOG_GROUP_COST_FUNCTIONS
         return
     end
-    cost_component_normalized = _get_piecewise_pointcurve_per_system_unit(
+    cost_component_normalized = get_piecewise_pointcurve_per_system_unit(
         cost_component,
-        Val{power_units}(),
+        power_units,
         base_power,
         device_base_power,
     )
