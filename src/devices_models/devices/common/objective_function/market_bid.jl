@@ -2,6 +2,51 @@
 ################# MarketBidCost ##################
 ##################################################
 
+# For Market Bid 
+
+function _add_pwl_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    component_name::String,
+    time_period::Int,
+    cost_data::PSY.PiecewiseStepData,
+) where {T <: PSY.Component}
+    var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
+    # length(PiecewiseStepData) gets number of segments, here we want number of points
+    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
+    for i in 1:(length(cost_data) + 1)
+        pwlvars[i] =
+            var_container[(component_name, i, time_period)] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
+            )
+    end
+    return pwlvars
+end
+
+# For Market Bid #
+function _get_pwl_cost_expression(
+    container::OptimizationContainer,
+    component::T,
+    time_period::Int,
+    cost_data::PSY.PiecewiseStepData,
+    multiplier::Float64,
+) where {T <: PSY.Component}
+    # TODO: This functions needs to be reimplemented for the new model. The code is repeated
+    # because the internals will be different
+    name = PSY.get_name(component)
+    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    gen_cost = JuMP.AffExpr(0.0)
+    cost_data = PSY.get_y_coords(cost_data)
+    for (i, cost) in enumerate(cost_data)
+        JuMP.add_to_expression!(
+            gen_cost,
+            cost * multiplier * pwl_var_container[(name, i, time_period)],
+        )
+    end
+    return gen_cost
+end
+
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
