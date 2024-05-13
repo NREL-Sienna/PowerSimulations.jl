@@ -104,24 +104,26 @@ uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
+"""
+Theoretical Cost at power output zero
+"""
 function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return no_load_cost(PSY.get_variable(cost), S, T, U) + PSY.get_fixed(cost)
+    return _no_load_cost(PSY.get_variable(cost))
 end
 
-# TODO given the old implementations, these functions seem to get the cost at *minimum* load, not *zero* load. Is that correct?
-function no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve})
     value_curve = PSY.get_value_curve(cost_function)
     cost = PSY.get_function_data(value_curve)
     return last(first(PSY.get_points(cost)))
 end
 
-function no_load_cost(cost_function::PSY.CostCurve{PSY.LinearCurve}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.LinearCurve})
     value_curve = PSY.get_value_curve(cost_function)
     cost = PSY.get_function_data(value_curve)
     return PSY.get_proportional_term(cost) * PSY.get_active_power_limits(d).min * PSY.get_system_base_power(d)
 end
 
-function no_load_cost(cost_function::PSY.CostCurve{PSY.QuadraticCurve}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.QuadraticCurve})
     min_power = PSY.get_active_power_limits(d).min
     value_curve = PSY.get_value_curve(cost_function)
     cost = PSY.get_function_data(value_curve)
