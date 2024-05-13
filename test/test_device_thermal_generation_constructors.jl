@@ -1,4 +1,69 @@
 test_path = mktempdir()
+
+@testset "Test Thermal Generation Cost Functions " begin
+    test_cases = [
+        ("linear_cost_test", 4664.88),
+        ("linear_fuel_test", 0.0),
+        ("quadratic_cost_test", 0.0),
+        ("quadratic_fuel_test", 0.0),
+        ("pwl_io_cost_test", 0.0),
+        ("pwl_io_fuel_test", 0.0),
+        ("pwl_incremental_cost_test", 0.0),
+        ("pwl_incremental_fuel_test", 0.0),
+        ("non_convex_io_pwl_cost_test", 0.0),
+    ]
+    for (i, cost_reference) in test_cases
+        @testset "$i" begin
+            sys = build_system(PSITestSystems,"c_$(i)")
+            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            model = DecisionModel(
+                template,
+                sys;
+                name = "UC_$(i)",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
+                optimizer_solve_log_print = true
+            )
+            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            results = OptimizationProblemResults(model)
+            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
+            var_unit_cost = sum(expr[!, "Test Unit"])
+            @test isapprox(var_unit_cost, cost_reference; atol = 1)
+            @test expr[!, "Test Unit"][end] == 0.0
+        end
+    end
+end
+
+@testset "Test Thermal Generation Cost Functions Fuel Cost time series" begin
+    test_cases = [
+        "linear_fuel_test_ts",
+        "quadratic_fuel_test_ts",
+        "pwl_io_fuel_test_ts",
+        "pwl_incremental_fuel_test_ts",
+    ]
+    for i in test_cases
+        @testset "$i" begin
+            sys = build_system(PSITestSystems,"c_$(i)")
+            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+            #=
+            model = DecisionModel(
+                template,
+                sys;
+                name = "UC_$(i)",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
+            )
+            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            =#
+        end
+    end
+end
+
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_keys = [
@@ -837,32 +902,3 @@ end
     on_sundance = on[!, "Sundance"]
     @test all(isapprox.(on_sundance, 1.0))
 end
-
-#=
-# NOTE not a comprehensive test, should expand as part of the cost refactor
-@testset "Test no_load_cost" begin
-    sys = build_system(PSITestSystems, "c_sys5_uc")
-    comp = get_component(ThermalStandard, sys, "Sundance")
-    sys_base_power = get_base_power(sys)
-    set_base_power!(comp, 123.4)
-    min_limit = PSY.get_active_power_limits(comp).min
-    @test isapprox(
-        PSI.no_load_cost(
-            PSY.LinearFunctionData(5.0),
-            OnVariable(),
-            comp,
-            ThermalBasicUnitCommitment(),
-        ),
-        5.0 * min_limit * sys_base_power,
-    )
-    @test isapprox(
-        PSI.no_load_cost(
-            QuadraticFunctionData(3.0, 5.0, 0.0),
-            OnVariable(),
-            comp,
-            ThermalBasicUnitCommitment(),
-        ),
-        (3.0 * min_limit^2 + 5.0 * min_limit) * sys_base_power,
-    )
-end
-=#
