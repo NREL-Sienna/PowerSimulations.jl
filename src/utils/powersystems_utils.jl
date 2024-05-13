@@ -126,6 +126,112 @@ function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalHVDCLine)
     return
 end
 
+##################################################
+########### Cost Function Utilities ##############
+##################################################
+
+"""
+Obtain proportional (marginal or slope) cost data in system base per unit
+depending on the specified power units
+"""
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{0}, # SystemBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{1}, # DeviceBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)
+end
+
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{2}, # Natural Units
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power
+end
+
+
+"""
+Obtain quadratic cost data in system base per unit
+depending on the specified power units
+"""
+function get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{0}, # SystemBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{1}, # DeviceBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)^2
+end
+
+function get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{2}, # Natural Units
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power^2
+end
+
+##################################################
+############### Auxiliary Methods ################
+##################################################
+
+# These conversions are not properly done for the new models
+function convert_to_compact_variable_cost(
+    var_cost::PSY.PiecewiseLinearData,
+    p_min::Float64,
+    no_load_cost::Float64,
+)
+    points = PSY.get_points(var_cost)
+    new_points = [(pp - p_min, c - no_load_cost) for (pp, c) in points]
+    return PSY.PiecewiseLinearData(new_points)
+end
+
+# These conversions are not properly done for the new models
+function convert_to_compact_variable_cost(
+    var_cost::PSY.PiecewiseStepData,
+    p_min::Float64,
+    no_load_cost::Float64,
+)
+    x = PSY.get_x_coords(var_cost)
+    y = vcat(PSY.get_y_coords(var_cost), PSY.get_y_coords(var_cost)[end])
+    points = [(x[i], y[i]) for i in length(x)]
+    new_points = [(x = pp - p_min, y = c - no_load_cost) for (pp, c) in points]
+    return PSY.PiecewiseLinearData(new_points)
+end
+
+# TODO: This method needs to be corrected to account for actual StepData. The TestData is point wise
+function convert_to_compact_variable_cost(var_cost::PSY.PiecewiseStepData)
+    p_min, no_load_cost = (PSY.get_x_coords(var_cost)[1], PSY.get_y_coords(var_cost)[1])
+    return convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
+end
+
+function convert_to_compact_variable_cost(var_cost::PSY.PiecewiseLinearData)
+    p_min, no_load_cost = first(PSY.get_points(var_cost))
+    return convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
+end
+
 function _validate_compact_pwl_data(
     min::Float64,
     max::Float64,
