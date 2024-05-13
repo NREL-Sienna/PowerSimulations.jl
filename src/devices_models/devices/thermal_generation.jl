@@ -74,7 +74,9 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstrac
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = no_load_cost(cost, S, T, U)
+# TODO: Decide what is the cost for OnVariable, if fixed or constant term in variable
+#proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = no_load_cost(cost, S, T, U)
+proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = PSY.get_fixed(cost)
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
@@ -117,17 +119,12 @@ function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d:
     return last(first(PSY.get_points(cost)))
 end
 
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.LinearCurve}, d::PSY.ThermalGen)
-    # value_curve = PSY.get_value_curve(cost_function)
-    # cost = PSY.get_function_data(value_curve)
-    return 0.0
-end
-
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.QuadraticCurve}, d::PSY.ThermalGen)
-    # system_base_power = PSY.get_system_base_power(d)
-    # device_base_power = PSY.get_base_power(d)
-    # power_units_value = PSY.get_power_units(cost_function).value
-    return 0.0
+function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    # Always in \$/h
+    constant_term = PSY.get_constant_term(cost_component)
+    return constant_term
 end
 
 function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
@@ -136,14 +133,17 @@ function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d:
     return 0.0
 end
 
-function _no_load_cost(cost_function::PSY.FuelCurve{PSY.LinearCurve}, d::PSY.ThermalGen)
-    # value_curve = PSY.get_value_curve(cost_function)
-    # cost = PSY.get_function_data(value_curve)
-    return 0.0
-end
-
-function _no_load_cost(cost_function::PSY.FuelCurve{PSY.QuadraticCurve}, d::PSY.ThermalGen)
-    return 0.0
+function _no_load_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    # In Unit/h (unit typically in )
+    constant_term = PSY.get_constant_term(cost_component)
+    fuel_cost = PSY.get_fuel_cost(cost_function)
+    if typeof(fuel_cost) <: Float64
+        return constant_term * fuel_cost
+    else
+        error("Time series not implemented yet")
+    end
 end
 
 #! format: on
