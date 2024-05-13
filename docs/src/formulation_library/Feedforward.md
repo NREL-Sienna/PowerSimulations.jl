@@ -1,16 +1,8 @@
 # [FeedForward Formulations](@id ff_formulations)
 
-In PowerSimulations, chronologies define where information is flowing. There are two types
-of chronologies.
+**FeedForwards** are the mechanism to define how information is shared between models. Specifically, a FeedForward defines what to do with information passed with an inter-stage chronology in a Simulation. The most common FeedForward is the `SemiContinuousFeedForward` that affects the semi-continuous range constraints of thermal generators in the economic dispatch problems based on the value of the (already solved) unit-commitment variables.
 
-- inter-stage chronologies: Define how information flows between stages. e.g. day-ahead solutions are used to inform economic dispatch problems
-- intra-stage chronologies: Define how information flows between multiple executions of a single stage. e.g. the dispatch setpoints of the first period of an economic dispatch problem are constrained by the ramping limits from setpoints in the final period of the previous problem.
-
-The definition of exactly what information is passed using the defined chronologies is accomplished using **FeedForwards**.
-
-Specifically, a FeedForward is used to define what to do with information being passed with an inter-stage chronology in a Simulation. The most common FeedForward is the `SemiContinuousFeedForward` that affects the semi-continuous range constraints of thermal generators in the economic dispatch problems based on the value of the (already solved) unit-commitment variables.
-
-The creation of a FeedForward requires at least to specify the `component_type` on which the FeedForward will be applied. The `source` variable specify which variable will be taken from the problem solved, for example the commitment variable of the thermal unit in the unit commitment problem. Finally, the `affected_values` specify which variables will be affected in the problem to be solved, for example the next economic dispatch problem.
+The creation of a FeedForward requires at least specifying the `component_type` on which the FeedForward will be applied. The `source` variable specifies which variable will be taken from the problem solved, for example, the commitment variable of the thermal unit in the unit commitment problem. Finally, the `affected_values` specify which variables will be affected in the problem to be solved, for example, the next economic dispatch problem.
 
 ### Table of contents
 
@@ -70,7 +62,7 @@ No variables are created
 
 **Parameters:**
 
-The parameter `FixValueParameter` is used to match the result obtained from the source variable (from an upper level problem).
+The parameter `FixValueParameter` is used to match the result obtained from the source variable (from the simulation state).
 
 **Objective:**
 
@@ -109,7 +101,7 @@ If slack variables are enabled:
 
 **Parameters:**
 
-The parameter `UpperBoundValueParameter` is used to store the result obtained from the source variable (from an upper level problem) that will be used as an upper bound to the affected variable.
+The parameter `UpperBoundValueParameter` stores the result obtained from the source variable (from the simulation state) that will be used as an upper bound to the affected variable.
 
 **Objective:**
 
@@ -148,7 +140,7 @@ If slack variables are enabled:
 
 **Parameters:**
 
-The parameter `LowerBoundValueParameter` is used to store the result obtained from the source variable (from an upper level problem) that will be used as a lower bound to the affected variable.
+The parameter `LowerBoundValueParameter` stores the result obtained from the source variable (from the simulation state) that will be used as a lower bound to the affected variable.
 
 **Objective:**
 

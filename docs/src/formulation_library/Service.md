@@ -148,7 +148,7 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-The `ServiceRequirementVariable` is added as a piecewise linear cost based on the decreasing offers listed in the `variable_cost` time series. These decreasing cost represent the scarcity prices of not having sufficient reserves. For example, if the variable ``\text{req} = 0``, then a really high cost is paid for not having enough reserves, and if ``\text{req}`` is larger, then a lower cost (or even zero) is paid. TODO: actual implementation. 
+The `ServiceRequirementVariable` is added as a piecewise linear cost based on the decreasing offers listed in the `variable_cost` time series. These decreasing cost represent the scarcity prices of not having sufficient reserves. For example, if the variable ``\text{req} = 0``, then a really high cost is paid for not having enough reserves, and if ``\text{req}`` is larger, then a lower cost (or even zero) is paid.
 
 **Expressions:**
 
