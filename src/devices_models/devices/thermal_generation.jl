@@ -105,33 +105,45 @@ variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ThermalGen
 variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
 """
-Theoretical Cost at power output zero
+Theoretical Cost at power output zero. Mathematically is the intercept with the y-axis
 """
-function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return _no_load_cost(PSY.get_variable(cost))
+function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
+    return _no_load_cost(PSY.get_variable(cost), d)
 end
 
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve})
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
     cost = PSY.get_function_data(value_curve)
     return last(first(PSY.get_points(cost)))
 end
 
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.LinearCurve})
-    value_curve = PSY.get_value_curve(cost_function)
-    cost = PSY.get_function_data(value_curve)
-    return PSY.get_proportional_term(cost) * PSY.get_active_power_limits(d).min * PSY.get_system_base_power(d)
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.LinearCurve}, d::PSY.ThermalGen)
+    # value_curve = PSY.get_value_curve(cost_function)
+    # cost = PSY.get_function_data(value_curve)
+    return 0.0
 end
 
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.QuadraticCurve})
-    min_power = PSY.get_active_power_limits(d).min
-    value_curve = PSY.get_value_curve(cost_function)
-    cost = PSY.get_function_data(value_curve)
-    evaluated = LinearAlgebra.dot(
-        [PSY.get_quadratic_term(cost), PSY.get_proportional_term(cost), PSY.get_constant_term(cost)],
-        [min_power^2, min_power, 1]
-    )
-    return evaluated * PSY.get_system_base_power(d)
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.QuadraticCurve}, d::PSY.ThermalGen)
+    # system_base_power = PSY.get_system_base_power(d)
+    # device_base_power = PSY.get_base_power(d)
+    # power_units_value = PSY.get_power_units(cost_function).value
+    return 0.0
+end
+
+function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+    # value_curve = PSY.get_value_curve(cost_function)
+    # cost = PSY.get_function_data(value_curve)
+    return 0.0
+end
+
+function _no_load_cost(cost_function::PSY.FuelCurve{PSY.LinearCurve}, d::PSY.ThermalGen)
+    # value_curve = PSY.get_value_curve(cost_function)
+    # cost = PSY.get_function_data(value_curve)
+    return 0.0
+end
+
+function _no_load_cost(cost_function::PSY.FuelCurve{PSY.QuadraticCurve}, d::PSY.ThermalGen)
+    return 0.0
 end
 
 #! format: on
