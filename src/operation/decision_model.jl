@@ -278,7 +278,7 @@ end
 function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
     settings = get_settings(model)
-    available_resolutions = PSY.list_time_series_resolutions(sys)
+    available_resolutions = PSY.get_time_series_resolutions(sys)
 
     if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
         throw(
