@@ -139,7 +139,7 @@ With this, it is possible to obtain results of each `DecisionModel` and `Emulati
 # Use the Problem Name for Decision Problems
 results_uc = get_decision_problem_results(results_sim, "UC")
 results_ed = get_decision_problem_results(results_sim, "ED")
-results_emulator = get_emulation_problem_results(results_dcp)
+results_emulator = get_emulation_problem_results(results_sim)
 ```
 
 Once we have each decision (or emulation) problem results, we can explore directly using the approach for Decision Models, mentioned in the previous section.
