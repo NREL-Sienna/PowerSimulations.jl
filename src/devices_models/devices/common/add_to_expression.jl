@@ -903,7 +903,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: Union{ActivePowerRangeExpressionUB, ReserveRangeExpressionUB},
+    T <: ActivePowerRangeExpressionUB,
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveUp},
@@ -975,7 +975,7 @@ function add_to_expression!(
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
-    T <: Union{ActivePowerRangeExpressionLB, ReserveRangeExpressionLB},
+    T <: ActivePowerRangeExpressionLB,
     U <: VariableType,
     V <: PSY.Component,
     X <: PSY.Reserve{PSY.ReserveDown},
