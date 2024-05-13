@@ -83,7 +83,7 @@ function _add_sc_feedforward_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
-    T <: FeedforwardSemiContinousConstraint,
+    T <: FeedforwardSemiContinuousConstraint,
     P <: OnStatusParameter,
     U <: Union{ActivePowerVariable, PowerAboveMinimumVariable},
     V <: PSY.Component,
@@ -128,7 +128,7 @@ function _add_sc_feedforward_constraints!(
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
 ) where {
-    T <: FeedforwardSemiContinousConstraint,
+    T <: FeedforwardSemiContinuousConstraint,
     P <: ParameterType,
     U <: VariableType,
     V <: PSY.Component,
@@ -230,7 +230,7 @@ function add_feedforward_constraints!(
         end
         _add_sc_feedforward_constraints!(
             container,
-            FeedforwardSemiContinousConstraint,
+            FeedforwardSemiContinuousConstraint,
             parameter_type(),
             var,
             devices,

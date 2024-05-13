@@ -1,3 +1,3 @@
 # Basics of Developing Operation Models
 
-Check the page [PowerSimulations Structure](@ref) for more background on PowerSimulations.jl
+Check the page PowerSimulations Structure for more background on PowerSimulations.jl

@@ -219,6 +219,8 @@ export ReserveRequirementSlack
 export VoltageMagnitude
 export VoltageAngle
 export FlowActivePowerVariable
+export FlowActivePowerSlackUpperBound
+export FlowActivePowerSlackLowerBound
 export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
@@ -227,6 +229,8 @@ export PowerAboveMinimumVariable
 export PhaseShifterAngle
 export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
+export InterfaceFlowSlackUp
+export InterfaceFlowSlackDown
 
 # Auxiliary variables
 export TimeDurationOn
@@ -246,7 +250,7 @@ export CopperPlateBalanceConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EqualityConstraint
-export FeedforwardSemiContinousConstraint
+export FeedforwardSemiContinuousConstraint
 export FeedforwardUpperBoundConstraint
 export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
@@ -265,6 +269,7 @@ export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCLosses
+export HVDCFlowDirectionVariable
 export InputActivePowerVariableLimitsConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint

@@ -1,21 +1,16 @@
 # `PowerSystems.ElectricLoad` Formulations
 
-Valid `DeviceModel`s for subtypes of `ElectricLoad` include the following:
+Electric load formulations define the optimization models that describe load units (demand) mathematical model in different operational settings, such as economic dispatch and unit commitment.
 
-```@eval
-using PowerSimulations
-using PowerSystems
-using DataFrames
-using Latexify
-combos = PowerSimulations.generate_device_formulation_combinations()
-filter!(x -> x["device_type"] <: ElectricLoad, combos)
-combo_table = DataFrame(
-    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
-    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
-    "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
-    )
-mdtable(combo_table, latex = false)
-```
+!!! note
+    The use of reactive power variables and constraints will depend on the network model used, i.e., whether it uses (or does not use) reactive power. If the network model is purely active power-based, reactive power variables and related constraints are not created.
+
+### Table of contents
+
+1. [`StaticPowerLoad`](#StaticPowerLoad)
+2. [`PowerLoadInterruption`](#PowerLoadInterruption)
+3. [`PowerLoadDispatch`](#PowerLoadDispatch)
+4. [Valid configurations](#Valid-configurations)
 
 ---
 
@@ -30,6 +25,8 @@ StaticPowerLoad
 No variables are created
 
 **Time Series Parameters:**
+
+Uses the `max_active_power`  timeseries parameter to determine the demand value at each time-step
 
 ```@eval
 using PowerSimulations
@@ -46,7 +43,7 @@ mdtable(combo_table, latex = false)
 
 **Expressions:**
 
-Subtracts the parameters listed above from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+Subtracts the parameters listed above from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations).
 
 **Constraints:**
 
@@ -65,12 +62,19 @@ PowerLoadInterruption
 - [`ActivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: 0.0
+  - Symbol: ``p^\text{ld}``
 - [`ReactivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: 0.0
+  - Symbol: ``q^\text{ld}``
 - [`OnVariable`](@ref):
-  - Bounds: {0,1}
+  - Bounds: ``\{0,1\}``
   - Default initial value: 1
+  - Symbol: ``u^\text{ld}``
+
+**Static Parameters:**
+- ``P^\text{ld,max}`` = `PowerSystems.get_max_active_power(device)`
+- ``Q^\text{ld,max}`` = `PowerSystems.get_max_reactive_power(device)`
 
 **Time Series Parameters:**
 
@@ -89,25 +93,22 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``Pg``.
+Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``p^\text{ld}``.
+
 
 **Expressions:**
 
-- Adds ``Pg`` and ``Qg`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
-- Subtracts the time series parameters listed above terms from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+- Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
-``Pg`` and ``Qg`` represent the "unserved" active and reactive power loads
-
 ```math
 \begin{aligned}
-&  Pg_t \le ActivePowerTimeSeriesParameter_t\\
-&  Pg_t - u_t ActivePowerTimeSeriesParameter_t \le 0 \\
-&  Qg_t \le ReactivePowerTimeSeriesParameter_t\\
-&  Qg_t - u_t ReactivePowerTimeSeriesParameter_t\le 0
+&  p_t^\text{ld} \le u_t^\text{ld} \cdot \text{ActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
+&  q_t^\text{re} = \text{pf} \cdot p_t^\text{re}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
 ```
+on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
 
 ---
 
@@ -122,9 +123,15 @@ PowerLoadDispatch
 - [`ActivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: `PowerSystems.get_active_power(device)`
+  - Symbol: ``p^\text{ld}``
 - [`ReactivePowerVariable`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: `PowerSystems.get_reactive_power(device)`
+  - Symbol: ``q^\text{ld}``
+
+**Static Parameters:**
+- ``P^\text{ld,max}`` = `PowerSystems.get_max_active_power(device)`
+- ``Q^\text{ld,max}`` = `PowerSystems.get_max_reactive_power(device)`
 
 **Time Series Parameters:**
 
@@ -143,20 +150,38 @@ mdtable(combo_table, latex = false)
 
 **Objective:**
 
-Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``Pg``.
+Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``p^\text{ld}``.
+
 
 **Expressions:**
 
-- Adds ``Pg`` and ``Qg`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
-- Subtracts the time series parameters listed above terms from the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+- Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
-``Pg`` and ``Qg`` represent the "unserved" active and reactive power loads
-
 ```math
 \begin{aligned}
-&  Pg_t \le ActivePowerTimeSeriesParameter_t\\
-&  Qg_t \le ReactivePowerTimeSeriesParameter_t\\
+&  p_t^\text{ld} \le \text{ActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\}\\
+&  q_t^\text{ld} = \text{pf} \cdot p_t^\text{ld}, \quad \forall t \in \{1,\dots, T\}\\
 \end{aligned}
+```
+on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
+
+## Valid configurations
+
+Valid `DeviceModel`s for subtypes of `ElectricLoad` include the following:
+
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.generate_device_formulation_combinations()
+filter!(x -> x["device_type"] <: ElectricLoad, combos)
+combo_table = DataFrame(
+    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
+    "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
+    )
+mdtable(combo_table, latex = false)
 ```
