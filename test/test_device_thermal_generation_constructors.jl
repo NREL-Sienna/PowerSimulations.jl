@@ -3,7 +3,7 @@ test_path = mktempdir()
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [
         ("linear_cost_test", 4664.88),
-        ("linear_fuel_test", 0.0),
+        ("linear_fuel_test", 4664.88),
         ("quadratic_cost_test", 0.0),
         ("quadratic_fuel_test", 0.0),
         ("pwl_io_cost_test", 0.0),
