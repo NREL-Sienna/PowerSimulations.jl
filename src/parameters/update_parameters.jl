@@ -531,7 +531,7 @@ function _update_pwl_cost_expression(
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
     upb = get_breakpoint_upper_bounds(cost_data)
@@ -553,7 +553,7 @@ function update_variable_cost!(
     time_period::Int,
 ) where {T <: PSY.Component}
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
     cost_data = parameter_array[component_name, time_period]  # TODO is this a new-style cost?

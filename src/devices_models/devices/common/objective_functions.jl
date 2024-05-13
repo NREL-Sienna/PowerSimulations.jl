@@ -198,41 +198,6 @@ function _add_quadratic_term!(
     return q_cost
 end
 
-##################################################
-########### Cost Curve: LinearCurve ##############
-##################################################
-
-"""
-Obtain proportional (marginal or slope) cost data in system base per unit
-depending on the specified power units
-"""
-function get_proportional_cost_per_system_unit(
-    cost_term::Float64,
-    ::Val{0}, # SystemBase Unit
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_term
-end
-
-function get_proportional_cost_per_system_unit(
-    cost_term::Float64,
-    ::Val{1}, # DeviceBase Unit
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_term * (system_base_power / device_base_power)
-end
-
-function get_proportional_cost_per_system_unit(
-    cost_term::Float64,
-    ::Val{2}, # Natural Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_term * system_base_power
-end
-
 """
 Adds to the cost function cost terms for sum of variables with common factor to be used for cost expression for optimization_container model.
 
@@ -243,6 +208,69 @@ Adds to the cost function cost terms for sum of variables with common factor to 
   - component_name::String: The component_name of the variable container
   - cost_component::PSY.CostCurve{PSY.LinearFunctionData} : container for cost to be associated with variable
 """
+function _add_linearcurve_variable_term_to_model!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    proportional_term_per_unit::Float64,
+    time_period::Int,
+) where {T <: VariableType}
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
+    linear_cost = _add_proportional_term!(
+        container,
+        T(),
+        component,
+        proportional_term_per_unit * dt,
+        time_period,
+    )
+    add_to_expression!(
+        container,
+        ProductionCostExpression,
+        linear_cost,
+        component,
+        time_period,
+    )
+    return
+end
+
+# These function dispatches depending on wether there is a fuel cost or not
+function _add_linearcurve_variable_cost!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    proportional_terms_per_unit::Vector{Float64},
+) where {T <: VariableType}
+    for t in get_time_steps(container)
+        _add_linearcurve_variable_term_to_model!(
+            container,
+            T(),
+            component,
+            proportional_terms_per_unit[t],
+            t,
+        )
+    end
+    return
+end
+
+function _add_linearcurve_variable_cost!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    proportional_term_per_unit::Float64,
+) where {T <: VariableType}
+    for t in get_time_steps(container)
+        _add_linearcurve_variable_term_to_model!(
+            container,
+            T(),
+            component,
+            proportional_term_per_unit,
+            t,
+        )
+    end
+    return
+end
+
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -250,74 +278,77 @@ function _add_variable_cost_to_objective!(
     cost_function::PSY.CostCurve{PSY.LinearCurve},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(T(), U())
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
-    power_units_value = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     proportional_term = PSY.get_proportional_term(cost_component)
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     proportional_term_per_unit = get_proportional_cost_per_system_unit(
         proportional_term,
-        Val{power_units_value},
+        power_units,
         base_power,
         device_base_power,
     )
-    for time_period in get_time_steps(container)
-        linear_cost = _add_proportional_term!(
-            container,
-            T(),
-            component,
-            proportional_term_per_unit * multiplier * dt,
-            time_period,
-        )
-        add_to_expression!(
-            container,
-            ProductionCostExpression,
-            linear_cost,
-            component,
-            time_period,
-        )
-    end
+    multiplier = objective_function_multiplier(T(), U())
+    _add_linearcurve_variable_cost!(
+        container,
+        T(),
+        component,
+        multiplier * proportional_term_per_unit,
+    )
+    return
+end
+
+function _add_fuel_variable_cost!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    fuel_curve::Float64,
+    fuel_cost::Float64,
+) where {T <: VariableType}
+    _add_linearcurve_variable_cost!(container, T(), component, fuel_curve * fuel_cost)
+end
+
+function _add_fuel_variable_cost!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    fuel_curve::IS.TimeSeriesKey,
+    fuel_cost::Float64,
+) where {T <: VariableType}
+    error("Not implemented yet")
+    _add_linearcurve_variable_cost!(container, T(), component, fuel_curve)
+end
+
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    cost_function::PSY.FuelCurve{PSY.LinearCurve},
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    value_curve = PSY.get_value_curve(cost_function)
+    power_units = PSY.get_power_units(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    proportional_term = PSY.get_proportional_term(cost_component)
+    fuel_curve_per_unit = get_proportional_cost_per_system_unit(
+        proportional_term,
+        power_units,
+        base_power,
+        device_base_power,
+    )
+    fuel_cost = PSY.get_fuel_cost(cost_function)
+    # Multiplier is not necessary here. There is no negative cost for fuel curves.
+    _add_fuel_variable_cost!(container, T(), component, fuel_curve_per_unit, fuel_cost)
     return
 end
 
 ##################################################
 ########## Cost Curve: Quadratic Curve ###########
 ##################################################
-
-"""
-Obtain quadratic (marginal or slope) cost data in system base per unit
-depending on the specified power units
-"""
-function get_quadratic_cost_per_system_unit(
-    cost_term::Float64,
-    ::Val{0}, # SystemBase Unit
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_term
-end
-
-function get_quadratic_cost_per_system_unit(
-    cost_term::Float64,
-    ::Val{1}, # DeviceBase Unit
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_term * (system_base_power / device_base_power)^2
-end
-
-function get_quadratic_cost_per_system_unit(
-    cost_term::Float64,
-    ::Val{2}, # Natural Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_term * system_base_power^2
-end
 
 @doc raw"""
 Adds to the cost function cost terms for sum of variables with common factor to be used for cost expression for optimization_container model.
@@ -351,7 +382,7 @@ function _add_variable_cost_to_objective!(
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
-    power_units_value = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     quadratic_term = PSY.get_quadratic_term(cost_component)
     proportional_term = PSY.get_proportional_term(cost_component)
@@ -359,16 +390,16 @@ function _add_variable_cost_to_objective!(
     (constant_term == 0) ||
         throw(ArgumentError("Not yet implemented for nonzero constant term"))
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     proportional_term_per_unit = get_proportional_cost_per_system_unit(
         proportional_term,
-        Val{power_units_value},
+        power_units,
         base_power,
         device_base_power,
     )
     quadratic_term_per_unit = get_quadratic_cost_per_system_unit(
         quadratic_term,
-        Val{power_units_value},
+        power_units_value,
         base_power,
         device_base_power,
     )
@@ -450,51 +481,6 @@ end
 ##################################################
 
 """
-Obtain the normalized PiecewiseLinear cost data in system base per unit
-depending on the specified power units.
-
-Note that the costs (y-axis) are always in \$/h so
-they do not require transformation
-"""
-function get_piecewise_pointcurve_per_system_unit(
-    cost_component::PSY.PiecewiseLinearData,
-    ::Val{0}, # SystemBase Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    return cost_component
-end
-
-function get_piecewise_pointcurve_per_system_unit(
-    cost_component::PSY.PiecewiseLinearData,
-    ::Val{1}, # DeviceBase Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    points = cost_component.points
-    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
-    for (ix, point) in enumerate(points)
-        points_normalized[ix] =
-            (x = point.x * (device_base_power / system_base_power), y = point.y) # case for natural units
-    end
-    return typeof(cost_component)(points_normalized)
-end
-
-function get_piecewise_pointcurve_per_system_unit(
-    cost_component::PSY.PiecewiseLinearData,
-    ::Val{2}, # Natural Units
-    system_base_power::Float64,
-    device_base_power::Float64,
-)
-    points = cost_component.points
-    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
-    for (ix, point) in enumerate(points)
-        points_normalized[ix] = (x = point.x / system_base_power, y = point.y) # case for natural units
-    end
-    return typeof(cost_component)(points_normalized)
-end
-
-"""
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
 # Arguments
@@ -518,7 +504,7 @@ function _add_variable_cost_to_objective!(
     device_base_power = PSY.get_base_power(component)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
-    power_units = PSY.get_power_units(cost_function).value
+    power_units = PSY.get_power_units(cost_function)
     if all(iszero.((point -> point.y).(PSY.get_points(cost_component))))  # TODO I think this should have been first. before?
         @debug "All cost terms for component $(component_name) are 0.0" _group =
             LOG_GROUP_COST_FUNCTIONS
@@ -526,7 +512,7 @@ function _add_variable_cost_to_objective!(
     end
     cost_component_normalized = get_piecewise_pointcurve_per_system_unit(
         cost_component,
-        Val{power_units},
+        power_units,
         base_power,
         device_base_power,
     )
@@ -557,7 +543,7 @@ function _add_pwl_term!(
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     name = PSY.get_name(component)
 
     compact_status = validate_compact_pwl_data(component, data, base_power)
@@ -570,7 +556,7 @@ function _add_pwl_term!(
         @warn(
             "The cost data provided is not in compact form. Will attempt to convert. Errors may occur."
         )
-        data = _convert_to_compact_variable_cost(data)
+        data = convert_to_compact_variable_cost(data)
     else
         @debug uses_compact_power(component, V()) compact_status name T V
     end
@@ -604,7 +590,7 @@ function _add_pwl_term!(
 ) where {T <: PSY.ThermalGen, U <: VariableType, V <: ThermalDispatchNoMin}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     component_name = PSY.get_name(component)
     @debug "PWL cost function detected for device $(component_name) using $V"
     slopes = PSY.get_slopes(data)
@@ -681,117 +667,11 @@ function _add_variable_cost_to_objective!(
     _add_variable_cost_to_objective!(
         container,
         T(),
-        componen,
+        component,
         pointbased_cost_function,
         U(),
     )
     return
-end
-
-##################################################
-################# MarketBidCost ##################
-##################################################
-
-function _add_pwl_term!(
-    container::OptimizationContainer,
-    component::T,
-    cost_data::AbstractVector{PSY.LinearFunctionData},
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(U(), V())
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    base_power = get_base_power(container)
-    # Re-scale breakpoints by Basepower
-    time_steps = get_time_steps(container)
-    cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    for t in time_steps
-        proportional_value =
-            PSY.get_proportional_term(cost_data[t]) * multiplier * base_power * dt
-        cost_expressions[t] =
-            _add_proportional_term!(container, U(), component, proportional_value, t)
-    end
-    return cost_expressions
-end
-
-"""
-Add PWL cost terms for data coming from the MarketBidCost
-"""
-function _add_pwl_term!(
-    container::OptimizationContainer,
-    component::T,
-    cost_data::AbstractVector{PSY.PiecewiseStepData},
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(U(), V())
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    base_power = get_base_power(container)
-    # Re-scale breakpoints by Basepower
-    name = PSY.get_name(component)
-    time_steps = get_time_steps(container)
-    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    sos_val = _get_sos_value(container, V, component)
-    for t in time_steps
-        # Run checks in every time step because each time step has a PWL cost function
-        data = cost_data[t]
-        compact_status = validate_compact_pwl_data(component, data, base_power)
-        if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
-            error(
-                "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
-            )
-            # data = _convert_to_full_variable_cost(data, component)
-        elseif uses_compact_power(component, V()) &&
-               compact_status != COMPACT_PWL_STATUS.VALID
-            @warn(
-                "The cost data provided is not in compact form. Will attempt to convert. Errors may occur."
-            )
-            data = _convert_to_compact_variable_cost(data)
-        else
-            @debug uses_compact_power(component, V()) compact_status name T V
-        end
-        cost_is_convex = PSY.is_convex(data)
-        break_points = PSY.get_x_coords(data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
-        _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        if !cost_is_convex
-            _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
-        end
-        pwl_cost =
-            _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
-        pwl_cost_expressions[t] = pwl_cost
-    end
-    return pwl_cost_expressions
-end
-
-function _add_pwl_term!(
-    container::OptimizationContainer,
-    component::T,
-    cost_data::AbstractVector{PSY.PiecewiseStepData},
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
-    multiplier = objective_function_multiplier(U(), V())
-    resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    base_power = get_base_power(container)
-    # Re-scale breakpoints by Basepower
-    name = PSY.get_name(component)
-    time_steps = get_time_steps(container)
-    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    sos_val = _get_sos_value(container, V, component)
-    for t in time_steps
-        data = cost_data[t]
-        break_points = PSY.get_x_coords(data) ./ base_power
-        _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
-        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
-        pwl_cost_expressions[t] = pwl_cost
-    end
-    return pwl_cost_expressions
 end
 
 ##################################################
@@ -977,43 +857,4 @@ function _get_pwl_cost_expression(
         )
     end
     return gen_cost
-end
-
-##################################################
-############### Auxiliary Methods ################
-##################################################
-
-# These conversions are not properly done for the new models
-function _convert_to_compact_variable_cost(
-    var_cost::PSY.PiecewiseLinearData,
-    p_min::Float64,
-    no_load_cost::Float64,
-)
-    points = PSY.get_points(var_cost)
-    new_points = [(pp - p_min, c - no_load_cost) for (pp, c) in points]
-    return PSY.PiecewiseLinearData(new_points)
-end
-
-# These conversions are not properly done for the new models
-function _convert_to_compact_variable_cost(
-    var_cost::PSY.PiecewiseStepData,
-    p_min::Float64,
-    no_load_cost::Float64,
-)
-    x = PSY.get_x_coords(var_cost)
-    y = vcat(PSY.get_y_coords(var_cost), PSY.get_y_coords(var_cost)[end])
-    points = [(x[i], y[i]) for i in length(x)]
-    new_points = [(x = pp - p_min, y = c - no_load_cost) for (pp, c) in points]
-    return PSY.PiecewiseLinearData(new_points)
-end
-
-# TODO: This method needs to be corrected to account for actual StepData. The TestData is point wise
-function _convert_to_compact_variable_cost(var_cost::PSY.PiecewiseStepData)
-    p_min, no_load_cost = (PSY.get_x_coords(var_cost)[1], PSY.get_y_coords(var_cost)[1])
-    return _convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
-end
-
-function _convert_to_compact_variable_cost(var_cost::PSY.PiecewiseLinearData)
-    p_min, no_load_cost = first(PSY.get_points(var_cost))
-    return _convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
 end
