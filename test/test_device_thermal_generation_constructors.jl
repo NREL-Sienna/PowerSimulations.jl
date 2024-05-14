@@ -2,21 +2,21 @@ test_path = mktempdir()
 
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [
-        ("linear_cost_test", 4664.88),
-        ("linear_fuel_test", 4664.88),
-        ("quadratic_cost_test", 0.0),
-        ("quadratic_fuel_test", 0.0),
-        ("pwl_io_cost_test", 0.0),
-        ("pwl_io_fuel_test", 0.0),
-        ("pwl_incremental_cost_test", 0.0),
-        ("pwl_incremental_fuel_test", 0.0),
-        ("non_convex_io_pwl_cost_test", 0.0),
+        ("linear_cost_test", 4664.88, ThermalBasicUnitCommitment),
+        ("linear_fuel_test", 4664.88, ThermalBasicUnitCommitment),
+        ("quadratic_cost_test", 3301.81, ThermalDispatchNoMin),
+        ("quadratic_fuel_test", 3331.12, ThermalDispatchNoMin),
+        ("pwl_io_cost_test", 3421.64, ThermalBasicUnitCommitment),
+        ("pwl_io_fuel_test", 3421.64, ThermalBasicUnitCommitment),
+        ("pwl_incremental_cost_test", 3424.43ThermalBasicUnitCommitment),
+        ("pwl_incremental_fuel_test", 4271.76, ThermalBasicUnitCommitment),
+        ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
     ]
-    for (i, cost_reference) in test_cases
+    for (i, cost_reference, thermal_formulation) in test_cases
         @testset "$i" begin
             sys = build_system(PSITestSystems, "c_$(i)")
             template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
-            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+            set_device_model!(template, ThermalStandard, thermal_formulation)
             set_device_model!(template, PowerLoad, StaticPowerLoad)
             model = DecisionModel(
                 template,
