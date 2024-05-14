@@ -215,31 +215,6 @@ function _add_quadratic_term!(
 end
 
 ##################################################
-################# SOS Methods ####################
-##################################################
-
-function _get_sos_value(
-    container::OptimizationContainer,
-    ::Type{V},
-    component::T,
-) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
-    if has_container_key(container, OnStatusParameter, T)
-        sos_val = SOSStatusVariable.PARAMETER
-    else
-        sos_val = sos_status(component, V())
-    end
-    return sos_val
-end
-
-function _get_sos_value(
-    container::OptimizationContainer,
-    ::Type{V},
-    component::T,
-) where {T <: PSY.Component, V <: AbstractServiceFormulation}
-    return SOSStatusVariable.NO_VARIABLE
-end
-
-##################################################
 ################## Fuel Cost #####################
 ##################################################
 

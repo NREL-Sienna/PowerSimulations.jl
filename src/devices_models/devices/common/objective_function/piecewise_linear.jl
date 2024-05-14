@@ -1,4 +1,29 @@
 ##################################################
+################# SOS Methods ####################
+##################################################
+
+function _get_sos_value(
+    container::OptimizationContainer,
+    ::Type{V},
+    component::T,
+) where {T <: PSY.Component, V <: AbstractDeviceFormulation}
+    if has_container_key(container, OnStatusParameter, T)
+        sos_val = SOSStatusVariable.PARAMETER
+    else
+        sos_val = sos_status(component, V())
+    end
+    return sos_val
+end
+
+function _get_sos_value(
+    container::OptimizationContainer,
+    ::Type{V},
+    component::T,
+) where {T <: PSY.Component, V <: AbstractServiceFormulation}
+    return SOSStatusVariable.NO_VARIABLE
+end
+
+##################################################
 ################# PWL Variables ##################
 ##################################################
 
@@ -81,7 +106,15 @@ function _add_pwl_constraint!(
         @assert false
     end
 
-    JuMP.@constraint(
+    const_normalization_container = lazy_container_addition!(
+        container,
+        PieceWiseLinearCostConstraint(),
+        T,
+        axes(variables)...;
+        meta = "normalization",
+    )
+
+    const_normalization_container[name, period] = JuMP.@constraint(
         jump_model,
         sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin
     )
@@ -229,13 +262,24 @@ function _add_pwl_term!(
     # multiplier = objective_function_multiplier(U(), V())
     name = PSY.get_name(component)
     value_curve = PSY.get_value_curve(cost_function)
-    data = PSY.get_function_data(value_curve)
+    cost_component = PSY.get_function_data(value_curve)
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    power_units = PSY.get_power_units(cost_function)
+
+    # Normalize data
+    data = get_piecewise_pointcurve_per_system_unit(
+        cost_component,
+        power_units,
+        base_power,
+        device_base_power,
+    )
+
     if all(iszero.((point -> point.y).(PSY.get_points(data))))  # TODO I think this should have been first. before?
         @debug "All cost terms for component $(name) are 0.0" _group =
             LOG_GROUP_COST_FUNCTIONS
         return
     end
-    base_power = get_base_power(container)
 
     compact_status = validate_compact_pwl_data(component, data, base_power)
     if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
@@ -334,7 +378,10 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::PSY.CostCurve{PSY.PiecewisePointCurve},
+    cost_function::Union{
+        PSY.CostCurve{PSY.PiecewisePointCurve},
+        PSY.FuelCurve{PSY.PiecewisePointCurve},
+    },
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
@@ -397,6 +444,57 @@ function _add_variable_cost_to_objective!(
     pointbased_value_curve = PSY.InputOutputCurve(value_curve)
     pointbased_cost_function =
         PSY.CostCurve(; value_curve = pointbased_value_curve, power_units = power_units)
+    # Call method for PiecewisePointCurve
+    _add_variable_cost_to_objective!(
+        container,
+        T(),
+        component,
+        pointbased_cost_function,
+        U(),
+    )
+    return
+end
+
+##################################################
+###### FuelCurve: PiecewiseIncrementalCurve ######
+######### and PiecewiseAverageCurve ##############
+##################################################
+
+"""
+Creates piecewise linear fuel cost function using a sum of variables and expression with sign and time step included.
+
+# Arguments
+
+  - container::OptimizationContainer : the optimization_container model built in PowerSimulations
+  - var_key::VariableKey: The variable name
+  - component_name::String: The component_name of the variable container
+  - cost_function::PSY.Union{PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, PSY.FuelCurve{PSY.PiecewiseAverageCurve}}: container for piecewise linear cost
+"""
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    cost_function::V,
+    ::U,
+) where {
+    T <: VariableType,
+    V <: Union{
+        PSY.FuelCurve{PSY.PiecewiseIncrementalCurve},
+        PSY.FuelCurve{PSY.PiecewiseAverageCurve},
+    },
+    U <: AbstractDeviceFormulation,
+}
+    # Create new PiecewisePointCurve
+    value_curve = PSY.get_value_curve(cost_function)
+    power_units = PSY.get_power_units(cost_function)
+    fuel_cost = PSY.get_fuel_cost(cost_function)
+    pointbased_value_curve = PSY.InputOutputCurve(value_curve)
+    pointbased_cost_function =
+        PSY.FuelCurve(;
+            value_curve = pointbased_value_curve,
+            power_units = power_units,
+            fuel_cost = fuel_cost,
+        )
     # Call method for PiecewisePointCurve
     _add_variable_cost_to_objective!(
         container,
