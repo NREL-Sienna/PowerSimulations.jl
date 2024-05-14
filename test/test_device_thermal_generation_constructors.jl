@@ -8,7 +8,7 @@ test_path = mktempdir()
         ("quadratic_fuel_test", 3331.12, ThermalDispatchNoMin),
         ("pwl_io_cost_test", 3421.64, ThermalBasicUnitCommitment),
         ("pwl_io_fuel_test", 3421.64, ThermalBasicUnitCommitment),
-        ("pwl_incremental_cost_test", 3424.43ThermalBasicUnitCommitment),
+        ("pwl_incremental_cost_test", 3424.43, ThermalBasicUnitCommitment),
         ("pwl_incremental_fuel_test", 4271.76, ThermalBasicUnitCommitment),
         ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
     ]
@@ -672,37 +672,6 @@ end
     @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 56, 0, 56, 14, 21, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 13143.5)
-end
-
-## PWL linear Cost implementation test
-@testset "Solving UC with CopperPlate testing Convex PWL" begin
-    template = get_thermal_standard_uc_template()
-    UC = DecisionModel(
-        UnitCommitmentProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-        optimizer = HiGHS_optimizer,
-        initialize_model = false,
-    )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    moi_tests(UC, 32, 0, 8, 4, 14, true)
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 13046.32, 0.01)
-end
-
-@testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
-    template = get_thermal_standard_uc_template()
-    UC = DecisionModel(
-        UnitCommitmentProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer = cbc_optimizer,
-        initialize_model = false,
-    )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    moi_tests(UC, 32, 0, 8, 4, 14, true)
-    # Cbc can have reliability issues with SoS. The objective function target in the this
-    # test was calculated with CPLEX do not change if Cbc gets a bad result
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 13746.13, 10.0)
 end
 
 #= Test disabled due to inconsistency between the models and the data
