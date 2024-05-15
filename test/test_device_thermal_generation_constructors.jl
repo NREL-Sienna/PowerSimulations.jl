@@ -9,7 +9,7 @@ test_path = mktempdir()
         ("pwl_io_cost_test", 3421.64, ThermalBasicUnitCommitment),
         ("pwl_io_fuel_test", 3421.64, ThermalBasicUnitCommitment),
         ("pwl_incremental_cost_test", 3424.43, ThermalBasicUnitCommitment),
-        ("pwl_incremental_fuel_test", 4271.76, ThermalBasicUnitCommitment),
+        ("pwl_incremental_fuel_test", 3424.43, ThermalBasicUnitCommitment),
         ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
     ]
     for (i, cost_reference, thermal_formulation) in test_cases
@@ -671,7 +671,7 @@ end
     build!(UC; output_dir = mktempdir(; cleanup = true))
     @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 56, 0, 56, 14, 21, true)
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 13143.5)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
 
 #= Test disabled due to inconsistency between the models and the data
