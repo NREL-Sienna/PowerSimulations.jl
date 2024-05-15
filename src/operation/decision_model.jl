@@ -299,9 +299,7 @@ function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     end
 
     if get_horizon(settings) == UNSET_HORIZON
-        # TODO: forecast horizon needs to return a TimePeriod value
-        resolution = get_resolution(settings)
-        set_horizon!(settings, PSY.get_forecast_horizon(sys) * resolution)
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
     end
 
     counts = PSY.get_time_series_counts(sys)
