@@ -228,12 +228,21 @@ Docs abbreviation: ``u^\\text{dir}``
 """
 struct HVDCFlowDirectionVariable <: VariableType end
 
+abstract type SparseVariableType <: VariableType end
+
 """
 Struct to dispatch the creation of piecewise linear cost variables for objective function
 
 Docs abbreviation: ``\\delta``
 """
-struct PieceWiseLinearCostVariable <: VariableType end
+struct PieceWiseLinearCostVariable <: SparseVariableType end
+
+"""
+Struct to dispatch the creation of piecewise linear block offer variables for objective function
+
+Docs abbreviation: ``\\delta``
+"""
+struct PieceWiseLinearBlockOffer <: SparseVariableType end
 
 """
 Struct to dispatch the creation of Interface Flow Slack Up variables
@@ -264,7 +273,7 @@ struct LowerBoundFeedForwardSlack <: VariableType end
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
-
+should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true
