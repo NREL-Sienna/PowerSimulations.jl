@@ -34,7 +34,7 @@ Implement the constraints for PWL Block Offer variables. That is:
 
 ```math
 \\sum_{k\\in\\mathcal{K}} \\delta_{k,t} = p_t \\\\
-\\sum_{k\\in\\mathcal{K}} \\delta_{k,t} <= P_{k-1,t}^{max} - P_{k,t}^{max}
+\\sum_{k\\in\\mathcal{K}} \\delta_{k,t} <= P_{k+1,t}^{max} - P_{k,t}^{max}
 ```
 """
 function _add_pwl_constraint!(
