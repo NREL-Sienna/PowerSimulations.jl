@@ -64,6 +64,36 @@ end
     end
 end
 
+@testset "Test Thermal Generation MarketBidCost models" begin
+    test_cases = [
+        ("fixed_market_bid_cost", 20532.76),
+        #"market_bid_cost",
+    ]
+    for (i, cost_reference) in test_cases
+        @testset "$i" begin
+            sys = build_system(PSITestSystems, "c_$(i)")
+            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            model = DecisionModel(
+                template,
+                sys;
+                name = "UC_$(i)",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
+                optimizer_solve_log_print = true,
+            )
+            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            results = OptimizationProblemResults(model)
+            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
+            var_unit_cost = sum(expr[!, "Test Unit1"])
+            @test isapprox(var_unit_cost, cost_reference; atol = 1)
+            @test expr[!, "Test Unit1"][end] == 0.0
+        end
+    end
+end
+
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_keys = [
