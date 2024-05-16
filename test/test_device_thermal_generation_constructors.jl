@@ -9,7 +9,7 @@ test_path = mktempdir()
         ("pwl_io_cost_test", 3421.64, ThermalBasicUnitCommitment),
         ("pwl_io_fuel_test", 3421.64, ThermalBasicUnitCommitment),
         ("pwl_incremental_cost_test", 3424.43, ThermalBasicUnitCommitment),
-        ("pwl_incremental_fuel_test", 4271.76, ThermalBasicUnitCommitment),
+        ("pwl_incremental_fuel_test", 3424.43, ThermalBasicUnitCommitment),
         ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
         ("fixed_market_bid_cost", 3047.14, ThermalBasicUnitCommitment)
     ]
@@ -673,7 +673,7 @@ end
     build!(UC; output_dir = mktempdir(; cleanup = true))
     @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 56, 0, 56, 14, 21, true)
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 13143.5)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
 
 #= Test disabled due to inconsistency between the models and the data
@@ -851,7 +851,7 @@ end
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
     template_uc =
         ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)))
-    set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))

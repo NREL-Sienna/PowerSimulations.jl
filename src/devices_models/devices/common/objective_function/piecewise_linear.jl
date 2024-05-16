@@ -320,20 +320,33 @@ Add PWL cost terms for data coming from a PiecewisePointCurve for ThermalDispatc
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    data::PSY.PiecewiseLinearData,
+    cost_function::Union{
+        PSY.CostCurve{PSY.PiecewisePointCurve},
+        PSY.FuelCurve{PSY.PiecewisePointCurve},
+    },
     ::U,
     ::V,
 ) where {T <: PSY.ThermalGen, U <: VariableType, V <: ThermalDispatchNoMin}
-    multiplier = objective_function_multiplier(U(), V())
-    resolution = get_resolution(container)
-    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    component_name = PSY.get_name(component)
-    @debug "PWL cost function detected for device $(component_name) using $V"
+    name = PSY.get_name(component)
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    power_units = PSY.get_power_units(cost_function)
+
+    # Normalize data
+    data = get_piecewise_pointcurve_per_system_unit(
+        cost_component,
+        power_units,
+        base_power,
+        device_base_power,
+    )
+    @debug "PWL cost function detected for device $(name) using $V"
     slopes = PSY.get_slopes(data)
     if any(slopes .< 0) || !PSY.is_convex(data)
         throw(
             IS.InvalidValue(
-                "The PWL cost data provided for generator $(component_name) is not compatible with $U.",
+                "The PWL cost data provided for generator $(name) is not compatible with $U.",
             ),
         )
     end
@@ -358,7 +371,8 @@ function _add_pwl_term!(
     for t in time_steps
         _add_pwl_variables!(container, T, component_name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost =
+            _get_pwl_cost_expression(container, component, t, cost_function, U(), V())
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
