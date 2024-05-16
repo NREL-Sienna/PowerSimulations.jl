@@ -231,6 +231,21 @@ Struct to create the PieceWiseLinearCostConstraint associated with a specified v
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
 struct PieceWiseLinearCostConstraint <: ConstraintType end
+
+"""
+Struct to create the PieceWiseLinearBlockOfferConstraint associated with a specified variable.
+
+See [Piecewise linear cost functions](@ref pwl_cost) for more information.
+"""
+struct PieceWiseLinearBlockOfferConstraint <: ConstraintType end
+
+"""
+Struct to create the PieceWiseLinearUpperBoundConstraint associated with a specified variable.
+
+See [Piecewise linear cost functions](@ref pwl_cost) for more information.
+"""
+struct PieceWiseLinearUpperBoundConstraint <: ConstraintType end
+
 """
 Struct to create the RampConstraint associated with a specified thermal device or reserve service.
 
