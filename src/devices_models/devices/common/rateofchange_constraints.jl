@@ -89,14 +89,14 @@ function add_linear_ramp_constraints!(
         name ∉ set_name && continue
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
-        @error "add rate_of_change_constraint" name ic_power
+        @debug "add rate_of_change_constraint" name ic_power
         con_up[name, 1] = JuMP.@constraint(
             get_jump_model(container),
             expr_up[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
         )
         con_down[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            ic_power - expr_dn[name, 1] <= ramp_limits.down * minutes_per_period
+            ic_power - expr_dn[name, 1] >= -1 * ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
@@ -106,8 +106,8 @@ function add_linear_ramp_constraints!(
             )
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                variable[name, t - 1] - expr_dn[name, t] <=
-                ramp_limits.down * minutes_per_period
+                variable[name, t - 1] - expr_dn[name, t] >=
+                -1 * ramp_limits.down * minutes_per_period
             )
         end
     end

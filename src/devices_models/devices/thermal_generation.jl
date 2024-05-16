@@ -74,7 +74,9 @@ initial_condition_default(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstrac
 initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 
 ########################Objective Function##################################################
-proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = no_load_cost(cost, S, T, U)
+# TODO: Decide what is the cost for OnVariable, if fixed or constant term in variable
+#proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = no_load_cost(cost, S, T, U)
+proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = PSY.get_fixed(cost)
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
@@ -104,32 +106,44 @@ uses_compact_power(::PSY.ThermalGen, ::ThermalCompactDispatch)=true
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_variable(cost)
 
-function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return no_load_cost(PSY.get_variable(cost), S, T, U) + PSY.get_fixed(cost)
+"""
+Theoretical Cost at power output zero. Mathematically is the intercept with the y-axis
+"""
+function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
+    return _no_load_cost(PSY.get_variable(cost), d)
 end
 
-# TODO given the old implementations, these functions seem to get the cost at *minimum* load, not *zero* load. Is that correct?
-function no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation)
+function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
     cost = PSY.get_function_data(value_curve)
     return last(first(PSY.get_points(cost)))
 end
 
-function no_load_cost(cost_function::PSY.CostCurve{PSY.LinearCurve}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
+function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
-    cost = PSY.get_function_data(value_curve)
-    return PSY.get_proportional_term(cost) * PSY.get_active_power_limits(d).min * PSY.get_system_base_power(d)
+    cost_component = PSY.get_function_data(value_curve)
+    # Always in \$/h
+    constant_term = PSY.get_constant_term(cost_component)
+    return constant_term
 end
 
-function no_load_cost(cost_function::PSY.CostCurve{PSY.QuadraticCurve}, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation)
-    min_power = PSY.get_active_power_limits(d).min
+function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+    # value_curve = PSY.get_value_curve(cost_function)
+    # cost = PSY.get_function_data(value_curve)
+    return 0.0
+end
+
+function _no_load_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
-    cost = PSY.get_function_data(value_curve)
-    evaluated = LinearAlgebra.dot(
-        [PSY.get_quadratic_term(cost), PSY.get_proportional_term(cost), PSY.get_constant_term(cost)],
-        [min_power^2, min_power, 1]
-    )
-    return evaluated * PSY.get_system_base_power(d)
+    cost_component = PSY.get_function_data(value_curve)
+    # In Unit/h (unit typically in )
+    constant_term = PSY.get_constant_term(cost_component)
+    fuel_cost = PSY.get_fuel_cost(cost_function)
+    if typeof(fuel_cost) <: Float64
+        return constant_term * fuel_cost
+    else
+        error("Time series not implemented yet")
+    end
 end
 
 #! format: on

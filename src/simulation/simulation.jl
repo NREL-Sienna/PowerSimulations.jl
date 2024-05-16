@@ -1040,7 +1040,7 @@ Solves the simulation model for sequential Simulations.
   - `sim::Simulation=sim`: simulation object created by Simulation()
 
 The optional keyword argument `exports` controls exporting of results to CSV files as
-the simulation runs. Refer to [`export_results`](@ref) for a description of this argument.
+the simulation runs.
 
 # Example
 ```julia

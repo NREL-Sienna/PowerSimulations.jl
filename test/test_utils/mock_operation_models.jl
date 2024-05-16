@@ -12,7 +12,7 @@ function PSI.DecisionModel(
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
-    available_resolutions = PSY.list_time_series_resolutions(sys)
+    available_resolutions = PSY.get_time_series_resolutions(sys)
     if length(available_resolutions) == 1
         PSI.set_resolution!(settings, first(available_resolutions))
     else

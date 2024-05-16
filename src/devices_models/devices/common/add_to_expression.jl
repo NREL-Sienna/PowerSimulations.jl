@@ -1012,7 +1012,7 @@ function add_to_expression!(
     end
     expression = get_expression(container, T(), V)
     for d in devices
-        mult in get_expression_multiplier(U(), T(), d, W())
+        mult = get_expression_multiplier(U(), T(), d, W())
         for t in get_time_steps(container)
             name = PSY.get_name(d)
             _add_to_jump_expression!(
@@ -1043,7 +1043,8 @@ function add_to_expression!(
         add_expressions!(container, T, devices, model)
     end
     expression = get_expression(container, T(), V)
-    for d in devices, mult in get_expression_multiplier(U(), T(), d, W())
+    for d in devices
+        mult = get_expression_multiplier(U(), T(), d, W())
         for t in get_time_steps(container)
             name = PSY.get_name(d)
             _add_to_jump_expression!(expression[name, t], parameter_array[name, t], -mult)

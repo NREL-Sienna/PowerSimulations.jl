@@ -846,7 +846,7 @@ function add_variable_container!(
     ::T,
     ::Type{U};
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
-) where {T <: PieceWiseLinearCostVariable, U <: Union{PSY.Component, PSY.System}}
+) where {T <: SparseVariableType, U <: Union{PSY.Component, PSY.System}}
     var_key = VariableKey(T, U, meta)
     _assign_container!(container.variables, var_key, _get_pwl_variables_container())
     return container.variables[var_key]
