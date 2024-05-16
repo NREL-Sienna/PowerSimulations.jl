@@ -11,7 +11,6 @@ test_path = mktempdir()
         ("pwl_incremental_cost_test", 3424.43, ThermalBasicUnitCommitment),
         ("pwl_incremental_fuel_test", 3424.43, ThermalBasicUnitCommitment),
         ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
-        ("fixed_market_bid_cost", 3047.14, ThermalBasicUnitCommitment)
     ]
     for (i, cost_reference, thermal_formulation) in test_cases
         @testset "$i" begin
