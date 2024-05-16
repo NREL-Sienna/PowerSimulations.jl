@@ -260,9 +260,9 @@ function _get_piecewise_pointcurve_per_system_unit(
     points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
     for (ix, point) in enumerate(points)
         points_normalized[ix] =
-            (x = point.x * (device_base_power / system_base_power), y = point.y) # case for natural units
+            (x = point.x * (device_base_power / system_base_power), y = point.y)
     end
-    return typeof(cost_component)(points_normalized)
+    return PSY.PiecewiseLinearData(points_normalized)
 end
 
 function _get_piecewise_pointcurve_per_system_unit(
@@ -274,10 +274,68 @@ function _get_piecewise_pointcurve_per_system_unit(
     points = cost_component.points
     points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
     for (ix, point) in enumerate(points)
-        points_normalized[ix] = (x = point.x / system_base_power, y = point.y) # case for natural units
+        points_normalized[ix] = (x = point.x / system_base_power, y = point.y)
     end
-    return typeof(cost_component)(points_normalized)
+    return PSY.PiecewiseLinearData(points_normalized)
 end
+
+"""
+Obtain the normalized PiecewiseStep cost data in system base per unit
+depending on the specified power units.
+
+Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h),
+so they also require transformation.
+"""
+function get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_piecewise_incrementalcurve_per_system_unit(
+        cost_component,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_component
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    x_coords = PSY.get_x_coords(cost_component)
+    y_coords = PSY.get_y_coords(cost_component)
+    ratio = device_base_power / system_base_power
+    x_coords_normalized = x_coords .* ratio
+    y_coords_normalized = y_coords ./ ratio
+    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    x_coords = PSY.get_x_coords(cost_component)
+    y_coords = PSY.get_y_coords(cost_component)
+    x_coords_normalized = x_coords ./ system_base_power
+    y_coords_normalized = y_coords .* system_base_power
+    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+end
+
 ##################################################
 ############### Auxiliary Methods ################
 ##################################################
