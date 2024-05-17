@@ -43,7 +43,7 @@ end
         "quadratic_fuel_test_ts",
         "pwl_io_fuel_test_ts",
         "pwl_incremental_fuel_test_ts",
-        "market_bid_cost"
+        "market_bid_cost",
     ]
     for i in test_cases
         @testset "$i" begin
