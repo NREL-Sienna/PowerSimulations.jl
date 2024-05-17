@@ -48,9 +48,9 @@ function build_simulation(
         error("num_steps and partitions cannot both be set")
     end
     c_sys5_pjm_da = PSB.build_system(PSISystems, "c_sys5_pjm")
-    PSY.transform_single_time_series!(c_sys5_pjm_da, 48, Hour(24))
+    PSY.transform_single_time_series!(c_sys5_pjm_da, Hour(48), Hour(24))
     c_sys5_pjm_rt = PSB.build_system(PSISystems, "c_sys5_pjm_rt")
-    PSY.transform_single_time_series!(c_sys5_pjm_rt, 12, Hour(1))
+    PSY.transform_single_time_series!(c_sys5_pjm_rt, Hour(1), Hour(1))
 
     for sys in [c_sys5_pjm_da, c_sys5_pjm_rt]
         th = get_component(ThermalStandard, sys, "Park City")
