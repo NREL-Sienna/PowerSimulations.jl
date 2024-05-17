@@ -243,6 +243,38 @@ function _get_pwl_cost_expression(
 end
 
 ##################################################
+########## PWL for StepwiseCostReserve  ##########
+##################################################
+
+function _add_pwl_term!(
+    container::OptimizationContainer,
+    component::T,
+    cost_data::AbstractVector{PSY.PiecewiseStepData},
+    ::U,
+    ::V,
+) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
+    multiplier = objective_function_multiplier(U(), V())
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    # Re-scale breakpoints by Basepower
+    name = PSY.get_name(component)
+    time_steps = get_time_steps(container)
+    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    sos_val = _get_sos_value(container, V, component)
+    for t in time_steps
+        data = cost_data[t]
+        break_points = PSY.get_x_coords(data) ./ base_power
+        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
+        _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
+        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost_expressions[t] = pwl_cost
+    end
+    return pwl_cost_expressions
+end
+
+##################################################
 ######## CostCurve: PiecewisePointCurve ##########
 ##################################################
 
