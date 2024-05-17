@@ -17,7 +17,7 @@ function _make_params()
     problem_defs = OrderedDict(
         :ED => Dict(
             "execution_count" => 24,
-            "horizon" => 12,
+            "horizon" => Dates.Hour(12),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
             "base_power" => 100.0,
@@ -25,7 +25,7 @@ function _make_params()
         ),
         :UC => Dict(
             "execution_count" => 1,
-            "horizon" => 24,
+            "horizon" => Dates.Hour(24),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),
             "base_power" => 100.0,
@@ -46,9 +46,9 @@ function _make_params()
     for problem in keys(problem_defs)
         problem_params = ModelStoreParams(
             problem_defs[problem]["execution_count"],
-            problem_defs[problem]["horizon"],
-            problem_defs[problem]["interval"],
-            problem_defs[problem]["resolution"],
+            IS.time_period_conversion(problem_defs[problem]["horizon"]),
+            IS.time_period_conversion(problem_defs[problem]["interval"]),
+            IS.time_period_conversion(problem_defs[problem]["resolution"]),
             problem_defs[problem]["base_power"],
             problem_defs[problem]["system_uuid"],
             container_metadata,

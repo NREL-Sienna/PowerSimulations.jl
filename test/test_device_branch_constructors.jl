@@ -240,10 +240,10 @@ end
     add_component!(sys_5, hvdc)
 
     template_uc = ProblemTemplate(
-        NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)),
+        NetworkModel(PTDFPowerModel),
     )
 
-    set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
@@ -325,10 +325,10 @@ end
         @testset "$net_model" begin
             PSY.set_loss!(hvdc, (l0 = 0.0, l1 = 0.0))
             template_uc = ProblemTemplate(
-                NetworkModel(net_model; PTDF_matrix = PTDF(sys_5), use_slacks = true),
+                NetworkModel(net_model; use_slacks = true),
             )
 
-            set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
+            set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
             set_device_model!(template_uc, RenewableDispatch, FixedOutput)
             set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
             set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
@@ -341,8 +341,9 @@ end
                 template_uc,
                 sys_5;
                 name = "UC",
-                optimizer = HiGHS_optimizer,
+                optimizer = HiGHS.Optimizer,
                 system_to_file = false,
+                store_variable_names = true,
             )
 
             solve!(model_ref; output_dir = mktempdir())
@@ -377,7 +378,7 @@ end
                 template_uc,
                 sys_5;
                 name = "UC",
-                optimizer = HiGHS_optimizer,
+                optimizer = HiGHS.Optimizer,
                 system_to_file = false,
             )
 

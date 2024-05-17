@@ -299,7 +299,7 @@ end
     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
     @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(UC)
-    @test isapprox(get_objective_value(res), 247448.0; atol = 10000.0)
+    @test isapprox(get_objective_value(res), 415555.0; atol = 10000.0)
     vars = res.variable_values
     service_key = PSI.VariableKey(
         ActivePowerReserveVariable,
@@ -432,11 +432,11 @@ end
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    ######## Test with ThermalCompactUnitCommitment ########
+    ######## Test with ThermalStandardUnitCommitment ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib"; force_build = true)
-    set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
-    set_device_model!(template, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template, ThermalMultiStart, ThermalStandardUnitCommitment)
+    set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
     model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -654,7 +654,7 @@ end
     template = get_thermal_dispatch_template_network()
     c_sys5_bat = PSB.build_system(PSITestSystems, "c_sys5_bat_ems"; force_build = true)
     device_model = DeviceModel(
-        BatteryEMS,
+        EnergyReservoirStorage,
         StorageDispatchWithReserves;
         attributes = Dict{String, Any}(
             "reservation" => true,

@@ -219,6 +219,8 @@ export ReserveRequirementSlack
 export VoltageMagnitude
 export VoltageAngle
 export FlowActivePowerVariable
+export FlowActivePowerSlackUpperBound
+export FlowActivePowerSlackLowerBound
 export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable
@@ -227,6 +229,8 @@ export PowerAboveMinimumVariable
 export PhaseShifterAngle
 export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
+export InterfaceFlowSlackUp
+export InterfaceFlowSlackDown
 
 # Auxiliary variables
 export TimeDurationOn
@@ -246,7 +250,7 @@ export CopperPlateBalanceConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EqualityConstraint
-export FeedforwardSemiContinousConstraint
+export FeedforwardSemiContinuousConstraint
 export FeedforwardUpperBoundConstraint
 export FeedforwardLowerBoundConstraint
 export FeedforwardIntegralLimitConstraint
@@ -265,6 +269,7 @@ export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCLosses
+export HVDCFlowDirectionVariable
 export InputActivePowerVariableLimitsConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
@@ -313,9 +318,7 @@ export EmergencyDown
 export RawACE
 export ProductionCostExpression
 export ActivePowerRangeExpressionLB
-export ReserveRangeExpressionLB
 export ActivePowerRangeExpressionUB
-export ReserveRangeExpressionUB
 
 #################################################################################
 # Imports
@@ -529,7 +532,11 @@ include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 
-include("devices_models/devices/common/objective_functions.jl")
+include("devices_models/devices/common/objective_function/common.jl")
+include("devices_models/devices/common/objective_function/linear_curve.jl")
+include("devices_models/devices/common/objective_function/quadratic_curve.jl")
+include("devices_models/devices/common/objective_function/market_bid.jl")
+include("devices_models/devices/common/objective_function/piecewise_linear.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")

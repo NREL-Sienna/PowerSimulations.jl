@@ -64,7 +64,7 @@ end
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    ######## Test with ThermalCompactUnitCommitment ########
+    ######## Test with ThermalStandardUnitCommitment ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
@@ -72,7 +72,7 @@ end
         add_single_time_series = true,
         force_build = true,
     )
-    set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
+    set_device_model!(template, ThermalMultiStart, ThermalStandardUnitCommitment)
     model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 1, output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -82,7 +82,7 @@ end
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    ######## Test with ThermalCompactDispatch ########
+    ######## Test with ThermalStandardDispatch ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
@@ -90,7 +90,7 @@ end
         add_single_time_series = true,
         force_build = true,
     )
-    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardDispatch)
     set_device_model!(template, device_model)
     model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==

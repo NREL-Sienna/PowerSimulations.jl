@@ -176,11 +176,11 @@ function _set_parameter!(
 end
 
 function _set_parameter!(
-    array::AbstractArray{Vector{NTuple{2, Float64}}},
+    array::AbstractArray{T},
     ::JuMP.Model,
-    value::Vector{NTuple{2, Float64}},
+    value::T,
     ixs::Tuple,
-)
+) where {T <: IS.FunctionData}
     array[ixs...] = value
     return
 end
@@ -224,7 +224,7 @@ end
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::Vector{NTuple{2, Float64}},
+    parameter::IS.FunctionData,
     ixs...,
 )
     param_array = get_parameter_array(container)

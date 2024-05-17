@@ -126,14 +126,263 @@ function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalHVDCLine)
     return
 end
 
+##################################################
+########### Cost Function Utilities ##############
+##################################################
+
+"""
+Obtain proportional (marginal or slope) cost data in system base per unit
+depending on the specified power units
+"""
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_proportional_cost_per_system_unit(
+        cost_term,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power
+end
+
+"""
+Obtain quadratic cost data in system base per unit
+depending on the specified power units
+"""
+function get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_quadratic_cost_per_system_unit(
+        cost_term,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE}, # SystemBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.DEVICE_BASE}, # DeviceBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)^2
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS}, # Natural Units
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power^2
+end
+
+"""
+Obtain the normalized PiecewiseLinear cost data in system base per unit
+depending on the specified power units.
+
+Note that the costs (y-axis) are always in \$/h so
+they do not require transformation
+"""
+function get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_piecewise_pointcurve_per_system_unit(
+        cost_component,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_component
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    points = cost_component.points
+    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
+    for (ix, point) in enumerate(points)
+        points_normalized[ix] =
+            (x = point.x * (device_base_power / system_base_power), y = point.y)
+    end
+    return PSY.PiecewiseLinearData(points_normalized)
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    points = cost_component.points
+    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
+    for (ix, point) in enumerate(points)
+        points_normalized[ix] = (x = point.x / system_base_power, y = point.y)
+    end
+    return PSY.PiecewiseLinearData(points_normalized)
+end
+
+"""
+Obtain the normalized PiecewiseStep cost data in system base per unit
+depending on the specified power units.
+
+Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h),
+so they also require transformation.
+"""
+function get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_piecewise_incrementalcurve_per_system_unit(
+        cost_component,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_component
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    x_coords = PSY.get_x_coords(cost_component)
+    y_coords = PSY.get_y_coords(cost_component)
+    ratio = device_base_power / system_base_power
+    x_coords_normalized = x_coords .* ratio
+    y_coords_normalized = y_coords ./ ratio
+    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    x_coords = PSY.get_x_coords(cost_component)
+    y_coords = PSY.get_y_coords(cost_component)
+    x_coords_normalized = x_coords ./ system_base_power
+    y_coords_normalized = y_coords .* system_base_power
+    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+end
+
+##################################################
+############### Auxiliary Methods ################
+##################################################
+
+# These conversions are not properly done for the new models
+function convert_to_compact_variable_cost(
+    var_cost::PSY.PiecewiseLinearData,
+    p_min::Float64,
+    no_load_cost::Float64,
+)
+    points = PSY.get_points(var_cost)
+    new_points = [(pp - p_min, c - no_load_cost) for (pp, c) in points]
+    return PSY.PiecewiseLinearData(new_points)
+end
+
+# These conversions are not properly done for the new models
+function convert_to_compact_variable_cost(
+    var_cost::PSY.PiecewiseStepData,
+    p_min::Float64,
+    no_load_cost::Float64,
+)
+    x = PSY.get_x_coords(var_cost)
+    y = vcat(PSY.get_y_coords(var_cost), PSY.get_y_coords(var_cost)[end])
+    points = [(x[i], y[i]) for i in length(x)]
+    new_points = [(x = pp - p_min, y = c - no_load_cost) for (pp, c) in points]
+    return PSY.PiecewiseLinearData(new_points)
+end
+
+# TODO: This method needs to be corrected to account for actual StepData. The TestData is point wise
+function convert_to_compact_variable_cost(var_cost::PSY.PiecewiseStepData)
+    p_min, no_load_cost = (PSY.get_x_coords(var_cost)[1], PSY.get_y_coords(var_cost)[1])
+    return convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
+end
+
+function convert_to_compact_variable_cost(var_cost::PSY.PiecewiseLinearData)
+    p_min, no_load_cost = first(PSY.get_points(var_cost))
+    return convert_to_compact_variable_cost(var_cost, p_min, no_load_cost)
+end
+
 function _validate_compact_pwl_data(
     min::Float64,
     max::Float64,
-    data::PSY.PiecewiseLinearPointData,
+    cost_data::PSY.PiecewiseStepData,
     base_power::Float64,
 )
-    data = PSY.get_points(data)
-    if isapprox(max - min, last(data).x / base_power) && iszero(first(data).x)
+    data = PSY.get_x_coords(cost_data)
+    if isapprox(max - min, last(data) / base_power) && iszero(first(data))
         return COMPACT_PWL_STATUS.VALID
     else
         return COMPACT_PWL_STATUS.INVALID
@@ -142,7 +391,7 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.ThermalGen,
-    data::PSY.PiecewiseLinearPointData,
+    data::PSY.PiecewiseStepData,
     base_power::Float64,
 )
     min = PSY.get_active_power_limits(d).min
@@ -152,7 +401,7 @@ end
 
 function validate_compact_pwl_data(
     d::PSY.Component,
-    ::PSY.PiecewiseLinearPointData,
+    ::PSY.PiecewiseLinearData,
     ::Float64,
 )
     @warn "Validation of compact pwl data is not implemented for $(typeof(d))."

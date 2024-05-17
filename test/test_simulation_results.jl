@@ -177,7 +177,7 @@ function run_simulation(
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = GLPK_optimizer,
+                optimizer = HiGHS_optimizer,
                 system_to_file = system_to_file,
             ),
             DecisionModel(

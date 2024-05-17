@@ -7,7 +7,7 @@
         #duals=[CopperPlateBalanceConstraint],
     ))
 
-    set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
@@ -25,7 +25,7 @@
         #duals=[CopperPlateBalanceConstraint],
     ))
 
-    set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))

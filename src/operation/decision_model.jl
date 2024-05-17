@@ -37,7 +37,8 @@ Build the optimization problem of type M with the specific system and template.
   - `name = nothing`: name of model, string or symbol; defaults to the type of template converted to a symbol.
   - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes} = nothing` : The optimizer does
     not get serialized. Callers should pass whatever they passed to the original problem.
-  - `horizon::Int = UNSET_HORIZON`: Manually specify the length of the forecast Horizon
+  - `horizon::Dates.Period = UNSET_HORIZON`: Manually specify the length of the forecast Horizon
+  - `resolution::Dates.Period = UNSET_RESOLUTION`: Manually specify the model's resolution
   - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
   - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
   - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
@@ -76,9 +77,10 @@ function DecisionModel{M}(
     internal = IS.Optimization.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
     )
+
     template_ = deepcopy(template)
     finalize_template!(template_, sys)
-    return DecisionModel{M}(
+    model = DecisionModel{M}(
         name,
         template_,
         sys,
@@ -87,6 +89,8 @@ function DecisionModel{M}(
         DecisionModelStore(),
         Dict{String, Any}(),
     )
+    validate_time_series(model)
+    return model
 end
 
 function DecisionModel{M}(
@@ -96,6 +100,7 @@ function DecisionModel{M}(
     name = nothing,
     optimizer = nothing,
     horizon = UNSET_HORIZON,
+    resolution = UNSET_RESOLUTION,
     warm_start = true,
     system_to_file = true,
     initialize_model = true,
@@ -116,6 +121,7 @@ function DecisionModel{M}(
     settings = Settings(
         sys;
         horizon = horizon,
+        resolution = resolution,
         initial_time = initial_time,
         optimizer = optimizer,
         time_series_cache_size = time_series_cache_size,
@@ -253,7 +259,7 @@ function init_model_store_params!(model::DecisionModel)
     horizon = get_horizon(model)
     system = get_system(model)
     interval = PSY.get_forecast_interval(system)
-    resolution = PSY.get_time_series_resolution(system)
+    resolution = get_resolution(model)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
     store_params = ModelStoreParams(
@@ -271,6 +277,31 @@ end
 
 function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
+    settings = get_settings(model)
+    available_resolutions = PSY.get_time_series_resolutions(sys)
+
+    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
+        throw(
+            IS.ConflictingInputsError(
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+            ),
+        )
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+        if get_resolution(settings) ∉ available_resolutions
+            throw(
+                IS.ConflictingInputsError(
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                ),
+            )
+        end
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end
+
+    if get_horizon(settings) == UNSET_HORIZON
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
+    end
+
     counts = PSY.get_time_series_counts(sys)
     if counts.forecast_count < 1
         error(
@@ -283,7 +314,6 @@ end
 function build_pre_step!(model::DecisionModel{<:DecisionProblem})
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         validate_template(model)
-        validate_time_series(model)
         if !isempty(model)
             @info "OptimizationProblem status not ModelBuildStatus.EMPTY. Resetting"
 

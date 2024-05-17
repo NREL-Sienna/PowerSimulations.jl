@@ -1,12 +1,11 @@
 function check_simulation_chronology(
-    horizons::OrderedDict{Symbol, Int},
+    horizons::OrderedDict{Symbol, Dates.Millisecond},
     intervals::OrderedDict{Symbol, Dates.Millisecond},
     resolutions::OrderedDict{Symbol, Dates.Millisecond},
 )
     models = collect(keys(resolutions))
 
-    for (model, horizon) in horizons
-        horizon_time = resolutions[model] * horizon
+    for (model, horizon_time) in horizons
         if horizon_time < intervals[model]
             throw(IS.ConflictingInputsError("horizon ($horizon_time) is
                                 shorter than interval ($interval) for $(model)"))
@@ -16,11 +15,17 @@ function check_simulation_chronology(
     for i in 2:length(models)
         upper_level_model = models[i - 1]
         lower_level_model = models[i]
-        if horizons[lower_level_model] * resolutions[lower_level_model] >
-           horizons[upper_level_model] * resolutions[upper_level_model]
+        if horizons[lower_level_model] > horizons[upper_level_model]
             throw(
                 IS.ConflictingInputsError(
                     "The lookahead length $(horizons[upper_level_model]) in model $(upper_level_model) is insufficient to syncronize with $(lower_level_model)",
+                ),
+            )
+        end
+        if intervals[lower_level_model] == Dates.Millisecond(0)
+            throw(
+                IS.ConflictingInputsError(
+                    "The interval in model $(lower_level_model) is invalid.",
                 ),
             )
         end
@@ -28,7 +33,7 @@ function check_simulation_chronology(
            Dates.Millisecond(0)
             throw(
                 IS.ConflictingInputsError(
-                    "The system's intervals are not compatible for simulation. The interval in model $(upper_level_model) needs to be a mutiple of the interval $(lower_level_model) for a consistent time coordination.",
+                    "The intervals are not compatible for simulation. The interval in model $(upper_level_model) needs to be a mutiple of the interval $(lower_level_model) for a consistent time coordination.",
                 ),
             )
         end
@@ -238,7 +243,7 @@ sequence = SimulationSequence(;
 ```
 """
 mutable struct SimulationSequence
-    horizons::OrderedDict{Symbol, Int}
+    horizons::OrderedDict{Symbol, Dates.Millisecond}
     intervals::OrderedDict{Symbol, Dates.Millisecond}
     feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
     events::Dict{EventKey, Any}

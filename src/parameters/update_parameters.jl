@@ -502,7 +502,7 @@ function _update_parameter_values!(
                     value, _ = _convert_variable_cost(value)
                 end
                 # TODO removed an apparently unused block of code here?
-                _set_param_value!(parameter_array, PSY.get_raw_data(value), name, t)
+                _set_param_value!(parameter_array, value, name, t)
                 update_variable_cost!(
                     container,
                     parameter_array,
@@ -527,11 +527,11 @@ function _update_pwl_cost_expression(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::PSY.PiecewiseLinearPointData,
+    cost_data::PSY.PiecewiseLinearData,
 ) where {T <: PSY.Component}
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_slopes(cost_data)
     upb = get_breakpoint_upper_bounds(cost_data)
@@ -553,7 +553,7 @@ function update_variable_cost!(
     time_period::Int,
 ) where {T <: PSY.Component}
     resolution = get_resolution(container)
-    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     base_power = get_base_power(container)
     component_name = PSY.get_name(component)
     cost_data = parameter_array[component_name, time_period]  # TODO is this a new-style cost?
@@ -588,7 +588,7 @@ function update_variable_cost!(
             T,
             component_name,
             time_period,
-            PSY.PiecewiseLinearPointData(cost_data),
+            PSY.PiecewiseLinearData(cost_data),
         )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)

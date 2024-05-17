@@ -12,6 +12,12 @@ function PSI.DecisionModel(
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     settings = PSI.Settings(sys; kwargs...)
+    available_resolutions = PSY.get_time_series_resolutions(sys)
+    if length(available_resolutions) == 1
+        PSI.set_resolution!(settings, first(available_resolutions))
+    else
+        error("System has multiple resolutions MockOperationProblem won't work")
+    end
     return DecisionModel{MockOperationProblem}(
         ProblemTemplate(T),
         sys,
@@ -21,12 +27,18 @@ function PSI.DecisionModel(
     )
 end
 
-function make_mock_forecast(horizon, resolution, interval, steps)
+function make_mock_forecast(
+    horizon::Dates.TimePeriod,
+    resolution::Dates.TimePeriod,
+    interval::Dates.TimePeriod,
+    steps,
+)
     init_time = DateTime("2024-01-01")
     timeseries_data = Dict{Dates.DateTime, Vector{Float64}}()
+    horizon_count = horizon ÷ resolution
     for i in 1:steps
         forecast_timestamps = init_time + interval * i
-        timeseries_data[forecast_timestamps] = rand(horizon)
+        timeseries_data[forecast_timestamps] = rand(horizon_count)
     end
     return Deterministic(;
         name = "mock_forecast",
@@ -37,8 +49,9 @@ end
 
 function make_mock_singletimeseries(horizon, resolution)
     init_time = DateTime("2024-01-01")
-    tstamps = collect(range(init_time; length = horizon, step = resolution))
-    timeseries_data = TimeArray(tstamps, rand(horizon))
+    horizon_count = horizon ÷ resolution
+    tstamps = collect(range(init_time; length = horizon_count, step = resolution))
+    timeseries_data = TimeArray(tstamps, rand(horizon_count))
     return SingleTimeSeries(; name = "mock_timeseries", data = timeseries_data)
 end
 
@@ -52,14 +65,15 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs.
     add_component!(sys, l)
     add_component!(sys, gen)
     forecast = make_mock_forecast(
-        get(kwargs, :horizon, 24),
+        get(kwargs, :horizon, Hour(24)),
         get(kwargs, :resolution, Hour(1)),
         get(kwargs, :interval, Hour(1)),
         get(kwargs, :steps, 2),
     )
     add_time_series!(sys, l, forecast)
-
-    settings = PSI.Settings(sys; horizon = get(kwargs, :horizon, 24))
+    settings = PSI.Settings(sys;
+        horizon = get(kwargs, :horizon, Hour(24)),
+        resolution = get(kwargs, :resolution, Hour(1)))
     return DecisionModel{MockOperationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
@@ -79,12 +93,14 @@ function PSI.EmulationModel(::Type{MockEmulationProblem}; name = nothing, kwargs
     add_component!(sys, l)
     add_component!(sys, gen)
     single_ts = make_mock_singletimeseries(
-        get(kwargs, :horizon, 24),
+        get(kwargs, :horizon, Hour(24)),
         get(kwargs, :resolution, Hour(1)),
     )
     add_time_series!(sys, l, single_ts)
 
-    settings = PSI.Settings(sys; horizon = get(kwargs, :horizon, 24))
+    settings = PSI.Settings(sys;
+        horizon = get(kwargs, :resolution, Hour(1)),
+        resolution = get(kwargs, :resolution, Hour(1)))
     return EmulationModel{MockEmulationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,
@@ -103,6 +119,7 @@ function mock_construct_device!(
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.finalize_template!(template, PSI.get_system(problem))
+    PSI.validate_time_series(problem)
     PSI.init_optimization_container!(
         PSI.get_optimization_container(problem),
         PSI.get_network_model(template),
