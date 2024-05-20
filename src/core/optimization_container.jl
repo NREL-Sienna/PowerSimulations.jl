@@ -460,9 +460,9 @@ function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
-    ::Type{T},
+    ::Type{PTDFPowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
-) where {T <: PTDFPowerModel}
+)
     time_steps = get_time_steps(container)
     if isempty(bus_reduction_map)
         ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
@@ -483,6 +483,27 @@ function _make_system_expressions!(
     return
 end
 
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    subnetworks::Dict{Int, Set{Int}},
+    ::Type{AreaBalancePowerModel},
+    areas::IS.FlattenIteratorWrapper{PSY.Area},
+)
+    if length(subnetworks) > 1
+        throw(
+            IS.ConflictingInputsError(
+                "AreaBalancePowerModel doesn't support systems with multiple asynchrous areas",
+            ),
+        )
+    end
+    time_steps = get_time_steps(container)
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.Area) =>
+            _make_container_array(PSY.get_name.(areas), time_steps),
+    )
+    return
+end
+
 function initialize_system_expressions!(
     container::OptimizationContainer,
     ::Type{T},
@@ -492,6 +513,18 @@ function initialize_system_expressions!(
 ) where {T <: PM.AbstractPowerModel}
     dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
     _make_system_expressions!(container, subnetworks, dc_bus_numbers, T, bus_reduction_map)
+    return
+end
+
+function initialize_system_expressions!(
+    container::OptimizationContainer,
+    ::Type{AreaBalancePowerModel},
+    subnetworks::Dict{Int, Set{Int}},
+    system::PSY.System,
+    ::Dict{Int64, Set{Int64}},
+)
+    areas = PSY.get_components(PSY.Area, system)
+    _make_system_expressions!(container, subnetworks, AreaBalancePowerModel, areas)
     return
 end
 

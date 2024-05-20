@@ -30,22 +30,21 @@ function construct_network!(
     model::NetworkModel{AreaBalancePowerModel},
     ::ProblemTemplate,
 )
-    area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
-    branches = get_available_components(model, PSY.Branch, sys)
     if get_use_slacks(model)
-        throw(
-            IS.ConflictingInputsError(
-                "Slack Variables are not compatible with AreaBalancePowerModel",
-            ),
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
         )
+        objective_function!(container, PSY.System, model)
     end
 
-    area_balance(
-        container,
-        ExpressionKey(ActivePowerBalance, PSY.ACBus),
-        area_mapping,
-        branches,
-    )
+    add_constraints!(container, AreaDispatchBalanceConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end
