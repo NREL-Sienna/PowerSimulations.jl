@@ -104,7 +104,10 @@ function add_constraints!(
                     var_array[ci_name, t] >= -1.0 * from_to_limit
                 )
             con_ub[ci_name, t] =
-                JuMP.@constraint(get_jump_model(container), var_array[ci_name, t] <= to_from_limit)
+                JuMP.@constraint(
+                    get_jump_model(container),
+                    var_array[ci_name, t] <= to_from_limit
+                )
         end
     end
     return
