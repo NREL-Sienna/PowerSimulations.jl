@@ -335,6 +335,7 @@ function _constraint_with_slacks!(
             )
         end
     end
+    return
 end
 
 """
@@ -430,6 +431,7 @@ function add_constraints!(
             )
         end
     end
+    return
 end
 
 """
@@ -473,6 +475,7 @@ function add_constraints!(
             )
         end
     end
+    return
 end
 
 """
