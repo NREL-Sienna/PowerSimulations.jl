@@ -122,6 +122,75 @@ function _add_pwl_constraint!(
 end
 
 """
+Implement the constraints for PWL variables for Compact form. That is:
+
+```math
+\\sum_{k\\in\\mathcal{K}} P_k^{max} \\delta_{k,t} = p_t + P_min * u_t \\\\
+\\sum_{k\\in\\mathcal{K}} \\delta_{k,t} = on_t
+```
+"""
+function _add_pwl_constraint!(
+    container::OptimizationContainer,
+    component::T,
+    ::U,
+    break_points::Vector{Float64},
+    sos_status::SOSStatusVariable,
+    period::Int,
+) where {T <: PSY.Component, U <: PowerAboveMinimumVariable}
+    variables = get_variable(container, U(), T)
+    const_container = lazy_container_addition!(
+        container,
+        PieceWiseLinearCostConstraint(),
+        T,
+        axes(variables)...,
+    )
+    len_cost_data = length(break_points)
+    jump_model = get_jump_model(container)
+    pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
+    name = PSY.get_name(component)
+
+    if sos_status == SOSStatusVariable.NO_VARIABLE
+        bin = 1.0
+        @debug "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)" _group =
+            LOG_GROUP_COST_FUNCTIONS
+
+    elseif sos_status == SOSStatusVariable.PARAMETER
+        param = get_default_on_parameter(component)
+        bin = get_parameter(container, param, T).parameter_array[name, period]
+        @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
+            LOG_GROUP_COST_FUNCTIONS
+    elseif sos_status == SOSStatusVariable.VARIABLE
+        var = get_default_on_variable(component)
+        bin = get_variable(container, var, T)[name, period]
+        @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
+            LOG_GROUP_COST_FUNCTIONS
+    else
+        @assert false
+    end
+    P_min = PSY.get_active_power_limits(component).min
+
+    const_container[name, period] = JuMP.@constraint(
+        jump_model,
+        bin * P_min + variables[name, period] ==
+        sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
+    )
+
+    const_normalization_container = lazy_container_addition!(
+        container,
+        PieceWiseLinearCostConstraint(),
+        T,
+        axes(variables)...;
+        meta = "normalization",
+    )
+
+    const_normalization_container[name, period] = JuMP.@constraint(
+        jump_model,
+        sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin
+    )
+    return
+end
+
+"""
 Implement the SOS for PWL variables. That is:
 
 ```math
@@ -313,20 +382,7 @@ function _add_pwl_term!(
         return
     end
 
-    compact_status = validate_compact_pwl_data(component, data, base_power)
-    if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
-        error(
-            "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
-        )
-        # data = _convert_to_full_variable_cost(data, component)
-    elseif uses_compact_power(component, V()) && compact_status != COMPACT_PWL_STATUS.VALID
-        @warn(
-            "The cost data provided is not in compact form. Will attempt to convert. Errors may occur."
-        )
-        data = convert_to_compact_variable_cost(data)
-    else
-        @debug uses_compact_power(component, V()) compact_status name T V
-    end
+    # Compact PWL data does not exists anymore
 
     cost_is_convex = PSY.is_convex(data)
     break_points = PSY.get_x_coords(data)
@@ -383,10 +439,7 @@ function _add_pwl_term!(
         )
     end
 
-    if validate_compact_pwl_data(component, data, base_power) == COMPACT_PWL_STATUS.VALID
-        error("The data provided is not compatible with formulation $V. \\
-              Use a formulation compatible with Compact Cost Functions")
-    end
+    # Compact PWL data does not exists anymore
 
     if slopes[1] != 0.0
         @debug "PWL has no 0.0 intercept for generator $(component_name)"
