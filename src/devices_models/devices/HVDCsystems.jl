@@ -169,6 +169,22 @@ function add_to_expression!(
     ::OptimizationContainer,
     ::Type{T},
     ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
+}
+    return
+end
+
+function add_to_expression!(
+    ::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
     ::IS.FlattenIteratorWrapper{V},
     devices::DeviceModel{V, W},
     network_model::NetworkModel{CopperPlatePowerModel},

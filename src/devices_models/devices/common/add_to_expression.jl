@@ -107,6 +107,34 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: TimeSeriesParameter,
+    V <: PSY.Device,
+    W <: AbstractDeviceFormulation,
+}
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
+    for d in devices, t in get_time_steps(container)
+        bus = PSY.get_bus(d)
+        area_name = PSY.get_name(PSY.get_area(bus))
+        name = PSY.get_name(d)
+        _add_to_jump_expression!(
+            get_expression(container, T(), PSY.Area)[area_name, t],
+            get_parameter_column_refs(param_container, name)[t],
+            multiplier[name, t],
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
@@ -156,6 +184,34 @@ function add_to_expression!(
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
         _add_to_jump_expression!(
             expression[bus_no, t],
+            variable[name, t],
+            get_variable_multiplier(U(), V, W()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: VariableType,
+    V <: PSY.StaticInjection,
+    W <: AbstractDeviceFormulation,
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), PSY.Area)
+    for d in devices, t in get_time_steps(container)
+        name = PSY.get_name(d)
+        bus = PSY.get_bus(d)
+        area_name = PSY.get_name(PSY.get_area(bus))
+        _add_to_jump_expression!(
+            expression[area_name, t],
             variable[name, t],
             get_variable_multiplier(U(), V, W()),
         )
@@ -431,6 +487,34 @@ function add_to_expression!(
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
         _add_to_jump_expression!(
             expression[bus_no, t],
+            variable[name, t],
+            get_variable_multiplier(U(), d, W()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: OnVariable,
+    V <: PSY.ThermalGen,
+    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), PSY.ACBus)
+    for d in devices, t in get_time_steps(container)
+        bus = PSY.get_bus(d)
+        area_name = PSY.get_name(PSY.get_area(bus))
+        name = PSY.get_name(d)
+        _add_to_jump_expression!(
+            expression[area_name, t],
             variable[name, t],
             get_variable_multiplier(U(), d, W()),
         )
@@ -746,6 +830,38 @@ function add_to_expression!(
             _add_to_jump_expression!(
                 expression[bus_no_to, t],
                 flow_variable,
+                1.0,
+            )
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{FlowActivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
+    ::DeviceModel{PSY.AreaInterchange, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    W <: AbstractBranchFormulation,
+}
+    flow_variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
+    expression = get_expression(container, T(), PSY.Area)
+    for d in devices
+        area_from_name = PSY.get_name(PSY.get_from_area(d))
+        area_to_name = PSY.get_name(PSY.get_to_area(d))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[area_from_name, t],
+                flow_variable[PSY.get_name(d), t],
+                -1.0,
+            )
+            _add_to_jump_expression!(
+                expression[area_to_name, t],
+                flow_variable[PSY.get_name(d), t],
                 1.0,
             )
         end
