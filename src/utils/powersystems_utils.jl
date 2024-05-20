@@ -340,6 +340,9 @@ end
 ############### Auxiliary Methods ################
 ##################################################
 
+# Compact Data does not exists anymore
+#=
+
 # These conversions are not properly done for the new models
 function convert_to_compact_variable_cost(
     var_cost::PSY.PiecewiseLinearData,
@@ -381,8 +384,11 @@ function _validate_compact_pwl_data(
     cost_data::PSY.PiecewiseStepData,
     base_power::Float64,
 )
+    @show min
+    @show max
     data = PSY.get_x_coords(cost_data)
-    if isapprox(max - min, last(data) / base_power) && iszero(first(data))
+    @show last(data)
+    if isapprox(max - min, last(data)) && iszero(first(data))
         return COMPACT_PWL_STATUS.VALID
     else
         return COMPACT_PWL_STATUS.INVALID
@@ -409,3 +415,4 @@ function validate_compact_pwl_data(
 end
 
 get_breakpoint_upper_bounds = PSY.get_x_lengths
+=#
