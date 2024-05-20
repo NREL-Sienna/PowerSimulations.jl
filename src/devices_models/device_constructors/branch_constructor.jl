@@ -861,3 +861,79 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
+
+################################# AreaInterchange Models ################################
+function construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, U},
+    network_model::NetworkModel{T},
+) where {T <: PM.AbstractPowerModel, U <: Union{StaticBranchUnbounded, StaticBranch}}
+    error("AreaInterchange is not yet implemented for $T")
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, T},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {T <: Union{StaticBranchUnbounded, StaticBranch}}
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            FlowActivePowerSlackUpperBound,
+            network_model,
+            devices,
+            T(),
+        )
+        add_variables!(
+            container,
+            FlowActivePowerSlackLowerBound,
+            network_model,
+            devices,
+            T(),
+        )
+    end
+    devices = get_available_components(model, sys)
+    add_variables!(
+        container,
+        FlowActivePowerVariable,
+        network_model,
+        devices,
+        T(),
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, StaticBranch},
+    network_model::NetworkModel{AreaBalancePowerModel},
+)
+    devices = get_available_components(model, sys)
+    add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
+    return
+end
+
+function construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
+    network_model::NetworkModel{AreaBalancePowerModel},
+)
+    return
+end
