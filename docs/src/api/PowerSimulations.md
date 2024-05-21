@@ -7,7 +7,7 @@ end
 
 # API Reference
 
-### Table of Contents
+## Table of Contents
 
 * [Device Models](#Device-Models)
     * [Formulations](#Formulations)
@@ -42,7 +42,7 @@ end
 &nbsp;
 ```
 
-# Device Models
+## Device Models
 
 List of structures and methods for Device models
 
@@ -66,7 +66,7 @@ Refer to the [Problem Templates Page](@ref op_problem_template) for available `P
 
 ---
 
-# Decision Models
+## Decision Models
 
 ```@docs
 DecisionModel
@@ -83,7 +83,7 @@ solve!(::DecisionModel)
 
 ---
 
-# Emulation Models
+## Emulation Models
 
 ```@docs
 EmulationModel
@@ -100,7 +100,7 @@ run!(::EmulationModel)
 
 ---
 
-# Service Models
+## Service Models
 
 List of structures and methods for Service models
 
@@ -115,7 +115,7 @@ ServiceModel
 
 ---
 
-# Simulation Models
+## Simulation Models
 
 Refer to the [Simulations Page](@ref running_a_simulation) to explanations on how to setup a Simulation, with Sequencing and Feedforwards.
 
@@ -210,7 +210,7 @@ LowerBoundFeedForwardSlack
 
 ---
 
-# Constraints
+## Constraints
 
 ### Common Constraints
 
@@ -222,7 +222,6 @@ PieceWiseLinearCostConstraint
 ### Network Constraints
 
 ```@docs
-AreaDispatchBalanceConstraint
 CopperPlateBalanceConstraint
 NodalBalanceActiveConstraint
 NodalBalanceReactiveConstraint
@@ -292,7 +291,7 @@ FeedforwardLowerBoundConstraint
 
 ---
 
-# Parameters
+## Parameters
 
 ### Time Series Parameters
 
