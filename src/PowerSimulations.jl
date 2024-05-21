@@ -21,6 +21,7 @@ export NetworkModel
 export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
+export AreaPTDFPowerModel
 
 ######## Device Models ########
 export DeviceModel
@@ -242,7 +243,6 @@ export AbsoluteValueConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint
-export AreaDispatchBalanceConstraint
 export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint

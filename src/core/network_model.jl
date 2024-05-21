@@ -118,7 +118,10 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(model::NetworkModel{PTDFPowerModel}, sys::PSY.System)
+function instantiate_network_model(
+    model::NetworkModel{<:AbstractPTDFModel},
+    sys::PSY.System,
+)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         model.PTDF_matrix =
@@ -140,7 +143,7 @@ end
 function _assign_subnetworks_to_buses(
     model::NetworkModel{T},
     sys::PSY.System,
-) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
+) where {T <: Union{CopperPlatePowerModel, AbstractPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     radial_network_reduction = PSI.get_radial_network_reduction(model)
