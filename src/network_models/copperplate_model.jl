@@ -19,3 +19,25 @@ function add_constraints!(
 
     return
 end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    sys::U,
+    model::NetworkModel{AreaPTDFPowerModel},
+) where {
+    T <: CopperPlateBalanceConstraint,
+    U <: PSY.System,
+}
+    time_steps = get_time_steps(container)
+    expressions = get_expression(container, ActivePowerBalance(), PSY.Area)
+    area_names = PSY.get_name.(PSY.get_components(PSY.Area, sys))
+    constraint =
+        add_constraints_container!(container, T(), PSY.Area, area_names, time_steps)
+    jm = get_jump_model(container)
+    for t in time_steps, k in area_names
+        constraint[k, t] = JuMP.@constraint(jm, expressions[k, t] == 0)
+    end
+
+    return
+end

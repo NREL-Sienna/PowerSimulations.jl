@@ -15,10 +15,10 @@ end
 function add_variables!(
     container::OptimizationContainer,
     ::Type{FlowActivePowerVariable},
-    model::NetworkModel{AreaBalancePowerModel},
+    model::NetworkModel{T},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     formulation::AbstractBranchFormulation,
-)
+) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
     time_steps = get_time_steps(container)
 
     variable = add_variable_container!(
@@ -38,7 +38,7 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{AreaDispatchBalanceConstraint},
+    ::Type{CopperPlateBalanceConstraint},
     sys::PSY.System,
     model::NetworkModel{AreaBalancePowerModel},
 )
@@ -47,7 +47,7 @@ function add_constraints!(
 
     constraints = add_constraints_container!(
         container,
-        AreaDispatchBalanceConstraint(),
+        CopperPlateBalanceConstraint(),
         PSY.Area,
         area_names,
         time_steps,
@@ -68,8 +68,8 @@ function add_constraints!(
     ::Type{FlowLimitConstraint},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     model::DeviceModel{PSY.AreaInterchange, StaticBranch},
-    ::NetworkModel{AreaBalancePowerModel},
-)
+    ::NetworkModel{T},
+) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 

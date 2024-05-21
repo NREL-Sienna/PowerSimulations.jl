@@ -44,7 +44,7 @@ function construct_network!(
         objective_function!(container, PSY.System, model)
     end
 
-    add_constraints!(container, AreaDispatchBalanceConstraint, sys, model)
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -52,7 +52,7 @@ end
 function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
-    model::NetworkModel{PTDFPowerModel},
+    model::NetworkModel{<:AbstractPTDFModel},
     ::ProblemTemplate,
 )
     if get_use_slacks(model)

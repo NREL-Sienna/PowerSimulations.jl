@@ -1,6 +1,6 @@
 function add_constraints(
     container::OptimizationContainer,
-    ::Type{AreaDispatchBalanceConstraint},
+    ::Type{CopperPlateBalanceConstraint},
     sys::PSY.System,
     model::NetworkModel{AreaBalancePowerModel},
 )
@@ -8,7 +8,7 @@ function add_constraints(
     area_names = PSY.get_name.(PSY.get_components(Area, sys))
     constraint = add_constraints_container!(
         container,
-        AreaDispatchBalanceConstraint(),
+        CopperPlateBalanceConstraint(),
         PSY.Area,
         area_names,
         time_steps,
@@ -34,7 +34,7 @@ function agc_area_balance(
 
     constraint = add_constraints_container!(
         container,
-        AreaDispatchBalanceConstraint(),
+        CopperPlateBalanceConstraint(),
         PSY.Area,
         keys(area_mapping),
         time_steps,

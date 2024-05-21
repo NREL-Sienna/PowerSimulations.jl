@@ -1,3 +1,15 @@
+_system_expression_type(::Type{PTDFPowerModel}) = PSY.System
+_system_expression_type(::Type{CopperPlatePowerModel}) = PSY.System
+_system_expression_type(::Type{AreaPTDFPowerModel}) = PSY.Area
+
+function _ref_index(network_model::NetworkModel{<:PM.AbstractPowerModel}, bus::PSY.ACBus)
+    return get_reference_bus(network_model, bus)
+end
+
+function _ref_index(::NetworkModel{AreaPTDFPowerModel}, device_bus::PSY.ACBus)
+    return PSY.get_name(PSY.get_area(device_bus))
+end
+
 function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
@@ -234,10 +246,10 @@ function add_to_expression!(
     U <: HVDCLosses,
     V <: TwoTerminalHVDCTypes,
     W <: HVDCTwoTerminalDispatch,
-    X <: Union{PTDFPowerModel, CopperPlatePowerModel},
+    X <: Union{AbstractPTDFModel, CopperPlatePowerModel},
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), PSY.System)
+    expression = get_expression(container, T(), _system_expression_type(X))
     for d in devices
         name = PSY.get_name(d)
         device_bus_from = PSY.get_arc(d).from
@@ -262,13 +274,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: AbstractDeviceFormulation,
-    X <: PTDFPowerModel,
+    W <: AbstractTwoTerminalDCLineFormulation,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -304,7 +315,7 @@ function add_to_expression!(
     U <: FlowActivePowerFromToVariable,
     V <: TwoTerminalHVDCTypes,
     W <: AbstractTwoTerminalDCLineFormulation,
-    X <: PTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -663,11 +674,11 @@ function add_to_expression!(
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: PTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
-    sys_expr = get_expression(container, T(), PSY.System)
+    sys_expr = get_expression(container, T(), _system_expression_type(X))
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
@@ -675,10 +686,10 @@ function add_to_expression!(
         device_bus = PSY.get_bus(d)
         bus_no_ = PSY.get_number(device_bus)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
-        ref_bus = get_reference_bus(network_model, device_bus)
+        ref_index = _ref_index(network_model, device_bus)
         param = get_parameter_column_refs(param_container, name)
         for t in get_time_steps(container)
-            _add_to_jump_expression!(sys_expr[ref_bus, t], param[t], multiplier[name, t])
+            _add_to_jump_expression!(sys_expr[ref_index, t], param[t], multiplier[name, t])
             _add_to_jump_expression!(nodal_expr[bus_no, t], param[t], multiplier[name, t])
         end
     end
@@ -697,7 +708,7 @@ function add_to_expression!(
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
-    X <: PTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     parameter = get_parameter_array(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -709,8 +720,8 @@ function add_to_expression!(
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
         mult = get_expression_multiplier(U(), T(), d, W())
         device_bus = PSY.get_bus(d)
-        ref_bus = get_reference_bus(network_model, device_bus)
-        _add_to_jump_expression!(sys_expr[ref_bus, t], parameter[name, t], mult)
+        ref_index = _ref_index(network_model, device_bus)
+        _add_to_jump_expression!(sys_expr[ref_index, t], parameter[name, t], mult)
         _add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
     end
     return
@@ -731,20 +742,20 @@ function add_to_expression!(
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: PTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     variable = get_variable(container, U(), V)
-    sys_expr = get_expression(container, T(), PSY.System)
+    sys_expr = get_expression(container, T(), _system_expression_type(X))
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, device_bus)
-        ref_bus = get_reference_bus(network_model, device_bus)
+        ref_index = _ref_index(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
-                sys_expr[ref_bus, t],
+                sys_expr[ref_index, t],
                 variable[name, t],
                 get_variable_multiplier(U(), V, W()),
             )
@@ -770,19 +781,19 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-    X <: PTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     variable = get_variable(container, U(), V)
-    sys_expr = get_expression(container, T(), PSY.System)
+    sys_expr = get_expression(container, T(), _system_expression_type(X))
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
-        ref_bus = get_reference_bus(network_model, PSY.get_bus(d))
+        ref_index = _ref_index(network_model, SY.get_bus(d))
         for t in get_time_steps(container)
             _add_to_jump_expression!(
-                sys_expr[ref_bus, t],
+                sys_expr[ref_index, t],
                 variable[name, t],
                 get_variable_multiplier(U(), d, W()),
             )
@@ -843,9 +854,10 @@ function add_to_expression!(
     ::Type{FlowActivePowerVariable},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     ::DeviceModel{PSY.AreaInterchange, W},
-    network_model::NetworkModel{AreaBalancePowerModel},
+    network_model::NetworkModel{U},
 ) where {
     T <: ActivePowerBalance,
+    U <: Union{AreaBalancePowerModel, AreaPTDFPowerModel},
     W <: AbstractBranchFormulation,
 }
     flow_variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
@@ -960,7 +972,7 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{PSY.PhaseShiftingTransformer},
     ::DeviceModel{PSY.PhaseShiftingTransformer, V},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: ActivePowerBalance, U <: PhaseShifterAngle, V <: PhaseAngleControl}
     var = get_variable(container, U(), PSY.PhaseShiftingTransformer)
     expression = get_expression(container, T(), PSY.ACBus)
@@ -1197,13 +1209,36 @@ function add_to_expression!(
     W <: Union{CopperPlatePowerModel, PTDFPowerModel},
 }
     variable = get_variable(container, U(), PSY.System)
-    expression = get_expression(container, T(), PSY.System)
+    expression = get_expression(container, T(), _system_expression_type(W))
     reference_buses = get_reference_buses(network_model)
     for t in get_time_steps(container), n in reference_buses
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
             get_variable_multiplier(U(), PSY.System, W()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    sys::PSY.System,
+    network_model::NetworkModel{AreaPTDFPowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+}
+    variable = get_variable(container, U(), PSY.System)
+    expression = get_expression(container, T(), _system_expression_type(W))
+    areas = PSY.get_components(PSY.Area, sys)
+    for t in get_time_steps(container), n in PSY.get_name.(areas)
+        _add_to_jump_expression!(
+            expression[n, t],
+            variable[n, t],
+            get_variable_multiplier(U(), PSY.Area, AreaPTDFPowerModel()),
         )
     end
     return

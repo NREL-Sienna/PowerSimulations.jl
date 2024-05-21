@@ -56,7 +56,7 @@ end
 function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
     devices::IS.FlattenIteratorWrapper{U},
     formulation::AbstractBranchFormulation,
 ) where {
@@ -435,14 +435,14 @@ function add_constraints!(
 end
 
 """
-Add network flow constraints for ACBranch and NetworkModel with PTDFPowerModel
+Add network flow constraints for ACBranch and NetworkModel with <: AbstractPTDFModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF_matrix(network_model)
     # This is a workaround to not call the same list comprehension to find
@@ -479,14 +479,14 @@ function add_constraints!(
 end
 
 """
-Add network flow constraints for PhaseShiftingTransformer and NetworkModel with PTDFPowerModel
+Add network flow constraints for PhaseShiftingTransformer and NetworkModel with <: AbstractPTDFModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, PhaseAngleControl},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.PhaseShiftingTransformer}
     ptdf = get_PTDF_matrix(network_model)
     branches = PSY.get_name.(devices)
