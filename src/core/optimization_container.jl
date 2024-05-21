@@ -460,6 +460,37 @@ function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
+    ::Type{AreaPTDFPowerModel},
+    areas::IS.FlattenIteratorWrapper{PSY.Area},
+)
+    if length(subnetworks) > 1
+        throw(
+            IS.ConflictingInputsError(
+                "AreaPTDFPowerModel doesn't support systems with multiple asynchrous areas",
+            ),
+        )
+    end
+
+    time_steps = get_time_steps(container)
+    ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    subnetworks = collect(keys(subnetworks))
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.Area) =>
+            _make_container_array(PSY.get_name.(areas), time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
+            _make_container_array(dc_bus_numbers, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        # Bus numbers are sorted to guarantee consistency in the order between the
+        # containers
+            _make_container_array(sort!(ac_bus_numbers), time_steps),
+    )
+    return
+end
+
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
     ::Type{PTDFPowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
@@ -525,6 +556,25 @@ function initialize_system_expressions!(
 )
     areas = PSY.get_components(PSY.Area, system)
     _make_system_expressions!(container, subnetworks, AreaBalancePowerModel, areas)
+    return
+end
+
+function initialize_system_expressions!(
+    container::OptimizationContainer,
+    ::Type{AreaPTDFPowerModel},
+    subnetworks::Dict{Int, Set{Int}},
+    system::PSY.System,
+    ::Dict{Int64, Set{Int64}},
+)
+    areas = PSY.get_components(PSY.Area, system)
+    dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
+    _make_system_expressions!(
+        container,
+        subnetworks,
+        dc_bus_numbers,
+        AreaPTDFPowerModel,
+        areas,
+    )
     return
 end
 
