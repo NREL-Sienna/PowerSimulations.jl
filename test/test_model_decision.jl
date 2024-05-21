@@ -674,6 +674,6 @@ end
     @test build!(model; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model)
-    shortage = read_variable(res, "StorageEnergyShortageVariable__BatteryEMS")
+    shortage = read_variable(res, "StorageEnergyShortageVariable__EnergyReservoirStorage ")
     @test nrow(shortage) == 1
 end
