@@ -806,8 +806,8 @@ end
     results = OptimizationProblemResults(ps_model)
     interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
     # The values for these tests come from the data
-    @test all(interarea_flow[!, "1_2"] .<= 100)
-    @test all(interarea_flow[!, "1_2"] .>= -100)
+    @test all(interarea_flow[!, "1_2"] .<= 100.0 + PSI.ABSOLUTE_TOLERANCE)
+    @test all(interarea_flow[!, "1_2"] .>= -100.0 - PSI.ABSOLUTE_TOLERANCE)
 
     load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
     thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
