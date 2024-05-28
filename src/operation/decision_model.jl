@@ -286,7 +286,7 @@ function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
                 "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
             ),
         )
-    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) >= 1
         if get_resolution(settings) ∉ available_resolutions
             throw(
                 IS.ConflictingInputsError(
@@ -294,7 +294,10 @@ function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
                 ),
             )
         end
+        set_resolution!(settings, first(available_resolutions))
     else
+        IS.@assert_op get_resolution(settings) == UNSET_RESOLUTION
+        @info "Resolution not set, using $(first(available_resolutions)) from the system data"
         set_resolution!(settings, first(available_resolutions))
     end
 
