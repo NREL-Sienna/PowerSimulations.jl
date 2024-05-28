@@ -89,7 +89,7 @@ function DecisionModel{M}(
         DecisionModelStore(),
         Dict{String, Any}(),
     )
-    validate_time_series(model)
+    PSI.validate_time_series!(model)
     return model
 end
 
@@ -244,7 +244,6 @@ end
 
 get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
 validate_template(::DecisionModel{<:DecisionProblem}) = nothing
-validate_time_series(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
@@ -272,45 +271,6 @@ function init_model_store_params!(model::DecisionModel)
         get_metadata(get_optimization_container(model)),
     )
     IS.Optimization.set_store_params!(get_internal(model), store_params)
-    return
-end
-
-function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
-    sys = get_system(model)
-    settings = get_settings(model)
-    available_resolutions = PSY.get_time_series_resolutions(sys)
-
-    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
-        throw(
-            IS.ConflictingInputsError(
-                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
-            ),
-        )
-    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) >= 1
-        if get_resolution(settings) ∉ available_resolutions
-            throw(
-                IS.ConflictingInputsError(
-                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
-                ),
-            )
-        end
-        set_resolution!(settings, first(available_resolutions))
-    else
-        IS.@assert_op get_resolution(settings) == UNSET_RESOLUTION
-        @info "Resolution not set, using $(first(available_resolutions)) from the system data"
-        set_resolution!(settings, first(available_resolutions))
-    end
-
-    if get_horizon(settings) == UNSET_HORIZON
-        set_horizon!(settings, PSY.get_forecast_horizon(sys))
-    end
-
-    counts = PSY.get_time_series_counts(sys)
-    if counts.forecast_count < 1
-        error(
-            "The system does not contain forecast data. A DecisionModel can't be built.",
-        )
-    end
     return
 end
 

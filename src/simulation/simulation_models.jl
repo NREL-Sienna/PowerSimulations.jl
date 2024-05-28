@@ -106,10 +106,8 @@ function determine_horizons!(models::SimulationModels)
         if horizon == UNSET_HORIZON
             sys = get_system(model)
             horizon = PSY.get_forecast_horizon(sys)
-            # TODO: PSY to return horizon in TimePeriod
-            resolution = get_resolution(settings)
-            set_horizon!(settings, horizon * resolution)
-            horizons[get_name(model)] = horizon * resolution
+            set_horizon!(settings, horizon)
+            horizons[get_name(model)] = horizon
         else
             horizons[get_name(model)] = horizon
         end

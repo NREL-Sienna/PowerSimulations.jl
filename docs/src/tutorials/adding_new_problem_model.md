@@ -62,7 +62,7 @@ my_model = DecisionModel{MyCustomDecisionProblem}(
 These methods can be defined optionally for your problem. By default for problems subtyped from `DecisionProblem` these checks are not executed. If the problems are subtyped from `DefaultDecisionProblem` these checks are always conducted with PowerSimulations defaults and require compliance with those defaults to pass. In any case, these can be overloaded when necessary depending on the problem requirements.
 
 1. `validate_template`
-2. `validate_time_series`
+2. `validate_time_series!`
 3. `reset!`
 4. `solve_impl!`
 
