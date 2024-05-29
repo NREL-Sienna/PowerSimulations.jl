@@ -29,7 +29,7 @@ get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.ReserveNonSpinning
 get_parameter_multiplier(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 0.0
 
-objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = 1.0
+objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = -1.0
 sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO_VARIABLE
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 #! format: on
@@ -85,6 +85,42 @@ function get_default_attributes(
     ::Type{<:AbstractReservesFormulation},
 )
     return Dict{String, Any}()
+end
+
+################################## Reserve Requirement Variables ##########################
+
+"""
+Add variables for ServiceRequirementVariable for StepWiseCostReserve
+"""
+function add_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    service::D,
+    formulation,
+) where {
+    T <: ServiceRequirementVariable,
+    D <: PSY.ReserveDemandCurve,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        D,
+        [service_name],
+        time_steps;
+        meta = service_name,
+    )
+
+    for t in time_steps
+        variable[service_name, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "$(T)_$(D)_$(service_name)_{$(service_name), $(t)}",
+            lower_bound = 0.0,
+        )
+    end
+
+    return
 end
 
 ################################## Reserve Requirement Constraint ##########################
@@ -276,7 +312,8 @@ function add_constraints!(
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-    requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
+    requirement_variable =
+        get_variable(container, ServiceRequirementVariable(), SR, service_name)
     jump_model = get_jump_model(container)
     for t in time_steps
         constraint[service_name, t] = JuMP.@constraint(
