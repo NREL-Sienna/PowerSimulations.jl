@@ -164,9 +164,9 @@ end
 function set_service_model!(
     template::ProblemTemplate,
     service_name::String,
-    model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},
-)
-    _set_model!(template.services, service_name, model)
+    model::ServiceModel{T, <:AbstractServiceFormulation},
+) where {T <: PSY.Service}
+    _set_model!(template.services, (service_name, Symbol(T)), model)
     return
 end
 
