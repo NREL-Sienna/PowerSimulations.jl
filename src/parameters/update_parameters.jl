@@ -390,7 +390,7 @@ function update_container_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
+) where {T <: ParameterType, U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
