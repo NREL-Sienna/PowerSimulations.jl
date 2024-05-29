@@ -189,6 +189,9 @@ function _add_variable_cost_to_objective!(
     return
 end
 
+"""
+Add variable cost for StepwiseCostReserve
+"""
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -202,34 +205,17 @@ function _add_variable_cost_to_objective!(
     variable_cost_forecast = get_time_series(container, component, "variable_cost")
     variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
     variable_cost_forecast_values = map(PSY.VariableCost, variable_cost_forecast_values)
-    parameter_container = _get_cost_function_parameter_container(
-        container,
-        CostFunctionParameter(),
-        component,
-        T(),
-        U(),
-        eltype(variable_cost_forecast_values),
-    )
     pwl_cost_expressions =
         _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
-    jump_model = get_jump_model(container)
     for t in time_steps
-        set_multiplier!(
-            parameter_container,
-            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
-            #  of base power times the time delta.
-            1.0,
-            component_name,
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            pwl_cost_expressions[t],
+            component,
             t,
         )
-        set_parameter!(
-            parameter_container,
-            jump_model,
-            PSY.get_cost(variable_cost_forecast_values[t]),
-            component_name,
-            t,
-        )
-        add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+        add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
     end
     return
 end
@@ -631,13 +617,16 @@ function _add_pwl_term!(
     return pwl_cost_expressions
 end
 
+"""
+Add PWL terms for StepWiseCostReserve
+"""
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
     cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -646,17 +635,28 @@ function _add_pwl_term!(
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         data = PSY.get_cost(cost_data[t])
         # Shouldn't be passed for convexity check
-        is_convex = false
-        break_points = map(x -> last(x), data) ./ base_power
-        _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        if !is_convex
-            _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
+        costs = map(x -> first(x), data)
+        for ix in (length(costs) - 1)
+            if costs[ix] - costs[ix + 1] > 0
+                continue
+            else
+                error("Cost data for $(name) at timestep $t is non-decreasing")
+            end
         end
+        # Data is normalized in per-unit
+        break_points = map(x -> last(x), data)
+        _add_pwl_variables!(container, T, name, t, costs)
+        _add_pwl_constraint!(
+            container,
+            component,
+            U(),
+            break_points,
+            SOSStatusVariable.NO_VARIABLE,
+            t,
+        )
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
     end
@@ -785,6 +785,29 @@ function _add_pwl_variables!(
     return pwlvars
 end
 
+"""
+Add PWL variables for ORDC.
+"""
+function _add_pwl_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    component_name::String,
+    time_period::Int,
+    cost_data::Vector{Float64},
+) where {T <: PSY.ReserveDemandCurve}
+    var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
+    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data))
+    for i in 1:length(cost_data)
+        pwlvars[i] =
+            var_container[(component_name, i, time_period)] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
+                lower_bound = 0.0,
+            )
+    end
+    return pwlvars
+end
+
 function _add_pwl_constraint!(
     container::OptimizationContainer,
     component::T,
@@ -833,6 +856,49 @@ function _add_pwl_constraint!(
         jump_model,
         sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin
     )
+    return
+end
+
+"""
+Add PWL constraints for ORDC
+"""
+function _add_pwl_constraint!(
+    container::OptimizationContainer,
+    component::T,
+    ::U,
+    break_points::Vector{Float64},
+    sos_status::SOSStatusVariable,
+    period::Int,
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType}
+    variables = get_variable(container, U(), T, PSY.get_name(component))
+    const_container = lazy_container_addition!(
+        container,
+        PieceWiseLinearCostConstraint(),
+        T,
+        axes(variables)...;
+        meta = PSY.get_name(component),
+    )
+    len_cost_data = length(break_points)
+    jump_model = get_jump_model(container)
+    pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
+    name = PSY.get_name(component)
+    const_container[name, period] = JuMP.@constraint(
+        jump_model,
+        variables[name, period] ==
+        sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data)
+    )
+
+    # Case i = 1: Assumes the previous point is 0.0
+    JuMP.@constraint(
+        jump_model,
+        pwl_vars[name, 1, period] <= break_points[1] - 0.0
+    )
+    for i in 2:len_cost_data
+        JuMP.@constraint(
+            jump_model,
+            pwl_vars[name, i, period] <= break_points[i] - break_points[i - 1]
+        )
+    end
     return
 end
 
