@@ -204,7 +204,7 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_variable!(container, ServiceRequirementVariable(), [service], StepwiseCostReserve())
+    add_variable!(container, ServiceRequirementVariable(), service, StepwiseCostReserve())
     add_variables!(
         container,
         ActivePowerReserveVariable,
