@@ -1,6 +1,6 @@
 #! format: off
-get_variable_multiplier(::SystemBalanceSlackUp, ::Type{<: Union{PSY.ACBus, PSY.System}}, _) = 1.0
-get_variable_multiplier(::SystemBalanceSlackDown, ::Type{<: Union{PSY.ACBus, PSY.System}}, _) = -1.0
+get_variable_multiplier(::SystemBalanceSlackUp, ::Type{<: Union{PSY.ACBus, PSY.Area, PSY.System}}, _) = 1.0
+get_variable_multiplier(::SystemBalanceSlackDown, ::Type{<: Union{PSY.ACBus, PSY.Area, PSY.System}}, _) = -1.0
 #! format: on
 
 function add_variables!(
@@ -10,7 +10,7 @@ function add_variables!(
     network_model::NetworkModel{U},
 ) where {
     T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    U <: Union{CopperPlatePowerModel, AbstractPTDFModel},
+    U <: Union{CopperPlatePowerModel, PTDFPowerModel},
 }
     time_steps = get_time_steps(container)
     reference_buses = get_reference_buses(network_model)
@@ -24,6 +24,55 @@ function add_variables!(
             lower_bound = 0.0
         )
     end
+    return
+end
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::PSY.System,
+    network_model::NetworkModel{U},
+) where {
+    T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    U <: Union{CopperPlatePowerModel, PTDFPowerModel},
+}
+    time_steps = get_time_steps(container)
+    reference_buses = get_reference_buses(network_model)
+    variable =
+        add_variable_container!(container, T(), PSY.System, reference_buses, time_steps)
+
+    for t in time_steps, bus in reference_buses
+        variable[bus, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "slack_{$(T), $(bus), $t}",
+            lower_bound = 0.0
+        )
+    end
+    return
+end
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    sys::PSY.System,
+    network_model::NetworkModel{U},
+) where {
+    T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    U <: Union{AreaBalancePowerModel, AreaPTDFPowerModel},
+}
+    time_steps = get_time_steps(container)
+    areas = get_name.(get_available_components(network_model, PSY.Area, sys))
+    variable =
+        add_variable_container!(container, T(), PSY.Area, areas, time_steps)
+
+    for t in time_steps, area in areas
+        variable[area, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "slack_{$(T), $(area), $t}",
+            lower_bound = 0.0
+        )
+    end
+
     return
 end
 
@@ -95,9 +144,9 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    ::Type{PSY.System},
+    sys::PSY.System,
     network_model::NetworkModel{T},
-) where {T <: Union{CopperPlatePowerModel, AbstractPTDFModel}}
+) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.System)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
     reference_buses = get_reference_buses(network_model)
@@ -113,7 +162,25 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    ::Type{PSY.ACBus},
+    sys::PSY.System,
+    network_model::NetworkModel{T},
+) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+    variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.Area)
+    variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.Area)
+    areas = PSY.get_name.(get_available_components(network_model, PSY.Area, sys))
+
+    for t in get_time_steps(container), n in areas
+        add_to_objective_invariant_expression!(
+            container,
+            (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
+        )
+    end
+    return
+end
+
+function objective_function!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     network_model::NetworkModel{T},
 ) where {T <: PM.AbstractActivePowerModel}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.ACBus)
@@ -131,7 +198,7 @@ end
 
 function objective_function!(
     container::OptimizationContainer,
-    ::Type{PSY.ACBus},
+    sys::PSY.System,
     network_model::NetworkModel{T},
 ) where {T <: PM.AbstractPowerModel}
     variable_p_up = get_variable(container, SystemBalanceSlackUp(), PSY.ACBus, "P")
