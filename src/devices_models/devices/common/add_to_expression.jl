@@ -319,7 +319,7 @@ function add_to_expression!(
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
-    sys_expr = get_expression(container, T(), PSY.System)
+    sys_expr = get_expression(container, T(), _system_expression_type(X))
     radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         bus_no_from =
@@ -1231,8 +1231,10 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
 }
-    variable = get_variable(container, U(), PSY.System)
-    expression = get_expression(container, T(), _system_expression_type(W))
+    @show variable =
+        get_variable(container, U(), _system_expression_type(AreaPTDFPowerModel))
+    @show expression =
+        get_expression(container, T(), _system_expression_type(AreaPTDFPowerModel))
     areas = PSY.get_components(PSY.Area, sys)
     for t in get_time_steps(container), n in PSY.get_name.(areas)
         _add_to_jump_expression!(

@@ -25,7 +25,7 @@ function add_variables!(
         container,
         FlowActivePowerVariable(),
         PSY.AreaInterchange,
-        get_name.(devices),
+        PSY.get_name.(devices),
         time_steps,
     )
 

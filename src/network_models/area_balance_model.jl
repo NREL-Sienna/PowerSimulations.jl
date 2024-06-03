@@ -5,7 +5,7 @@ function add_constraints(
     model::NetworkModel{AreaBalancePowerModel},
 )
     time_steps = get_time_steps(container)
-    area_names = PSY.get_name.(PSY.get_components(Area, sys))
+    area_names = PSY.get_name.(get_available_components(model, PSY.Area, sys))
     constraint = add_constraints_container!(
         container,
         CopperPlateBalanceConstraint(),
