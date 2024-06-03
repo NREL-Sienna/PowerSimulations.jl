@@ -15,7 +15,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.System, model)
+        objective_function!(container, sys, model)
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
@@ -41,7 +41,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.System, model)
+        objective_function!(container, sys, model)
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
@@ -66,7 +66,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.System, model)
+        objective_function!(container, sys, model)
     end
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
@@ -99,7 +99,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_nip_expr_model method" _group =
@@ -146,7 +146,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_nip_expr_model method" _group =
@@ -206,7 +206,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_bfp_expr_model method" _group =
@@ -271,7 +271,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_vip_expr_model method" _group =

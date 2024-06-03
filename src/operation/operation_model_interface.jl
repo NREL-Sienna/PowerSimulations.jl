@@ -490,7 +490,8 @@ function validate_time_series!(model::OperationModel)
                 "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
             ),
         )
-    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) >= 1
+    elseif get_resolution(settings) != UNSET_RESOLUTION &&
+           length(available_resolutions) >= 1
         if get_resolution(settings) ∉ available_resolutions
             throw(
                 IS.ConflictingInputsError(
