@@ -537,37 +537,43 @@ end
 
 function initialize_system_expressions!(
     container::OptimizationContainer,
-    ::Type{T},
+    network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: PM.AbstractPowerModel}
-    dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
+    dc_bus_numbers = [
+        PSY.get_number(b) for
+        b in get_available_components(network_model, PSY.DCBus, system)
+    ]
     _make_system_expressions!(container, subnetworks, dc_bus_numbers, T, bus_reduction_map)
     return
 end
 
 function initialize_system_expressions!(
     container::OptimizationContainer,
-    ::Type{AreaBalancePowerModel},
+    network_model::NetworkModel{AreaBalancePowerModel},
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     ::Dict{Int64, Set{Int64}},
 )
-    areas = PSY.get_components(PSY.Area, system)
+    areas = get_available(PSY.Area, system, network_model)
     _make_system_expressions!(container, subnetworks, AreaBalancePowerModel, areas)
     return
 end
 
 function initialize_system_expressions!(
     container::OptimizationContainer,
-    ::Type{AreaPTDFPowerModel},
+    network_model::NetworkModel{AreaPTDFPowerModel},
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     ::Dict{Int64, Set{Int64}},
 )
-    areas = PSY.get_components(PSY.Area, system)
-    dc_bus_numbers = [PSY.get_number(b) for b in PSY.get_components(PSY.DCBus, system)]
+    areas = get_available_components(network_model, PSY.Area, system)
+    dc_bus_numbers = [
+        PSY.get_number(b) for
+        b in get_available_components(network_model, PSY.DCBus, system)
+    ]
     _make_system_expressions!(
         container,
         subnetworks,
@@ -587,7 +593,7 @@ function build_impl!(
     transmission_model = get_network_model(template)
     initialize_system_expressions!(
         container,
-        transmission,
+        get_network_model(template),
         transmission_model.subnetworks,
         sys,
         transmission_model.radial_network_reduction.bus_reduction_map)

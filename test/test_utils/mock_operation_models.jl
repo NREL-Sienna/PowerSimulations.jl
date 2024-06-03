@@ -131,7 +131,7 @@ function mock_construct_device!(
         built_for_recurrent_solves
     PSI.initialize_system_expressions!(
         PSI.get_optimization_container(problem),
-        PSI.get_network_formulation(template),
+        PSI.get_network_model(template),
         PSI.get_network_model(template).subnetworks,
         PSI.get_system(problem),
         Dict{Int64, Set{Int64}}(),
