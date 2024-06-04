@@ -816,13 +816,11 @@ function add_to_expression!(
     area_expr = get_expression(container, T(), PSY.Area)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
-    areas = axes(area_expr)[1]
     for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
         area_name = PSY.get_name(PSY.get_area(device_bus))
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, device_bus)
-        ref_index = _ref_index(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 area_expr[area_name, t],
