@@ -745,15 +745,17 @@ function add_to_expression!(
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_bus(d))
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
         mult = get_expression_multiplier(U(), T(), d, W())
         device_bus = PSY.get_bus(d)
         ref_index = _ref_index(network_model, device_bus)
-        _add_to_jump_expression!(sys_expr[ref_index, t], parameter[name, t], mult)
-        _add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(sys_expr[ref_index, t], parameter[name, t], mult)
+            _add_to_jump_expression!(nodal_expr[bus_no, t], parameter[name, t], mult)
+        end
     end
     return
 end
