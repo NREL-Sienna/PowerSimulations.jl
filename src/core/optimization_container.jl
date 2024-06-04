@@ -557,7 +557,8 @@ function initialize_system_expressions!(
     system::PSY.System,
     ::Dict{Int64, Set{Int64}},
 )
-    areas = get_available(PSY.Area, system, network_model)
+    areas = get_available_components(network_model, PSY.Area, system)
+    @assert !isempty(areas)
     _make_system_expressions!(container, subnetworks, AreaBalancePowerModel, areas)
     return
 end
@@ -570,6 +571,7 @@ function initialize_system_expressions!(
     ::Dict{Int64, Set{Int64}},
 )
     areas = get_available_components(network_model, PSY.Area, system)
+    @assert !isempty(areas)
     dc_bus_numbers = [
         PSY.get_number(b) for
         b in get_available_components(network_model, PSY.DCBus, system)

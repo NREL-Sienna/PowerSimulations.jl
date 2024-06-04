@@ -24,14 +24,14 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     sys::U,
-    model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel{AreaPTDFPowerModel},
 ) where {
     T <: CopperPlateBalanceConstraint,
     U <: PSY.System,
 }
     time_steps = get_time_steps(container)
     expressions = get_expression(container, ActivePowerBalance(), PSY.Area)
-    area_names = PSY.get_name.(PSY.get_components(PSY.Area, sys))
+    area_names = PSY.get_name.(get_available_components(network_model, PSY.Area, sys))
     constraint =
         add_constraints_container!(container, T(), PSY.Area, area_names, time_steps)
     jm = get_jump_model(container)
