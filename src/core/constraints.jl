@@ -412,5 +412,7 @@ p_t \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\
 """
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
+struct LineFlowBoundConstraint <: ConstraintType end
+
 abstract type EventConstraint <: ConstraintType end
 struct OutageConstraint <: EventConstraint end

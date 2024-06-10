@@ -240,6 +240,7 @@ export PowerOutput
 
 # Constraints
 export AbsoluteValueConstraint
+export LineFlowBoundConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint
