@@ -924,9 +924,47 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{PSY.AreaInterchange, StaticBranch},
     network_model::NetworkModel{T},
-) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+) where {T <: AreaBalancePowerModel}
     devices = get_available_components(model, sys)
     add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, StaticBranch},
+    network_model::NetworkModel{T},
+) where {T <: AreaPTDFPowerModel}
+    devices = get_available_components(model, sys)
+    add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
+    # Not ideal to do this here, but it is a not terrible workaround
+    # The area interchanges are like a services/device mix.
+    # Doesn't include the possibility of Multi-terminal HVDC
+    inter_area_branch_map = Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector}}()
+    for d in get_available_components(network_model, PSY.ACBranch, sys)
+        area_from = PSY.get_area(PSY.get_arc(d).from)
+        area_to = PSY.get_area(PSY.get_arc(d).to)
+        if area_from != area_to
+            branch_type = typeof(d)
+            branch_typed_dict = get!(
+                inter_area_branch_map,
+                (area_from, area_to),
+                Dict(branch_type => Vector{branch_type}()),
+            )
+            branch_vector = get!(branch_typed_dict, branch_type, branch_type[])
+            push!(branch_vector, d)
+        end
+    end
+    add_constraints!(
+        container,
+        LineFlowBoundConstraint,
+        devices,
+        model,
+        network_model,
+        inter_area_branch_map,
+    )
     return
 end
 
@@ -935,7 +973,41 @@ function construct_device!(
     ::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
-    network_model::NetworkModel{T},
-) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+    network_model::NetworkModel{AreaBalancePowerModel},
+)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
+    network_model::NetworkModel{AreaPTDFPowerModel},
+)
+    inter_area_branch_map = Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector}}()
+    for d in get_available_components(network_model, PSY.ACBranch, sys)
+        area_from = PSY.get_area(PSY.get_arc(d).from)
+        area_to = PSY.get_area(PSY.get_arc(d).to)
+        if area_from != area_to
+            branch_type = typeof(d)
+            branch_typed_dict = get!(
+                inter_area_branch_map,
+                (area_from, area_to),
+                Dict(branch_type => Vector{branch_type}()),
+            )
+            branch_vector = get!(branch_typed_dict, branch_type, branch_type[])
+            push!(branch_vector, d)
+        end
+    end
+    add_constraints!(
+        container,
+        LineFlowBoundConstraint,
+        devices,
+        model,
+        network_model,
+        inter_area_branch_map,
+    )
+    return
     return
 end
