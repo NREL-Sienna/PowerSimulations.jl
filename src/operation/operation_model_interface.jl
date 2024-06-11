@@ -487,7 +487,7 @@ function validate_time_series!(model::OperationModel)
     if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
         throw(
             IS.ConflictingInputsError(
-                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(Dates.canonicalize(first(available_resolutions)))",
             ),
         )
     elseif get_resolution(settings) != UNSET_RESOLUTION &&
@@ -495,14 +495,14 @@ function validate_time_series!(model::OperationModel)
         if get_resolution(settings) ∉ available_resolutions
             throw(
                 IS.ConflictingInputsError(
-                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(Dates.canonicalize(first(available_resolutions)))",
                 ),
             )
         end
         set_resolution!(settings, first(available_resolutions))
     else
         IS.@assert_op get_resolution(settings) == UNSET_RESOLUTION
-        @info "Resolution not set, using $(first(available_resolutions)) from the system data"
+        @info "Resolution not set, using $(Dates.canonicalize(first(available_resolutions))) from the system data"
         set_resolution!(settings, first(available_resolutions))
     end
 
