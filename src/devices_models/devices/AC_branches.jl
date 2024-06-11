@@ -462,6 +462,7 @@ function add_constraints!(
 
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
     jump_model = get_jump_model(container)
+    t1 = time()
     for name in branches
         ptdf_col = ptdf[name, :]
         flow_variables_ = flow_variables[name, :]
@@ -475,6 +476,8 @@ function add_constraints!(
             )
         end
     end
+    t2 = time()
+    @error "time to build PTDF lines $(t2 - t1)"
     return
 end
 
