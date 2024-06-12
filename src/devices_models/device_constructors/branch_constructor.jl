@@ -944,23 +944,25 @@ function construct_device!(
     # Doesn't include the possibility of Multi-terminal HVDC
     inter_area_branch_map =
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    for d in get_available_components(network_model, PSY.ACBranch, sys)
-        area_from = PSY.get_area(PSY.get_arc(d).from)
-        area_to = PSY.get_area(PSY.get_arc(d).to)
-        if area_from != area_to
-            branch_type = typeof(d)
-            if !haskey(inter_area_branch_map, (area_from, area_to))
-                branch_vector = [d]
-                inter_area_branch_map[(area_from, area_to)] =
-                    Dict{DataType, Vector{<:PSY.ACBranch}}(branch_type => branch_vector)
-                continue
-            else
-                branch_typed_dict = inter_area_branch_map[(area_from, area_to)]
-            end
-            if !haskey(branch_typed_dict, branch_type)
-                branch_typed_dict[branch_type] = [d]
-            else
-                push!(branch_typed_dict[branch_type], d)
+    for branch_type in network_model.modeled_branch_types
+        for d in get_available_components(network_model, branch_type, sys)
+            area_from = PSY.get_area(PSY.get_arc(d).from)
+            area_to = PSY.get_area(PSY.get_arc(d).to)
+            if area_from != area_to
+                branch_type = typeof(d)
+                if !haskey(inter_area_branch_map, (area_from, area_to))
+                    branch_vector = [d]
+                    inter_area_branch_map[(area_from, area_to)] =
+                        Dict{DataType, Vector{<:PSY.ACBranch}}(branch_type => branch_vector)
+                    continue
+                else
+                    branch_typed_dict = inter_area_branch_map[(area_from, area_to)]
+                end
+                if !haskey(branch_typed_dict, branch_type)
+                    branch_typed_dict[branch_type] = [d]
+                else
+                    push!(branch_typed_dict[branch_type], d)
+                end
             end
         end
     end
