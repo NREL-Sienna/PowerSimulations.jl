@@ -35,6 +35,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
     subsystem::Union{Nothing, String}
+    modeled_branch_types::Vector{DataType}
 
     function NetworkModel(
         ::Type{T};
@@ -54,6 +55,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
             nothing,
+            Vector{DataType}(),
         )
     end
 end

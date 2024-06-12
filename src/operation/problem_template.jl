@@ -308,7 +308,17 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
     return
 end
 
+function _add_modeled_lines!(template::ProblemTemplate, sys::PSY.System)
+    network_model = get_network_model(template)
+    branch_models = get_branch_models(template)
+    for k in keys(branch_models)
+        push!(network_model.modeled_branch_types)
+    end
+    return
+end
+
 function finalize_template!(template::ProblemTemplate, sys::PSY.System)
+    _add_modeled_lines!(template, sys)
     _populate_aggregated_service_model!(template, sys)
     _populate_contributing_devices!(template, sys)
     _add_services_to_device_model!(template)
