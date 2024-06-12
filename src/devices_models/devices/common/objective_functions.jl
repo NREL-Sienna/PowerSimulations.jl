@@ -16,7 +16,11 @@ function add_variable_cost!(
     ::U,
     service::T,
     ::V,
-) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
+) where {
+    T <: PSY.ReserveDemandCurve,
+    U <: VariableType,
+    V <: Union{StepwiseCostReserve, StepwiseMarginalCostReserve},
+}
     _add_variable_cost_to_objective!(container, U(), service, V())
     return
 end
@@ -190,14 +194,14 @@ function _add_variable_cost_to_objective!(
 end
 
 """
-Add variable cost for StepwiseCostReserve
+Add variable cost for Stepwise Cost Reserve models
 """
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Reserve,
     ::U,
-) where {T <: VariableType, U <: StepwiseCostReserve}
+) where {T <: VariableType, U <: Union{StepwiseCostReserve, StepwiseMarginalCostReserve}}
     component_name = PSY.get_name(component)
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     # If array is full of tuples with zeros return 0.0
@@ -618,7 +622,55 @@ function _add_pwl_term!(
 end
 
 """
-Add PWL terms for StepWiseCostReserve
+Add PWL terms for StepwiseMarginalCostReserve
+"""
+function _add_pwl_term!(
+    container::OptimizationContainer,
+    component::T,
+    cost_data::Vector{PSY.VariableCost{Vector{Tuple{Float64, Float64}}}},
+    ::U,
+    ::V,
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseMarginalCostReserve}
+    multiplier = objective_function_multiplier(U(), V())
+    resolution = get_resolution(container)
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    base_power = get_base_power(container)
+    # Re-scale breakpoints by Basepower
+    name = PSY.get_name(component)
+    time_steps = get_time_steps(container)
+    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    for t in time_steps
+        data = PSY.get_cost(cost_data[t])
+        # Shouldn't be passed for convexity check
+        costs = map(x -> first(x), data) * base_power
+        for ix in (length(costs) - 1)
+            if costs[ix] - costs[ix + 1] > 0
+                continue
+            else
+                error("Cost data for $(name) at timestep $t is non-decreasing")
+            end
+        end
+        # Data is normalized in per-unit
+        break_points = map(x -> last(x), data) / base_power
+        _add_pwl_variables!(container, T, name, t, costs, V())
+        _add_pwl_constraint!(
+            container,
+            component,
+            U(),
+            break_points,
+            SOSStatusVariable.NO_VARIABLE,
+            t,
+            V(),
+        )
+        pwl_cost =
+            _get_pwl_cost_expression(container, component, t, data, multiplier * dt, V())
+        pwl_cost_expressions[t] = pwl_cost
+    end
+    return pwl_cost_expressions
+end
+
+"""
+Add PWL terms for StepwiseCostReserve
 """
 function _add_pwl_term!(
     container::OptimizationContainer,
@@ -634,27 +686,19 @@ function _add_pwl_term!(
     # Re-scale breakpoints by Basepower
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
+    sos_val = _get_sos_value(container, V, component)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
         data = PSY.get_cost(cost_data[t])
-        # Shouldn't be passed for convexity check
-        costs = map(x -> first(x), data)
-        for ix in (length(costs) - 1)
-            if costs[ix] - costs[ix + 1] > 0
-                continue
-            else
-                error("Cost data for $(name) at timestep $t is non-decreasing")
-            end
-        end
         # Data is normalized in per-unit
-        break_points = map(x -> last(x), data)
-        _add_pwl_variables!(container, T, name, t, costs)
+        break_points = map(x -> last(x), data) / base_power
+        _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(
             container,
             component,
             U(),
             break_points,
-            SOSStatusVariable.NO_VARIABLE,
+            sos_val,
             t,
         )
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
@@ -786,7 +830,7 @@ function _add_pwl_variables!(
 end
 
 """
-Add PWL variables for ORDC.
+Add PWL variables for ORDC StepwiseMarginalCostReserve
 """
 function _add_pwl_variables!(
     container::OptimizationContainer,
@@ -794,6 +838,7 @@ function _add_pwl_variables!(
     component_name::String,
     time_period::Int,
     cost_data::Vector{Float64},
+    ::StepwiseMarginalCostReserve,
 ) where {T <: PSY.ReserveDemandCurve}
     var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
     pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data))
@@ -860,7 +905,7 @@ function _add_pwl_constraint!(
 end
 
 """
-Add PWL constraints for ORDC
+Add PWL constraints for ORDC StepwiseMarginalCostReserve
 """
 function _add_pwl_constraint!(
     container::OptimizationContainer,
@@ -869,6 +914,7 @@ function _add_pwl_constraint!(
     break_points::Vector{Float64},
     sos_status::SOSStatusVariable,
     period::Int,
+    ::StepwiseMarginalCostReserve,
 ) where {T <: PSY.ReserveDemandCurve, U <: VariableType}
     variables = get_variable(container, U(), T, PSY.get_name(component))
     const_container = lazy_container_addition!(
@@ -899,6 +945,44 @@ function _add_pwl_constraint!(
             pwl_vars[name, i, period] <= break_points[i] - break_points[i - 1]
         )
     end
+    return
+end
+
+"""
+Add PWL constraints for ORDC StepwiseCostReserve
+"""
+function _add_pwl_constraint!(
+    container::OptimizationContainer,
+    component::T,
+    ::U,
+    break_points::Vector{Float64},
+    sos_status::SOSStatusVariable,
+    period::Int,
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType}
+    variables = get_variable(container, U(), T, PSY.get_name(component))
+    const_container = lazy_container_addition!(
+        container,
+        PieceWiseLinearCostConstraint(),
+        T,
+        axes(variables)...;
+        meta = PSY.get_name(component),
+    )
+    len_cost_data = length(break_points)
+    jump_model = get_jump_model(container)
+    pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
+    name = PSY.get_name(component)
+    const_container[name, period] = JuMP.@constraint(
+        jump_model,
+        variables[name, period] ==
+        sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
+    )
+
+    bin = 1.0
+
+    JuMP.@constraint(
+        jump_model,
+        sum(pwl_vars[name, i, period] for i in 1:len_cost_data) == bin
+    )
     return
 end
 
@@ -938,6 +1022,31 @@ function _get_pwl_cost_expression(
         JuMP.add_to_expression!(
             gen_cost,
             cost_data[i][1] * multiplier * pwl_var_container[(name, i, time_period)],
+        )
+    end
+    return gen_cost
+end
+
+"""
+Get cost expression for StepwiseMarginalCostReserve
+"""
+function _get_pwl_cost_expression(
+    container::OptimizationContainer,
+    component::T,
+    time_period::Int,
+    cost_data::Vector{NTuple{2, Float64}},
+    multiplier::Float64,
+    ::StepwiseMarginalCostReserve,
+) where {T <: PSY.ReserveDemandCurve}
+    name = PSY.get_name(component)
+    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    base_power = get_base_power(container)
+    gen_cost = JuMP.AffExpr(0.0)
+    for i in 1:length(cost_data)
+        JuMP.add_to_expression!(
+            gen_cost,
+            (cost_data[i][1] * base_power) * multiplier *
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost

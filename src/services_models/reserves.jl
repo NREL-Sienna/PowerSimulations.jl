@@ -32,6 +32,9 @@ get_initial_parameter_value(::VariableValueParameter, d::Type{<:PSY.AbstractRese
 objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = -1.0
 sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO_VARIABLE
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
+objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseMarginalCostReserve) = -1.0
+sos_status(::PSY.ReserveDemandCurve, ::StepwiseMarginalCostReserve)=SOSStatusVariable.NO_VARIABLE
+uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseMarginalCostReserve)=false
 #! format: on
 
 function get_initial_conditions_service_model(
@@ -295,9 +298,10 @@ function add_constraints!(
     T::Type{RequirementConstraint},
     service::SR,
     ::U,
-    ::ServiceModel{SR, StepwiseCostReserve},
+    ::ServiceModel{SR, V},
 ) where {
     SR <: PSY.ReserveDemandCurve,
+    V <: Union{StepwiseCostReserve, StepwiseMarginalCostReserve},
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
@@ -491,7 +495,10 @@ function objective_function!(
     container::OptimizationContainer,
     service::PSY.ReserveDemandCurve{T},
     ::ServiceModel{PSY.ReserveDemandCurve{T}, SR},
-) where {T <: PSY.ReserveDirection, SR <: StepwiseCostReserve}
+) where {
+    T <: PSY.ReserveDirection,
+    SR <: Union{StepwiseCostReserve, StepwiseMarginalCostReserve},
+}
     add_variable_cost!(container, ServiceRequirementVariable(), service, SR())
     return
 end

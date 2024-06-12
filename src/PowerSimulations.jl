@@ -31,6 +31,7 @@ export ServiceModel
 export RangeReserve
 export RampReserve
 export StepwiseCostReserve
+export StepwiseMarginalCostReserve
 export NonSpinningReserve
 export PIDSmoothACE
 export GroupReserve

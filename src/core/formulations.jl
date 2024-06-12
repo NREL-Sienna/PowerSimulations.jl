@@ -230,6 +230,7 @@ struct PIDSmoothACE <: AbstractAGCFormulation end
 struct GroupReserve <: AbstractReservesFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
 struct StepwiseCostReserve <: AbstractReservesFormulation end
+struct StepwiseMarginalCostReserve <: AbstractReservesFormulation end
 struct RampReserve <: AbstractReservesFormulation end
 struct NonSpinningReserve <: AbstractReservesFormulation end
 

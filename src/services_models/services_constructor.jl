@@ -197,20 +197,20 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::ServiceModel{SR, StepwiseCostReserve},
+    model::ServiceModel{SR, S},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-) where {SR <: PSY.Reserve}
+) where {SR <: PSY.Reserve, S <: Union{StepwiseCostReserve, StepwiseMarginalCostReserve}}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_variable!(container, ServiceRequirementVariable(), service, StepwiseCostReserve())
+    add_variable!(container, ServiceRequirementVariable(), service, S())
     add_variables!(
         container,
         ActivePowerReserveVariable,
         service,
         contributing_devices,
-        StepwiseCostReserve(),
+        S(),
     )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     add_expressions!(container, ProductionCostExpression, [service], model)
@@ -221,10 +221,10 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::ServiceModel{SR, StepwiseCostReserve},
+    model::ServiceModel{SR, S},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-) where {SR <: PSY.Reserve}
+) where {SR <: PSY.Reserve, S <: Union{StepwiseCostReserve, StepwiseMarginalCostReserve}}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
