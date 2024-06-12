@@ -464,7 +464,8 @@ function _make_flow_expressions!(
             )
         )
     end
-    return name, expressions
+    #return name, expressions
+    return expressions
 end
 
 function _make_flow_expressions!(
@@ -502,6 +503,7 @@ function _make_flow_expressions!(
     =#
 
     for name in branches
+        ptdf_col = ptdf[name, :]
         branch_flow_expr[name, :] .= _make_flow_expressions!(
             jump_model,
             name,
