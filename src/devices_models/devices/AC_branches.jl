@@ -484,6 +484,7 @@ function _make_flow_expressions!(
 
     t1_ = time()
     jump_model = get_jump_model(container)
+    #=
     tasks = map(branches) do name
         ptdf_col = ptdf[name, :]
         Threads.@spawn _make_flow_expressions!(
@@ -498,6 +499,18 @@ function _make_flow_expressions!(
         name, expressions = fetch(task)
         branch_flow_expr[name, :] .= expressions
     end
+    =#
+
+    for name in branches
+        branch_flow_expr[name, :] .= _make_flow_expressions!(
+            jump_model,
+            name,
+            time_steps,
+            ptdf_col,
+            nodal_balance_expressions.data,
+        )
+    end
+
     t2_ = time()
     @error "time to build PTDF expressions $branch_Type  $(t2_ - t1_)"
     return branch_flow_expr
