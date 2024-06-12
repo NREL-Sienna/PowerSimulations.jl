@@ -446,7 +446,7 @@ function _make_flow_expressions!(
     ptdf_col::AbstractVector{Float64},
     nodal_balance_expressions::Matrix{JuMP.AffExpr},
 )
-    @show Threads.threadid() name
+    @debug Threads.threadid() name
     expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
     for t in time_steps
         expressions[t] = JuMP.@expression(
