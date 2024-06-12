@@ -443,7 +443,7 @@ function _make_flow_expressions!(
     jump_model::JuMP.Model,
     name::String,
     time_steps::UnitRange{Int},
-    ptdf_col::Vector{Float64},
+    ptdf_col::AbstractVector{Float64},
     nodal_balance_expressions::Matrix{JuMP.AffExpr},
 )
     @show Threads.threadid() name
