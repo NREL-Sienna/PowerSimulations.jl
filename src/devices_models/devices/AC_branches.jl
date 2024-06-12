@@ -435,8 +435,15 @@ function add_constraints!(
 end
 
 const ValidPTDFS = Union{
-    PNM.PTDF{Tuple{Vector{Int}, Vector{String}}, Tuple{Dict{Int64, Int64}, Dict{String, Int64}}, Matrix{Float64}},
-    VirtualPTDF{Tuple{Vector{String}, Vector{Int64}}, Tuple{Dict{String, Int64}, Dict{Int64, Int64}}}
+    PNM.PTDF{
+        Tuple{Vector{Int}, Vector{String}},
+        Tuple{Dict{Int64, Int64}, Dict{String, Int64}},
+        Matrix{Float64},
+    },
+    VirtualPTDF{
+        Tuple{Vector{String}, Vector{Int64}},
+        Tuple{Dict{String, Int64}, Dict{Int64, Int64}},
+    },
 }
 
 function _make_flow_expressions!(
@@ -466,9 +473,8 @@ function _make_flow_expressions!(
     time_steps::UnitRange{Int},
     ptdf::ValidPTDFS,
     nodal_balance_expressions::JuMPAffineExpressionDArray,
-    branch_Type::DataType
-    )
-
+    branch_Type::DataType,
+)
     branch_flow_expr = add_expression_container!(container,
         PTDFBranchFlow(),
         branch_Type,
@@ -480,7 +486,13 @@ function _make_flow_expressions!(
     jump_model = get_jump_model(container)
     tasks = map(branches) do name
         ptdf_col = ptdf[name, :]
-        Threads.@spawn _make_flow_expressions!(jump_model, name, time_steps, ptdf_col, nodal_balance_expressions.data)
+        Threads.@spawn _make_flow_expressions!(
+            jump_model,
+            name,
+            time_steps,
+            ptdf_col,
+            nodal_balance_expressions.data,
+        )
     end
     for task in tasks
         name, expressions = fetch(task)
@@ -516,7 +528,14 @@ function add_constraints!(
     nodal_balance_expressions =
         get_expression(container, ActivePowerBalance(), PSY.ACBus)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
-    branch_flow_expr = _make_flow_expressions!(container, branches, time_steps, ptdf, nodal_balance_expressions, B)
+    branch_flow_expr = _make_flow_expressions!(
+        container,
+        branches,
+        time_steps,
+        ptdf,
+        nodal_balance_expressions,
+        B,
+    )
     jump_model = get_jump_model(container)
     t1 = time()
     for name in branches
