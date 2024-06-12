@@ -158,7 +158,11 @@ function add_constraints!(
             inter_area_branches = inter_area_branch_map[(area_to, area_from)]
             mult = -1.0
         else
-            error("bad inter area branch mapping")
+            @warn(
+                "There are no branches modeled in Area InterChange $(summary(area_interchange)) \
+          LineFlowBoundConstraint not created"
+            )
+            continue
         end
 
         for t in time_steps
