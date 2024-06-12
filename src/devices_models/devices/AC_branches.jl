@@ -464,8 +464,9 @@ function _make_flow_expressions!(
             )
         )
     end
-    #return name, expressions
-    return expressions
+    return name, expressions
+    # change when using the not concurrent version
+    #return expressions
 end
 
 function _make_flow_expressions!(
@@ -500,7 +501,6 @@ function _make_flow_expressions!(
         name, expressions = fetch(task)
         branch_flow_expr[name, :] .= expressions
     end
-
 
     #= Leaving serial code commented out for debugging purposes in the future
     for name in branches
