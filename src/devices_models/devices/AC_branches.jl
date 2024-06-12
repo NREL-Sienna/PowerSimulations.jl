@@ -460,24 +460,43 @@ function add_constraints!(
     nodal_balance_expressions =
         get_expression(container, ActivePowerBalance(), PSY.ACBus)
 
-    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    branch_flow_expr = add_expression_container!(container,
+        PTDFBranchFlow(),
+        B,
+        branches,
+        time_steps,
+    )
+
+    t1_ = time()
     jump_model = get_jump_model(container)
-    t1 = time()
     for name in branches
         ptdf_col = ptdf[name, :]
-        flow_variables_ = flow_variables[name, :]
         for t in time_steps
-            branch_flow[name, t] = JuMP.@constraint(
+            branch_flow_expr[name, t] = JuMP.@expression(
                 jump_model,
                 sum(
                     ptdf_col[i] * nodal_balance_expressions.data[i, t] for
                     i in 1:length(ptdf_col)
-                ) - flow_variables_[t] == 0.0
+                )
+            )
+        end
+    end
+    t2_ = time()
+    @error "time to build PTDF expressions $(t2_ - t1_)"
+
+    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+
+    t1 = time()
+    for name in branches
+        for t in time_steps
+            branch_flow[name, t] = JuMP.@constraint(
+                jump_model,
+                branch_flow_expr[name, t] - flow_variables[name, t] == 0.0
             )
         end
     end
     t2 = time()
-    @error "time to build PTDF lines $(t2 - t1)"
+    @error "time to build PTDF constraints $(t2 - t1)"
     return
 end
 
