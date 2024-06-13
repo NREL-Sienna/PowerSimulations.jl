@@ -40,7 +40,7 @@ PowerSimulations Problem Duals Results
 
 PowerSimulations Problem Parameters Results
 ┌────────────────────────────────────────────────────────────────────────┐
-│ ActivePowerTimeSeriesParameter__RenewableFix                           │
+│ ActivePowerTimeSeriesParameter__RenewableNonDispatch                           │
 │ RenewablePowerTimeSeries__HybridSystem                                 │
 │ RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3 │
 │ RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up     │
