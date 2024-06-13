@@ -56,7 +56,7 @@ end
 function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
     devices::IS.FlattenIteratorWrapper{U},
     formulation::AbstractBranchFormulation,
 ) where {
@@ -335,6 +335,7 @@ function _constraint_with_slacks!(
             )
         end
     end
+    return
 end
 
 """
@@ -430,17 +431,103 @@ function add_constraints!(
             )
         end
     end
+    return
 end
 
+const ValidPTDFS = Union{
+    PNM.PTDF{
+        Tuple{Vector{Int}, Vector{String}},
+        Tuple{Dict{Int64, Int64}, Dict{String, Int64}},
+        Matrix{Float64},
+    },
+    VirtualPTDF{
+        Tuple{Vector{String}, Vector{Int64}},
+        Tuple{Dict{String, Int64}, Dict{Int64, Int64}},
+    },
+}
+
+function _make_flow_expressions!(
+    jump_model::JuMP.Model,
+    name::String,
+    time_steps::UnitRange{Int},
+    ptdf_col::AbstractVector{Float64},
+    nodal_balance_expressions::Matrix{JuMP.AffExpr},
+)
+    @debug Threads.threadid() name
+    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
+    for t in time_steps
+        expressions[t] = JuMP.@expression(
+            jump_model,
+            sum(
+                ptdf_col[i] * nodal_balance_expressions[i, t] for
+                i in 1:length(ptdf_col)
+            )
+        )
+    end
+    return name, expressions
+    # change when using the not concurrent version
+    #return expressions
+end
+
+function _make_flow_expressions!(
+    container::OptimizationContainer,
+    branches::Vector{String},
+    time_steps::UnitRange{Int},
+    ptdf::ValidPTDFS,
+    nodal_balance_expressions::JuMPAffineExpressionDArray,
+    branch_Type::DataType,
+)
+    branch_flow_expr = add_expression_container!(container,
+        PTDFBranchFlow(),
+        branch_Type,
+        branches,
+        time_steps,
+    )
+
+    t1_ = time()
+    jump_model = get_jump_model(container)
+
+    tasks = map(branches) do name
+        ptdf_col = ptdf[name, :]
+        Threads.@spawn _make_flow_expressions!(
+            jump_model,
+            name,
+            time_steps,
+            ptdf_col,
+            nodal_balance_expressions.data,
+        )
+    end
+    for task in tasks
+        name, expressions = fetch(task)
+        branch_flow_expr[name, :] .= expressions
+    end
+
+    #= Leaving serial code commented out for debugging purposes in the future
+    for name in branches
+        ptdf_col = ptdf[name, :]
+        branch_flow_expr[name, :] .= _make_flow_expressions!(
+            jump_model,
+            name,
+            time_steps,
+            ptdf_col,
+            nodal_balance_expressions.data,
+        )
+    end
+    =#
+
+    t2_ = time()
+    @error "time to build PTDF expressions $branch_Type  $(t2_ - t1_)"
+    return branch_flow_expr
+end
 """
-Add network flow constraints for ACBranch and NetworkModel with PTDFPowerModel
+Add network flow constraints for ACBranch and NetworkModel with <: AbstractPTDFModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF_matrix(network_model)
     # This is a workaround to not call the same list comprehension to find
@@ -457,33 +544,39 @@ function add_constraints!(
     )
     nodal_balance_expressions =
         get_expression(container, ActivePowerBalance(), PSY.ACBus)
-
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    branch_flow_expr = _make_flow_expressions!(
+        container,
+        branches,
+        time_steps,
+        ptdf,
+        nodal_balance_expressions,
+        B,
+    )
     jump_model = get_jump_model(container)
+    t1 = time()
     for name in branches
-        ptdf_col = ptdf[name, :]
-        flow_variables_ = flow_variables[name, :]
         for t in time_steps
             branch_flow[name, t] = JuMP.@constraint(
                 jump_model,
-                sum(
-                    ptdf_col[i] * nodal_balance_expressions.data[i, t] for
-                    i in 1:length(ptdf_col)
-                ) - flow_variables_[t] == 0.0
+                branch_flow_expr[name, t] - flow_variables[name, t] == 0.0
             )
         end
     end
+    t2 = time()
+    @error "time to build PTDF constraints $B  $(t2 - t1)"
+    return
 end
 
 """
-Add network flow constraints for PhaseShiftingTransformer and NetworkModel with PTDFPowerModel
+Add network flow constraints for PhaseShiftingTransformer and NetworkModel with <: AbstractPTDFModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, PhaseAngleControl},
-    network_model::NetworkModel{PTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.PhaseShiftingTransformer}
     ptdf = get_PTDF_matrix(network_model)
     branches = PSY.get_name.(devices)

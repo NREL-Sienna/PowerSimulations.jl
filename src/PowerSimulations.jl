@@ -21,6 +21,7 @@ export NetworkModel
 export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
+export AreaPTDFPowerModel
 
 ######## Device Models ########
 export DeviceModel
@@ -238,10 +239,10 @@ export PowerOutput
 
 # Constraints
 export AbsoluteValueConstraint
+export LineFlowBoundConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint
-export AreaDispatchBalanceConstraint
 export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
@@ -552,6 +553,7 @@ include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
+include("devices_models/devices/area_interchange.jl")
 include("devices_models/devices/TwoTerminalDC_branches.jl")
 include("devices_models/devices/HVDCsystems.jl")
 #include("devices_models/devices/regulation_device.jl")

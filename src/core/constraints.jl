@@ -20,7 +20,6 @@ The specified constraint is generally formulated as:
 \\sum_{c \\in \\text{components}_a} p_t^c = 0, \\quad \\forall a\\in \\{1,\\dots, A\\}, t \\in \\{1, \\dots, T\\}
 ```
 """
-struct AreaDispatchBalanceConstraint <: ConstraintType end
 struct AreaParticipationAssignmentConstraint <: ConstraintType end
 struct BalanceAuxConstraint <: ConstraintType end
 """
@@ -78,7 +77,7 @@ The specified constraint is formulated as:
 ```math
 \\begin{align*}
 &  \\text{ActivePowerRangeExpressionUB}_t := p_t^\\text{th} - \\text{on}_t^\\text{th}P^\\text{th,max} \\le 0, \\quad  \\forall t\\in \\{1, \\dots, T\\}  \\\\
-&  \\text{ActivePowerRangeExpressionLB}_t := p_t^\\text{th} - \\text{on}_t^\\text{th}P^\\text{th,min} \\ge 0, \\quad  \\forall t\\in \\{1, \\dots, T\\} 
+&  \\text{ActivePowerRangeExpressionLB}_t := p_t^\\text{th} - \\text{on}_t^\\text{th}P^\\text{th,min} \\ge 0, \\quad  \\forall t\\in \\{1, \\dots, T\\}
 \\end{align*}
 ```
 """
@@ -162,7 +161,7 @@ For more information check [Branch Formulations](@ref PowerSystems.Branch-Formul
 The specified constraint is formulated as:
 
 ```math
-R^\\text{to,min} \\le f_t^\\text{to-from}  \\le R^\\text{to,max},\\quad \\forall t \\in \\{1,\\dots, T\\} 
+R^\\text{to,min} \\le f_t^\\text{to-from}  \\le R^\\text{to,max},\\quad \\forall t \\in \\{1,\\dots, T\\}
 ```
 """
 struct FlowRateConstraintToFrom <: ConstraintType end
@@ -274,7 +273,7 @@ The specified constraint is formulated as:
 ```math
 \\begin{align*}
 &  f_t - f_t^\\text{sl,up} \\le R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
-&  f_t + f_t^\\text{sl,lo} \\ge -R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\} 
+&  f_t + f_t^\\text{sl,lo} \\ge -R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\}
 \\end{align*}
 ```
 """
@@ -343,7 +342,7 @@ The specified constraints are formulated as:
 ```math
 \\begin{align*}
 & f_t^\\text{to-from} - f_t^\\text{from-to} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
-& f_t^\\text{from-to} - f_t^\\text{to-from} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\} 
+& f_t^\\text{from-to} - f_t^\\text{to-from} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\}
 \\end{align*}
 ```
 """
@@ -412,6 +411,8 @@ p_t \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\
 ```
 """
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
+
+struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
 struct OutageConstraint <: EventConstraint end

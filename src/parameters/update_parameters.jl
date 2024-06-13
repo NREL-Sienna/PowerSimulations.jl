@@ -373,6 +373,29 @@ end
 function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    # Multiplier is only needed for the objective function since `_update_parameter_values!` also updates the objective function
+    parameter_multiplier = get_parameter_multiplier_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_multiplier,
+        parameter_attributes,
+        U,
+        model,
+        input,
+    )
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
     key::ParameterKey{FixValueParameter, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {U <: PSY.Component}
@@ -388,9 +411,24 @@ end
 function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
+    key::ParameterKey{FixValueParameter, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {U <: PSY.Service}
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
+) where {T <: ParameterType, U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)

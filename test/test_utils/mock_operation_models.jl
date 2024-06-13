@@ -119,7 +119,7 @@ function mock_construct_device!(
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.finalize_template!(template, PSI.get_system(problem))
-    PSI.validate_time_series(problem)
+    PSI.validate_time_series!(problem)
     PSI.init_optimization_container!(
         PSI.get_optimization_container(problem),
         PSI.get_network_model(template),
@@ -131,7 +131,7 @@ function mock_construct_device!(
         built_for_recurrent_solves
     PSI.initialize_system_expressions!(
         PSI.get_optimization_container(problem),
-        PSI.get_network_formulation(template),
+        PSI.get_network_model(template),
         PSI.get_network_model(template).subnetworks,
         PSI.get_system(problem),
         Dict{Int64, Set{Int64}}(),

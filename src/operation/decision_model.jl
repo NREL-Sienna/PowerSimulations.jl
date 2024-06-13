@@ -89,7 +89,7 @@ function DecisionModel{M}(
         DecisionModelStore(),
         Dict{String, Any}(),
     )
-    validate_time_series(model)
+    PSI.validate_time_series!(model)
     return model
 end
 
@@ -244,7 +244,6 @@ end
 
 get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
 validate_template(::DecisionModel{<:DecisionProblem}) = nothing
-validate_time_series(::DecisionModel{<:DecisionProblem}) = nothing
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)

@@ -166,6 +166,10 @@ struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
 Approximation to represent inter-area flow with each area represented as a single node.
 """
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balacing areas independently.
+"""
+struct AreaPTDFPowerModel <: AbstractPTDFModel end
 
 #================================================
     # exact non-convex models
