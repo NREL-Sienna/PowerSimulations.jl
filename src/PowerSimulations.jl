@@ -112,7 +112,6 @@ export run_parallel_simulation
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
-export template_agc_reserve_deployment
 export EconomicDispatchProblem
 export UnitCommitmentProblem
 export AGCReserveDeployment
