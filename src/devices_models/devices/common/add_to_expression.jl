@@ -810,7 +810,7 @@ function add_to_expression!(
     network_model::NetworkModel{AreaPTDFPowerModel},
 ) where {
     T <: ActivePowerBalance,
-    U <: VariableType,
+    U <: ActivePowerVariable,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
 }
@@ -845,13 +845,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{PTDFPowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-    X <: AbstractPTDFModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), _system_expression_type(X))

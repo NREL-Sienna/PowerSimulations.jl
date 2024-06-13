@@ -165,19 +165,36 @@ function add_to_expression!(
     return
 end
 
+
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{AreaPTDFPowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerVariable,
     V <: PSY.InterconnectingConverter,
     W <: AbstractConverterFormulation,
-    X <: AbstractPTDFModel,
+}
+    error("AreaPTDFPowerModel doesn't support InterconnectingConverter")
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{PTDFPowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
 }
     variable = get_variable(container, U(), V)
     expression_dc = get_expression(container, T(), PSY.DCBus)
