@@ -931,13 +931,17 @@ function construct_device!(
 end
 
 function _get_branch_map(
-    modeled_branch_types::Vector{DataType},
+    network_model::NetworkModel{AreaPTDFPowerModel},
     sys::PSY.System,
 )
+    @assert !isempty(network_model.modeled_branch_types)
     inter_area_branch_map =
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    for branch_type in modeled_branch_types
-        for d in get_available_components(branch_type, sys)
+    for branch_type in network_model.modeled_branch_types
+        if branch_type == PSY.AreaInterchange
+            continue
+        end
+        for d in get_available_components(network_model, branch_type, sys)
             area_from = PSY.get_area(PSY.get_arc(d).from)
             area_to = PSY.get_area(PSY.get_arc(d).to)
             if area_from != area_to
@@ -969,7 +973,7 @@ function construct_device!(
     # Not ideal to do this here, but it is a not terrible workaround
     # The area interchanges are like a services/device mix.
     # Doesn't include the possibility of Multi-terminal HVDC
-    inter_area_branch_map = _get_branch_map(network_model.modeled_branch_types, sys)
+    inter_area_branch_map = _get_branch_map(network_model, sys)
 
     add_constraints!(
         container,
@@ -999,7 +1003,7 @@ function construct_device!(
     model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
     network_model::NetworkModel{AreaPTDFPowerModel},
 )
-    inter_area_branch_map = _get_branch_map(network_model.modeled_branch_types, sys)
+    inter_area_branch_map = _get_branch_map(network_model, sys)
     # Not ideal to do this here, but it is a not terrible workaround
     # The area interchanges are like a services/device mix.
     # Doesn't include the possibility of Multi-terminal HVDC

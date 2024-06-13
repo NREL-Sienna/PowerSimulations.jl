@@ -311,8 +311,8 @@ end
 function _add_modeled_lines!(template::ProblemTemplate, sys::PSY.System)
     network_model = get_network_model(template)
     branch_models = get_branch_models(template)
-    for k in keys(branch_models)
-        push!(network_model.modeled_branch_types)
+    for v in values(branch_models)
+        push!(network_model.modeled_branch_types, get_component_type(v))
     end
     return
 end

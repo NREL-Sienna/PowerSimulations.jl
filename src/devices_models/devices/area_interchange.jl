@@ -122,8 +122,12 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     model::DeviceModel{PSY.AreaInterchange, <:AbstractBranchFormulation},
     network_model::NetworkModel{AreaPTDFPowerModel},
-    inter_area_branch_map,
+    inter_area_branch_map::Dict{
+        Tuple{PSY.Area, PSY.Area},
+        Dict{DataType, Vector{<:PSY.ACBranch}},
+    },
 )
+    @assert !isempty(inter_area_branch_map)
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
