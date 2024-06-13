@@ -294,8 +294,9 @@ function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
                 ),
             )
         end
-    end
-    set_resolution!(settings, first(available_resolutions))
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end    
     
     if get_horizon(settings) == UNSET_HORIZON
         set_horizon!(settings, PSY.get_forecast_horizon(sys))
