@@ -4,14 +4,14 @@ Once a `DecisionModel` is solved via `solve!(model)` or a Simulation is executed
 
 ## Read results of a Decision Problem
 
-Once a `DecisionModel` is solved, results are accessed using `ProblemResults(model)` as follows:
+Once a `DecisionModel` is solved, results are accessed using `OptimizationProblemResults(model)` as follows:
 
 ```julia
 # The DecisionModel is already constructed
 build!(model, output_dir = mktempdir())
 solve!(model)
 
-results = ProblemResults(model)
+results = OptimizationProblemResults(model)
 ```
 
 The output will showcase the available expressions, parameters and variables to read. For example it will look like:
