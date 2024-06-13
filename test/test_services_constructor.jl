@@ -236,7 +236,7 @@ end
     )
     set_service_model!(
         template,
-        ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve, "init"),
+        ServiceModel(ConstantReserveGroup{ReserveDown}, GroupReserve, "init"),
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
@@ -247,7 +247,7 @@ end
             push!(contributing_services, service)
         end
     end
-    groupservice = StaticReserveGroup{ReserveDown}(;
+    groupservice = ConstantReserveGroup{ReserveDown}(;
         name = "init",
         available = true,
         requirement = 0.0,
@@ -271,7 +271,7 @@ end
     )
     set_service_model!(
         template,
-        ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
+        ServiceModel(ConstantReserveGroup{ReserveDown}, GroupReserve),
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
@@ -282,7 +282,7 @@ end
             push!(contributing_services, service)
         end
     end
-    groupservice = StaticReserveGroup{ReserveDown}(;
+    groupservice = ConstantReserveGroup{ReserveDown}(;
         name = "init",
         available = true,
         requirement = 0.0,
@@ -301,15 +301,15 @@ end
     ) == PSI.ModelBuildStatus.FAILED
 end
 
-@testset "Test StaticReserve" begin
+@testset "Test ConstantReserve" begin
     template = get_thermal_dispatch_template_network()
     set_service_model!(
         template,
-        ServiceModel(StaticReserve{ReserveUp}, RangeReserve, "Reserve3"),
+        ServiceModel(ConstantReserve{ReserveUp}, RangeReserve, "Reserve3"),
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
+    static_reserve = ConstantReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
