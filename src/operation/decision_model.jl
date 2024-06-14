@@ -274,7 +274,7 @@ function init_model_store_params!(model::DecisionModel)
     return
 end
 
-function validate_time_series(model::DecisionModel{<:DefaultDecisionProblem})
+function validate_time_series!(model::DecisionModel{<:DefaultDecisionProblem})
     sys = get_system(model)
     settings = get_settings(model)
     available_resolutions = PSY.get_time_series_resolutions(sys)
