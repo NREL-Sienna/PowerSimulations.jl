@@ -102,10 +102,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
@@ -161,10 +161,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
@@ -501,10 +501,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     template = get_template_dispatch_with_network(
         NetworkModel(PTDFPowerModel),
@@ -623,10 +623,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, TapTransformer, StaticBranchBounds)

@@ -134,8 +134,8 @@ function branch_rate_bounds!(
             continue
         end
         for t in get_time_steps(container)
-            JuMP.set_upper_bound(var[name, t], PSY.get_rate(d))
-            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rate(d))
+            JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
+            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
         end
     end
     return
@@ -162,8 +162,8 @@ function branch_rate_bounds!(
             continue
         end
         for t in time_steps, var in vars
-            JuMP.set_upper_bound(var[name, t], PSY.get_rate(d))
-            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rate(d))
+            JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
+            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
         end
     end
     return
@@ -179,7 +179,7 @@ function get_min_max_limits(
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    return (min = -1 * PSY.get_rate(device), max = PSY.get_rate(device))
+    return (min = -1 * PSY.get_rating(device), max = PSY.get_rating(device))
 end
 
 """
@@ -348,7 +348,7 @@ function add_constraints!(
     device_model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
-    rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
+    rating_data = [(PSY.get_name(h), PSY.get_rating(h)) for h in devices]
 
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerFromToVariable(), B)
@@ -403,7 +403,7 @@ function add_constraints!(
     ::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
-    rating_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
+    rating_data = [(PSY.get_name(h), PSY.get_rating(h)) for h in devices]
 
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerToFromVariable(), B)
@@ -622,7 +622,7 @@ function get_min_max_limits(
         )
     end
     limit = min(
-        PSY.get_rate(device),
+        PSY.get_rating(device),
         PSY.get_flow_limits(device).to_from,
         PSY.get_flow_limits(device).from_to,
     )
