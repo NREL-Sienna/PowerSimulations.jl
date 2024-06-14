@@ -516,7 +516,7 @@ function _make_flow_expressions!(
     =#
 
     t2_ = time()
-    @error "time to build PTDF expressions $branch_Type  $(t2_ - t1_)"
+    #@error "time to build PTDF expressions $branch_Type  $(t2_ - t1_)"
     return branch_flow_expr
 end
 """
@@ -564,7 +564,7 @@ function add_constraints!(
         end
     end
     t2 = time()
-    @error "time to build PTDF constraints $B  $(t2 - t1)"
+    #@error "time to build PTDF constraints $B  $(t2 - t1)"
     return
 end
 
