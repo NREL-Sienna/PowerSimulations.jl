@@ -47,7 +47,7 @@ end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with inequalities" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rating(PSY.get_component(Line, system, "2"), 1.5)
+    set_rating!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
@@ -67,7 +67,7 @@ end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with Bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rating(PSY.get_component(Line, system, "2"), 1.5)
+    set_rating!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
@@ -563,7 +563,7 @@ end
         primary_shunt = 0.0,
         tap = 1.0,
         α = 0.0,
-        rate = get_rate(line),
+        rating = get_rating(line),
         arc = get_arc(line),
     )
 
@@ -591,7 +591,7 @@ end
         FlowActivePowerVariable,
         PhaseShiftingTransformer,
         "1",
-        get_rate(ps),
+        get_rating(ps),
     )
 
     @test check_flow_variable_values(
@@ -672,7 +672,7 @@ end
 
 @testset "Test Line and Monitored Line models with slacks" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rating(PSY.get_component(Line, system, "2"), 0.0)
+    set_rating!(PSY.get_component(Line, system, "2"), 0.0)
     for (model, optimizer) in NETWORKS_FOR_TESTING
         if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel, SOCWRConicPowerModel]
             # Skip because the data is too in the feasibility margins for these models
