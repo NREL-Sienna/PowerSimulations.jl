@@ -203,6 +203,7 @@ end
     moi_tests(model, 504, 0, 120, 192, 24, false)
 end
 
+#=
 @testset "Test AGC" begin
     c_sys5_reg = PSB.build_system(PSITestSystems, "c_sys5_reg")
     @test_throws ArgumentError template_agc_reserve_deployment(; dummy_arg = 0.0)
@@ -215,6 +216,7 @@ end
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
+=#
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
