@@ -310,7 +310,8 @@ function add_constraints!(
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-    requirement_variable = get_variable(container, ServiceRequirementVariable(), SR, service_name)
+    requirement_variable =
+        get_variable(container, ServiceRequirementVariable(), SR, service_name)
     jump_model = get_jump_model(container)
     for t in time_steps
         constraint[service_name, t] = JuMP.@constraint(
@@ -517,7 +518,9 @@ function _add_variable_cost_to_objective!(
     if variable_cost isa Nothing
         error("ReserveDemandCurve $(component.name) does not have cost data.")
     elseif typeof(variable_cost) <: PSY.TimeSeriesKey
-        error("Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.")
+        error(
+            "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
+        )
     end
 
     pwl_cost_expressions =

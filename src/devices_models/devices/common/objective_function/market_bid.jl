@@ -335,7 +335,6 @@ function _add_pwl_term!(
     return pwl_cost_expressions
 end
 
-
 ##################################################
 ########## PWL for StepwiseCostReserve  ##########
 ##################################################
@@ -374,7 +373,6 @@ function _add_pwl_term!(
     end
     return pwl_cost_expressions
 end
-
 
 #=
 """
