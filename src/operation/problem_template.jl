@@ -269,7 +269,7 @@ function _add_services_to_device_model!(template::ProblemTemplate)
     devices_template = get_device_models(template)
     for (service_key, service_model) in service_models
         S = get_component_type(service_model)
-        (S <: PSY.AGC || S <: PSY.StaticReserveGroup) && continue
+        (S <: PSY.AGC || S <: PSY.ConstantReserveGroup) && continue
         contributing_devices = get_contributing_devices(service_model)
         isempty(contributing_devices) && continue
         _modify_device_model!(devices_template, service_model, contributing_devices)

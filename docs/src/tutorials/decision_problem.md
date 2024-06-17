@@ -59,14 +59,14 @@ Here we define template entries for all devices that inject or withdraw power on
 network. For each device type, we can define a distinct `AbstractDeviceFormulation`. In
 this case, we're defining a basic unit commitment model for thermal generators,
 curtailable renewable generators, and fixed dispatch (net-load reduction) formulations
-for `HydroDispatch` and `RenewableFix` devices.
+for `HydroDispatch` and `RenewableNonDispatch` devices.
 
 ```@example op_problem
 set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
 set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
 set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
 set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
-set_device_model!(template_uc, RenewableFix, FixedOutput)
+set_device_model!(template_uc, RenewableNonDispatch, FixedOutput)
 ```
 
 ### Service Formulations

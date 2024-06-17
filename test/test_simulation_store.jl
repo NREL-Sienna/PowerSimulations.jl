@@ -168,7 +168,7 @@ end
             Dict("keep_in_cache" => true),
         PSI.VariableKey(ActivePowerVariable, InterruptiblePowerLoad) =>
             Dict("keep_in_cache" => false),
-        PSI.VariableKey(ActivePowerVariable, RenewableFix) =>
+        PSI.VariableKey(ActivePowerVariable, RenewableNonDispatch) =>
             Dict("keep_in_cache" => false),
     )
     model_defs = OrderedDict(

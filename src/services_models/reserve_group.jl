@@ -1,11 +1,11 @@
 function get_default_time_series_names(
-    ::Type{PSY.StaticReserveGroup{T}},
+    ::Type{PSY.ConstantReserveGroup{T}},
     ::Type{GroupReserve}) where {T <: PSY.ReserveDirection}
     return Dict{String, Any}()
 end
 
 function get_default_attributes(
-    ::Type{PSY.StaticReserveGroup{T}},
+    ::Type{PSY.ConstantReserveGroup{T}},
     ::Type{GroupReserve}) where {T <: PSY.ReserveDirection}
     return Dict{String, Any}()
 end
@@ -39,7 +39,7 @@ function add_constraints!(
     service::SR,
     contributing_services::Vector{<:PSY.Service},
     model::ServiceModel{SR, GroupReserve},
-) where {SR <: PSY.StaticReserveGroup}
+) where {SR <: PSY.ConstantReserveGroup}
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
     add_constraints_container!(

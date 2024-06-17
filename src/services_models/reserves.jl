@@ -210,7 +210,7 @@ function add_constraints!(
     ::U,
     model::ServiceModel{SR, V},
 ) where {
-    SR <: PSY.StaticReserve,
+    SR <: PSY.ConstantReserve,
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}

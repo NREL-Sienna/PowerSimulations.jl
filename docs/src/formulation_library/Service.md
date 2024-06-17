@@ -46,7 +46,7 @@ Depending on the `PowerSystems.jl` type associated to the `RangeReserve` formula
 
 - ``\text{PF}`` = `PowerSystems.get_max_participation_factor(service)`
 
-For a `StaticReserve` `PowerSystems` type:
+For a `ConstantReserve` `PowerSystems` type:
 - ``\text{Req}`` = `PowerSystems.get_requirement(service)`
 
 **Time Series Parameters** 
@@ -94,14 +94,14 @@ similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
 A RangeReserve implements two fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `RangeReserve` requirement. Thus, for a service ``s``:
 
 ```math
-\sum_{d\in\mathcal{D}_s} r_{d,t} + r_t^\text{sl} \ge \text{Req},\quad \forall t\in \{1,\dots, T\} \quad \text{(for a StaticReserve)} \\
+\sum_{d\in\mathcal{D}_s} r_{d,t} + r_t^\text{sl} \ge \text{Req},\quad \forall t\in \{1,\dots, T\} \quad \text{(for a ConstantReserve)} \\
 \sum_{d\in\mathcal{D}_s} r_{d,t} + r_t^\text{sl} \ge \text{RequirementTimeSeriesParameter}_{t},\quad \forall t\in \{1,\dots, T\} \quad \text{(for a VariableReserve)}
 ```
 
 In addition, there is a restriction on how much each contributing device ``d`` can contribute to the requirement, based on the max participation factor allowed.
 
 ```math
-r_{d,t} \le \text{Req} \cdot \text{PF} ,\quad \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\} \quad \text{(for a StaticReserve)} \\
+r_{d,t} \le \text{Req} \cdot \text{PF} ,\quad \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\} \quad \text{(for a ConstantReserve)} \\
 r_{d,t} \le \text{RequirementTimeSeriesParameter}_{t} \cdot \text{PF}\quad  \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\}, \quad \text{(for a VariableReserve)}
 ```
 
@@ -176,7 +176,7 @@ A `StepwiseCostReserve` implements a single constraint, such that the sum of all
 
 ## `GroupReserve`
 
-Service must be used with `StaticReserveGroup` `PowerSystems.jl` type. This service model is used to model an aggregation of services.
+Service must be used with `ConstantReserveGroup` `PowerSystems.jl` type. This service model is used to model an aggregation of services.
 
 ```@docs
 GroupReserve

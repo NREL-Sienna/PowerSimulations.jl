@@ -274,6 +274,42 @@ function init_model_store_params!(model::DecisionModel)
     return
 end
 
+function validate_time_series!(model::DecisionModel{<:DefaultDecisionProblem})
+    sys = get_system(model)
+    settings = get_settings(model)
+    available_resolutions = PSY.get_time_series_resolutions(sys)
+
+    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
+        throw(
+            IS.ConflictingInputsError(
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+            ),
+        )
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+        if get_resolution(settings) ∉ available_resolutions
+            throw(
+                IS.ConflictingInputsError(
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                ),
+            )
+        end
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end
+
+    if get_horizon(settings) == UNSET_HORIZON
+        set_horizon!(settings, PSY.get_forecast_horizon(sys))
+    end
+
+    counts = PSY.get_time_series_counts(sys)
+    if counts.forecast_count < 1
+        error(
+            "The system does not contain forecast data. A DecisionModel can't be built.",
+        )
+    end
+    return
+end
+
 function build_pre_step!(model::DecisionModel{<:DecisionProblem})
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         validate_template(model)

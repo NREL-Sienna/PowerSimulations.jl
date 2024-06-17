@@ -244,7 +244,7 @@ problem definition), we can use:
 ```@example pcm
 read_parameter(
     ed_results,
-    "ActivePowerTimeSeriesParameter__RenewableFix",
+    "ActivePowerTimeSeriesParameter__RenewableNonDispatch",
     initial_time = DateTime("2020-01-01T06:00:00"),
     count = 5,
 )

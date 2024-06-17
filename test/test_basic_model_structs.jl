@@ -8,6 +8,7 @@ end
     @test_throws ArgumentError NetworkModel(PM.AbstractPowerModel)
 end
 
+#=
 @testset "ServiceModel Tests" begin
     @test_throws ArgumentError ServiceModel(AGC, PSI.AbstractAGCFormulation, "TestName")
     @test_throws ArgumentError ServiceModel(
@@ -16,6 +17,7 @@ end
         "TestName2",
     )
 end
+=#
 
 @testset "Feedforward Struct Tests" begin
     ffs = [

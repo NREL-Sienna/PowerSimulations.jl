@@ -853,7 +853,7 @@ function add_to_expression!(
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
 }
     variable = get_variable(container, U(), V)
-    sys_expr = get_expression(container, T(), _system_expression_type(X))
+    sys_expr = get_expression(container, T(), _system_expression_type(PTDFPowerModel))
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
