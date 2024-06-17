@@ -95,7 +95,7 @@ function _add_pwl_constraint!(
     break_points::Vector{Float64},
     sos_status::SOSStatusVariable,
     period::Int,
-) where {T <: PSY.ReserveDemandCurve, U <: VariableType}
+) where {T <: PSY.ReserveDemandCurve, U <: ServiceRequirementVariable}
     name = PSY.get_name(component)
     variables = get_variable(container, U(), T, name)
     const_container = lazy_container_addition!(
