@@ -113,6 +113,10 @@ for enum in ENUMS
     end
 end
 
+# Special cases for backwards compatibility
+ENUM_MAPPINGS[RunStatus]["ready"] = RunStatus.INITIALIZED
+ENUM_MAPPINGS[RunStatus]["successful"] = RunStatus.SUCCESSFULLY_FINALIZED
+
 """
 Get the enum value for the string. Case insensitive.
 """
