@@ -29,7 +29,7 @@ get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.ReserveNonSpinning
 get_parameter_multiplier(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 0.0
 
-objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = 1.0
+objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = -1.0
 sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO_VARIABLE
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 #! format: on
@@ -85,6 +85,40 @@ function get_default_attributes(
     ::Type{<:AbstractReservesFormulation},
 )
     return Dict{String, Any}()
+end
+
+"""
+Add variables for ServiceRequirementVariable for StepWiseCostReserve
+"""
+function add_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    service::D,
+    formulation,
+) where {
+    T <: ServiceRequirementVariable,
+    D <: PSY.ReserveDemandCurve,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        D,
+        [service_name],
+        time_steps;
+        meta = service_name,
+    )
+
+    for t in time_steps
+        variable[service_name, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "$(T)_$(D)_$(service_name)_{$(service_name), $(t)}",
+            lower_bound = 0.0,
+        )
+    end
+
+    return
 end
 
 ################################## Reserve Requirement Constraint ##########################
@@ -276,7 +310,8 @@ function add_constraints!(
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-    requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
+    requirement_variable =
+        get_variable(container, ServiceRequirementVariable(), SR, service_name)
     jump_model = get_jump_model(container)
     for t in time_steps
         constraint[service_name, t] = JuMP.@constraint(
@@ -479,36 +514,26 @@ function _add_variable_cost_to_objective!(
     @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     # If array is full of tuples with zeros return 0.0
     time_steps = get_time_steps(container)
-    variable_cost_forecast = get_time_series(container, component, "variable_cost")
-    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
-    parameter_container = _get_cost_function_parameter_container(
-        container,
-        CostFunctionParameter(),
-        component,
-        T(),
-        U(),
-        eltype(variable_cost_forecast_values),
-    )
+    variable_cost = PSY.get_variable(component)
+    if variable_cost isa Nothing
+        error("ReserveDemandCurve $(component.name) does not have cost data.")
+    elseif typeof(variable_cost) <: PSY.TimeSeriesKey
+        error(
+            "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
+        )
+    end
+
     pwl_cost_expressions =
-        _add_pwl_term!(container, component, variable_cost_forecast_values, T(), U())
-    jump_model = get_jump_model(container)
+        _add_pwl_term!(container, component, variable_cost, T(), U())
     for t in time_steps
-        set_multiplier!(
-            parameter_container,
-            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
-            #  of base power times the time delta.
-            1.0,
-            component_name,
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            pwl_cost_expressions[t],
+            component,
             t,
         )
-        set_parameter!(
-            parameter_container,
-            jump_model,
-            variable_cost_forecast_values[t],
-            component_name,
-            t,
-        )
-        add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+        add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
     end
     return
 end

@@ -21,7 +21,7 @@
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 120, 216, 72, false)
+    moi_tests(model, 624, 0, 216, 216, 48, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
         :ActivePowerReserveVariable__ReserveDemandCurve__ReserveUp__ORDC1
@@ -99,7 +99,7 @@ end
     model = DecisionModel(template, c_sys5_uc; optimizer = cbc_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 1008, 0, 480, 216, 192, true)
+    moi_tests(model, 984, 0, 576, 216, 168, true)
 end
 
 @testset "Test Reserves from Thermal Standard UC with NonSpinningReserve" begin
@@ -137,7 +137,7 @@ end
     model = DecisionModel(template, c_sys5_re)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 360, 0, 72, 120, 72, false)
+    moi_tests(model, 336, 0, 168, 120, 48, false)
 end
 
 @testset "Test Reserves from Hydro" begin
@@ -161,7 +161,7 @@ end
     model = DecisionModel(template, c_sys5_hyd)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 240, 0, 48, 96, 72, false)
+    moi_tests(model, 216, 0, 144, 96, 48, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
@@ -260,7 +260,7 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 120, 240, 72, false)
+    moi_tests(model, 624, 0, 216, 240, 48, false)
 end
 
 @testset "Test GroupReserve Errors" begin
@@ -368,7 +368,7 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 384, 216, 72, false)
+    moi_tests(model, 624, 0, 480, 216, 48, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
         :ActivePowerReserveVariable__ReserveDemandCurve__ReserveUp__ORDC1

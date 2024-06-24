@@ -38,8 +38,15 @@ function add_expressions!(
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    add_expression_container!(container, T(), D, names, time_steps)
+    @assert length(devices) == 1
+    add_expression_container!(
+        container,
+        T(),
+        D,
+        PSY.get_name.(devices),
+        time_steps;
+        meta = PSY.get_name(first(devices)),
+    )
     return
 end
 
@@ -1408,6 +1415,25 @@ end
 
 function add_to_expression!(
     container::OptimizationContainer,
+    ::Type{S},
+    cost_expression::JuMP.AbstractJuMPScalar,
+    component::T,
+    time_period::Int,
+) where {S <: CostExpressions, T <: PSY.ReserveDemandCurve}
+    if has_container_key(container, S, T, PSY.get_name(component))
+        device_cost_expression = get_expression(container, S(), T, PSY.get_name(component))
+        component_name = PSY.get_name(component)
+        JuMP.add_to_expression!(
+            device_cost_expression[component_name, time_period],
+            cost_expression,
+        )
+    end
+    return
+end
+
+#=
+function add_to_expression!(
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     areas::IS.FlattenIteratorWrapper{V},
@@ -1461,3 +1487,4 @@ function add_to_expression!(
     end
     return
 end
+=#
