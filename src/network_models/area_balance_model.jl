@@ -1,4 +1,4 @@
-function add_constraints(
+function add_constraints!(
     container::OptimizationContainer,
     ::Type{CopperPlateBalanceConstraint},
     sys::PSY.System,

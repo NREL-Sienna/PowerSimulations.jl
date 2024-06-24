@@ -440,7 +440,7 @@ const ValidPTDFS = Union{
         Tuple{Dict{Int64, Int64}, Dict{String, Int64}},
         Matrix{Float64},
     },
-    VirtualPTDF{
+    PNM.VirtualPTDF{
         Tuple{Vector{String}, Vector{Int64}},
         Tuple{Dict{String, Int64}, Dict{Int64, Int64}},
     },
@@ -484,7 +484,6 @@ function _make_flow_expressions!(
         time_steps,
     )
 
-    t1_ = time()
     jump_model = get_jump_model(container)
 
     tasks = map(branches) do name
@@ -515,8 +514,6 @@ function _make_flow_expressions!(
     end
     =#
 
-    t2_ = time()
-    #@error "time to build PTDF expressions $branch_Type  $(t2_ - t1_)"
     return branch_flow_expr
 end
 """
@@ -554,7 +551,6 @@ function add_constraints!(
         B,
     )
     jump_model = get_jump_model(container)
-    t1 = time()
     for name in branches
         for t in time_steps
             branch_flow[name, t] = JuMP.@constraint(
@@ -563,8 +559,6 @@ function add_constraints!(
             )
         end
     end
-    t2 = time()
-    #@error "time to build PTDF constraints $B  $(t2 - t1)"
     return
 end
 

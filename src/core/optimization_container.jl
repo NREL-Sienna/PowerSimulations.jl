@@ -492,7 +492,7 @@ function _make_system_expressions!(
     if length(subnetworks) > 1
         throw(
             IS.ConflictingInputsError(
-                "AreaBalancePowerModel doesn't support systems with multiple asynchrous areas",
+                "AreaBalancePowerModel doesn't support systems with multiple asynchronous areas",
             ),
         )
     end
