@@ -38,8 +38,15 @@ function add_expressions!(
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    add_expression_container!(container, T(), D, names, time_steps; meta = names[1])
+    @assert length(devices) == 1
+    add_expression_container!(
+        container,
+        T(),
+        D,
+        PSY.get_name.(devices),
+        time_steps;
+        meta = PSY.get_name(first(devices)),
+    )
     return
 end
 
