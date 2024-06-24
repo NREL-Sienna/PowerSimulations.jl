@@ -4,9 +4,10 @@ function add_constraints!(
     sys::PSY.System,
     model::NetworkModel{AreaBalancePowerModel},
 )
-    time_steps = get_time_steps(container)
-    area_names = PSY.get_name.(get_available_components(model, PSY.Area, sys))
-    constraint = add_constraints_container!(
+    expressions = get_expression(container, ActivePowerBalance(), PSY.Area)
+    area_names, time_steps = axes(expressions)
+
+    constraints = add_constraints_container!(
         container,
         CopperPlateBalanceConstraint(),
         PSY.Area,
@@ -14,12 +15,10 @@ function add_constraints!(
         time_steps,
     )
 
-    area_balance_expr = get_variable(container, ActivePowerVariable(), PSY.Area)
-    for area in area_names, t in time_steps
-        constraint[area, t] =
-            JuMP.@constraint(get_jump_model(container), area_balance_expr[area, t] == 0.0)
+    for a in area_names, t in time_steps
+        constraints[a, t] =
+            JuMP.@constraint(get_jump_model(container), expressions[a, t] == 0.0)
     end
-
     return
 end
 
