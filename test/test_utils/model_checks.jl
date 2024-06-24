@@ -309,9 +309,11 @@ function check_energy_initial_conditions_values(model, ::Type{T}) where {T <: PS
         T,
     )
     for ic in ic_data
+        d = ic.component
         name = PSY.get_name(ic.component)
         e_value = PSI.jump_value(PSI.get_value(ic))
-        @test PSY.get_initial_energy(ic.component) == e_value
+        @test PSY.get_initial_storage_capacity_level(d) * PSY.get_storage_capacity(d) *
+              PSY.get_conversion_factor(d) == e_value
     end
 end
 

@@ -1,6 +1,7 @@
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
     alien_files = setdiff(folder_files, KNOWN_SIMULATION_PATHS)
+    alien_files = filter(x -> !any(occursin.(IGNORABLE_FILES, x)), alien_files)
     if isempty(alien_files)
         return true
     else

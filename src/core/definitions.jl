@@ -15,6 +15,15 @@ const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = DenseAxisArray{JuMP.ConstraintRef}
+const JuMPAffineExpressionDArray = JuMP.Containers.DenseAxisArray{
+    JuMP.AffExpr,
+    2,
+    Tuple{Vector{Int64}, UnitRange{Int64}},
+    Tuple{
+        JuMP.Containers._AxisLookup{Dict{Int64, Int64}},
+        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
+    },
+}
 const JuMPVariableMatrix = DenseAxisArray{
     JuMP.VariableRef,
     2,
@@ -81,6 +90,14 @@ const KNOWN_SIMULATION_PATHS = [
     "simulation_files",
     "simulation_partitions",
 ]
+"If the name of an extraneous file that appears in simulation results matches one of these regexes, it is safe to ignore"
+const IGNORABLE_FILES = [
+    r"^\.DS_Store$",
+    r"^\.Trashes$",
+    r"^\.Trash-.*$",
+    r"^\.nfs.*$",
+    r"^[Dd]esktop.ini$",
+]
 const RESULTS_DIR = "results"
 
 # Enums
@@ -103,6 +120,10 @@ for enum in ENUMS
         ENUM_MAPPINGS[enum][lowercase(string(value))] = value
     end
 end
+
+# Special cases for backwards compatibility
+ENUM_MAPPINGS[RunStatus]["ready"] = RunStatus.INITIALIZED
+ENUM_MAPPINGS[RunStatus]["successful"] = RunStatus.SUCCESSFULLY_FINALIZED
 
 """
 Get the enum value for the string. Case insensitive.

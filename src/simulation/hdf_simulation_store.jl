@@ -740,7 +740,13 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     empty!(get_dm_data(store))
     for model in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/decision_models/$model"]
-        horizon_count = HDF5.read(HDF5.attributes(problem_group)["horizon_count"])
+        # Fall back on old key for backwards compatibility
+        horizon_count = HDF5.read(
+            if haskey(HDF5.attributes(problem_group), "horizon_count")
+                HDF5.attributes(problem_group)["horizon_count"]
+            else
+                HDF5.attributes(problem_group)["horizon"]
+            end)
         model_name = Symbol(model)
         store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
@@ -785,7 +791,13 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     end
 
     em_group = _get_emulation_model_path(store)
-    horizon_count = HDF5.read(HDF5.attributes(em_group)["horizon_count"])
+    # Fall back on old key for backwards compatibility
+    horizon_count = HDF5.read(
+        if haskey(HDF5.attributes(em_group), "horizon_count")
+            HDF5.attributes(em_group)["horizon_count"]
+        else
+            HDF5.attributes(em_group)["horizon"]
+        end)
     model_name = Symbol(HDF5.read(HDF5.attributes(em_group)["name"]))
     resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["resolution_ms"]))
     store.params.emulation_model_params[model_name] = ModelStoreParams(

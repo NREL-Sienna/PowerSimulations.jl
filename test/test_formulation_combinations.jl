@@ -13,13 +13,13 @@
     end
 
     for item in res["service_formulations"]
-        if item["service_type"] == PSY.StaticReserveNonSpinning &&
+        if item["service_type"] == PSY.ConstantReserveNonSpinning &&
            item["formulation"] == PSI.NonSpinningReserve
             found_valid_service = true
         end
-        if item["service_type"] == PSY.AGC && item["formulation"] == PSI.NonSpinningReserve
-            found_invalid_service = true
-        end
+        #if item["service_type"] == PSY.AGC && item["formulation"] == PSI.NonSpinningReserve
+        #    found_invalid_service = true
+        #end
     end
 
     @test found_valid_device

@@ -13,6 +13,7 @@ struct ActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end
 struct InterfaceTotalFlow <: ExpressionType end
+struct PTDFBranchFlow <: ExpressionType end
 
 should_write_resulting_value(::Type{<:CostExpressions}) = true
 should_write_resulting_value(::Type{InterfaceTotalFlow}) = true

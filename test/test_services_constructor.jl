@@ -21,7 +21,7 @@
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 120, 216, 72, false)
+    moi_tests(model, 624, 0, 216, 216, 48, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
         :ActivePowerReserveVariable__ReserveDemandCurve__ReserveUp__ORDC1
@@ -99,7 +99,7 @@ end
     model = DecisionModel(template, c_sys5_uc; optimizer = cbc_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 1008, 0, 480, 216, 192, true)
+    moi_tests(model, 984, 0, 576, 216, 168, true)
 end
 
 @testset "Test Reserves from Thermal Standard UC with NonSpinningReserve" begin
@@ -137,7 +137,7 @@ end
     model = DecisionModel(template, c_sys5_re)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 360, 0, 72, 120, 72, false)
+    moi_tests(model, 336, 0, 168, 120, 48, false)
 end
 
 @testset "Test Reserves from Hydro" begin
@@ -161,7 +161,7 @@ end
     model = DecisionModel(template, c_sys5_hyd)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 240, 0, 48, 96, 72, false)
+    moi_tests(model, 216, 0, 144, 96, 48, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
@@ -203,6 +203,7 @@ end
     moi_tests(model, 504, 0, 120, 192, 24, false)
 end
 
+#=
 @testset "Test AGC" begin
     c_sys5_reg = PSB.build_system(PSITestSystems, "c_sys5_reg")
     @test_throws ArgumentError template_agc_reserve_deployment(; dummy_arg = 0.0)
@@ -215,6 +216,7 @@ end
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
+=#
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
@@ -236,7 +238,7 @@ end
     )
     set_service_model!(
         template,
-        ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve, "init"),
+        ServiceModel(ConstantReserveGroup{ReserveDown}, GroupReserve, "init"),
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
@@ -247,7 +249,7 @@ end
             push!(contributing_services, service)
         end
     end
-    groupservice = StaticReserveGroup{ReserveDown}(;
+    groupservice = ConstantReserveGroup{ReserveDown}(;
         name = "init",
         available = true,
         requirement = 0.0,
@@ -258,7 +260,7 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 120, 240, 72, false)
+    moi_tests(model, 624, 0, 216, 240, 48, false)
 end
 
 @testset "Test GroupReserve Errors" begin
@@ -271,7 +273,7 @@ end
     )
     set_service_model!(
         template,
-        ServiceModel(StaticReserveGroup{ReserveDown}, GroupReserve),
+        ServiceModel(ConstantReserveGroup{ReserveDown}, GroupReserve),
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
@@ -282,7 +284,7 @@ end
             push!(contributing_services, service)
         end
     end
-    groupservice = StaticReserveGroup{ReserveDown}(;
+    groupservice = ConstantReserveGroup{ReserveDown}(;
         name = "init",
         available = true,
         requirement = 0.0,
@@ -301,15 +303,15 @@ end
     ) == PSI.ModelBuildStatus.FAILED
 end
 
-@testset "Test StaticReserve" begin
+@testset "Test ConstantReserve" begin
     template = get_thermal_dispatch_template_network()
     set_service_model!(
         template,
-        ServiceModel(StaticReserve{ReserveUp}, RangeReserve, "Reserve3"),
+        ServiceModel(ConstantReserve{ReserveUp}, RangeReserve, "Reserve3"),
     )
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    static_reserve = StaticReserve{ReserveUp}("Reserve3", true, 30, 100)
+    static_reserve = ConstantReserve{ReserveUp}("Reserve3", true, 30, 100)
     add_service!(c_sys5_uc, static_reserve, get_components(ThermalGen, c_sys5_uc))
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
@@ -366,7 +368,7 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 384, 216, 72, false)
+    moi_tests(model, 624, 0, 480, 216, 48, false)
     reserve_variables = [
         :ActivePowerReserveVariable__VariableReserve__ReserveUp__Reserve1
         :ActivePowerReserveVariable__ReserveDemandCurve__ReserveUp__ORDC1

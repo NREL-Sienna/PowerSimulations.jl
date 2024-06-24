@@ -157,7 +157,7 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.StaticReserve}
+) where {SR <: PSY.ConstantReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
@@ -182,7 +182,7 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.StaticReserve}
+) where {SR <: PSY.ConstantReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
@@ -215,7 +215,7 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_devices = get_contributing_devices(model)
-    add_variable!(container, ServiceRequirementVariable(), [service], StepwiseCostReserve())
+    add_variable!(container, ServiceRequirementVariable(), service, StepwiseCostReserve())
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -345,7 +345,7 @@ function construct_service!(
 end
 
 """
-    Constructs a service for StaticReserveGroup.
+    Constructs a service for ConstantReserveGroup.
 """
 function construct_service!(
     container::OptimizationContainer,
@@ -355,7 +355,7 @@ function construct_service!(
     ::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.StaticReserveGroup}
+) where {SR <: PSY.ConstantReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)
@@ -373,7 +373,7 @@ function construct_service!(
     ::Dict{Symbol, DeviceModel},
     ::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.StaticReserveGroup}
+) where {SR <: PSY.ConstantReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     contributing_services = PSY.get_contributing_services(service)

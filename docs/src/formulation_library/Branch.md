@@ -39,7 +39,7 @@ If Slack variables are enabled:
 
 **Static Parameters**
 
-- ``R^\text{max}`` = `PowerSystems.get_rate(branch)`
+- ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
 
 **Objective:**
 
@@ -80,7 +80,7 @@ StaticBranchBounds
 
 **Static Parameters**
 
-- ``R^\text{max}`` = `PowerSystems.get_rate(branch)`
+- ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
 
 **Objective:**
 
@@ -308,7 +308,7 @@ PhaseAngleControl
 
 **Static Parameters**
 
-- ``R^\text{max}`` = `PowerSystems.get_rate(branch)`
+- ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
 - ``\Theta^\text{min}`` = `PowerSystems.get_phase_angle_limits(branch).min`
 - ``\Theta^\text{max}`` = `PowerSystems.get_phase_angle_limits(branch).max`
 - ``X`` = `PowerSystems.get_x(branch)` (series reactance)

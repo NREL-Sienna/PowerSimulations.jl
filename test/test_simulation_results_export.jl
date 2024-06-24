@@ -104,7 +104,7 @@ end
         exports,
         valid,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.VariableKey(ActivePowerVariable, RenewableNonDispatch),
     )
     @test should_export_parameter(
         exports,
@@ -116,7 +116,7 @@ end
         exports,
         valid,
         :ED,
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableNonDispatch),
     )
 
     @test should_export_variable(
@@ -129,7 +129,7 @@ end
         exports,
         valid,
         :UC,
-        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.VariableKey(ActivePowerVariable, RenewableNonDispatch),
     )
     @test should_export_parameter(
         exports,
@@ -141,7 +141,7 @@ end
         exports,
         valid,
         :UC,
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableNonDispatch),
     )
 
     @test exports.path == "export_path"

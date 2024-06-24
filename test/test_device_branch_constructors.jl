@@ -47,7 +47,7 @@ end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with inequalities" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rate!(PSY.get_component(Line, system, "2"), 1.5)
+    set_rating!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
@@ -67,7 +67,7 @@ end
 
 @testset "DC Power Flow Models Monitored Line Flow Constraints and Static with Bounds" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rate!(PSY.get_component(Line, system, "2"), 1.5)
+    set_rating!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_thermal_dispatch_template_network(
             NetworkModel(model; PTDF_matrix = PTDF(system)),
@@ -102,10 +102,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
@@ -161,10 +161,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     for model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
@@ -501,10 +501,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     template = get_template_dispatch_with_network(
         NetworkModel(PTDFPowerModel),
@@ -563,7 +563,7 @@ end
         primary_shunt = 0.0,
         tap = 1.0,
         α = 0.0,
-        rate = get_rate(line),
+        rating = get_rating(line),
         arc = get_arc(line),
     )
 
@@ -591,7 +591,7 @@ end
         FlowActivePowerVariable,
         PhaseShiftingTransformer,
         "1",
-        get_rate(ps),
+        get_rating(ps),
     )
 
     @test check_flow_variable_values(
@@ -623,10 +623,10 @@ end
     limits_max = min(limits_from.max, limits_to.max)
 
     tap_transformer = PSY.get_component(TapTransformer, system, "Trans3")
-    rate_limit = PSY.get_rate(tap_transformer)
+    rate_limit = PSY.get_rating(tap_transformer)
 
     transformer = PSY.get_component(Transformer2W, system, "Trans4")
-    rate_limit2w = PSY.get_rate(tap_transformer)
+    rate_limit2w = PSY.get_rating(tap_transformer)
 
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, TapTransformer, StaticBranchBounds)
@@ -672,7 +672,7 @@ end
 
 @testset "Test Line and Monitored Line models with slacks" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rate!(PSY.get_component(Line, system, "2"), 0.0)
+    set_rating!(PSY.get_component(Line, system, "2"), 0.0)
     for (model, optimizer) in NETWORKS_FOR_TESTING
         if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel, SOCWRConicPowerModel]
             # Skip because the data is too in the feasibility margins for these models

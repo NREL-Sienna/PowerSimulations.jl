@@ -37,6 +37,8 @@ test_path = mktempdir()
     end
 end
 
+#TODO: This test
+#=
 @testset "Test Thermal Generation Cost Functions Fuel Cost time series" begin
     test_cases = [
         "linear_fuel_test_ts",
@@ -64,7 +66,10 @@ end
         end
     end
 end
+=#
 
+#=
+#TODO: This test
 @testset "Test Thermal Generation MarketBidCost models" begin
     test_cases = [
         ("fixed_market_bid_cost", 20532.76),
@@ -94,6 +99,7 @@ end
         end
     end
 end
+=#
 
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin

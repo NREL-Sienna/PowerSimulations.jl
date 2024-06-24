@@ -7,8 +7,10 @@ Network formulations are used to describe how the network and buses are handled 
 | `CopperPlatePowerModel` | Copper plate connection between all components, i.e. infinite transmission capacity |
 | `AreaBalancePowerModel` | Network model approximation to represent inter-area flow with each area represented as a single node |
 | `PTDFPowerModel` | Uses the PTDF factor matrix to compute the fraction of power transferred in the network across the branches |
+| `AreaPTDFPowerModel` | Uses the PTDF factor matrix to compute the fraction of power transferred in the network across the branches and balances power by Area instead of system-wide |
 
 [`PowerModels.jl`](https://github.com/lanl-ansi/PowerModels.jl) available formulations:
+
 - Exact non-convex models: `ACPPowerModel`, `ACRPowerModel`, `ACTPowerModel`.
 - Linear approximations: `DCPPowerModel`, `NFAPowerModel`.
 - Quadratic approximations: `DCPLLPowerModel`, `LPACCPowerModel`
@@ -28,10 +30,11 @@ CopperPlatePowerModel
 **Variables:**
 
 If Slack variables are enabled:
+
 - [`SystemBalanceSlackUp`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: 0.0
-  - Default proportional cost: 1e6 
+  - Default proportional cost: 1e6
   - Symbol: ``p^\text{sl,up}``
 - [`SystemBalanceSlackDown`](@ref):
   - Bounds: [0.0, ]
@@ -66,20 +69,30 @@ AreaBalancePowerModel
 ```
 
 **Variables:**
+If Slack variables are enabled:
 
-Slack variables are not supported for `AreaBalancePowerModel`
+- [`SystemBalanceSlackUp`](@ref) by area:
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+  - Default proportional cost: 1e6
+  - Symbol: ``p^\text{sl,up}``
+- [`SystemBalanceSlackDown`](@ref) by area:
+  - Bounds: [0.0, ]
+  - Default initial value: 0.0
+  - Default proportional cost: 1e6
+  - Symbol: ``p^\text{sl,dn}``
 
 **Objective:**
 
-No changes to the objective function.
+Adds ``p^\text{sl,up}`` and ``p^\text{sl,dn}`` terms to the respective active power balance expressions `ActivePowerBalance` per area.
 
 **Expressions:**
 
-Creates `ActivePowerBalance` expressions for each bus that then are used to balance active power for all buses within a single area.
+Creates `ActivePowerBalance` expressions for each area that then are used to balance active power for all buses within a single area.
 
 **Constraints:**
 
-Adds the `AreaDispatchBalanceConstraint` to balance the active power of all components available in an area.
+Adds the `CopperPlateBalanceConstraint` to balance the active power of all components available in an area.
 
 ```math
 \begin{align}
@@ -98,10 +111,11 @@ PTDFPowerModel
 **Variables:**
 
 If Slack variables are enabled:
+
 - [`SystemBalanceSlackUp`](@ref):
   - Bounds: [0.0, ]
   - Default initial value: 0.0
-  - Default proportional cost: 1e6 
+  - Default proportional cost: 1e6
   - Symbol: ``p^\text{sl,up}``
 - [`SystemBalanceSlackDown`](@ref):
   - Bounds: [0.0, ]
@@ -128,4 +142,3 @@ Adds the `CopperPlateBalanceConstraint` to balance the active power of all compo
 ```
 
 In addition creates `NodalBalanceActiveConstraint` for HVDC buses balance, if DC components are connected to an HVDC network.
-

@@ -38,7 +38,7 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.use_slacks = service_model.use_slacks
         base_model.time_series_names = service_model.time_series_names
         base_model.attributes = service_model.attributes
-        set_service_model!(ic_template, base_model)
+        set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
     return ic_template
 end

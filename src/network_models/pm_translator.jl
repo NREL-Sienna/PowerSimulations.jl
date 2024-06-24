@@ -23,11 +23,11 @@ function get_branch_to_pm(
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
+        "rate_a" => PSY.get_rating(branch),
         "shift" => PSY.get_α(branch),
-        "rate_b" => PSY.get_rate(branch),
+        "rate_b" => PSY.get_rating(branch),
         "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
+        "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
         "g_fr" => 0.0,
         "b_fr" => PSY.get_primary_shunt(branch) / 2,
@@ -52,11 +52,11 @@ function get_branch_to_pm(
 ) where {D <: AbstractBranchFormulation}
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
+        "rate_a" => PSY.get_rating(branch),
         "shift" => PSY.get_α(branch),
-        "rate_b" => PSY.get_rate(branch),
+        "rate_b" => PSY.get_rating(branch),
         "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
+        "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
         "g_fr" => 0.0,
         "b_fr" => PSY.get_primary_shunt(branch) / 2,
@@ -107,11 +107,11 @@ function get_branch_to_pm(
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
+        "rate_a" => PSY.get_rating(branch),
         "shift" => 0.0,
-        "rate_b" => PSY.get_rate(branch),
+        "rate_b" => PSY.get_rating(branch),
         "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
+        "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
         "g_fr" => 0.0,
         "b_fr" => PSY.get_primary_shunt(branch) / 2,
@@ -162,11 +162,11 @@ function get_branch_to_pm(
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
+        "rate_a" => PSY.get_rating(branch),
         "shift" => 0.0,
-        "rate_b" => PSY.get_rate(branch),
+        "rate_b" => PSY.get_rating(branch),
         "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
+        "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
         "g_fr" => 0.0,
         "b_fr" => PSY.get_primary_shunt(branch) / 2,
@@ -217,11 +217,11 @@ function get_branch_to_pm(
 )
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
+        "rate_a" => PSY.get_rating(branch),
         "shift" => 0.0,
-        "rate_b" => PSY.get_rate(branch),
+        "rate_b" => PSY.get_rating(branch),
         "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
+        "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
         "g_fr" => 0.0,
         "b_fr" => PSY.get_b(branch).from,
