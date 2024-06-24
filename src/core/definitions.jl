@@ -90,6 +90,14 @@ const KNOWN_SIMULATION_PATHS = [
     "simulation_files",
     "simulation_partitions",
 ]
+"If the name of an extraneous file that appears in simulation results matches one of these regexes, it is safe to ignore"
+const IGNORABLE_FILES = [
+    r"^\.DS_Store$",
+    r"^\.Trashes$",
+    r"^\.Trash-.*$",
+    r"^\.nfs.*$",
+    r"^[Dd]esktop.ini$",
+]
 const RESULTS_DIR = "results"
 
 # Enums
