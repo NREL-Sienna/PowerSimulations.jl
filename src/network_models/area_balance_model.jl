@@ -23,6 +23,8 @@ function add_constraints!(
     return
 end
 
+# Unavailable Feature
+#=
 function agc_area_balance(
     container::OptimizationContainer,
     expression::ExpressionKey,
@@ -80,3 +82,4 @@ function agc_area_balance(
 
     return
 end
+=#
