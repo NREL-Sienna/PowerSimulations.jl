@@ -6,7 +6,7 @@ import PowerSimulations:
     should_export_dual,
     should_export_parameter,
     should_export_variable,
-    OptimizationContainerMetadata
+    IS.Optimization.OptimizationContainerMetadata
 
 function _make_params()
     sim = Dict(
@@ -17,7 +17,7 @@ function _make_params()
     problem_defs = OrderedDict(
         :ED => Dict(
             "execution_count" => 24,
-            "horizon" => 12,
+            "horizon" => Dates.Hour(12),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(1),
             "base_power" => 100.0,
@@ -25,14 +25,14 @@ function _make_params()
         ),
         :UC => Dict(
             "execution_count" => 1,
-            "horizon" => 24,
+            "horizon" => Dates.Hour(24),
             "interval" => Dates.Hour(1),
             "resolution" => Dates.Hour(24),
             "base_power" => 100.0,
             "system_uuid" => Base.UUID("4076af6c-e467-56ae-b986-b466b2749572"),
         ),
     )
-    container_metadata = OptimizationContainerMetadata(
+    container_metadata = IS.Optimization.OptimizationContainerMetadata(
         Dict(
             "ActivePowerVariable__ThermalStandard" =>
                 PSI.VariableKey(ActivePowerVariable, ThermalStandard),
@@ -46,9 +46,9 @@ function _make_params()
     for problem in keys(problem_defs)
         problem_params = ModelStoreParams(
             problem_defs[problem]["execution_count"],
-            problem_defs[problem]["horizon"],
-            problem_defs[problem]["interval"],
-            problem_defs[problem]["resolution"],
+            IS.time_period_conversion(problem_defs[problem]["horizon"]),
+            IS.time_period_conversion(problem_defs[problem]["interval"]),
+            IS.time_period_conversion(problem_defs[problem]["resolution"]),
             problem_defs[problem]["base_power"],
             problem_defs[problem]["system_uuid"],
             container_metadata,
@@ -104,7 +104,7 @@ end
         exports,
         valid,
         :ED,
-        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.VariableKey(ActivePowerVariable, RenewableNonDispatch),
     )
     @test should_export_parameter(
         exports,
@@ -116,7 +116,7 @@ end
         exports,
         valid,
         :ED,
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableNonDispatch),
     )
 
     @test should_export_variable(
@@ -129,7 +129,7 @@ end
         exports,
         valid,
         :UC,
-        PSI.VariableKey(ActivePowerVariable, RenewableFix),
+        PSI.VariableKey(ActivePowerVariable, RenewableNonDispatch),
     )
     @test should_export_parameter(
         exports,
@@ -141,7 +141,7 @@ end
         exports,
         valid,
         :UC,
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableFix),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, RenewableNonDispatch),
     )
 
     @test exports.path == "export_path"

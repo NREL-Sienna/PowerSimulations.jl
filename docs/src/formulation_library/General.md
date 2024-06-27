@@ -15,11 +15,11 @@ No variables are created for `DeviceModel(<:DeviceType, FixedOutput)`
 **Static Parameters:**
 
 - ThermalGen:
-  - ``Pg^\text{max}`` = `PowerSystems.get_max_active_power(device)`
-  - ``Qg^\text{max}`` = `PowerSystems.get_max_reactive_power(device)`
+  - ``P^\text{th,max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_max_reactive_power(device)`
 - Storage:
-  - ``Pg^\text{max}`` = `PowerSystems.get_max_active_power(device)`
-  - ``Qg^\text{max}`` = `PowerSystems.get_max_reactive_power(device)`
+  - ``P^\text{st,max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{st,max}`` = `PowerSystems.get_max_reactive_power(device)`
 
 **Time Series Parameters:**
 
@@ -48,7 +48,7 @@ No objective terms are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 **Expressions:**
 
-Adds the active and reactive parameters listed for specific device types above to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+Adds the active and reactive parameters listed for specific device types above to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations).
 
 **Constraints:**
 
@@ -56,42 +56,57 @@ No constraints are created for `DeviceModel(<:DeviceType, FixedOutput)`
 
 ---
 
-## `VariableCost` Options
+## `FunctionData` Options
 
 PowerSimulations can represent variable costs using a variety of different methods depending on the data available in each device. The following describes the objective function terms that are populated for each variable cost option.
 
-### Scalar `VariableCost`
+### `LinearFunctionData`
 
-`variable_cost <: Float64`: creates a fixed marginal cost term in the objective function
-
-```math
-\begin{aligned}
-&  \text{min} \sum_{t} C * G_t
-\end{aligned}
-```
-
-### Polynomial `VariableCost`
-
-`variable_cost <: Tuple{Float64, Float64}`: creates a polynomial cost term in the objective function where
-
-- ``C_g``=`variable_cost[1]`
-- ``C_g^\prime``=`variable_cost[2]`
+`variable_cost = LinearFunctionData(c)`: creates a fixed marginal cost term in the objective function
 
 ```math
 \begin{aligned}
-&  \text{min} \sum_{t} C * G_t + C^\prime * G_t^2
+&  \text{min} \sum_{t} c * G_t
 \end{aligned}
 ```
 
-### Piecewise Linear `VariableCost`
+### `QuadraticFunctionData` and `PolynomialFunctionData`
 
-`variable_cost <: Vector{Tuple{Float64, Float64}}`: creates a piecewise linear cost term in the objective function
+`variable_cost::QuadraticFunctionData` and `variable_cost::PolynomialFunctionData`: create a polynomial cost term in the objective function
 
-TODO: add formulation
+```math
+\begin{aligned}
+&  \text{min} \sum_{t} \sum_{n} C_n * G_t^n
+\end{aligned}
+```
 
-___
+where
 
-### `StorageManagementCost`
+- For `QuadraticFunctionData`:
+  - ``C_0`` = `get_constant_term(variable_cost)`
+  - ``C_1`` = `get_proportional_term(variable_cost)`
+  - ``C_2`` = `get_quadratic_term(variable_cost)`
+- For `PolynomialFunctionData`:
+  - ``C_n`` = `get_coefficients(variable_cost)[n]`
+
+### `` and `PiecewiseLinearSlopeData`
+
+`variable_cost::PiecewiseLinearData` and `variable_cost::PiecewiseLinearSlopeData`: create a piecewise linear cost term in the objective function
+
+```math
+\begin{aligned}
+&  \text{min} \sum_{t} f(G_t)
+\end{aligned}
+```
+
+where
+
+- For `variable_cost::PiecewiseLinearData`, ``f(x)`` is the piecewise linear function obtained by connecting the `(x, y)` points `get_points(variable_cost)` in order.
+- For `variable_cost = PiecewiseLinearSlopeData([x0, x1, x2, ...], y0, [s0, s1, s2, ...])`, ``f(x)`` is the piecewise linear function obtained by starting at `(x0, y0)`, drawing a segment at slope `s0` to `x=x1`, drawing a segment at slope `s1` to `x=x2`, etc.
+
+---
+
+## `StorageCost`
 
 Adds an objective function cost term according to:
 
@@ -103,7 +118,7 @@ Adds an objective function cost term according to:
 
 **Impact of different cost configurations:**
 
-The following table describes all possible configuration of the `StorageManagementCost` with the target constraint in hydro or storage device models. Cases 1(a) & 2(a) will have no impact of the models operations and the target constraint will be rendered useless. In most cases that have no energy target and a non-zero value for ``C^{value}``, if this cost is too high (``C^{value} >> 0``) or too low (``C^{value} <<0``) can result in either the model holding on to stored energy till the end or the model not storing any energy in the device. This is caused by the fact that when energy target is zero, we have ``E_t = - E^{shortage}_t``, and ``- E^{shortage}_t * C^{value}`` in the objective function is replaced by ``E_t * C^{value}``, thus resulting in ``C^{value}`` to be seen as the cost of stored energy.
+The following table describes all possible configurations of the `StorageCost` with the target constraint in hydro or storage device models. Cases 1(a) & 2(a) will not impact the model's operations, and the target constraint will be rendered useless. In most cases that have no energy target and a non-zero value for ``C^{value}``, if this cost is too high (``C^{value} >> 0``) or too low (``C^{value} <<0``) can result in either the model holding on to stored energy till the end of the model not storing any energy in the device. This is caused by the fact that when the energy target is zero, we have ``E_t = - E^{shortage}_t``, and ``- E^{shortage}_t * C^{value}`` in the objective function is replaced by ``E_t * C^{value}``, thus resulting in ``C^{value}`` to be seen as the cost of stored energy.
 
 
 | Case | Energy Target | Energy Shortage Cost | Energy Value / Energy Surplus cost | Effect |

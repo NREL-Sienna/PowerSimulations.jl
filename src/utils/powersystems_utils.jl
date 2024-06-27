@@ -1,35 +1,80 @@
 function get_available_components(
-    ::Type{T},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     sys::PSY.System,
-    ::Nothing = nothing,
 ) where {T <: PSY.Component}
-    return PSY.get_components(PSY.get_available, T, sys)
+    subsystem = get_subsystem(model)
+    filter_function = get_attribute(model, "filter_function")
+    if filter_function === nothing
+        return PSY.get_components(
+            PSY.get_available,
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    else
+        return PSY.get_components(
+            x -> PSY.get_available(x) && filter_function(x),
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    end
 end
 
 function get_available_components(
-    ::Type{T},
+    model::ServiceModel{T, <:AbstractServiceFormulation},
     sys::PSY.System,
-    f::Function,
 ) where {T <: PSY.Component}
-    return PSY.get_components(x -> PSY.get_available(x) && f(x), T, sys)
+    subsystem = get_subsystem(model)
+    filter_function = get_attribute(model, "filter_function")
+    if filter_function === nothing
+        return PSY.get_components(
+            PSY.get_available,
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    else
+        return PSY.get_components(
+            x -> PSY.get_available(x) && filter_function(x),
+            T,
+            sys;
+            subsystem_name = subsystem,
+        )
+    end
 end
 
 function get_available_components(
+    model::NetworkModel,
     ::Type{PSY.ACBus},
     sys::PSY.System,
-    ::Nothing = nothing,
 )
+    subsystem = get_subsystem(model)
     return PSY.get_components(
         x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
         PSY.ACBus,
-        sys,
+        sys;
+        subsystem_name = subsystem,
     )
 end
 
 function get_available_components(
+    model::NetworkModel,
+    ::Type{T},
+    sys::PSY.System,
+) where {T <: PSY.Component}
+    subsystem = get_subsystem(model)
+    return PSY.get_components(
+        T,
+        sys;
+        subsystem_name = subsystem,
+    )
+end
+
+#=
+function get_available_components(
     ::Type{PSY.RegulationDevice{T}},
     sys::PSY.System,
-    ::Nothing,
 ) where {T <: PSY.Component}
     return PSY.get_components(
         x -> (PSY.get_available(x) && PSY.has_service(x, PSY.AGC)),
@@ -37,8 +82,9 @@ function get_available_components(
         sys,
     )
 end
+=#
 
-make_system_filename(sys::PSY.System) = "system-$(IS.get_uuid(sys)).json"
+make_system_filename(sys::PSY.System) = make_system_filename(IS.get_uuid(sys))
 make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"
 
 function check_hvdc_line_limits_consistency(
@@ -82,34 +128,212 @@ function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalHVDCLine)
     return
 end
 
-function _validate_compact_pwl_data(
-    min::Float64,
-    max::Float64,
-    data::Vector{Tuple{Float64, Float64}},
-    base_power::Float64,
+##################################################
+########### Cost Function Utilities ##############
+##################################################
+
+"""
+Obtain proportional (marginal or slope) cost data in system base per unit
+depending on the specified power units
+"""
+function get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
 )
-    if isapprox(max - min, data[end][2] / base_power) && iszero(data[1][2])
-        return COMPACT_PWL_STATUS.VALID
-    else
-        return COMPACT_PWL_STATUS.INVALID
+    return _get_proportional_cost_per_system_unit(
+        cost_term,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)
+end
+
+function _get_proportional_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power
+end
+
+"""
+Obtain quadratic cost data in system base per unit
+depending on the specified power units
+"""
+function get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_quadratic_cost_per_system_unit(
+        cost_term,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE}, # SystemBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.DEVICE_BASE}, # DeviceBase Unit
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * (system_base_power / device_base_power)^2
+end
+
+function _get_quadratic_cost_per_system_unit(
+    cost_term::Float64,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS}, # Natural Units
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_term * system_base_power^2
+end
+
+"""
+Obtain the normalized PiecewiseLinear cost data in system base per unit
+depending on the specified power units.
+
+Note that the costs (y-axis) are always in \$/h so
+they do not require transformation
+"""
+function get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return _get_piecewise_pointcurve_per_system_unit(
+        cost_component,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_component
+end
+
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    points = cost_component.points
+    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
+    for (ix, point) in enumerate(points)
+        points_normalized[ix] =
+            (x = point.x * (device_base_power / system_base_power), y = point.y)
     end
+    return PSY.PiecewiseLinearData(points_normalized)
 end
 
-function validate_compact_pwl_data(
-    d::PSY.ThermalGen,
-    data::Vector{Tuple{Float64, Float64}},
-    base_power::Float64,
+function _get_piecewise_pointcurve_per_system_unit(
+    cost_component::PSY.PiecewiseLinearData,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
 )
-    min = PSY.get_active_power_limits(d).min
-    max = PSY.get_active_power_limits(d).max
-    return _validate_compact_pwl_data(min, max, data, base_power)
+    points = cost_component.points
+    points_normalized = Vector{NamedTuple{(:x, :y)}}(undef, length(points))
+    for (ix, point) in enumerate(points)
+        points_normalized[ix] = (x = point.x / system_base_power, y = point.y)
+    end
+    return PSY.PiecewiseLinearData(points_normalized)
 end
 
-function validate_compact_pwl_data(
-    d::PSY.Component,
-    ::Vector{Tuple{Float64, Float64}},
-    ::Float64,
+"""
+Obtain the normalized PiecewiseStep cost data in system base per unit
+depending on the specified power units.
+
+Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h),
+so they also require transformation.
+"""
+function get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
 )
-    @warn "Validation of compact pwl data is not implemented for $(typeof(d))."
-    return COMPACT_PWL_STATUS.UNDETERMINED
+    return _get_piecewise_incrementalcurve_per_system_unit(
+        cost_component,
+        Val{unit_system}(),
+        system_base_power,
+        device_base_power,
+    )
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.SYSTEM_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    return cost_component
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.DEVICE_BASE},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    x_coords = PSY.get_x_coords(cost_component)
+    y_coords = PSY.get_y_coords(cost_component)
+    ratio = device_base_power / system_base_power
+    x_coords_normalized = x_coords .* ratio
+    y_coords_normalized = y_coords ./ ratio
+    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+end
+
+function _get_piecewise_incrementalcurve_per_system_unit(
+    cost_component::PSY.PiecewiseStepData,
+    ::Val{PSY.UnitSystem.NATURAL_UNITS},
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
+    x_coords = PSY.get_x_coords(cost_component)
+    y_coords = PSY.get_y_coords(cost_component)
+    x_coords_normalized = x_coords ./ system_base_power
+    y_coords_normalized = y_coords .* system_base_power
+    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
 end

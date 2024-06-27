@@ -23,9 +23,9 @@ function test_single_stage_sequential(in_memory, rebuild)
         simulation_folder = mktempdir(; cleanup = true),
     )
     build_out = build!(sim_single)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim_single; in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "Single stage sequential tests" begin
@@ -59,8 +59,7 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = GLPK_optimizer,
-            ),
+                optimizer = HiGHS_optimizer),
             DecisionModel(
                 template_ed,
                 c_sys5_hy_ed;
@@ -91,10 +90,10 @@ function test_2_stage_decision_models_with_feedforwards(in_memory)
         simulation_folder = mktempdir(; cleanup = true),
     )
 
-    build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.BuildStatus.BUILT
+    build_out = build!(sim; console_level = Logging.Info)
+    @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim; in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "2-Stage Decision Models with FeedForwards" begin
@@ -129,7 +128,7 @@ end
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = GLPK_optimizer,
+                optimizer = HiGHS_optimizer,
             ),
             DecisionModel(
                 template_ed,
@@ -162,9 +161,9 @@ end
     )
 
     build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     @testset "Verify simulation events" begin
         file = joinpath(PSI.get_simulation_dir(sim), "recorder", "simulation_status.log")
@@ -220,7 +219,7 @@ end
     #     files_path = PSI.serialize_simulation(sim; path = path)
     #     deserialized_sim = Simulation(files_path, stage_info)
     #     build_out = build!(deserialized_sim)
-    #     @test build_out == PSI.BuildStatus.BUILT
+    #     @test build_out == PSI.SimulationBuildStatus.BUILT
     #     for stage in values(PSI.get_stages(deserialized_sim))
     #         @test PSI.is_stage_built(stage)
     #     end
@@ -228,6 +227,7 @@ end
 
 end
 
+#= Re-enable when cost functions are updated
 function test_3_stage_simulation_with_feedforwards(in_memory)
     sys_rts_da = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
@@ -293,9 +293,9 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
         simulation_folder = mktempdir(; cleanup = true),
     )
     build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
     # execute_out = execute!(sim, in_memory = in_memory)
-    # @test execute_out == PSI.RunStatus.SUCCESSFUL
+    # @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "Test 3 stage simulation with FeedForwards" begin
@@ -304,6 +304,7 @@ end
     end
 end
 
+# TODO: Re-enable once MarketBid Cost is re-implemented
 @testset "UC with MarketBid Cost in ThermalGenerators simulations" begin
     template = get_thermal_dispatch_template_network(
         NetworkModel(CopperPlatePowerModel; use_slacks = true),
@@ -337,7 +338,8 @@ end
         simulation_folder = mktempdir(; cleanup = true),
     )
 
-    @test build!(sim) == PSI.BuildStatus.BUILT
-    @test execute!(sim) == PSI.RunStatus.SUCCESSFUL
+    @test build!(sim) == PSI.SimulationBuildStatus.BUILT
+    @test execute!(sim) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     # TODO: Add more testing of resulting values
 end
+=#

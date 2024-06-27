@@ -1,6 +1,7 @@
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
     alien_files = setdiff(folder_files, KNOWN_SIMULATION_PATHS)
+    alien_files = filter(x -> !any(occursin.(IGNORABLE_FILES, x)), alien_files)
     if isempty(alien_files)
         return true
     else
@@ -193,12 +194,54 @@ Base.length(res::SimulationResults) =
     mapreduce(length, +, values(res.decision_problem_results))
 get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
-function get_decision_problem_results(results::SimulationResults, problem)
+"""
+Return SimulationProblemResults corresponding to a SimulationResults
+
+# Arguments
+ - `sim_results::PSI.SimulationResults`: the simulation results to read from
+ - `problem::String`: the name of the problem (e.g., "UC", "ED")
+ - `populate_system::Bool = true`: whether to set the results' system using
+ [`read_serialized_system`](@ref)
+ - `populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS`:
+   the units system with which to populate the results' system, if any (requires
+   `populate_system=true`)
+"""
+
+function get_decision_problem_results(
+    results::SimulationResults,
+    problem::String;
+    populate_system::Bool = false,
+    populate_units::Union{IS.UnitSystem, String, Nothing} = nothing,
+)
     if !haskey(results.decision_problem_results, problem)
         throw(IS.InvalidValue("$problem is not stored"))
     end
 
-    return results.decision_problem_results[problem]
+    results = results.decision_problem_results[problem]
+
+    if populate_system
+        try
+            get_system!(results)
+        catch e
+            error("Can't find the system file or retrieve the system error=$e")
+        end
+
+        if populate_units !== nothing
+            PSY.set_units_base_system!(PSI.get_system(results), populate_units)
+        else
+            PSY.set_units_base_system!(PSI.get_system(results), IS.UnitSystem.NATURAL_UNITS)
+        end
+
+    else
+        (populate_units === nothing) ||
+            throw(
+                ArgumentError(
+                    "populate_units=$populate_units is unaccepted when populate_system=$populate_system",
+                ),
+            )
+    end
+
+    return results
 end
 
 function get_emulation_problem_results(results::SimulationResults)
@@ -292,7 +335,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
 
@@ -306,7 +355,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
 
@@ -320,7 +375,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
 
@@ -334,7 +395,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
         end
@@ -349,76 +416,27 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     count = 1,
                     store = store,
                 )
-                export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                IS.Optimization.export_result(
+                    file_type,
+                    export_path,
+                    name,
+                    timestamp,
+                    dfs[timestamp],
+                )
             end
         end
 
         if problem_exports.optimizer_stats
             export_path = joinpath(path, problem_results.problem, "optimizer_stats.csv")
             df = read_optimizer_stats(problem_results; store = store)
-            export_result(file_type, export_path, df)
+            IS.Optimization.export_result(file_type, export_path, df)
         end
     end
     return
 end
 
-function export_result(
-    ::Type{CSV.File},
-    path,
-    key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
-    df::DataFrames.DataFrame,
-)
-    name = encode_key_as_string(key)
-    export_result(CSV.File, path, name, timestamp, df)
-    return
-end
-
-function export_result(
-    ::Type{CSV.File},
-    path,
-    name::AbstractString,
-    timestamp::Dates.DateTime,
-    df::DataFrames.DataFrame,
-)
-    filename = joinpath(path, name * "_" * convert_for_path(timestamp) * ".csv")
-    export_result(CSV.File, filename, df)
-    return
-end
-
-function export_result(
-    ::Type{CSV.File},
-    path,
-    key::OptimizationContainerKey,
-    df::DataFrames.DataFrame,
-)
-    name = encode_key_as_string(key)
-    export_result(CSV.File, path, name, df)
-    return
-end
-
-function export_result(
-    ::Type{CSV.File},
-    path,
-    name::AbstractString,
-    df::DataFrames.DataFrame,
-)
-    filename = joinpath(path, name * ".csv")
-    export_result(CSV.File, filename, df)
-    return
-end
-
-function export_result(::Type{CSV.File}, filename, df::DataFrames.DataFrame)
-    open(filename, "w") do io
-        CSV.write(io, df)
-    end
-
-    @debug "Exported $filename"
-    return
-end
-
 function _check_status(status::RunStatus, ignore_status)
-    status == RunStatus.SUCCESSFUL && return
+    status == RunStatus.SUCCESSFULLY_FINALIZED && return
 
     if ignore_status
         @warn "Simulation was not successful: $status. Results may not be valid."

@@ -44,7 +44,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
         model_interval = get_interval(model)
-        horizon_length = get_horizon(model) * model_resolution
+        horizon_length = get_horizon(model)
         # This is the portion of the Horizon that "overflows" into the next step
         time_residual = horizon_length - model_interval
         @assert_op time_residual >= zero(Dates.Millisecond)

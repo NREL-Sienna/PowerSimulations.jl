@@ -13,7 +13,7 @@ end
     fill!(one, 1.0)
     mock_key = PSI.VariableKey(ActivePowerVariable, ThermalStandard)
     one_df = PSI.to_dataframe(one, mock_key)
-    test_df = DataFrames.DataFrame(PSI.encode_key(mock_key) => [1.0, 1.0])
+    test_df = DataFrames.DataFrame(IS.Optimization.encode_key(mock_key) => [1.0, 1.0])
     @test one_df == test_df
 
     two = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2)
@@ -49,31 +49,4 @@ end
     @test PSI._get_output_dir_name(tmpdir, name) == joinpath(tmpdir, name * "-2")
     dir2 = mkdir(joinpath(tmpdir, name * "-2"))
     @test PSI._get_output_dir_name(tmpdir, name) == joinpath(tmpdir, name * "-3")
-end
-
-@testset "Test OptimizationContainer backwards compatibility" begin
-    mock_incomplete_data = [
-        1.0,
-        100.0,
-        1.0,
-        1.0,
-        2.0,
-        10.0,
-        1.0,
-        1.0,
-        0.0,
-        -100.0,
-        -100.0,
-        100.0,
-        NaN,
-        NaN,
-        10.0,
-        10.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-    ]
-    stats = PSI.OptimizerStats(mock_incomplete_data)
-    @test ismissing(stats.relative_gap)
 end

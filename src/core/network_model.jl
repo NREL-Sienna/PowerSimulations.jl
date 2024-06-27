@@ -34,6 +34,8 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     duals::Vector{DataType}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
+    subsystem::Union{Nothing, String}
+    modeled_branch_types::Vector{DataType}
 
     function NetworkModel(
         ::Type{T};
@@ -52,6 +54,8 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
+            nothing,
+            Vector{DataType}(),
         )
     end
 end
@@ -67,6 +71,9 @@ get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
 get_subnetworks(m::NetworkModel) = m.subnetworks
 get_bus_area_map(m::NetworkModel) = m.bus_area_map
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
+get_subsystem(m::NetworkModel) = m.subsystem
+
+set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
@@ -113,7 +120,10 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(model::NetworkModel{PTDFPowerModel}, sys::PSY.System)
+function instantiate_network_model(
+    model::NetworkModel{<:AbstractPTDFModel},
+    sys::PSY.System,
+)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         model.PTDF_matrix =
@@ -135,11 +145,11 @@ end
 function _assign_subnetworks_to_buses(
     model::NetworkModel{T},
     sys::PSY.System,
-) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
+) where {T <: Union{CopperPlatePowerModel, AbstractPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     radial_network_reduction = PSI.get_radial_network_reduction(model)
-    for bus in PSI.get_available_components(PSY.ACBus, sys)
+    for bus in PSI.get_available_components(model, PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
         mapped_bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus)
         if haskey(temp_bus_map, bus_no)

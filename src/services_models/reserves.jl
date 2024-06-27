@@ -29,7 +29,7 @@ get_multiplier_value(::RequirementTimeSeriesParameter, d::PSY.ReserveNonSpinning
 get_parameter_multiplier(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::Type{<:PSY.AbstractReserve}, ::AbstractReservesFormulation) = 0.0
 
-objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = 1.0
+objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = -1.0
 sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO_VARIABLE
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
 #! format: on
@@ -85,6 +85,40 @@ function get_default_attributes(
     ::Type{<:AbstractReservesFormulation},
 )
     return Dict{String, Any}()
+end
+
+"""
+Add variables for ServiceRequirementVariable for StepWiseCostReserve
+"""
+function add_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    service::D,
+    formulation,
+) where {
+    T <: ServiceRequirementVariable,
+    D <: PSY.ReserveDemandCurve,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        D,
+        [service_name],
+        time_steps;
+        meta = service_name,
+    )
+
+    for t in time_steps
+        variable[service_name, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "$(T)_$(D)_$(service_name)_{$(service_name), $(t)}",
+            lower_bound = 0.0,
+        )
+    end
+
+    return
 end
 
 ################################## Reserve Requirement Constraint ##########################
@@ -210,7 +244,7 @@ function add_constraints!(
     ::U,
     model::ServiceModel{SR, V},
 ) where {
-    SR <: PSY.StaticReserve,
+    SR <: PSY.ConstantReserve,
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
@@ -276,7 +310,8 @@ function add_constraints!(
     )
     reserve_variable =
         get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-    requirement_variable = get_variable(container, ServiceRequirementVariable(), SR)
+    requirement_variable =
+        get_variable(container, ServiceRequirementVariable(), SR, service_name)
     jump_model = get_jump_model(container)
     for t in time_steps
         constraint[service_name, t] = JuMP.@constraint(
@@ -456,5 +491,70 @@ function objective_function!(
     ::ServiceModel{PSY.ReserveDemandCurve{T}, SR},
 ) where {T <: PSY.ReserveDirection, SR <: StepwiseCostReserve}
     add_variable_cost!(container, ServiceRequirementVariable(), service, SR())
+    return
+end
+
+function add_variable_cost!(
+    container::OptimizationContainer,
+    ::U,
+    service::T,
+    ::V,
+) where {T <: PSY.ReserveDemandCurve, U <: VariableType, V <: StepwiseCostReserve}
+    _add_variable_cost_to_objective!(container, U(), service, V())
+    return
+end
+
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Reserve,
+    ::U,
+) where {T <: VariableType, U <: StepwiseCostReserve}
+    component_name = PSY.get_name(component)
+    @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    # If array is full of tuples with zeros return 0.0
+    time_steps = get_time_steps(container)
+    variable_cost = PSY.get_variable(component)
+    if variable_cost isa Nothing
+        error("ReserveDemandCurve $(component.name) does not have cost data.")
+    elseif typeof(variable_cost) <: PSY.TimeSeriesKey
+        error(
+            "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
+        )
+    end
+
+    pwl_cost_expressions =
+        _add_pwl_term!(container, component, variable_cost, T(), U())
+    for t in time_steps
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            pwl_cost_expressions[t],
+            component,
+            t,
+        )
+        add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+    end
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    service::T,
+    ::V,
+) where {
+    T <: Union{PSY.Reserve, PSY.ReserveNonSpinning},
+    U <: ActivePowerReserveVariable,
+    V <: AbstractReservesFormulation,
+}
+    base_p = get_base_power(container)
+    reserve_variable = get_variable(container, U(), T, PSY.get_name(service))
+    for index in Iterators.product(axes(reserve_variable)...)
+        add_to_objective_invariant_expression!(
+            container,
+            DEFAULT_RESERVE_COST / base_p * reserve_variable[index...],
+        )
+    end
     return
 end

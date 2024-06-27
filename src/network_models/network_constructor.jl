@@ -15,7 +15,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.System, model)
+        objective_function!(container, sys, model)
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
@@ -30,22 +30,21 @@ function construct_network!(
     model::NetworkModel{AreaBalancePowerModel},
     ::ProblemTemplate,
 )
-    area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
-    branches = get_available_components(PSY.Branch, sys)
     if get_use_slacks(model)
-        throw(
-            IS.ConflictingInputsError(
-                "Slack Variables are not compatible with AreaBalancePowerModel",
-            ),
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
         )
+        objective_function!(container, sys, model)
     end
 
-    area_balance(
-        container,
-        ExpressionKey(ActivePowerBalance, PSY.ACBus),
-        area_mapping,
-        branches,
-    )
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -53,7 +52,7 @@ end
 function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
-    model::NetworkModel{PTDFPowerModel},
+    model::NetworkModel{<:AbstractPTDFModel},
     ::ProblemTemplate,
 )
     if get_use_slacks(model)
@@ -67,7 +66,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.System, model)
+        objective_function!(container, sys, model)
     end
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
@@ -100,7 +99,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_nip_expr_model method" _group =
@@ -147,7 +146,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_nip_expr_model method" _group =
@@ -207,7 +206,7 @@ function construct_network!(
             sys,
             model,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_bfp_expr_model method" _group =
@@ -272,7 +271,7 @@ function construct_network!(
             model,
             T,
         )
-        objective_function!(container, PSY.ACBus, model)
+        objective_function!(container, sys, model)
     end
 
     @debug "Building the $T network with instantiate_vip_expr_model method" _group =

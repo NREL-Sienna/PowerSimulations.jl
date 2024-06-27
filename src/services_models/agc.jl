@@ -56,7 +56,7 @@ function get_default_attributes(
     ::Type{PSY.AGC},
     ::Type{<:AbstractAGCFormulation},
 )
-    return Dict{String, Any}()
+    return Dict{String, Any}("aggregated_service_model" => false)
 end
 
 """
@@ -77,7 +77,7 @@ end
 
 function _get_variable_initial_value(
     d::PSY.Component,
-    key::ICKey,
+    key::InitialConditionKey,
     ::AbstractAGCFormulation,
     ::Nothing,
 )
@@ -174,10 +174,10 @@ function add_constraints!(
     ::Type{T},
     ::Type{SteadyStateFrequencyDeviation},
     agcs::IS.FlattenIteratorWrapper{U},
-    ::ServiceModel{PSY.AGC, V},
+    model::ServiceModel{PSY.AGC, V},
     sys::PSY.System,
 ) where {T <: SACEPIDAreaConstraint, U <: PSY.AGC, V <: PIDSmoothACE}
-    services = get_available_components(PSY.AGC, sys)
+    services = get_available_components(model, sys)
     time_steps = get_time_steps(container)
     agc_names = PSY.get_name.(services)
     area_names = [PSY.get_name(PSY.get_area(s)) for s in services]
@@ -196,7 +196,7 @@ function add_constraints!(
         kp = PSY.get_K_p(service)
         ki = PSY.get_K_i(service)
         kd = PSY.get_K_d(service)
-        Δt = convert(Dates.Second, container.resolution).value
+        Δt = convert(Dates.Second, get_resolution(container)).value
         a = PSY.get_name(service)
         for t in time_steps
             if t == 1
@@ -291,6 +291,22 @@ function add_feedforward_constraints!(
     for ff in get_feedforwards(model)
         @debug "arguments" ff V _group = LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
         add_feedforward_constraints!(container, model, areas, ff)
+    end
+    return
+end
+
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    agcs::IS.FlattenIteratorWrapper{T},
+    ::PIDSmoothACE,
+) where {T <: PSY.AGC, U <: LiftVariable}
+    lift_variable = get_variable(container, U(), T)
+    for index in Iterators.product(axes(lift_variable)...)
+        add_to_objective_invariant_expression!(
+            container,
+            SERVICES_SLACK_COST * lift_variable[index...],
+        )
     end
     return
 end

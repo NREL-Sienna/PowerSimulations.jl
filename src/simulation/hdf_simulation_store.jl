@@ -231,7 +231,7 @@ Return the optimizer stats for a problem as a DataFrame.
 function read_optimizer_stats(store::HdfSimulationStore, model_name)
     dataset = _get_dataset(OptimizerStats, store, model_name)
     data = permutedims(dataset[:, :])
-    stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
+    stats = [IS.to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
     return DataFrames.DataFrame(stats)
 end
 
@@ -653,6 +653,33 @@ function write_result!(
     return
 end
 
+function serialize_system!(store::HdfSimulationStore, sys::PSY.System)
+    root = store.file[HDF_SIMULATION_ROOT_PATH]
+    systems_group = _get_group_or_create(root, "systems")
+    uuid = string(IS.get_uuid(sys))
+    if haskey(systems_group, uuid)
+        @debug "System with UUID = $uuid is already stored" _group =
+            LOG_GROUP_SIMULATION_STORE
+        return
+    end
+
+    json_text = PSY.to_json(sys)
+    systems_group[uuid] = json_text
+    return
+end
+
+function deserialize_system(store::HdfSimulationStore, uuid::Base.UUID)
+    root = store.file[HDF_SIMULATION_ROOT_PATH]
+    systems_group = _get_group_or_create(root, "systems")
+    uuid_str = string(uuid)
+    if !haskey(systems_group, uuid_str)
+        error("No system with UUID $uuid_str is stored")
+    end
+
+    json_text = HDF5.read(systems_group[uuid_str])
+    return PSY.from_json(json_text, PSY.System)
+end
+
 function _check_state(store::HdfSimulationStore)
     if has_dirty(store.cache)
         error("BUG!!! dirty cache is present at shutdown: $(store.file)")
@@ -713,11 +740,17 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     empty!(get_dm_data(store))
     for model in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/decision_models/$model"]
-        horizon = HDF5.read(HDF5.attributes(problem_group)["horizon"])
+        # Fall back on old key for backwards compatibility
+        horizon_count = HDF5.read(
+            if haskey(HDF5.attributes(problem_group), "horizon_count")
+                HDF5.attributes(problem_group)["horizon_count"]
+            else
+                HDF5.attributes(problem_group)["horizon"]
+            end)
         model_name = Symbol(model)
         store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
-            horizon,
+            horizon_count,
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
@@ -732,7 +765,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                     column_dataset = group[_make_column_name(name)]
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
-                    dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                    dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
                     n_dims = max(1, ndims(dataset) - 2)
                     item = HDF5Dataset{n_dims}(
                         dataset,
@@ -758,12 +791,18 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     end
 
     em_group = _get_emulation_model_path(store)
-    horizon = HDF5.read(HDF5.attributes(em_group)["horizon"])
+    # Fall back on old key for backwards compatibility
+    horizon_count = HDF5.read(
+        if haskey(HDF5.attributes(em_group), "horizon_count")
+            HDF5.attributes(em_group)["horizon_count"]
+        else
+            HDF5.attributes(em_group)["horizon"]
+        end)
     model_name = Symbol(HDF5.read(HDF5.attributes(em_group)["name"]))
     resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["resolution_ms"]))
     store.params.emulation_model_params[model_name] = ModelStoreParams(
         HDF5.read(HDF5.attributes(em_group)["num_executions"]),
-        HDF5.read(HDF5.attributes(em_group)["horizon"]),
+        horizon_count,
         Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["interval_ms"])),
         resolution,
         HDF5.read(HDF5.attributes(em_group)["base_power"]),
@@ -775,7 +814,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             if !endswith(name, "columns")
                 dataset = group[name]
                 column_dataset = group[_make_column_name(name)]
-                dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
                 n_dims = max(1, ndims(dataset) - 1)
                 item = HDF5Dataset{n_dims}(
                     dataset,
@@ -809,8 +848,8 @@ function _serialize_attributes(store::HdfSimulationStore)
         problem_group = store.file["simulation/decision_models/$problem"]
         HDF5.attributes(problem_group)["num_executions"] =
             params.decision_models_params[problem].num_executions
-        HDF5.attributes(problem_group)["horizon"] =
-            params.decision_models_params[problem].horizon
+        HDF5.attributes(problem_group)["horizon_count"] =
+            params.decision_models_params[problem].horizon_count
         HDF5.attributes(problem_group)["resolution_ms"] =
             Dates.Millisecond(params.decision_models_params[problem].resolution).value
         HDF5.attributes(problem_group)["interval_ms"] =
@@ -827,7 +866,7 @@ function _serialize_attributes(store::HdfSimulationStore)
         HDF5.attributes(emulation_group)["name"] =
             string(first(keys(params.emulation_model_params)))
         HDF5.attributes(emulation_group)["num_executions"] = em_params.num_executions
-        HDF5.attributes(emulation_group)["horizon"] = em_params.horizon
+        HDF5.attributes(emulation_group)["horizon_count"] = em_params.horizon_count
         HDF5.attributes(emulation_group)["resolution_ms"] =
             Dates.Millisecond(em_params.resolution).value
         HDF5.attributes(emulation_group)["interval_ms"] =

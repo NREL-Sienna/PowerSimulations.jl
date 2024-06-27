@@ -9,8 +9,8 @@
 
     model = EmulationModel(template, c_sys5; optimizer = GLPK_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
-    @test run!(model) == RunStatus.SUCCESSFUL
+          PSI.ModelBuildStatus.BUILT
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     template = get_thermal_standard_uc_template()
     c_sys5_uc_re = PSB.build_system(
@@ -23,8 +23,8 @@
     model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
-    @test run!(model) == RunStatus.SUCCESSFUL
+          PSI.ModelBuildStatus.BUILT
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     @test !isempty(collect(readdir(PSI.get_recorder_dir(model))))
 end
 
@@ -40,10 +40,10 @@ end
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     model = EmulationModel(template, c_sys5_uc_re; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     ######## Test with ThermalMultiStartUnitCommitment ########
     template = get_thermal_standard_uc_template()
@@ -56,15 +56,15 @@ end
     set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
     model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 1, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
 
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
     check_duration_on_initial_conditions_values(model, ThermalMultiStart)
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    ######## Test with ThermalCompactUnitCommitment ########
+    ######## Test with ThermalStandardUnitCommitment ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
@@ -72,17 +72,17 @@ end
         add_single_time_series = true,
         force_build = true,
     )
-    set_device_model!(template, ThermalMultiStart, ThermalCompactUnitCommitment)
+    set_device_model!(template, ThermalMultiStart, ThermalStandardUnitCommitment)
     model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 1, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     check_duration_on_initial_conditions_values(model, ThermalStandard)
     check_duration_off_initial_conditions_values(model, ThermalStandard)
     check_duration_on_initial_conditions_values(model, ThermalMultiStart)
     check_duration_off_initial_conditions_values(model, ThermalMultiStart)
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    ######## Test with ThermalCompactDispatch ########
+    ######## Test with ThermalStandardDispatch ########
     template = get_thermal_standard_uc_template()
     c_sys5_uc = PSB.build_system(
         PSITestSystems,
@@ -90,11 +90,11 @@ end
         add_single_time_series = true,
         force_build = true,
     )
-    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalCompactDispatch)
+    device_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardDispatch)
     set_device_model!(template, device_model)
     model = EmulationModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
 end
 
 @testset "Emulation Model initial_conditions test for Hydro" begin
@@ -110,7 +110,7 @@ end
     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test !PSI.has_initial_condition_value(
@@ -118,7 +118,7 @@ end
         ActivePowerVariable(),
         HydroEnergyReservoir,
     )
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     ######## Test with HydroCommitmentRunOfRiver ########
     template = get_thermal_dispatch_template_network()
@@ -133,7 +133,7 @@ end
     model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
-          BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     initial_conditions_data =
         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
     @test PSI.has_initial_condition_value(
@@ -141,7 +141,7 @@ end
         OnVariable(),
         HydroEnergyReservoir,
     )
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "Emulation Model Results" begin
@@ -160,9 +160,9 @@ end
         executions = executions,
         output_dir = mktempdir(; cleanup = true),
     ) ==
-          BuildStatus.BUILT
-    @test run!(model) == RunStatus.SUCCESSFUL
-    results = ProblemResults(model)
+          PSI.ModelBuildStatus.BUILT
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    results = OptimizationProblemResults(model)
     @test list_aux_variable_names(results) == []
     @test list_aux_variable_keys(results) == []
     @test list_variable_names(results) == ["ActivePowerVariable__ThermalStandard"]
@@ -176,7 +176,10 @@ end
 
     @test read_variable(results, "ActivePowerVariable__ThermalStandard") isa DataFrame
     @test read_variable(results, ActivePowerVariable, ThermalStandard) isa DataFrame
-    @test read_variable(results, PSI.VariableKey(ActivePowerVariable, ThermalStandard)) isa
+    @test read_variable(
+        results,
+        PSI.VariableKey(ActivePowerVariable, ThermalStandard),
+    ) isa
           DataFrame
 
     @test read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad") isa DataFrame
@@ -221,7 +224,7 @@ end
             executions = 10,
             output_dir = mktempdir(; cleanup = true),
             serialize = serialize,
-        ) == RunStatus.SUCCESSFUL
+        ) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     end
 end
 
@@ -237,25 +240,28 @@ end
 
     model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
     executions = 10
-    @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
-    @test run!(model; export_problem_results = true) == RunStatus.SUCCESSFUL
-    results1 = ProblemResults(model)
+    @test build!(model; executions = executions, output_dir = path) ==
+          PSI.ModelBuildStatus.BUILT
+    @test run!(model; export_problem_results = true) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    results1 = OptimizationProblemResults(model)
     var1_a = read_variable(results1, ActivePowerVariable, ThermalStandard)
     # Ensure that we can deserialize strings into keys.
     var1_b = read_variable(results1, "ActivePowerVariable__ThermalStandard")
     @test var1_a == var1_b
 
     # Results were automatically serialized here.
-    results2 = ProblemResults(joinpath(PSI.get_output_dir(model)))
+    results2 = OptimizationProblemResults(PSI.get_output_dir(model))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
-    @test get_system(results2) !== nothing
+    @test get_system(results2) === nothing
+    get_system!(results2)
+    @test get_system(results2) isa PSY.System
 
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, PSI._PROBLEM_RESULTS_FILENAME))
-    results3 = ProblemResults(results_path)
+    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
+    results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
     @test get_system(results3) === nothing
@@ -281,9 +287,10 @@ end
 
     model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
     executions = 10
-    @test build!(model; executions = executions, output_dir = path) == BuildStatus.BUILT
-    @test run!(model) == RunStatus.SUCCESSFUL
-    results = ProblemResults(model)
+    @test build!(model; executions = executions, output_dir = path) ==
+          PSI.ModelBuildStatus.BUILT
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    results = OptimizationProblemResults(model)
     var1 = read_variable(results, ActivePowerVariable, ThermalStandard)
 
     file_list = sort!(collect(readdir(path)))
@@ -292,8 +299,8 @@ end
     path2 = joinpath(path, "tmp")
     model2 = EmulationModel(path, HiGHS_optimizer)
     build!(model2; output_dir = path2)
-    @test run!(model2) == RunStatus.SUCCESSFUL
-    results2 = ProblemResults(model2)
+    @test run!(model2) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    results2 = OptimizationProblemResults(model2)
     var2 = read_variable(results, ActivePowerVariable, ThermalStandard)
 
     @test var1 == var2
@@ -325,16 +332,18 @@ end
     model = EmulationModel(template, sys; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
 
-    @test build!(model; executions = 1, output_dir = output_dir) == BuildStatus.BUILT
+    @test build!(model; executions = 1, output_dir = output_dir) ==
+          PSI.ModelBuildStatus.BUILT
     ic_file = PSI.get_initial_conditions_file(model)
     test_ic_serialization_outputs(model; ic_file_exists = true, message = "make")
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     # Build again, use existing initial conditions.
     PSI.reset!(model)
-    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test build!(model; executions = 1, output_dir = output_dir) ==
+          PSI.ModelBuildStatus.BUILT
     test_ic_serialization_outputs(model; ic_file_exists = true, message = "make")
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     # Build again, use existing initial conditions.
     model = EmulationModel(
@@ -343,9 +352,10 @@ end
         optimizer = optimizer,
         deserialize_initial_conditions = true,
     )
-    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test build!(model; executions = 1, output_dir = output_dir) ==
+          PSI.ModelBuildStatus.BUILT
     test_ic_serialization_outputs(model; ic_file_exists = true, message = "deserialize")
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     # Construct and build again with custom initial conditions file.
     initialization_file = joinpath(output_dir, ic_file * ".old")
@@ -358,13 +368,15 @@ end
         initialization_file = initialization_file,
         deserialize_initial_conditions = true,
     )
-    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test build!(model; executions = 1, output_dir = output_dir) ==
+          PSI.ModelBuildStatus.BUILT
     test_ic_serialization_outputs(model; ic_file_exists = true, message = "deserialize")
 
     # Construct and build again while skipping build of initial conditions.
     model = EmulationModel(template, sys; optimizer = optimizer, initialize_model = false)
     rm(ic_file)
-    @test build!(model; executions = 1, output_dir = output_dir) == PSI.BuildStatus.BUILT
+    @test build!(model; executions = 1, output_dir = output_dir) ==
+          PSI.ModelBuildStatus.BUILT
     test_ic_serialization_outputs(model; ic_file_exists = false, message = "skip")
-    @test run!(model) == RunStatus.SUCCESSFUL
+    @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
