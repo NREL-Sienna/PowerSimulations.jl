@@ -777,6 +777,59 @@ end
     )
 end
 
+@testset "2 Areas AreaBalance PowerModel with TimeSeries" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    load = first(get_components(PowerLoad, c_sys))
+    ts_array = get_time_series_array(SingleTimeSeries, load, "max_active_power")
+    tstamp = timestamp(ts_array)
+    area_int = first(get_components(AreaInterchange, c_sys))
+    day_data = [
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+    ]
+    weekly_data = repeat(day_data, 7)
+    ts_from_to = SingleTimeSeries(
+        "from_to_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    ts_to_from = SingleTimeSeries(
+        "to_from_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    add_time_series!(c_sys, area_int, ts_from_to)
+    add_time_series!(c_sys, area_int, ts_to_from)
+    ## Transform Time Series ##
+    transform_single_time_series!(c_sys, Hour(24), Hour(24))
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 264, 0, 264, 264, 48, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    # The values for these tests come from the data
+    @test interarea_flow[4, "1_2"] != 0.0
+    @test interarea_flow[5, "1_2"] == 0.0
+    @test interarea_flow[6, "1_2"] == 0.0
+end
+
 @testset "2 Areas AreaPTDFPowerModel" begin
     c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
     transform_single_time_series!(c_sys, Hour(24), Hour(1))
@@ -845,4 +898,78 @@ end
             atol = 1e-3,
         ),
     )
+end
+
+@testset "2 Areas AreaPTDFPowerModel with Time Series" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    load = first(get_components(PowerLoad, c_sys))
+    new_line = Line(;
+        name = "C2_D1",
+        available = true,
+        active_power_flow = 0.0,
+        reactive_power_flow = 0.0,
+        arc = Arc(;
+            from = get_component(ACBus, c_sys, "Bus_nodeC_2"),
+            to = get_component(ACBus, c_sys, "Bus_nodeD_1"),
+        ),
+        r = 0.00297,
+        x = 0.0297,
+        b = (from = 0.00337, to = 0.00337),
+        rating = 40.53,
+        angle_limits = (min = -0.7, max = 0.7),
+    )
+    add_component!(c_sys, new_line)
+    ts_array = get_time_series_array(SingleTimeSeries, load, "max_active_power")
+    tstamp = timestamp(ts_array)
+    area_int = first(get_components(AreaInterchange, c_sys))
+    day_data = [
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+    ]
+    weekly_data = repeat(day_data, 7)
+    ts_from_to = SingleTimeSeries(
+        "from_to_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    ts_to_from = SingleTimeSeries(
+        "to_from_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    add_time_series!(c_sys, area_int, ts_from_to)
+    add_time_series!(c_sys, area_int, ts_to_from)
+    ## Transform Time Series ##
+    transform_single_time_series!(c_sys, Hour(24), Hour(24))
+    set_flow_limits!(
+        get_component(AreaInterchange, c_sys, "1_2"),
+        (from_to = 1.0, to_from = 1.0),
+    )
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaPTDFPowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    set_device_model!(template, MonitoredLine, StaticBranchUnbounded)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 600, 0, 600, 600, 384, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 662467, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    # The values for these tests come from the data
+    @test interarea_flow[1, "1_2"] != 0.0
+    @test interarea_flow[5, "1_2"] == 0.0
+    @test interarea_flow[6, "1_2"] == 0.0
 end
