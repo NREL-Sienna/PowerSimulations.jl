@@ -902,7 +902,9 @@ function construct_device!(
     devices = get_available_components(model, sys)
     has_ts = PSY.has_time_series.(devices)
     if any(has_ts) && !all(has_ts)
-        error("Not all AreaInterchange devices have time series. Check data to complete (or remove) time series.")
+        error(
+            "Not all AreaInterchange devices have time series. Check data to complete (or remove) time series.",
+        )
     end
     add_variables!(
         container,
@@ -920,6 +922,15 @@ function construct_device!(
         network_model,
     )
     if all(has_ts)
+        for device in devices
+            name = PSY.get_name(device)
+            num_ts = length(unique(PSY.get_name.(PSY.get_time_series_keys(device))))
+            if num_ts < 2
+                error(
+                    "AreaInterchange $name has less than two time series. It is required to add both from_to and to_from time series.",
+                )
+            end
+        end
         add_parameters!(container, FromToFlowLimitParameter, devices, model)
         add_parameters!(container, ToFromFlowLimitParameter, devices, model)
     end
