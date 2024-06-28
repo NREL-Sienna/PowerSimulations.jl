@@ -106,7 +106,7 @@ function add_constraints!(container::OptimizationContainer,
     int_name = PSY.get_name(interface)
     param_container_min =
         get_parameter(container, MinInterfaceFlowLimitParameter(), PSY.TransmissionInterface, int_name)
-    @show param_multiplier_min = get_parameter_multiplier_array(
+    param_multiplier_min = get_parameter_multiplier_array(
         container,
         MinInterfaceFlowLimitParameter(),
         PSY.TransmissionInterface,
@@ -114,14 +114,14 @@ function add_constraints!(container::OptimizationContainer,
     )
     param_container_max =
         get_parameter(container, MaxInterfaceFlowLimitParameter(), PSY.TransmissionInterface, int_name)
-    @show param_multiplier_max = get_parameter_multiplier_array(
+    param_multiplier_max = get_parameter_multiplier_array(
         container,
         MaxInterfaceFlowLimitParameter(),
         PSY.TransmissionInterface,
         int_name,
     )
-    @show param_min = get_parameter_column_refs(param_container_min, int_name)
-    @show param_max = get_parameter_column_refs(param_container_max, int_name)
+    param_min = get_parameter_column_refs(param_container_min, int_name)
+    param_max = get_parameter_column_refs(param_container_max, int_name)
     for t in timesteps
         constraint_container_ub[int_name, t] =
             JuMP.@constraint(get_jump_model(container), expr[int_name, t] <= param_multiplier_max[int_name, t] * param_max[t])
