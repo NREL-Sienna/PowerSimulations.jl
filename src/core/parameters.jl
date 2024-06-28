@@ -257,6 +257,16 @@ Parameter to define Flow To_From limit time series
 """
 struct ToFromFlowLimitParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define Max Flow limit for interface time series
+"""
+struct MaxInterfaceFlowLimitParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define Min Flow limit for interface time series
+"""
+struct MinInterfaceFlowLimitParameter <: TimeSeriesParameter end
+
 abstract type VariableValueParameter <: RightHandSideParameter end
 
 """
