@@ -900,6 +900,10 @@ function construct_device!(
         )
     end
     devices = get_available_components(model, sys)
+    has_ts = PSY.has_time_series.(devices)
+    if any(has_ts) && !all(has_ts)
+        error("Not all AreaInterchange devices have time series. Check data to complete (or remove) time series.")
+    end
     add_variables!(
         container,
         FlowActivePowerVariable,
@@ -915,6 +919,10 @@ function construct_device!(
         model,
         network_model,
     )
+    if all(has_ts)
+        add_parameters!(container, FromToFlowLimitParameter, devices, model)
+        add_parameters!(container, ToFromFlowLimitParameter, devices, model)
+    end
     return
 end
 
