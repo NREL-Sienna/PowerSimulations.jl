@@ -243,9 +243,19 @@ Parameter to define reactive power time series
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
 """
-Paramter to define requirement time series
+Parameter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define Flow From_To limit time series
+"""
+struct FromToFlowLimitParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define Flow To_From limit time series
+"""
+struct ToFromFlowLimitParameter <: TimeSeriesParameter end
 
 abstract type VariableValueParameter <: RightHandSideParameter end
 
