@@ -258,3 +258,7 @@ struct NonSpinningReserve <: AbstractReservesFormulation end
 Struct to add a constant maximum transmission flow for specified interface
 """
 struct ConstantMaxInterfaceFlow <: AbstractServiceFormulation end
+"""
+Struct to add a variable maximum transmission flow for specified interface
+"""
+struct VariableMaxInterfaceFlow <: AbstractServiceFormulation end

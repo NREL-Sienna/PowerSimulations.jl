@@ -35,6 +35,7 @@ export NonSpinningReserve
 export PIDSmoothACE
 export GroupReserve
 export ConstantMaxInterfaceFlow
+export VariableMaxInterfaceFlow
 
 ######## Branch Models ########
 export StaticBranch

@@ -264,6 +264,14 @@ function _modify_device_model!(
     return
 end
 
+function _modify_device_model!(
+    ::Dict{Symbol, DeviceModel},
+    ::ServiceModel{PSY.TransmissionInterface, VariableMaxInterfaceFlow},
+    ::Vector,
+)
+    return
+end
+
 function _add_services_to_device_model!(template::ProblemTemplate)
     service_models = get_service_models(template)
     devices_template = get_device_models(template)

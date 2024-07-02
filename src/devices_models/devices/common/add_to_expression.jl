@@ -1151,8 +1151,8 @@ function add_to_expression!(
     ::Type{InterfaceTotalFlow},
     ::Type{FlowActivePowerVariable},
     service::PSY.TransmissionInterface,
-    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
-)
+    model::ServiceModel{PSY.TransmissionInterface, V},
+) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     service_name = get_service_name(model)
     for (device_type, devices) in get_contributing_devices_map(model)

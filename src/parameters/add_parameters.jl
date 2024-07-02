@@ -59,7 +59,7 @@ function add_parameters!(
     ::Type{T},
     service::U,
     model::ServiceModel{U, V},
-) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
+) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractServiceFormulation}
     if get_rebuild_model(get_settings(container)) &&
        has_container_key(container, T, U, PSY.get_name(service))
         return
@@ -258,7 +258,7 @@ function _add_parameters!(
     ::T,
     service::U,
     model::ServiceModel{U, V},
-) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
+) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractServiceFormulation}
     ts_type = get_default_time_series_type(container)
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
