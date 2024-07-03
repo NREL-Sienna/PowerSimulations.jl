@@ -449,3 +449,76 @@ end
     moi_tests(model, 312, 0, 288, 288, 168, false)
     =#
 end
+
+@testset "Test Transmission Interface with TimeSeries" begin
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    interface = TransmissionInterface(;
+        name = "west_east",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 400.0),
+    )
+    interface_lines = [
+        get_component(Line, c_sys5_uc, "1"),
+        get_component(Line, c_sys5_uc, "2"),
+        get_component(Line, c_sys5_uc, "6"),
+    ]
+    add_service!(c_sys5_uc, interface, interface_lines)
+    # Add TimeSeries Data
+    data_minflow = Dict(
+        DateTime("2024-01-01T00:00:00") => zeros(24),
+        DateTime("2024-01-02T00:00:00") => zeros(24),
+    )
+
+    forecast_minflow = Deterministic(
+        "min_active_power_flow_limit",
+        data_minflow,
+        Hour(1);
+        scaling_factor_multiplier = get_min_active_power_flow_limit,
+    )
+
+    data_maxflow = Dict(
+        DateTime("2024-01-01T00:00:00") => [
+            0.9, 0.85, 0.95, 0.2, 0.15, 0.2,
+            0.9, 0.85, 0.95, 0.2, 0.15, 0.2,
+            0.9, 0.85, 0.95, 0.2, 0.5, 0.5,
+            0.9, 0.85, 0.95, 0.2, 0.6, 0.6,
+        ],
+        DateTime("2024-01-02T00:00:00") => [
+            0.9, 0.85, 0.95, 0.2, 0.15, 0.2,
+            0.9, 0.85, 0.95, 0.2, 0.15, 0.2,
+            0.9, 0.85, 0.95, 0.2, 0.5, 0.5,
+            0.9, 0.85, 0.95, 0.2, 0.6, 0.6,
+        ],
+    )
+
+    forecast_maxflow = Deterministic(
+        "max_active_power_flow_limit",
+        data_maxflow,
+        Hour(1);
+        scaling_factor_multiplier = get_max_active_power_flow_limit,
+    )
+
+    add_time_series!(c_sys5_uc, interface, forecast_minflow)
+    add_time_series!(c_sys5_uc, interface, forecast_maxflow)
+
+    template = get_thermal_dispatch_template_network(DCPPowerModel)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(model, 432, 144, 288, 288, 288, false)
+
+    template = get_thermal_dispatch_template_network(PTDFPowerModel)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+    model = DecisionModel(template, c_sys5_uc)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(model, 312, 0, 288, 288, 168, false)
+end

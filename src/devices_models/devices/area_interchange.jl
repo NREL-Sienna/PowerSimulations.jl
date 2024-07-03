@@ -1,8 +1,16 @@
+#! format: off
+get_multiplier_value(::FromToFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = -1.0 * PSY.get_from_to_flow_limit(d)
+get_multiplier_value(::ToFromFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = PSY.get_to_from_flow_limit(d)
+#! format: on
+
 function get_default_time_series_names(
     ::Type{PSY.AreaInterchange},
     ::Type{V},
 ) where {V <: AbstractBranchFormulation}
-    return Dict{Type{<:TimeSeriesParameter}, String}()
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        FromToFlowLimitParameter => "from_to_flow_limit",
+        ToFromFlowLimitParameter => "to_from_flow_limit",
+    )
 end
 
 function get_default_attributes(
@@ -71,22 +79,56 @@ function add_constraints!(
     )
 
     var_array = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
-
-    for device in devices
-        ci_name = PSY.get_name(device)
-        to_from_limit = PSY.get_flow_limits(device).to_from
-        from_to_limit = PSY.get_flow_limits(device).from_to
-        for t in time_steps
-            con_lb[ci_name, t] =
-                JuMP.@constraint(
-                    get_jump_model(container),
-                    var_array[ci_name, t] >= -1.0 * from_to_limit
+    if !all(PSY.has_time_series.(devices))
+        for device in devices
+            ci_name = PSY.get_name(device)
+            to_from_limit = PSY.get_flow_limits(device).to_from
+            from_to_limit = PSY.get_flow_limits(device).from_to
+            for t in time_steps
+                con_lb[ci_name, t] =
+                    JuMP.@constraint(
+                        get_jump_model(container),
+                        var_array[ci_name, t] >= -1.0 * from_to_limit
+                    )
+                con_ub[ci_name, t] =
+                    JuMP.@constraint(
+                        get_jump_model(container),
+                        var_array[ci_name, t] <= to_from_limit
+                    )
+            end
+        end
+    else
+        param_container_from_to =
+            get_parameter(container, FromToFlowLimitParameter(), PSY.AreaInterchange)
+        param_multiplier_from_to = get_parameter_multiplier_array(
+            container,
+            FromToFlowLimitParameter(),
+            PSY.AreaInterchange,
+        )
+        param_container_to_from =
+            get_parameter(container, ToFromFlowLimitParameter(), PSY.AreaInterchange)
+        param_multiplier_to_from = get_parameter_multiplier_array(
+            container,
+            ToFromFlowLimitParameter(),
+            PSY.AreaInterchange,
+        )
+        jump_model = get_jump_model(container)
+        for device in devices
+            name = PSY.get_name(device)
+            param_from_to = get_parameter_column_refs(param_container_from_to, name)
+            param_to_from = get_parameter_column_refs(param_container_to_from, name)
+            for t in time_steps
+                con_lb[name, t] = JuMP.@constraint(
+                    jump_model,
+                    var_array[name, t] >=
+                    param_multiplier_from_to[name, t] * param_from_to[t]
                 )
-            con_ub[ci_name, t] =
-                JuMP.@constraint(
-                    get_jump_model(container),
-                    var_array[ci_name, t] <= to_from_limit
+                con_ub[name, t] = JuMP.@constraint(
+                    jump_model,
+                    var_array[name, t] <=
+                    param_multiplier_to_from[name, t] * param_to_from[t]
                 )
+            end
         end
     end
     return
