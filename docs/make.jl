@@ -53,6 +53,8 @@ makedocs(;
     pages = Any[p for p in pages],
 )
 
+rm(joinpath(@__DIR__, "build", "tutorials", "rts-store"); recursive = true)
+
 deploydocs(;
     repo = "github.com/NREL-Sienna/PowerSimulations.jl.git",
     target = "build",
