@@ -504,7 +504,7 @@ end
     template = get_thermal_dispatch_template_network(DCPPowerModel)
     set_service_model!(
         template,
-        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+        ServiceModel(TransmissionInterface, VariableMaxInterfaceFlow; use_slacks = true),
     )
 
     model = DecisionModel(template, c_sys5_uc)
@@ -515,7 +515,7 @@ end
     template = get_thermal_dispatch_template_network(PTDFPowerModel)
     set_service_model!(
         template,
-        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+        ServiceModel(TransmissionInterface, VariableMaxInterfaceFlow; use_slacks = true),
     )
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
