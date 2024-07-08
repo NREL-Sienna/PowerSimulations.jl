@@ -16,6 +16,7 @@ using PowerSimulations
 using HydroPowerSimulations
 using PowerSystemCaseBuilder
 using HiGHS # solver
+using Dates
 ```
 
 ## Data
