@@ -260,7 +260,7 @@ read_realized_variables(
     uc_results,
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"],
 )
-rm(path, force  =true, recursive = true) # hide
+rm(path, force = true, recursive = true) #hide
 ```
 
 
