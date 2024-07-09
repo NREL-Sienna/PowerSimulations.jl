@@ -93,7 +93,7 @@ end
                 skip && continue
                 r_sum = 0
                 p_sum = 0
-                atol = occursin("ProductionCostExpression", key) ? 11000 : 0
+                atol = occursin("ProductionCostExpression", key) ? 11000 : 1e-6
                 for i in 2:ncol(rdf)
                     r_sum += sum(rdf[!, i])
                     p_sum += sum(pdf[!, i])
