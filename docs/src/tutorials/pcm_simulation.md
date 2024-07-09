@@ -38,7 +38,7 @@ First, we'll create a `System` with hourly data to represent day-ahead forecaste
 solar, and load profiles:
 
 ```@example pcm
-sys_DA = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+sys_DA = build_system(PSISystems, "modified_RTS_GMLC_DA_sys"; skip_serialization = true)
 ```
 
 ### 5-Minute system
@@ -47,7 +47,7 @@ The RTS data also includes 5-minute resolution time series data. So, we can crea
 `System` to represent 15 minute ahead forecasted data for a "real-time" market:
 
 ```@example pcm
-sys_RT = build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
+sys_RT = build_system(PSISystems, "modified_RTS_GMLC_RT_sys"; skip_serialization = true)
 ```
 
 ## `ProblemTemplate`s define stages
@@ -165,12 +165,13 @@ Now, we can build and execute a simulation using the `SimulationSequence` and `S
 that we've defined.
 
 ```@example pcm
+path = mkdir(joinpath(".", "rts-store")) #hide
 sim = Simulation(
     name = "rts-test",
     steps = 2,
     models = models,
     sequence = DA_RT_sequence,
-    simulation_folder = mktempdir(".", cleanup = true),
+    simulation_folder = joinpath(".", "rts-store"),
 )
 ```
 
@@ -250,7 +251,8 @@ read_parameter(
 )
 ```
 
-* note that this returns the results of each execution step in a separate dataframe *
+!!! info
+note that this returns the results of each execution step in a separate dataframe
 If you want the realized results (without lookahead periods), you can call `read_realized_*`:
 
 ```@example pcm
@@ -258,7 +260,9 @@ read_realized_variables(
     uc_results,
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"],
 )
+rm(path, force = true, recursive = true) #hide
 ```
+
 
 ## Plotting
 

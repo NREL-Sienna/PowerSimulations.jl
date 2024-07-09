@@ -341,6 +341,7 @@ function _build_single_model_for_simulation(
         _pre_solve_model_checks(model)
     catch
         set_status!(model, ModelBuildStatus.FAILED)
+        @error "Failed to build $(get_name(model))"
         rethrow()
     end
     return

@@ -6,6 +6,9 @@ get_variable_lower_bound(::InterfaceFlowSlackDown, ::PSY.TransmissionInterface, 
 get_variable_multiplier(::InterfaceFlowSlackUp, ::PSY.TransmissionInterface, ::ConstantMaxInterfaceFlow) = 1.0
 get_variable_multiplier(::InterfaceFlowSlackDown, ::PSY.TransmissionInterface, ::ConstantMaxInterfaceFlow) = -1.0
 
+get_variable_multiplier(::InterfaceFlowSlackUp, ::PSY.TransmissionInterface, ::VariableMaxInterfaceFlow) = 1.0
+get_variable_multiplier(::InterfaceFlowSlackDown, ::PSY.TransmissionInterface, ::VariableMaxInterfaceFlow) = -1.0
+
 get_multiplier_value(::MinInterfaceFlowLimitParameter, d::PSY.TransmissionInterface, ::VariableMaxInterfaceFlow) = PSY.get_min_active_power_flow_limit(d)
 get_multiplier_value(::MaxInterfaceFlowLimitParameter, d::PSY.TransmissionInterface, ::VariableMaxInterfaceFlow) = PSY.get_max_active_power_flow_limit(d)
 

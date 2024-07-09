@@ -1131,8 +1131,11 @@ function add_to_expression!(
     ::Type{InterfaceTotalFlow},
     ::Type{T},
     service::PSY.TransmissionInterface,
-    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
-) where {T <: Union{InterfaceFlowSlackUp, InterfaceFlowSlackDown}}
+    model::ServiceModel{PSY.TransmissionInterface, U},
+) where {
+    T <: Union{InterfaceFlowSlackUp, InterfaceFlowSlackDown},
+    U <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow},
+}
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     service_name = PSY.get_name(service)
     variable = get_variable(container, T(), PSY.TransmissionInterface, service_name)
@@ -1140,7 +1143,7 @@ function add_to_expression!(
         _add_to_jump_expression!(
             expression[service_name, t],
             variable[t],
-            get_variable_multiplier(T(), service, ConstantMaxInterfaceFlow()),
+            get_variable_multiplier(T(), service, U()),
         )
     end
     return

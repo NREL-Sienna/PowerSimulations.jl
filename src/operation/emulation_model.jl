@@ -261,9 +261,9 @@ function validate_time_series!(model::EmulationModel{<:DefaultEmulationProblem})
     end
 
     counts = PSY.get_time_series_counts(sys)
-    if counts.forecast_count < 1
+    if counts.static_time_series_count < 1
         error(
-            "The system does not contain forecast data. A DecisionModel can't be built.",
+            "The system does not contain Static Time Series data. A EmulationModel can't be built.",
         )
     end
     return

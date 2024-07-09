@@ -350,8 +350,8 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
     table = Matrix{Any}(undef, length(sequence.executions_by_model), length(header))
     for (ix, (model, executions)) in enumerate(sequence.executions_by_model)
         table[ix, 1] = string(model)
-        table[ix, 2] = sequence.horizons[model]
-        table[ix, 3] = Dates.Minute(sequence.intervals[model])
+        table[ix, 2] = Dates.canonicalize(sequence.horizons[model])
+        table[ix, 3] = Dates.canonicalize(sequence.intervals[model])
         table[ix, 4] = executions
     end
 
