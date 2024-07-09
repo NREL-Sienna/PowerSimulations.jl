@@ -410,11 +410,14 @@ function _make_system_expressions!(
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
-            _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
     )
+
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, time_steps)
+    end
     return
 end
 
@@ -434,9 +437,11 @@ function _make_system_expressions!(
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
-            _make_container_array(dc_bus_numbers, time_steps),
     )
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, time_steps)
+    end
     return
 end
 
@@ -473,13 +478,16 @@ function _make_system_expressions!(
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.System) =>
             _make_container_array(subnetworks, time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
-            _make_container_array(dc_bus_numbers, time_steps),
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
         # Bus numbers are sorted to guarantee consistency in the order between the
         # containers
             _make_container_array(sort!(ac_bus_numbers), time_steps),
     )
+
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, time_steps)
+    end
     return
 end
 
@@ -518,41 +526,29 @@ function _make_system_expressions!(
     else
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
+    container.expressions = Dict(
+        # Enforces the balance by Area
+        ExpressionKey(ActivePowerBalance, PSY.Area) =>
+            _make_container_array(PSY.get_name.(areas), time_steps),
+        # Keeps track of the Injections by bus.
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        # Bus numbers are sorted to guarantee consistency in the order between the
+        # containers
+            _make_container_array(sort!(ac_bus_numbers), time_steps),
+    )
+
     if length(subnetworks) > 1
         @warn "The system contains $(length(subnetworks)) synchronous regions. \
                When combined with AreaPTDFPowerModel, the model can be infeasible if the data doesn't \
                have a well defined topology"
         subnetworks_ref_buses = collect(keys(subnetworks))
-        container.expressions = Dict(
-            # Enforces the balance by Area
-            ExpressionKey(ActivePowerBalance, PSY.Area) =>
-                _make_container_array(PSY.get_name.(areas), time_steps),
-            # Enforces the balance by Synchronous System
-            ExpressionKey(ActivePowerBalance, PSY.System) =>
-                _make_container_array(subnetworks_ref_buses, time_steps),
-            # Enforces the balance by DC Buses
-            ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
-                _make_container_array(dc_bus_numbers, time_steps),
-            # Keeps track of the Injections by bus.
-            ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-            # Bus numbers are sorted to guarantee consistency in the order between the
-            # containers
-                _make_container_array(sort!(ac_bus_numbers), time_steps),
-        )
-    else
-        container.expressions = Dict(
-            # Enforces the balance by Area
-            ExpressionKey(ActivePowerBalance, PSY.Area) =>
-                _make_container_array(PSY.get_name.(areas), time_steps),
-            # Enforces the balance by DC Buses
-            ExpressionKey(ActivePowerBalance, PSY.DCBus) =>
-                _make_container_array(dc_bus_numbers, time_steps),
-            # Keeps track of the Injections by bus.
-            ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-            # Bus numbers are sorted to guarantee consistency in the order between the
-            # containers
-                _make_container_array(sort!(ac_bus_numbers), time_steps),
-        )
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
+            _make_container_array(subnetworks_ref_buses, time_steps)
+    end
+
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, time_steps)
     end
 
     return
@@ -799,8 +795,6 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         end
     end
 
-    status = RunStatus.SUCCESSFULLY_FINALIZED
-
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
 
@@ -809,6 +803,9 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
 
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system, is_milp(container))
+
+    status = RunStatus.SUCCESSFULLY_FINALIZED
+
     return status
 end
 
