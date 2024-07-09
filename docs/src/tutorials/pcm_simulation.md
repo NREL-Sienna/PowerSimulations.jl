@@ -165,7 +165,7 @@ Now, we can build and execute a simulation using the `SimulationSequence` and `S
 that we've defined.
 
 ```@example pcm
-mkdir(joinpath(".", "rts-store")) #hide
+path = mkdir(joinpath(".", "rts-store")) #hide
 sim = Simulation(
     name = "rts-test",
     steps = 2,
@@ -251,7 +251,8 @@ read_parameter(
 )
 ```
 
-* note that this returns the results of each execution step in a separate dataframe *
+!!! info
+note that this returns the results of each execution step in a separate dataframe
 If you want the realized results (without lookahead periods), you can call `read_realized_*`:
 
 ```@example pcm
@@ -259,7 +260,9 @@ read_realized_variables(
     uc_results,
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"],
 )
+rm(path, force  =true, recursive = true) # hide
 ```
+
 
 ## Plotting
 
