@@ -64,7 +64,7 @@ end
     @test length(read_variables(res)) == 4
     @test length(read_parameters(res)) == 1
     @test length(read_duals(res)) == 0
-    @test length(read_expressions(res)) == 1
+    @test length(read_expressions(res)) == 2
     @test read_variables(res, ["StartVariable__ThermalStandard"])["StartVariable__ThermalStandard"] ==
           read_variable(res, "StartVariable__ThermalStandard")
     @test read_variables(res, [(StartVariable, ThermalStandard)])["StartVariable__ThermalStandard"] ==
@@ -347,7 +347,7 @@ end
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
     @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
 
-    @test length(readdir(IS.Optimization.export_realized_results(results1))) === 6
+    @test length(readdir(IS.Optimization.export_realized_results(results1))) === 7
 end
 
 @testset "Test Numerical Stability of Constraints" begin

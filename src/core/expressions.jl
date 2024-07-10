@@ -18,5 +18,7 @@ struct PTDFBranchFlow <: ExpressionType end
 should_write_resulting_value(::Type{<:CostExpressions}) = true
 should_write_resulting_value(::Type{InterfaceTotalFlow}) = true
 should_write_resulting_value(::Type{RawACE}) = true
+should_write_resulting_value(::Type{ActivePowerBalance}) = true
+should_write_resulting_value(::Type{ReactivePowerBalance}) = true
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
