@@ -867,9 +867,8 @@ function construct_device!(
     ::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.AreaInterchange, U},
-    network_model::NetworkModel{T},
-) where {T <: PM.AbstractPowerModel, U <: Union{StaticBranchUnbounded, StaticBranch}}
-    error("AreaInterchange is not yet implemented for $T")
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {U <: Union{StaticBranchUnbounded, StaticBranch}}
     return
 end
 
@@ -881,7 +880,7 @@ function construct_device!(
     network_model::NetworkModel{U},
 ) where {
     T <: Union{StaticBranchUnbounded, StaticBranch},
-    U <: Union{AreaBalancePowerModel, AreaPTDFPowerModel},
+    U <: PM.AbstractActivePowerModel
 }
     if get_use_slacks(model)
         add_variables!(

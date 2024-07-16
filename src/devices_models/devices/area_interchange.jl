@@ -26,7 +26,7 @@ function add_variables!(
     model::NetworkModel{T},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     formulation::AbstractBranchFormulation,
-) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+) where {T <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
 
     variable = add_variable_container!(
@@ -56,7 +56,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     model::DeviceModel{PSY.AreaInterchange, StaticBranch},
     ::NetworkModel{T},
-) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+) where {T <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
