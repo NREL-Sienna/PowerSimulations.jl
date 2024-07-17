@@ -13,10 +13,11 @@ function get_initial_conditions_template(model::OperationModel)
         get_radial_network_reduction(get_network_model(model.template))
     network_model.subnetworks = get_subnetworks(get_network_model(model.template))
     bus_area_map = get_bus_area_map(get_network_model(model.template))
+
     if !isempty(bus_area_map)
         network_model.bus_area_map = get_bus_area_map(get_network_model(model.template))
     end
-
+    network_model.modeled_branch_types = get_network_model(model.template).modeled_branch_types
     ic_template = ProblemTemplate(network_model)
     for device_model in values(model.template.devices)
         base_model = get_initial_conditions_device_model(model, device_model)

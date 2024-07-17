@@ -950,7 +950,7 @@ end
 
 function _get_branch_map(
     container::OptimizationContainer,
-    network_model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel,
     sys::PSY.System,
 )
     @assert !isempty(network_model.modeled_branch_types)
@@ -993,7 +993,7 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{PSY.AreaInterchange, StaticBranch},
     network_model::NetworkModel{T},
-) where {T <: AreaPTDFPowerModel}
+) where {T <: PSI.AbstractPTDFModel}
     devices = get_available_components(model, sys)
     add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
     # Not ideal to do this here, but it is a not terrible workaround

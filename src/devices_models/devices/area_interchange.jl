@@ -1,6 +1,12 @@
 #! format: off
 get_multiplier_value(::FromToFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = -1.0 * PSY.get_from_to_flow_limit(d)
 get_multiplier_value(::ToFromFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = PSY.get_to_from_flow_limit(d)
+
+get_initial_conditions_device_model(
+    ::OperationModel,
+    model::DeviceModel{PSY.AreaInterchange, T},
+) where {T <: AbstractBranchFormulation} = DeviceModel(PSY.AreaInterchange, T)
+
 #! format: on
 
 function get_default_time_series_names(
@@ -139,12 +145,12 @@ function add_constraints!(
     ::Type{LineFlowBoundConstraint},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     model::DeviceModel{PSY.AreaInterchange, <:AbstractBranchFormulation},
-    network_model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel{T},
     inter_area_branch_map::Dict{
         Tuple{PSY.Area, PSY.Area},
         Dict{DataType, Vector{<:PSY.ACBranch}},
     },
-)
+) where {T <: AbstractPTDFModel}
     @assert !isempty(inter_area_branch_map)
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
