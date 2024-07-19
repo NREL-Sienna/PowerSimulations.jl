@@ -403,7 +403,7 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end
@@ -418,7 +418,13 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_attributes,
+        FixValueParameter,
+        model,
+        input,
+    )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end
