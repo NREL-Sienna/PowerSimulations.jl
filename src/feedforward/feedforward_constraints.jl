@@ -456,7 +456,6 @@ function add_feedforward_constraints!(
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ff::FixValueFeedforward,
 ) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     var_type = get_entry_type(source_key)
@@ -466,7 +465,6 @@ function add_feedforward_constraints!(
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
         IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
-        #IS.@assert_op set_time == time_steps
 
         for t in set_time, name in set_name
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
