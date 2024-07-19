@@ -46,6 +46,7 @@ function construct_device!(
             network_model,
         )
     end
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -71,6 +72,7 @@ function construct_device!(
         )
         add_constraint_dual!(container, sys, model)
     end
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -106,6 +108,7 @@ function construct_device!(
             network_model,
         )
     end
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -129,6 +132,7 @@ function construct_device!(
             network_model,
         )
     end
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -161,6 +165,7 @@ function construct_device!(
             network_model,
         )
     end
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -174,6 +179,7 @@ function construct_device!(
         NetworkModel{AreaBalancePowerModel},
     },
 )
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -217,8 +223,7 @@ function construct_device!(
         )
     end
     add_feedforward_arguments!(container, device_model, devices)
-
-    add_feedforward_arguments!(container, device_model, devices)
+    return
 end
 
 # For DC Power only. Implements constraints
@@ -272,6 +277,7 @@ function construct_device!(
         devices,
         StaticBranch(),
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -285,6 +291,7 @@ function construct_device!(
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
+    add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
     return
@@ -310,6 +317,7 @@ function construct_device!(
         devices,
         StaticBranchBounds(),
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -329,6 +337,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_constraints!(container, model, devices)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -349,6 +358,7 @@ function construct_device!(
         devices,
         StaticBranchUnbounded(),
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -361,7 +371,7 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     devices =
         get_available_components(model, sys)
-
+    add_feedforward_constraints!(container, model, devices)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
@@ -386,7 +396,7 @@ function construct_device!(
             StaticBranch(),
         )
     end
-
+    add_feedforward_arguments!(container, device_model, devices)
     return
 end
 
@@ -400,7 +410,7 @@ function construct_device!(
     devices =
         get_available_components(model, sys)
     branch_rate_bounds!(container, devices, model, network_model)
-
+    add_feedforward_constraints!(container, model, devices)
     add_constraints!(container, RateLimitConstraintFromTo, devices, model, network_model)
     add_constraints!(container, RateLimitConstraintToFrom, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
@@ -880,8 +890,10 @@ function construct_device!(
     network_model::NetworkModel{U},
 ) where {
     T <: Union{StaticBranchUnbounded, StaticBranch},
-    U <: PM.AbstractActivePowerModel
+    U <: PM.AbstractActivePowerModel,
 }
+    devices = get_available_components(model, sys)
+    has_ts = PSY.has_time_series.(devices)
     if get_use_slacks(model)
         add_variables!(
             container,
@@ -898,8 +910,6 @@ function construct_device!(
             T(),
         )
     end
-    devices = get_available_components(model, sys)
-    has_ts = PSY.has_time_series.(devices)
     if any(has_ts) && !all(has_ts)
         error(
             "Not all AreaInterchange devices have time series. Check data to complete (or remove) time series.",
