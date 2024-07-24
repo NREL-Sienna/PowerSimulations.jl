@@ -231,9 +231,11 @@ end
     @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
     @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
     @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
-    @test isa(IS.Optimization.get_resolution(res), Dates.TimePeriod)
+    @test isa(PSI.get_resolution(res), Dates.TimePeriod)
+    @test isa(PSI.get_forecast_horizon(res), Int64)
+    @test isa(get_realized_timestamps(res), StepRange{DateTime})
     @test isa(IS.Optimization.get_source_data(res), PSY.System)
-    @test length(IS.Optimization.get_timestamps(res)) == 24
+    @test length(get_timestamps(res)) == 24
 end
 
 @testset "Solve DecisionModelModel with auto-build" begin
