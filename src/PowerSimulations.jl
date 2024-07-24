@@ -365,6 +365,7 @@ import InfrastructureSystems.Optimization: list_variable_names, list_dual_names,
     list_parameter_names, list_aux_variable_names, list_expression_names
 import InfrastructureSystems.Optimization: read_optimizer_stats, get_optimizer_stats,
     export_results, serialize_results, get_timestamps, get_model_base_power
+import InfrastructureSystems.Optimization: get_resolution, get_forecast_horizon
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
 import InfrastructureSystems.Optimization: ArgumentConstructStage, ModelConstructStage
@@ -392,6 +393,7 @@ export get_model_base_power
 export get_optimizer_stats
 export get_timestamps
 export get_resolution
+
 import PowerModels
 import TimerOutputs
 import ProgressMeter
