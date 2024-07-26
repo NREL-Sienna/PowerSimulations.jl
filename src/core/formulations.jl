@@ -146,9 +146,24 @@ LossLess InterconnectingConverter Model
 struct LossLessConverter <: AbstractConverterFormulation end
 
 """
+Linear Loss InterconnectingConverter Model
+"""
+struct LinearLossConverter <: AbstractConverterFormulation end
+
+"""
+Quadratic Loss InterconnectingConverter Model
+"""
+struct QuadraticLossConverter <: AbstractConverterFormulation end
+
+"""
 LossLess Line Abstract Model
 """
 struct LossLessLine <: AbstractBranchFormulation end
+
+"""
+DC Loss Line Abstract Model
+"""
+struct DCLossLine <: AbstractBranchFormulation end
 
 ############################## Network Model Formulations ##################################
 # These formulations are taken directly from PowerModels
