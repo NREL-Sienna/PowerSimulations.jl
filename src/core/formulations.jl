@@ -163,7 +163,7 @@ struct LossLessLine <: AbstractBranchFormulation end
 """
 DC Loss Line Abstract Model
 """
-struct DCLossLine <: AbstractBranchFormulation end
+struct DCLossyLine <: AbstractBranchFormulation end
 
 ############################## Network Model Formulations ##################################
 # These formulations are taken directly from PowerModels

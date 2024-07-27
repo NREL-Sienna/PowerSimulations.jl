@@ -43,6 +43,112 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
+    model::DeviceModel{PSY.InterconnectingConverter, QuadraticLossConverter},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(
+        model,
+        sys,
+    )
+    # Add Power Variable
+    add_variables!(container, ActivePowerVariable, devices, QuadraticLossConverter()) # p_c
+    add_variables!(container, ConverterPowerDirection, devices, QuadraticLossConverter()) #κ
+    # Add Current Variables: i, δ^i, z^i, i+, i-
+    add_variables!(container, ConverterCurrent, devices, QuadraticLossConverter()) # i
+    add_variables!(container, SquaredConverterCurrent, devices, QuadraticLossConverter()) # i^sq
+    add_variables!(
+        container,
+        InterpolationSquaredCurrentVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # δ^i
+    add_variables!(
+        container,
+        InterpolationBinarySquaredCurrentVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) #  z^i
+    add_variables!(container, ConverterPositiveCurrent, devices, QuadraticLossConverter()) # i^+
+    add_variables!(container, ConverterNegativeCurrent, devices, QuadraticLossConverter()) # i^- 
+    add_variables!(
+        container,
+        ConverterBinaryAbsoluteValueCurrent,
+        devices,
+        QuadraticLossConverter(),
+    ) # ν
+    # Add Voltage Variables: v^sq, δ^v, z^v
+    add_variables!(container, SquaredDCVoltage, devices, QuadraticLossConverter())
+    add_variables!(
+        container,
+        InterpolationSquaredVoltageVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # δ^v
+    add_variables!(
+        container,
+        InterpolationBinarySquaredVoltageVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # z^v
+    # Add Bilinear Variables: γ, γ^{sq}
+    add_variables!(
+        container,
+        AuxBilinearConverterVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # γ
+    add_variables!(
+        container,
+        AuxBilinearSquaredConverterVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # γ^{sq}
+    add_variables!(
+        container,
+        InterpolationSquaredBilinearVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # δ^γ
+    add_variables!(
+        container,
+        InterpolationBinarySquaredBilinearVariable,
+        devices,
+        QuadraticLossConverter(),
+    ) # z^γ
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.InterconnectingConverter, QuadraticLossConverter},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(
+        model,
+        sys,
+    )
+    # TODO Constraints
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
@@ -59,6 +165,38 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    ::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
+    ::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.TModelHVDCLine, DCLossyLine},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(
+        model,
+        sys,
+    )
+
+    dc_buses = PSY.get_components(
+        DCBus,
+        sys,
+    )
+    add_variables!(container, DCVoltage, dc_buses, DCLossyLine())
+    add_variables!(container, DCLineCurrent, devices, DCLossyLine())
+    add_variables!(container, DCLineLosses, devices, DCLossyLine())
     add_feedforward_arguments!(container, model, devices)
     return
 end
