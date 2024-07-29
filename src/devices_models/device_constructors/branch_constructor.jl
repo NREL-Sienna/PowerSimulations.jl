@@ -60,6 +60,7 @@ function construct_device!(
         NetworkModel{AreaBalancePowerModel},
     },
 ) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
     if has_subnetworks(network_model)
         devices =
             get_available_components(model, sys)
