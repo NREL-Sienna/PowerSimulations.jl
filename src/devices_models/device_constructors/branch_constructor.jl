@@ -12,7 +12,6 @@ function construct_device!(
 ) where {T <: PSY.ACBranch}
     devices = get_available_components(model, sys)
     if has_subnetworks(network_model)
-
         if get_use_slacks(model)
             add_variables!(
                 container,
