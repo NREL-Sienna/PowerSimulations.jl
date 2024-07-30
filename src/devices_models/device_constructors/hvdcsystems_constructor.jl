@@ -50,8 +50,13 @@ function construct_device!(
         model,
         sys,
     )
+    #####################
+    ##### Variables #####
+    #####################
+
     # Add Power Variable
-    add_variables!(container, ActivePowerVariable, devices, QuadraticLossConverter()) # p_c
+    add_variables!(container, ActivePowerVariable, devices, QuadraticLossConverter()) # p_c^{ac}
+    #add_variables!(container, ConverterDCPower, devices, QuadraticLossConverter()) # p_c
     add_variables!(container, ConverterPowerDirection, devices, QuadraticLossConverter()) #κ
     # Add Current Variables: i, δ^i, z^i, i+, i-
     add_variables!(container, ConverterCurrent, devices, QuadraticLossConverter()) # i
@@ -115,6 +120,12 @@ function construct_device!(
         devices,
         QuadraticLossConverter(),
     ) # z^γ
+
+    #####################
+    #### Expressions ####
+    #####################
+
+    # No losses for now: ActivePowerVariable = DCPower and ACPower
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -139,6 +150,15 @@ function construct_device!(
         sys,
     )
     # TODO Constraints
+    add_constraints!(
+        container,
+        sys,
+        ConverterCurrentBalanceConstraint,
+        devices,
+        model,
+        network_model,
+    )
+
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, get_network_formulation(network_model))
     add_constraint_dual!(container, sys, model)
@@ -191,12 +211,12 @@ function construct_device!(
     )
 
     dc_buses = PSY.get_components(
-        DCBus,
+        PSY.DCBus,
         sys,
     )
     add_variables!(container, DCVoltage, dc_buses, DCLossyLine())
-    add_variables!(container, DCLineCurrent, devices, DCLossyLine())
-    add_variables!(container, DCLineLosses, devices, DCLossyLine())
+    #add_variables!(container, DCLineCurrent, devices, DCLossyLine())
+    #add_variables!(container, DCLineLosses, devices, DCLossyLine())
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -205,7 +225,7 @@ function construct_device!(
     ::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
+    model::DeviceModel{PSY.TModelHVDCLine, DCLossyLine},
     ::NetworkModel{<:PM.AbstractActivePowerModel},
 )
 end
