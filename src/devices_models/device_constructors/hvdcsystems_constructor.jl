@@ -158,6 +158,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_constraints!(
+        container,
+        ConverterPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterDirectionConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterMcCormickEnvelopes,
+        devices,
+        model,
+        network_model,
+    )
 
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, get_network_formulation(network_model))

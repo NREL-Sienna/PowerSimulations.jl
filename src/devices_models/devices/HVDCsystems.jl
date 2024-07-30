@@ -22,12 +22,16 @@ get_variable_binary(::DCVoltage, ::Type{PSY.DCBus}, ::AbstractBranchFormulation)
 
 ### Warm Start ###
 get_variable_warm_start_value(::ActivePowerVariable, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power(d)
+get_variable_warm_start_value(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_dc_current(d)
 
 ### Lower Bounds ###
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power_limits(d).min
+get_variable_lower_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_dc_current_limits(d).min
 
 ### Upper Bounds ###
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power_limits(d).max
+get_variable_upper_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_dc_current_limits(d).max
+
 get_variable_multiplier(_, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = 1.0
 
 
@@ -400,7 +404,6 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    sys::PSY.System,
     ::Type{ConverterPowerCalculationConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
@@ -414,7 +417,7 @@ function add_constraints!(
     varcurrent = get_variable(container, ConverterCurrent(), U)
     var_dcvoltage = get_variable(container, DCVoltage(), PSY.DCBus)
     var_sq_current = get_variable(container, SquaredConverterCurrent(), U)
-    var_sq_voltage = get_variable(container, SquaredConverterVoltage(), U)
+    var_sq_voltage = get_variable(container, SquaredDCVoltage(), U)
     var_bilinear = get_variable(container, AuxBilinearConverterVariable(), U)
     var_sq_bilinear = get_variable(container, AuxBilinearSquaredConverterVariable(), U)
     var_dc_power = get_variable(container, ActivePowerVariable(), U)
@@ -434,7 +437,111 @@ function add_constraints!(
             )
             constraint_aux[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                var_bilinear[name, t] ==  var_dcvoltage[dc_bus_name, t] + var_current[name, t]
+                var_bilinear[name, t] ==  var_dcvoltage[dc_bus_name, t] + varcurrent[name, t]
+            )
+        end        
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ConverterDirectionConstraint},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{X},
+) where {
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+    X <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    varcurrent = get_variable(container, ConverterCurrent(), U)
+    var_dc_power = get_variable(container, ActivePowerVariable(), U)
+    var_binary = get_variable(container, ConverterPowerDirection(), U)
+    ipc_names = axes(varcurrent, 1)
+    constraint_i_ub =
+        add_constraints_container!(container, ConverterDirectionConstraint(), U, ipc_names, time_steps; meta = "current_ub")
+    constraint_i_lb =
+        add_constraints_container!(container, ConverterDirectionConstraint(), U, ipc_names, time_steps; meta = "current_lb")
+    constraint_p_ub =
+        add_constraints_container!(container, ConverterDirectionConstraint(), U, ipc_names, time_steps; meta = "power_ub")
+    constraint_p_lb =
+        add_constraints_container!(container, ConverterDirectionConstraint(), U, ipc_names, time_steps; meta = "power_lb")
+
+    for device in devices
+        name = PSY.get_name(device)
+        P_min, P_max = PSY.get_active_power_limits(device)
+        I_min, I_max = PSY.get_dc_current_limits(device)
+        for t in time_steps
+            constraint_i_ub[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                varcurrent[name, t] <= var_binary[name, t] * I_max
+            )
+            constraint_i_lb[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                varcurrent[name, t] >= (1 - var_binary[name, t]) * I_min
+            )
+            constraint_p_ub[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] <= var_binary[name, t] * P_max
+            )
+            constraint_p_lb[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] >= (1 - var_binary[name, t]) * P_min
+            )
+        end        
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ConverterMcCormickEnvelopes},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{X},
+) where {
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+    X <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    varcurrent = get_variable(container, ConverterCurrent(), U)
+    var_dcvoltage = get_variable(container, DCVoltage(), PSY.DCBus)
+    var_dc_power = get_variable(container, ActivePowerVariable(), U)
+    ipc_names = axes(varcurrent, 1)
+    constraint1_under =
+        add_constraints_container!(container, ConverterMcCormickEnvelopes(), U, ipc_names, time_steps; meta = "under_1")
+    constraint2_under =
+        add_constraints_container!(container, ConverterMcCormickEnvelopes(), U, ipc_names, time_steps; meta = "under_2")
+    constraint1_over =
+        add_constraints_container!(container, ConverterMcCormickEnvelopes(), U, ipc_names, time_steps; meta = "over_1")
+    constraint2_over =
+        add_constraints_container!(container, ConverterMcCormickEnvelopes(), U, ipc_names, time_steps; meta = "over_2")
+
+    for device in devices
+        name = PSY.get_name(device)
+        dc_bus = PSY.get_dc_bus(device)
+        dc_bus_name = PSY.get_name(dc_bus)
+        V_min, V_max = PSY.get_voltage_limits(dc_bus)
+        I_min, I_max = PSY.get_dc_current_limits(device)
+        for t in time_steps
+            constraint1_under[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] >= V_min * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_min - I_min * V_min
+            )
+            constraint2_under[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] >= V_max * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_max - I_max * V_max
+            )
+            constraint1_over[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] <= V_max * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_min - I_min * V_max
+            )
+            constraint2_over[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] <= V_min * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_max - I_max * V_min
             )
         end        
     end
