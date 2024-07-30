@@ -431,3 +431,19 @@ The specified constraint is formulated as:
 ```
 """
 struct ConverterCurrentBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that compute the converter DC power based on current and voltage.
+
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+
+The specified constraints are formulated as:
+
+```math
+\\begin{align*}
+& p_c = 0.5 * (γ^sq - v^sq - i^sq), \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& γ_c = v_c + i_c, \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterPowerCalculationConstraint <: ConstraintType end

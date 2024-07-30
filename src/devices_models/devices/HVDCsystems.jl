@@ -398,6 +398,49 @@ function add_constraints!(
     return
 end
 
+function add_constraints!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{ConverterPowerCalculationConstraint},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{X},
+) where {
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+    X <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    varcurrent = get_variable(container, ConverterCurrent(), U)
+    var_dcvoltage = get_variable(container, DCVoltage(), PSY.DCBus)
+    var_sq_current = get_variable(container, SquaredConverterCurrent(), U)
+    var_sq_voltage = get_variable(container, SquaredConverterVoltage(), U)
+    var_bilinear = get_variable(container, AuxBilinearConverterVariable(), U)
+    var_sq_bilinear = get_variable(container, AuxBilinearSquaredConverterVariable(), U)
+    var_dc_power = get_variable(container, ActivePowerVariable(), U)
+    ipc_names = axes(varcurrent, 1)
+    constraint =
+        add_constraints_container!(container, ConverterPowerCalculationConstraint(), U, ipc_names, time_steps)
+    constraint_aux = 
+        add_constraints_container!(container, ConverterPowerCalculationConstraint(), U, ipc_names, time_steps; meta = "aux")
+
+    for device in devices
+        name = PSY.get_name(device)
+        dc_bus_name = PSY.get_name(PSY.get_dc_bus(device))
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] == 0.5 * (var_sq_bilinear[name, t] - var_sq_voltage[name, t] - var_sq_current[name, t])
+            )
+            constraint_aux[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_bilinear[name, t] ==  var_dcvoltage[dc_bus_name, t] + var_current[name, t]
+            )
+        end        
+    end
+    return
+end
+
 function objective_function!(
     ::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{PSY.InterconnectingConverter},
