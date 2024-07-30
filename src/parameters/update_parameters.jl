@@ -40,8 +40,13 @@ function _update_parameter_values!(
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
     multiplier_id = get_time_series_multiplier_id(attributes)
+    subsystem = get_subsystem(attributes)
     template = get_template(model)
-    device_model = get_model(template, V)
+    if isempty(subsystem)
+        device_model = get_model(template, V)
+    else
+        device_model = get_model(template, V, subsystem)
+    end
     components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
