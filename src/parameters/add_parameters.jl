@@ -283,7 +283,7 @@ function _add_parameters!(
     )
 
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
-    set_subsystem!(get_attributes(param_container), get_subsystem(model))
+    set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())
