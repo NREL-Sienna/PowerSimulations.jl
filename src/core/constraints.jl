@@ -416,3 +416,18 @@ struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
 struct OutageConstraint <: EventConstraint end
+
+"""
+Struct to create the constraints that set the losses through a lossy Interconnecting Power Converter.
+
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\begin{align*}
+& i_c^{dc} = \\sum_{j \\in \\mathcal{B}^{DC}} \\frac{1}{r_{i,j}} (v_i - v_j), \\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
+struct ConverterCurrentBalanceConstraint <: ConstraintType end
