@@ -190,6 +190,13 @@ Docs abbreviation: ``i_c^{dc}``
 struct ConverterCurrent <: VariableType end
 
 """
+Struct to dispatch the creation of DC Converter Power Variables for DC formulations
+
+Docs abbreviation: ``p_c^{dc}``
+"""
+struct ConverterDCPower <: VariableType end
+
+"""
 Struct to dispatch the creation of Squared DC Converter Current Variables for DC formulations
 
 Docs abbreviation: ``i_c^{sq,dc}``
