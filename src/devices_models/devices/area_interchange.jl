@@ -62,7 +62,9 @@ function add_variables!(
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     formulation::AbstractBranchFormulation,
 )
-    @warn("CopperPlatePowerModel ignores AreaInterchanges. Instead use AreaBalancePowerModel.")
+    @warn(
+        "CopperPlatePowerModel ignores AreaInterchanges. Instead use AreaBalancePowerModel."
+    )
 end
 
 """
