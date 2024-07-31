@@ -458,6 +458,7 @@ function construct_device!(
         network_model,
     )
     add_constraint_dual!(container, sys, device_model)
+
     return
 end
 
@@ -808,6 +809,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -832,6 +834,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -850,6 +853,7 @@ function construct_device!(
     add_constraints!(container, PhaseAngleControlLimit, devices, model, network_model)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -868,6 +872,7 @@ function construct_device!(
     add_constraints!(container, PhaseAngleControlLimit, devices, model, network_model)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -879,6 +884,7 @@ function construct_device!(
     model::DeviceModel{PSY.AreaInterchange, U},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {U <: Union{StaticBranchUnbounded, StaticBranch}}
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -943,6 +949,7 @@ function construct_device!(
         add_parameters!(container, FromToFlowLimitParameter, devices, model)
         add_parameters!(container, ToFromFlowLimitParameter, devices, model)
     end
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -955,6 +962,7 @@ function construct_device!(
 ) where {T <: AreaBalancePowerModel}
     devices = get_available_components(model, sys)
     add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -1019,6 +1027,7 @@ function construct_device!(
         network_model,
         inter_area_branch_map,
     )
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -1029,6 +1038,7 @@ function construct_device!(
     model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
     network_model::NetworkModel{AreaBalancePowerModel},
 )
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -1051,5 +1061,6 @@ function construct_device!(
         network_model,
         inter_area_branch_map,
     )
+    add_feedforward_constraints!(container, model, devices)
     return
 end
