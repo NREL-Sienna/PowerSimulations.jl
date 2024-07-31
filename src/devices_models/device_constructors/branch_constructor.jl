@@ -89,9 +89,8 @@ function construct_device!(
     if get_use_slacks(model)
         throw(ArgumentError("StaticBranchBounds is not compatible with the use of slacks"))
     end
+    devices = get_available_components(model, sys)
     if has_subnetworks(network_model)
-        devices =
-            get_available_components(model, sys)
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -122,9 +121,8 @@ function construct_device!(
         NetworkModel{AreaBalancePowerModel},
     },
 ) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
     if has_subnetworks(network_model)
-        devices =
-            get_available_components(model, sys)
         branch_rate_bounds!(
             container,
             devices,
@@ -146,9 +144,8 @@ function construct_device!(
         NetworkModel{AreaBalancePowerModel},
     },
 ) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
     if has_subnetworks(network_model)
-        devices =
-            get_available_components(model, sys)
         add_variables!(
             container,
             FlowActivePowerVariable,
@@ -171,14 +168,15 @@ end
 
 function construct_device!(
     ::OptimizationContainer,
-    ::PSY.System,
+    sys::PSY.System,
     ::ModelConstructStage,
-    ::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
+    model::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},
     network_model::Union{
         NetworkModel{CopperPlatePowerModel},
         NetworkModel{AreaBalancePowerModel},
     },
 )
+    devices = get_available_components(model, sys)
     add_feedforward_constraints!(container, model, devices)
     return
 end
