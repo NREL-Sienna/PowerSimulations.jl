@@ -2,7 +2,9 @@
 get_multiplier_value(::FromToFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = -1.0 * PSY.get_from_to_flow_limit(d)
 get_multiplier_value(::ToFromFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = PSY.get_to_from_flow_limit(d)
 
-get_parameter_multiplier(::FixValueParameter, ::PSY.AreaInterchange, ::StaticBranch) = 1.0
+get_parameter_multiplier(::FixValueParameter, ::PSY.AreaInterchange, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::LowerBoundValueParameter, ::PSY.AreaInterchange, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.AreaInterchange, ::AbstractBranchFormulation) = 1.0
 
 get_initial_conditions_device_model(
     ::OperationModel,

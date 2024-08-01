@@ -889,6 +889,18 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
+    network_model::NetworkModel{T},
+) where {T <: PM.AbstractActivePowerModel}
+    devices = get_available_components(model, sys)
+    add_feedforward_constraints!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.AreaInterchange, T},
     network_model::NetworkModel{U},
@@ -957,7 +969,7 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{PSY.AreaInterchange, StaticBranch},
     network_model::NetworkModel{T},
-) where {T <: AreaBalancePowerModel}
+) where {T <: PM.AbstractActivePowerModel}
     devices = get_available_components(model, sys)
     add_constraints!(container, FlowLimitConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
