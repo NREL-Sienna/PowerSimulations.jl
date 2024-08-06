@@ -109,9 +109,10 @@ function _add_feedforward_slack_variables!(
         var_type = get_entry_type(var)
         variable = add_variable_container!(
             container,
-            T,
+            T(),
             U,
-            [PSY.get_name(d) for d in devices];
+            [PSY.get_name(d) for d in devices],
+            time_steps;
             meta = "$(var_type)",
         )
 
@@ -135,11 +136,12 @@ function _add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, T)
     add_parameters!(container, parameter_type, ff, model, devices)
     if get_slacks(ff)
-        add_feedforward_slack_variables!(
+        _add_feedforward_slack_variables!(
             container,
-            UpperBoundFeedForwardSlack,
-            devices,
+            UpperBoundFeedForwardSlack(),
+            ff,
             model,
+            devices,
         )
     end
     return
@@ -154,11 +156,12 @@ function _add_feedforward_arguments!(
     parameter_type = get_default_parameter_type(ff, SR)
     add_parameters!(container, parameter_type, ff, model, contributing_devices)
     if get_slacks(ff)
-        add_feedforward_slack_variables!(
+        _add_feedforward_slack_variables!(
             container,
-            UpperBoundFeedForwardSlack,
-            contributing_devices,
+            UpperBoundFeedForwardSlack(),
+            ff,
             model,
+            contributing_devices,
         )
     end
     return
@@ -175,7 +178,7 @@ function _add_feedforward_arguments!(
     if get_slacks(ff)
         _add_feedforward_slack_variables!(
             container,
-            LowerBoundFeedForwardSlack,
+            LowerBoundFeedForwardSlack(),
             ff,
             model,
             devices,

@@ -216,6 +216,7 @@ function _add_time_series_parameters!(
         time_steps,
     )
     set_time_series_multiplier_id!(get_attributes(param_container), time_series_mult_id)
+    set_subsystem!(get_attributes(param_container), get_subsystem(model))
     jump_model = get_jump_model(container)
 
     for (ts_uuid, ts_values) in initial_values
@@ -282,6 +283,7 @@ function _add_parameters!(
     )
 
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
+    set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())

@@ -89,7 +89,11 @@ function update_initial_conditions!(
                       $(comp_type)-$(comp_name) is out of bounds [$(min), $(max)].")
             end
         else
-            @assert isapprox(var_val, 0.0, atol = ABSOLUTE_TOLERANCE) "status and power don't match"
+            if !isapprox(var_val, 0.0; atol = ABSOLUTE_TOLERANCE)
+                error("Status and Power variables don't match for $comp_name. \\
+                ActivePowerVariable: $(var_val)\\
+                Status value: $(status_val) for OnVariable")
+            end
             set_ic_quantity!(ic, 0.0)
         end
     end
