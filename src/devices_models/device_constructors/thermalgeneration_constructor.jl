@@ -5,8 +5,7 @@ function construct_device!(
     device_model::DeviceModel{T, FixedOutput},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     add_to_expression!(
         container,
@@ -44,8 +43,7 @@ function construct_device!(
     T <: PSY.ThermalGen,
     D <: AbstractStandardUnitCommitment,
 }
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -107,8 +105,7 @@ function construct_device!(
     model::DeviceModel{T, <:AbstractStandardUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -155,8 +152,7 @@ function construct_device!(
     model::DeviceModel{T, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen, D <: AbstractStandardUnitCommitment}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, OnVariable, devices, D())
@@ -210,8 +206,7 @@ function construct_device!(
     model::DeviceModel{T, <:AbstractStandardUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
@@ -251,8 +246,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, ReactivePowerVariable, devices, ThermalBasicUnitCommitment())
@@ -312,8 +306,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -359,8 +352,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, OnVariable, devices, ThermalBasicUnitCommitment())
@@ -411,8 +403,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -450,8 +441,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalStandardDispatch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalStandardDispatch())
@@ -508,8 +498,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalStandardDispatch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -555,8 +544,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalStandardDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, ThermalStandardDispatch())
 
@@ -604,8 +592,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalStandardDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -643,8 +630,7 @@ function construct_device!(
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
 }
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
@@ -696,8 +682,7 @@ function construct_device!(
     model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -742,8 +727,7 @@ function construct_device!(
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
 }
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
@@ -786,8 +770,7 @@ function construct_device!(
     model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -1085,8 +1068,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(
         container,
@@ -1157,8 +1139,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -1203,8 +1184,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(
         container,
@@ -1268,8 +1248,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -1306,8 +1285,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(
         container,
@@ -1376,8 +1354,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -1420,8 +1397,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(
         container,
@@ -1483,8 +1459,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -1519,8 +1494,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
     add_variables!(container, ReactivePowerVariable, devices, ThermalCompactDispatch())
@@ -1603,8 +1577,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,
@@ -1647,8 +1620,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_variables!(container, PowerAboveMinimumVariable, devices, ThermalCompactDispatch())
 
@@ -1706,8 +1678,7 @@ function construct_device!(
     model::DeviceModel{T, ThermalCompactDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
 
     add_constraints!(
         container,

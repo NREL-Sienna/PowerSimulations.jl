@@ -326,8 +326,7 @@ function construct_device!(
     model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     branch_rate_bounds!(
         container,
@@ -347,8 +346,7 @@ function construct_device!(
     model::DeviceModel{T, StaticBranchUnbounded},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_variables!(
         container,
         FlowActivePowerVariable,
@@ -367,8 +365,7 @@ function construct_device!(
     model::DeviceModel{T, StaticBranchUnbounded},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_feedforward_constraints!(container, model, devices)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
@@ -405,8 +402,7 @@ function construct_device!(
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ACBranch}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     branch_rate_bounds!(container, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
     add_constraints!(container, RateLimitConstraintFromTo, devices, model, network_model)
@@ -553,8 +549,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalUnbounded},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalUnbounded())
     add_to_expression!(
         container,
@@ -596,8 +591,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalLossless},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
@@ -611,8 +605,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalLossless},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalLossless())
     add_to_expression!(
         container,
@@ -635,8 +628,7 @@ function construct_device!(
 ) where {
     T <: TwoTerminalHVDCTypes,
 }
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
@@ -649,8 +641,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_variables!(
         container,
         FlowActivePowerToFromVariable,
@@ -699,8 +690,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
@@ -715,8 +705,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_variables!(
         container,
         FlowActivePowerToFromVariable,
@@ -757,8 +746,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     @warn "CopperPlatePowerModel models with HVDC ignores inter-area losses"
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
@@ -773,8 +761,7 @@ function construct_device!(
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
-    devices =
-        get_available_components(model, sys)
+    devices = get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
