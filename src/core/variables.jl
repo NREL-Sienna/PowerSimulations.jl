@@ -228,6 +228,13 @@ Docs abbreviation: ``u^\\text{dir}``
 """
 struct HVDCFlowDirectionVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of HVDC Piecewise Loss Variables
+
+Docs abbreviation: ``h``
+"""
+struct HVDCPiecewiseLossVariable <: VariableType end
+
 abstract type SparseVariableType <: VariableType end
 
 """

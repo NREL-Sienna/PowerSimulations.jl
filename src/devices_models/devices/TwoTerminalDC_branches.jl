@@ -42,8 +42,14 @@ function get_variable_multiplier(
     d::PSY.TwoTerminalHVDCLine,
     ::HVDCTwoTerminalDispatch,
 )
-    l1 = PSY.get_loss(d).l1
-    l0 = PSY.get_loss(d).l0
+    loss = PSY.get_loss(d)
+    if !isa(loss, PSY.LinearCurve)
+        error(
+            "HVDCTwoTerminalDispatch of branch $(PSY.get_name(d)) only accepts LinearCurve for loss models.",
+        )
+    end
+    l1 = PSY.get_proportional_term(loss)
+    l0 = PSY.get_constant_term(loss)
     if l1 == 0.0 && l0 == 0.0
         return 0.0
     else
@@ -110,8 +116,14 @@ function get_variable_upper_bound(
     d::PSY.TwoTerminalHVDCLine,
     ::HVDCTwoTerminalDispatch,
 )
-    l1 = PSY.get_loss(d).l1
-    l0 = PSY.get_loss(d).l0
+    loss = PSY.get_loss(d)
+    if !isa(loss, PSY.LinearCurve)
+        error(
+            "HVDCTwoTerminalDispatch of branch $(PSY.get_name(d)) only accepts LinearCurve for loss models.",
+        )
+    end
+    l1 = PSY.get_proportional_term(loss)
+    l0 = PSY.get_constant_term(loss)
     if l1 == 0.0 && l0 == 0.0
         return 0.0
     else
@@ -279,11 +291,12 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    model::DeviceModel{U, HVDCTwoTerminalDispatch},
+    model::DeviceModel{U, V},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
     U <: PSY.TwoTerminalHVDCLine,
+    V <: Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
 }
     inter_network_branches = U[]
     for d in devices
@@ -303,10 +316,27 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, HVDCTwoTerminalDispatch},
+    ::DeviceModel{U, V},
     ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
-    U <: PSY.TwoTerminalHVDCLine}
+) where {
+    T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
+    U <: PSY.TwoTerminalHVDCLine,
+    V <: Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
+}
+    _add_hvdc_flow_constraints!(container, devices, T())
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, HVDCTwoTerminalDispatch},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
+    U <: PSY.TwoTerminalHVDCLine,
+}
     _add_hvdc_flow_constraints!(container, devices, T())
     return
 end
@@ -405,8 +435,14 @@ function add_constraints!(
         meta = "ft_lb",
     )
     for d in devices
-        l1 = PSY.get_loss(d).l1
-        l0 = PSY.get_loss(d).l0
+        loss = PSY.get_loss(d)
+        if !isa(loss, PSY.LinearCurve)
+            error(
+                "HVDCTwoTerminalDispatch of branch $(PSY.get_name(d)) only accepts LinearCurve for loss models.",
+            )
+        end
+        l1 = PSY.get_proportional_term(loss)
+        l0 = PSY.get_constant_term(loss)
         name = PSY.get_name(d)
         for t in get_time_steps(container)
             if l1 == 0.0 && l0 == 0.0

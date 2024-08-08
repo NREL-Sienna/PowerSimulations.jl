@@ -349,6 +349,7 @@ The specified constraints are formulated as:
 struct HVDCLossesAbsoluteValue <: ConstraintType end
 struct HVDCDirection <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
+struct HVDCFlowCalculationConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 """
