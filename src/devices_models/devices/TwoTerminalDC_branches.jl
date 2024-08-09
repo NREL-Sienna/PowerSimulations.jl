@@ -151,6 +151,128 @@ get_initial_conditions_device_model(
 ) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractTwoTerminalDCLineFormulation} =
     DeviceModel(T, U)
 
+####################################### PWL Constraints #######################################################
+
+function _get_pwl_loss_params(d::PSY.TwoTerminalHVDCLine, loss::PSY.LinearCurve)
+    from_to_loss_params = Vector{Float64}(undef, 4)
+    to_from_loss_params = Vector{Float64}(undef, 4)
+    loss_factor = PSY.get_proportional_term(loss)
+    P_send0 = PSY.get_constant_term(loss)
+    P_max_ft = PSY.get_active_power_limits_from(d).max
+    P_max_tf = PSY.get_active_power_limits_to(d).max
+    if P_max_ft != P_max_tf
+        error(
+            "HVDC Line $(PSY.get_name(d)) has non-symmetrical limits for from and to, that are not supported in the HVDCTwoTerminalPiecewiseLoss formulation",
+        )
+    end
+    P_sendS = P_max_ft
+    ### Update Params Vectors ###
+    from_to_loss_params[1] = -P_sendS - P_send0
+    from_to_loss_params[2] = -P_send0
+    from_to_loss_params[3] = 0.0
+    from_to_loss_params[4] = P_sendS * (1 - loss_factor)
+
+    to_from_loss_params[1] = P_sendS * (1 - loss_factor)
+    to_from_loss_params[2] = 0.0
+    to_from_loss_params[3] = -P_send0
+    to_from_loss_params[4] = -P_sendS - P_send0
+
+    return from_to_loss_params, to_from_loss_params
+end
+
+function _get_pwl_loss_params(
+    d::PSY.TwoTerminalHVDCLine,
+    loss::PSY.PiecewiseIncrementalCurve,
+)
+    p_breakpoints = PSY.get_x_coords(loss)
+    loss_factors = PSY.get_slopes(loss)
+    len_segments = length(loss_factors)
+    len_variables = 2 * len_segments + 2
+    from_to_loss_params = Vector{Float64}(undef, len_variables)
+    to_from_loss_params = similar(from_to_loss_params)
+    P_max_ft = PSY.get_active_power_limits_from(d).max
+    P_max_tf = PSY.get_active_power_limits_to(d).max
+    if P_max_ft != P_max_tf
+        error(
+            "HVDC Line $(PSY.get_name(d)) has non-symmetrical limits for from and to, that are not supported in the HVDCTwoTerminalPiecewiseLoss formulation",
+        )
+    end
+    if P_max_ft != last(p_breakpoints)
+        error(
+            "Maximum power limit $P_max_ft of HVDC Line $(PSY.get_name(d)) has different value of last breakpoint from Loss data $(last(p_breakpoints)).",
+        )
+    end
+    ### Update Params Vectors ###
+    ## Update from 1 to S
+    for i in 1:len_segments
+        from_to_loss_params[i] = -p_breakpoints[2 + len_segments - i] - p_breakpoints[1] # for i = 1: P_end, for i = len_segments: P_2
+        to_from_loss_params[i] =
+            p_breakpoints[2 + len_segments - i] * (1 - loss_factors[len_segments + 1 - i])
+    end
+    ## Update from S+1 and S+2
+    from_to_loss_params[len_segments + 1] = -p_breakpoints[1] # P_send0
+    from_to_loss_params[len_segments + 2] = 0.0
+    to_from_loss_params[len_segments + 1] = 0.0
+    to_from_loss_params[len_segments + 2] = -p_breakpoints[1] # P_send0
+    ## Update from S+3 to 2S+2
+    for i in 1:len_segments
+        from_to_loss_params[2 + len_segments + i] =
+            p_breakpoints[i + 1] * (1 - loss_factors[i])
+        to_from_loss_params[2 + len_segments + i] = -p_breakpoints[i + 1] - p_breakpoints[1]
+    end
+
+    return from_to_loss_params, to_from_loss_params
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    ::DeviceModel{U, HVDCTwoTerminalPiecewiseLoss},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalHVDCLine}
+    var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
+    names = axes(var_pwl)[1]
+    segments = axes(var_pwl)[2]
+    time_steps = get_time_steps(container)
+    flow_ft = get_variable(container, FlowActivePowerFromToVariable(), U)
+    flow_tf = get_variable(container, FlowActivePowerToFromVariable(), U)
+
+    constraint_from_to =
+        add_constraints_container!(container, T(), U, names, time_steps; meta = "ft")
+    constraint_to_from =
+        add_constraints_container!(container, T(), U, names, time_steps; meta = "tf")
+    for d in devices
+        name = PSY.get_name(d)
+        loss = PSY.get_loss(d)
+        from_to_params, to_from_params = _get_pwl_loss_params(d, loss)
+        for t in time_steps
+            ## Add Equality Constraints ##
+            constraint_from_to[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                flow_ft[name, t] == sum(
+                    var_pwl[name, s, t] * from_to_params[ix] for
+                    (ix, s) in enumerate(segments)
+                )
+            )
+            constraint_to_from[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                flow_tf[name, t] == sum(
+                    var_pwl[name, s, t] * to_from_params[ix] for
+                    (ix, s) in enumerate(segments)
+                )
+            )
+            ## Add SOS Constraints ###
+            pwl_vars_subset = [var_pwl[name, s, t] for s in segments]
+            JuMP.@constraint(
+                get_jump_model(container),
+                pwl_vars_subset in MOI.SOS2(collect(1:length(segments)))
+            )
+        end
+    end
+    return
+end
+
 #################################### Rate Limits Constraints ##################################################
 function _get_flow_bounds(d::PSY.TwoTerminalHVDCLine)
     check_hvdc_line_limits_consistency(d)
