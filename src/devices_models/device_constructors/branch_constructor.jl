@@ -819,6 +819,8 @@ function construct_device!(
     return
 end
 
+# TODO: Other models besides PTDF
+#=
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -876,6 +878,7 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
+=#
 
 function construct_device!(
     container::OptimizationContainer,
