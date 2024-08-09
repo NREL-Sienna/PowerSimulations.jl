@@ -131,6 +131,18 @@ function get_variable_upper_bound(
     end
 end
 
+get_variable_upper_bound(
+    ::HVDCPiecewiseLossVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
+) = 1.0
+
+get_variable_lower_bound(
+    ::HVDCPiecewiseLossVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
+) = 0.0
+
 function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
