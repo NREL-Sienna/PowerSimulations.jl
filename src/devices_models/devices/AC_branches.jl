@@ -248,6 +248,53 @@ function _add_dense_pwl_loss_variables!(
     end
 end
 
+function _add_sparse_pwl_loss_variables!(
+    container::OptimizationContainer,
+    devices,
+    model::DeviceModel{D, HVDCTwoTerminalPiecewiseLoss},
+) where {D <: TwoTerminalHVDCTypes}
+    # Check if type and length of PWL loss model are the same for all devices
+    #_check_pwl_loss_model(devices)
+
+    # Create Variables
+    time_steps = get_time_steps(container)
+    settings = get_settings(container)
+    formulation = HVDCTwoTerminalPiecewiseLoss()
+    T = HVDCPiecewiseLossVariable
+    binary = get_variable_binary(T(), D, formulation)
+    first_loss = PSY.get_loss(first(devices))
+    if isa(first_loss, PSY.LinearCurve)
+        len_segments = 4 # 2*1 + 2
+    elseif isa(first_loss, PSY.PiecewiseIncrementalCurve)
+        len_segments = 2 * length(PSY.get_slopes(first_loss)) + 2
+    else
+        error("Should not be here")
+    end
+
+    T = HVDCPiecewiseLossVariable
+    var_container = lazy_container_addition!(container, T(), D)
+
+    for d in devices
+        name = PSY.get_name(d)
+        for t in time_steps
+            pwlvars = Array{JuMP.VariableRef}(undef, len_segments)
+            for i in 1:len_segments
+                pwlvars[i] =
+                    var_container[(name, i, t)] = JuMP.@variable(
+                        get_jump_model(container),
+                        base_name = "$(T)_$(name)_{pwl_$(i), $(t)}",
+                        binary = binary
+                    )
+                ub = get_variable_upper_bound(T(), d, formulation)
+                ub !== nothing && JuMP.set_upper_bound(var_container[name, i, t], ub)
+
+                lb = get_variable_lower_bound(T(), d, formulation)
+                lb !== nothing && JuMP.set_lower_bound(var_container[name, i, t], lb)
+            end
+        end
+    end
+end
+
 ################################## Rate Limits constraint_infos ############################
 
 """

@@ -165,6 +165,15 @@ get_initial_conditions_device_model(
 
 ####################################### PWL Constraints #######################################################
 
+function _get_range_segments(::PSY.TwoTerminalHVDCLine, loss::PSY.LinearCurve)
+    return 1:4
+end
+
+function _get_range_segments(::PSY.TwoTerminalHVDCLine, loss::PSY.PiecewiseIncrementalCurve)
+    loss_factors = PSY.get_slopes(loss)
+    return 1:length(loss_factors)
+end
+
 function _get_pwl_loss_params(d::PSY.TwoTerminalHVDCLine, loss::PSY.LinearCurve)
     from_to_loss_params = Vector{Float64}(undef, 4)
     to_from_loss_params = Vector{Float64}(undef, 4)
@@ -244,8 +253,7 @@ function add_constraints!(
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalHVDCLine}
     var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
-    names = axes(var_pwl)[1]
-    segments = axes(var_pwl)[2]
+    names = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
     flow_ft = get_variable(container, FlowActivePowerFromToVariable(), U)
     flow_tf = get_variable(container, FlowActivePowerToFromVariable(), U)
@@ -258,27 +266,28 @@ function add_constraints!(
         name = PSY.get_name(d)
         loss = PSY.get_loss(d)
         from_to_params, to_from_params = _get_pwl_loss_params(d, loss)
+        segments = _get_range_segments(d, loss)
         for t in time_steps
             ## Add Equality Constraints ##
             constraint_from_to[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
                 flow_ft[name, t] == sum(
-                    var_pwl[name, s, t] * from_to_params[ix] for
-                    (ix, s) in enumerate(segments)
+                    var_pwl[name, ix, t] * from_to_params[ix] for
+                    ix in segments
                 )
             )
             constraint_to_from[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
                 flow_tf[name, t] == sum(
-                    var_pwl[name, s, t] * to_from_params[ix] for
-                    (ix, s) in enumerate(segments)
+                    var_pwl[name, ix, t] * to_from_params[ix] for
+                    ix in segments
                 )
             )
             ## Add SOS Constraints ###
             pwl_vars_subset = [var_pwl[name, s, t] for s in segments]
             JuMP.@constraint(
                 get_jump_model(container),
-                pwl_vars_subset in MOI.SOS2(collect(1:length(segments)))
+                pwl_vars_subset in MOI.SOS2(collect(segments))
             )
         end
     end

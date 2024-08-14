@@ -778,7 +778,8 @@ function construct_device!(
         devices,
         HVDCTwoTerminalPiecewiseLoss(),
     )
-    _add_dense_pwl_loss_variables!(container, devices, model)
+    #_add_dense_pwl_loss_variables!(container, devices, model)
+    _add_sparse_pwl_loss_variables!(container, devices, model)
     add_to_expression!(
         container,
         ActivePowerBalance,
