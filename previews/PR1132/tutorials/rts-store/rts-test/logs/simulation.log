@@ -1,45 +1,45 @@
-┌ Info: 2024-08-14T03:15:15.484 [3361:1]: Initializing Optimization Container For a DecisionModel
+┌ Info: 2024-08-15T03:04:12.995 [3419:1]: Initializing Optimization Container For a DecisionModel
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:323
-┌ Info: 2024-08-14T03:15:15.485 [3361:1]: Initializing ModelStoreParams
+┌ Info: 2024-08-15T03:04:12.996 [3419:1]: Initializing ModelStoreParams
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:329
-┌ Info: 2024-08-14T03:15:15.485 [3361:1]: Instantiating Network Model
+┌ Info: 2024-08-15T03:04:12.997 [3419:1]: Instantiating Network Model
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:338
-┌ Info: 2024-08-14T03:15:15.485 [3361:1]: Validating connectivity with depth first search (network traversal)
+┌ Info: 2024-08-15T03:04:12.997 [3419:1]: Validating connectivity with depth first search (network traversal)
 └ @ PowerNetworkMatrices /home/runner/.julia/packages/PowerNetworkMatrices/mKnwZ/src/system_utils.jl:12
-┌ Info: 2024-08-14T03:15:15.486 [3361:1]: Make Initial Conditions Model
+┌ Info: 2024-08-15T03:04:12.997 [3419:1]: Make Initial Conditions Model
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:230
-┌ Warning: 2024-08-14T03:15:16.574 [3361:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+┌ Warning: 2024-08-15T03:04:14.364 [3419:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:753
-┌ Info: 2024-08-14T03:15:16.574 [3361:1]: Solving Initialization Model for UC
+┌ Info: 2024-08-15T03:04:14.364 [3419:1]: Solving Initialization Model for UC
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:248
-┌ Info: 2024-08-14T03:15:16.746 [3361:1]: Serialized initial conditions to ./rts-store/rts-test/problems/UC/initial_conditions.bin
+┌ Info: 2024-08-15T03:04:14.585 [3419:1]: Serialized initial conditions to ./rts-store/rts-test/problems/UC/initial_conditions.bin
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:263
-┌ Warning: 2024-08-14T03:15:18.046 [3361:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+┌ Warning: 2024-08-15T03:04:16.063 [3419:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:753
-┌ Info: 2024-08-14T03:15:18.149 [3361:1]: UC optimizer set to: HiGHS
+┌ Info: 2024-08-15T03:04:16.198 [3419:1]: UC optimizer set to: HiGHS
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:356
-┌ Info: 2024-08-14T03:15:18.149 [3361:1]: Checking Numerical Bounds
+┌ Info: 2024-08-15T03:04:16.198 [3419:1]: Checking Numerical Bounds
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:359
-┌ Info: 2024-08-14T03:15:18.223 [3361:1]: Variable bounds range is [0.0 8.47]
+┌ Info: 2024-08-15T03:04:16.345 [3419:1]: Variable bounds range is [0.0 8.47]
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:317
-┌ Info: 2024-08-14T03:15:18.281 [3361:1]: Constraint coefficient bounds range is [-0.55 4380.0]
+┌ Info: 2024-08-15T03:04:16.397 [3419:1]: Constraint coefficient bounds range is [0.0135 4380.0]
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:327
-┌ Info: 2024-08-14T03:15:18.281 [3361:1]: Constraint right-hand-side bounds [0.06 48.0]
+┌ Info: 2024-08-15T03:04:16.397 [3419:1]: Constraint right-hand-side bounds [0.06 48.0]
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:336
-┌ Info: 2024-08-14T03:15:18.281 [3361:1]: Initializing Optimization Container For a DecisionModel
+┌ Info: 2024-08-15T03:04:16.398 [3419:1]: Initializing Optimization Container For a DecisionModel
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:323
-┌ Info: 2024-08-14T03:15:18.352 [3361:1]: Initializing ModelStoreParams
+┌ Info: 2024-08-15T03:04:16.488 [3419:1]: Initializing ModelStoreParams
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:329
-┌ Info: 2024-08-14T03:15:18.352 [3361:1]: Instantiating Network Model
+┌ Info: 2024-08-15T03:04:16.488 [3419:1]: Instantiating Network Model
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:338
-┌ Info: 2024-08-14T03:15:21.518 [3361:1]: PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF
+┌ Info: 2024-08-15T03:04:20.275 [3419:1]: PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/network_model.jl:128
-┌ Info: 2024-08-14T03:15:21.741 [3361:1]: Make Initial Conditions Model
+┌ Info: 2024-08-15T03:04:20.541 [3419:1]: Make Initial Conditions Model
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:230
-┌ Info: 2024-08-14T03:15:21.741 [3361:1]: No initial conditions in the model
+┌ Info: 2024-08-15T03:04:20.541 [3419:1]: No initial conditions in the model
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:175
-┌ Error: 2024-08-14T03:15:24.370 [3361:1]: Failed to build ED
+┌ Error: 2024-08-15T03:04:23.719 [3419:1]: Failed to build ED
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:344
-┌ Error: 2024-08-14T03:15:25.458 [3361:1]: Simulation build failed
-│   exception = (ErrorException("HVDCTwoTerminalDispatch of branch DC1 only accepts LinearCurve for loss models."), Union{Ptr{Nothing}, Base.InterpreterIP}[Ptr{Nothing} @0x00007f86d60d56cd, Ptr{Nothing} @0x00007f86b9d8937b, Ptr{Nothing} @0x00007f86b9d89ccc, Ptr{Nothing} @0x00007f86b9d8b83e, Ptr{Nothing} @0x00007f86b9d8b8e5, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86bb906119, Ptr{Nothing} @0x00007f86bb91493e, Ptr{Nothing} @0x00007f86bb91695f, Ptr{Nothing} @0x00007f86ba1f0df2, Ptr{Nothing} @0x00007f86ba1f15b3, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86ba1da4a9, Ptr{Nothing} @0x00007f86ba1ed57a, Ptr{Nothing} @0x00007f86ba1ee646, Ptr{Nothing} @0x00007f86ba1ee679, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86ba1b5def, Ptr{Nothing} @0x00007f86ba1b68a2, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86d5bf7475, Ptr{Nothing} @0x00007f86ba1b5095, Ptr{Nothing} @0x00007f86ba1b5af7, Ptr{Nothing} @0x00007f86ba1b5b35, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86ebe64dd4, Ptr{Nothing} @0x00007f86ebe648c4, Ptr{Nothing} @0x00007f86ebe65623, Ptr{Nothing} @0x00007f86ebe663fd, Base.InterpreterIP in top-level CodeInfo for Main.__atexample__named__pcm at statement 0, Ptr{Nothing} @0x00007f86ebe822e4, Ptr{Nothing} @0x00007f86ebe82a99, Ptr{Nothing} @0x00007f86ebe83eab, Ptr{Nothing} @0x00007f86c136bc64, Ptr{Nothing} @0x00007f86c136bf25, Ptr{Nothing} @0x00007f86c136c7e2, Ptr{Nothing} @0x00007f86c136cda2, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86d5bf7475, Ptr{Nothing} @0x00007f86c136b300, Ptr{Nothing} @0x00007f86c136b503, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86c136a1f6, Ptr{Nothing} @0x00007f86c136a239, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86c1367f6c, Ptr{Nothing} @0x00007f86c1369fe1, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86ebe59548, Ptr{Nothing} @0x00007f86eb94f3fa, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86eb94e6ab, Ptr{Nothing} @0x00007f86eb94eb2e, Ptr{Nothing} @0x00007f86eb94edb6, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86eb8bc2f0, Ptr{Nothing} @0x00007f86eb8bc49a, Ptr{Nothing} @0x00007f86eb8bc92e, Ptr{Nothing} @0x00007f86eb8bca99, Ptr{Nothing} @0x00007f86eb8bcad5, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86eb8a254b, Ptr{Nothing} @0x00007f86ebe82603, Ptr{Nothing} @0x00007f86ebe82a99, Ptr{Nothing} @0x00007f86ebe83eab, Ptr{Nothing} @0x00007f86d6e36331, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86d6079460, Ptr{Nothing} @0x00007f86d622e2de, Ptr{Nothing} @0x00007f86d66285ca, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86d6750e13, Ptr{Nothing} @0x00007f86d639327d, Ptr{Nothing} @0x00007f86d63933b3, Ptr{Nothing} @0x00007f86ebe46f8d, Ptr{Nothing} @0x00007f86ebeb1ec5, Ptr{Nothing} @0x00007f86ebeb294e, Ptr{Nothing} @0x0000000000401088, Ptr{Nothing} @0x00007f86ecc29d8f, Ptr{Nothing} @0x00007f86ecc29e3f, Ptr{Nothing} @0x00000000004010b8])
+┌ Error: 2024-08-15T03:04:25.068 [3419:1]: Simulation build failed
+│   exception = (ErrorException("HVDCTwoTerminalDispatch of branch DC1 only accepts LinearCurve for loss models."), Union{Ptr{Nothing}, Base.InterpreterIP}[Ptr{Nothing} @0x00007fd7e4cd56cd, Ptr{Nothing} @0x00007fd7c89867bb, Ptr{Nothing} @0x00007fd7c898710c, Ptr{Nothing} @0x00007fd7c8988c7e, Ptr{Nothing} @0x00007fd7c8988d25, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7cb1e3aa9, Ptr{Nothing} @0x00007fd7ca50e2fe, Ptr{Nothing} @0x00007fd7ca51033f, Ptr{Nothing} @0x00007fd7c8dee002, Ptr{Nothing} @0x00007fd7c8dee7c3, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7c8db9309, Ptr{Nothing} @0x00007fd7c8dea78a, Ptr{Nothing} @0x00007fd7c8deb856, Ptr{Nothing} @0x00007fd7c8deb889, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7c8db2fff, Ptr{Nothing} @0x00007fd7c8db3ab2, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7e47f7475, Ptr{Nothing} @0x00007fd7c8db22a5, Ptr{Nothing} @0x00007fd7c8db2d07, Ptr{Nothing} @0x00007fd7c8db2d45, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7faa64dd4, Ptr{Nothing} @0x00007fd7faa648c4, Ptr{Nothing} @0x00007fd7faa65623, Ptr{Nothing} @0x00007fd7faa663fd, Base.InterpreterIP in top-level CodeInfo for Main.__atexample__named__pcm at statement 0, Ptr{Nothing} @0x00007fd7faa822e4, Ptr{Nothing} @0x00007fd7faa82a99, Ptr{Nothing} @0x00007fd7faa83eab, Ptr{Nothing} @0x00007fd7cfb6b9a4, Ptr{Nothing} @0x00007fd7cfb6bc65, Ptr{Nothing} @0x00007fd7cfb6c522, Ptr{Nothing} @0x00007fd7cfb6cae2, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7e47f7475, Ptr{Nothing} @0x00007fd7cfb6b040, Ptr{Nothing} @0x00007fd7cfb6b243, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7cfb69f36, Ptr{Nothing} @0x00007fd7cfb69f79, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7cfb67cac, Ptr{Nothing} @0x00007fd7cfb69d21, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7faa59548, Ptr{Nothing} @0x00007fd7f4fd091a, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7f4fcfbcb, Ptr{Nothing} @0x00007fd7f4fd004e, Ptr{Nothing} @0x00007fd7f4fd02d6, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7f4f3d2b0, Ptr{Nothing} @0x00007fd7f4f3d45a, Ptr{Nothing} @0x00007fd7f4f3d8ee, Ptr{Nothing} @0x00007fd7f4f3da59, Ptr{Nothing} @0x00007fd7f4f3da95, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7f4f2351b, Ptr{Nothing} @0x00007fd7faa82603, Ptr{Nothing} @0x00007fd7faa82a99, Ptr{Nothing} @0x00007fd7faa83eab, Ptr{Nothing} @0x00007fd7e5a36331, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7e4c79460, Ptr{Nothing} @0x00007fd7e4e2e2de, Ptr{Nothing} @0x00007fd7e52285ca, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7e5350e13, Ptr{Nothing} @0x00007fd7e4f9327d, Ptr{Nothing} @0x00007fd7e4f933b3, Ptr{Nothing} @0x00007fd7faa46f8d, Ptr{Nothing} @0x00007fd7faab1ec5, Ptr{Nothing} @0x00007fd7faab294e, Ptr{Nothing} @0x0000000000401088, Ptr{Nothing} @0x00007fd7fb829d8f, Ptr{Nothing} @0x00007fd7fb829e3f, Ptr{Nothing} @0x00000000004010b8])
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:725
