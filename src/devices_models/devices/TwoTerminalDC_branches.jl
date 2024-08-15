@@ -171,7 +171,7 @@ end
 
 function _get_range_segments(::PSY.TwoTerminalHVDCLine, loss::PSY.PiecewiseIncrementalCurve)
     loss_factors = PSY.get_slopes(loss)
-    return 1:length(loss_factors)
+    return 1:(2 * length(loss_factors) + 2)
 end
 
 function _get_pwl_loss_params(d::PSY.TwoTerminalHVDCLine, loss::PSY.LinearCurve)
@@ -253,6 +253,78 @@ function add_constraints!(
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalHVDCLine}
     var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
+    var_pwl_bin = get_variable(container, HVDCPiecewiseBinaryLossVariable(), U)
+    names = PSY.get_name.(devices)
+    time_steps = get_time_steps(container)
+    flow_ft = get_variable(container, FlowActivePowerFromToVariable(), U)
+    flow_tf = get_variable(container, FlowActivePowerToFromVariable(), U)
+
+    constraint_from_to =
+        add_constraints_container!(container, T(), U, names, time_steps; meta = "ft")
+    constraint_to_from =
+        add_constraints_container!(container, T(), U, names, time_steps; meta = "tf")
+    constraint_binary =
+        add_constraints_container!(container, T(), U, names, time_steps; meta = "bin")
+    for d in devices
+        name = PSY.get_name(d)
+        loss = PSY.get_loss(d)
+        from_to_params, to_from_params = _get_pwl_loss_params(d, loss)
+        #@show from_to_params
+        #@show to_from_params
+        range_segments = 1:(length(from_to_params) - 1) # 1:(2S+1)
+        for t in time_steps
+            ## Add Equality Constraints ##
+            constraint_from_to[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                flow_ft[name, t] ==
+                sum(
+                    var_pwl_bin[name, ix, t] * from_to_params[ix] for
+                    ix in range_segments
+                ) + sum(
+                    var_pwl[name, ix, t] * (from_to_params[ix + 1] - from_to_params[ix]) for
+                    ix in range_segments
+                )
+            )
+            constraint_to_from[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                flow_tf[name, t] ==
+                sum(
+                    var_pwl_bin[name, ix, t] * to_from_params[ix] for
+                    ix in range_segments
+                ) + sum(
+                    var_pwl[name, ix, t] * (to_from_params[ix + 1] - to_from_params[ix]) for
+                    ix in range_segments
+                )
+            )
+            ## Add Binary Bound ###
+            constraint_binary[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                sum(var_pwl_bin[name, ix, t] for ix in range_segments) == 1.0
+            )
+            ## Add Bounds for Continuous ##
+            for ix in range_segments
+                JuMP.@constraint(
+                    get_jump_model(container),
+                    var_pwl[name, ix, t] <= var_pwl_bin[name, ix, t]
+                )
+                if ix == div(length(range_segments) + 1, 2)
+                    JuMP.fix(var_pwl[name, ix, t], 0.0; force = true)
+                end
+            end
+        end
+    end
+    return
+end
+
+# SOS Model
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    ::DeviceModel{U, HVDCTwoTerminalSOSPiecewiseLoss},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalHVDCLine}
+    var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
     names = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
     flow_ft = get_variable(container, FlowActivePowerFromToVariable(), U)
@@ -266,6 +338,8 @@ function add_constraints!(
         name = PSY.get_name(d)
         loss = PSY.get_loss(d)
         from_to_params, to_from_params = _get_pwl_loss_params(d, loss)
+        #@show from_to_params
+        #@show to_from_params
         segments = _get_range_segments(d, loss)
         for t in time_steps
             ## Add Equality Constraints ##
@@ -439,7 +513,11 @@ function add_constraints!(
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
     U <: PSY.TwoTerminalHVDCLine,
-    V <: Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
+    V <: Union{
+        HVDCTwoTerminalDispatch,
+        HVDCTwoTerminalPiecewiseLoss,
+        HVDCTwoTerminalSOSPiecewiseLoss,
+    },
 }
     inter_network_branches = U[]
     for d in devices
@@ -464,7 +542,11 @@ function add_constraints!(
 ) where {
     T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
     U <: PSY.TwoTerminalHVDCLine,
-    V <: Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
+    V <: Union{
+        HVDCTwoTerminalDispatch,
+        HVDCTwoTerminalPiecewiseLoss,
+        HVDCTwoTerminalSOSPiecewiseLoss,
+    },
 }
     _add_hvdc_flow_constraints!(container, devices, T())
     return

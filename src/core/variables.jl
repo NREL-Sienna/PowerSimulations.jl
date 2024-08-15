@@ -233,9 +233,16 @@ abstract type SparseVariableType <: VariableType end
 """
 Struct to dispatch the creation of HVDC Piecewise Loss Variables
 
-Docs abbreviation: ``h``
+Docs abbreviation: ``h`` or ``w``
 """
 struct HVDCPiecewiseLossVariable <: SparseVariableType end
+
+"""
+Struct to dispatch the creation of HVDC Piecewise Binary Loss Variables
+
+Docs abbreviation: ``z``
+"""
+struct HVDCPiecewiseBinaryLossVariable <: SparseVariableType end
 
 """
 Struct to dispatch the creation of piecewise linear cost variables for objective function
@@ -282,6 +289,7 @@ const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
+should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true

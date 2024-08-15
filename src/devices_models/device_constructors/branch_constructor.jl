@@ -761,9 +761,12 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, HVDCTwoTerminalPiecewiseLoss},
+    model::DeviceModel{T, U},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {T <: TwoTerminalHVDCTypes}
+) where {
+    T <: TwoTerminalHVDCTypes,
+    U <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+}
     devices =
         get_available_components(model, sys)
     add_variables!(
@@ -803,9 +806,12 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, HVDCTwoTerminalPiecewiseLoss},
+    model::DeviceModel{T, U},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {T <: TwoTerminalHVDCTypes}
+) where {
+    T <: TwoTerminalHVDCTypes,
+    U <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+}
     devices =
         get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
