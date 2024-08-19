@@ -164,9 +164,9 @@ end
 function set_service_model!(
     template::ProblemTemplate,
     service_name::String,
-    model::ServiceModel{<:PSY.Service, <:AbstractServiceFormulation},
-)
-    _set_model!(template.services, service_name, model)
+    model::ServiceModel{T, <:AbstractServiceFormulation},
+) where {T <: PSY.Service}
+    _set_model!(template.services, (service_name, Symbol(T)), model)
     return
 end
 
@@ -264,12 +264,20 @@ function _modify_device_model!(
     return
 end
 
+function _modify_device_model!(
+    ::Dict{Symbol, DeviceModel},
+    ::ServiceModel{PSY.TransmissionInterface, VariableMaxInterfaceFlow},
+    ::Vector,
+)
+    return
+end
+
 function _add_services_to_device_model!(template::ProblemTemplate)
     service_models = get_service_models(template)
     devices_template = get_device_models(template)
     for (service_key, service_model) in service_models
         S = get_component_type(service_model)
-        (S <: PSY.AGC || S <: PSY.StaticReserveGroup) && continue
+        (S <: PSY.AGC || S <: PSY.ConstantReserveGroup) && continue
         contributing_devices = get_contributing_devices(service_model)
         isempty(contributing_devices) && continue
         _modify_device_model!(devices_template, service_model, contributing_devices)
@@ -308,7 +316,17 @@ function _populate_aggregated_service_model!(template::ProblemTemplate, sys::PSY
     return
 end
 
+function _add_modeled_lines!(template::ProblemTemplate, sys::PSY.System)
+    network_model = get_network_model(template)
+    branch_models = get_branch_models(template)
+    for v in values(branch_models)
+        push!(network_model.modeled_branch_types, get_component_type(v))
+    end
+    return
+end
+
 function finalize_template!(template::ProblemTemplate, sys::PSY.System)
+    _add_modeled_lines!(template, sys)
     _populate_aggregated_service_model!(template, sys)
     _populate_contributing_devices!(template, sys)
     _add_services_to_device_model!(template)

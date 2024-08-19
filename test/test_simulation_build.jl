@@ -22,7 +22,7 @@
     )
 
     build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
 
     for field in fieldnames(SimulationSequence)
         if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
@@ -73,7 +73,7 @@ end
         initial_time = second_day,
     )
     build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
 
     for model in PSI.get_decision_models(PSI.get_models(sim))
         @test PSI.get_initial_time(model) == second_day
@@ -181,32 +181,32 @@ end
         simulation_folder = mktempdir(; cleanup = true),
     )
     build_out = build!(sim)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
     ac_power_model = PSI.get_simulation_model(PSI.get_models(sim), :ED)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ActivePowerVariable_ub",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ActivePowerVariable_lb",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ReactivePowerVariable_ub",
     )
     @test !isempty(c)
     c = PSI.get_constraint(
         PSI.get_optimization_container(ac_power_model),
-        FeedforwardSemiContinousConstraint(),
+        FeedforwardSemiContinuousConstraint(),
         ThermalStandard,
         "ReactivePowerVariable_lb",
     )

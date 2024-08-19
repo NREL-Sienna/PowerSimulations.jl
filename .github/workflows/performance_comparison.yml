@@ -33,6 +33,14 @@ jobs:
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}"
           echo "::set-output name=body::$body"
+      - name: Read solve results
+        id: solve_results
+        run: |
+          body="$(cat solve_time.txt)"
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}"
+          echo "::set-output name=body::$body"
       - name: Find Comment
         uses: peter-evans/find-comment@v1
         id: fc
@@ -54,6 +62,10 @@ jobs:
             | Version      | Build Time |
             | :---        |    :----:   |
             ${{ steps.build_results.outputs.body }}
+
+            | Version      | Solve Time |
+            | :---        |    :----:   |
+            ${{ steps.solve_results.outputs.body }}
       - name: Update comment
         if: steps.fc.outputs.comment-id != ''
         uses: peter-evans/create-or-update-comment@v1
@@ -68,5 +80,9 @@ jobs:
             | Version      | Build Time |
             | :---        |    :----:   |
             ${{ steps.build_results.outputs.body }}
+
+            | Version      | Build Time |
+            | :---        |    :----:   |
+            ${{ steps.solve_results.outputs.body }}
 
           edit-mode: replace

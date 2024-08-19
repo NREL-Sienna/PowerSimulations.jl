@@ -1,58 +1,79 @@
 # Default implementations of getter/setter functions for OperationModel.
-is_built(model::OperationModel) = model.internal.status == BuildStatus.BUILT
-isempty(model::OperationModel) = model.internal.status == BuildStatus.EMPTY
+is_built(model::OperationModel) =
+    IS.Optimization.get_status(get_internal(model)) == ModelBuildStatus.BUILT
+isempty(model::OperationModel) =
+    IS.Optimization.get_status(get_internal(model)) == ModelBuildStatus.EMPTY
 warm_start_enabled(model::OperationModel) =
     get_warm_start(get_optimization_container(model).settings)
 built_for_recurrent_solves(model::OperationModel) =
     get_optimization_container(model).built_for_recurrent_solves
-get_constraints(model::OperationModel) = get_internal(model).container.constraints
-get_execution_count(model::OperationModel) = get_internal(model).execution_count
-get_executions(model::OperationModel) = get_internal(model).executions
+get_constraints(model::OperationModel) =
+    IS.Optimization.get_constraints(get_internal(model))
+get_execution_count(model::OperationModel) =
+    IS.Optimization.get_execution_count(get_internal(model))
+get_executions(model::OperationModel) = IS.Optimization.get_executions(get_internal(model))
 get_initial_time(model::OperationModel) = get_initial_time(get_settings(model))
 get_internal(model::OperationModel) = model.internal
-get_jump_model(model::OperationModel) = get_jump_model(get_internal(model).container)
+
+function get_jump_model(model::OperationModel)
+    return get_jump_model(IS.Optimization.get_container(get_internal(model)))
+end
+
 get_name(model::OperationModel) = model.name
 get_store(model::OperationModel) = model.store
 is_synchronized(model::OperationModel) = is_synchronized(get_optimization_container(model))
 
 function get_rebuild_model(model::OperationModel)
-    sim_info = get_internal(model).simulation_info
+    sim_info = model.simulation_info
     if sim_info === nothing
         error("Model not part of a simulation")
     end
     return get_rebuild_model(get_optimization_container(model).settings)
 end
 
-get_optimization_container(model::OperationModel) = get_internal(model).container
+function get_optimization_container(model::OperationModel)
+    return IS.Optimization.get_optimization_container(get_internal(model))
+end
+
 function get_resolution(model::OperationModel)
-    resolution = PSY.get_time_series_resolution(get_system(model))
-    return IS.time_period_conversion(resolution)
+    resolution = get_resolution(get_settings(model))
+    return resolution
 end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
 get_settings(model::OperationModel) = get_optimization_container(model).settings
 get_optimizer_stats(model::OperationModel) =
     get_optimizer_stats(get_optimization_container(model))
-get_simulation_info(model::OperationModel) = model.internal.simulation_info
-get_simulation_number(model::OperationModel) = model.internal.simulation_info.number
-get_status(model::OperationModel) = model.internal.status
+get_simulation_info(model::OperationModel) = model.simulation_info
+get_simulation_number(model::OperationModel) = get_number(get_simulation_info(model))
+set_simulation_number!(model::OperationModel, val) =
+    set_number!(get_simulation_info(model), val)
+get_sequence_uuid(model::OperationModel) = get_sequence_uuid(get_simulation_info(model))
+set_sequence_uuid!(model::OperationModel, val) =
+    set_sequence_uuid!(get_simulation_info(model), val)
+get_status(model::OperationModel) = IS.Optimization.get_status(get_internal(model))
 get_system(model::OperationModel) = model.sys
 get_template(model::OperationModel) = model.template
 get_log_file(model::OperationModel) = joinpath(get_output_dir(model), PROBLEM_LOG_FILENAME)
-get_output_dir(model::OperationModel) = model.internal.output_dir
+get_store_params(model::OperationModel) =
+    IS.Optimization.get_store_params(get_internal(model))
+get_output_dir(model::OperationModel) = IS.Optimization.get_output_dir(get_internal(model))
 get_initial_conditions_file(model::OperationModel) =
-    joinpath(model.internal.output_dir, "initial_conditions.bin")
-get_recorder_dir(model::OperationModel) = joinpath(model.internal.output_dir, "recorder")
+    joinpath(get_output_dir(model), "initial_conditions.bin")
+get_recorder_dir(model::OperationModel) =
+    joinpath(get_output_dir(model), "recorder")
 get_variables(model::OperationModel) = get_variables(get_optimization_container(model))
 get_parameters(model::OperationModel) = get_parameters(get_optimization_container(model))
 get_duals(model::OperationModel) = get_duals(get_optimization_container(model))
 get_initial_conditions(model::OperationModel) =
     get_initial_conditions(get_optimization_container(model))
 
-get_interval(model::OperationModel) = model.internal.store_parameters.interval
-get_run_status(model::OperationModel) = model.internal.run_status
-set_run_status!(model::OperationModel, status) = model.internal.run_status = status
-get_time_series_cache(model::OperationModel) = model.internal.time_series_cache
+get_interval(model::OperationModel) = get_store_params(model).interval
+get_run_status(model::OperationModel) = get_run_status(get_simulation_info(model))
+set_run_status!(model::OperationModel, status) =
+    set_run_status!(get_simulation_info(model), status)
+get_time_series_cache(model::OperationModel) =
+    IS.Optimization.get_time_series_cache(get_internal(model))
 empty_time_series_cache!(x::OperationModel) = empty!(get_time_series_cache(x))
 
 function get_current_timestamp(model::OperationModel)
@@ -61,10 +82,11 @@ function get_current_timestamp(model::OperationModel)
 end
 
 function get_timestamps(model::OperationModel)
-    start_time = get_initial_time(get_optimization_container(model))
+    optimization_container = get_optimization_container(model)
+    start_time = get_initial_time(optimization_container)
     resolution = get_resolution(model)
-    horizon = get_horizon(model)
-    return range(start_time; length = horizon, step = resolution)
+    horizon_count = get_time_steps(optimization_container)[end]
+    return range(start_time; length = horizon_count, step = resolution)
 end
 
 function write_data(model::OperationModel, output_dir::AbstractString; kwargs...)
@@ -84,12 +106,12 @@ function solve_impl!(model::OperationModel)
     container = get_optimization_container(model)
     status = solve_impl!(container, get_system(model))
     set_run_status!(model, status)
-    if status != RunStatus.SUCCESSFUL
+    if status != RunStatus.SUCCESSFULLY_FINALIZED
         settings = get_settings(model)
         model_name = get_name(model)
         ts = get_current_timestamp(model)
         output_dir = get_output_dir(model)
-        infeasible_opt_path = joinpath(output_dir, "infeasible_$(model_name)_$(ts).json")
+        infeasible_opt_path = joinpath(output_dir, "infeasible_$(model_name).json")
         @error("Serializing Infeasible Problem at $(infeasible_opt_path)")
         serialize_optimization_model(container, infeasible_opt_path)
         if !get_allow_fails(settings)
@@ -101,20 +123,34 @@ function solve_impl!(model::OperationModel)
     return
 end
 
-set_console_level!(model::OperationModel, val) = get_internal(model).console_level = val
-set_file_level!(model::OperationModel, val) = get_internal(model).file_level = val
-set_executions!(model::OperationModel, val::Int) = model.internal.executions = val
-set_execution_count!(model::OperationModel, val::Int) =
-    get_internal(model).execution_count = val
-set_initial_time!(model::OperationModel, val::Dates.DateTime) =
-    set_initial_time!(get_settings(model), val)
-set_simulation_info!(model::OperationModel, info) = model.internal.simulation_info = info
-function set_status!(model::OperationModel, status::BuildStatus)
-    model.internal.status = status
+set_console_level!(model::OperationModel, val) =
+    IS.Optimization.set_console_level!(get_internal(model), val)
+set_file_level!(model::OperationModel, val) =
+    IS.Optimization.set_file_level!(get_internal(model), val)
+function set_executions!(model::OperationModel, val::Int)
+    IS.Optimization.set_executions!(get_internal(model), val)
     return
 end
-set_output_dir!(model::OperationModel, path::AbstractString) =
-    get_internal(model).output_dir = path
+
+function set_execution_count!(model::OperationModel, val::Int)
+    IS.Optimization.set_execution_count!(get_internal(model), val)
+    return
+end
+
+set_initial_time!(model::OperationModel, val::Dates.DateTime) =
+    set_initial_time!(get_settings(model), val)
+
+get_simulation_info(model::OperationModel, val) = model.simulation_info = val
+
+function set_status!(model::OperationModel, status::ModelBuildStatus)
+    IS.Optimization.set_status!(get_internal(model), status)
+    return
+end
+
+function set_output_dir!(model::OperationModel, path::AbstractString)
+    IS.Optimization.set_output_dir!(get_internal(model), path)
+    return
+end
 
 function advance_execution_count!(model::OperationModel)
     internal = get_internal(model)
@@ -123,7 +159,8 @@ function advance_execution_count!(model::OperationModel)
 end
 
 function build_initial_conditions!(model::OperationModel)
-    @assert model.internal.ic_model_container === nothing
+    @assert IS.Optimization.get_initial_conditions_model_container(get_internal(model)) ===
+            nothing
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
@@ -143,7 +180,7 @@ end
 function write_initial_conditions_data!(model::OperationModel)
     write_initial_conditions_data!(
         get_optimization_container(model),
-        model.internal.ic_model_container,
+        IS.Optimization.get_initial_conditions_model_container(get_internal(model)),
     )
     return
 end
@@ -185,7 +222,7 @@ function handle_initial_conditions!(model::OperationModel)
 
         if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
             set_initial_conditions_data!(
-                model.internal.container,
+                get_optimization_container(model),
                 Serialization.deserialize(serialized_initial_conditions_file),
             )
             @info "Deserialized initial_conditions_data"
@@ -194,23 +231,33 @@ function handle_initial_conditions!(model::OperationModel)
             build_initial_conditions!(model)
             initialize!(model)
         end
-        model.internal.ic_model_container = nothing
+        IS.Optimization.set_initial_conditions_model_container!(
+            get_internal(model),
+            nothing,
+        )
     end
     return
 end
 
 function initialize!(model::OperationModel)
     container = get_optimization_container(model)
-    if model.internal.ic_model_container === nothing
+    if IS.Optimization.get_initial_conditions_model_container(get_internal(model)) ===
+       nothing
         return
     end
     @info "Solving Initialization Model for $(get_name(model))"
-    status = solve_impl!(model.internal.ic_model_container, get_system(model))
+    status = solve_impl!(
+        IS.Optimization.get_initial_conditions_model_container(get_internal(model)),
+        get_system(model),
+    )
     if status == RunStatus.FAILED
         error("Model failed to initialize")
     end
 
-    write_initial_conditions_data!(container, model.internal.ic_model_container)
+    write_initial_conditions_data!(
+        container,
+        IS.Optimization.get_initial_conditions_model_container(get_internal(model)),
+    )
     init_file = get_initial_conditions_file(model)
     Serialization.serialize(init_file, get_initial_conditions_data(container))
     @info "Serialized initial conditions to $init_file"
@@ -241,9 +288,9 @@ function validate_template(model::OperationModel)
     return
 end
 
-function build_if_not_already_built!(model; kwargs...)
+function build_if_not_already_built!(model::OperationModel; kwargs...)
     status = get_status(model)
-    if status == BuildStatus.EMPTY
+    if status == ModelBuildStatus.EMPTY
         if !haskey(kwargs, :output_dir)
             error(
                 "'output_dir' must be provided as a kwarg if the model build status is $status",
@@ -253,7 +300,7 @@ function build_if_not_already_built!(model; kwargs...)
             status = build!(model; new_kwargs...)
         end
     end
-    if status != BuildStatus.BUILT
+    if status != ModelBuildStatus.BUILT
         error("build! of the $(typeof(model)) $(get_name(model)) failed: $status")
     end
     return
@@ -306,17 +353,21 @@ function _pre_solve_model_checks(model::OperationModel, optimizer = nothing)
     end
 
     optimizer_name = JuMP.solver_name(jump_model)
-    @info "Solving $(get_name(model)) with optimizer = $optimizer_name"
+    @info "$(get_name(model)) optimizer set to: $optimizer_name"
     settings = get_settings(model)
     if get_check_numerical_bounds(settings)
-        _check_numerical_bounds(model)
+        @info "Checking Numerical Bounds"
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Numerical Bounds Check" begin
+            _check_numerical_bounds(model)
+        end
     end
-
     return
 end
 
 function _list_names(model::OperationModel, container_type)
-    return encode_keys_as_strings(list_keys(get_store(model), container_type))
+    return encode_keys_as_strings(
+        IS.Optimization.list_keys(get_store(model), container_type),
+    )
 end
 
 read_dual(model::OperationModel, key::ConstraintKey) = _read_results(model, key)
@@ -353,20 +404,20 @@ read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(mod
 function add_recorders!(model::OperationModel, recorders)
     internal = get_internal(model)
     for name in union(REQUIRED_RECORDERS, recorders)
-        add_recorder!(internal, name)
+        IS.Optimization.add_recorder!(internal, name)
     end
 end
 
 function register_recorders!(model::OperationModel, file_mode)
     recorder_dir = get_recorder_dir(model)
     mkpath(recorder_dir)
-    for name in get_recorders(get_internal(model))
+    for name in IS.Optimization.get_recorders(get_internal(model))
         IS.register_recorder!(name; mode = file_mode, directory = recorder_dir)
     end
 end
 
 function unregister_recorders!(model::OperationModel)
-    for name in get_recorders(get_internal(model))
+    for name in IS.Optimization.get_recorders(get_internal(model))
         IS.unregister_recorder!(name)
     end
 end
@@ -399,16 +450,19 @@ function instantiate_network_model(model::OperationModel)
 end
 
 list_aux_variable_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_AUX_VARIABLES)
 list_aux_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_AUX_VARIABLES)
-list_variable_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
+list_variable_keys(x::OperationModel) =
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_VARIABLES)
 list_variable_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_VARIABLES)
-list_parameter_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
+list_parameter_keys(x::OperationModel) =
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_PARAMETERS)
 list_parameter_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_PARAMETERS)
-list_dual_keys(x::OperationModel) = list_keys(get_store(x), STORE_CONTAINER_DUALS)
+list_dual_keys(x::OperationModel) =
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_DUALS)
 list_dual_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_DUALS)
 list_expression_keys(x::OperationModel) =
-    list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
+    IS.Optimization.list_keys(get_store(x), STORE_CONTAINER_EXPRESSIONS)
 list_expression_names(x::OperationModel) = _list_names(x, STORE_CONTAINER_EXPRESSIONS)
 
 function list_all_keys(x::OperationModel)

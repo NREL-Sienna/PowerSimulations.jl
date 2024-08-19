@@ -40,7 +40,7 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.use_slacks = service_model.use_slacks
         base_model.time_series_names = service_model.time_series_names
         base_model.attributes = service_model.attributes
-        set_service_model!(ic_template, base_model)
+        set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
     return ic_template
 end
@@ -62,26 +62,36 @@ function _make_init_jump_model(ic_settings::Settings)
 end
 
 function build_initial_conditions_model!(model::T) where {T <: OperationModel}
-    model.internal.ic_model_container = deepcopy(get_optimization_container(model))
-    ic_settings = deepcopy(model.internal.ic_model_container.settings)
+    internal = get_internal(model)
+    IS.Optimization.set_initial_conditions_model_container!(
+        internal,
+        deepcopy(get_optimization_container(model)),
+    )
+    ic_container = IS.Optimization.get_initial_conditions_model_container(internal)
+    ic_settings = deepcopy(get_settings(ic_container))
     main_problem_horizon = get_horizon(ic_settings)
     # TODO: add an interface to allow user to configure initial_conditions problem
-    model.internal.ic_model_container.JuMPmodel = _make_init_jump_model(ic_settings)
+    ic_container.JuMPmodel = _make_init_jump_model(ic_settings)
     template = get_initial_conditions_template(model)
-    model.internal.ic_model_container.settings = ic_settings
-    model.internal.ic_model_container.built_for_recurrent_solves = false
-    set_horizon!(ic_settings, min(INITIALIZATION_PROBLEM_HORIZON, main_problem_horizon))
+    ic_container.settings = ic_settings
+    ic_container.built_for_recurrent_solves = false
+    init_horizon = INITIALIZATION_PROBLEM_HORIZON_COUNT * get_resolution(ic_settings)
+    set_horizon!(ic_settings, min(init_horizon, main_problem_horizon))
     init_optimization_container!(
-        model.internal.ic_model_container,
+        IS.Optimization.get_initial_conditions_model_container(internal),
         get_network_model(get_template(model)),
         get_system(model),
     )
     JuMP.set_string_names_on_creation(
-        get_jump_model(model.internal.ic_model_container),
+        get_jump_model(IS.Optimization.get_initial_conditions_model_container(internal)),
         false,
     )
-    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build Initialization $(get_name(model))" begin
-        build_impl!(model.internal.ic_model_container, template, get_system(model))
-    end
+    TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
+    build_impl!(
+        model.internal.initial_conditions_model_container,
+        template,
+        get_system(model),
+    )
+    TimerOutputs.enable_timer!(BUILD_PROBLEMS_TIMER)
     return
 end

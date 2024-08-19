@@ -1,12 +1,18 @@
 """
 Stores results data for one DecisionModel
 """
-mutable struct DecisionModelStore <: AbstractModelStore
+mutable struct DecisionModelStore <: IS.Optimization.AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
     duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    parameters::Dict{
+        ParameterKey,
+        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+    }
     variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    aux_variables::Dict{
+        AuxVarKey,
+        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+    }
     expressions::Dict{
         ExpressionKey,
         OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
@@ -27,7 +33,7 @@ end
 
 function initialize_storage!(
     store::DecisionModelStore,
-    container::AbstractModelContainer,
+    container::IS.Optimization.AbstractOptimizationContainer,
     params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
@@ -91,8 +97,7 @@ function write_result!(
         columns = string.(columns)
     end
     container = getfield(store, get_store_container_type(key))
-    container[key][index] =
-        DenseAxisArray(reshape(array.data, 1, length(columns)), ["1"], columns)
+    container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns)
     return
 end
 
@@ -125,7 +130,7 @@ function write_optimizer_stats!(
 end
 
 function read_optimizer_stats(store::DecisionModelStore)
-    stats = [to_namedtuple(x) for x in values(store.optimizer_stats)]
+    stats = [IS.to_namedtuple(x) for x in values(store.optimizer_stats)]
     df = DataFrames.DataFrame(stats)
     DataFrames.insertcols!(df, 1, :DateTime => keys(store.optimizer_stats))
     return df

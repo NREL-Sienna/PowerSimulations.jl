@@ -1,32 +1,4 @@
-# SIIP Packages
-using PowerSimulations
-using PowerSystems
-using PowerSystemCaseBuilder
-using InfrastructureSystems
-using PowerNetworkMatrices
-using HydroPowerSimulations
-import PowerSystemCaseBuilder: PSITestSystems
-using PowerNetworkMatrices
-using StorageSystemsSimulations
-
-# Test Packages
-using Test
-using Logging
-
-# Dependencies for testing
-using PowerModels
-using DataFrames
-using Dates
-using JuMP
-using TimeSeries
-using CSV
-import JSON3
-using DataFrames
-using DataStructures
-import UUIDs
-using Random
-import Serialization
-using Base.Filesystem
+include("includes.jl")
 
 # Code Quality Tests
 import Aqua
@@ -34,25 +6,7 @@ Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
 Aqua.test_ambiguities(PowerSimulations)
 
-const PM = PowerModels
-const PSY = PowerSystems
-const PSI = PowerSimulations
-const PSB = PowerSystemCaseBuilder
-const PNM = PowerNetworkMatrices
-
-const IS = InfrastructureSystems
-const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
-const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
-
-include("test_utils/common_operation_model.jl")
-include("test_utils/model_checks.jl")
-include("test_utils/mock_operation_models.jl")
-include("test_utils/solver_definitions.jl")
-include("test_utils/operations_problem_templates.jl")
-
 const LOG_FILE = "power-simulations-test.log"
-
-ENV["RUNNING_PSI_TESTS"] = "true"
 
 const DISABLED_TEST_FILES = [
 # "test_basic_model_structs.jl",
@@ -68,7 +22,7 @@ const DISABLED_TEST_FILES = [
 # "test_problem_template.jl",
 # "test_model_emulation.jl",
 # "test_network_constructors.jl",
-"test_services_constructor.jl",
+# "test_services_constructor.jl",
 # "test_simulation_models.jl",
 # "test_simulation_sequence.jl",
 # "test_simulation_build.jl",

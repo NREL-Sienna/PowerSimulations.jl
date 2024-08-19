@@ -59,7 +59,7 @@ function add_parameters!(
     ::Type{T},
     service::U,
     model::ServiceModel{U, V},
-) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
+) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractServiceFormulation}
     if get_rebuild_model(get_settings(container)) &&
        has_container_key(container, T, U, PSY.get_name(service))
         return
@@ -198,7 +198,7 @@ function _add_time_series_parameters!(
     initial_values = Dict{String, AbstractArray}()
     for device in devices
         push!(device_names, PSY.get_name(device))
-        ts_uuid = get_time_series_uuid(ts_type, device, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(ts_type, device, ts_name))
         if !(ts_uuid in keys(initial_values))
             initial_values[ts_uuid] =
                 get_time_series_initial_values!(container, ts_type, device, ts_name)
@@ -233,7 +233,7 @@ function _add_time_series_parameters!(
         add_component_name!(
             get_attributes(param_container),
             name,
-            get_time_series_uuid(ts_type, device, ts_name),
+            string(IS.get_time_series_uuid(ts_type, device, ts_name)),
         )
     end
     return
@@ -258,7 +258,7 @@ function _add_parameters!(
     ::T,
     service::U,
     model::ServiceModel{U, V},
-) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractReservesFormulation}
+) where {T <: TimeSeriesParameter, U <: PSY.Service, V <: AbstractServiceFormulation}
     ts_type = get_default_time_series_type(container)
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
@@ -267,7 +267,7 @@ function _add_parameters!(
     time_series_mult_id = _create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
-    ts_uuid = get_time_series_uuid(ts_type, service, ts_name)
+    ts_uuid = string(IS.get_time_series_uuid(ts_type, service, ts_name))
     @debug "adding" T U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     parameter_container = add_param_container!(
         container,
@@ -401,8 +401,7 @@ function _add_parameters!(
         D,
         key,
         names,
-        time_steps;
-        meta = get_service_name(model),
+        time_steps,
     )
     jump_model = get_jump_model(container)
 

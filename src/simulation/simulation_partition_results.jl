@@ -59,11 +59,11 @@ _store_subpath() = joinpath("data_store", "simulation_store.h5")
 _store_path(x::SimulationPartitionResults) = joinpath(x.path, _store_subpath())
 
 function _check_jobs(results::SimulationPartitionResults)
-    overall_status = RunStatus.SUCCESSFUL
+    overall_status = RunStatus.SUCCESSFULLY_FINALIZED
     for i in 1:get_num_partitions(results.partitions)
         job_results_path = joinpath(_partition_path(results, 1), "results")
         status = deserialize_status(job_results_path)
-        if status != RunStatus.SUCCESSFUL
+        if status != RunStatus.SUCCESSFULLY_FINALIZED
             @warn "partition job index = $i was not successful: $status"
             overall_status = status
         end
@@ -186,6 +186,6 @@ end
 function _complete(results::SimulationPartitionResults, status)
     serialize_status(status, joinpath(results.path, "results"))
     store_path = _store_path(results)
-    compute_file_hash(dirname(store_path), basename(store_path))
+    IS.compute_file_hash(dirname(store_path), basename(store_path))
     return
 end

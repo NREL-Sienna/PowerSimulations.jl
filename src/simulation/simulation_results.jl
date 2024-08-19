@@ -1,6 +1,7 @@
 function check_folder_integrity(folder::String)
     folder_files = readdir(folder)
     alien_files = setdiff(folder_files, KNOWN_SIMULATION_PATHS)
+    alien_files = filter(x -> !any(occursin.(IGNORABLE_FILES, x)), alien_files)
     if isempty(alien_files)
         return true
     else
@@ -334,7 +335,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
 
@@ -348,7 +355,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
 
@@ -362,7 +375,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
 
@@ -376,7 +395,13 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                    IS.Optimization.export_result(
+                        file_type,
+                        export_path,
+                        name,
+                        timestamp,
+                        dfs[timestamp],
+                    )
                 end
             end
         end
@@ -391,76 +416,27 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     count = 1,
                     store = store,
                 )
-                export_result(file_type, export_path, name, timestamp, dfs[timestamp])
+                IS.Optimization.export_result(
+                    file_type,
+                    export_path,
+                    name,
+                    timestamp,
+                    dfs[timestamp],
+                )
             end
         end
 
         if problem_exports.optimizer_stats
             export_path = joinpath(path, problem_results.problem, "optimizer_stats.csv")
             df = read_optimizer_stats(problem_results; store = store)
-            export_result(file_type, export_path, df)
+            IS.Optimization.export_result(file_type, export_path, df)
         end
     end
     return
 end
 
-function export_result(
-    ::Type{CSV.File},
-    path,
-    key::OptimizationContainerKey,
-    timestamp::Dates.DateTime,
-    df::DataFrames.DataFrame,
-)
-    name = encode_key_as_string(key)
-    export_result(CSV.File, path, name, timestamp, df)
-    return
-end
-
-function export_result(
-    ::Type{CSV.File},
-    path,
-    name::AbstractString,
-    timestamp::Dates.DateTime,
-    df::DataFrames.DataFrame,
-)
-    filename = joinpath(path, name * "_" * convert_for_path(timestamp) * ".csv")
-    export_result(CSV.File, filename, df)
-    return
-end
-
-function export_result(
-    ::Type{CSV.File},
-    path,
-    key::OptimizationContainerKey,
-    df::DataFrames.DataFrame,
-)
-    name = encode_key_as_string(key)
-    export_result(CSV.File, path, name, df)
-    return
-end
-
-function export_result(
-    ::Type{CSV.File},
-    path,
-    name::AbstractString,
-    df::DataFrames.DataFrame,
-)
-    filename = joinpath(path, name * ".csv")
-    export_result(CSV.File, filename, df)
-    return
-end
-
-function export_result(::Type{CSV.File}, filename, df::DataFrames.DataFrame)
-    open(filename, "w") do io
-        CSV.write(io, df)
-    end
-
-    @debug "Exported $filename"
-    return
-end
-
 function _check_status(status::RunStatus, ignore_status)
-    status == RunStatus.SUCCESSFUL && return
+    status == RunStatus.SUCCESSFULLY_FINALIZED && return
 
     if ignore_status
         @warn "Simulation was not successful: $status. Results may not be valid."

@@ -2,14 +2,14 @@ function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
     if !isconcretetype(T)
         throw(
             ArgumentError(
-                "The device model must contain only concrete types, $(T) is an Abstract Type",
+                "The network model must contain only concrete types, $(T) is an Abstract Type",
             ),
         )
     end
 end
 
 """
-Establishes the model for a particular device specified by type.
+Establishes the model for the network specified by type.
 
 # Arguments
 
@@ -17,14 +17,14 @@ Establishes the model for a particular device specified by type.
 
 # Accepted Key Words
 
-  - `use_slacks::Bool`: Adds slacks to the network modelings
+  - `use_slacks::Bool`: Adds slacks to the network modeling
   - `PTDF::PTDF`: PTDF Array calculated using PowerNetworkMatrices
   - `duals::Vector{DataType}`: Constraint types to calculate the duals
   - `reduce_radial_branches::Bool`: Skips modeling radial branches in the system to reduce problem size
 # Example
 
 ptdf_array = PTDF(system)
-thermal_gens = NetworkModel(PTDFPowerModel, ptdf = ptdf_array),
+nw = NetworkModel(PTDFPowerModel, ptdf = ptdf_array),
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
@@ -36,6 +36,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     reduce_radial_branches::Bool
     power_flow_evaluation::Union{Nothing, PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
+    modeled_branch_types::Vector{DataType}
 
     function NetworkModel(
         ::Type{T};
@@ -57,6 +58,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             reduce_radial_branches,
             power_flow_evaluation,
             nothing,
+            Vector{DataType}(),
         )
     end
 end
@@ -122,7 +124,10 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(model::NetworkModel{PTDFPowerModel}, sys::PSY.System)
+function instantiate_network_model(
+    model::NetworkModel{<:AbstractPTDFModel},
+    sys::PSY.System,
+)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         model.PTDF_matrix =
@@ -144,7 +149,7 @@ end
 function _assign_subnetworks_to_buses(
     model::NetworkModel{T},
     sys::PSY.System,
-) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
+) where {T <: Union{CopperPlatePowerModel, AbstractPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
     radial_network_reduction = PSI.get_radial_network_reduction(model)

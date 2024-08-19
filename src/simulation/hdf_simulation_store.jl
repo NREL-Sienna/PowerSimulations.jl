@@ -231,7 +231,7 @@ Return the optimizer stats for a problem as a DataFrame.
 function read_optimizer_stats(store::HdfSimulationStore, model_name)
     dataset = _get_dataset(OptimizerStats, store, model_name)
     data = permutedims(dataset[:, :])
-    stats = [to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
+    stats = [IS.to_namedtuple(OptimizerStats(data[i, :])) for i in axes(data)[1]]
     return DataFrames.DataFrame(stats)
 end
 
@@ -507,7 +507,7 @@ function _read_result(
     #end
     columns = get_column_names(key, dataset)
     data = permutedims(data)
-    @assert_op size(data)[2] == length(columns)
+    @assert_op size(data)[2] == length(columns[1])
     @assert_op size(data)[1] == 1
     return data, columns
 end
@@ -644,38 +644,12 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    data::Array{Float64},
+    data::DenseAxisArray,
 )
     dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, data, index)
+    _write_dataset!(dataset.values, to_matrix(data), index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
-    return
-end
-
-function write_result!(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    data::DenseAxisArray{Float64, 2},
-)
-    data_array = Array{Float64, 3}(undef, size(data)[1], size(data)[2], 1)
-    data_array[:, :, 1] = data
-    write_result!(store, model_name, key, index, simulation_time, data_array)
-    return
-end
-
-function write_result!(
-    store::HdfSimulationStore,
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    data::DenseAxisArray{Float64, 1},
-)
-    write_result!(store, model_name, key, index, simulation_time, to_matrix(data))
     return
 end
 
@@ -766,11 +740,17 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     empty!(get_dm_data(store))
     for model in HDF5.read(HDF5.attributes(group)["problem_order"])
         problem_group = store.file["simulation/decision_models/$model"]
-        horizon = HDF5.read(HDF5.attributes(problem_group)["horizon"])
+        # Fall back on old key for backwards compatibility
+        horizon_count = HDF5.read(
+            if haskey(HDF5.attributes(problem_group), "horizon_count")
+                HDF5.attributes(problem_group)["horizon_count"]
+            else
+                HDF5.attributes(problem_group)["horizon"]
+            end)
         model_name = Symbol(model)
         store.params.decision_models_params[model_name] = ModelStoreParams(
             HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
-            horizon,
+            horizon_count,
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
             Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
             HDF5.read(HDF5.attributes(problem_group)["base_power"]),
@@ -785,7 +765,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                     column_dataset = group[_make_column_name(name)]
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
-                    dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                    dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
                     n_dims = max(1, ndims(dataset) - 2)
                     item = HDF5Dataset{n_dims}(
                         dataset,
@@ -811,12 +791,18 @@ function _deserialize_attributes!(store::HdfSimulationStore)
     end
 
     em_group = _get_emulation_model_path(store)
-    horizon = HDF5.read(HDF5.attributes(em_group)["horizon"])
+    # Fall back on old key for backwards compatibility
+    horizon_count = HDF5.read(
+        if haskey(HDF5.attributes(em_group), "horizon_count")
+            HDF5.attributes(em_group)["horizon_count"]
+        else
+            HDF5.attributes(em_group)["horizon"]
+        end)
     model_name = Symbol(HDF5.read(HDF5.attributes(em_group)["name"]))
     resolution = Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["resolution_ms"]))
     store.params.emulation_model_params[model_name] = ModelStoreParams(
         HDF5.read(HDF5.attributes(em_group)["num_executions"]),
-        HDF5.read(HDF5.attributes(em_group)["horizon"]),
+        horizon_count,
         Dates.Millisecond(HDF5.read(HDF5.attributes(em_group)["interval_ms"])),
         resolution,
         HDF5.read(HDF5.attributes(em_group)["base_power"]),
@@ -828,7 +814,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             if !endswith(name, "columns")
                 dataset = group[name]
                 column_dataset = group[_make_column_name(name)]
-                dims = (horizon, size(dataset)[2:end]..., size(dataset)[1])
+                dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
                 n_dims = max(1, ndims(dataset) - 1)
                 item = HDF5Dataset{n_dims}(
                     dataset,
@@ -862,8 +848,8 @@ function _serialize_attributes(store::HdfSimulationStore)
         problem_group = store.file["simulation/decision_models/$problem"]
         HDF5.attributes(problem_group)["num_executions"] =
             params.decision_models_params[problem].num_executions
-        HDF5.attributes(problem_group)["horizon"] =
-            params.decision_models_params[problem].horizon
+        HDF5.attributes(problem_group)["horizon_count"] =
+            params.decision_models_params[problem].horizon_count
         HDF5.attributes(problem_group)["resolution_ms"] =
             Dates.Millisecond(params.decision_models_params[problem].resolution).value
         HDF5.attributes(problem_group)["interval_ms"] =
@@ -880,7 +866,7 @@ function _serialize_attributes(store::HdfSimulationStore)
         HDF5.attributes(emulation_group)["name"] =
             string(first(keys(params.emulation_model_params)))
         HDF5.attributes(emulation_group)["num_executions"] = em_params.num_executions
-        HDF5.attributes(emulation_group)["horizon"] = em_params.horizon
+        HDF5.attributes(emulation_group)["horizon_count"] = em_params.horizon_count
         HDF5.attributes(emulation_group)["resolution_ms"] =
             Dates.Millisecond(em_params.resolution).value
         HDF5.attributes(emulation_group)["interval_ms"] =
@@ -1041,51 +1027,14 @@ function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
     return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
-function _write_dataset!(
-    dataset::HDF5.Dataset,
-    array::Matrix{Float64},
-    row_range::UnitRange{Int64},
-    ::Val{3},
-)
-    dataset[:, 1, row_range] = array
-    @debug "wrote dataset" dataset row_range
-    return
-end
-
-function _write_dataset!(
-    dataset::HDF5.Dataset,
-    array::Matrix{Float64},
-    row_range::UnitRange{Int64},
-    ::Val{2},
-)
-    dataset[row_range, :] = array
-    @debug "wrote dataset" dataset row_range
-    return
-end
-
-function _write_dataset!(
-    dataset::HDF5.Dataset,
-    array::Array{Float64, 3},
-    row_range::UnitRange{Int64},
-    ::Val{3},
-)
-    dataset[row_range, :, :] = array
-    @debug "wrote dataset" dataset row_range
-    return
-end
-
-function _write_dataset!(dataset::HDF5.Dataset, array::Array{Float64}, index::Int)
-    _write_dataset!(dataset, array, index:index, Val{ndims(dataset)}())
-    return
-end
-
+# Specific data set writing function that writes decision model data. It dispatches on the index type of the dataset as a range
 function _write_dataset!(
     dataset::HDF5.Dataset,
     array::Array{Float64, 3},
     row_range::UnitRange{Int64},
 )
     dataset[:, :, row_range] = array
-    @debug "wrote dataset" dataset row_range
+    @debug "wrote dm dataset" dataset row_range
     return
 end
 
@@ -1095,6 +1044,27 @@ function _write_dataset!(
     row_range::UnitRange{Int64},
 )
     dataset[:, :, :, row_range] = array
-    @debug "wrote dataset" dataset row_range
+    @debug "wrote dm dataset" dataset row_range
+    return
+end
+
+# Specific data set writing function that writes emulation model data. It dispatches on the index type of the dataset
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 2},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :] = array
+    @debug "wrote em dataset" dataset index
+    return
+end
+
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 4},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :, :] = array
+    @debug "wrote em dataset" dataset index
     return
 end

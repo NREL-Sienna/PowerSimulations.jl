@@ -33,7 +33,7 @@ Formulation type to enable standard dispatch with a range and enforce intertempo
 """
 struct ThermalStandardDispatch <: AbstractThermalDispatchFormulation end
 """
-Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *may not work with PWL cost definitions*
+Formulation type to enable basic dispatch without any intertemporal constraints and relaxed minimum generation. *May not work with non-convex PWL cost definitions*
 """
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
@@ -58,7 +58,7 @@ abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
 
 """
-Formulation type to add a time series parameter for non-dispatchable `ElectricLoad` withdrawls to power balance constraints
+Formulation type to add a time series parameter for non-dispatchable `ElectricLoad` withdrawals to power balance constraints
 """
 struct StaticPowerLoad <: AbstractLoadFormulation end
 
@@ -145,17 +145,31 @@ LossLess InterconnectingConverter Model
 """
 struct LossLessConverter <: AbstractConverterFormulation end
 
-# TODO: Think if this an ok abstraction for future use cases
+"""
+LossLess Line Abstract Model
+"""
 struct LossLessLine <: AbstractBranchFormulation end
 
 ############################## Network Model Formulations ##################################
 # These formulations are taken directly from PowerModels
 
 abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
+"""
 struct PTDFPowerModel <: AbstractPTDFModel end
-
+"""
+Infinite capacity approximation of network flow to represent entire system with a single node.
+"""
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
+"""
+Approximation to represent inter-area flow with each area represented as a single node.
+"""
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balacing areas independently.
+"""
+struct AreaPTDFPowerModel <: AbstractPTDFModel end
 
 #================================================
     # exact non-convex models
@@ -219,10 +233,32 @@ abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
 
+"""
+Struct to add reserves to be larger than a specified requirement for an aggregated collection of services
+"""
 struct GroupReserve <: AbstractReservesFormulation end
-struct RangeReserve <: AbstractReservesFormulation end
-struct StepwiseCostReserve <: AbstractReservesFormulation end
-struct RampReserve <: AbstractReservesFormulation end
-struct NonSpinningReserve <: AbstractReservesFormulation end
 
+"""
+Struct for to add reserves to be larger than a specified requirement
+"""
+struct RangeReserve <: AbstractReservesFormulation end
+"""
+Struct for to add reserves to be larger than a variable requirement depending of costs
+"""
+struct StepwiseCostReserve <: AbstractReservesFormulation end
+"""
+Struct to add reserves to be larger than a specified requirement, with ramp constraints
+"""
+struct RampReserve <: AbstractReservesFormulation end
+"""
+Struct to add non spinning reserve requirements larger than specified requirement
+"""
+struct NonSpinningReserve <: AbstractReservesFormulation end
+"""
+Struct to add a constant maximum transmission flow for specified interface
+"""
 struct ConstantMaxInterfaceFlow <: AbstractServiceFormulation end
+"""
+Struct to add a variable maximum transmission flow for specified interface
+"""
+struct VariableMaxInterfaceFlow <: AbstractServiceFormulation end

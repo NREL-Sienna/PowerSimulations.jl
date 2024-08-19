@@ -1,4 +1,30 @@
-function area_balance(
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{CopperPlateBalanceConstraint},
+    sys::PSY.System,
+    model::NetworkModel{AreaBalancePowerModel},
+)
+    expressions = get_expression(container, ActivePowerBalance(), PSY.Area)
+    area_names, time_steps = axes(expressions)
+
+    constraints = add_constraints_container!(
+        container,
+        CopperPlateBalanceConstraint(),
+        PSY.Area,
+        area_names,
+        time_steps,
+    )
+
+    for a in area_names, t in time_steps
+        constraints[a, t] =
+            JuMP.@constraint(get_jump_model(container), expressions[a, t] == 0.0)
+    end
+    return
+end
+
+# Unavailable Feature
+#=
+function agc_area_balance(
     container::OptimizationContainer,
     expression::ExpressionKey,
     area_mapping::Dict{String, Array{PSY.ACBus, 1}},
@@ -9,7 +35,7 @@ function area_balance(
 
     constraint = add_constraints_container!(
         container,
-        AreaDispatchBalanceConstraint(),
+        CopperPlateBalanceConstraint(),
         PSY.Area,
         keys(area_mapping),
         time_steps,
@@ -22,7 +48,7 @@ function area_balance(
                 JuMP.add_to_expression!(area_net, nodal_net_balance[PSY.get_number(b), t])
             end
             constraint[k, t] =
-                JuMP.@constraint(container.JuMPmodel, area_balance[k, t] == area_net)
+                JuMP.@constraint(get_jump_model(container), area_balance[k, t] == area_net)
         end
     end
 
@@ -48,10 +74,11 @@ function area_balance(
 
     for area in keys(area_mapping), t in time_steps
         participation_assignment_up[area, t] =
-            JuMP.@constraint(container.JuMPmodel, expr_up[area, t] == 0)
+            JuMP.@constraint(get_jump_model(container), expr_up[area, t] == 0)
         participation_assignment_dn[area, t] =
-            JuMP.@constraint(container.JuMPmodel, expr_dn[area, t] == 0)
+            JuMP.@constraint(get_jump_model(container), expr_dn[area, t] == 0)
     end
 
     return
 end
+=#

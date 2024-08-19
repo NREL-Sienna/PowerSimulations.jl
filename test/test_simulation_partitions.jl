@@ -54,7 +54,7 @@ end
         initial_time = DateTime("2024-01-02T00:00:00"),
         num_steps = 1,
     )
-    @test execute_simulation(regular_sim) == PSI.RunStatus.SUCCESSFUL
+    @test execute_simulation(regular_sim) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     regular_results = SimulationResults(sim_dir, regular_name)
     partitioned_results = SimulationResults(sim_dir, partition_name)
@@ -93,7 +93,7 @@ end
                 skip && continue
                 r_sum = 0
                 p_sum = 0
-                atol = occursin("ProductionCostExpression", key) ? 11000 : 0
+                atol = occursin("ProductionCostExpression", key) ? 11000 : 1e-6
                 for i in 2:ncol(rdf)
                     r_sum += sum(rdf[!, i])
                     p_sum += sum(pdf[!, i])

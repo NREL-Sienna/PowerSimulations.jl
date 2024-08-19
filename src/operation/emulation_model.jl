@@ -54,7 +54,8 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::ModelInternal
+    internal::IS.Optimization.ModelInternal
+    simulation_info::SimulationInfo
     store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
 
@@ -71,10 +72,18 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
             name = Symbol(name)
         end
         finalize_template!(template, sys)
-        internal = ModelInternal(
+        internal = IS.Optimization.ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
-        new{M}(name, template, sys, internal, EmulationModelStore(), Dict{String, Any}())
+        new{M}(
+            name,
+            template,
+            sys,
+            internal,
+            SimulationInfo(),
+            EmulationModelStore(),
+            Dict{String, Any}(),
+        )
     end
 end
 
@@ -82,6 +91,7 @@ function EmulationModel{M}(
     template::AbstractProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.Model} = nothing;
+    resolution = UNSET_RESOLUTION,
     name = nothing,
     optimizer = nothing,
     warm_start = true,
@@ -120,9 +130,12 @@ function EmulationModel{M}(
         check_numerical_bounds = check_numerical_bounds,
         store_variable_names = store_variable_names,
         rebuild_model = rebuild_model,
-        horizon = 1,
+        horizon = resolution,
+        resolution = resolution,
     )
-    return EmulationModel{M}(template, sys, settings, jump_model; name = name)
+    model = EmulationModel{M}(template, sys, settings, jump_model; name = name)
+    validate_time_series!(model)
+    return model
 end
 
 """
@@ -218,50 +231,78 @@ end
 
 get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
 validate_template(::EmulationModel{<:EmulationProblem}) = nothing
-validate_time_series(::EmulationModel{<:EmulationProblem}) = nothing
+
+function validate_time_series!(model::EmulationModel{<:DefaultEmulationProblem})
+    sys = get_system(model)
+    settings = get_settings(model)
+    available_resolutions = PSY.get_time_series_resolutions(sys)
+
+    if get_resolution(settings) == UNSET_RESOLUTION && length(available_resolutions) != 1
+        throw(
+            IS.ConflictingInputsError(
+                "Data contains multiple resolutions, the resolution keyword argument must be added to the Model. Time Series Resolutions: $(available_resolutions)",
+            ),
+        )
+    elseif get_resolution(settings) != UNSET_RESOLUTION && length(available_resolutions) > 1
+        if get_resolution(settings) ∉ available_resolutions
+            throw(
+                IS.ConflictingInputsError(
+                    "Resolution $(get_resolution(settings)) is not available in the system data. Time Series Resolutions: $(available_resolutions)",
+                ),
+            )
+        end
+    else
+        set_resolution!(settings, first(available_resolutions))
+    end
+
+    if get_horizon(settings) == UNSET_HORIZON
+        # Emulation Models Only solve one "step" so Horizon and Resolution must match
+        set_horizon!(settings, get_resolution(settings))
+    end
+
+    counts = PSY.get_time_series_counts(sys)
+    if counts.static_time_series_count < 1
+        error(
+            "The system does not contain Static Time Series data. A EmulationModel can't be built.",
+        )
+    end
+    return
+end
 
 function get_current_time(model::EmulationModel)
-    execution_count = get_internal(model).execution_count
+    execution_count = get_execution_count(model)
     initial_time = get_initial_time(model)
-    resolution = get_resolution(model.internal.store_parameters)
+    resolution = get_resolution(model)
     return initial_time + resolution * execution_count
 end
 
 function init_model_store_params!(model::EmulationModel)
     num_executions = get_executions(model)
     system = get_system(model)
-    interval = resolution = PSY.get_time_series_resolution(system)
+    settings = get_settings(model)
+    horizon = interval = resolution = get_resolution(settings)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    model.internal.store_parameters = ModelStoreParams(
-        num_executions,
-        1,
-        interval,
-        resolution,
-        base_power,
-        sys_uuid,
-        get_metadata(get_optimization_container(model)),
+    IS.Optimization.set_store_params!(
+        get_internal(model),
+        ModelStoreParams(
+            num_executions,
+            horizon,
+            interval,
+            resolution,
+            base_power,
+            sys_uuid,
+            get_metadata(get_optimization_container(model)),
+        ),
     )
-    return
-end
-
-function validate_time_series(model::EmulationModel{<:DefaultEmulationProblem})
-    sys = get_system(model)
-    counts = PSY.get_time_series_counts(sys)
-    if counts.static_time_series_count < 1
-        error(
-            "The system does not contain Static TimeSeries data. An Emulation model can't be formulated.",
-        )
-    end
     return
 end
 
 function build_pre_step!(model::EmulationModel)
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Build pre-step" begin
         validate_template(model)
-        validate_time_series(model)
         if !isempty(model)
-            @info "EmulationProblem status not BuildStatus.EMPTY. Resetting"
+            @info "EmulationProblem status not ModelBuildStatus.EMPTY. Resetting"
             reset!(model)
         end
         container = get_optimization_container(model)
@@ -276,7 +317,7 @@ function build_pre_step!(model::EmulationModel)
 
         @info "Initializing ModelStoreParams"
         init_model_store_params!(model)
-        set_status!(model, BuildStatus.IN_PROGRESS)
+        set_status!(model, ModelBuildStatus.IN_PROGRESS)
     end
     return
 end
@@ -313,7 +354,11 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = configure_logging(model.internal, file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     try
         Logging.with_logger(logger) do
             try
@@ -321,10 +366,10 @@ function build!(
                 TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Problem $(get_name(model))" begin
                     build_impl!(model)
                 end
-                set_status!(model, BuildStatus.BUILT)
+                set_status!(model, ModelBuildStatus.BUILT)
                 @info "\n$(BUILD_PROBLEMS_TIMER)\n"
             catch e
-                set_status!(model, BuildStatus.FAILED)
+                set_status!(model, ModelBuildStatus.FAILED)
                 bt = catch_backtrace()
                 @error "EmulationModel Build Failed" exception = e, bt
             end
@@ -350,16 +395,19 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
-    model.internal.container = OptimizationContainer(
-        get_system(model),
-        get_settings(model),
-        nothing,
-        PSY.SingleTimeSeries,
+    IS.Optimization.set_container!(
+        get_internal(model),
+        OptimizationContainer(
+            get_system(model),
+            get_settings(model),
+            nothing,
+            PSY.SingleTimeSeries,
+        ),
     )
-    model.internal.ic_model_container = nothing
+    IS.Optimization.set_initial_conditions_model_container!(get_internal(model), nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
-    set_status!(model, BuildStatus.EMPTY)
+    set_status!(model, ModelBuildStatus.EMPTY)
     return
 end
 
@@ -376,7 +424,7 @@ function update_parameters!(model::EmulationModel, data::DatasetContainer{InMemo
     if !is_synchronized(model)
         update_objective_function!(get_optimization_container(model))
         obj_func = get_objective_expression(get_optimization_container(model))
-        set_synchronized_status(obj_func, true)
+        set_synchronized_status!(obj_func, true)
     end
     return
 end
@@ -419,13 +467,14 @@ function run_impl!(
 )
     _pre_solve_model_checks(model, optimizer)
     internal = get_internal(model)
+    executions = IS.Optimization.get_executions(internal)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
         error("Call build! again")
     end
-    prog_bar = ProgressMeter.Progress(internal.executions; enabled = enable_progress_bar)
+    prog_bar = ProgressMeter.Progress(executions; enabled = enable_progress_bar)
     initial_time = get_initial_time(model)
-    for execution in 1:(internal.executions)
+    for execution in 1:executions
         TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run execution" begin
             solve_impl!(model)
             current_time = initial_time + (execution - 1) * PSI.get_resolution(model)
@@ -455,7 +504,7 @@ keyword arguments to that function.
   - `model::EmulationModel = model`: Emulation model
   - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
   - `executions::Int`: Number of executions for the emulator run
-  - `export_problem_results::Bool`: If true, export ProblemResults DataFrames to CSV files.
+  - `export_problem_results::Bool`: If true, export OptimizationProblemResults DataFrames to CSV files.
   - `output_dir::String`: Required if the model is not already built, otherwise ignored
   - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
   - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
@@ -489,18 +538,22 @@ function run!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = configure_logging(model.internal, file_mode)
+    logger = IS.Optimization.configure_logging(
+        get_internal(model),
+        PROBLEM_LOG_FILENAME,
+        file_mode,
+    )
     try
         Logging.with_logger(logger) do
             try
                 initialize_storage!(
                     get_store(model),
                     get_optimization_container(model),
-                    model.internal.store_parameters,
+                    get_store_params(model),
                 )
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Run" begin
                     run_impl!(model; kwargs...)
-                    set_run_status!(model, RunStatus.SUCCESSFUL)
+                    set_run_status!(model, RunStatus.SUCCESSFULLY_FINALIZED)
                 end
                 if serialize
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
@@ -510,7 +563,7 @@ function run!(
                     end
                 end
                 TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Results processing" begin
-                    results = ProblemResults(model)
+                    results = OptimizationProblemResults(model)
                     serialize_results(results, get_output_dir(model))
                     export_problem_results && export_results(results)
                 end
@@ -549,7 +602,7 @@ function solve!(
     # other logic used when solving the models separate from a simulation
     solve_impl!(model)
     @assert get_current_time(model) == start_time
-    if get_run_status(model) == RunStatus.SUCCESSFUL
+    if get_run_status(model) == RunStatus.SUCCESSFULLY_FINALIZED
         advance_execution_count!(model)
         write_results!(
             store,

@@ -109,7 +109,7 @@ NATURAL_UNITS_VALUES = [
 ]
 
 function compare_results(rpath, epath, model, field, name, timestamp)
-    filename = string(name) * "_" * PSI.convert_for_path(timestamp) * ".csv"
+    filename = string(name) * "_" * IS.convert_for_path(timestamp) * ".csv"
     rp = joinpath(rpath, model, field, filename)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
@@ -138,7 +138,7 @@ end
 
 function make_export_all(problems)
     return [
-        ProblemResultsExport(
+        OptimizationProblemResultsExport(
             x;
             store_all_duals = true,
             store_all_variables = true,
@@ -177,7 +177,7 @@ function run_simulation(
                 template_uc,
                 c_sys5_hy_uc;
                 name = "UC",
-                optimizer = GLPK_optimizer,
+                optimizer = HiGHS_optimizer,
                 system_to_file = system_to_file,
             ),
             DecisionModel(
@@ -212,7 +212,7 @@ function run_simulation(
     )
 
     build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.BuildStatus.BUILT
+    @test build_out == PSI.SimulationBuildStatus.BUILT
 
     exports = Dict(
         "models" => [
@@ -235,7 +235,7 @@ function run_simulation(
         "optimizer_stats" => true,
     )
     execute_out = execute!(sim; exports = exports, in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFUL
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     return sim
 end
@@ -259,6 +259,13 @@ function test_simulation_results(
         )
         results = SimulationResults(sim)
         test_decision_problem_results(results, c_sys5_hy_ed, c_sys5_hy_uc, in_memory)
+        if !in_memory
+            test_decision_problem_results_kwargs_handling(
+                dirname(results.path),
+                c_sys5_hy_ed,
+                c_sys5_hy_uc,
+            )
+        end
         test_emulation_problem_results(results, in_memory)
 
         results_ed = get_decision_problem_results(results, "ED")
@@ -269,12 +276,12 @@ function test_simulation_results(
         @test isempty(results)
 
         verify_export_results(results, export_path)
-        @test length(readdir(export_realized_results(results_ed))) === 17
+        @test length(readdir(export_realized_results(results_ed))) === 18
 
         # Test that you can't read a failed simulation.
-        PSI.set_simulation_status!(sim, RunStatus.FAILED)
+        PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)
         PSI.serialize_status(sim)
-        @test PSI.deserialize_status(sim) == RunStatus.FAILED
+        @test PSI.deserialize_status(sim) == PSI.RunStatus.FAILED
         @test_throws ErrorException SimulationResults(sim)
         @test_logs(
             match_mode = :any,
@@ -662,6 +669,40 @@ function test_decision_problem_results_values(
         empty!(myres)
         @test isempty(PSI.get_cached_variables(myres))
     end
+
+    @testset "Test read_results_with_keys" begin
+        myres = deepcopy(results_ed)
+        initial_time = DateTime("2024-01-01T00:00:00")
+        timestamps = PSI._process_timestamps(myres, initial_time, 3)
+        result_keys = [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
+
+        res1 = PSI.read_results_with_keys(myres, result_keys)
+        @test Set(keys(res1)) == Set(result_keys)
+        res1_df = res1[first(result_keys)]
+        @test size(res1_df) == (576, 6)
+        @test names(res1_df) ==
+              ["DateTime", "Solitude", "Park City", "Alta", "Brighton", "Sundance"]
+        @test first(eltype.(eachcol(res1_df))) === DateTime
+
+        res2 =
+            PSI.read_results_with_keys(myres, result_keys; cols = ["Park City", "Brighton"])
+        @test Set(keys(res2)) == Set(result_keys)
+        res2_df = res2[first(result_keys)]
+        @test size(res2_df) == (576, 3)
+        @test names(res2_df) ==
+              ["DateTime", "Park City", "Brighton"]
+        @test first(eltype.(eachcol(res2_df))) === DateTime
+
+        res3_df =
+            PSI.read_results_with_keys(myres, result_keys; start_time = timestamps[2])[first(
+                result_keys,
+            )]
+        @test res3_df[1, "DateTime"] == timestamps[2]
+
+        res4_df =
+            PSI.read_results_with_keys(myres, result_keys; len = 2)[first(result_keys)]
+        @test size(res4_df) == (2, 6)
+    end
 end
 
 function test_decision_problem_results(
@@ -697,7 +738,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     end
 
     expressions_keys = collect(keys(read_realized_expressions(results_em)))
-    @test length(expressions_keys) == 3
+    @test length(expressions_keys) == 4
     expressions_inputs = (
         [
             "ProductionCostExpression__HydroEnergyReservoir",
@@ -855,6 +896,26 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test get_system(results_uc) === nothing
     @test length(read_realized_variables(results_uc)) == length(UC_EXPECTED_VARS)
 
+    @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
+    set_system!(results_ed, c_sys5_hy_ed)
+    set_system!(results_uc, c_sys5_hy_uc)
+
+    test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
+end
+
+function test_decision_problem_results_kwargs_handling(
+    path::AbstractString,
+    c_sys5_hy_ed,
+    c_sys5_hy_uc,
+)
+    results = SimulationResults(path, "no_cache")
+    @test list_decision_problems(results) == ["ED", "UC"]
+    results_uc = get_decision_problem_results(results, "UC")
+    results_ed = get_decision_problem_results(results, "ED")
+
+    # Verify this works without system.
+    @test get_system(results_uc) === nothing
+
     results_ed = get_decision_problem_results(results, "ED")
     @test isnothing(get_system(results_ed))
 
@@ -863,21 +924,6 @@ function test_simulation_results_from_file(path::AbstractString, c_sys5_hy_ed, c
     @test PSY.get_units_base(get_system(results_ed)) == "NATURAL_UNITS"
 
     @test_throws IS.InvalidValue set_system!(results_uc, c_sys5_hy_ed)
-
-    current_file = joinpath(
-        results_uc.execution_path,
-        "problems",
-        results_uc.problem,
-        PSI.make_system_filename(results_uc.system_uuid),
-    )
-    mv(current_file, "system-temporary-file-name.json"; force = true)
-
-    @test_throws ErrorException get_decision_problem_results(
-        results,
-        "UC";
-        populate_system = true,
-    )
-    mv("system-temporary-file-name.json", current_file)
 
     set_system!(results_ed, c_sys5_hy_ed)
     set_system!(results_uc, c_sys5_hy_uc)

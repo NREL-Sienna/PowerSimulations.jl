@@ -1,89 +1,56 @@
-abstract type SubComponentVariableType <: VariableType end
-
-struct VariableKey{T <: VariableType, U <: Union{PSY.Component, PSY.System}} <:
-       OptimizationContainerKey
-    meta::String
-end
-
-function VariableKey(
-    ::Type{T},
-    ::Type{U},
-    meta = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    if isabstracttype(U)
-        error("Type $U can't be abstract")
-    end
-    check_meta_chars(meta)
-    return VariableKey{T, U}(meta)
-end
-
-function VariableKey(
-    ::Type{T},
-    meta::String = CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType}
-    return VariableKey(T, PSY.Component, meta)
-end
-
-get_entry_type(
-    ::VariableKey{T, U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = T
-get_component_type(
-    ::VariableKey{T, U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = U
-
 """
 Struct to dispatch the creation of Active Power Variables
 
-Docs abbreviation: ``Pg``
+Docs abbreviation: ``p``
 """
 struct ActivePowerVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
 
-Docs abbreviation: ``\\hat{Pg}``
+Docs abbreviation: ``\\Delta p``
 """
 struct PowerAboveMinimumVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``Pg^{in}``
+Docs abbreviation: ``p^\\text{in}``
 """
 struct ActivePowerInVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Output Variables for 2-directional devices. For instance storage or pump-hydro
 
-Docs abbreviation: ``Pg^{out}``
+Docs abbreviation: ``p^\\text{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Hot Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``z^\\text{th}``
 """
 struct HotStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Warm Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``y^\\text{th}``
 """
 struct WarmStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Cold Start Variable for Thermal units with temperature considerations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``x^\\text{th}``
 """
 struct ColdStartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of a variable for energy storage level (state of charge)
 
-Docs abbreviation: ``E``
+Docs abbreviation: ``e``
 """
 struct EnergyVariable <: VariableType end
 
@@ -99,37 +66,42 @@ struct OnVariable <: VariableType end
 """
 Struct to dispatch the creation of Reactive Power Variables
 
-Docs abbreviation: ``Qg``
+Docs abbreviation: ``q``
 """
 struct ReactivePowerVariable <: VariableType end
 
 """
 Struct to dispatch the creation of binary storage charge reservation variable
 
-Docs abbreviation: ``r``
+Docs abbreviation: ``u^\\text{st}``
 """
 struct ReservationVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Active Power Reserve Variables
 
-Docs abbreviation: ``Pr``
+Docs abbreviation: ``r``
 """
 struct ActivePowerReserveVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of Service Requirement Variables
+
+Docs abbreviation: ``\\text{req}``
+"""
 struct ServiceRequirementVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Binary Start Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``v``
 """
 struct StartVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Binary Stop Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``w``
 """
 struct StopVariable <: VariableType end
 
@@ -147,30 +119,59 @@ struct AdditionalDeltaActivePowerDownVariable <: VariableType end
 
 struct SmoothACE <: VariableType end
 
+"""
+Struct to dispatch the creation of System-wide slack up variables. Used when there is not enough generation.
+
+Docs abbreviation: ``p^\\text{sl,up}``
+"""
 struct SystemBalanceSlackUp <: VariableType end
 
+"""
+Struct to dispatch the creation of System-wide slack down variables. Used when there is not enough load curtailment.
+
+Docs abbreviation: ``p^\\text{sl,dn}``
+"""
 struct SystemBalanceSlackDown <: VariableType end
 
+"""
+Struct to dispatch the creation of Reserve requirement slack variables. Used when there is not reserves in the system to satisfy the requirement.
+
+Docs abbreviation: ``r^\\text{sl}``
+"""
 struct ReserveRequirementSlack <: VariableType end
+
+"""
+Struct to dispatch the creation of active power flow upper bound slack variables. Used when there is not enough flow through the branch in the forward direction.
+
+Docs abbreviation: ``f^\\text{sl,up}``
+"""
+struct FlowActivePowerSlackUpperBound <: VariableType end
+
+"""
+Struct to dispatch the creation of active power flow lower bound slack variables. Used when there is not enough flow through the branch in the reverse direction.
+
+Docs abbreviation: ``f^\\text{sl,lo}``
+"""
+struct FlowActivePowerSlackLowerBound <: VariableType end
 
 """
 Struct to dispatch the creation of Voltage Magnitude Variables for AC formulations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``v``
 """
 struct VoltageMagnitude <: VariableType end
 
 """
 Struct to dispatch the creation of Voltage Angle Variables for AC/DC formulations
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\theta``
 """
 struct VoltageAngle <: VariableType end
 
 """
 Struct to dispatch the creation of bidirectional Active Power Flow Variables
 
-Docs abbreviation: ``P``
+Docs abbreviation: ``f``
 """
 struct FlowActivePowerVariable <: VariableType end
 
@@ -180,35 +181,35 @@ struct FlowActivePowerVariable <: VariableType end
 """
 Struct to dispatch the creation of unidirectional Active Power Flow Variables
 
-Docs abbreviation: ``\\overrightarrow{P}``
+Docs abbreviation: ``f^\\text{from-to}``
 """
 struct FlowActivePowerFromToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of unidirectional Active Power Flow Variables
 
-Docs abbreviation: ``\\overleftarrow{P}``
+Docs abbreviation: ``f^\\text{to-from}``
 """
 struct FlowActivePowerToFromVariable <: VariableType end
 
 """
 Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
 
-Docs abbreviation: ``\\overrightarrow{Q}``
+Docs abbreviation: ``f^\\text{q,from-to}``
 """
 struct FlowReactivePowerFromToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
 
-Docs abbreviation: ``\\overleftarrow{Q}``
+Docs abbreviation: ``f^\\text{q,to-from}``
 """
 struct FlowReactivePowerToFromVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Phase Shifters Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\theta^\\text{shift}``
 """
 struct PhaseShifterAngle <: VariableType end
 
@@ -216,39 +217,63 @@ struct PhaseShifterAngle <: VariableType end
 """
 Struct to dispatch the creation of HVDC Losses Auxiliary Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\ell``
 """
 struct HVDCLosses <: VariableType end
 
 """
 Struct to dispatch the creation of HVDC Flow Direction Auxiliary Variables
 
-Docs abbreviation: TODO
+Docs abbreviation: ``u^\\text{dir}``
 """
 struct HVDCFlowDirectionVariable <: VariableType end
+
+abstract type SparseVariableType <: VariableType end
 
 """
 Struct to dispatch the creation of piecewise linear cost variables for objective function
 
-Docs abbreviation: TODO
+Docs abbreviation: ``\\delta``
 """
-struct PieceWiseLinearCostVariable <: VariableType end
+struct PieceWiseLinearCostVariable <: SparseVariableType end
 
+"""
+Struct to dispatch the creation of piecewise linear block offer variables for objective function
+
+Docs abbreviation: ``\\delta``
+"""
+struct PieceWiseLinearBlockOffer <: SparseVariableType end
+
+"""
+Struct to dispatch the creation of Interface Flow Slack Up variables
+
+Docs abbreviation: ``f^\\text{sl,up}``
+"""
 struct InterfaceFlowSlackUp <: VariableType end
+"""
+Struct to dispatch the creation of Interface Flow Slack Down variables
 
+Docs abbreviation: ``f^\\text{sl,dn}``
+"""
 struct InterfaceFlowSlackDown <: VariableType end
 
-struct UpperBoundFeedForwardSlack <: VariableType end
+"""
+Struct to dispatch the creation of Slack variables for UpperBoundFeedforward
 
+Docs abbreviation: ``p^\\text{ff,ubsl}``
+"""
+struct UpperBoundFeedForwardSlack <: VariableType end
+"""
+Struct to dispatch the creation of Slack variables for LowerBoundFeedforward
+
+Docs abbreviation: ``p^\\text{ff,lbsl}``
+"""
 struct LowerBoundFeedForwardSlack <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
-should_write_resulting_value(::Type{<:VariableType}) = true
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
-
-convert_result_to_natural_units(::Type{<:VariableType}) = false
-
+should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true

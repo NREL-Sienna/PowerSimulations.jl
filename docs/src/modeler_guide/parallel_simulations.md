@@ -41,7 +41,7 @@ Here is example code to construct the `Simulation` with these parameters:
         simulation_folder=output_dir,
     )
     status = build!(sim; partitions=partitions, index=index, serialize=isnothing(index))
-    if status != PSI.BuildStatus.BUILT
+    if status != PSI.SimulationBuildStatus.BUILT
         error("Failed to build simulation: status=$status")
     end
 ```
@@ -52,7 +52,7 @@ Here is example code to construct the `Simulation` with these parameters:
 ```
 function execute_simulation(sim, args...; kwargs...)
     status = execute!(sim)
-    if status != PSI.RunStatus.SUCCESSFUL
+    if status != PSI.RunStatus.SUCCESSFULLY_FINALIZED
         error("Simulation failed to execute: status=$status")
     end
 end
@@ -183,7 +183,7 @@ Here is example code to construct the `Simulation` with these parameters:
         simulation_folder=output_dir,
     )
     status = build!(sim; partitions=partitions, index=index, serialize=isnothing(index))
-    if status != PSI.BuildStatus.BUILT
+    if status != PSI.SimulationBuildStatus.BUILT
         error("Failed to build simulation: status=$status")
     end
 ```
@@ -194,7 +194,7 @@ Here is example code to construct the `Simulation` with these parameters:
 ```
 function execute_simulation(sim, args...; kwargs...)
     status = execute!(sim)
-    if status != PSI.RunStatus.SUCCESSFUL
+    if status != PSI.RunStatus.SUCCESSFULLY_FINALIZED
         error("Simulation failed to execute: status=$status")
     end
 end
@@ -282,4 +282,3 @@ julia> results = SimulationResults("<output-dir>/job-outputs/<simulation-name>")
 
 Note the log files and results for each partition are located in
 `<output-dir>/job-outputs/<simulation-name>/simulation_partitions`
-

@@ -1,25 +1,5 @@
 # Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
-const NETWORKS_FOR_TESTING = [
-    (PM.ACPPowerModel, fast_ipopt_optimizer),
-    (PM.ACRPowerModel, fast_ipopt_optimizer),
-    (PM.ACTPowerModel, fast_ipopt_optimizer),
-    #(PM.IVRPowerModel, fast_ipopt_optimizer), #instantiate_ivp_expr_model not implemented
-    (PM.DCPPowerModel, fast_ipopt_optimizer),
-    (PM.DCMPPowerModel, fast_ipopt_optimizer),
-    (PM.NFAPowerModel, fast_ipopt_optimizer),
-    (PM.DCPLLPowerModel, fast_ipopt_optimizer),
-    (PM.LPACCPowerModel, fast_ipopt_optimizer),
-    (PM.SOCWRPowerModel, fast_ipopt_optimizer),
-    (PM.SOCWRConicPowerModel, scs_solver),
-    (PM.QCRMPowerModel, fast_ipopt_optimizer),
-    (PM.QCLSPowerModel, fast_ipopt_optimizer),
-    #(PM.SOCBFPowerModel, fast_ipopt_optimizer), # not implemented
-    (PM.BFAPowerModel, fast_ipopt_optimizer),
-    #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
-    (PM.SDPWRMPowerModel, scs_solver),
-    (PM.SparseSDPWRMPowerModel, scs_solver),
-]
 
 @testset "All PowerModels models construction" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -29,10 +9,10 @@ const NETWORKS_FOR_TESTING = [
         )
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test ps_model.internal.container.pm !== nothing
+              PSI.ModelBuildStatus.BUILT
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
         # TODO: Change test
-        # @test :nodal_balance_active in keys(ps_model.internal.container.expressions)
+        # @test :nodal_balance_active in keys(PSI.get_optimization_container(ps_model).expressions)
     end
 end
 
@@ -59,7 +39,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -82,7 +62,7 @@ end
         optimizer = GLPK_optimizer,
     )
     @test build!(ps_model_re; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     psi_checksolve_test(ps_model_re, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
@@ -121,7 +101,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -146,7 +126,7 @@ end
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
         output_dir = mktempdir(; cleanup = true),
-    ) == PSI.BuildStatus.FAILED
+    ) == PSI.ModelBuildStatus.FAILED
 end
 
 @testset "Network DC-PF with VirtualPTDF Model" begin
@@ -184,7 +164,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -230,7 +210,7 @@ end
         template = get_thermal_dispatch_template_network(DCPPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -278,7 +258,7 @@ end
         template = get_thermal_dispatch_template_network(ACPPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -320,7 +300,7 @@ end
         template = get_thermal_dispatch_template_network(NFAPowerModel)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -370,7 +350,7 @@ end
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = fast_ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -381,7 +361,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_model.internal.container.pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end
 
@@ -414,7 +394,7 @@ end
         template = get_thermal_dispatch_template_network(network)
         ps_model = DecisionModel(template, sys; optimizer = ipopt_optimizer)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
@@ -425,7 +405,7 @@ end
             test_results[network][sys][5],
             false,
         )
-        @test ps_model.internal.container.pm !== nothing
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.LOCALLY_SOLVED],
@@ -447,18 +427,18 @@ end
             ps_model;
             console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
             output_dir = mktempdir(; cleanup = true),
-        ) == PSI.BuildStatus.FAILED
+        ) == PSI.ModelBuildStatus.FAILED
     end
 end
 
-@testset "2 Subnetworks DC-PF with CopperPlatePowerModel" begin
+@testset "2 Subnetworks HVDC DC-PF with CopperPlatePowerModel" begin
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(NetworkModel(CopperPlatePowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 264, 0, 288, 240, 48, false)
@@ -470,7 +450,7 @@ end
 
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
@@ -516,14 +496,14 @@ end
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
@@ -558,7 +538,7 @@ end
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     moi_tests(ps_model, 552, 0, 576, 528, 336, false)
@@ -570,10 +550,10 @@ end
 
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
-    @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
-    @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
+    @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
+    @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
 
     load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
     thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
@@ -616,14 +596,14 @@ end
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.BuildStatus.BUILT
+          PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
-    results = ProblemResults(ps_model)
+    results = OptimizationProblemResults(ps_model)
     hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
@@ -673,10 +653,10 @@ end
         )
 
         @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         solve!(uc_model_red)
 
-        res_red = ProblemResults(uc_model_red)
+        res_red = OptimizationProblemResults(uc_model_red)
 
         flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
         line_names = DataFrames.names(flow_lines)[2:end]
@@ -699,10 +679,10 @@ end
         )
 
         @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         solve!(uc_model_orig)
 
-        res_orig = ProblemResults(uc_model_orig)
+        res_orig = OptimizationProblemResults(uc_model_orig)
 
         flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
 
@@ -726,7 +706,269 @@ end
         )
         ps_model = DecisionModel(template, new_sys; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.BuildStatus.BUILT
-        @test ps_model.internal.container.pm !== nothing
+              PSI.ModelBuildStatus.BUILT
+        @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
+end
+
+@testset "2 Areas AreaBalance PowerModel" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    transform_single_time_series!(c_sys, Hour(24), Hour(1))
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 264, 0, 264, 264, 48, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    # The values for these tests come from the data
+    @test all(interarea_flow[!, "1_2"] .<= 150)
+    @test all(interarea_flow[!, "1_2"] .>= -150)
+
+    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
+    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+
+    zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
+    zone_1_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_1", "Park City_1", "Sundance_1", "Brighton_1", "Alta_1"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_1_gen .+ zone_1_load .- interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+
+    zone_2_load = sum(eachcol(load[!, ["Bus4_2", "Bus3_2", "Bus2_2"]]))
+    zone_2_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_2", "Park City_2", "Sundance_2", "Brighton_2", "Alta_2"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_2_gen .+ zone_2_load .+ interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+end
+
+@testset "2 Areas AreaBalance PowerModel with TimeSeries" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    load = first(get_components(PowerLoad, c_sys))
+    ts_array = get_time_series_array(SingleTimeSeries, load, "max_active_power")
+    tstamp = timestamp(ts_array)
+    area_int = first(get_components(AreaInterchange, c_sys))
+    day_data = [
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+    ]
+    weekly_data = repeat(day_data, 7)
+    ts_from_to = SingleTimeSeries(
+        "from_to_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    ts_to_from = SingleTimeSeries(
+        "to_from_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    add_time_series!(c_sys, area_int, ts_from_to)
+    add_time_series!(c_sys, area_int, ts_to_from)
+    ## Transform Time Series ##
+    transform_single_time_series!(c_sys, Hour(24), Hour(24))
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 264, 0, 264, 264, 48, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    # The values for these tests come from the data
+    @test interarea_flow[4, "1_2"] != 0.0
+    @test interarea_flow[5, "1_2"] == 0.0
+    @test interarea_flow[6, "1_2"] == 0.0
+end
+
+@testset "2 Areas AreaPTDFPowerModel" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    transform_single_time_series!(c_sys, Hour(24), Hour(1))
+    set_flow_limits!(
+        get_component(AreaInterchange, c_sys, "1_2"),
+        (from_to = 1.0, to_from = 1.0),
+    )
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaPTDFPowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    set_device_model!(template, MonitoredLine, StaticBranchUnbounded)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 576, 0, 576, 576, 360, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 666147, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    # The values for these tests come from the data
+    @test all(interarea_flow[!, "1_2"] .<= 100.0 + PSI.ABSOLUTE_TOLERANCE)
+    @test all(interarea_flow[!, "1_2"] .>= -100.0 - PSI.ABSOLUTE_TOLERANCE)
+
+    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
+    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+
+    zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
+    zone_1_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_1", "Park City_1", "Sundance_1", "Brighton_1", "Alta_1"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_1_gen .+ zone_1_load .- interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+
+    zone_2_load = sum(eachcol(load[!, ["Bus4_2", "Bus3_2", "Bus2_2"]]))
+    zone_2_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_2", "Park City_2", "Sundance_2", "Brighton_2", "Alta_2"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_2_gen .+ zone_2_load .+ interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+end
+
+@testset "2 Areas AreaPTDFPowerModel with Time Series" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    load = first(get_components(PowerLoad, c_sys))
+    new_line = Line(;
+        name = "C2_D1",
+        available = true,
+        active_power_flow = 0.0,
+        reactive_power_flow = 0.0,
+        arc = Arc(;
+            from = get_component(ACBus, c_sys, "Bus_nodeC_2"),
+            to = get_component(ACBus, c_sys, "Bus_nodeD_1"),
+        ),
+        r = 0.00297,
+        x = 0.0297,
+        b = (from = 0.00337, to = 0.00337),
+        rating = 40.53,
+        angle_limits = (min = -0.7, max = 0.7),
+    )
+    add_component!(c_sys, new_line)
+    ts_array = get_time_series_array(SingleTimeSeries, load, "max_active_power")
+    tstamp = timestamp(ts_array)
+    area_int = first(get_components(AreaInterchange, c_sys))
+    day_data = [
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+        0.9, 0.85, 0.95, 0.2, 0.0, 0.0,
+    ]
+    weekly_data = repeat(day_data, 7)
+    ts_from_to = SingleTimeSeries(
+        "from_to_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    ts_to_from = SingleTimeSeries(
+        "to_from_flow_limit",
+        TimeArray(tstamp, weekly_data);
+        scaling_factor_multiplier = get_from_to_flow_limit,
+    )
+    add_time_series!(c_sys, area_int, ts_from_to)
+    add_time_series!(c_sys, area_int, ts_to_from)
+    ## Transform Time Series ##
+    transform_single_time_series!(c_sys, Hour(24), Hour(24))
+    set_flow_limits!(
+        get_component(AreaInterchange, c_sys, "1_2"),
+        (from_to = 1.0, to_from = 1.0),
+    )
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaPTDFPowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    set_device_model!(template, MonitoredLine, StaticBranchUnbounded)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 600, 0, 600, 600, 384, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 662467, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    # The values for these tests come from the data
+    @test interarea_flow[1, "1_2"] != 0.0
+    @test interarea_flow[5, "1_2"] == 0.0
+    @test interarea_flow[6, "1_2"] == 0.0
 end

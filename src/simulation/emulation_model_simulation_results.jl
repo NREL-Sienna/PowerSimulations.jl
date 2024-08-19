@@ -197,13 +197,9 @@ function _read_results(
     len = nothing,
 )
     isempty(result_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
-    if store === nothing && res.store !== nothing
-        # In this case we have an InMemorySimulationStore.
-        store = res.store
-    end
-
+    _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
-    _validate_keys(existing_keys, result_keys)
+    IS.Optimization._validate_keys(existing_keys, result_keys)
     cached_results = Dict(
         k => v for
         (k, v) in get_cached_results(res, eltype(result_keys)) if !isempty(v)
@@ -217,7 +213,7 @@ function _read_results(
             _get_store_value(
                 res,
                 result_keys,
-                store;
+                _store;
                 start_time = start_time,
                 len = len,
             )

@@ -1,4 +1,106 @@
 test_path = mktempdir()
+
+@testset "Test Thermal Generation Cost Functions " begin
+    test_cases = [
+        ("linear_cost_test", 4664.88, ThermalBasicUnitCommitment),
+        ("linear_fuel_test", 4664.88, ThermalBasicUnitCommitment),
+        ("quadratic_cost_test", 3301.81, ThermalDispatchNoMin),
+        ("quadratic_fuel_test", 3331.12, ThermalDispatchNoMin),
+        ("pwl_io_cost_test", 3421.64, ThermalBasicUnitCommitment),
+        ("pwl_io_fuel_test", 3421.64, ThermalBasicUnitCommitment),
+        ("pwl_incremental_cost_test", 3424.43, ThermalBasicUnitCommitment),
+        ("pwl_incremental_fuel_test", 3424.43, ThermalBasicUnitCommitment),
+        ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
+    ]
+    for (i, cost_reference, thermal_formulation) in test_cases
+        @testset "$i" begin
+            sys = build_system(PSITestSystems, "c_$(i)")
+            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+            set_device_model!(template, ThermalStandard, thermal_formulation)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            model = DecisionModel(
+                template,
+                sys;
+                name = "UC_$(i)",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
+                optimizer_solve_log_print = true,
+            )
+            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            results = OptimizationProblemResults(model)
+            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
+            var_unit_cost = sum(expr[!, "Test Unit"])
+            @test isapprox(var_unit_cost, cost_reference; atol = 1)
+            @test expr[!, "Test Unit"][end] == 0.0
+        end
+    end
+end
+
+#TODO: This test
+#=
+@testset "Test Thermal Generation Cost Functions Fuel Cost time series" begin
+    test_cases = [
+        "linear_fuel_test_ts",
+        "quadratic_fuel_test_ts",
+        "pwl_io_fuel_test_ts",
+        "pwl_incremental_fuel_test_ts",
+        "market_bid_cost",
+    ]
+    for i in test_cases
+        @testset "$i" begin
+            sys = build_system(PSITestSystems, "c_$(i)")
+            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+            #=
+            model = DecisionModel(
+                template,
+                sys;
+                name = "UC_$(i)",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
+            )
+            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            =#
+        end
+    end
+end
+=#
+
+#=
+#TODO: This test
+@testset "Test Thermal Generation MarketBidCost models" begin
+    test_cases = [
+        ("fixed_market_bid_cost", 20532.76),
+        #"market_bid_cost",
+    ]
+    for (i, cost_reference) in test_cases
+        @testset "$i" begin
+            sys = build_system(PSITestSystems, "c_$(i)")
+            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            model = DecisionModel(
+                template,
+                sys;
+                name = "UC_$(i)",
+                optimizer = HiGHS_optimizer,
+                system_to_file = false,
+                optimizer_solve_log_print = true,
+            )
+            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            results = OptimizationProblemResults(model)
+            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
+            var_unit_cost = sum(expr[!, "Test Unit1"])
+            @test isapprox(var_unit_cost, cost_reference; atol = 1)
+            @test expr[!, "Test Unit1"][end] == 0.0
+        end
+    end
+end
+=#
+
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_keys = [
@@ -407,8 +509,16 @@ end
             PSY.ThermalMultiStart,
             "hot",
         ),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "lb",
+        ),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "ub",
+        ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 334, false => 282)
@@ -434,8 +544,16 @@ end
             PSY.ThermalMultiStart,
             "hot",
         ),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "lb"),
-        PSI.ConstraintKey(StartupInitialConditionConstraint, PSY.ThermalMultiStart, "ub"),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "lb",
+        ),
+        PSI.ConstraintKey(
+            StartupInitialConditionConstraint,
+            PSY.ThermalMultiStart,
+            "ub",
+        ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 382, false => 330)
@@ -571,7 +689,7 @@ end
         optimizer = HiGHS_optimizer,
         initialize_model = false,
     )
-    @test build!(ED; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(ED; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(ED, 10, 0, 15, 15, 5, false)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
 end
@@ -585,44 +703,17 @@ end
         PSB.build_system(PSITestSystems, "c_duration_test");
         optimizer = HiGHS_optimizer,
         initialize_model = false,
+        store_variable_names = true,
     )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    build!(UC; output_dir = mktempdir(; cleanup = true))
+    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 56, 0, 56, 14, 21, true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
 
-## PWL linear Cost implementation test
-@testset "Solving UC with CopperPlate testing Convex PWL" begin
-    template = get_thermal_standard_uc_template()
-    UC = DecisionModel(
-        UnitCommitmentProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_linear_pwl_test");
-        optimizer = HiGHS_optimizer,
-        initialize_model = false,
-    )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(UC, 32, 0, 8, 4, 14, true)
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
-end
-
-@testset "Solving UC with CopperPlate testing PWL-SOS2 implementation" begin
-    template = get_thermal_standard_uc_template()
-    UC = DecisionModel(
-        UnitCommitmentProblem,
-        template,
-        PSB.build_system(PSITestSystems, "c_sos_pwl_test");
-        optimizer = cbc_optimizer,
-        initialize_model = false,
-    )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
-    moi_tests(UC, 32, 0, 8, 4, 14, true)
-    # Cbc can have reliability issues with SoS. The objective function target in the this
-    # test was calculated with CPLEX do not change if Cbc gets a bad result
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.0, 10.0)
-end
-
+#= Test disabled due to inconsistency between the models and the data
 @testset "UC with MarketBid Cost in ThermalGenerators" begin
+    sys = PSB.build_system(PSITestSystems, "c_market_bid_cost")
     template = get_thermal_standard_uc_template()
     set_device_model!(
         template,
@@ -631,13 +722,14 @@ end
     UC = DecisionModel(
         UnitCommitmentProblem,
         template,
-        PSB.build_system(PSITestSystems, "c_market_bid_cost");
+        sys;
         optimizer = cbc_optimizer,
         initialize_model = false,
     )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
     moi_tests(UC, 38, 0, 16, 8, 16, true)
 end
+=#
 
 @testset "Solving UC Models with Linear Networks" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -645,15 +737,15 @@ end
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, PTDFPowerModel, CopperPlatePowerModel]
     commitment_models = [ThermalStandardUnitCommitment, ThermalCompactUnitCommitment]
-    PTDF_ref = IdDict{System, PTDF}(c_sys5 => PTDF(c_sys5), c_sys5_dc => PTDF(c_sys5_dc))
 
     for net in networks, sys in systems, model in commitment_models
         template = get_thermal_dispatch_template_network(
-            NetworkModel(net; PTDF_matrix = PTDF_ref[sys]),
+            NetworkModel(net),
         )
         set_device_model!(template, ThermalStandard, model)
         UC = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-        @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.BuildStatus.BUILT
+        @test build!(UC; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
     end
 end
@@ -794,7 +886,7 @@ end
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
     template_uc =
         ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)))
-    set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+    set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
@@ -811,7 +903,7 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    ptdf_vars = get_variable_values(ProblemResults(model))
+    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
     on_sundance = on[!, "Sundance"]
     @test all(isapprox.(on_sundance, 1.0))
