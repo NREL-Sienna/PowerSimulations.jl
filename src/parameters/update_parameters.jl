@@ -262,11 +262,11 @@ function _update_parameter_values!(
                      This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
                      Consider reviewing your models' horizon and interval definitions",
                 )
+            end
+            if 0.0 > value || value > 1.0
                 error(
                     "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range",
                 )
-            if 0.0 > value || value > 1.0
-                error("The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range")
             end
             _set_param_value!(parameter_array, value, name, t)
         end
