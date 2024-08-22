@@ -432,16 +432,6 @@ function serialize_optimization_model(model::OperationModel)
     return
 end
 
-function update_model!(model::OperationModel, source, ini_cond_chronology)
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        update_parameters!(model, get_decision_states(source))
-    end
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        update_initial_conditions!(model, source, ini_cond_chronology)
-    end
-    return
-end
-
 function instantiate_network_model(model::OperationModel)
     template = get_template(model)
     network_model = get_network_model(template)
