@@ -1046,6 +1046,7 @@ function construct_device!(
     model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
     network_model::NetworkModel{AreaPTDFPowerModel},
 )
+    devices = get_available_components(model, sys)
     inter_area_branch_map = _get_branch_map(container, network_model, sys)
     # Not ideal to do this here, but it is a not terrible workaround
     # The area interchanges are like a services/device mix.
