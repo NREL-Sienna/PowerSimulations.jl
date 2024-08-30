@@ -418,6 +418,11 @@ function _add_pwl_term!(
         @warn(
             "PWL has no 0.0 intercept for generator $(name). First point is given at (x = $(x_first), y = $(y_first)). Adding a first intercept at (x = 0.0, y = $(round(guess_y_zero, digits = 3)) to have equal initial slope $(slope_first)"
         )
+        if guess_y_zero < 0.0
+            error(
+                "Added zero intercept has negative cost for generator $(name). Consider using other formulation or improve data.",
+            )
+        end
         # adds a first intercept a x = 0.0 and y above the intercept of the first tuple to make convex equivalent (avoid floating point issues of almost equal slopes)
         intercept_point = (x = 0.0, y = guess_y_zero + COST_EPSILON)
         data = PSY.PiecewiseLinearData(vcat(intercept_point, PSY.get_points(data)))
