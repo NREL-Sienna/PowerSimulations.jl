@@ -863,12 +863,13 @@ end
 
 ################################# AreaInterchange Models ################################
 function construct_device!(
-    ::OptimizationContainer,
+    container::OptimizationContainer,
     ::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.AreaInterchange, U},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {U <: Union{StaticBranchUnbounded, StaticBranch}}
+    devices = get_available_components(model, sys)
     add_feedforward_arguments!(container, model, devices)
     return
 end
