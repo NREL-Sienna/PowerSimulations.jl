@@ -864,7 +864,7 @@ end
 ################################# AreaInterchange Models ################################
 function construct_device!(
     container::OptimizationContainer,
-    ::PSY.System,
+    sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{PSY.AreaInterchange, U},
     network_model::NetworkModel{CopperPlatePowerModel},
