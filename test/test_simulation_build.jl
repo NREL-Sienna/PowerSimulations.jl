@@ -212,3 +212,111 @@ end
     )
     @test !isempty(c)
 end
+
+@testset "Test Upper/Lower Bound Feedforwards" begin
+    template_uc = get_template_basic_uc_simulation()
+    set_network_model!(template_uc, NetworkModel(PTDFPowerModel; use_slacks = true))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+    template_ed =
+        get_template_nomin_ed_simulation(NetworkModel(PTDFPowerModel; use_slacks = true))
+    set_device_model!(template_ed, DeviceModel(Line, StaticBranchUnbounded))
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                initialize_model = false,
+            ),
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = ipopt_optimizer,
+                initialize_model = false,
+            ),
+        ],
+    )
+
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+                LowerBoundFeedforward(;
+                    component_type = Line,
+                    source = FlowActivePowerVariable,
+                    affected_values = [FlowActivePowerVariable],
+                    add_slacks = true,
+                ),
+                UpperBoundFeedforward(;
+                    component_type = Line,
+                    source = FlowActivePowerVariable,
+                    affected_values = [FlowActivePowerVariable],
+                    add_slacks = true,
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "reactive_feedforward",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+    build_out = build!(sim)
+    @test build_out == PSI.SimulationBuildStatus.BUILT
+    ed_power_model = PSI.get_simulation_model(PSI.get_models(sim), :ED)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ed_power_model),
+        FeedforwardSemiContinuousConstraint(),
+        ThermalStandard,
+        "ActivePowerVariable_ub",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ed_power_model),
+        FeedforwardSemiContinuousConstraint(),
+        ThermalStandard,
+        "ActivePowerVariable_lb",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ed_power_model),
+        FeedforwardLowerBoundConstraint(),
+        Line,
+        "FlowActivePowerVariablelb",
+    )
+    @test !isempty(c)
+    c = PSI.get_constraint(
+        PSI.get_optimization_container(ed_power_model),
+        FeedforwardUpperBoundConstraint(),
+        Line,
+        "FlowActivePowerVariableub",
+    )
+    @test !isempty(c)
+    c = PSI.get_variable(
+        PSI.get_optimization_container(ed_power_model),
+        UpperBoundFeedForwardSlack(),
+        Line,
+        "FlowActivePowerVariable",
+    )
+    @test !isempty(c)
+    c = PSI.get_variable(
+        PSI.get_optimization_container(ed_power_model),
+        LowerBoundFeedForwardSlack(),
+        Line,
+        "FlowActivePowerVariable",
+    )
+    @test !isempty(c)
+end
