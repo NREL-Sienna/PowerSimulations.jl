@@ -1536,23 +1536,6 @@ function construct_device!(
     )
     add_to_expression!(
         container,
-        ReactivePowerBalance,
-        ReactivePowerVariable,
-        devices,
-        model,
-        network_model,
-    )
-    add_to_expression!(
-        container,
-        ActivePowerBalance,
-        OnStatusParameter,
-        devices,
-        model,
-        network_model,
-    )
-
-    add_to_expression!(
-        container,
         ActivePowerRangeExpressionLB,
         PowerAboveMinimumVariable,
         devices,
