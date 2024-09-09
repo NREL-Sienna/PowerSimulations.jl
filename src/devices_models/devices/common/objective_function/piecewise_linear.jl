@@ -408,13 +408,25 @@ function _add_pwl_term!(
     end
 
     # Compact PWL data does not exists anymore
-
-    if slopes[1] != 0.0
-        @debug "PWL has no 0.0 intercept for generator $(component_name)"
-        # adds a first intercept a x = 0.0 and y below the intercept of the first tuple to make convex equivalent
-        intercept_point = (x = 0.0, y = first(data).y - COST_EPSILON)
-        data = PSY.PiecewiseLinearData(vcat(intercept_point, get_points(data)))
-        @assert PSY.is_convex(slopes)
+    x_coords = PSY.get_x_coords(data)
+    if x_coords[1] != 0.0
+        y_coords = PSY.get_y_coords(data)
+        x_first = round(x_coords[1]; digits = 3)
+        y_first = round(y_coords[1]; digits = 3)
+        slope_first = round(slopes[1]; digits = 3)
+        guess_y_zero = y_coords[1] - slopes[1] * x_coords[1]
+        @warn(
+            "PWL has no 0.0 intercept for generator $(name). First point is given at (x = $(x_first), y = $(y_first)). Adding a first intercept at (x = 0.0, y = $(round(guess_y_zero, digits = 3)) to have equal initial slope $(slope_first)"
+        )
+        if guess_y_zero < 0.0
+            error(
+                "Added zero intercept has negative cost for generator $(name). Consider using other formulation or improve data.",
+            )
+        end
+        # adds a first intercept a x = 0.0 and y above the intercept of the first tuple to make convex equivalent (avoid floating point issues of almost equal slopes)
+        intercept_point = (x = 0.0, y = guess_y_zero + COST_EPSILON)
+        data = PSY.PiecewiseLinearData(vcat(intercept_point, PSY.get_points(data)))
+        @assert PSY.is_convex(data)
     end
 
     time_steps = get_time_steps(container)
@@ -422,7 +434,7 @@ function _add_pwl_term!(
     break_points = PSY.get_x_coords(data)
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
-        _add_pwl_variables!(container, T, component_name, t, data)
+        _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost =
             _get_pwl_cost_expression(container, component, t, cost_function, U(), V())

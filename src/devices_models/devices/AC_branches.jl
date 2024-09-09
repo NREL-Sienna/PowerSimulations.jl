@@ -21,8 +21,13 @@
 get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
 get_variable_binary(::PhaseShifterAngle, ::Type{PSY.PhaseShiftingTransformer}, ::AbstractBranchFormulation,) = false
 
-get_parameter_multiplier(::FixValueParameter, ::PSY.ACBranch, ::StaticBranch) = 1.0
+get_parameter_multiplier(::FixValueParameter, ::PSY.ACBranch, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::LowerBoundValueParameter, ::PSY.ACBranch, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACBranch, ::AbstractBranchFormulation) = 1.0
+
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
+
+
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation} = DeviceModel(T, U)
 

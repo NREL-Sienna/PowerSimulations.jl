@@ -964,7 +964,7 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 662467, 1)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 671937, 1)
 
     results = OptimizationProblemResults(ps_model)
     interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")

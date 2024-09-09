@@ -40,8 +40,13 @@ function _update_parameter_values!(
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
     multiplier_id = get_time_series_multiplier_id(attributes)
+    subsystem = get_subsystem(attributes)
     template = get_template(model)
-    device_model = get_model(template, V)
+    if isempty(subsystem)
+        device_model = get_model(template, V)
+    else
+        device_model = get_model(template, V, subsystem)
+    end
     components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
@@ -407,7 +412,7 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end
@@ -422,7 +427,13 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, T, model, input)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_attributes,
+        FixValueParameter,
+        model,
+        input,
+    )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end

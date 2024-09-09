@@ -104,6 +104,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
     contributing_devices = get_contributing_devices(model)
 
@@ -130,6 +131,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
@@ -160,6 +162,7 @@ function construct_service!(
 ) where {SR <: PSY.ConstantReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
 
     add_variables!(
@@ -185,6 +188,7 @@ function construct_service!(
 ) where {SR <: PSY.ConstantReserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
@@ -214,6 +218,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
     add_variable!(container, ServiceRequirementVariable(), service, StepwiseCostReserve())
     add_variables!(
@@ -239,6 +244,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
@@ -251,6 +257,7 @@ function construct_service!(
     return
 end
 
+#=
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -343,6 +350,7 @@ function construct_service!(
     objective_function!(container, services, model)
     return
 end
+=#
 
 """
     Constructs a service for ConstantReserveGroup.
@@ -358,6 +366,7 @@ function construct_service!(
 ) where {SR <: PSY.ConstantReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_services = PSY.get_contributing_services(service)
     # check if variables exist
     check_activeservice_variables(container, contributing_services)
@@ -376,6 +385,7 @@ function construct_service!(
 ) where {SR <: PSY.ConstantReserveGroup}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_services = PSY.get_contributing_services(service)
 
     add_constraints!(
@@ -401,6 +411,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
 
@@ -427,6 +438,7 @@ function construct_service!(
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
@@ -458,6 +470,7 @@ function construct_service!(
 ) where {SR <: PSY.ReserveNonSpinning}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
 
@@ -483,6 +496,7 @@ function construct_service!(
 ) where {SR <: PSY.ReserveNonSpinning}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
@@ -549,6 +563,7 @@ function construct_service!(
 ) where {T <: PSY.TransmissionInterface}
     name = get_service_name(model)
     service = PSY.get_component(T, sys, name)
+    !PSY.get_available(service) && return
 
     add_to_expression!(
         container,
@@ -640,6 +655,7 @@ function construct_service!(
 ) where {T <: PSY.TransmissionInterface}
     name = get_service_name(model)
     service = PSY.get_component(T, sys, name)
+    !PSY.get_available(service) && return
 
     add_to_expression!(
         container,
