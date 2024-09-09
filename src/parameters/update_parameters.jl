@@ -30,7 +30,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    ::SimulationState
+    ::SimulationState,
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -343,7 +343,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -351,7 +351,13 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, U, model, simulation_state)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_attributes,
+        U,
+        model,
+        simulation_state,
+    )
     return
 end
 
@@ -359,7 +365,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -382,7 +388,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -405,13 +411,19 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{FixValueParameter, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {U <: PSY.Component}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, U, model, simulation_state)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_attributes,
+        U,
+        model,
+        simulation_state,
+    )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end
@@ -420,7 +432,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{FixValueParameter, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -441,7 +453,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {T <: ParameterType, U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -449,7 +461,13 @@ function update_container_parameter_values!(
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     service = PSY.get_component(U, get_system(model), key.meta)
     @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, simulation_state)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_attributes,
+        service,
+        model,
+        simulation_state,
+    )
     return
 end
 
@@ -459,7 +477,7 @@ Update parameter function an OperationModel
 function update_parameter_values!(
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState
+    simulation_state::SimulationState,
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -508,7 +526,13 @@ function update_parameter_values!(
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     service = PSY.get_component(T, get_system(model), key.meta)
     @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, simulation_state)
+    _update_parameter_values!(
+        parameter_array,
+        parameter_attributes,
+        service,
+        model,
+        simulation_state,
+    )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     IS.@record :execution ParameterUpdateEvent(
         FixValueParameter,
