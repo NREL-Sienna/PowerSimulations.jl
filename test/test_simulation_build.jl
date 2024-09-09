@@ -320,3 +320,80 @@ end
     )
     @test !isempty(c)
 end
+
+@testset "Test FixValue Feedforwards" begin
+    template_uc = get_template_basic_uc_simulation()
+    set_network_model!(template_uc, NetworkModel(PTDFPowerModel; use_slacks = true))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+    set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+    template_ed =
+        get_template_nomin_ed_simulation(NetworkModel(PTDFPowerModel; use_slacks = true))
+    set_device_model!(template_ed, DeviceModel(Line, StaticBranchUnbounded))
+    set_service_model!(template_ed, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"; add_reserves = true)
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                initialize_model = false,
+            ),
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = ipopt_optimizer,
+                initialize_model = false,
+            ),
+        ],
+    )
+
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+                FixValueFeedforward(;
+                    component_type = VariableReserve{ReserveUp},
+                    source = ActivePowerReserveVariable,
+                    affected_values = [ActivePowerReserveVariable],
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "reserve_feedforward",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+    build_out = build!(sim)
+    @test build_out == PSI.SimulationBuildStatus.BUILT
+    ed_power_model = PSI.get_simulation_model(PSI.get_models(sim), :ED)
+    c = PSI.get_parameter(
+        PSI.get_optimization_container(ed_power_model),
+        FixValueParameter(),
+        VariableReserve{ReserveUp},
+        "Reserve1",
+    )
+    @test !isempty(c.multiplier_array)
+    @test !isempty(c.parameter_array)
+    c = PSI.get_parameter(
+        PSI.get_optimization_container(ed_power_model),
+        FixValueParameter(),
+        VariableReserve{ReserveUp},
+        "Reserve11",
+    )
+    @test !isempty(c.multiplier_array)
+    @test !isempty(c.parameter_array)
+end
