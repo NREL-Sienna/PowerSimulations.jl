@@ -16,6 +16,7 @@ struct Settings
     export_pwl_vars::Bool
     allow_fails::Bool
     rebuild_model::Bool
+    export_optimization_model::Bool
     store_variable_names::Bool
     check_numerical_bounds::Bool
     ext::Dict{String, Any}
@@ -41,6 +42,7 @@ function Settings(
     allow_fails::Bool = false,
     check_numerical_bounds = true,
     rebuild_model = false,
+    export_optimization_model = false,
     store_variable_names = false,
     ext = Dict{String, Any}(),
 )
@@ -77,6 +79,7 @@ function Settings(
         export_pwl_vars,
         allow_fails,
         rebuild_model,
+        export_optimization_model,
         store_variable_names,
         check_numerical_bounds,
         ext,
@@ -151,6 +154,7 @@ get_detailed_optimizer_stats(settings::Settings) = settings.detailed_optimizer_s
 get_direct_mode_optimizer(settings::Settings) = settings.direct_mode_optimizer
 get_store_variable_names(settings::Settings) = settings.store_variable_names
 get_rebuild_model(settings::Settings) = settings.rebuild_model
+get_export_optimization_model(settings::Settings) = settings.export_optimization_model
 use_time_series_cache(settings::Settings) = settings.time_series_cache_size > 0
 
 function set_horizon!(settings::Settings, horizon::Dates.TimePeriod)
