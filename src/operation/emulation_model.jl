@@ -507,7 +507,7 @@ keyword arguments to that function.
   - `export_problem_results::Bool`: If true, export OptimizationProblemResults DataFrames to CSV files.
   - `output_dir::String`: Required if the model is not already built, otherwise ignored
   - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
-  - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
+  - `export_optimization_model::Bool`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
 
@@ -522,7 +522,7 @@ function run!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
-    serialize = true,
+    export_optimization_model = true,
     kwargs...,
 )
     build_if_not_already_built!(
@@ -555,7 +555,7 @@ function run!(
                     run_impl!(model; kwargs...)
                     set_run_status!(model, RunStatus.SUCCESSFULLY_FINALIZED)
                 end
-                if serialize
+                if export_optimization_model
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
                         optimizer = get(kwargs, :optimizer, nothing)
                         serialize_problem(model; optimizer = optimizer)

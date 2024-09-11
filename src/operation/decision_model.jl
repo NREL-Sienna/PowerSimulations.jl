@@ -114,6 +114,7 @@ function DecisionModel{M}(
     direct_mode_optimizer = false,
     store_variable_names = false,
     rebuild_model = false,
+    export_optimization_model = false,
     check_numerical_bounds = true,
     initial_time = UNSET_INI_TIME,
     time_series_cache_size::Int = IS.TIME_SERIES_CACHE_SIZE_BYTES,
@@ -139,6 +140,7 @@ function DecisionModel{M}(
         check_numerical_bounds = check_numerical_bounds,
         store_variable_names = store_variable_names,
         rebuild_model = rebuild_model,
+        export_optimization_model = export_optimization_model,
     )
     return DecisionModel{M}(template, sys, settings, jump_model; name = name)
 end
@@ -444,7 +446,7 @@ keyword arguments to that function.
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
   - `disable_timer_outputs = false` : Enable/Disable timing outputs
-  - `serialize::Bool = true`: If true, serialize the model to a file to allow re-execution later.
+  - `export_optimization_problem::Bool = true`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
 
@@ -459,7 +461,7 @@ function solve!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
-    serialize = true,
+    export_optimization_problem = true,
     kwargs...,
 )
     build_if_not_already_built!(
@@ -500,7 +502,7 @@ function solve!(
                         current_time,
                     )
                 end
-                if serialize
+                if export_optimization_problem
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
                         serialize_problem(model; optimizer = optimizer)
                         serialize_optimization_model(model)
