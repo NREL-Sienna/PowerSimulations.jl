@@ -113,7 +113,7 @@ function solve_impl!(model::OperationModel)
         if !ispath(model_output_dir)
             mkdir(model_output_dir)
         end
-        tss = replace!("$(ts)", ":" => "_")
+        tss = replace("$(ts)", ":" => "_")
         model_export_path = joinpath(model_output_dir, "exported_$(model_name)_$(tss).json")
         serialize_optimization_model(container, model_export_path)
     end
