@@ -1,80 +1,80 @@
-┌ Info: 2024-09-09T20:01:20.592 [3406:1]: Initializing Optimization Container For a DecisionModel
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:323
-┌ Info: 2024-09-09T20:01:20.593 [3406:1]: Initializing ModelStoreParams
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:329
-┌ Info: 2024-09-09T20:01:20.594 [3406:1]: Instantiating Network Model
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:338
-┌ Info: 2024-09-09T20:01:20.594 [3406:1]: Validating connectivity with depth first search (network traversal)
+┌ Info: 2024-09-11T23:07:09.569 [3367:1]: Initializing Optimization Container For a DecisionModel
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:325
+┌ Info: 2024-09-11T23:07:09.570 [3367:1]: Initializing ModelStoreParams
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:331
+┌ Info: 2024-09-11T23:07:09.570 [3367:1]: Instantiating Network Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:340
+┌ Info: 2024-09-11T23:07:09.570 [3367:1]: Validating connectivity with depth first search (network traversal)
 └ @ PowerNetworkMatrices /home/runner/.julia/packages/PowerNetworkMatrices/mKnwZ/src/system_utils.jl:12
-┌ Info: 2024-09-09T20:01:20.594 [3406:1]: Make Initial Conditions Model
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:230
-┌ Warning: 2024-09-09T20:01:21.769 [3406:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+┌ Info: 2024-09-11T23:07:09.570 [3367:1]: Make Initial Conditions Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:239
+┌ Warning: 2024-09-11T23:07:10.708 [3367:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:750
-┌ Info: 2024-09-09T20:01:21.769 [3406:1]: Solving Initialization Model for UC
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:248
-┌ Info: 2024-09-09T20:01:21.955 [3406:1]: Serialized initial conditions to ./rts-store/rts-test/problems/UC/initial_conditions.bin
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:263
-┌ Warning: 2024-09-09T20:01:23.322 [3406:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
+┌ Info: 2024-09-11T23:07:10.708 [3367:1]: Solving Initialization Model for UC
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:257
+┌ Info: 2024-09-11T23:07:10.884 [3367:1]: Serialized initial conditions to ./rts-store/rts-test/problems/UC/initial_conditions.bin
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:272
+┌ Warning: 2024-09-11T23:07:12.270 [3367:1]: CopperPlatePowerModel models with HVDC ignores inter-area losses
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/devices_models/device_constructors/branch_constructor.jl:750
-┌ Info: 2024-09-09T20:01:23.439 [3406:1]: UC optimizer set to: HiGHS
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:356
-┌ Info: 2024-09-09T20:01:23.439 [3406:1]: Checking Numerical Bounds
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:359
-┌ Info: 2024-09-09T20:01:23.519 [3406:1]: Variable bounds range is [0.0 8.47]
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:317
-┌ Info: 2024-09-09T20:01:23.570 [3406:1]: Constraint coefficient bounds range is [-0.42851 4380.0]
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:327
-┌ Info: 2024-09-09T20:01:23.570 [3406:1]: Constraint right-hand-side bounds [0.06 48.0]
+┌ Info: 2024-09-11T23:07:12.379 [3367:1]: UC optimizer set to: HiGHS
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:365
+┌ Info: 2024-09-11T23:07:12.379 [3367:1]: Checking Numerical Bounds
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:368
+┌ Info: 2024-09-11T23:07:12.456 [3367:1]: Variable bounds range is [0.0 8.47]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:326
+┌ Info: 2024-09-11T23:07:12.505 [3367:1]: Constraint coefficient bounds range is [-1.0 4380.0]
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:336
-┌ Info: 2024-09-09T20:01:23.570 [3406:1]: Initializing Optimization Container For a DecisionModel
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:323
-┌ Info: 2024-09-09T20:01:23.646 [3406:1]: Initializing ModelStoreParams
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:329
-┌ Info: 2024-09-09T20:01:23.647 [3406:1]: Instantiating Network Model
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:338
-┌ Info: 2024-09-09T20:01:26.972 [3406:1]: PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF
+┌ Info: 2024-09-11T23:07:12.505 [3367:1]: Constraint right-hand-side bounds [0.06 48.0]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:345
+┌ Info: 2024-09-11T23:07:12.505 [3367:1]: Initializing Optimization Container For a DecisionModel
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:325
+┌ Info: 2024-09-11T23:07:12.565 [3367:1]: Initializing ModelStoreParams
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:331
+┌ Info: 2024-09-11T23:07:12.565 [3367:1]: Instantiating Network Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/decision_model.jl:340
+┌ Info: 2024-09-11T23:07:15.837 [3367:1]: PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/core/network_model.jl:128
-┌ Info: 2024-09-09T20:01:27.209 [3406:1]: Make Initial Conditions Model
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:230
-┌ Info: 2024-09-09T20:01:27.209 [3406:1]: No initial conditions in the model
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:175
-┌ Info: 2024-09-09T20:01:34.137 [3406:1]: ED optimizer set to: HiGHS
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:356
-┌ Info: 2024-09-09T20:01:34.137 [3406:1]: Checking Numerical Bounds
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:359
-┌ Info: 2024-09-09T20:01:34.244 [3406:1]: Variable bounds range is [0.0 8.47]
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:317
-┌ Info: 2024-09-09T20:01:34.579 [3406:1]: Constraint coefficient bounds range is [-0.42851 1.0e6]
-└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:327
-┌ Info: 2024-09-09T20:01:34.580 [3406:1]: Constraint right-hand-side bounds [1.0 4.0]
+┌ Info: 2024-09-11T23:07:16.066 [3367:1]: Make Initial Conditions Model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:239
+┌ Info: 2024-09-11T23:07:16.067 [3367:1]: No initial conditions in the model
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:184
+┌ Info: 2024-09-11T23:07:22.681 [3367:1]: ED optimizer set to: HiGHS
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:365
+┌ Info: 2024-09-11T23:07:22.681 [3367:1]: Checking Numerical Bounds
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:368
+┌ Info: 2024-09-11T23:07:22.784 [3367:1]: Variable bounds range is [0.0 8.47]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:326
+┌ Info: 2024-09-11T23:07:23.116 [3367:1]: Constraint coefficient bounds range is [-1.0 1.0e6]
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:336
-┌ Info: 2024-09-09T20:01:34.977 [3406:1]: Reconciling initial conditions across models UC, ED
+┌ Info: 2024-09-11T23:07:23.116 [3367:1]: Constraint right-hand-side bounds [1.0 7.22]
+└ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_interface.jl:345
+┌ Info: 2024-09-11T23:07:23.518 [3367:1]: Reconciling initial conditions across models UC, ED
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:275
-┌ Info: 2024-09-09T20:01:41.248 [3406:1]: Serialized simulation name = rts-test
+┌ Info: 2024-09-11T23:07:29.574 [3367:1]: Serialized simulation name = rts-test
 │   directory = ./rts-store/rts-test/simulation_files
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:1174
-┌ Info: 2024-09-09T20:01:41.315 [3406:1]: Serialized time series data to ./rts-store/rts-test/problems/UC/system-15bad92d-8c29-4804-a089-3409f1f8be99_time_series_storage.h5.
-└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/4ZGA8/src/time_series_storage.jl:106
-┌ Info: 2024-09-09T20:01:41.336 [3406:1]: Serialized System to ./rts-store/rts-test/problems/UC/system-15bad92d-8c29-4804-a089-3409f1f8be99.json
+┌ Info: 2024-09-11T23:07:29.636 [3367:1]: Serialized time series data to ./rts-store/rts-test/problems/UC/system-3902bdf4-ab97-4d2e-99f5-7c488c07d0f3_time_series_storage.h5.
+└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/xqBQ7/src/time_series_storage.jl:106
+┌ Info: 2024-09-11T23:07:29.655 [3367:1]: Serialized System to ./rts-store/rts-test/problems/UC/system-3902bdf4-ab97-4d2e-99f5-7c488c07d0f3.json
 └ @ PowerSystems /home/runner/.julia/packages/PowerSystems/Stu3w/src/base.jl:439
-┌ Info: 2024-09-09T20:01:41.338 [3406:1]: Serialized System metadata to ./rts-store/rts-test/problems/UC/system-15bad92d-8c29-4804-a089-3409f1f8be99_metadata.json
+┌ Info: 2024-09-11T23:07:29.657 [3367:1]: Serialized System metadata to ./rts-store/rts-test/problems/UC/system-3902bdf4-ab97-4d2e-99f5-7c488c07d0f3_metadata.json
 └ @ PowerSystems /home/runner/.julia/packages/PowerSystems/Stu3w/src/base.jl:464
-┌ Info: 2024-09-09T20:01:41.362 [3406:1]: Serialized OperationModel to
+┌ Info: 2024-09-11T23:07:29.663 [3367:1]: Serialized OperationModel to
 │   bin_file_name = ./rts-store/rts-test/problems/UC/model.bin
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_serialization.jl:67
-┌ Info: 2024-09-09T20:01:41.488 [3406:1]: Serialized time series data to ./rts-store/rts-test/problems/ED/system-4e1288e6-7378-487e-90e0-e2ce18e52bb4_time_series_storage.h5.
-└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/4ZGA8/src/time_series_storage.jl:106
-┌ Info: 2024-09-09T20:01:41.508 [3406:1]: Serialized System to ./rts-store/rts-test/problems/ED/system-4e1288e6-7378-487e-90e0-e2ce18e52bb4.json
+┌ Info: 2024-09-11T23:07:29.796 [3367:1]: Serialized time series data to ./rts-store/rts-test/problems/ED/system-f5af1e6f-ea1e-47cf-9f2c-4081f424a4fb_time_series_storage.h5.
+└ @ InfrastructureSystems /home/runner/.julia/packages/InfrastructureSystems/xqBQ7/src/time_series_storage.jl:106
+┌ Info: 2024-09-11T23:07:29.815 [3367:1]: Serialized System to ./rts-store/rts-test/problems/ED/system-f5af1e6f-ea1e-47cf-9f2c-4081f424a4fb.json
 └ @ PowerSystems /home/runner/.julia/packages/PowerSystems/Stu3w/src/base.jl:439
-┌ Info: 2024-09-09T20:01:41.510 [3406:1]: Serialized System metadata to ./rts-store/rts-test/problems/ED/system-4e1288e6-7378-487e-90e0-e2ce18e52bb4_metadata.json
+┌ Info: 2024-09-11T23:07:29.817 [3367:1]: Serialized System metadata to ./rts-store/rts-test/problems/ED/system-f5af1e6f-ea1e-47cf-9f2c-4081f424a4fb_metadata.json
 └ @ PowerSystems /home/runner/.julia/packages/PowerSystems/Stu3w/src/base.jl:464
-┌ Info: 2024-09-09T20:01:41.589 [3406:1]: Serialized OperationModel to
+┌ Info: 2024-09-11T23:07:29.893 [3367:1]: Serialized OperationModel to
 │   bin_file_name = ./rts-store/rts-test/problems/ED/model.bin
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/operation/operation_model_serialization.jl:67
-┌ Info: 2024-09-09T20:01:44.685 [3406:1]: Initialize store cache
+┌ Info: 2024-09-11T23:07:32.834 [3367:1]: Initialize store cache
 │   get_min_flush_size(store.cache) = 1048576
 │   get_max_size(store.cache) = 1073741824
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/hdf_simulation_store.jl:249
-┌ Error: 2024-09-09T20:01:58.889 [3406:1]: simulation failed
-│   exception = (KeyError("113"), Union{Ptr{Nothing}, Base.InterpreterIP}[Ptr{Nothing} @0x00007f953c167d10, Ptr{Nothing} @0x00007f953c167d93, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f953a1dff4c, Ptr{Nothing} @0x00007f953a1e02e9, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f953a1b6547, Ptr{Nothing} @0x00007f953a1b6739, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f953a136cd3, Ptr{Nothing} @0x00007f953a13c6fc, Ptr{Nothing} @0x00007f953a13c729, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f953a13af14, Ptr{Nothing} @0x00007f953a13bdf1, Ptr{Nothing} @0x00007f953a13c62f, Ptr{Nothing} @0x00007f953a13c6b2, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f95574d2a85, Ptr{Nothing} @0x00007f953a130315, Ptr{Nothing} @0x00007f953a130856, Ptr{Nothing} @0x00007f953a130899, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f956c664de4, Ptr{Nothing} @0x00007f956c6648d4, Ptr{Nothing} @0x00007f956c665633, Ptr{Nothing} @0x00007f956c66640d, Base.InterpreterIP in top-level CodeInfo for Main.__atexample__named__pcm at statement 4, Ptr{Nothing} @0x00007f956c6822f4, Ptr{Nothing} @0x00007f956c682aa9, Ptr{Nothing} @0x00007f956c683ebb, Ptr{Nothing} @0x00007f9541b6b884, Ptr{Nothing} @0x00007f9541b6bb45, Ptr{Nothing} @0x00007f9541b6c402, Ptr{Nothing} @0x00007f9541b6c9c2, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f95574d2a85, Ptr{Nothing} @0x00007f9541b6af20, Ptr{Nothing} @0x00007f9541b6b123, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f9541b69e16, Ptr{Nothing} @0x00007f9541b69e59, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f9541b67b8c, Ptr{Nothing} @0x00007f9541b69c01, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f956c659548, Ptr{Nothing} @0x00007f956c1d085a, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f956c1cf47b, Ptr{Nothing} @0x00007f956c1cff8e, Ptr{Nothing} @0x00007f956c1d0216, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f956c13d320, Ptr{Nothing} @0x00007f956c13d4ca, Ptr{Nothing} @0x00007f956c13d95e, Ptr{Nothing} @0x00007f956c13dac9, Ptr{Nothing} @0x00007f956c13db05, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f956c12358b, Ptr{Nothing} @0x00007f956c682613, Ptr{Nothing} @0x00007f956c682aa9, Ptr{Nothing} @0x00007f956c683ebb, Ptr{Nothing} @0x00007f95565f0bb1, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f95557da800, Ptr{Nothing} @0x00007f9556b8e7fe, Ptr{Nothing} @0x00007f955601f7fa, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f9556f6af53, Ptr{Nothing} @0x00007f9556a5288d, Ptr{Nothing} @0x00007f95557a6b73, Ptr{Nothing} @0x00007f956c646f8d, Ptr{Nothing} @0x00007f956c6b1d75, Ptr{Nothing} @0x00007f956c6b27fe, Ptr{Nothing} @0x0000000000401088, Ptr{Nothing} @0x00007f956d429d8f, Ptr{Nothing} @0x00007f956d429e3f, Ptr{Nothing} @0x00000000004010b8])
+┌ Error: 2024-09-11T23:07:46.487 [3367:1]: simulation failed
+│   exception = (KeyError("113"), Union{Ptr{Nothing}, Base.InterpreterIP}[Ptr{Nothing} @0x00007f0bfb369210, Ptr{Nothing} @0x00007f0bfb369293, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0bf93de41c, Ptr{Nothing} @0x00007f0bf93de7b9, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0bf93b1427, Ptr{Nothing} @0x00007f0bf93b1619, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0bf9331c23, Ptr{Nothing} @0x00007f0bf933764c, Ptr{Nothing} @0x00007f0bf9337679, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0bf93346b4, Ptr{Nothing} @0x00007f0bf9335591, Ptr{Nothing} @0x00007f0bf933757f, Ptr{Nothing} @0x00007f0bf9337602, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c166d2a85, Ptr{Nothing} @0x00007f0bf932b265, Ptr{Nothing} @0x00007f0bf932b7a6, Ptr{Nothing} @0x00007f0bf932b7e9, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c2b864de4, Ptr{Nothing} @0x00007f0c2b8648d4, Ptr{Nothing} @0x00007f0c2b865633, Ptr{Nothing} @0x00007f0c2b86640d, Base.InterpreterIP in top-level CodeInfo for Main.__atexample__named__pcm at statement 4, Ptr{Nothing} @0x00007f0c2b8822f4, Ptr{Nothing} @0x00007f0c2b882aa9, Ptr{Nothing} @0x00007f0c2b883ebb, Ptr{Nothing} @0x00007f0c00d6b944, Ptr{Nothing} @0x00007f0c00d6bc05, Ptr{Nothing} @0x00007f0c00d6c4c2, Ptr{Nothing} @0x00007f0c00d6ca82, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c166d2a85, Ptr{Nothing} @0x00007f0c00d6afe0, Ptr{Nothing} @0x00007f0c00d6b1e3, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c00d69ed6, Ptr{Nothing} @0x00007f0c00d69f19, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c00d67c4c, Ptr{Nothing} @0x00007f0c00d69cc1, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c2b859548, Ptr{Nothing} @0x00007f0c25dd026a, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c25dcf51b, Ptr{Nothing} @0x00007f0c25dcf99e, Ptr{Nothing} @0x00007f0c25dcfc26, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c25d37bf0, Ptr{Nothing} @0x00007f0c25d37d9a, Ptr{Nothing} @0x00007f0c25d3d93e, Ptr{Nothing} @0x00007f0c25d3daa9, Ptr{Nothing} @0x00007f0c25d3dae5, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c25d2357b, Ptr{Nothing} @0x00007f0c2b882613, Ptr{Nothing} @0x00007f0c2b882aa9, Ptr{Nothing} @0x00007f0c2b883ebb, Ptr{Nothing} @0x00007f0c157f0bb1, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c149da800, Ptr{Nothing} @0x00007f0c15d8e7fe, Ptr{Nothing} @0x00007f0c1521f7fa, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c1616af53, Ptr{Nothing} @0x00007f0c15c5288d, Ptr{Nothing} @0x00007f0c149a6b73, Ptr{Nothing} @0x00007f0c2b846f8d, Ptr{Nothing} @0x00007f0c2b8b1d75, Ptr{Nothing} @0x00007f0c2b8b27fe, Ptr{Nothing} @0x0000000000401088, Ptr{Nothing} @0x00007f0c2c629d8f, Ptr{Nothing} @0x00007f0c2c629e3f, Ptr{Nothing} @0x00000000004010b8])
 └ @ PowerSimulations /home/runner/work/PowerSimulations.jl/PowerSimulations.jl/src/simulation/simulation.jl:1097
