@@ -111,7 +111,7 @@ function solve_impl!(model::OperationModel)
     if get_export_optimization_model(get_settings(model))
         model_output_dir = joinpath(output_dir, "optimization_model_exports")
         if !ispath(model_output_dir)
-            mkdir(model_output_dir)
+            mkpath(model_output_dir)
         end
         tss = replace("$(ts)", ":" => "_")
         model_export_path = joinpath(model_output_dir, "exported_$(model_name)_$(tss).json")
