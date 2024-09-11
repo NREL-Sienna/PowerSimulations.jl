@@ -33,6 +33,8 @@ get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.ACBranch}, ::
 get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
 get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
 get_variable_binary(::HVDCPiecewiseLossVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCActivePowerReceivedFromVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCActivePowerReceivedToVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
 get_variable_binary(::HVDCPiecewiseBinaryLossVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = true
 get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
 get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0

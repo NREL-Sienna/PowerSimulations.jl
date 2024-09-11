@@ -228,6 +228,20 @@ Docs abbreviation: ``u^\\text{dir}``
 """
 struct HVDCFlowDirectionVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of HVDC Received Flow at From Bus Variables for PWL formulations
+
+Docs abbreviation: ``x``
+"""
+struct HVDCActivePowerReceivedFromVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of HVDC Received Flow at To Bus Variables for PWL formulations
+
+Docs abbreviation: ``y``
+"""
+struct HVDCActivePowerReceivedToVariable <: VariableType end
+
 abstract type SparseVariableType <: VariableType end
 
 """

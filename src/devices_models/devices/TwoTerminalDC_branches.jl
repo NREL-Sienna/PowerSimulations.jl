@@ -111,6 +111,30 @@ get_variable_lower_bound(
     ::HVDCTwoTerminalDispatch,
 ) = PSY.get_active_power_limits_to(d).min
 
+get_variable_upper_bound(
+    ::HVDCActivePowerReceivedFromVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::AbstractTwoTerminalDCLineFormulation,
+) = PSY.get_active_power_limits_from(d).max
+
+get_variable_lower_bound(
+    ::HVDCActivePowerReceivedFromVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::AbstractTwoTerminalDCLineFormulation,
+) = PSY.get_active_power_limits_from(d).min
+
+get_variable_upper_bound(
+    ::HVDCActivePowerReceivedToVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::AbstractTwoTerminalDCLineFormulation,
+) = PSY.get_active_power_limits_to(d).max
+
+get_variable_lower_bound(
+    ::HVDCActivePowerReceivedToVariable,
+    d::PSY.TwoTerminalHVDCLine,
+    ::AbstractTwoTerminalDCLineFormulation,
+) = PSY.get_active_power_limits_to(d).min
+
 function get_variable_upper_bound(
     ::HVDCLosses,
     d::PSY.TwoTerminalHVDCLine,
@@ -256,8 +280,8 @@ function add_constraints!(
     var_pwl_bin = get_variable(container, HVDCPiecewiseBinaryLossVariable(), U)
     names = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
-    flow_ft = get_variable(container, FlowActivePowerFromToVariable(), U)
-    flow_tf = get_variable(container, FlowActivePowerToFromVariable(), U)
+    flow_ft = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
+    flow_tf = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
 
     constraint_from_to =
         add_constraints_container!(container, T(), U, names, time_steps; meta = "ft")
@@ -327,8 +351,8 @@ function add_constraints!(
     var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
     names = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
-    flow_ft = get_variable(container, FlowActivePowerFromToVariable(), U)
-    flow_tf = get_variable(container, FlowActivePowerToFromVariable(), U)
+    flow_ft = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
+    flow_tf = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
 
     constraint_from_to =
         add_constraints_container!(container, T(), U, names, time_steps; meta = "ft")
@@ -475,7 +499,12 @@ end
 function _add_hvdc_flow_constraints!(
     container::OptimizationContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    var::Union{FlowActivePowerFromToVariable, FlowActivePowerToFromVariable},
+    var::Union{
+        FlowActivePowerFromToVariable,
+        FlowActivePowerToFromVariable,
+        HVDCActivePowerReceivedFromVariable,
+        HVDCActivePowerReceivedToVariable,
+    },
     constraint::Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
 ) where {T <: PSY.TwoTerminalHVDCLine}
     time_steps = get_time_steps(container)
@@ -508,16 +537,11 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    model::DeviceModel{U, V},
+    model::DeviceModel{U, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
     U <: PSY.TwoTerminalHVDCLine,
-    V <: Union{
-        HVDCTwoTerminalDispatch,
-        HVDCTwoTerminalPiecewiseLoss,
-        HVDCTwoTerminalSOSPiecewiseLoss,
-    },
 }
     inter_network_branches = U[]
     for d in devices
@@ -537,16 +561,11 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, V},
+    ::DeviceModel{U, HVDCTwoTerminalDispatch},
     ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {
     T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
     U <: PSY.TwoTerminalHVDCLine,
-    V <: Union{
-        HVDCTwoTerminalDispatch,
-        HVDCTwoTerminalPiecewiseLoss,
-        HVDCTwoTerminalSOSPiecewiseLoss,
-    },
 }
     _add_hvdc_flow_constraints!(container, devices, T())
     return
@@ -563,6 +582,74 @@ function add_constraints!(
     U <: PSY.TwoTerminalHVDCLine,
 }
     _add_hvdc_flow_constraints!(container, devices, T())
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {
+    T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
+    U <: PSY.TwoTerminalHVDCLine,
+    V <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+}
+    inter_network_branches = U[]
+    for d in devices
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        if ref_bus_from != ref_bus_to
+            push!(inter_network_branches, d)
+        end
+    end
+    if !isempty(inter_network_branches)
+        if T <: FlowRateConstraintFromTo
+            _add_hvdc_flow_constraints!(
+                container,
+                devices,
+                HVDCActivePowerReceivedFromVariable(),
+                T(),
+            )
+        else
+            _add_hvdc_flow_constraints!(
+                container,
+                devices,
+                HVDCActivePowerReceivedToVariable(),
+                T(),
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
+    U <: PSY.TwoTerminalHVDCLine,
+    V <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+}
+    if T <: FlowRateConstraintFromTo
+        _add_hvdc_flow_constraints!(
+            container,
+            devices,
+            HVDCActivePowerReceivedFromVariable(),
+            T(),
+        )
+    else
+        _add_hvdc_flow_constraints!(
+            container,
+            devices,
+            HVDCActivePowerReceivedToVariable(),
+            T(),
+        )
+    end
     return
 end
 

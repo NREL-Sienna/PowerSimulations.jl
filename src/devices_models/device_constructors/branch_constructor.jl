@@ -771,22 +771,21 @@ function construct_device!(
         get_available_components(model, sys)
     add_variables!(
         container,
-        FlowActivePowerToFromVariable,
+        HVDCActivePowerReceivedFromVariable,
         devices,
         HVDCTwoTerminalPiecewiseLoss(),
     )
     add_variables!(
         container,
-        FlowActivePowerFromToVariable,
+        HVDCActivePowerReceivedToVariable,
         devices,
         HVDCTwoTerminalPiecewiseLoss(),
     )
-    #_add_dense_pwl_loss_variables!(container, devices, model)
     _add_sparse_pwl_loss_variables!(container, devices, model)
     add_to_expression!(
         container,
         ActivePowerBalance,
-        FlowActivePowerToFromVariable,
+        HVDCActivePowerReceivedFromVariable,
         devices,
         model,
         network_model,
@@ -794,7 +793,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        FlowActivePowerFromToVariable,
+        HVDCActivePowerReceivedToVariable,
         devices,
         model,
         network_model,
