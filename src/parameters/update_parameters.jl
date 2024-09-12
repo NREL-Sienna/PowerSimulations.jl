@@ -30,7 +30,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
-    ::SimulationState,
+    ::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -78,7 +78,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
-    ::SimulationState,
+    ::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
@@ -111,7 +111,7 @@ function _update_parameter_values!(
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
-    ::SimulationState,
+    ::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Device}
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
@@ -147,9 +147,8 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Device},
     model::DecisionModel,
-    simulation_state::SimulationState,
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}}
-    state = get_decision_states(simulation_state)
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(parameter_array)
@@ -191,9 +190,8 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes,
     ::PSY.Reserve,
     model::DecisionModel,
-    simulation_state::SimulationState,
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}}
-    state = get_decision_states(simulation_state)
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(parameter_array)
@@ -235,9 +233,8 @@ function _update_parameter_values!(
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{U},
     model::DecisionModel,
-    simulation_state::SimulationState,
+    state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Device}
-    state = get_decision_states(simulation_state)
     current_time = get_current_time(model)
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, time = axes(parameter_array)
@@ -343,7 +340,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState,
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
@@ -351,13 +348,7 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(
-        parameter_array,
-        parameter_attributes,
-        U,
-        model,
-        simulation_state,
-    )
+    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
     return
 end
 
@@ -365,7 +356,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState,
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -379,7 +370,7 @@ function update_container_parameter_values!(
         parameter_attributes,
         U,
         model,
-        simulation_state,
+        input
     )
     return
 end
@@ -388,7 +379,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{T, U},
-    simulation_state::SimulationState,
+    input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -402,7 +393,7 @@ function update_container_parameter_values!(
         parameter_attributes,
         U,
         model,
-        simulation_state,
+        input,
     )
     return
 end
@@ -411,7 +402,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{FixValueParameter, U},
-    simulation_state::SimulationState,
+    input::DatasetContainer{InMemoryDataset},
 ) where {U <: PSY.Component}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -422,7 +413,7 @@ function update_container_parameter_values!(
         parameter_attributes,
         U,
         model,
-        simulation_state,
+        input,
     )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
@@ -432,7 +423,7 @@ function update_container_parameter_values!(
     optimization_container::OptimizationContainer,
     model::OperationModel,
     key::ParameterKey{FixValueParameter, U},
-    simulation_state::SimulationState,
+    input::DatasetContainer{InMemoryDataset},
 ) where {U <: PSY.Service}
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
@@ -443,7 +434,7 @@ function update_container_parameter_values!(
         parameter_attributes,
         FixValueParameter,
         model,
-        simulation_state,
+        input,
     )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
@@ -482,7 +473,8 @@ function update_parameter_values!(
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     optimization_container = get_optimization_container(model)
-    update_container_parameter_values!(optimization_container, model, key, simulation_state)
+    input = get_decision_states(simulation_state)
+    update_container_parameter_values!(optimization_container, model, key, input)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     IS.@record :execution ParameterUpdateEvent(
         T,
@@ -531,7 +523,7 @@ function update_parameter_values!(
         parameter_attributes,
         service,
         model,
-        simulation_state,
+        input,
     )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     IS.@record :execution ParameterUpdateEvent(
