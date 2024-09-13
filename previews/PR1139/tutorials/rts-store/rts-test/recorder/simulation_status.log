@@ -1,4 +1,4 @@
-{"timestamp":"2024-09-13T17:00:14.839","status":"start","step":1,"name":"SimulationStepEvent","simulation_time":"2020-01-01T00:00:00.0"}
-{"timestamp":"2024-09-13T17:00:15.892","model_name":"UC","status":"start","step":1,"name":"ProblemExecutionEvent","simulation_time":"2020-01-01T00:00:00.0"}
-{"timestamp":"2024-09-13T17:00:22.002","model_name":"UC","status":"done","step":1,"name":"ProblemExecutionEvent","simulation_time":"2020-01-01T00:00:00.0"}
-{"timestamp":"2024-09-13T17:00:22.002","model_name":"ED","status":"start","step":1,"name":"ProblemExecutionEvent","simulation_time":"2020-01-01T00:00:00.0"}
+{"timestamp":"2024-09-13T19:10:54.052","status":"start","step":1,"name":"SimulationStepEvent","simulation_time":"2020-01-01T00:00:00.0"}
+{"timestamp":"2024-09-13T19:10:55.094","model_name":"UC","status":"start","step":1,"name":"ProblemExecutionEvent","simulation_time":"2020-01-01T00:00:00.0"}
+{"timestamp":"2024-09-13T19:11:01.048","model_name":"UC","status":"done","step":1,"name":"ProblemExecutionEvent","simulation_time":"2020-01-01T00:00:00.0"}
+{"timestamp":"2024-09-13T19:11:01.048","model_name":"ED","status":"start","step":1,"name":"ProblemExecutionEvent","simulation_time":"2020-01-01T00:00:00.0"}
