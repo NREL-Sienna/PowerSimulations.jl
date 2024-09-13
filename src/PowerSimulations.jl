@@ -534,6 +534,8 @@ include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 include("operation/operation_model_simulation_interface.jl")
+include("parameters/update_container_parameter_values.jl")
+include("parameters/update_cost_parameters.jl")
 include("parameters/update_parameters.jl")
 
 include("devices_models/devices/common/objective_function/common.jl")
