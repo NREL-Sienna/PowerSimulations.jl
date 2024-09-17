@@ -268,7 +268,8 @@ function _update_parameter_values!(
             end
             if 0.0 > value || value > 1.0
                 error(
-                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range")
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range",
+                )
             end
             _set_param_value!(parameter_array, value, name, t)
         end
@@ -304,7 +305,7 @@ function _update_parameter_values!(
     state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
-    state_values = get_dataset_values(state, get_attribute_key(attributes))
+    @show state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
@@ -321,7 +322,8 @@ function _update_parameter_values!(
         end
         if 0.0 > value || value > 1.0
             error(
-                "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range")
+                "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range",
+            )
         end
         _set_param_value!(parameter_array, value, name, t)
     end
