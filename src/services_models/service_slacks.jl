@@ -1,7 +1,7 @@
 function reserve_slacks!(
     container::OptimizationContainer,
     service::T,
-) where {T <: PSY.Reserve}
+) where {T <: Union{PSY.Reserve, PSY.ReserveNonSpinning}}
     time_steps = get_time_steps(container)
     variable = add_variable_container!(
         container,
