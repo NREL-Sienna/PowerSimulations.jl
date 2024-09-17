@@ -8,6 +8,12 @@ function update_model!(model::OperationModel, source::SimulationState, ini_cond_
     return
 end
 
+function update_parameters!(model::EmulationModel, state::SimulationState)
+    data = get_system_states(state)
+    update_parameters!(model, data)
+    return
+end
+
 function update_parameters!(
     model::DecisionModel,
     simulation_state::SimulationState,
