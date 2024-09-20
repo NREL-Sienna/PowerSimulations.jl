@@ -232,6 +232,7 @@ export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
+export PieceWiseLinearCostVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -271,6 +272,7 @@ export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCLosses
 export HVDCFlowDirectionVariable
+export HVDCLossesAbsoluteValue
 export InputActivePowerVariableLimitsConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
@@ -302,9 +304,13 @@ export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
+# Cost Parameters
+export CostFunctionParameter
+
 # Feedforward Parameters
 export OnStatusParameter
 export UpperBoundValueParameter
+export LowerBoundValueParameter
 export FixValueParameter
 
 # Expressions
