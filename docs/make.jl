@@ -29,6 +29,7 @@ pages = OrderedDict(
     "Code Base Developer Guide" => Any[
         "Developer Guide" => "code_base_developer_guide/developer.md",
         "Troubleshooting" => "code_base_developer_guide/troubleshooting.md",
+        "Internals" => "code_base_developer_guide/internal.md",
     ],
     "Formulation Library" => Any[
         "Introduction" => "formulation_library/Introduction.md",
