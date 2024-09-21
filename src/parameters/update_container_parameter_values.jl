@@ -305,7 +305,7 @@ function _update_parameter_values!(
     state::DatasetContainer{InMemoryDataset},
 ) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.Component}
     current_time = get_current_time(model)
-    @show state_values = get_dataset_values(state, get_attribute_key(attributes))
+    state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
@@ -325,7 +325,7 @@ function _update_parameter_values!(
                 "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is out of the [0, 1] range",
             )
         end
-        _set_param_value!(parameter_array, value, name, t)
+        _set_param_value!(parameter_array, value, name, 1)
     end
     return
 end
