@@ -6,7 +6,7 @@ function add_jump_parameter(jump_model::JuMP.Model, val::Number)
 end
 
 function write_data(base_power::Float64, save_path::String)
-    JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
+    JSON3.write(joinpath(save_path, "base_power.json"), JSON3.json(base_power))
     return
 end
 
