@@ -319,23 +319,25 @@ function add_variable!(
         container,
         variable_type,
         D,
-        [PSY.get_name(d) for d in devices],
+        [PSY.get_name(d) for d in devices if !PSY.get_must_run(d)],
         time_steps,
     )
 
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        variable[name, t] = JuMP.@variable(
-            get_jump_model(container),
-            base_name = "$(T)_$(D)_{$(name), $(t)}",
-            binary = binary
-        )
-        if get_warm_start(settings)
-            init = get_variable_warm_start_value(variable_type, d, formulation)
-            init !== nothing && JuMP.set_start_value(variable[name, t], init)
-        end
+    for d in devices
         if PSY.get_must_run(d)
-            JuMP.fix(variable[name, t], 1.0; force = true)
+            continue
+        end
+        name = PSY.get_name(d)
+        for t in time_steps
+            variable[name, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(D)_{$(name), $(t)}",
+                binary = binary
+            )
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(variable_type, d, formulation)
+                init !== nothing && JuMP.set_start_value(variable[name, t], init)
+            end
         end
     end
 
