@@ -530,15 +530,24 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_bus(d))
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
-        _add_to_jump_expression!(
-            expression[bus_no, t],
-            variable[name, t],
-            get_variable_multiplier(U(), d, W()),
-        )
+        for t in get_time_steps(container)
+            if PSY.get_must_run(d)
+                _add_to_jump_expression!(
+                    expression[bus_no, t],
+                    get_variable_multiplier(U(), d, W()),
+                )
+            else
+                _add_to_jump_expression!(
+                    expression[bus_no, t],
+                    variable[name, t],
+                    get_variable_multiplier(U(), d, W()),
+                )
+            end
+        end
     end
     return
 end
@@ -558,15 +567,24 @@ function add_to_expression!(
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
+        name = PSY.get_name(d)
         bus = PSY.get_bus(d)
         area_name = PSY.get_name(PSY.get_area(bus))
-        name = PSY.get_name(d)
-        _add_to_jump_expression!(
-            expression[area_name, t],
-            variable[name, t],
-            get_variable_multiplier(U(), d, W()),
-        )
+        for t in get_time_steps(container)
+            if PSY.get_must_run(d)
+                _add_to_jump_expression!(
+                    expression[area_name, t],
+                    get_variable_multiplier(U(), d, W()),
+                )
+            else
+                _add_to_jump_expression!(
+                    expression[area_name, t],
+                    variable[name, t],
+                    get_variable_multiplier(U(), d, W()),
+                )
+            end
+        end
     end
     return
 end
@@ -676,7 +694,7 @@ function add_to_expression!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
-    U <: OnVariable,
+    U <: ,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
 }
