@@ -1716,6 +1716,9 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
             if JuMP.has_upper_bound(first(variable))
                 cache[key][:ub] = JuMP.upper_bound.(variable)
             end
+            if JuMP.is_fixed(first(variable)) && is_integer_flag
+                cache[key][:fixed_int_value] = jump_value.(v)
+            end
             cache[key][:integer] = is_integer_flag
             JuMP.fix.(variable, var_cache[key]; force = true)
         end
@@ -1756,6 +1759,9 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
         else
             JuMP.unfix.(variable)
             JuMP.set_binary.(variable)
+            if haskey(cache[key], :fixed_int_value)
+                JuMP.fix.(variable, cache[key][:fixed_int_value])
+            end
             #= Needed if a model has integer variables
             if haskey(cache[key], :lb) && JuMP.has_lower_bound(first(variable))
                 JuMP.set_lower_bound.(variable, cache[key][:lb])
