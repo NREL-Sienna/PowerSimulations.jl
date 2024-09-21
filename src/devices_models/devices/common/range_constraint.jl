@@ -104,7 +104,7 @@ function _add_lower_bound_range_constraints_impl!(
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_lb[ci_name, t] =
-            JuMP.@constraint(container.JuMPmodel, array[ci_name, t] >= limits.min)
+            JuMP.@constraint(get_jump_model(container), array[ci_name, t] >= limits.min)
     end
     return
 end
@@ -126,7 +126,7 @@ function _add_upper_bound_range_constraints_impl!(
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] =
-            JuMP.@constraint(container.JuMPmodel, array[ci_name, t] <= limits.max)
+            JuMP.@constraint(get_jump_model(container), array[ci_name, t] <= limits.max)
     end
     return
 end
@@ -246,20 +246,86 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    binary_variables = [OnVariable()]
-
     con_lb = add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
+    varbin = get_variable(container, OnVariable(), V)
 
-    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
-    varbin = get_variable(container, only(binary_variables), V)
-
-    for device in devices, t in time_steps
+    for device in devices
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
-        con_lb[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
-            array[ci_name, t] >= limits.min * varbin[ci_name, t]
-        )
+        for t in time_steps
+            con_lb[ci_name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                array[ci_name, t] >= limits.min * varbin[ci_name, t]
+            )
+        end
+    end
+    return
+end
+
+function _add_semicontinuous_lower_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    ::Type{T},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+) where {T <: ConstraintType, V <: PSY.ThermalGen, W <: AbstractDeviceFormulation}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    con_lb = add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
+    varbin = get_variable(container, OnVariable(), V)
+
+    for device in devices
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        if PSY.get_must_run_device(device)
+            for t in time_steps
+                con_lb[ci_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    array[ci_name, t] >= limits.min
+                )
+            end
+        else
+            for t in time_steps
+                con_lb[ci_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    array[ci_name, t] >= limits.min * varbin[ci_name, t]
+                )
+            end
+        end
+    end
+    return
+end
+
+function _add_semicontinuous_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    ::Type{T},
+    array,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {T <: ConstraintType, V <: PSY.ThermalGen, W <: AbstractDeviceFormulation}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    con_ub = add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
+    varbin = get_variable(container, OnVariable(), V)
+
+    for device in devices
+        ci_name = PSY.get_name(device)
+        limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
+        if PSY.get_must_run_device(device)
+            for t in time_steps
+                con_ub[ci_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    array[ci_name, t] <= limits.max
+                )
+            end
+        else
+            for t in time_steps
+                con_ub[ci_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    array[ci_name, t] <= limits.max * varbin[ci_name, t]
+                )
+            end
+        end
     end
     return
 end
@@ -273,18 +339,14 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
-    binary_variables = [OnVariable()]
-
     con_ub = add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
-
-    @assert length(binary_variables) == 1 "Expected $(binary_variables) for $U $V $T $W to be length 1"
-    varbin = get_variable(container, only(binary_variables), V)
+    varbin = get_variable(container, OnVariable(), V)
 
     for device in devices, t in time_steps
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, t] <= limits.max * varbin[ci_name, t]
         )
     end
@@ -375,7 +437,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W)
         con_lb[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, t] >= limits.min * (1 - varbin[ci_name, t])
         )
     end
@@ -409,7 +471,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W)
         con_ub[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, t] <= limits.max * (1 - varbin[ci_name, t])
         )
     end
@@ -513,7 +575,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
         con_lb[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, t] >= limits.min * varbin[ci_name, t]
         )
     end
@@ -545,7 +607,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, X) # depends on constraint type and formulation type
         con_ub[ci_name, t] = JuMP.@constraint(
-            container.JuMPmodel,
+            get_jump_model(container),
             array[ci_name, t] <= limits.max * varbin[ci_name, t]
         )
     end
