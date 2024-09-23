@@ -61,7 +61,7 @@ get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionLB, d
 get_expression_multiplier(::OnStatusParameter, ::ActivePowerBalance, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 
 #################### Initial Conditions for models ###############
-initial_condition_default(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d)
+initial_condition_default(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = max(PSY.get_must_run(d), PSY.get_status(d))
 initial_condition_variable(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 initial_condition_default(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 initial_condition_variable(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = ActivePowerVariable()
@@ -307,7 +307,7 @@ function add_variable!(
     devices::U,
     formulation::AbstractThermalFormulation,
 ) where {
-    T <: OnVariable,
+    T <: Union{OnVariable, StartVariable, StopVariable},
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.ThermalGen}
     @assert !isempty(devices)
@@ -719,26 +719,35 @@ function add_constraints!(
 
     for ic in initial_conditions
         name = PSY.get_name(get_component(ic))
-        constraint[name, 1] = JuMP.@constraint(
-            get_jump_model(container),
-            varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
-        )
-        aux_constraint[name, 1] = JuMP.@constraint(
-            get_jump_model(container),
-            varstart[name, 1] + varstop[name, 1] <= 1.0
-        )
+        if !PSY.get_must_run(get_component(ic))
+            constraint[name, 1] = JuMP.@constraint(
+                get_jump_model(container),
+                varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
+            )
+            aux_constraint[name, 1] = JuMP.@constraint(
+                get_jump_model(container),
+                varstart[name, 1] + varstop[name, 1] <= 1.0
+            )
+        end
     end
 
-    for t in time_steps[2:end], ic in initial_conditions
-        name = get_component_name(ic)
-        constraint[name, t] = JuMP.@constraint(
-            get_jump_model(container),
-            varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
-        )
-        aux_constraint[name, t] = JuMP.@constraint(
-            get_jump_model(container),
-            varstart[name, t] + varstop[name, t] <= 1.0
-        )
+    for ic in initial_conditions
+        if PSY.get_must_run(get_component(ic))
+            continue
+        else
+            name = get_component_name(ic)
+            for t in time_steps[2:end]
+                constraint[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    varon[name, t] ==
+                    varon[name, t - 1] + varstart[name, t] - varstop[name, t]
+                )
+                aux_constraint[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    varstart[name, t] + varstop[name, t] <= 1.0
+                )
+            end
+        end
     end
     return
 end
