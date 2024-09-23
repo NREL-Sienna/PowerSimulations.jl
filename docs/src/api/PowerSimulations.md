@@ -7,35 +7,10 @@ end
 
 # API Reference
 
-## Table of Contents
-
-* [Device Models](#Device-Models)
-    * [Formulations](#Formulations)
-    * [Problem Templates](#Problem-Templates)
-* [Decision Models](#Decision-Models)
-* [Emulation Models](#Emulation-Models)
-* [Service Models](#Service-Models)
-* [Simulation Models](#Simulation-Models)
-* [Variables](#Variables)
-    * [Common Variables](#Common-Variables)
-    * [Thermal Unit Variables](#Thermal-Unit-Variables)
-    * [Storage Unit Variables](#Storage-Unit-Variables)
-    * [Branches and Network Variables](#Branches-and-Network-Variables)
-    * [Services Variables](#Services-Variables)
-    * [Feedforward Variables](#Feedforward-Variables)
-* [Constraints](#Constraints)
-    * [Common Constraints](#Common-Constraints)
-    * [Network Constraints](#Network-Constraints)
-    * [Power Variable Limit Constraints](#Power-Variable-Limit-Constraints)
-    * [Services Constraints](#Services-Constraints)
-    * [Thermal Unit Constraints](#Thermal-Unit-Constraints)
-    * [Renewable Unit Constraints](#Renewable-Unit-Constraints)
-    * [Branches Constraints](#Branches-Constraints)
-    * [Feedforward Constraints](#Feedforward-Constraints)
-* [Parameters](#Parameters)
-    * [Time Series Parameters](#Time-Series-Parameters)
-    * [Variable Value Parameters](#Variable-Value-Parameters)
-    * [Objective Function Parameters](#Objective-Function-Parameters)
+```@contents
+Pages = ["PowerSimulations.md"]
+Depth = 3
+```
 
 ```@raw html
 &nbsp;
@@ -56,8 +31,15 @@ Refer to the [Formulations Page](@ref formulation_library) for each Abstract Dev
 
 ### Problem Templates
 
-Refer to the [Problem Templates Page](@ref op_problem_template) for available `ProblemTemplate`s.
-
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["problem_template.jl",
+            "operation_problem_templates.jl",
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
+```
 
 ```@raw html
 &nbsp;
@@ -68,12 +50,13 @@ Refer to the [Problem Templates Page](@ref op_problem_template) for available `P
 
 ## Decision Models
 
-```@docs
-DecisionModel
-DecisionModel(::Type{M} where {M <: DecisionProblem}, ::ProblemTemplate, ::PSY.System, ::Union{Nothing, JuMP.Model})
-DecisionModel(::AbstractString, ::MOI.OptimizerWithAttributes)
-build!(::DecisionModel)
-solve!(::DecisionModel)
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["decision_model.jl",
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
 ```
 
 ```@raw html
@@ -91,6 +74,7 @@ EmulationModel(::Type{M} where {M <: EmulationProblem}, ::ProblemTemplate, ::PSY
 EmulationModel(::AbstractString, ::MOI.OptimizerWithAttributes)
 build!(::EmulationModel)
 run!(::EmulationModel)
+solve!(::Int, ::EmulationModel{<:EmulationProblem}, ::Dates.DateTime, ::SimulationStore)
 ```
 
 ```@raw html
@@ -128,14 +112,33 @@ build!(::Simulation)
 execute!(::Simulation)
 ```
 
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["simulation_partitions.jl",
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
+```
+
 ```@raw html
 &nbsp;
 &nbsp;
 ```
 
+## Chronology Models
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["initial_condition_chronologies.jl",
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
+```
+
 ---
 
-# Variables
+## Variables
 
 For a list of variables for each device refer to its Formulations page.
 ### Common Variables
@@ -165,6 +168,9 @@ PowerOutput
 
 ```@docs
 ReservationVariable
+EnergyVariable
+ActivePowerOutVariable
+ActivePowerInVariable
 ```
 
 ### Branches and Network Variables
@@ -225,6 +231,7 @@ PieceWiseLinearCostConstraint
 CopperPlateBalanceConstraint
 NodalBalanceActiveConstraint
 NodalBalanceReactiveConstraint
+AreaParticipationAssignmentConstraint
 ```
 
 ### Power Variable Limit Constraints
@@ -314,4 +321,52 @@ FixValueParameter
 
 ```@docs
 CostFunctionParameter
+```
+
+## Results
+
+### Acessing Optimization Model
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["optimization_container.jl",
+            "optimization_debugging.jl"
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
+```
+
+### Accessing Problem Results
+
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["operation/problem_results.jl",
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
+```
+
+### Accessing Simulation Results
+
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["simulation_results.jl",
+            "simulation_problem_results.jl",
+            "simulation_partition_results.jl",
+            "hdf_simulation_store.jl"
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
+```
+
+## Simulation Recorder
+```@autodocs
+Modules = [PowerSimulations]
+Pages   = ["utils/recorder_events.jl",
+           ]
+Order = [:type, :function]
+Public = true
+Private = false
 ```
