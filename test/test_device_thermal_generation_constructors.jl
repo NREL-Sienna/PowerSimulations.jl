@@ -886,7 +886,7 @@ end
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
     template_uc =
         ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)))
-    set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
     set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
@@ -904,7 +904,10 @@ end
 
     solve!(model; output_dir = mktempdir())
     ptdf_vars = get_variable_values(OptimizationProblemResults(model))
+    power =
+        ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}("")]
     on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
-    on_sundance = on[!, "Sundance"]
-    @test all(isapprox.(on_sundance, 1.0))
+    power_sundance = power[!, "Sundance"]
+    @test all(isapprox.(power_sundance, 1.0))
+    @test "Sundance" ∉ names(on)
 end
