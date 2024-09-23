@@ -27,6 +27,7 @@ function add_shut_down_cost!(
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
+        PSY.get_must_run(d) && continue
         op_cost_data = PSY.get_operation_cost(d)
         cost_term = shut_down_cost(op_cost_data, d, V())
         iszero(cost_term) && continue
@@ -114,6 +115,7 @@ function _add_start_up_cost_to_objective!(
     op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    PSY.get_must_run(component) && return
     cost_term = start_up_cost(op_cost, component, U())
     iszero(cost_term) && return
     multiplier = objective_function_multiplier(T(), U())
@@ -136,6 +138,7 @@ function _add_start_up_cost_to_objective!(
     op_cost::PSY.ThermalGenerationCost,
     ::U,
 ) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
+    PSY.get_must_run(component) && return
     cost_terms = start_up_cost(op_cost, component, U())
     cost_term = cost_terms[MULTI_START_COST_MAP[T]]
     iszero(cost_term) && return

@@ -694,7 +694,7 @@ function add_to_expression!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
-    U <: ,
+    U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
 }
