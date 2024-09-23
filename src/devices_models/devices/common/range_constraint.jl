@@ -277,7 +277,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     for device in devices
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
-        if PSY.get_must_run_device(device)
+        if PSY.get_must_run(device)
             for t in time_steps
                 con_lb[ci_name, t] = JuMP.@constraint(
                     get_jump_model(container),
@@ -311,7 +311,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     for device in devices
         ci_name = PSY.get_name(device)
         limits = get_min_max_limits(device, T, W) # depends on constraint type and formulation type
-        if PSY.get_must_run_device(device)
+        if PSY.get_must_run(device)
             for t in time_steps
                 con_ub[ci_name, t] = JuMP.@constraint(
                     get_jump_model(container),
