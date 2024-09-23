@@ -211,8 +211,9 @@ Construct the simulation sequence between decision and emulation models.
 
   - `models::SimulationModels`: Vector of decisions and emulation models.
   - `feedforward = Dict{String, Vector{<:AbstractAffectFeedforward}}()`: Optional dictionary to specify how information
-   and variables are exchanged between decision and emulation models.
-  - `ini_cond_chronology::nitialConditionChronology =  InterProblemChronology()`: TODO
+    and variables are exchanged between decision and emulation models.
+  - `ini_cond_chronology::InitialConditionChronology =  InterProblemChronology()`: Define
+    information sharing model between stages with [`InterProblemChronology`](@ref)
 
 # Example
 
