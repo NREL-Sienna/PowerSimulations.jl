@@ -16,7 +16,8 @@ In this documentation, we first specify the available `Services` in the grid, an
 4. [`RampReserve`](#RampReserve)
 5. [`NonSpinningReserve`](#NonSpinningReserve)
 6. [`ConstantMaxInterfaceFlow`](#ConstantMaxInterfaceFlow)
-7. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
+7. [`VariableMaxInterfaceFlow`](#VariableMaxInterfaceFlow)
+8. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
 
 ---
 
@@ -448,6 +449,67 @@ It adds the constraint to limit the `InterfaceTotalFlow` by the specified bounds
 
 ```math
 F^\text{min} \le f^\text{sl,up}_t - f^\text{sl,dn}_t + \sum_{d\in\mathcal{D}_s} \text{Dir}_d f_{d,t} \le F^\text{max}, \quad \forall t \in \{1,\dots,T\}
+```
+
+## `VariableMaxInterfaceFlow`
+
+This Service model only accepts the `PowerSystems.jl` `TransmissionInterface` type to properly function. It is used to model a collection of branches that make up an interface or corridor with a maximum transfer of power.
+
+```@docs
+VariableMaxInterfaceFlow
+```
+
+**Variables**
+
+If slacks are used:
+- [`InterfaceFlowSlackUp`](@ref):
+    - Bounds: [0.0, ]
+    - Symbol: ``f^\text{sl,up}``
+- [`InterfaceFlowSlackDown`](@ref):
+    - Bounds: [0.0, ]
+    - Symbol: ``f^\text{sl,dn}``
+
+**Static Parameters**
+
+- ``F^\text{max}`` = `PowerSystems.get_active_power_flow_limits(service).max`
+- ``F^\text{min}`` = `PowerSystems.get_active_power_flow_limits(service).min`
+- ``C^\text{flow}`` = `PowerSystems.get_violation_penalty(service)`
+- ``\mathcal{M}_s`` = `PowerSystems.get_direction_mapping(service)`. Dictionary of contributing branches with its specified direction (``\text{Dir}_d = 1`` or ``\text{Dir}_d = -1``) with respect to the interface.
+
+**Time Series Parameters** 
+
+For a `TransmissionInterface` `PowerSystems` type:
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.get_default_time_series_names(TransmissionInterface, VariableMaxInterfaceFlow)
+combo_table = DataFrame(
+    "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
+    "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
+    )
+mdtable(combo_table, latex = false)
+```
+
+**Relevant Methods**
+
+- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing branches to the service ``s`` in the system.
+
+**Objective:**
+
+Add the violation penalty proportional cost to the objective function if slack variables are used ``+ (f^\text{sl,up} + f^\text{sl,dn}) \cdot C^\text{flow}``.
+
+**Expressions:**
+
+Creates the expression `InterfaceTotalFlow` to keep track of all `FlowActivePowerVariable` of contributing branches to the transmission interface.
+
+**Constraints:**
+
+It adds the constraint to limit the `InterfaceTotalFlow` by the specified bounds of the service ``s``:
+
+```math
+F^\text{min} \cdot \text{MinInterfaceFlowLimitParameter}_t \le f^\text{sl,up}_t - f^\text{sl,dn}_t + \sum_{d\in\mathcal{D}_s} \text{Dir}_d f_{d,t} \le F^\text{max}\cdot \text{MaxInterfaceFlowLimitParameter}_t, \quad \forall t \in \{1,\dots,T\}
 ```
 
 ## Changes on Expressions due to Service models
