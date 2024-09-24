@@ -513,7 +513,6 @@ include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
 
 include("parameters/add_parameters.jl")
-include("parameters/update_parameters.jl")
 
 include("simulation/optimization_output_cache.jl")
 include("simulation/optimization_output_caches.jl")
@@ -534,6 +533,10 @@ include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
+include("operation/operation_model_simulation_interface.jl")
+include("parameters/update_container_parameter_values.jl")
+include("parameters/update_cost_parameters.jl")
+include("parameters/update_parameters.jl")
 
 include("devices_models/devices/common/objective_function/common.jl")
 include("devices_models/devices/common/objective_function/linear_curve.jl")

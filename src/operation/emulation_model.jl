@@ -454,6 +454,30 @@ function update_model!(
     return
 end
 
+"""
+Update parameter function an OperationModel
+"""
+function update_parameter_values!(
+    model::EmulationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: ParameterType, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    update_container_parameter_values!(optimization_container, model, key, input)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    #end
+    return
+end
+
 function update_model!(model::EmulationModel)
     update_model!(model, get_store(model), InterProblemChronology())
     return
