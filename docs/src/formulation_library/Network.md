@@ -1,6 +1,12 @@
 # [Network Formulations](@id network_formulations)
 
-Network formulations are used to describe how the network and buses are handled when constructing constraints. The most common constraint decided by the network formulation is the supply-demand balance constraint. Available Network Models are:
+Network formulations are used to describe how the network and buses are handled when constructing constraints. The most common constraint decided by the network formulation is the supply-demand balance constraint.
+
+```@docs
+NetworkModel
+```
+
+ Available Network Models are:
 
 | Formulation      | Description |
 | ----- | ---- |
@@ -142,3 +148,33 @@ Adds the `CopperPlateBalanceConstraint` to balance the active power of all compo
 ```
 
 In addition creates `NodalBalanceActiveConstraint` for HVDC buses balance, if DC components are connected to an HVDC network.
+
+## `AreaPTDFPowerModel`
+
+```@docs
+AreaPTDFPowerModel
+```
+
+**Variables**
+
+Slack variables are not supported.
+
+**Objective Function**
+
+No changes to the objective function.
+
+**Expressions**
+
+Creates the area-wide and nodal-wide active power balance expressions `ActivePowerBalance` to balance power based on each area independently. The flows across areas are computed based on the PTDF factors of lines connecting areas.
+
+**Constraints:**
+
+Adds the `ActivePowerBalance` constraint to balance the active power of all components available for each area.
+
+```math
+\begin{align}
+&  \sum_{c \in \text{components}_a} p_t^c = 0, \quad \forall a\in \{1,\dots, A\}, t \in \{1, \dots, T\}
+\end{align}
+```
+
+This includes the flows of lines based on the PTDF factors.
