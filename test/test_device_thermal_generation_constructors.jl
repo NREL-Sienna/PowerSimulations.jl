@@ -885,24 +885,27 @@ end
 @testset "Test Must Run ThermalGen" begin
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
     template_uc =
-        ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)))
+        ProblemTemplate(NetworkModel(CopperPlatePowerModel))
     set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
-    set_device_model!(template_uc, RenewableDispatch, FixedOutput)
+    #set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-    set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
 
     # Set Must Run the most expensive one: Sundance
     sundance = get_component(ThermalStandard, sys_5, "Sundance")
+    set_status!(sundance, true)
     set_must_run!(sundance, true)
     model = DecisionModel(
         template_uc,
         sys_5;
         name = "UC",
-        optimizer = HiGHS_optimizer,
+        optimizer = Xpress.Optimizer,
         system_to_file = false,
+        store_variable_names = true,
     )
 
     solve!(model; output_dir = mktempdir())
+    serialize_optimization_model(model, "branch.json")
     ptdf_vars = get_variable_values(OptimizationProblemResults(model))
     power =
         ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}("")]

@@ -167,7 +167,7 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::OptimizationContainer,
+    container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{<:PSY.ACBranch, StaticBranchUnbounded},

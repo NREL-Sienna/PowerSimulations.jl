@@ -1503,7 +1503,8 @@ function _add_initial_condition_container!(
     else
         param_type = Float64
     end
-    ini_conds = Vector{InitialCondition{T, param_type}}(undef, length_devices)
+    ini_type = Union{InitialCondition{T, param_type}, InitialCondition{T, Nothing}}
+    ini_conds = Vector{ini_type}(undef, length_devices)
     _assign_container!(container.initial_conditions, ic_key, ini_conds)
     return ini_conds
 end

@@ -61,7 +61,7 @@ get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionLB, d
 get_expression_multiplier(::OnStatusParameter, ::ActivePowerBalance, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 
 #################### Initial Conditions for models ###############
-initial_condition_default(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = max(PSY.get_must_run(d), PSY.get_status(d))
+initial_condition_default(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 initial_condition_variable(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 initial_condition_default(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 initial_condition_variable(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = ActivePowerVariable()
@@ -818,14 +818,14 @@ function calculate_aux_variable_value!(
     time_steps = get_time_steps(container)
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      JuMP.axes(on_variable_results)[1][ix]
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      get_component_name(ini_cond[ix])
-        on_var = jump_value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
-        aux_variable_container.data[ix, :] .= ini_cond_value
-        sum_on_var = sum(on_var)
+        if isnothing(get_value(ini_cond[ix]))
+            sum_on_var = time_steps[end]
+        else
+            on_var = jump_value.(on_variable_results.data[ix, :])
+            aux_variable_container.data[ix, :] .= ini_cond_value
+            sum_on_var = sum(on_var)
+        end
         if sum_on_var == time_steps[end] # Unit was always on
             aux_variable_container.data[ix, :] += time_steps
         elseif sum_on_var == 0.0 # Unit was always off

@@ -3,7 +3,7 @@ Container for the initial condition data
 """
 mutable struct InitialCondition{
     T <: InitialConditionType,
-    U <: Union{JuMP.VariableRef, Float64},
+    U <: Union{JuMP.VariableRef, Float64, Nothing},
 }
     component::PSY.Component
     value::U
