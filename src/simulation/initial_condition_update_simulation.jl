@@ -22,12 +22,25 @@ function update_initial_conditions!(
 end
 
 function update_initial_conditions!(
-    ics::Vector{T},
+    ics::T,
     state::SimulationState,
     model_resolution::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialTimeDurationOn, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
+    T <: Union{
+        Vector{
+            Union{
+                InitialCondition{InitialTimeDurationOn, Nothing},
+                InitialCondition{InitialTimeDurationOn, Float64},
+            },
+        },
+        Vector{
+            Union{
+                InitialCondition{InitialTimeDurationOn, Nothing},
+                InitialCondition{InitialTimeDurationOn, JuMP.VariableRef},
+            },
+        },
+    },
+}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOn(), get_component_type(ic))
         state_resolution = get_data_resolution(
@@ -42,12 +55,25 @@ function update_initial_conditions!(
 end
 
 function update_initial_conditions!(
-    ics::Vector{T},
+    ics::T,
     state::SimulationState,
     model_resolution::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialTimeDurationOff, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
+    T <: Union{
+        Vector{
+            Union{
+                InitialCondition{InitialTimeDurationOff, Nothing},
+                InitialCondition{InitialTimeDurationOff, Float64},
+            },
+        },
+        Vector{
+            Union{
+                InitialCondition{InitialTimeDurationOff, Nothing},
+                InitialCondition{InitialTimeDurationOff, JuMP.VariableRef},
+            },
+        },
+    },
+}
     for ic in ics
         var_val = get_system_state_value(state, TimeDurationOff(), get_component_type(ic))
         state_resolution = get_data_resolution(
@@ -62,12 +88,25 @@ function update_initial_conditions!(
 end
 
 function update_initial_conditions!(
-    ics::Vector{T},
+    ics::T,
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{DevicePower, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
+    T <: Union{
+        Vector{
+            Union{
+                InitialCondition{DevicePower, Nothing},
+                InitialCondition{DevicePower, Float64},
+            },
+        },
+        Vector{
+            Union{
+                InitialCondition{DevicePower, Nothing},
+                InitialCondition{DevicePower, JuMP.VariableRef},
+            },
+        },
+    },
+}
     for ic in ics
         comp_name = get_component_name(ic)
         comp_type = get_component_type(ic)
@@ -101,12 +140,25 @@ function update_initial_conditions!(
 end
 
 function update_initial_conditions!(
-    ics::Vector{T},
+    ics::T,
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{DeviceStatus, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
+    T <: Union{
+        Vector{
+            Union{
+                InitialCondition{DeviceStatus, Nothing},
+                InitialCondition{DeviceStatus, Float64},
+            },
+        },
+        Vector{
+            Union{
+                InitialCondition{DeviceStatus, Nothing},
+                InitialCondition{DeviceStatus, JuMP.VariableRef},
+            },
+        },
+    },
+}
     for ic in ics
         var_val = get_system_state_value(state, OnVariable(), get_component_type(ic))
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
@@ -115,12 +167,25 @@ function update_initial_conditions!(
 end
 
 function update_initial_conditions!(
-    ics::Vector{T},
+    ics::T,
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{DeviceAboveMinPower, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
+    T <: Union{
+        Vector{
+            Union{
+                InitialCondition{DeviceAboveMinPower, Nothing},
+                InitialCondition{DeviceAboveMinPower, Float64},
+            },
+        },
+        Vector{
+            Union{
+                InitialCondition{DeviceAboveMinPower, Nothing},
+                InitialCondition{DeviceAboveMinPower, JuMP.VariableRef},
+            },
+        },
+    },
+}
     for ic in ics
         var_val = get_system_state_value(
             state,
@@ -133,12 +198,25 @@ function update_initial_conditions!(
 end
 
 function update_initial_conditions!(
-    ics::Vector{T},
+    ics::T,
     state::SimulationState,
     ::Dates.Millisecond,
 ) where {
-    T <: InitialCondition{InitialEnergyLevel, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
+    T <: Union{
+        Vector{
+            Union{
+                InitialCondition{InitialEnergyLevel, Nothing},
+                InitialCondition{InitialEnergyLevel, Float64},
+            },
+        },
+        Vector{
+            Union{
+                InitialCondition{InitialEnergyLevel, Nothing},
+                InitialCondition{InitialEnergyLevel, JuMP.VariableRef},
+            },
+        },
+    },
+}
     for ic in ics
         var_val = get_system_state_value(state, EnergyVariable(), get_component_type(ic))
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
