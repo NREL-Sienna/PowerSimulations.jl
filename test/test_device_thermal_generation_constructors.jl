@@ -893,24 +893,32 @@ end
 
     # Set Must Run the most expensive one: Sundance
     sundance = get_component(ThermalStandard, sys_5, "Sundance")
-    set_status!(sundance, true)
     set_must_run!(sundance, true)
-    model = DecisionModel(
-        template_uc,
-        sys_5;
-        name = "UC",
-        optimizer = Xpress.Optimizer,
-        system_to_file = false,
-        store_variable_names = true,
-    )
+    for rebuild in [true, false]
+        model = DecisionModel(
+            template_uc,
+            sys_5;
+            name = "UC",
+            optimizer = HiGHS_optimizer,
+            system_to_file = false,
+            store_variable_names = true,
+            rebuild_model = rebuild,
+        )
 
-    solve!(model; output_dir = mktempdir())
-    serialize_optimization_model(model, "branch.json")
-    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
-    power =
-        ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}("")]
-    on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
-    power_sundance = power[!, "Sundance"]
-    @test all(isapprox.(power_sundance, 1.0))
-    @test "Sundance" ∉ names(on)
+        solve!(model; output_dir = mktempdir())
+        serialize_optimization_model(model, "branch.json")
+        ptdf_vars = get_variable_values(OptimizationProblemResults(model))
+        power =
+            ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}(
+                "",
+            )]
+        on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
+        start = ptdf_vars[PowerSimulations.VariableKey{StartVariable, ThermalStandard}("")]
+        stop = ptdf_vars[PowerSimulations.VariableKey{StopVariable, ThermalStandard}("")]
+        power_sundance = power[!, "Sundance"]
+        @test all(power_sundance .>= 1.0)
+        for v in [on, start, stop]
+            @test "Sundance" ∉ names(v)
+        end
+    end
 end
