@@ -818,10 +818,13 @@ function calculate_aux_variable_value!(
     time_steps = get_time_steps(container)
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        ini_cond_value = get_condition(ini_cond[ix])
+        # if its nothing it means the thermal unit was on must run
+        # so there is nothing to do but to add the total number of time steps
+        # to the count
         if isnothing(get_value(ini_cond[ix]))
             sum_on_var = time_steps[end]
         else
+            ini_cond_value = get_condition(ini_cond[ix])
             on_var = jump_value.(on_variable_results.data[ix, :])
             aux_variable_container.data[ix, :] .= ini_cond_value
             sum_on_var = sum(on_var)
@@ -859,10 +862,11 @@ function calculate_aux_variable_value!(
 
     time_steps = get_time_steps(container)
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      JuMP.axes(on_variable_results)[1][ix]
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      get_component_name(ini_cond[ix])
+        # if its nothing it means the thermal unit was on must run
+        # so there is nothing to do but continue
+        if isnothing(get_value(ini_cond[ix]))
+            continue
+        end
         on_var = jump_value.(on_variable_results.data[ix, :])
         ini_cond_value = get_condition(ini_cond[ix])
         aux_variable_container.data[ix, :] .= ini_cond_value
