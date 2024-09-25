@@ -906,7 +906,6 @@ end
         )
 
         solve!(model; output_dir = mktempdir())
-        serialize_optimization_model(model, "branch.json")
         ptdf_vars = get_variable_values(OptimizationProblemResults(model))
         power =
             ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}(
