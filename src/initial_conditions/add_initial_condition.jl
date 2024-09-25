@@ -5,6 +5,20 @@ function _get_initial_conditions_value(
     ::V,
     container::OptimizationContainer,
 ) where {
+    T <: InitialCondition{U, Nothing},
+    V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+    W <: PSY.Component,
+} where {U <: InitialConditionType}
+    return InitialCondition{U, Nothing}(component, nothing)
+end
+
+function _get_initial_conditions_value(
+    ::Vector{T},
+    component::W,
+    ::U,
+    ::V,
+    container::OptimizationContainer,
+) where {
     T <: Union{InitialCondition{U, Float64}, InitialCondition{U, Nothing}},
     V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
     W <: PSY.Component,
@@ -29,7 +43,7 @@ function _get_initial_conditions_value(
     container::OptimizationContainer,
 ) where {
     T <: Union{InitialCondition{U, JuMP.VariableRef}, InitialCondition{U, Nothing}},
-    V <: AbstractThermalFormulation,
+    V <: AbstractDeviceFormulation,
     W <: PSY.Component,
 } where {U <: InitialConditionType}
     ic_data = get_initial_conditions_data(container)
@@ -48,20 +62,19 @@ function _get_initial_conditions_value(
 end
 
 function _get_initial_conditions_value(
-    ::Vector{T},
+    ::Vector{Union{InitialCondition{U, Float64}, InitialCondition{U, Nothing}}},
     component::W,
     ::U,
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: Union{InitialCondition{U, Float64}, InitialCondition{U, Nothing}},
     V <: AbstractThermalFormulation,
     W <: PSY.Component,
 } where {U <: InitialTimeDurationOff}
     ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
-        @show val = initial_condition_default(U(), component, V())
+        val = initial_condition_default(U(), component, V())
     else
         var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
         val = 0.0
@@ -75,13 +88,12 @@ function _get_initial_conditions_value(
 end
 
 function _get_initial_conditions_value(
-    ::Vector{T},
+    ::Vector{Union{InitialCondition{U, JuMP.VariableRef}, InitialCondition{U, Nothing}}},
     component::W,
     ::U,
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: Union{InitialCondition{U, JuMP.VariableRef}, InitialCondition{U, Nothing}},
     V <: AbstractThermalFormulation,
     W <: PSY.ThermalGen,
 } where {U <: InitialTimeDurationOff}
@@ -105,20 +117,19 @@ function _get_initial_conditions_value(
 end
 
 function _get_initial_conditions_value(
-    ::Vector{T},
+    ::Vector{Union{InitialCondition{U, Float64}, InitialCondition{U, Nothing}}},
     component::W,
     ::U,
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: Union{InitialCondition{U, Float64}, InitialCondition{U, Nothing}},
-    V <: AbstractDeviceFormulation,
+    V <: AbstractThermalFormulation,
     W <: PSY.ThermalGen,
 } where {U <: InitialTimeDurationOn}
     ic_data = get_initial_conditions_data(container)
     var_type = initial_condition_variable(U(), component, V())
     if !has_initial_condition_value(ic_data, var_type, W)
-        @show val = initial_condition_default(U(), component, V())
+        val = initial_condition_default(U(), component, V())
     else
         var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
         val = 0.0
@@ -132,14 +143,13 @@ function _get_initial_conditions_value(
 end
 
 function _get_initial_conditions_value(
-    ::Vector{T},
+    ::Vector{Union{InitialCondition{U, JuMP.VariableRef}, InitialCondition{U, Nothing}}},
     component::W,
     ::U,
     ::V,
     container::OptimizationContainer,
 ) where {
-    T <: Union{InitialCondition{U, JuMP.VariableRef}, InitialCondition{U, Nothing}},
-    V <: AbstractDeviceFormulation,
+    V <: AbstractThermalFormulation,
     W <: PSY.ThermalGen,
 } where {U <: InitialTimeDurationOn}
     ic_data = get_initial_conditions_data(container)
@@ -170,7 +180,7 @@ function _get_initial_conditions_value(
 ) where {
     T <: InitialCondition{U, JuMP.VariableRef},
     V <: AbstractDeviceFormulation,
-    W <: PSY.ThermalGen,
+    W <: PSY.Component,
 } where {U <: InitialEnergyLevel}
     var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
