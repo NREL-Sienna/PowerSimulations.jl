@@ -42,7 +42,7 @@ end
     test_path =
         joinpath(folder, "consecutive", "problems", "ED", "optimization_model_exports")
     @test ispath(test_path)
-    @test length(readdir(test_path)) == 2
+    @test length(readdir(test_path)) == 4
 end
 
 function test_2_stage_decision_models_with_feedforwards(in_memory)
