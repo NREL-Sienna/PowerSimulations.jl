@@ -873,13 +873,13 @@ ed_results = get_decision_problem_results(results, &quot;ED&quot;); # ED stage r
   <caption style = "text-align: left;">ED Problem Expressions Results</caption>
   <tbody>
     <tr>
-      <td style = "text-align: left;">ActivePowerBalance__ACBus</td>
+      <td style = "text-align: left;">ProductionCostExpression__RenewableDispatch</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerBalance__System</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">ProductionCostExpression__RenewableDispatch</td>
+      <td style = "text-align: left;">ActivePowerBalance__ACBus</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ProductionCostExpression__ThermalStandard</td>
@@ -891,31 +891,31 @@ ed_results = get_decision_problem_results(results, &quot;ED&quot;); # ED stage r
   <caption style = "text-align: left;">ED Problem Parameters Results</caption>
   <tbody>
     <tr>
-      <td style = "text-align: left;">ActivePowerTimeSeriesParameter__PowerLoad</td>
+      <td style = "text-align: left;">ActivePowerTimeSeriesParameter__RenewableDispatch</td>
     </tr>
     <tr>
       <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R1</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">OnStatusParameter__ThermalStandard</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">ActivePowerTimeSeriesParameter__RenewableDispatch</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2</td>
+      <td style = "text-align: left;">ActivePowerTimeSeriesParameter__RenewableNonDispatch</td>
     </tr>
     <tr>
       <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">ActivePowerTimeSeriesParameter__RenewableNonDispatch</td>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">OnStatusParameter__ThermalStandard</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">ActivePowerTimeSeriesParameter__PowerLoad</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2</td>
     </tr>
   </tbody>
 </table>
@@ -924,65 +924,65 @@ ed_results = get_decision_problem_results(results, &quot;ED&quot;); # ED stage r
   <caption style = "text-align: left;">ED Problem Variables Results</caption>
   <tbody>
     <tr>
-      <td style = "text-align: left;">SystemBalanceSlackUp__System</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">SystemBalanceSlackDown__System</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">FlowActivePowerVariable__TapTransformer</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">FlowActivePowerVariable__Line</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">FlowActivePowerToFromVariable__TwoTerminalHVDCLine</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">ActivePowerVariable__ThermalStandard</td>
-    </tr>
-    <tr>
       <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveDown__Reg_Down</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">HVDCLosses__TwoTerminalHVDCLine</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R2</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">HVDCFlowDirectionVariable__TwoTerminalHVDCLine</td>
-    </tr>
-    <tr>
-      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1</td>
-    </tr>
-    <tr>
       <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R3</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">FlowActivePowerVariable__TapTransformer</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">HVDCLosses__TwoTerminalHVDCLine</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">FlowActivePowerFromToVariable__TwoTerminalHVDCLine</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">HVDCFlowDirectionVariable__TwoTerminalHVDCLine</td>
     </tr>
     <tr>
       <td style = "text-align: left;">ActivePowerVariable__RenewableDispatch</td>
     </tr>
     <tr>
-      <td style = "text-align: left;">FlowActivePowerFromToVariable__TwoTerminalHVDCLine</td>
+      <td style = "text-align: left;">SystemBalanceSlackDown__System</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">ActivePowerVariable__ThermalStandard</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">FlowActivePowerToFromVariable__TwoTerminalHVDCLine</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">SystemBalanceSlackUp__System</td>
+    </tr>
+    <tr>
+      <td style = "text-align: left;">FlowActivePowerVariable__Line</td>
     </tr>
   </tbody>
 </table>
 <p>We can read all the result variables</p><pre><code class="language-julia hljs">read_variables(uc_results)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, SortedDict{Any, Any, Base.Order.ForwardOrdering}} with 14 entries:
   &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
   &quot;FlowActivePowerToFromVa… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
-  &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
   &quot;StopVariable__ThermalSt… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
+  &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
   &quot;OnVariable__ThermalStan… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
   &quot;ActivePowerVariable__Hy… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
   &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×1…
   &quot;StartVariable__ThermalS… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
   &quot;ActivePowerVariable__Th… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×5…
-  &quot;ActivePowerVariable__Re… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×3…
-  &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×1…
   &quot;FlowActivePowerFromToVa… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
+  &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×1…
+  &quot;ActivePowerVariable__Re… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×3…
   &quot;HVDCFlowDirectionVariab… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
   &quot;ActivePowerReserveVaria… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×1…</code></pre><p>or all the parameters</p><pre><code class="language-julia hljs">read_parameters(uc_results)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, SortedDict{Any, Any, Base.Order.ForwardOrdering}} with 9 entries:
   &quot;RequirementTimeSeriesPa… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
@@ -994,29 +994,29 @@ ed_results = get_decision_problem_results(results, &quot;ED&quot;); # ED stage r
   &quot;ActivePowerTimeSeriesPa… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
   &quot;RequirementTimeSeriesPa… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…
   &quot;RequirementTimeSeriesPa… =&gt; SortedDict(DateTime(&quot;2020-01-01T00:00:00&quot;)=&gt;48×2…</code></pre><p>We can just list the variable names contained in <code>uc_results</code>:</p><pre><code class="language-julia hljs">list_variable_names(uc_results)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">14-element Vector{String}:
- &quot;OnVariable__ThermalStandard&quot;
- &quot;ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up&quot;
- &quot;FlowActivePowerToFromVariable__TwoTerminalHVDCLine&quot;
- &quot;ActivePowerVariable__HydroDispatch&quot;
- &quot;StartVariable__ThermalStandard&quot;
- &quot;ActivePowerVariable__ThermalStandard&quot;
  &quot;ActivePowerReserveVariable__VariableReserve__ReserveDown__Reg_Down&quot;
  &quot;ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R2&quot;
- &quot;StopVariable__ThermalStandard&quot;
- &quot;HVDCFlowDirectionVariable__TwoTerminalHVDCLine&quot;
- &quot;ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1&quot;
  &quot;ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R3&quot;
+ &quot;StopVariable__ThermalStandard&quot;
+ &quot;ActivePowerReserveVariable__VariableReserve__ReserveUp__Reg_Up&quot;
+ &quot;FlowActivePowerFromToVariable__TwoTerminalHVDCLine&quot;
+ &quot;HVDCFlowDirectionVariable__TwoTerminalHVDCLine&quot;
  &quot;ActivePowerVariable__RenewableDispatch&quot;
- &quot;FlowActivePowerFromToVariable__TwoTerminalHVDCLine&quot;</code></pre><p>and a number of parameters (this pattern also works for aux_variables, expressions, and duals)</p><pre><code class="language-julia hljs">list_parameter_names(uc_results)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{String}:
- &quot;RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3&quot;
- &quot;ActivePowerTimeSeriesParameter__PowerLoad&quot;
+ &quot;ActivePowerVariable__ThermalStandard&quot;
+ &quot;StartVariable__ThermalStandard&quot;
+ &quot;FlowActivePowerToFromVariable__TwoTerminalHVDCLine&quot;
+ &quot;ActivePowerReserveVariable__VariableReserve__ReserveUp__Spin_Up_R1&quot;
+ &quot;OnVariable__ThermalStandard&quot;
+ &quot;ActivePowerVariable__HydroDispatch&quot;</code></pre><p>and a number of parameters (this pattern also works for aux_variables, expressions, and duals)</p><pre><code class="language-julia hljs">list_parameter_names(uc_results)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">9-element Vector{String}:
+ &quot;ActivePowerTimeSeriesParameter__RenewableDispatch&quot;
  &quot;RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R1&quot;
+ &quot;ActivePowerTimeSeriesParameter__RenewableNonDispatch&quot;
+ &quot;RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R3&quot;
  &quot;RequirementTimeSeriesParameter__VariableReserve__ReserveDown__Reg_Down&quot;
  &quot;RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Reg_Up&quot;
+ &quot;ActivePowerTimeSeriesParameter__PowerLoad&quot;
  &quot;RequirementTimeSeriesParameter__VariableReserve__ReserveUp__Spin_Up_R2&quot;
- &quot;ActivePowerTimeSeriesParameter__RenewableDispatch&quot;
- &quot;ActivePowerTimeSeriesParameter__HydroDispatch&quot;
- &quot;ActivePowerTimeSeriesParameter__RenewableNonDispatch&quot;</code></pre><p>Now we can read the specific results of interest for a specific problem, time window (optional), and set of variables, duals, or parameters (optional)</p><pre><code class="language-julia hljs">Dict([
+ &quot;ActivePowerTimeSeriesParameter__HydroDispatch&quot;</code></pre><p>Now we can read the specific results of interest for a specific problem, time window (optional), and set of variables, duals, or parameters (optional)</p><pre><code class="language-julia hljs">Dict([
     v =&gt; read_variable(uc_results, v) for v in [
         &quot;ActivePowerVariable__RenewableDispatch&quot;,
         &quot;ActivePowerVariable__HydroDispatch&quot;,
@@ -1038,4 +1038,4 @@ ed_results = get_decision_problem_results(results, &quot;ED&quot;); # ED stage r
   DateTime(&quot;2020-01-01T07:00:00&quot;) =&gt; 12×32 DataFrame…</code></pre><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"></div></div><p>note that this returns the results of each execution step in a separate dataframe If you want the realized results (without lookahead periods), you can call <code>read_realized_*</code>:</p><pre><code class="language-julia hljs">read_realized_variables(
     uc_results,
     [&quot;ActivePowerVariable__ThermalStandard&quot;, &quot;ActivePowerVariable__RenewableDispatch&quot;],
-)</code></pre><h2 id="Plotting"><a class="docs-heading-anchor" href="#Plotting">Plotting</a><a id="Plotting-1"></a><a class="docs-heading-anchor-permalink" href="#Plotting" title="Permalink"></a></h2><p>Take a look at the plotting capabilities in <a href="https://github.com/nrel-siip/powergraphics.jl">PowerGraphics.jl</a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../decision_problem/">« Single-step Problem</a><a class="docs-footer-nextpage" href="../../modeler_guide/definitions/">Definitions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Wednesday 25 September 2024 23:29">Wednesday 25 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre><h2 id="Plotting"><a class="docs-heading-anchor" href="#Plotting">Plotting</a><a id="Plotting-1"></a><a class="docs-heading-anchor-permalink" href="#Plotting" title="Permalink"></a></h2><p>Take a look at the plotting capabilities in <a href="https://github.com/nrel-siip/powergraphics.jl">PowerGraphics.jl</a></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../decision_problem/">« Single-step Problem</a><a class="docs-footer-nextpage" href="../../modeler_guide/definitions/">Definitions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 27 September 2024 19:27">Friday 27 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
