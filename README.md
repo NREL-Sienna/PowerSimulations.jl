@@ -9,24 +9,23 @@
 
 `PowerSimulations.jl` is a Julia package for power system modeling and simulation of Power Systems operations. The objectives of the package are:
 
-- Provide a flexible modeling framework that can accommodate problems of different complexity and at different time-scales.
+  - Provide a flexible modeling framework that can accommodate problems of different complexity and at different time-scales.
 
-- Streamline the construction of large scale optimization problems to avoid repetition of work when adding/modifying model details.
-
-- Exploit Julia's capabilities to improve computational performance of large scale power system quasi-static simulations.
+  - Streamline the construction of large scale optimization problems to avoid repetition of work when adding/modifying model details.
+  - Exploit Julia's capabilities to improve computational performance of large scale power system quasi-static simulations.
 
 The flexible modeling framework is enabled through a modular set of capabilities that enable scalable power system analysis and exploration of new analysis methods. The modularity of PowerSimulations results from the structure of the simulations enabled by the package:
 
-- _Simulations_ define a set of problems that can be solved using numerical techniques.
+  - _Simulations_ define a set of problems that can be solved using numerical techniques.
 
 For example, an annual production cost modeling simulation can be created by formulating a unit commitment model against system data to assemble a set of 365 daily time-coupled scheduling problems.
 
 ## Simulations enabled by PowerSimulations
 
-- Integrated Resource Planning
-- Production Cost Modeling
-- Market Simulations
-  
+  - Integrated Resource Planning
+  - Production Cost Modeling
+  - Market Simulations
+
 ## Installation
 
 ```julia
@@ -50,4 +49,4 @@ Contributions to the development and enhancement of PowerSimulations is welcome.
 
 ## License
 
-PowerSimulations is released under a BSD [license](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP) initiative at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/)) Software Record SWR-23-104. 
+PowerSimulations is released under a BSD [license](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/LICENSE). PowerSimulations has been developed as part of the Scalable Integrated Infrastructure Planning (SIIP) initiative at the U.S. Department of Energy's National Renewable Energy Laboratory ([NREL](https://www.nrel.gov/)) Software Record SWR-23-104.

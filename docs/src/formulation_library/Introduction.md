@@ -20,23 +20,24 @@ For example a typical optimization problem in a `DecisionModel` in `PowerSimulat
 ```
 
 Suppose this is a system with the following characteristics:
-- Horizon: 48 hours
-- Interval: 24 hours
-- Resolution: 1 hour
-- Three Buses: 1, 2 and 3
-- One `ThermalStandard` (device A) unit at bus 1
-- One `RenewableDispatch` (device B) unit at bus 2
-- One `PowerLoad` (device C) at bus 3
-- Three `Line` that connects all the buses
+
+  - Horizon: 48 hours
+  - Interval: 24 hours
+  - Resolution: 1 hour
+  - Three Buses: 1, 2 and 3
+  - One `ThermalStandard` (device A) unit at bus 1
+  - One `RenewableDispatch` (device B) unit at bus 2
+  - One `PowerLoad` (device C) at bus 3
+  - Three `Line` that connects all the buses
 
 Now, we assign the following `DeviceModel` to each `PowerSystems.jl` with:
 
-| Type      | Formulation |
-| ----------- | ----------- |
-| Network     | `CopperPlatePowerModel`       |
-| `ThermalStandard`  | `ThermalDispatchNoMin` |
-| `RenewableDispatch`  | `RenewableFullDispatch` |
-| `PowerLoad`  | `StaticPowerLoad` |
+| Type                | Formulation             |
+|:------------------- |:----------------------- |
+| Network             | `CopperPlatePowerModel` |
+| `ThermalStandard`   | `ThermalDispatchNoMin`  |
+| `RenewableDispatch` | `RenewableFullDispatch` |
+| `PowerLoad`         | `StaticPowerLoad`       |
 
 Note that we did not assign any `DeviceModel` to `Line` since the `CopperPlatePowerModel` used for the network assumes that everything is lumped in the same node (like a copper plate with infinite capacity), and hence there are no flows between buses that branches can limit.
 
@@ -57,11 +58,9 @@ Note that the `StaticPowerLoad` does not impose any cost to the objective functi
 # Nomenclature
 
 In the formulations described in the other pages, the nomenclature is as follows:
-- Lowercase letters are used for variables, e.g., ``p`` for power.
-- Uppercase letters are used for parameters, e.g., ``C`` for costs.
-- Subscripts are used for indexing, e.g., ``(\cdot)_t`` for indexing at time ``t``.
-- Superscripts are used for descriptions, e.g., ``(\cdot)^\text{th}`` to describe a thermal (th) variable/parameter.
-- Bold letters are used for vectors, e.g., ``\boldsymbol{p} = \{p\}_{1,\dots,24}``.
 
-
-
+  - Lowercase letters are used for variables, e.g., ``p`` for power.
+  - Uppercase letters are used for parameters, e.g., ``C`` for costs.
+  - Subscripts are used for indexing, e.g., ``(\cdot)_t`` for indexing at time ``t``.
+  - Superscripts are used for descriptions, e.g., ``(\cdot)^\text{th}`` to describe a thermal (th) variable/parameter.
+  - Bold letters are used for vectors, e.g., ``\boldsymbol{p} = \{p\}_{1,\dots,24}``.

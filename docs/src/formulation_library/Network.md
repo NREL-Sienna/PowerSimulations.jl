@@ -6,26 +6,26 @@ Network formulations are used to describe how the network and buses are handled 
 NetworkModel
 ```
 
- Available Network Models are:
+Available Network Models are:
 
-| Formulation      | Description |
-| ----- | ---- |
-| `CopperPlatePowerModel` | Copper plate connection between all components, i.e. infinite transmission capacity |
-| `AreaBalancePowerModel` | Network model approximation to represent inter-area flow with each area represented as a single node |
-| `PTDFPowerModel` | Uses the PTDF factor matrix to compute the fraction of power transferred in the network across the branches |
-| `AreaPTDFPowerModel` | Uses the PTDF factor matrix to compute the fraction of power transferred in the network across the branches and balances power by Area instead of system-wide |
+| Formulation             | Description                                                                                                                                                   |
+|:----------------------- |:------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CopperPlatePowerModel` | Copper plate connection between all components, i.e. infinite transmission capacity                                                                           |
+| `AreaBalancePowerModel` | Network model approximation to represent inter-area flow with each area represented as a single node                                                          |
+| `PTDFPowerModel`        | Uses the PTDF factor matrix to compute the fraction of power transferred in the network across the branches                                                   |
+| `AreaPTDFPowerModel`    | Uses the PTDF factor matrix to compute the fraction of power transferred in the network across the branches and balances power by Area instead of system-wide |
 
 [`PowerModels.jl`](https://github.com/lanl-ansi/PowerModels.jl) available formulations:
 
-- Exact non-convex models: `ACPPowerModel`, `ACRPowerModel`, `ACTPowerModel`.
-- Linear approximations: `DCPPowerModel`, `NFAPowerModel`.
-- Quadratic approximations: `DCPLLPowerModel`, `LPACCPowerModel`
-- Quadratic relaxations: `SOCWRPowerModel`, `SOCWRConicPowerModel`, `SOCBFPowerModel`, `SOCBFConicPowerModel`, `QCRMPowerModel`, `QCLSPowerModel`.
-- SDP relaxations: `SDPWRMPowerModel`, `SparseSDPWRMPowerModel`.
+  - Exact non-convex models: `ACPPowerModel`, `ACRPowerModel`, `ACTPowerModel`.
+  - Linear approximations: `DCPPowerModel`, `NFAPowerModel`.
+  - Quadratic approximations: `DCPLLPowerModel`, `LPACCPowerModel`
+  - Quadratic relaxations: `SOCWRPowerModel`, `SOCWRConicPowerModel`, `SOCBFPowerModel`, `SOCBFConicPowerModel`, `QCRMPowerModel`, `QCLSPowerModel`.
+  - SDP relaxations: `SDPWRMPowerModel`, `SparseSDPWRMPowerModel`.
 
 All of these formulations are described in the [PowerModels.jl documentation](https://lanl-ansi.github.io/PowerModels.jl/stable/formulation-details/) and will not be described here.
 
----
+* * *
 
 ## `CopperPlatePowerModel`
 
@@ -37,16 +37,19 @@ CopperPlatePowerModel
 
 If Slack variables are enabled:
 
-- [`SystemBalanceSlackUp`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Default proportional cost: 1e6
-  - Symbol: ``p^\text{sl,up}``
-- [`SystemBalanceSlackDown`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Default proportional cost: 1e6
-  - Symbol: ``p^\text{sl,dn}``
+  - [`SystemBalanceSlackUp`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{sl,up}``
+
+  - [`SystemBalanceSlackDown`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{sl,dn}``
 
 **Objective:**
 
@@ -66,7 +69,7 @@ Adds the `CopperPlateBalanceConstraint` to balance the active power of all compo
 \end{align}
 ```
 
----
+* * *
 
 ## `AreaBalancePowerModel`
 
@@ -77,16 +80,19 @@ AreaBalancePowerModel
 **Variables:**
 If Slack variables are enabled:
 
-- [`SystemBalanceSlackUp`](@ref) by area:
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Default proportional cost: 1e6
-  - Symbol: ``p^\text{sl,up}``
-- [`SystemBalanceSlackDown`](@ref) by area:
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Default proportional cost: 1e6
-  - Symbol: ``p^\text{sl,dn}``
+  - [`SystemBalanceSlackUp`](@ref) by area:
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{sl,up}``
+
+  - [`SystemBalanceSlackDown`](@ref) by area:
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{sl,dn}``
 
 **Objective:**
 
@@ -106,7 +112,7 @@ Adds the `CopperPlateBalanceConstraint` to balance the active power of all compo
 \end{align}
 ```
 
----
+* * *
 
 ## `PTDFPowerModel`
 
@@ -118,16 +124,19 @@ PTDFPowerModel
 
 If Slack variables are enabled:
 
-- [`SystemBalanceSlackUp`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Default proportional cost: 1e6
-  - Symbol: ``p^\text{sl,up}``
-- [`SystemBalanceSlackDown`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Default proportional cost: 1e6
-  - Symbol: ``p^\text{sl,dn}``
+  - [`SystemBalanceSlackUp`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{sl,up}``
+
+  - [`SystemBalanceSlackDown`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{sl,dn}``
 
 **Objective:**
 

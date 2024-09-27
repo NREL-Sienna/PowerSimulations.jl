@@ -10,16 +10,16 @@ In this documentation, we first specify the available `Services` in the grid, an
 
 ### Table of contents
 
-1. [`RangeReserve`](#RangeReserve)
-2. [`StepwiseCostReserve`](#StepwiseCostReserve)
-3. [`GroupReserve`](#GroupReserve)
-4. [`RampReserve`](#RampReserve)
-5. [`NonSpinningReserve`](#NonSpinningReserve)
-6. [`ConstantMaxInterfaceFlow`](#ConstantMaxInterfaceFlow)
-7. [`VariableMaxInterfaceFlow`](#VariableMaxInterfaceFlow)
-8. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
+ 1. [`RangeReserve`](#RangeReserve)
+ 2. [`StepwiseCostReserve`](#StepwiseCostReserve)
+ 3. [`GroupReserve`](#GroupReserve)
+ 4. [`RampReserve`](#RampReserve)
+ 5. [`NonSpinningReserve`](#NonSpinningReserve)
+ 6. [`ConstantMaxInterfaceFlow`](#ConstantMaxInterfaceFlow)
+ 7. [`VariableMaxInterfaceFlow`](#VariableMaxInterfaceFlow)
+ 8. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
 
----
+* * *
 
 ## `RangeReserve`
 
@@ -31,28 +31,33 @@ For each service ``s`` of the model type `RangeReserve` the following variables 
 
 **Variables**:
 
-- [`ActivePowerReserveVariable`](@ref):
-    - Bounds: [0.0, ]
-    - Default proportional cost: ``1.0 / \text{SystemBasePower}``
-    - Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
-If slacks are enabled:
-- [`ReserveRequirementSlack`](@ref):
-    - Bounds: [0.0, ]
-    - Default proportional cost: 1e5
-    - Symbol: ``r^\text{sl}``
+  - [`ActivePowerReserveVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: ``1.0 / \text{SystemBasePower}``
+      + Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
+        If slacks are enabled:
+
+  - [`ReserveRequirementSlack`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 1e5
+      + Symbol: ``r^\text{sl}``
 
 Depending on the `PowerSystems.jl` type associated to the `RangeReserve` formulation model, the parameters are:
 
 **Static Parameters**
 
-- ``\text{PF}`` = `PowerSystems.get_max_participation_factor(service)`
+  - ``\text{PF}`` = `PowerSystems.get_max_participation_factor(service)`
 
 For a `ConstantReserve` `PowerSystems` type:
-- ``\text{Req}`` = `PowerSystems.get_requirement(service)`
 
-**Time Series Parameters** 
+  - ``\text{Req}`` = `PowerSystems.get_requirement(service)`
+
+**Time Series Parameters**
 
 For a `VariableReserve` `PowerSystems` type:
+
 ```@eval
 using PowerSimulations
 using PowerSystems
@@ -62,13 +67,13 @@ combos = PowerSimulations.get_default_time_series_names(VariableReserve, RangeRe
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Relevant Methods:**
 
-- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
+  - ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
 
 **Objective:**
 
@@ -80,17 +85,19 @@ Adds the `ActivePowerReserveVariable` for upper/lower bound expressions of contr
 
 For `ReserveUp` types, the variable is added to `ActivePowerRangeExpressionUB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable. Similarly, For `ReserveDown` types, the variable is added to `ActivePowerRangeExpressionLB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable
 
-
 *Example*: for a thermal unit ``d`` contributing to two different `ReserveUp` ``s_1, s_2`` services (e.g. Reg-Up and Spin):
+
 ```math
 \text{ActivePowerRangeExpressionUB}_{t} = p_t^\text{th} + r_{s_1,t} + r_{s_2, t} \le P^\text{th,max}
 ```
+
 similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
+
 ```math
 \text{ActivePowerRangeExpressionLB}_{t} = p_t^\text{th} - r_{s_3,t}  \ge P^\text{th,min}
 ```
 
-**Constraints:** 
+**Constraints:**
 
 A RangeReserve implements two fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `RangeReserve` requirement. Thus, for a service ``s``:
 
@@ -106,7 +113,7 @@ r_{d,t} \le \text{Req} \cdot \text{PF} ,\quad \forall d\in \mathcal{D}_s, \foral
 r_{d,t} \le \text{RequirementTimeSeriesParameter}_{t} \cdot \text{PF}\quad  \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\}, \quad \text{(for a VariableReserve)}
 ```
 
----
+* * *
 
 ## `StepwiseCostReserve`
 
@@ -120,32 +127,37 @@ For each service ``s`` of the model type `ReserveDemandCurve` the following vari
 
 **Variables**:
 
-- [`ActivePowerReserveVariable`](@ref):
-    - Bounds: [0.0, ]
-    - Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
-- [`ServiceRequirementVariable`](@ref):
-    - Bounds: [0.0, ]
-    - Symbol: ``\text{req}``
+  - [`ActivePowerReserveVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
 
-**Time Series Parameters** 
+  - [`ServiceRequirementVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\text{req}``
+
+**Time Series Parameters**
 
 For a `ReserveDemandCurve` `PowerSystems` type:
+
 ```@eval
 using PowerSimulations
 using PowerSystems
 using DataFrames
 using Latexify
-combos = PowerSimulations.get_default_time_series_names(ReserveDemandCurve, StepwiseCostReserve)
+combos =
+    PowerSimulations.get_default_time_series_names(ReserveDemandCurve, StepwiseCostReserve)
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Relevant Methods:**
 
-- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
+  - ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
 
 **Objective:**
 
@@ -157,17 +169,19 @@ Adds the `ActivePowerReserveVariable` for upper/lower bound expressions of contr
 
 For `ReserveUp` types, the variable is added to `ActivePowerRangeExpressionUB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable. Similarly, For `ReserveDown` types, the variable is added to `ActivePowerRangeExpressionLB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable
 
-
 *Example*: for a thermal unit ``d`` contributing to two different `ReserveUp` ``s_1, s_2`` services (e.g. Reg-Up and Spin):
+
 ```math
 \text{ActivePowerRangeExpressionUB}_{t} = p_t^\text{th} + r_{s_1,t} + r_{s_2, t} \le P^\text{th,max}
 ```
+
 similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
+
 ```math
 \text{ActivePowerRangeExpressionLB}_{t} = p_t^\text{th} - r_{s_3,t}  \ge P^\text{th,min}
 ```
 
-**Constraints:** 
+**Constraints:**
 
 A `StepwiseCostReserve` implements a single constraint, such that the sum of all reserves of contributing devices must be larger than the `ServiceRequirementVariable` variable. Thus, for a service ``s``:
 
@@ -191,12 +205,12 @@ No variables are created, but the services associated with the `GroupReserve` mu
 
 **Static Parameters**
 
-- ``\text{Req}`` = `PowerSystems.get_requirement(service)`
+  - ``\text{Req}`` = `PowerSystems.get_requirement(service)`
 
 **Relevant Methods:**
 
-- ``\mathcal{S}_s`` = `PowerSystems.get_contributing_services(system, service)`: Set (vector) of all contributing services to the group service ``s`` in the system.
-- ``\mathcal{D}_{s_i}`` = `PowerSystems.get_contributing_devices(system, service_aux)`: Set (vector) of all contributing devices to the service ``s_i`` in the system.
+  - ``\mathcal{S}_s`` = `PowerSystems.get_contributing_services(system, service)`: Set (vector) of all contributing services to the group service ``s`` in the system.
+  - ``\mathcal{D}_{s_i}`` = `PowerSystems.get_contributing_devices(system, service_aux)`: Set (vector) of all contributing devices to the service ``s_i`` in the system.
 
 **Objective:**
 
@@ -214,7 +228,7 @@ A GroupReserve implements that the sum of all reserves of contributing devices, 
 \sum_{d\in\mathcal{D}_{s_i}} \sum_{i \in \mathcal{S}_s} r_{d,t} \ge \text{Req},\quad \forall t\in \{1,\dots, T\} 
 ```
 
----
+* * *
 
 ## `RampReserve`
 
@@ -226,28 +240,31 @@ For each service ``s`` of the model type `RampReserve` the following variables a
 
 **Variables**:
 
-- [`ActivePowerReserveVariable`](@ref):
-    - Bounds: [0.0, ]
-    - Default proportional cost: ``1.0 / \text{SystemBasePower}``
-    - Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
-If slacks are enabled:
-- [`ReserveRequirementSlack`](@ref):
-    - Bounds: [0.0, ]
-    - Default proportional cost: 1e5
-    - Symbol: ``r^\text{sl}``
+  - [`ActivePowerReserveVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: ``1.0 / \text{SystemBasePower}``
+      + Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
+        If slacks are enabled:
+
+  - [`ReserveRequirementSlack`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 1e5
+      + Symbol: ``r^\text{sl}``
 
 `RampReserve` only accepts `VariableReserve` `PowerSystems.jl` type. With that, the parameters are:
 
 **Static Parameters**
 
-- ``\text{TF}`` = `PowerSystems.get_time_frame(service)`
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up` for thermal contributing devices
-- ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down` for thermal contributing devices
+  - ``\text{TF}`` = `PowerSystems.get_time_frame(service)`
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up` for thermal contributing devices
+  - ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down` for thermal contributing devices
 
-
-**Time Series Parameters** 
+**Time Series Parameters**
 
 For a `VariableReserve` `PowerSystems` type:
+
 ```@eval
 using PowerSimulations
 using PowerSystems
@@ -257,13 +274,13 @@ combos = PowerSimulations.get_default_time_series_names(VariableReserve, RampRes
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Relevant Methods:**
 
-- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
+  - ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
 
 **Objective:**
 
@@ -275,17 +292,19 @@ Adds the `ActivePowerReserveVariable` for upper/lower bound expressions of contr
 
 For `ReserveUp` types, the variable is added to `ActivePowerRangeExpressionUB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable. Similarly, For `ReserveDown` types, the variable is added to `ActivePowerRangeExpressionLB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable
 
-
 *Example*: for a thermal unit ``d`` contributing to two different `ReserveUp` ``s_1, s_2`` services (e.g. Reg-Up and Spin):
+
 ```math
 \text{ActivePowerRangeExpressionUB}_{t} = p_t^\text{th} + r_{s_1,t} + r_{s_2, t} \le P^\text{th,max}
 ```
+
 similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
+
 ```math
 \text{ActivePowerRangeExpressionLB}_{t} = p_t^\text{th} - r_{s_3,t}  \ge P^\text{th,min}
 ```
 
-**Constraints:** 
+**Constraints:**
 
 A RampReserve implements three fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `RampReserve` requirement. Thus, for a service ``s``:
 
@@ -300,7 +319,7 @@ r_{d,t} \le R^\text{th,up} \cdot \text{TF}\quad  \forall d\in \mathcal{D}_s, \fo
 r_{d,t} \le R^\text{th,dn} \cdot \text{TF}\quad  \forall d\in \mathcal{D}_s, \forall t\in \{1,\dots, T\}, \quad \text{(for ReserveDown)}
 ```
 
----
+* * *
 
 ## `NonSpinningReserve`
 
@@ -312,33 +331,37 @@ For each service ``s`` of the model type `NonSpinningReserve`, the following var
 
 **Variables**:
 
-- [`ActivePowerReserveVariable`](@ref):
-    - Bounds: [0.0, ]
-    - Default proportional cost: ``1.0 / \text{SystemBasePower}``
-    - Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
-If slacks are enabled:
-- [`ReserveRequirementSlack`](@ref):
-    - Bounds: [0.0, ]
-    - Default proportional cost: 1e5
-    - Symbol: ``r^\text{sl}``
+  - [`ActivePowerReserveVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: ``1.0 / \text{SystemBasePower}``
+      + Symbol: ``r_{d}`` for ``d`` in contributing devices to the service ``s``
+        If slacks are enabled:
+
+  - [`ReserveRequirementSlack`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 1e5
+      + Symbol: ``r^\text{sl}``
 
 `NonSpinningReserve` only accepts `VariableReserve` `PowerSystems.jl` type. With that, the parameters are:
 
 **Static Parameters**
 
-- ``\text{PF}`` = `PowerSystems.get_max_participation_factor(service)`
-- ``\text{TF}`` = `PowerSystems.get_time_frame(service)`
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min` for thermal contributing devices
-- ``T^\text{st,up}`` = `PowerSystems.get_time_limits(d).up` for thermal contributing devices
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).down` for thermal contributing devices
+  - ``\text{PF}`` = `PowerSystems.get_max_participation_factor(service)`
+  - ``\text{TF}`` = `PowerSystems.get_time_frame(service)`
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min` for thermal contributing devices
+  - ``T^\text{st,up}`` = `PowerSystems.get_time_limits(d).up` for thermal contributing devices
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).down` for thermal contributing devices
 
 Other parameters:
 
-- ``\Delta T``: Resolution of the problem in minutes.
+  - ``\Delta T``: Resolution of the problem in minutes.
 
-**Time Series Parameters** 
+**Time Series Parameters**
 
 For a `VariableReserve` `PowerSystems` type:
+
 ```@eval
 using PowerSimulations
 using PowerSystems
@@ -348,13 +371,13 @@ combos = PowerSimulations.get_default_time_series_names(VariableReserve, NonSpin
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Relevant Methods:**
 
-- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
+  - ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing devices to the service ``s`` in the system.
 
 **Objective:**
 
@@ -366,17 +389,19 @@ Adds the `ActivePowerReserveVariable` for upper/lower bound expressions of contr
 
 For `ReserveUp` types, the variable is added to `ActivePowerRangeExpressionUB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable. Similarly, For `ReserveDown` types, the variable is added to `ActivePowerRangeExpressionLB`, such that this expression considers both the `ActivePowerVariable` and its reserve variable
 
-
 *Example*: for a thermal unit ``d`` contributing to two different `ReserveUp` ``s_1, s_2`` services (e.g. Reg-Up and Spin):
+
 ```math
 \text{ActivePowerRangeExpressionUB}_{t} = p_t^\text{th} + r_{s_1,t} + r_{s_2, t} \le P^\text{th,max}
 ```
+
 similarly if ``s_3`` is a `ReserveDown` service (e.g. Reg-Down):
+
 ```math
 \text{ActivePowerRangeExpressionLB}_{t} = p_t^\text{th} - r_{s_3,t}  \ge P^\text{th,min}
 ```
 
-**Constraints:** 
+**Constraints:**
 
 A NonSpinningReserve implements three fundamental constraints. The first is that the sum of all reserves of contributing devices must be larger than the `NonSpinningReserve` requirement. Thus, for a service ``s``:
 
@@ -391,6 +416,7 @@ r_{d,t} \le \text{RequirementTimeSeriesParameter}_{t} \cdot \text{PF}\quad  \for
 ```
 
 Finally, there is a restriction based on the reserve response time for the non-spinning reserve if the unit is off. To do so, compute ``R^\text{limit}_d`` as the reserve response limit as:
+
 ```math
 R^\text{limit}_d = \begin{cases}
 0 & \text{ if TF } \le T^\text{st,up}_d \\
@@ -404,7 +430,7 @@ Then, the constraint depends on the commitment variable ``u_t^\text{th}`` as:
 r_{d,t} \le (1 - u_{d,t}^\text{th}) \cdot R^\text{limit}_d, \quad \forall d \in \mathcal{D}_s, \forall t \in \{1,\dots, T\}
 ```
 
----
+* * *
 
 ## `ConstantMaxInterfaceFlow`
 
@@ -417,23 +443,27 @@ ConstantMaxInterfaceFlow
 **Variables**
 
 If slacks are used:
-- [`InterfaceFlowSlackUp`](@ref):
-    - Bounds: [0.0, ]
-    - Symbol: ``f^\text{sl,up}``
-- [`InterfaceFlowSlackDown`](@ref):
-    - Bounds: [0.0, ]
-    - Symbol: ``f^\text{sl,dn}``
+
+  - [`InterfaceFlowSlackUp`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``f^\text{sl,up}``
+
+  - [`InterfaceFlowSlackDown`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``f^\text{sl,dn}``
 
 **Static Parameters**
 
-- ``F^\text{max}`` = `PowerSystems.get_active_power_flow_limits(service).max`
-- ``F^\text{min}`` = `PowerSystems.get_active_power_flow_limits(service).min`
-- ``C^\text{flow}`` = `PowerSystems.get_violation_penalty(service)`
-- ``\mathcal{M}_s`` = `PowerSystems.get_direction_mapping(service)`. Dictionary of contributing branches with its specified direction (``\text{Dir}_d = 1`` or ``\text{Dir}_d = -1``) with respect to the interface.
+  - ``F^\text{max}`` = `PowerSystems.get_active_power_flow_limits(service).max`
+  - ``F^\text{min}`` = `PowerSystems.get_active_power_flow_limits(service).min`
+  - ``C^\text{flow}`` = `PowerSystems.get_violation_penalty(service)`
+  - ``\mathcal{M}_s`` = `PowerSystems.get_direction_mapping(service)`. Dictionary of contributing branches with its specified direction (``\text{Dir}_d = 1`` or ``\text{Dir}_d = -1``) with respect to the interface.
 
 **Relevant Methods**
 
-- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing branches to the service ``s`` in the system.
+  - ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing branches to the service ``s`` in the system.
 
 **Objective:**
 
@@ -462,39 +492,47 @@ VariableMaxInterfaceFlow
 **Variables**
 
 If slacks are used:
-- [`InterfaceFlowSlackUp`](@ref):
-    - Bounds: [0.0, ]
-    - Symbol: ``f^\text{sl,up}``
-- [`InterfaceFlowSlackDown`](@ref):
-    - Bounds: [0.0, ]
-    - Symbol: ``f^\text{sl,dn}``
+
+  - [`InterfaceFlowSlackUp`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``f^\text{sl,up}``
+
+  - [`InterfaceFlowSlackDown`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``f^\text{sl,dn}``
 
 **Static Parameters**
 
-- ``F^\text{max}`` = `PowerSystems.get_active_power_flow_limits(service).max`
-- ``F^\text{min}`` = `PowerSystems.get_active_power_flow_limits(service).min`
-- ``C^\text{flow}`` = `PowerSystems.get_violation_penalty(service)`
-- ``\mathcal{M}_s`` = `PowerSystems.get_direction_mapping(service)`. Dictionary of contributing branches with its specified direction (``\text{Dir}_d = 1`` or ``\text{Dir}_d = -1``) with respect to the interface.
+  - ``F^\text{max}`` = `PowerSystems.get_active_power_flow_limits(service).max`
+  - ``F^\text{min}`` = `PowerSystems.get_active_power_flow_limits(service).min`
+  - ``C^\text{flow}`` = `PowerSystems.get_violation_penalty(service)`
+  - ``\mathcal{M}_s`` = `PowerSystems.get_direction_mapping(service)`. Dictionary of contributing branches with its specified direction (``\text{Dir}_d = 1`` or ``\text{Dir}_d = -1``) with respect to the interface.
 
-**Time Series Parameters** 
+**Time Series Parameters**
 
 For a `TransmissionInterface` `PowerSystems` type:
+
 ```@eval
 using PowerSimulations
 using PowerSystems
 using DataFrames
 using Latexify
-combos = PowerSimulations.get_default_time_series_names(TransmissionInterface, VariableMaxInterfaceFlow)
+combos = PowerSimulations.get_default_time_series_names(
+    TransmissionInterface,
+    VariableMaxInterfaceFlow,
+)
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Relevant Methods**
 
-- ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing branches to the service ``s`` in the system.
+  - ``\mathcal{D}_s`` = `PowerSystems.get_contributing_devices(system, service)`: Set (vector) of all contributing branches to the service ``s`` in the system.
 
 **Objective:**
 
@@ -528,6 +566,7 @@ Each contributing generator ``d`` has active power limits that the reserve varia
 \text{ActivePowerRangeExpressionUB}_t \le P^\text{max} \\
 \text{ActivePowerRangeExpressionLB}_t \ge P^\text{min}
 ```
+
 `ReserveUp` type variables contribute to the upper bound expression, while `ReserveDown` variables contribute to the lower bound expressions. So if ``s_1,s_2`` are `ReserveUp` services, and ``s_3`` is a `ReserveDown` service, then for a thermal generator ``d`` using a `ThermalStandardDispatch`:
 
 ```math
@@ -549,6 +588,7 @@ while for a renewable generator ``d`` using a `RenewableFullDispatch`:
 ### Changes in Ramp limits
 
 For the case of Ramp Limits (of formulation that model these limits), the reserve variables only affect the current time, and not the previous time. Then, for the same example as before:
+
 ```math
 \begin{align*}
 & p_{d,t}^\text{th} + r_{s_1,d,t} + r_{s_2,d,t} - p_{d,t-1}^\text{th}\le R^\text{th,up},\quad \forall d\in \mathcal{D}^\text{th}, \forall t \in \{1,\dots,T\}\\

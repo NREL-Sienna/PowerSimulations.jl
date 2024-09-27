@@ -46,7 +46,7 @@ Private = false
 &nbsp;
 ```
 
----
+* * *
 
 ## Decision Models
 
@@ -64,7 +64,7 @@ Private = false
 &nbsp;
 ```
 
----
+* * *
 
 ## Emulation Models
 
@@ -82,7 +82,7 @@ solve!(::Int, ::EmulationModel{<:EmulationProblem}, ::Dates.DateTime, ::Simulati
 &nbsp;
 ```
 
----
+* * *
 
 ## Service Models
 
@@ -97,7 +97,7 @@ ServiceModel
 &nbsp;
 ```
 
----
+* * *
 
 ## Simulation Models
 
@@ -128,6 +128,7 @@ Private = false
 ```
 
 ## Chronology Models
+
 ```@autodocs
 Modules = [PowerSimulations]
 Pages   = ["initial_condition_chronologies.jl",
@@ -137,11 +138,12 @@ Public = true
 Private = false
 ```
 
----
+* * *
 
 ## Variables
 
 For a list of variables for each device refer to its Formulations page.
+
 ### Common Variables
 
 ```@docs
@@ -215,7 +217,7 @@ LowerBoundFeedForwardSlack
 &nbsp;
 ```
 
----
+* * *
 
 ## Constraints
 
@@ -297,7 +299,7 @@ FeedforwardLowerBoundConstraint
 &nbsp;
 ```
 
----
+* * *
 
 ## Parameters
 
@@ -327,6 +329,7 @@ CostFunctionParameter
 ## Results
 
 ### Acessing Optimization Model
+
 ```@autodocs
 Modules = [PowerSimulations]
 Pages   = ["optimization_container.jl",
@@ -363,6 +366,7 @@ Private = false
 ```
 
 ## Simulation Recorder
+
 ```@autodocs
 Modules = [PowerSimulations]
 Pages   = ["utils/recorder_events.jl",

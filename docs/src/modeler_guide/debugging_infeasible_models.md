@@ -5,18 +5,19 @@ Getting infeasible solutions to models is a common occurrence in operations simu
 
 ## Adding slacks to the model
 
-One of the most common infeasibility issues observed is due to not enough generation to supply demand, or conversely, excessive fixed (non-curtailable) generation in a low demand scenario. 
+One of the most common infeasibility issues observed is due to not enough generation to supply demand, or conversely, excessive fixed (non-curtailable) generation in a low demand scenario.
 
 The recommended solution for any of these cases is adding slack variables to the network model, for example:
 
 ```julia
 template_uc = ProblemTemplate(
-        NetworkModel(
-            CopperPlatePowerModel,
-            use_slacks=true,
-        ),
-    )
+    NetworkModel(
+        CopperPlatePowerModel;
+        use_slacks = true,
+    ),
+)
 ```
+
 will add slack variables to the `ActivePowerBalance` expression.
 
 In this case, if the problem is now feasible, the user can check the solution of the variables `SystemBalanceSlackUp` and `SystemBalanceSlackDown`, and if one value is greater than zero, it represents that not enough generation (for Slack Up) or not enough demand (for Slack Down) in the optimization problem.
@@ -24,21 +25,23 @@ In this case, if the problem is now feasible, the user can check the solution of
 ### Services cases
 
 In many scenarios, certain units are also required to provide reserve requirements, e.g. thermal units mandated to provide up-regulation. In such scenarios, it is also possible to add slack variables, by specifying the service model (`RangeReserve`) for the specific service type (`VariableReserve{ReserveUp}`) as:
+
 ```julia
 set_service_model!(
     template_uc,
     ServiceModel(
         VariableReserve{ReserveUp},
         RangeReserve;
-        use_slacks=true
+        use_slacks = true,
     ),
 )
 ```
+
 Again, if the problem is now feasible, check the solution of `ReserveRequirementSlack` variable, and if it is larger than zero in a specific time-step, then it is evidence that there is not enough reserve available to satisfy the requirement.
 
 ## Getting the infeasibility conflict
 
-Some solvers allows to identify which constraints and variables are producing the infeasibility, by finding the irreducible infeasible set (IIS), that is the subset of constraints and variable bounds that will become feasible if any single constraint or variable bound is removed. 
+Some solvers allows to identify which constraints and variables are producing the infeasibility, by finding the irreducible infeasible set (IIS), that is the subset of constraints and variable bounds that will become feasible if any single constraint or variable bound is removed.
 
 To enable this feature in `PowerSimulations` the keyword argument `calculate_conflict` must be set to `true`, when creating the `DecisionModel`. Note that not all solvers allow the computation of the IIS, but most commercial solvers have this capability. It is also recommended to enable the keyword argument `store_variable_names=true` to help understanding which variables are with infeasibility issues.
 
@@ -48,11 +51,11 @@ The following code creates a decision model with the `Xpress` optimizer, and ena
 DecisionModel(
     template_ed,
     sys_rts_rt;
-    name="ED",
-    optimizer=optimizer_with_attributes(Xpress.Optimizer, "MIPRELSTOP" => 1e-2),
-    optimizer_solve_log_print=true,
-    calculate_conflict=true,
-    store_variable_names=true,
+    name = "ED",
+    optimizer = optimizer_with_attributes(Xpress.Optimizer, "MIPRELSTOP" => 1e-2),
+    optimizer_solve_log_print = true,
+    calculate_conflict = true,
+    store_variable_names = true,
 )
 ```
 

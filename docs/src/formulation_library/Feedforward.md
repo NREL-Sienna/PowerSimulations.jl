@@ -6,12 +6,12 @@ The creation of a FeedForward requires at least specifying the `component_type` 
 
 ### Table of contents
 
-1. [`SemiContinuousFeedforward`](#SemiContinuousFeedForward)
-2. [`FixValueFeedforward`](#FixValueFeedforward)
-3. [`UpperBoundFeedforward`](#UpperBoundFeedforward)
-4. [`LowerBoundFeedforward`](#LowerBoundFeedforward)
+ 1. [`SemiContinuousFeedforward`](#SemiContinuousFeedForward)
+ 2. [`FixValueFeedforward`](#FixValueFeedforward)
+ 3. [`UpperBoundFeedforward`](#UpperBoundFeedforward)
+ 4. [`LowerBoundFeedforward`](#LowerBoundFeedforward)
 
----
+* * *
 
 ## `SemiContinuousFeedforward`
 
@@ -25,7 +25,7 @@ No variables are created
 
 **Parameters:**
 
-- ``\text{on}^\text{th}`` = `OnStatusParameter` obtained from the source variable, typically the commitment variable of the unit commitment problem ``u^\text{th}``.
+  - ``\text{on}^\text{th}`` = `OnStatusParameter` obtained from the source variable, typically the commitment variable of the unit commitment problem ``u^\text{th}``.
 
 **Objective:**
 
@@ -48,7 +48,7 @@ Limits the `ActivePowerRangeExpressionUB` and `ActivePowerRangeExpressionLB` by 
 
 Thus, if the commitment parameter is zero, the dispatch is limited to zero, forcing to turn off the generator without introducing binary variables in the economic dispatch problem.
 
----
+* * *
 
 ## `FixValueFeedforward`
 
@@ -82,7 +82,7 @@ Set the `VariableType` from the `affected_values` to be equal to the source para
 \end{align*}
 ```
 
----
+* * *
 
 ## `UpperBoundFeedforward`
 
@@ -93,11 +93,12 @@ UpperBoundFeedforward
 **Variables:**
 
 If slack variables are enabled:
-- [`UpperBoundFeedForwardSlack`](@ref)
-    - Bounds: [0.0, ]
-    - Default proportional cost: 1e6
-    - Symbol: ``p^\text{ff,ubsl}``
 
+  - [`UpperBoundFeedForwardSlack`](@ref)
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{ff,ubsl}``
 
 **Parameters:**
 
@@ -121,7 +122,7 @@ Set the `VariableType` from the `affected_values` to be lower than the source pa
 \end{align*}
 ```
 
----
+* * *
 
 ## `LowerBoundFeedforward`
 
@@ -132,11 +133,12 @@ LowerBoundFeedforward
 **Variables:**
 
 If slack variables are enabled:
-- [`LowerBoundFeedForwardSlack`](@ref)
-    - Bounds: [0.0, ]
-    - Default proportional cost: 1e6
-    - Symbol: ``p^\text{ff,lbsl}``
 
+  - [`LowerBoundFeedForwardSlack`](@ref)
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 1e6
+      + Symbol: ``p^\text{ff,lbsl}``
 
 **Parameters:**
 

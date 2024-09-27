@@ -50,7 +50,7 @@ makedocs(;
     modules = [PowerSimulations],
     format = Documenter.HTML(;
         prettyurls = haskey(ENV, "GITHUB_ACTIONS"),
-        size_threshold = nothing,),
+        size_threshold = nothing),
     sitename = "PowerSimulations.jl",
     authors = "Jose Daniel Lara, Daniel Thom, Kate Doubleday, Rodrigo Henriquez-Auba, and Clayton Barrows",
     pages = Any[p for p in pages],
