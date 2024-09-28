@@ -54,7 +54,8 @@ function add_proportional_cost!(
         cost_term = proportional_cost(op_cost_data, U(), d, V())
         iszero(cost_term) && continue
         for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
     end
     return
