@@ -138,10 +138,6 @@ struct HVDCTwoTerminalDispatch <: AbstractTwoTerminalDCLineFormulation end
 Branch type to represent piecewise lossy power flow on two terminal DC lines
 """
 struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
-"""
-Branch type to represent piecewise lossy power flow on two terminal DC lines using SOS2
-"""
-struct HVDCTwoTerminalSOSPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end

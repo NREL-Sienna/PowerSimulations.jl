@@ -340,58 +340,6 @@ function add_constraints!(
     return
 end
 
-# SOS Model
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{T},
-    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
-    ::DeviceModel{U, HVDCTwoTerminalSOSPiecewiseLoss},
-    ::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalHVDCLine}
-    var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
-    names = PSY.get_name.(devices)
-    time_steps = get_time_steps(container)
-    flow_ft = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
-    flow_tf = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
-
-    constraint_from_to =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "ft")
-    constraint_to_from =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "tf")
-    for d in devices
-        name = PSY.get_name(d)
-        loss = PSY.get_loss(d)
-        from_to_params, to_from_params = _get_pwl_loss_params(d, loss)
-        #@show from_to_params
-        #@show to_from_params
-        segments = _get_range_segments(d, loss)
-        for t in time_steps
-            ## Add Equality Constraints ##
-            constraint_from_to[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                flow_ft[name, t] == sum(
-                    var_pwl[name, ix, t] * from_to_params[ix] for
-                    ix in segments
-                )
-            )
-            constraint_to_from[PSY.get_name(d), t] = JuMP.@constraint(
-                get_jump_model(container),
-                flow_tf[name, t] == sum(
-                    var_pwl[name, ix, t] * to_from_params[ix] for
-                    ix in segments
-                )
-            )
-            ## Add SOS Constraints ###
-            pwl_vars_subset = [var_pwl[name, s, t] for s in segments]
-            JuMP.@constraint(
-                get_jump_model(container),
-                pwl_vars_subset in MOI.SOS2(collect(segments))
-            )
-        end
-    end
-    return
-end
-
 #################################### Rate Limits Constraints ##################################################
 function _get_flow_bounds(d::PSY.TwoTerminalHVDCLine)
     check_hvdc_line_limits_consistency(d)
@@ -594,7 +542,7 @@ function add_constraints!(
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
     U <: PSY.TwoTerminalHVDCLine,
-    V <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+    V <: HVDCTwoTerminalPiecewiseLoss,
 }
     inter_network_branches = U[]
     for d in devices
@@ -633,7 +581,7 @@ function add_constraints!(
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
     U <: PSY.TwoTerminalHVDCLine,
-    V <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+    V <: HVDCTwoTerminalPiecewiseLoss,
 }
     if T <: FlowRateConstraintFromTo
         _add_hvdc_flow_constraints!(

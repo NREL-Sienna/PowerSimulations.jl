@@ -765,7 +765,7 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: TwoTerminalHVDCTypes,
-    U <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+    U <: HVDCTwoTerminalPiecewiseLoss,
 }
     devices =
         get_available_components(model, sys)
@@ -809,7 +809,7 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: TwoTerminalHVDCTypes,
-    U <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalSOSPiecewiseLoss},
+    U <: HVDCTwoTerminalPiecewiseLoss,
 }
     devices =
         get_available_components(model, sys)
