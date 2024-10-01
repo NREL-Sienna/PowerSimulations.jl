@@ -54,6 +54,52 @@ end
 ################# PWL Constraints ################
 ##################################################
 
+function _determine_bin_lhs(
+    container::OptimizationContainer,
+    sos_status::SOSStatusVariable,
+    component::T,
+    period::Int) where {T <: PSY.Component}
+    name = PSY.get_name(component)
+    if sos_status == SOSStatusVariable.NO_VARIABLE
+        return 1.0
+        @debug "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)" _group =
+            LOG_GROUP_COST_FUNCTIONS
+
+    elseif sos_status == SOSStatusVariable.PARAMETER
+        param = get_default_on_parameter(component)
+        return get_parameter(container, param, T).parameter_array[name, period]
+        @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
+            LOG_GROUP_COST_FUNCTIONS
+    elseif sos_status == SOSStatusVariable.VARIABLE
+        var = get_default_on_variable(component)
+        return get_variable(container, var, T)[name, period]
+        @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
+            LOG_GROUP_COST_FUNCTIONS
+    else
+        @assert false
+    end
+end
+
+function _get_bin_lhs(
+    container::OptimizationContainer,
+    sos_status::SOSStatusVariable,
+    component::T,
+    period::Int) where {T <: PSY.Component}
+    return _determine_bin_lhs(container, sos_status, component, period)
+end
+
+function _get_bin_lhs(
+    container::OptimizationContainer,
+    sos_status::SOSStatusVariable,
+    component::PSY.ThermalGen,
+    period::Int)
+    if PSY.get_must_run(component)
+        return 1.0
+    else
+        return _determine_bin_lhs(container, sos_status, component, period)
+    end
+end
+
 """
 Implement the constraints for PWL variables. That is:
 
@@ -86,26 +132,7 @@ function _add_pwl_constraint!(
         variables[name, period] ==
         sum(pwl_vars[name, ix, period] * break_points[ix] for ix in 1:len_cost_data)
     )
-
-    if sos_status == SOSStatusVariable.NO_VARIABLE
-        bin = 1.0
-        @debug "Using Piecewise Linear cost function but no variable/parameter ref for ON status is passed. Default status will be set to online (1.0)" _group =
-            LOG_GROUP_COST_FUNCTIONS
-
-    elseif sos_status == SOSStatusVariable.PARAMETER
-        param = get_default_on_parameter(component)
-        bin = get_parameter(container, param, T).parameter_array[name, period]
-        @debug "Using Piecewise Linear cost function with parameter OnStatusParameter, $T" _group =
-            LOG_GROUP_COST_FUNCTIONS
-    elseif sos_status == SOSStatusVariable.VARIABLE
-        var = get_default_on_variable(component)
-        bin = get_variable(container, var, T)[name, period]
-        @debug "Using Piecewise Linear cost function with variable OnVariable $T" _group =
-            LOG_GROUP_COST_FUNCTIONS
-    else
-        @assert false
-    end
-
+    bin = _get_bin_lhs(container, sos_status, component, period)
     const_normalization_container = lazy_container_addition!(
         container,
         PieceWiseLinearCostConstraint(),
