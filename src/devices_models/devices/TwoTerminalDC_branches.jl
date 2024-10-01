@@ -661,6 +661,7 @@ function add_constraints!(
     tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
     ft_var = get_variable(container, FlowActivePowerFromToVariable(), T)
     direction_var = get_variable(container, HVDCFlowDirectionVariable(), T)
+    losses = get_variable(container, HVDCLosses(), T)
 
     constraint_ft_ub = add_constraints_container!(
         container,
@@ -694,6 +695,30 @@ function add_constraints!(
         time_steps;
         meta = "ft_lb",
     )
+    constraint_loss = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss",
+    )
+    constraint_loss_aux1 = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux1",
+    )
+    constraint_loss_aux2 = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux2",
+    )
     for d in devices
         loss = PSY.get_loss(d)
         if !isa(loss, PSY.LinearCurve)
@@ -704,78 +729,38 @@ function add_constraints!(
         l1 = PSY.get_proportional_term(loss)
         l0 = PSY.get_constant_term(loss)
         name = PSY.get_name(d)
+        R_min_from, R_max_from = PSY.get_active_power_limits_from(d)
+        R_min_to, R_max_to = PSY.get_active_power_limits_to(d)
         for t in get_time_steps(container)
-            if l1 == 0.0 && l0 == 0.0
-                constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    tf_var[name, t] - ft_var[name, t] == 0.0
-                )
-                constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    ft_var[name, t] - tf_var[name, t] == 0.0
-                )
-            else
-                constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    tf_var[name, t] - ft_var[name, t] <= l1 * tf_var[name, t] - l0
-                )
-                constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    ft_var[name, t] - tf_var[name, t] >= l1 * ft_var[name, t] + l0
-                )
-            end
+            constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                tf_var[name, t] <= R_max_to * direction_var[name, t]
+            )
             constraint_tf_lb[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                ft_var[name, t] - tf_var[name, t] >=
-                -M_VALUE * (1 - direction_var[name, t])
+                tf_var[name, t] >= R_min_to * (1 - direction_var[name, t])
+            )
+            constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                ft_var[name, t] <= R_max_from * (1 - direction_var[name, t])
             )
             constraint_ft_lb[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                tf_var[name, t] - ft_var[name, t] >= -M_VALUE * (direction_var[name, t])
+                ft_var[name, t] >= R_min_from * direction_var[name, t]
             )
-        end
-    end
-    return
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
-    ::Type{HVDCLossesAbsoluteValue},
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, <:AbstractTwoTerminalDCLineFormulation},
-    ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: PSY.TwoTerminalHVDCLine}
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-    losses = get_variable(container, HVDCLosses(), T)
-    tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
-    ft_var = get_variable(container, FlowActivePowerFromToVariable(), T)
-    constraint_tf = add_constraints_container!(
-        container,
-        HVDCLossesAbsoluteValue(),
-        T,
-        names,
-        time_steps;
-        meta = "tf",
-    )
-    constraint_ft = add_constraints_container!(
-        container,
-        HVDCLossesAbsoluteValue(),
-        T,
-        names,
-        time_steps;
-        meta = "ft",
-    )
-    for d in devices
-        name = PSY.get_name(d)
-        for t in get_time_steps(container)
-            constraint_tf[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_loss[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                tf_var[name, t] - ft_var[name, t] <= losses[name, t]
+                tf_var[name, t] + ft_var[name, t] == losses[name, t]
             )
-            constraint_ft[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_loss_aux1[PSY.get_name(d), t] = JuMP.@constraint(
                 get_jump_model(container),
-                -tf_var[name, t] + ft_var[name, t] <= losses[name, t]
+                losses[name, t] >=
+                l1 * ft_var[name, t] + l0 - M_VALUE * direction_var[name, t]
+            )
+            constraint_loss_aux2[PSY.get_name(d), t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses[name, t] >=
+                l1 * tf_var[name, t] + l0 - M_VALUE * (1 - direction_var[name, t])
             )
         end
     end

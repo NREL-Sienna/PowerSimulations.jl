@@ -329,9 +329,9 @@ function add_to_expression!(
         ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
-            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, 1.0)
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, -1.0)
             if ref_bus_from != ref_bus_to
-                _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, 1.0)
+                _add_to_jump_expression!(sys_expr[ref_bus_to, t], flow_variable, -1.0)
             end
         end
     end
@@ -366,9 +366,9 @@ function add_to_expression!(
         ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
-            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, 1.0)
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
             if ref_bus_from != ref_bus_to
-                _add_to_jump_expression!(sys_expr[ref_bus_from, t], flow_variable, 1.0)
+                _add_to_jump_expression!(sys_expr[ref_bus_from, t], flow_variable, -1.0)
             end
         end
     end

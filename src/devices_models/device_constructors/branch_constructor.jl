@@ -695,7 +695,6 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
-    add_constraints!(container, HVDCLossesAbsoluteValue, devices, model, network_model)
     return
 end
 
