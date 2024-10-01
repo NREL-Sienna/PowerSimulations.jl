@@ -260,13 +260,17 @@ function add_to_expression!(
     for d in devices
         name = PSY.get_name(d)
         device_bus_from = PSY.get_arc(d).from
+        device_bus_to = PSY.get_arc(d).to
         ref_bus_from = get_reference_bus(network_model, device_bus_from)
-        for t in get_time_steps(container)
-            _add_to_jump_expression!(
-                expression[ref_bus_from, t],
-                variable[name, t],
-                get_variable_multiplier(U(), d, W()),
-            )
+        ref_bus_to = get_reference_bus(network_model, device_bus_to)
+        if ref_bus_from == ref_bus_to
+            for t in get_time_steps(container)
+                _add_to_jump_expression!(
+                    expression[ref_bus_from, t],
+                    variable[name, t],
+                    get_variable_multiplier(U(), d, W()),
+                )
+            end
         end
     end
     return
