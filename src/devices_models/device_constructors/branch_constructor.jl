@@ -718,6 +718,7 @@ function construct_device!(
         HVDCTwoTerminalDispatch(),
     )
     add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCTwoTerminalDispatch())
+    add_variables!(container, HVDCLosses, devices, HVDCTwoTerminalDispatch())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -893,7 +894,6 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
-    add_constraints!(container, HVDCDirection, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     add_feedforward_constraints!(container, model, devices)
     return
