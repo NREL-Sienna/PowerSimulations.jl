@@ -2,9 +2,9 @@ function get_time_series_values!(
     time_series_type::Type{T},
     model::DecisionModel,
     component,
-    name,
+    name::String,
     multiplier_id::Int,
-    initial_time,
+    initial_time::Dates.DateTime,
     horizon::Int;
     ignore_scaling_factors = true,
 ) where {T <: PSY.Forecast}

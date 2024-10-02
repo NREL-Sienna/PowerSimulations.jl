@@ -454,6 +454,30 @@ function update_model!(
     return
 end
 
+"""
+Update parameter function an OperationModel
+"""
+function update_parameter_values!(
+    model::EmulationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: ParameterType, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    optimization_container = get_optimization_container(model)
+    update_container_parameter_values!(optimization_container, model, key, input)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    IS.@record :execution ParameterUpdateEvent(
+        T,
+        U,
+        parameter_attributes,
+        get_current_timestamp(model),
+        get_name(model),
+    )
+    #end
+    return
+end
+
 function update_model!(model::EmulationModel)
     update_model!(model, get_store(model), InterProblemChronology())
     return
@@ -507,7 +531,7 @@ keyword arguments to that function.
   - `export_problem_results::Bool`: If true, export OptimizationProblemResults DataFrames to CSV files.
   - `output_dir::String`: Required if the model is not already built, otherwise ignored
   - `enable_progress_bar::Bool`: Enables/Disable progress bar printing
-  - `serialize::Bool`: If true, serialize the model to a file to allow re-execution later.
+  - `export_optimization_model::Bool`: If true, serialize the model to a file to allow re-execution later.
 
 # Examples
 
@@ -522,7 +546,7 @@ function run!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     disable_timer_outputs = false,
-    serialize = true,
+    export_optimization_model = true,
     kwargs...,
 )
     build_if_not_already_built!(
@@ -555,7 +579,7 @@ function run!(
                     run_impl!(model; kwargs...)
                     set_run_status!(model, RunStatus.SUCCESSFULLY_FINALIZED)
                 end
-                if serialize
+                if export_optimization_model
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
                         optimizer = get(kwargs, :optimizer, nothing)
                         serialize_problem(model; optimizer = optimizer)

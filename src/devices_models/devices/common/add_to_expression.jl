@@ -1011,7 +1011,7 @@ function add_to_expression!(
     network_model::NetworkModel{U},
 ) where {
     T <: ActivePowerBalance,
-    U <: Union{AreaBalancePowerModel, AreaPTDFPowerModel},
+    U <: PM.AbstractActivePowerModel,
     W <: AbstractBranchFormulation,
 }
     flow_variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
