@@ -332,7 +332,6 @@ The specified constraint is formulated as:
 ```
 """
 struct PhaseAngleControlLimit <: ConstraintType end
-struct HVDCDirection <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
 struct HVDCFlowCalculationConstraint <: ConstraintType end
 

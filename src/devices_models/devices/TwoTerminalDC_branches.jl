@@ -603,54 +603,6 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{T},
-    devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, HVDCTwoTerminalDispatch},
-    ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: HVDCDirection, U <: PSY.TwoTerminalHVDCLine}
-    time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-
-    tf_var = get_variable(container, FlowActivePowerToFromVariable(), U)
-    ft_var = get_variable(container, FlowActivePowerFromToVariable(), U)
-    direction_var = get_variable(container, HVDCFlowDirectionVariable(), U)
-
-    constraint_ft_ub =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "ft_ub")
-    constraint_tf_ub =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "tf_ub")
-    constraint_ft_lb =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "ft_lb")
-    constraint_tf_lb =
-        add_constraints_container!(container, T(), U, names, time_steps; meta = "tf_lb")
-    for d in devices
-        min_rate_to, max_rate_to = PSY.get_active_power_limits_to(d)
-        min_rate_from, max_rate_from = PSY.get_active_power_limits_to(d)
-        name = PSY.get_name(d)
-        for t in time_steps
-            constraint_tf_ub[name, t] = JuMP.@constraint(
-                get_jump_model(container),
-                tf_var[name, t] <= max_rate_to * (1 - direction_var[name, t])
-            )
-            constraint_ft_ub[name, t] = JuMP.@constraint(
-                get_jump_model(container),
-                ft_var[name, t] <= max_rate_from * (1 - direction_var[name, t])
-            )
-            constraint_tf_lb[name, t] = JuMP.@constraint(
-                get_jump_model(container),
-                direction_var[name, t] * min_rate_to <= tf_var[name, t]
-            )
-            constraint_ft_lb[name, t] = JuMP.@constraint(
-                get_jump_model(container),
-                direction_var[name, t] * min_rate_from <= tf_var[name, t]
-            )
-        end
-    end
-    return
-end
-
-function add_constraints!(
-    container::OptimizationContainer,
     ::Type{HVDCPowerBalance},
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractTwoTerminalDCLineFormulation},
