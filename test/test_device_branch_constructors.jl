@@ -323,7 +323,7 @@ end
     add_component!(sys_5, hvdc)
     for net_model in [DCPPowerModel, PTDFPowerModel]
         @testset "$net_model" begin
-            PSY.set_loss!(hvdc, (l0 = 0.0, l1 = 0.0))
+            PSY.set_loss!(hvdc, PSY.LinearCurve(0.0))
             template_uc = ProblemTemplate(
                 NetworkModel(net_model; use_slacks = true),
             )
@@ -431,7 +431,7 @@ end
 
             @test isapprox(no_loss_total_gen, ref_total_gen; atol = 0.1)
 
-            PSY.set_loss!(hvdc, (l0 = 0.1, l1 = 0.005))
+            PSY.set_loss!(hvdc, PSY.LinearCurve(0.005, 0.1))
 
             model_wl = DecisionModel(
                 template_uc,

@@ -271,14 +271,14 @@ function get_branch_to_pm(
     ::Type{<:PM.AbstractDCPModel},
 )
     PM_branch = Dict{String, Any}(
-        "loss1" => PSY.get_loss(branch).l1,
+        "loss1" => PSY.get_proportional_term(PSY.get_loss(branch)),
         "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,
         "model" => 2,
         "shutdown" => 0.0,
         "pmaxt" => PSY.get_active_power_limits_to(branch).max,
         "pmaxf" => PSY.get_active_power_limits_from(branch).max,
         "startup" => 0.0,
-        "loss0" => PSY.get_loss(branch).l0,
+        "loss0" => PSY.get_constant_term(PSY.get_loss(branch)),
         "pt" => 0.0,
         "vt" => PSY.get_magnitude(PSY.get_arc(branch).to),
         "qmaxf" => PSY.get_reactive_power_limits_from(branch).max,
@@ -310,14 +310,14 @@ function get_branch_to_pm(
 )
     check_hvdc_line_limits_unidirectional(branch)
     PM_branch = Dict{String, Any}(
-        "loss1" => PSY.get_loss(branch).l1,
+        "loss1" => PSY.get_proportional_term(PSY.get_loss(branch)),
         "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,
         "model" => 2,
         "shutdown" => 0.0,
         "pmaxt" => PSY.get_active_power_limits_to(branch).max,
         "pmaxf" => PSY.get_active_power_limits_from(branch).max,
         "startup" => 0.0,
-        "loss0" => PSY.get_loss(branch).l0,
+        "loss0" => PSY.get_constant_term(PSY.get_loss(branch)),
         "pt" => 0.0,
         "vt" => PSY.get_magnitude(PSY.get_arc(branch).to),
         "qmaxf" => PSY.get_reactive_power_limits_from(branch).max,
@@ -348,14 +348,14 @@ function get_branch_to_pm(
     ::Type{<:PM.AbstractPowerModel},
 )
     PM_branch = Dict{String, Any}(
-        "loss1" => PSY.get_loss(branch).l1,
+        "loss1" => PSY.get_proportional_term(PSY.get_loss(branch)),
         "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,
         "model" => 2,
         "shutdown" => 0.0,
         "pmaxt" => PSY.get_active_power_limits_to(branch).max,
         "pmaxf" => PSY.get_active_power_limits_from(branch).max,
         "startup" => 0.0,
-        "loss0" => PSY.get_loss(branch).l0,
+        "loss0" => PSY.get_constant_term(PSY.get_loss(branch)),
         "pt" => 0.0,
         "vt" => PSY.get_magnitude(PSY.get_arc(branch).to),
         "qmaxf" => PSY.get_reactive_power_limits_from(branch).max,
