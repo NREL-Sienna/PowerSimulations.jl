@@ -195,14 +195,13 @@ function add_semicontinuous_ramp_constraints!(
     T::Type{<:ConstraintType},
     U::Type{S},
     devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
+    ::DeviceModel{V, W},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {
     S <: Union{PowerAboveMinimumVariable, ActivePowerVariable},
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
-    parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
     variable = get_variable(container, U(), V)
     varstart = get_variable(container, StartVariable(), V)
@@ -222,6 +221,7 @@ function add_semicontinuous_ramp_constraints!(
         add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
 
     for ic in initial_conditions_power
+        component = get_component(ic)
         name = get_component_name(ic)
         # This is to filter out devices that dont need a ramping constraint
         name ∉ set_name && continue
@@ -231,26 +231,58 @@ function add_semicontinuous_ramp_constraints!(
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
 
+        if hasmethod(PSY.get_must_run, Tuple{V})
+            must_run = PSY.get_must_run(component)
+        else
+            must_run = false
+        end
+
+        if must_run
+            rhs_up = ramp_limits.up * minutes_per_period
+            rhd_dn = ramp_limits.down * minutes_per_period
+        else
+            rhs_up =
+                ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, 1]
+            rhd_dn =
+                ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
+        end
+
         con_up[name, 1] = JuMP.@constraint(
             get_jump_model(container),
             expr_up[name, 1] - ic_power <=
-            ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, 1]
+            if must_run
+                ramp_limits.up * minutes_per_period
+            else
+                ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, 1]
+            end
         )
         con_down[name, 1] = JuMP.@constraint(
             get_jump_model(container),
             ic_power - expr_dn[name, 1] <=
-            ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
+            if must_run
+                ramp_limits.down * minutes_per_period
+            else
+                ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
+            end
         )
         for t in time_steps[2:end]
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 expr_up[name, t] - variable[name, t - 1] <=
-                ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, t]
+                if must_run
+                    ramp_limits.up * minutes_per_period
+                else
+                    ramp_limits.up * minutes_per_period + power_limits.min * varstart[name, t]
+                end
             )
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 variable[name, t - 1] - expr_dn[name, t] <=
-                ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, t]
+                if must_run
+                    ramp_limits.down * minutes_per_period
+                else
+                    ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, t]
+                end
             )
         end
     end
