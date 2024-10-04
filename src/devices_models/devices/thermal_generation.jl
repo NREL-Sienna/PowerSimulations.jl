@@ -76,7 +76,11 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 ########################Objective Function##################################################
 # TODO: Decide what is the cost for OnVariable, if fixed or constant term in variable
 function proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return no_load_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost)))
+    return no_load_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
+end
+
+function proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractCompactUnitCommitment)
+    return no_load_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
 end
 
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
@@ -130,8 +134,10 @@ function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.
 end
 
 function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
-    # value_curve = PSY.get_value_curve(cost_function)
-    # cost = PSY.get_function_data(value_curve)
+    return 0.0
+end
+
+function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
     return 0.0
 end
 
@@ -826,8 +832,10 @@ function calculate_aux_variable_value!(
         if isnothing(get_value(ini_cond[ix]))
             sum_on_var = time_steps[end]
         else
+            on_var_name = get_component_name(ini_cond[ix])
             ini_cond_value = get_condition(ini_cond[ix])
-            on_var = jump_value.(on_variable_results.data[ix, :])
+            # On Var doesn't exist for a unit that has must_run = true
+            on_var = jump_value.(on_variable_results[on_var_name, :])
             aux_variable_container.data[ix, :] .= ini_cond_value
             sum_on_var = sum(on_var)
         end
@@ -864,15 +872,18 @@ function calculate_aux_variable_value!(
 
     time_steps = get_time_steps(container)
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        # if its nothing it means the thermal unit was on must run
+        # if its nothing it means the thermal unit was on must_run = true
         # so there is nothing to do but continue
         if isnothing(get_value(ini_cond[ix]))
-            continue
+            sum_on_var = 0.0
+        else
+            on_var_name = get_component_name(ini_cond[ix])
+            # On Var doesn't exist for a unit that has must run
+            on_var = jump_value.(on_variable_results[on_var_name, :])
+            ini_cond_value = get_condition(ini_cond[ix])
+            aux_variable_container.data[ix, :] .= ini_cond_value
+            sum_on_var = sum(on_var)
         end
-        on_var = jump_value.(on_variable_results.data[ix, :])
-        ini_cond_value = get_condition(ini_cond[ix])
-        aux_variable_container.data[ix, :] .= ini_cond_value
-        sum_on_var = sum(on_var)
         if sum_on_var == time_steps[end] # Unit was always on
             aux_variable_container.data[ix, :] .= 0.0
         elseif sum_on_var == 0.0 # Unit was always off
