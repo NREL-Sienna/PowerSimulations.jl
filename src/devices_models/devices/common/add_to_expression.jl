@@ -1269,6 +1269,9 @@ function add_to_expression!(
     end
     expression = get_expression(container, T(), V)
     for d in devices
+        if PSY.get_must_run(d)
+            continue
+        end
         mult = get_expression_multiplier(U(), T(), d, W())
         for t in get_time_steps(container)
             name = PSY.get_name(d)
@@ -1419,7 +1422,7 @@ end
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{S},
-    cost_expression::JuMP.AbstractJuMPScalar,
+    cost_expression::Union{JuMP.AbstractJuMPScalar, Float64},
     component::T,
     time_period::Int,
 ) where {S <: CostExpressions, T <: PSY.Component}

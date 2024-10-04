@@ -178,12 +178,17 @@ function _lower_bound_range_with_parameter!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     time_steps = axes(constraint_container)[2]
-    for device in devices, t in time_steps
+    for device in devices
+        if hasmethod(PSY.get_must_run, Tuple{V})
+            PSY.get_must_run(device) && continue
+        end
         name = PSY.get_name(device)
-        constraint_container[name, t] = JuMP.@constraint(
-            jump_model,
-            lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
-        )
+        for t in time_steps
+            constraint_container[name, t] = JuMP.@constraint(
+                jump_model,
+                lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
+            )
+        end
     end
     return
 end
@@ -197,12 +202,17 @@ function _upper_bound_range_with_parameter!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     time_steps = axes(constraint_container)[2]
-    for device in devices, t in time_steps
+    for device in devices
+        if hasmethod(PSY.get_must_run, Tuple{V})
+            PSY.get_must_run(device) && continue
+        end
         name = PSY.get_name(device)
-        constraint_container[name, t] = JuMP.@constraint(
-            jump_model,
-            lhs_array[name, t] <= param_multiplier[name, t] * param_array[name, t]
-        )
+        for t in time_steps
+            constraint_container[name, t] = JuMP.@constraint(
+                jump_model,
+                lhs_array[name, t] <= param_multiplier[name, t] * param_array[name, t]
+            )
+        end
     end
     return
 end
