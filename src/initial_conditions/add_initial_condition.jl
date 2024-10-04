@@ -237,7 +237,7 @@ function add_initial_condition!(
 ) where {
     T <: PSY.ThermalGen,
     U <: AbstractThermalFormulation,
-    D <: InitialConditionType,
+    D <: Union{InitialTimeDurationOff, InitialTimeDurationOn, DeviceStatus},
 }
     if get_rebuild_model(get_settings(container)) && has_container_key(container, D, T)
         return
