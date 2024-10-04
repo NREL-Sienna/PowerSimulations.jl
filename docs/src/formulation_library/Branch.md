@@ -1,18 +1,19 @@
 # `PowerSystems.Branch` Formulations
 
 !!! note
+    
     The use of reactive power variables and constraints will depend on the network model used, i.e., whether it uses (or does not use) reactive power. If the network model is purely active power-based, reactive power variables and related constraints are not created.
 
 ### Table of contents
 
-1. [`StaticBranch`](#StaticBranch)
-2. [`StaticBranchBounds`](#StaticBranchBounds)
-3. [`StaticBranchUnbounded`](#StaticBranchUnbounded)
-4. [`HVDCTwoTerminalUnbounded`](#HVDCTwoTerminalUnbounded)
-5. [`HVDCTwoTerminalLossless`](#HVDCTwoTerminalLossless)
-6. [`HVDCTwoTerminalDispatch`](#HVDCTwoTerminalDispatch)
-7. [`PhaseAngleControl`](#PhaseAngleControl)
-8. [Valid configurations](#Valid-configurations)
+ 1. [`StaticBranch`](#StaticBranch)
+ 2. [`StaticBranchBounds`](#StaticBranchBounds)
+ 3. [`StaticBranchUnbounded`](#StaticBranchUnbounded)
+ 4. [`HVDCTwoTerminalUnbounded`](#HVDCTwoTerminalUnbounded)
+ 5. [`HVDCTwoTerminalLossless`](#HVDCTwoTerminalLossless)
+ 6. [`HVDCTwoTerminalDispatch`](#HVDCTwoTerminalDispatch)
+ 7. [`PhaseAngleControl`](#PhaseAngleControl)
+ 8. [Valid configurations](#Valid-configurations)
 
 ## `StaticBranch`
 
@@ -24,22 +25,26 @@ StaticBranch
 
 **Variables:**
 
-- [`FlowActivePowerVariable`](@ref):
-  - Bounds: ``(-\infty,\infty)``
-  - Symbol: ``f``
-If Slack variables are enabled:
-- [`FlowActivePowerSlackUpperBound`](@ref):
-  - Bounds: [0.0, ]
-  - Default proportional cost: 2e5
-  - Symbol: ``f^\text{sl,up}``
-- [`FlowActivePowerSlackLowerBound`](@ref):
-  - Bounds: [0.0, ]
-  - Default proportional cost: 2e5
-  - Symbol: ``f^\text{sl,lo}``
+  - [`FlowActivePowerVariable`](@ref):
+    
+      + Bounds: ``(-\infty,\infty)``
+      + Symbol: ``f``
+        If Slack variables are enabled:
+
+  - [`FlowActivePowerSlackUpperBound`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 2e5
+      + Symbol: ``f^\text{sl,up}``
+  - [`FlowActivePowerSlackLowerBound`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default proportional cost: 2e5
+      + Symbol: ``f^\text{sl,lo}``
 
 **Static Parameters**
 
-- ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
+  - ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
 
 **Objective:**
 
@@ -51,7 +56,7 @@ No expressions are used.
 
 **Constraints:**
 
-For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by: 
+For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by:
 
 ```math
 \begin{aligned}
@@ -60,9 +65,10 @@ For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the cons
 &  f_t + f_t^\text{sl,lo} \ge -R^\text{max},\quad \forall t \in \{1,\dots, T\} 
 \end{aligned}
 ```
-on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``. 
 
----
+on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``.
+
+* * *
 
 ## `StaticBranchBounds`
 
@@ -74,13 +80,14 @@ StaticBranchBounds
 
 **Variables:**
 
-- [`FlowActivePowerVariable`](@ref):
-  - Bounds: ``\left[-R^\text{max},R^\text{max}\right]``
-  - Symbol: ``f``
+  - [`FlowActivePowerVariable`](@ref):
+    
+      + Bounds: ``\left[-R^\text{max},R^\text{max}\right]``
+      + Symbol: ``f``
 
 **Static Parameters**
 
-- ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
+  - ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
 
 **Objective:**
 
@@ -92,16 +99,17 @@ No expressions are used.
 
 **Constraints:**
 
-For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by: 
+For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by:
 
 ```math
 \begin{aligned}
 &  f_t = \sum_{i=1}^N \text{PTDF}_{i,b} \cdot \text{Bal}_{i,t}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
 ```
-on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``. 
 
----
+on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``.
+
+* * *
 
 ## `StaticBranchUnbounded`
 
@@ -111,10 +119,10 @@ Formulation valid for `PTDFPowerModel` Network model
 StaticBranchUnbounded
 ```
 
-- [`FlowActivePowerVariable`](@ref):
-  - Bounds: ``(-\infty,\infty)``
-  - Symbol: ``f``
-
+  - [`FlowActivePowerVariable`](@ref):
+    
+      + Bounds: ``(-\infty,\infty)``
+      + Symbol: ``f``
 
 **Objective:**
 
@@ -126,16 +134,17 @@ No expressions are used.
 
 **Constraints:**
 
-For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by: 
+For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by:
 
 ```math
 \begin{aligned}
 &  f_t = \sum_{i=1}^N \text{PTDF}_{i,b} \cdot \text{Bal}_{i,t}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
 ```
-on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``. 
 
----
+on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``.
+
+* * *
 
 ## `HVDCTwoTerminalUnbounded`
 
@@ -149,10 +158,10 @@ This model assumes that it can transfer power from two AC buses without losses a
 
 **Variables:**
 
-- [`FlowActivePowerVariable`](@ref):
-  - Bounds: ``\left(-\infty,\infty\right)``
-  - Symbol: ``f``
-
+  - [`FlowActivePowerVariable`](@ref):
+    
+      + Bounds: ``\left(-\infty,\infty\right)``
+      + Symbol: ``f``
 
 **Objective:**
 
@@ -166,8 +175,7 @@ The variable `FlowActivePowerVariable` ``f`` is added to the nodal balance expre
 
 No constraints are added.
 
-
----
+* * *
 
 ## `HVDCTwoTerminalLossless`
 
@@ -181,17 +189,17 @@ This model assumes that it can transfer power from two AC buses without losses.
 
 **Variables:**
 
-- [`FlowActivePowerVariable`](@ref):
-  - Bounds: ``\left(-\infty,\infty\right)``
-  - Symbol: ``f``
-
+  - [`FlowActivePowerVariable`](@ref):
+    
+      + Bounds: ``\left(-\infty,\infty\right)``
+      + Symbol: ``f``
 
 **Static Parameters**
 
-- ``R^\text{from,min}`` = `PowerSystems.get_active_power_limits_from(branch).min`
-- ``R^\text{from,max}`` = `PowerSystems.get_active_power_limits_from(branch).max`
-- ``R^\text{to,min}`` = `PowerSystems.get_active_power_limits_to(branch).min`
-- ``R^\text{to,max}`` = `PowerSystems.get_active_power_limits_to(branch).max`
+  - ``R^\text{from,min}`` = `PowerSystems.get_active_power_limits_from(branch).min`
+  - ``R^\text{from,max}`` = `PowerSystems.get_active_power_limits_from(branch).max`
+  - ``R^\text{to,min}`` = `PowerSystems.get_active_power_limits_to(branch).min`
+  - ``R^\text{to,max}`` = `PowerSystems.get_active_power_limits_to(branch).max`
 
 **Objective:**
 
@@ -208,7 +216,9 @@ The variable `FlowActivePowerVariable` ``f`` is added to the nodal balance expre
 &  R^\text{min} \le f_t  \le R^\text{max},\quad \forall t \in \{1,\dots, T\} \\
 \end{align*}
 ```
+
 where:
+
 ```math
 \begin{align*}
 &  R^\text{min} = \begin{cases}
@@ -219,7 +229,9 @@ where:
 		 \end{cases}
 \end{align*}
 ```
+
 and
+
 ```math
 \begin{align*}
 &  R^\text{max} = \begin{cases}
@@ -231,10 +243,9 @@ and
 \end{align*}
 ```
 
----
+* * *
 
-
-## `HVDCTwoTerminalDispatch` 
+## `HVDCTwoTerminalDispatch`
 
 Formulation valid for `PTDFPowerModel` Network model
 
@@ -244,24 +255,29 @@ HVDCTwoTerminalDispatch
 
 **Variables**
 
-- [`FlowActivePowerToFromVariable`](@ref):
-  - Symbol: ``f^\text{to-from}``
-- [`FlowActivePowerFromToVariable`](@ref):
-  - Symbol: ``f^\text{from-to}``
-- [`HVDCLosses`](@ref):
-  - Symbol: ``\ell``
-- [`HVDCFlowDirectionVariable`](@ref)
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``u^\text{dir}``
+  - [`FlowActivePowerToFromVariable`](@ref):
+    
+      + Symbol: ``f^\text{to-from}``
+
+  - [`FlowActivePowerFromToVariable`](@ref):
+    
+      + Symbol: ``f^\text{from-to}``
+  - [`HVDCLosses`](@ref):
+    
+      + Symbol: ``\ell``
+  - [`HVDCFlowDirectionVariable`](@ref)
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``u^\text{dir}``
 
 **Static Parameters**
 
-- ``R^\text{from,min}`` = `PowerSystems.get_active_power_limits_from(branch).min`
-- ``R^\text{from,max}`` = `PowerSystems.get_active_power_limits_from(branch).max`
-- ``R^\text{to,min}`` = `PowerSystems.get_active_power_limits_to(branch).min`
-- ``R^\text{to,max}`` = `PowerSystems.get_active_power_limits_to(branch).max`
-- ``L_0`` = `PowerSystems.get_loss(branch).l0`
-- ``L_1`` = `PowerSystems.get_loss(branch).l1`
+  - ``R^\text{from,min}`` = `PowerSystems.get_active_power_limits_from(branch).min`
+  - ``R^\text{from,max}`` = `PowerSystems.get_active_power_limits_from(branch).max`
+  - ``R^\text{to,min}`` = `PowerSystems.get_active_power_limits_to(branch).min`
+  - ``R^\text{to,max}`` = `PowerSystems.get_active_power_limits_to(branch).max`
+  - ``L_0`` = `PowerSystems.get_loss(branch).l0`
+  - ``L_1`` = `PowerSystems.get_loss(branch).l1`
 
 **Objective:**
 
@@ -271,7 +287,7 @@ No cost is added to the objective function.
 
 Each `FlowActivePowerToFromVariable` ``f^\text{to-from}`` and `FlowActivePowerFromToVariable` ``f^\text{from-to}``  is added to the nodal balance expression `ActivePowerBalance`, by adding the respective flow in the receiving bus and subtracting it from the sending bus. That is,  ``f^\text{to-from}`` adds the flow to the `from` bus, and subtracts the flow from the `to` bus, while ``f^\text{from-to}`` adds the flow to the `to` bus, and subtracts the flow from the `from` bus  This is used then to compute the AC flows using the PTDF equation.
 
-In addition, the `HVDCLosses` are subtracted to the `from` bus in the `ActivePowerBalance` expression. 
+In addition, the `HVDCLosses` are subtracted to the `from` bus in the `ActivePowerBalance` expression.
 
 **Constraints:**
 
@@ -288,7 +304,7 @@ In addition, the `HVDCLosses` are subtracted to the `from` bus in the `ActivePow
 \end{align*}
 ```
 
----
+* * *
 
 ## `PhaseAngleControl`
 
@@ -300,18 +316,21 @@ PhaseAngleControl
 
 **Variables:**
 
-- [`FlowActivePowerVariable`](@ref):
-  - Bounds: ``(-\infty,\infty)``
-  - Symbol: ``f``
-- [`PhaseShifterAngle`](@ref):
-  - Symbol: ``\theta^\text{shift}``
+  - [`FlowActivePowerVariable`](@ref):
+    
+      + Bounds: ``(-\infty,\infty)``
+      + Symbol: ``f``
+
+  - [`PhaseShifterAngle`](@ref):
+    
+      + Symbol: ``\theta^\text{shift}``
 
 **Static Parameters**
 
-- ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
-- ``\Theta^\text{min}`` = `PowerSystems.get_phase_angle_limits(branch).min`
-- ``\Theta^\text{max}`` = `PowerSystems.get_phase_angle_limits(branch).max`
-- ``X`` = `PowerSystems.get_x(branch)` (series reactance)
+  - ``R^\text{max}`` = `PowerSystems.get_rating(branch)`
+  - ``\Theta^\text{min}`` = `PowerSystems.get_phase_angle_limits(branch).min`
+  - ``\Theta^\text{max}`` = `PowerSystems.get_phase_angle_limits(branch).max`
+  - ``X`` = `PowerSystems.get_x(branch)` (series reactance)
 
 **Objective:**
 
@@ -323,7 +342,7 @@ Adds to the `ActivePowerBalance` expression the term ``-\theta^\text{shift} /X``
 
 **Constraints:**
 
-For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by: 
+For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the constraints are given by:
 
 ```math
 \begin{aligned}
@@ -331,10 +350,10 @@ For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the cons
 &  -R^\text{max} \le f_t  \le R^\text{max},\quad \forall t \in \{1,\dots, T\} 
 \end{aligned}
 ```
-on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``. 
 
+on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``.
 
----
+* * *
 
 ## Valid configurations
 
@@ -348,9 +367,13 @@ using Latexify
 combos = PowerSimulations.generate_device_formulation_combinations()
 filter!(x -> (x["device_type"] <: Branch) && (x["device_type"] != TModelHVDCLine), combos)
 combo_table = DataFrame(
-    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
-    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
+    "Valid DeviceModel" =>
+        ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Device Type" => [
+        "[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)"
+        for c in combos
+    ],
     "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```

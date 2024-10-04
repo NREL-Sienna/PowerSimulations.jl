@@ -23,6 +23,11 @@ function OptimizationOutputCaches(rules::CacheFlushRules)
     )
 end
 
+"""
+    Base.empty!(cache::OptimizationOutputCaches)
+
+Empty the [`OptimizationOutputCaches`](@ref)
+"""
 function Base.empty!(cache::OptimizationOutputCaches)
     for output_cache in values(cache.data)
         empty!(output_cache)

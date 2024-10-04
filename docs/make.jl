@@ -29,6 +29,7 @@ pages = OrderedDict(
     "Code Base Developer Guide" => Any[
         "Developer Guide" => "code_base_developer_guide/developer.md",
         "Troubleshooting" => "code_base_developer_guide/troubleshooting.md",
+        "Internals" => "code_base_developer_guide/internal.md",
     ],
     "Formulation Library" => Any[
         "Introduction" => "formulation_library/Introduction.md",
@@ -47,9 +48,11 @@ pages = OrderedDict(
 
 makedocs(;
     modules = [PowerSimulations],
-    format = Documenter.HTML(; prettyurls = haskey(ENV, "GITHUB_ACTIONS")),
+    format = Documenter.HTML(;
+        prettyurls = haskey(ENV, "GITHUB_ACTIONS"),
+        size_threshold = nothing),
     sitename = "PowerSimulations.jl",
-    authors = "Jose Daniel Lara, Daniel Thom and Clayton Barrows",
+    authors = "Jose Daniel Lara, Daniel Thom, Kate Doubleday, Rodrigo Henriquez-Auba, and Clayton Barrows",
     pages = Any[p for p in pages],
 )
 

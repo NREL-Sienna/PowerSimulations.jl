@@ -16,6 +16,11 @@ function EmulationModelStore()
     )
 end
 
+"""
+    Base.empty!(store::EmulationModelStore)
+
+Empty the [`EmulationModelStore`](@ref)
+"""
 function Base.empty!(store::EmulationModelStore)
     stype = DatasetContainer
     for (name, _) in zip(fieldnames(stype), fieldtypes(stype))

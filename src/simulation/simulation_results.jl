@@ -184,6 +184,11 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
     )
 end
 
+"""
+    Base.empty!(res::SimulationResults)
+
+Empty the [`SimulationResults`](@ref)
+"""
 function Base.empty!(res::SimulationResults)
     foreach(empty!, values(res.decision_problem_results))
     empty!(res.emulation_problem_results)

@@ -10,7 +10,6 @@ assignees: ''
 **If this is a question, something isn't working or an idea please start a Q&A discussion in the [Discussion tab](https://github.com/NREL-Sienna/PowerSimulations.jl/discussions)**
 Open a bug report only if you can provide the details below
 
-
 **Describe the bug**
 A clear and concise description of what the bug is.
 
