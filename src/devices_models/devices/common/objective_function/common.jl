@@ -11,6 +11,7 @@ function add_variable_cost!(
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         _add_variable_cost_to_objective!(container, U(), d, op_cost_data, V())
+        _add_vom_cost_to_objective!(container, U(), d, op_cost_data, V())
     end
     return
 end
@@ -56,6 +57,39 @@ function add_proportional_cost!(
             exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
+    end
+    return
+end
+
+##################################
+########## VOM Cost ##############
+##################################
+
+function _add_vom_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::PSY.OperationalCost,
+    ::AbstractDeviceFormulation,
+) where {T <: VariableType}
+    variable_cost = PSY.get_variable(op_cost)
+    power_units = PSY.get_power_units(variable_cost)
+    vom_cost = PSY.get_vom_cost(variable_cost)
+    multiplier = 1.0 # VOM Cost is always positive
+    cost_term = PSY.get_proportional_term(vom_cost)
+    iszero(cost_term) && return
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    cost_term_normalized = get_proportional_cost_per_system_unit(
+        cost_term,
+        power_units,
+        base_power,
+        device_base_power,
+    )
+    for t in get_time_steps(container)
+        exp =
+            _add_proportional_term!(container, T(), d, cost_term_normalized * multiplier, t)
+        add_to_expression!(container, ProductionCostExpression, exp, d, t)
     end
     return
 end
