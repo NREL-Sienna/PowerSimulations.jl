@@ -35,7 +35,7 @@ get_variable_multiplier(
     ::FlowActivePowerToFromVariable,
     ::Type{<:PSY.TwoTerminalHVDCLine},
     ::AbstractTwoTerminalDCLineFormulation,
-) = 1.0
+) = -1.0
 
 function get_variable_multiplier(
     ::HVDCLosses,
