@@ -76,11 +76,7 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 ########################Objective Function##################################################
 # TODO: Decide what is the cost for OnVariable, if fixed or constant term in variable
 function proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return no_load_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
-end
-
-function proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractCompactUnitCommitment)
-    return no_load_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
+    return onvar_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
 end
 
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
@@ -115,17 +111,16 @@ variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.Ther
 """
 Theoretical Cost at power output zero. Mathematically is the intercept with the y-axis
 """
-function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return _no_load_cost(PSY.get_variable(cost), d)
+function onvar_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
+    return _onvar_cost(PSY.get_variable(cost), d)
 end
 
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
-    value_curve = PSY.get_value_curve(cost_function)
-    cost = PSY.get_function_data(value_curve)
-    return last(first(PSY.get_points(cost)))
+function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+    # OnVariableCost is included in the Point itself for PiecewisePointCurve
+    return 0.0
 end
 
-function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+function _onvar_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     # Always in \$/h
@@ -133,15 +128,22 @@ function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.
     return constant_term
 end
 
-function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+    # Input at min is used to transform to InputOutputCurve
     return 0.0
 end
 
-function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+function _onvar_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+    # OnVariableCost is included in the Point itself for PiecewisePointCurve
     return 0.0
 end
 
-function _no_load_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+function _onvar_cost(cost_function::PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+    # Input at min is used to transform to InputOutputCurve
+    return 0.0
+end
+
+function _onvar_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     # In Unit/h (unit typically in )
