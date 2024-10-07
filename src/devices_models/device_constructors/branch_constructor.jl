@@ -694,7 +694,6 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
-    add_constraints!(container, HVDCLossesAbsoluteValue, devices, model, network_model)
     return
 end
 
@@ -719,6 +718,7 @@ function construct_device!(
         HVDCTwoTerminalDispatch(),
     )
     add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCTwoTerminalDispatch())
+    add_variables!(container, HVDCLosses, devices, HVDCTwoTerminalDispatch())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -757,6 +757,135 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, U},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: TwoTerminalHVDCTypes,
+    U <: HVDCTwoTerminalPiecewiseLoss,
+}
+    devices =
+        get_available_components(model, sys)
+    add_variables!(
+        container,
+        HVDCActivePowerReceivedFromVariable,
+        devices,
+        HVDCTwoTerminalPiecewiseLoss(),
+    )
+    add_variables!(
+        container,
+        HVDCActivePowerReceivedToVariable,
+        devices,
+        HVDCTwoTerminalPiecewiseLoss(),
+    )
+    _add_sparse_pwl_loss_variables!(container, devices, model)
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActivePowerReceivedFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActivePowerReceivedToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, U},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: TwoTerminalHVDCTypes,
+    U <: HVDCTwoTerminalPiecewiseLoss,
+}
+    devices =
+        get_available_components(model, sys)
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
+    add_constraints!(
+        container,
+        HVDCFlowCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    return
+end
+
+# TODO: Other models besides PTDF
+#=
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, HVDCTwoTerminalPiecewiseLoss},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    devices =
+        get_available_components(model, sys)
+    add_variables!(
+        container,
+        FlowActivePowerToFromVariable,
+        devices,
+        HVDCTwoTerminalDispatch(),
+    )
+    add_variables!(
+        container,
+        FlowActivePowerFromToVariable,
+        devices,
+        HVDCTwoTerminalDispatch(),
+    )
+    add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCTwoTerminalDispatch())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerToFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerFromToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, HVDCTwoTerminalPiecewiseLoss},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    devices =
+        get_available_components(model, sys)
+    @warn "CopperPlatePowerModel models with HVDC ignores inter-area losses"
+    add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
+    add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+=#
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
@@ -765,7 +894,6 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
-    add_constraints!(container, HVDCDirection, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     add_feedforward_constraints!(container, model, devices)
     return
