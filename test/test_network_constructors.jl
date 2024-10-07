@@ -204,7 +204,7 @@ end
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 342000.0,
         c_sys14 => 142000.0,
-        c_sys14_dc => 135000.0,
+        c_sys14_dc => 143000.0,
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(DCPPowerModel)

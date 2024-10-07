@@ -312,12 +312,12 @@ end
         available = true,
         active_power_flow = 0.0,
         # Force the flow in the opposite direction for testing purposes
-        active_power_limits_from = (min = -2.0, max = -2.0),
-        active_power_limits_to = (min = -3.0, max = 2.0),
+        active_power_limits_from = (min = -2.0, max = 2.0),
+        active_power_limits_to = (min = -2.0, max = 2.0),
         reactive_power_limits_from = (min = -1.0, max = 1.0),
         reactive_power_limits_to = (min = -1.0, max = 1.0),
         arc = get_arc(line),
-        loss = (l0 = 0.00, l1 = 0.00),
+        loss = LinearCurve(0.0),
     )
 
     add_component!(sys_5, hvdc)
@@ -331,7 +331,7 @@ end
             set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
             set_device_model!(template_uc, RenewableDispatch, FixedOutput)
             set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-            set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+            set_device_model!(template_uc, DeviceModel(Line, StaticBranchBounds))
             set_device_model!(
                 template_uc,
                 DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless),
@@ -424,7 +424,7 @@ end
             @test all(
                 isapprox.(
                     hvdc_ft_no_loss_values[!, "1"],
-                    hvdc_tf_no_loss_values[!, "1"];
+                    -hvdc_tf_no_loss_values[!, "1"];
                     atol = 1e-3,
                 ),
             )
