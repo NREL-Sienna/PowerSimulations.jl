@@ -70,11 +70,11 @@ function _add_vom_cost_to_objective!(
     ::T,
     component::PSY.Component,
     op_cost::PSY.OperationalCost,
-    ::AbstractDeviceFormulation,
-) where {T <: VariableType}
-    variable_cost = PSY.get_variable(op_cost)
-    power_units = PSY.get_power_units(variable_cost)
-    vom_cost = PSY.get_vom_cost(variable_cost)
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    variable_cost_data = variable_cost(op_cost, T(), component, U())
+    power_units = PSY.get_power_units(variable_cost_data)
+    vom_cost = PSY.get_vom_cost(variable_cost_data)
     multiplier = 1.0 # VOM Cost is always positive
     cost_term = PSY.get_proportional_term(vom_cost)
     iszero(cost_term) && return
