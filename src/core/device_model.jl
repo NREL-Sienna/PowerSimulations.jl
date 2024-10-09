@@ -46,6 +46,7 @@ thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 """
 mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     feedforwards::Vector{<:AbstractAffectFeedforward}
+    events::Vector
     use_slacks::Bool
     duals::Vector{DataType}
     services::Vector{ServiceModel}
@@ -71,6 +72,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         _check_device_formulation(B)
         new{D, B}(
             feedforwards,
+            [],
             use_slacks,
             duals,
             Vector{ServiceModel}(),
