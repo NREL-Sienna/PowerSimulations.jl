@@ -198,6 +198,11 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
     return ff_dict
 end
 
+function _attach_events(models::SimulationModels, events)
+    return Dict{EventKey, Any}()
+end
+
+
 """
     SimulationSequence(
         models::SimulationModels,
@@ -281,7 +286,7 @@ mutable struct SimulationSequence
             horizons,
             intervals,
             _attach_feedforwards(models, feedforwards),
-            events,
+            _attach_events(models, events),
             ini_cond_chronology,
             execution_order,
             executions_by_model,
