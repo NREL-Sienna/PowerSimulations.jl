@@ -26,6 +26,10 @@ export AreaPTDFPowerModel
 ######## Device Models ########
 export DeviceModel
 export FixedOutput
+
+####### Event Models ########
+export EventModel
+
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
@@ -477,6 +481,7 @@ include("core/network_model.jl")
 include("core/parameters.jl")
 include("core/service_model.jl")
 include("core/device_model.jl")
+include("core/event_model.jl")
 include("core/variables.jl")
 include("core/event_keys.jl")
 include("core/auxiliary_variables.jl")
