@@ -45,7 +45,15 @@ function _add_quadraticcurve_variable_cost!(
     proportional_term_per_unit::Vector{Float64},
     quadratic_term_per_unit::Vector{Float64},
 ) where {T <: VariableType}
+    lb, ub = PSY.get_active_power_limits(component)
     for t in get_time_steps(container)
+        _check_quadratic_monotonicity(
+            PSY.get_name(component),
+            quadratic_term_per_unit[t],
+            proportional_term_per_unit[t],
+            lb,
+            ub,
+        )
         _add_quadraticcurve_variable_term_to_model!(
             container,
             T(),
@@ -66,6 +74,13 @@ function _add_quadraticcurve_variable_cost!(
     proportional_term_per_unit::Float64,
     quadratic_term_per_unit::Float64,
 ) where {T <: VariableType}
+    lb, ub = PSY.get_active_power_limits(component)
+    _check_quadratic_monotonicity(PSY.get_name(component),
+        quadratic_term_per_unit,
+        proportional_term_per_unit,
+        lb,
+        ub,
+    )
     for t in get_time_steps(container)
         _add_quadraticcurve_variable_term_to_model!(
             container,
@@ -75,6 +90,23 @@ function _add_quadraticcurve_variable_cost!(
             quadratic_term_per_unit,
             t,
         )
+    end
+    return
+end
+
+function _check_quadratic_monotonicity(
+    name::String,
+    quad_term::Float64,
+    linear_term::Float64,
+    lb::Float64,
+    ub::Float64,
+)
+    fp_lb = 2 * quad_term * lb + linear_term
+    fp_ub = 2 * quad_term * ub + linear_term
+
+    if fp_lb < 0 || fp_ub < 0
+        @warn "Cost function for component $name is not monotonically increasing in the range [$lb, $ub]. \
+               This can lead to unexpected results"
     end
     return
 end
@@ -149,7 +181,7 @@ function _add_variable_cost_to_objective!(
 }
     throw(
         IS.ConflictingInputsError(
-            "Quadratic Cost Curves are not allowed for Compact formulations",
+            "Quadratic Cost Curves are not compatible with Compact formulations",
         ),
     )
     return

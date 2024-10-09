@@ -33,7 +33,12 @@ function get_objective_expression(v::ObjectiveFunction)
     if iszero(v.variant_terms)
         return v.invariant_terms
     else
-        return JuMP.add_to_expression!(v.variant_terms, v.invariant_terms)
+        # JuMP doesn't support expression conversion from Affn to QuadExpressions
+        if isa(v.invariant_terms, JuMP.GenericQuadExpr)
+            return JuMP.add_to_expression!(v.invariant_terms, v.variant_terms)
+        else
+            return JuMP.add_to_expression!(v.variant_terms, v.invariant_terms)
+        end
     end
 end
 get_sense(v::ObjectiveFunction) = v.sense
@@ -1503,7 +1508,8 @@ function _add_initial_condition_container!(
     else
         param_type = Float64
     end
-    ini_conds = Vector{InitialCondition{T, param_type}}(undef, length_devices)
+    ini_type = Union{InitialCondition{T, param_type}, InitialCondition{T, Nothing}}
+    ini_conds = Vector{ini_type}(undef, length_devices)
     _assign_container!(container.initial_conditions, ic_key, ini_conds)
     return ini_conds
 end
@@ -1716,6 +1722,9 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
             if JuMP.has_upper_bound(first(variable))
                 cache[key][:ub] = JuMP.upper_bound.(variable)
             end
+            if JuMP.is_fixed(first(variable)) && is_integer_flag
+                cache[key][:fixed_int_value] = jump_value.(v)
+            end
             cache[key][:integer] = is_integer_flag
             JuMP.fix.(variable, var_cache[key]; force = true)
         end
@@ -1756,6 +1765,9 @@ function _process_duals(container::OptimizationContainer, lp_optimizer)
         else
             JuMP.unfix.(variable)
             JuMP.set_binary.(variable)
+            if haskey(cache[key], :fixed_int_value)
+                JuMP.fix.(variable, cache[key][:fixed_int_value])
+            end
             #= Needed if a model has integer variables
             if haskey(cache[key], :lb) && JuMP.has_lower_bound(first(variable))
                 JuMP.set_lower_bound.(variable, cache[key][:lb])

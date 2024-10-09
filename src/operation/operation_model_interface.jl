@@ -114,6 +114,10 @@ function solve_impl!(model::OperationModel)
         tss = replace("$(ts)", ":" => "_")
         model_export_path = joinpath(model_output_dir, "exported_$(model_name)_$(tss).json")
         serialize_optimization_model(container, model_export_path)
+        write_lp_file(
+            get_jump_model(container),
+            replace(model_export_path, ".json" => ".lp"),
+        )
     end
 
     status = solve_impl!(container, get_system(model))

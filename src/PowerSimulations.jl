@@ -418,7 +418,6 @@ import TimeSeries
 
 # I/O Imports
 import DataFrames
-import JSON
 import CSV
 import HDF5
 import PrettyTables

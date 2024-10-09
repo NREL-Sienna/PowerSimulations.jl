@@ -279,7 +279,6 @@ FlowLimitConstraint
 FlowRateConstraint
 FlowRateConstraintFromTo
 FlowRateConstraintToFrom
-HVDCLossesAbsoluteValue
 HVDCPowerBalance
 NetworkFlowConstraint
 RateLimitConstraint

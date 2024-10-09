@@ -885,26 +885,39 @@ end
 @testset "Test Must Run ThermalGen" begin
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
     template_uc =
-        ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys_5)))
-    set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
-    set_device_model!(template_uc, RenewableDispatch, FixedOutput)
+        ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
+    #set_device_model!(template_uc, RenewableDispatch, FixedOutput)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-    set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
 
     # Set Must Run the most expensive one: Sundance
     sundance = get_component(ThermalStandard, sys_5, "Sundance")
     set_must_run!(sundance, true)
-    model = DecisionModel(
-        template_uc,
-        sys_5;
-        name = "UC",
-        optimizer = HiGHS_optimizer,
-        system_to_file = false,
-    )
+    for rebuild in [true, false]
+        model = DecisionModel(
+            template_uc,
+            sys_5;
+            name = "UC",
+            optimizer = HiGHS_optimizer,
+            system_to_file = false,
+            store_variable_names = true,
+            rebuild_model = rebuild,
+        )
 
-    solve!(model; output_dir = mktempdir())
-    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
-    on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
-    on_sundance = on[!, "Sundance"]
-    @test all(isapprox.(on_sundance, 1.0))
+        solve!(model; output_dir = mktempdir())
+        ptdf_vars = get_variable_values(OptimizationProblemResults(model))
+        power =
+            ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}(
+                "",
+            )]
+        on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
+        start = ptdf_vars[PowerSimulations.VariableKey{StartVariable, ThermalStandard}("")]
+        stop = ptdf_vars[PowerSimulations.VariableKey{StopVariable, ThermalStandard}("")]
+        power_sundance = power[!, "Sundance"]
+        @test all(power_sundance .>= 1.0)
+        for v in [on, start, stop]
+            @test "Sundance" ∉ names(v)
+        end
+    end
 end

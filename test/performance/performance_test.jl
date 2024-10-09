@@ -22,6 +22,11 @@ try
     sys_rts_rt = build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
     sys_rts_realization = build_system(PSISystems, "modified_RTS_GMLC_realization_sys")
 
+    for sys in [sys_rts_da, sys_rts_rt, sys_rts_realization]
+        g = get_component(ThermalStandard, sys, "121_NUCLEAR_1")
+        set_must_run!(g, true)
+    end
+
     for i in 1:2
         template_uc = ProblemTemplate(
             NetworkModel(
@@ -32,8 +37,8 @@ try
             ),
         )
 
-        set_device_model!(template_uc, ThermalMultiStart, ThermalCompactUnitCommitment)
-        set_device_model!(template_uc, ThermalStandard, ThermalCompactUnitCommitment)
+        set_device_model!(template_uc, ThermalMultiStart, ThermalStandardUnitCommitment)
+        set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
         set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
         set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
         set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
