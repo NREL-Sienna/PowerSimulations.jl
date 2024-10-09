@@ -272,7 +272,6 @@ export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCLosses
 export HVDCFlowDirectionVariable
-export HVDCLossesAbsoluteValue
 export InputActivePowerVariableLimitsConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
