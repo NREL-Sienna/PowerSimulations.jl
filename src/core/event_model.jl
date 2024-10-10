@@ -1,5 +1,5 @@
 abstract type AbstractEventModel end
-
+struct TotalOutage <: AbstractEventModel end
 
 mutable struct EventModel{D <: PSY.SupplementalAttribute, B <: AbstractEventModel}
     attributes::Dict{String, Any}
