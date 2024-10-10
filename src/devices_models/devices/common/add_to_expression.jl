@@ -38,14 +38,28 @@ function add_expressions!(
     W <: AbstractReservesFormulation,
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
-    @assert length(devices) == 1
+    names = [PSY.get_name(d) for d in devices]
+    add_expression_container!(container, T(), D, names, time_steps)
+    return
+end
+
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::ServiceModel{PSY.ReserveDemandCurve, StepwiseCostReserve},
+) where {
+    T <: ExpressionType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
     add_expression_container!(
         container,
         T(),
         D,
         PSY.get_name.(devices),
         time_steps;
-        meta = PSY.get_name(first(devices)),
+        meta = get_service_name(model),
     )
     return
 end
