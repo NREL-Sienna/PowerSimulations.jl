@@ -199,6 +199,8 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
 end
 
 function _attach_events(models::SimulationModels, events)
+
+
     return Dict{EventKey, Any}()
 end
 
@@ -262,7 +264,7 @@ mutable struct SimulationSequence
     function SimulationSequence(;
         models::SimulationModels,
         feedforwards = Dict{String, Vector{<:AbstractAffectFeedforward}}(),
-        events = Dict{EventKey, Any}(),
+        events = Vector(),
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
