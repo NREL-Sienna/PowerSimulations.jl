@@ -11,9 +11,7 @@ end
 Return a DataFrame from a CSV file.
 """
 function read_dataframe(filename::AbstractString)
-    open(filename, "r") do io
-        DataFrames.DataFrame(CSV.File(io))
-    end
+    return CSV.read(filename, DataFrames.DataFrame)
 end
 
 """
