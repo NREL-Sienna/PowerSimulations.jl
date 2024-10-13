@@ -442,6 +442,30 @@ function _get_data_for_range_ic(
     return ini_conds
 end
 
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerVariableTimeSeriesLimitsConstraint},
+    U::Type{<:Union{ActivePowerVariable, ActivePowerRangeExpressionUB}},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {
+    V <: PSY.ThermalGen,
+    W <: AbstractThermalUnitCommitment,
+    X <: PM.AbstractPowerModel,
+}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
+    return
+end
+
 """
 This function adds range constraint for the first time period. Constraint (10) from PGLIB formulation
 """
