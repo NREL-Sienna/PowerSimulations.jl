@@ -50,6 +50,9 @@ function _update_parameter_values!(
     components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
+        if !PSY.has_time_series(component)
+            continue
+        end
         ts_uuid = _get_ts_uuid(attributes, PSY.get_name(component))
         if !(ts_uuid in ts_uuids)
             ts_vector = get_time_series_values!(
