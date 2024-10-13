@@ -548,7 +548,7 @@ function construct_service!(
         PSY.get_name.(interfaces),
         get_time_steps(container),
     )
-    #add_feedforward_arguments!(container, model, service)
+    add_feedforward_arguments!(container, model, service)
     return
 end
 
