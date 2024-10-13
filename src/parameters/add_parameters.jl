@@ -229,6 +229,9 @@ function _add_time_series_parameters!(
     end
 
     for device in devices
+        if !PSY.has_time_series(device)
+            continue
+        end
         name = PSY.get_name(device)
         multiplier = get_multiplier_value(T(), device, W())
         for step in time_steps
