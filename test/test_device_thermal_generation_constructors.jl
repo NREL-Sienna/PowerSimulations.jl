@@ -921,3 +921,49 @@ end
         end
     end
 end
+
+@testset "Thermal with max_active_power time series" begin
+    device_model = DeviceModel(
+        ThermalStandard,
+        ThermalStandardUnitCommitment;
+        time_series_names = Dict(ActivePowerTimeSeriesParameter => "max_active_power"))
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+
+    derate_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
+    data_ts = collect(
+        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+            "1/1/2024  23:00:00",
+            "d/m/y  H:M:S",
+        ),
+    )
+    for t in 1:2
+        ini_time = data_ts[1] + Day(t - 1)
+        derate_data[ini_time] =
+            TimeArray(data_ts + Day(t - 1), fill!(Vector{Float64}(undef, 24), 0.8))
+    end
+    solitude = get_component(ThermalStandard, c_sys5, "Solitude")
+    PSY.add_time_series!(
+        c_sys5,
+        solitude,
+        PSY.Deterministic("max_active_power", derate_data),
+    )
+
+    model = DecisionModel(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5)
+
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 480, 0, 504, 120, 120, true)
+    key = PSI.ConstraintKey(
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        ThermalStandard,
+        "ub",
+    )
+    constraint = PSI.get_constraint(PSI.get_optimization_container(model), key)
+    ub_value = get_max_active_power(solitude) * 0.8
+    for ix in eachindex(constraint)
+        @test JuMP.normalized_rhs(constraint[ix]) == ub_value
+    end
+    psi_checkobjfun_test(model, GAEVF)
+end

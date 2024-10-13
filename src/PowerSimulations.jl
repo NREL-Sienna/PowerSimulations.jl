@@ -556,7 +556,7 @@ include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 # Device Modeling components
-include("devices_models/devices/interfaces.jl")
+include("devices_models/devices/default_interface_methods.jl")
 include("devices_models/devices/common/add_to_expression.jl")
 include("devices_models/devices/common/set_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
