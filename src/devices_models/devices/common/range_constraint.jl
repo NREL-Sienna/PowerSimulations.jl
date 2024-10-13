@@ -706,6 +706,9 @@ function lower_bound_range_with_parameter!(
     jump_model = get_jump_model(container)
     time_steps = axes(constraint_container)[2]
     for device in devices
+        if !(PSY.has_time_series(device))
+            continue
+        end
         name = PSY.get_name(device)
         param = get_parameter_column_refs(param_container, name)
         for t in time_steps
@@ -730,8 +733,11 @@ function _add_parameterized_lower_bound_range_constraints_impl!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
-
+    names = [PSY.get_name(d) for d in devices if PSY.has_time_series(d)]
+    if isempty(names)
+        @debug "There are no $V devices with time series data"
+        return
+    end
     constraint =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
 
@@ -842,6 +848,9 @@ function upper_bound_range_with_parameter!(
     time_steps = axes(constraint_container)[2]
     for device in devices
         name = PSY.get_name(device)
+        if !(PSY.has_time_series(device))
+            continue
+        end
         param = get_parameter_column_refs(param_container, name)
         for t in time_steps
             constraint_container[name, t] =
@@ -865,7 +874,11 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = [PSY.get_name(d) for d in devices if PSY.has_time_series(d)]
+    if isempty(names)
+        @debug "There are no $V devices with time series data"
+        return
+    end
 
     constraint =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
