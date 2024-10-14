@@ -198,12 +198,61 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
     return ff_dict
 end
 
-function _attach_events(models::SimulationModels, events)
-
-
-    return Dict{EventKey, Any}()
+function _add_model_to_event_map!(
+    event_maps::Dict{EventKey, Vector{Symbol}},
+    model_name::Symbol,
+    sys::PSY.System,
+    event_models::Vector,
+)
+    for event_model in event_models
+        event_type = get_event_type(event_model)
+        if isempty(PSY.get_supplemental_attributes(event_type, sys))
+            @warn "There is no data for $event_type in $(model_name). Ignoring event model."
+            continue
+        end
+        for event in PSY.get_supplemental_attributes(event_type, sys)
+            devices_with_attribute = PSY.get_components(sys, event)
+            device_types_with_attribute = Set(typeof.(devices_with_attribute))
+            for device_type in device_types_with_attribute
+                participating_models =
+                    get!(event_maps, EventKey(event_type, device_type), Symbol[])
+                push!(participating_models, model_name)
+            end
+        end
+    end
+    return
 end
 
+function _attach_events(models::SimulationModels, event_models::Vector)
+    event_maps = Dict{EventKey, Vector{Symbol}}()
+    for model in get_decision_models(models)
+        sys = get_system(model)
+        _add_model_to_event_map!(event_maps, get_name(model), sys, event_models)
+    end
+
+    decision_model_names = string.(get_name.(get_decision_models(models)))
+    for (key, models) in event_maps
+        event_type = get_entry_type(key)
+        if length(models) < length(decision_model_names)
+            @show models
+            missing_models = setdiff(decision_model_names, string.(models))
+            @warn "The following DecisionModels are missing $(event_type) data: $(missing_models) \
+            This can lead to unexpected outcomes in the Simulation"
+        end
+    end
+
+    em_model = get_emulation_model(models)
+    if !isnothing(em_model)
+        _add_model_to_event_map!(
+            event_maps,
+            get_name(em_model),
+            get_system(em_model),
+            event_models,
+        )
+    end
+
+    return event_maps
+end
 
 """
     SimulationSequence(
