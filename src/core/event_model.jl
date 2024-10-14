@@ -12,3 +12,10 @@ mutable struct EventModel{D <: PSY.SupplementalAttribute, B <: AbstractEventMode
         new{D, B}(attributes)
     end
 end
+
+get_event_type(
+    ::EventModel{D, B},
+) where {D <: PSY.SupplementalAttribute, B <: AbstractEventModel} = D
+get_formulation(
+    ::EventModel{D, B},
+) where {D <: PSY.SupplementalAttribute, B <: AbstractEventModel} = B

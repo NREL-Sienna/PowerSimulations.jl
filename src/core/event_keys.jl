@@ -1,13 +1,11 @@
-abstract type EventType end
-
-struct EventKey{T <: EventType, U <: Union{PSY.Component, PSY.System}}
+struct EventKey{T <: PSY.SupplementalAttribute, U <: Union{PSY.Component, PSY.System}}
     meta::String
 end
 
 function EventKey(
     ::Type{T},
     ::Type{U},
-) where {T <: EventType, U <: Union{PSY.Component, PSY.System}}
+) where {T <: PSY.SupplementalAttribute, U <: Union{PSY.Component, PSY.System}}
     if isabstracttype(U)
         error("Type $U can't be abstract")
     end
@@ -16,7 +14,7 @@ end
 
 get_entry_type(
     ::EventKey{T, U},
-) where {T <: EventType, U <: Union{PSY.Component, PSY.System}} = T
+) where {T <: PSY.SupplementalAttribute, U <: Union{PSY.Component, PSY.System}} = T
 get_component_type(
     ::EventKey{T, U},
-) where {T <: EventType, U <: Union{PSY.Component, PSY.System}} = U
+) where {T <: PSY.SupplementalAttribute, U <: Union{PSY.Component, PSY.System}} = U
