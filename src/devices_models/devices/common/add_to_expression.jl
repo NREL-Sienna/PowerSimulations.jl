@@ -30,6 +30,25 @@ function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: FuelConsumptionExpression,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = [
+        PSY.get_name(d) for
+        d in devices if PSY.get_variable(PSY.get_operation_cost(d)) isa PSY.FuelCurve
+    ]
+    add_expression_container!(container, T(), D, names, time_steps)
+    return
+end
+
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
     model::ServiceModel{V, W},
 ) where {
     T <: ExpressionType,
@@ -1531,6 +1550,52 @@ function add_to_expression!(
         )
     end
     return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: FuelConsumptionExpression,
+    U <: ActivePowerVariable,
+    V <: PSY.ThermalGen,
+    W <: AbstractThermalDispatchFormulation,
+}
+    expression = get_expression(container, T(), V)
+    variable = get_variable(container, U(), V)
+    time_steps = get_time_steps(container)
+    base_power = get_base_power(container)
+    for d in devices
+        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        if !(var_cost isa PSY.FuelCurve)
+            continue
+        end
+        name = PSY.get_name(d)
+        device_base_power = PSY.get_base_power(d)
+        value_curve = PSY.get_value_curve(var_cost)
+        if value_curve isa PSY.LinearCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            for t in time_steps
+                fuel_expr = variable[name, t] * prop_term_per_unit
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
+        else
+            error("Not implemented yet")
+        end
+    end
 end
 
 #=
