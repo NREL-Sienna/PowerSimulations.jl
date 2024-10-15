@@ -34,7 +34,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     duals::Vector{DataType}
     radial_network_reduction::PNM.RadialNetworkReduction
     reduce_radial_branches::Bool
-    power_flow_evaluation::Union{Nothing, PFS.PowerFlowEvaluationModel}
+    power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
     modeled_branch_types::Vector{DataType}
 
@@ -45,7 +45,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         reduce_radial_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
-        power_flow_evaluation = nothing,
+        power_flow_evaluation = Vector{PFS.PowerFlowEvaluationModel}[],
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(

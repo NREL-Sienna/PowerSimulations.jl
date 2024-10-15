@@ -242,6 +242,21 @@ function update_pf_data!(
     return
 end
 
+"Fetch the most recently solved `PowerFlowEvaluationData`"
+function latest_solved_power_flow_evaluation_data(container::OptimizationContainer)
+    datas = get_power_flow_evaluation_data(container)
+    return datas[findlast(x -> x.is_solved, datas)]
+end
+
+function solve_powerflow!(
+    pf_e_data::PowerFlowEvaluationData,
+    container::OptimizationContainer)
+    update_pf_data!(pf_e_data, container)
+    PFS.solve_powerflow!(get_power_flow_data(pf_e_data))
+    pf_e_data.is_solved = true
+    return
+end
+
 function calculate_aux_variable_value!(container::OptimizationContainer,
     key,
     system::PSY.System)

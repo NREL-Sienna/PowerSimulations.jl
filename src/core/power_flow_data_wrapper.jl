@@ -7,12 +7,14 @@ mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowContainer}
     names.
     """
     injection_key_map::Dict{<:OptimizationContainerKey, <:Any}
+    is_solved::Bool
 end
 
 function PowerFlowEvaluationData(power_flow_data::T) where {T <: PFS.PowerFlowData}
     return PowerFlowEvaluationData{T}(
         power_flow_data,
         Dict{OptimizationContainerKey, Nothing}(),
+        false,
     )
 end
 

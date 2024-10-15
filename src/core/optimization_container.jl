@@ -73,7 +73,7 @@ mutable struct OptimizationContainer <: IS.Optimization.AbstractOptimizationCont
     built_for_recurrent_solves::Bool
     metadata::IS.Optimization.OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
-    power_flow_evaluation_data::Union{<:PowerFlowEvaluationData, Nothing}
+    power_flow_evaluation_data::Vector{PowerFlowEvaluationData}
 end
 
 function OptimizationContainer(
@@ -116,7 +116,7 @@ function OptimizationContainer(
         false,
         IS.Optimization.OptimizationContainerMetadata(),
         T,
-        nothing,
+        Vector{PowerFlowEvaluationData}[],
     )
 end
 
@@ -168,6 +168,12 @@ is_synchronized(container::OptimizationContainer) =
     container.objective_function.synchronized
 set_time_steps!(container::OptimizationContainer, time_steps::UnitRange{Int64}) =
     container.time_steps = time_steps
+
+function reset_power_flow_is_solved!(container::OptimizationContainer)
+    for pf_e_data in get_power_flow_evaluation_data(container)
+        pf_e_data.is_solved = false
+    end
+end
 
 function has_container_key(
     container::OptimizationContainer,
@@ -1635,12 +1641,23 @@ function deserialize_key(container::OptimizationContainer, name::AbstractString)
 end
 
 function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
-    pf_e_data = get_power_flow_evaluation_data(container)
-    update_pf_data!(pf_e_data, container)
-    PFS.solve_powerflow!(get_power_flow_data(pf_e_data))
-    pf_e_data.is_solved = true
-    for key in keys(get_aux_variables(container))
-        calculate_aux_variable_value!(container, key, system)
+    reset_power_flow_is_solved!(container)
+    # PERF currently we update the aux vars after each power flow because aux vars are how
+    # power flows pass information to each other. This shouldn't be a huge problem because
+    # there shouldn't ever be more than a few power flows, but we could record which aux
+    # vars are power flow-related and calculate the rest only once at the end.
+    for (i, pf_e_data) in enumerate(get_power_flow_evaluation_data(container))
+        @debug "Processing power flow $i"
+        solve_powerflow!(pf_e_data, container)
+        for key in keys(get_aux_variables(container))
+            calculate_aux_variable_value!(container, key, system)
+        end
+    end
+
+    if isempty(get_power_flow_evaluation_data(container))
+        for key in keys(get_aux_variables(container))
+            calculate_aux_variable_value!(container, key, system)
+        end
     end
     return RunStatus.SUCCESSFULLY_FINALIZED
 end
