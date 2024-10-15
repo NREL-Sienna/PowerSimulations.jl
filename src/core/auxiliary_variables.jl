@@ -33,10 +33,6 @@ Auxiliary Variable for the line active flow from power flow evaluation
 """
 struct PowerFlowLineActivePower <: AuxVariableType end
 
-should_write_resulting_value(::Type{<:AuxVariableType}) = true
-
-convert_result_to_natural_units(::Type{<:AuxVariableType}) = false
-
 convert_result_to_natural_units(::Type{PowerOutput}) = true
 convert_result_to_natural_units(::Type{PowerFlowLineReactivePower}) = true
 convert_result_to_natural_units(::Type{PowerFlowLineActivePower}) = true
