@@ -200,8 +200,8 @@ function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
-    return Dict{Any, String}(
-        FuelCostParameter => "fuel_cost",
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        FuelCostTimeSeriesParameter => "fuel_cost",
     )
 end
 
