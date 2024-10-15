@@ -276,6 +276,11 @@ Parameter to define Min Flow limit for interface time series
 """
 struct MinInterfaceFlowLimitParameter <: TimeSeriesParameter end
 
+"""
+Parameter to define fuel cost time series
+"""
+struct FuelCostTimeSeriesParameter <: TimeSeriesParameter end
+
 abstract type VariableValueParameter <: RightHandSideParameter end
 
 """
