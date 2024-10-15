@@ -8,6 +8,7 @@ struct EmergencyUp <: ExpressionType end
 struct EmergencyDown <: ExpressionType end
 struct RawACE <: ExpressionType end
 struct ProductionCostExpression <: CostExpressions end
+struct FuelConsumptionExpression <: ExpressionType end
 struct ActivePowerRangeExpressionLB <: RangeConstraintLBExpressions end
 struct ActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentReserveUpBalanceExpression <: ExpressionType end
