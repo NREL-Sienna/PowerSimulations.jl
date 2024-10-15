@@ -845,8 +845,8 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(model), FuelCostTimeSeriesParameter)
+        add_parameters!(container, FuelCostTimeSeriesParameter, devices, model)
     end
 
     add_to_expression!(
