@@ -50,6 +50,7 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFo
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
 ########################### Parameter related set functions ################################
+get_multiplier_value(::FuelCostTimeSeriesParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_proportional_term(d.operation_cost.variable.value_curve)
 get_parameter_multiplier(::VariableValueParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionUB, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
@@ -193,7 +194,9 @@ function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
-    return Dict{Type{<:TimeSeriesParameter}, String}()
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        FuelCostTimeSeriesParameter => "fuel_cost",
+    )
 end
 
 function get_default_attributes(
