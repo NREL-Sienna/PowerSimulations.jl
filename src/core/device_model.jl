@@ -49,7 +49,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
     use_slacks::Bool
     duals::Vector{DataType}
     services::Vector{ServiceModel}
-    time_series_names::Dict{Type{<:TimeSeriesParameter}, String}
+    time_series_names::Dict{Type{<:PSI.ParameterType}, String}
     attributes::Dict{String, Any}
     subsystem::Union{Nothing, String}
 
