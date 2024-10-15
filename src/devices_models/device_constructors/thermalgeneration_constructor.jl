@@ -789,8 +789,8 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    if haskey(get_time_series_names(model), FuelCostTimeSeriesParameter)
-        add_parameters!(container, FuelCostTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
     end
 
     add_to_expression!(
@@ -803,6 +803,8 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -819,6 +821,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
