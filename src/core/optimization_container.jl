@@ -1635,12 +1635,11 @@ function deserialize_key(container::OptimizationContainer, name::AbstractString)
 end
 
 function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
-    if !isnothing(get_power_flow_data(container))
-        solve_power_flow!(container, system)
-    end
-
-    aux_vars = get_aux_variables(container)
-    for key in keys(aux_vars)
+    pf_e_data = get_power_flow_evaluation_data(container)
+    update_pf_data!(pf_e_data, container)
+    PFS.solve_powerflow!(get_power_flow_data(pf_e_data))
+    pf_e_data.is_solved = true
+    for key in keys(get_aux_variables(container))
         calculate_aux_variable_value!(container, key, system)
     end
     return RunStatus.SUCCESSFULLY_FINALIZED
@@ -1911,3 +1910,14 @@ function get_time_series_initial_values!(
     )
     return ts_values
 end
+
+lookup_value(container::OptimizationContainer, key::VariableKey) =
+    get_variable(container, key)
+lookup_value(container::OptimizationContainer, key::ParameterKey) =
+    calculate_parameter_values(get_parameter(container, key))
+lookup_value(container::OptimizationContainer, key::AuxVarKey) =
+    get_aux_variable(container, key)
+lookup_value(container::OptimizationContainer, key::ExpressionKey) =
+    get_expression(container, key)
+lookup_value(container::OptimizationContainer, key::ConstraintKey) =
+    get_constraint(container, key)

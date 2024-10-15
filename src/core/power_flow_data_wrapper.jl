@@ -1,12 +1,18 @@
-mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowData}
+mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowContainer}
     power_flow_data::T
-    injection_key_map::Dict{<:OptimizationContainerKey, Dict{String, Int}}
+    """
+    Records which PSI keys get used to update the data and how they are mapped to it. For
+    `PowerFlowData`, values are `Dict{String, Int}` specifying component name, matrix index;
+    for `SystemPowerFlowContainer`, values are Set{String} merely specifying component
+    names.
+    """
+    injection_key_map::Dict{<:OptimizationContainerKey, <:Any}
 end
 
 function PowerFlowEvaluationData(power_flow_data::T) where {T <: PFS.PowerFlowData}
     return PowerFlowEvaluationData{T}(
         power_flow_data,
-        Dict{OptimizationContainerKey, Dict{String, Int}}(),
+        Dict{OptimizationContainerKey, Nothing}(),
     )
 end
 
