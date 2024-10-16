@@ -212,14 +212,7 @@ function _add_fuel_quadratic_variable_cost!(
     quadratic_fuel_curve::Float64,
     fuel_cost::IS.TimeSeriesKey,
 ) where {T <: VariableType}
-    error("Not implemented yet")
-    _add_quadraticcurve_variable_cost!(
-        container,
-        T(),
-        component,
-        proportional_fuel_curve,
-        quadratic_fuel_curve,
-    )
+    _add_time_varying_fuel_variable_cost!(container, T(), component, fuel_cost)
 end
 
 @doc raw"""
