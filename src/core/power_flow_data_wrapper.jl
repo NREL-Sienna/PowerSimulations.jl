@@ -10,7 +10,7 @@ mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowContainer}
     is_solved::Bool
 end
 
-function PowerFlowEvaluationData(power_flow_data::T) where {T <: PFS.PowerFlowData}
+function PowerFlowEvaluationData(power_flow_data::T) where {T <: PFS.PowerFlowContainer}
     return PowerFlowEvaluationData{T}(
         power_flow_data,
         Dict{OptimizationContainerKey, Nothing}(),

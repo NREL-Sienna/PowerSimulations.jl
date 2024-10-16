@@ -45,12 +45,16 @@ end
 
 # Creates Sets of components by type
 function _make_temp_component_bus_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
-    temp_component_bus_map = Dict{DataType, Set{String}}()
+    temp_component_bus_map = Dict{DataType, Dict{String, String}}()
     # TODO `ComponentSelector` use case
-    available_injectors = PSY.get_components(PSY.get_available, PSY.StaticInjection, sys)
+    available_injectors =
+        collect(PSY.get_components(PSY.get_available, PSY.StaticInjection, sys))
     for comp_type in unique(typeof.(available_injectors))
         temp_component_bus_map[comp_type] =
-            Set(filter(x -> typeof(x) == comp_type, available_injectors))
+            Dict(
+                PSY.get_name(c) => PSY.get_name(c) for
+                c in available_injectors if c isa comp_type
+            )
     end
     return temp_component_bus_map
 end
@@ -62,60 +66,33 @@ function _make_injection_map!(
 )
     pf_data = get_power_flow_data(pf_e_data)
     temp_component_bus_map = _make_temp_component_bus_map(pf_data, sys)
+    map_type = valtype(temp_component_bus_map)  # Dict{String, Int} for PowerFlowData, Dict{String, String} for SystemPowerFlowContainer
     injection_keys = pf_input_keys(pf_data)
 
     # Second map that persists to store the bus index that the variable
     # has to be added/substracted to in the power flow data dictionary
-    pf_data_opt_container_map = Dict{OptimizationContainerKey, Dict{String, Int}}()
+    pf_data_opt_container_map = Dict{OptimizationContainerKey, map_type}()
     added_injection_types = DataType[]
-    for (key, array) in get_variables(container)
-        if get_entry_type(key) ∉ injection_keys
-            continue
-        end
+    for (key, val) in Iterators.flatten([
+        get_variables(container),
+        get_aux_variables(container),
+        get_parameters(container),
+    ])
+        # Skip irrelevant keys
+        (get_entry_type(key) in injection_keys) || continue
 
-        name_bus_ix_map = Dict{String, Int}()
         comp_type = get_component_type(key)
+        # Skip types that have already been handled (prefer variable over aux variable, aux variable over parameter)
+        (comp_type in added_injection_types) && continue
         push!(added_injection_types, comp_type)
-        for n in axes(array)[1]
-            name_bus_ix_map[n] = temp_component_bus_map[comp_type][n]
-        end
 
-        pf_data_opt_container_map[key] = name_bus_ix_map
-    end
-
-    for (key, array) in get_aux_variables(container)
-        if get_entry_type(key) ∉ injection_keys
-            continue
+        name_bus_ix_map = map_type()
+        # Maybe this should be rewritten as multiple dispatch but it should not be rewritten as a copypasted loop
+        comp_names =
+            (key isa ParameterKey) ? get_component_names(get_attributes(val)) : axes(val)[1]
+        for comp_name in comp_names
+            name_bus_ix_map[comp_name] = temp_component_bus_map[comp_type][comp_name]
         end
-        # Skip aux variable if the device was added as a variable
-        if comp_type ∈ added_injection_types
-            continue
-        end
-        name_bus_ix_map = Dict{String, Int}()
-        comp_type = get_component_type(key)
-        push!(added_injection_types, comp_type)
-        for n in axes(array)[1]
-            name_bus_ix_map[n] = temp_component_bus_map[comp_type][n]
-        end
-
-        pf_data_opt_container_map[key] = name_bus_ix_map
-    end
-
-    for (key, param_container) in get_parameters(container)
-        if get_entry_type(key) ∉ injection_keys
-            continue
-        end
-        comp_type = get_component_type(key)
-        # Skip parameter if the device was added as a variable
-        if comp_type ∈ added_injection_types
-            continue
-        end
-        param_attributes = get_attributes(param_container)
-        name_bus_ix_map = Dict{String, Int}()
-        for n in get_component_names(param_attributes)
-            name_bus_ix_map[n] = temp_component_bus_map[comp_type][n]
-        end
-        pf_data_opt_container_map[key] = name_bus_ix_map
     end
 
     pf_e_data.injection_key_map = pf_data_opt_container_map
@@ -141,13 +118,16 @@ _get_branch_component_tuples(pfd::PFS.PowerFlowData) =
     zip(PFS.get_branch_type(pfd), keys(PFS.get_branch_lookup(pfd)))
 
 _get_branch_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
-    [(typeof(c), get_name(c)) for c in get_components(Branch, get_system(pfd))]
+    [(typeof(c), get_name(c)) for c in PSY.get_components(PSY.Branch, PFS.get_system(pfd))]
 
 _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
     tuple.(PSY.ACBus, keys(PFS.get_bus_lookup(pfd)))  # get_bus_type returns a ACBusTypes, not the DataType we need here
 
 _get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
-    [(typeof(c), PSY.get_number(c)) for c in get_components(Bus, get_system(pfd))]
+    [
+        (typeof(c), PSY.get_number(c)) for
+        c in PSY.get_components(PSY.Bus, PFS.get_system(pfd))
+    ]
 
 function add_power_flow_data!(
     container::OptimizationContainer,
@@ -261,5 +241,8 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
     key,
     system::PSY.System)
     # TODO read data back from the power flow
+    pf_e_data = latest_solved_power_flow_evaluation_data(container)
+    pf_type = typeof(get_power_flow_data(pf_e_data))
+    @warn "Placeholder for power flow write back to optimization container, $pf_type, $key"
     return
 end
