@@ -323,6 +323,7 @@ export EmergencyUp
 export EmergencyDown
 export RawACE
 export ProductionCostExpression
+export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
 
