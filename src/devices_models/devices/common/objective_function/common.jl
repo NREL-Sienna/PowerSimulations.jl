@@ -265,18 +265,42 @@ end
 ##################################################
 
 function _get_fuel_cost_value(
-    ::OptimizationContainer,
-    fuel_cost::Float64,
-    ::Int,
-)
-    return fuel_cost
+    container::OptimizationContainer,
+    component::T,
+    time_period::Int,
+) where {T <: PSY.Component}
+    # TODO: Check time series for derating to work later
+    if PSY.has_time_series(component)
+        parameter_array = get_parameter_array(container, FuelCostParameter(), T)
+        parameter_multiplier =
+            get_parameter_multiplier_array(container, FuelCostParameter(), T)
+        name = PSY.get_name(component)
+        return parameter_array[name, time_period] * parameter_multiplier[name, time_period]
+    else
+        return PSY.get_fuel_cost(component)
+    end
 end
 
-function _get_fuel_cost_value(
+function _add_time_varying_fuel_variable_cost!(
     container::OptimizationContainer,
+    ::T,
+    component::V,
     fuel_cost::IS.TimeSeriesKey,
-    time_period::Int,
-)
-    error("Not implemented yet fuel cost")
-    return fuel_cost
+) where {T <: VariableType, V <: PSY.Component}
+    parameter = get_parameter_array(container, FuelCostParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, FuelCostParameter(), V)
+    expression = get_expression(container, FuelConsumptionExpression(), V)
+    name = PSY.get_name(component)
+    for t in get_time_steps(container)
+        cost_expr = expression[name, t] * parameter[name, t] * multiplier[name, t]
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            cost_expr,
+            component,
+            t,
+        )
+        add_to_objective_variant_expression!(container, cost_expr)
+    end
+    return
 end

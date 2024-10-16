@@ -320,22 +320,18 @@ function _get_pwl_cost_expression(
         base_power,
         device_base_power,
     )
-    fuel_cost = PSY.get_fuel_cost(cost_function)
-    fuel_cost_value = _get_fuel_cost_value(
-        container,
-        fuel_cost,
-        time_period,
-    )
     # Multiplier is not necessary here. There is no negative cost for fuel curves.
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    return _get_pwl_cost_expression(
+    # TODO: Update name get_pwl_cost_expression
+    fuel_consumption_expression = _get_pwl_cost_expression(
         container,
         component,
         time_period,
         cost_data_normalized,
-        dt * fuel_cost_value,
+        dt,
     )
+    return fuel_consumption_expression
 end
 
 ##################################################
@@ -484,10 +480,7 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::Union{
-        PSY.CostCurve{PSY.PiecewisePointCurve},
-        PSY.FuelCurve{PSY.PiecewisePointCurve},
-    },
+    cost_function::PSY.CostCurve{PSY.PiecewisePointCurve},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
@@ -511,6 +504,66 @@ function _add_variable_cost_to_objective!(
             t,
         )
         add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+    end
+    return
+end
+
+"""
+Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
+
+# Arguments
+
+  - container::OptimizationContainer : the optimization_container model built in PowerSimulations
+  - var_key::VariableKey: The variable name
+  - component_name::String: The component_name of the variable container
+  - cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}: container for piecewise linear cost
+"""
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve},
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    component_name = PSY.get_name(component)
+    @debug "PWL Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    # If array is full of tuples with zeros return 0.0
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    if all(iszero.((point -> point.y).(PSY.get_points(cost_component))))  # TODO I think this should have been first. before?
+        @debug "All cost terms for component $(component_name) are 0.0" _group =
+            LOG_GROUP_COST_FUNCTIONS
+        return
+    end
+    pwl_fuel_consumption_expressions =
+        _add_pwl_term!(container, component, cost_function, T(), U())
+    is_time_variant = PSY.has_time_series(component)
+    for t in get_time_steps(container)
+        fuel_cost_value = _get_fuel_cost_value(
+            container,
+            component,
+            t,
+        )
+        pwl_cost_expression = pwl_fuel_consumption_expressions[t] * fuel_cost_value
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            pwl_cost_expression,
+            component,
+            t,
+        )
+        add_to_expression!(
+            container,
+            FuelConsumptionExpression,
+            pwl_fuel_consumption_expressions[t],
+            component,
+            t,
+        )
+        if is_time_variant
+            add_to_objective_variant_expression!(container, pwl_cost_expression)
+        else
+            add_to_objective_invariant_expression!(container, pwl_cost_expression)
+        end
     end
     return
 end
