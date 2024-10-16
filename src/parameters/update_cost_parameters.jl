@@ -14,31 +14,62 @@ function _update_parameter_values!(
     template = get_template(model)
     device_model = get_model(template, V)
     components = get_available_components(device_model, get_system(model))
-
     for component in components
         if _has_variable_cost_parameter(component)
             name = PSY.get_name(component)
-            ts_vector = PSY.get_variable_cost(
-                component,
-                PSY.get_operation_cost(component);
-                start_time = initial_forecast_time,
-                len = horizon,
-            )
-            variable_cost_forecast_values = TimeSeries.values(ts_vector)
-            for (t, value) in enumerate(variable_cost_forecast_values)
-                if attributes.uses_compact_power
-                    # TODO implement this
-                    value, _ = _convert_variable_cost(value)
-                end
-                # TODO removed an apparently unused block of code here?
-                _set_param_value!(parameter_array, value, name, t)
-                update_variable_cost!(
-                    container,
-                    parameter_array,
-                    parameter_multiplier,
-                    attributes,
+            op_cost = PSY.get_operation_cost(component)
+            if op_cost isa PSY.MarketBidCost
+                ts_vector = PSY.get_variable_cost(
                     component,
-                    t,
+                    PSY.get_operation_cost(component);
+                    start_time = initial_forecast_time,
+                    len = horizon,
+                )
+                variable_cost_forecast_values = TimeSeries.values(ts_vector)
+                for (t, value) in enumerate(variable_cost_forecast_values)
+                    if attributes.uses_compact_power
+                        # TODO implement this
+                        value, _ = _convert_variable_cost(value)
+                    end
+                    # TODO removed an apparently unused block of code here?
+                    _set_param_value!(parameter_array, value, name, t)
+                    update_variable_cost!(
+                        container,
+                        parameter_array,
+                        parameter_multiplier,
+                        attributes,
+                        component,
+                        t,
+                    )
+                end
+            elseif op_cost isa PSY.ThermalGenerationCost
+                fuel_curve = PSY.get_variable(op_cost)
+                ts_vector = PSY.get_fuel_cost(
+                    component;
+                    start_time = initial_forecast_time,
+                    len = horizon,
+                )
+                fuel_cost_forecast_values = TimeSeries.values(ts_vector)
+                for (t, value) in enumerate(fuel_cost_forecast_values)
+                    if attributes.uses_compact_power
+                        # TODO implement this
+                        value, _ = _convert_variable_cost(value)
+                    end
+                    # TODO removed an apparently unused block of code here?
+                    _set_param_value!(parameter_array, value, name, t)
+                    update_variable_cost!(
+                        container,
+                        parameter_array,
+                        parameter_multiplier,
+                        attributes,
+                        component,
+                        fuel_curve,
+                        t,
+                    )
+                end
+            else
+                error(
+                    "Update Cost Function Parameter not implemented for $(typeof(op_cost))",
                 )
             end
         end
@@ -50,6 +81,15 @@ _has_variable_cost_parameter(component::PSY.Component) =
     _has_variable_cost_parameter(PSY.get_operation_cost(component))
 _has_variable_cost_parameter(::PSY.MarketBidCost) = true
 _has_variable_cost_parameter(::T) where {T <: PSY.OperationalCost} = false
+function _has_variable_cost_parameter(cost::T) where {T <: PSY.ThermalGenerationCost}
+    var_cost = PSY.get_variable(cost)
+    if var_cost isa PSY.FuelCurve
+        if PSY.get_fuel_cost(var_cost) isa IS.TimeSeriesKey
+            return true
+        end
+    end
+    return false
+end
 
 function _update_pwl_cost_expression(
     container::OptimizationContainer,
@@ -121,5 +161,27 @@ function update_variable_cost!(
         )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
+    return
+end
+
+function update_variable_cost!(
+    container::OptimizationContainer,
+    parameter_array::JuMPFloatArray,
+    parameter_multiplier::JuMPFloatArray,
+    ::CostFunctionAttributes{Float64},
+    component::T,
+    fuel_curve::PSY.FuelCurve,
+    time_period::Int,
+) where {T <: PSY.Component}
+    component_name = PSY.get_name(component)
+    fuel_cost = parameter_array[component_name, time_period]
+    if all(iszero.(last.(fuel_cost)))
+        return
+    end
+    mult_ = parameter_multiplier[component_name, time_period]
+    expression = get_expression(container, FuelConsumptionExpression(), T)
+    cost_expr = expression[component_name, time_period] * fuel_cost * mult_
+    add_to_objective_variant_expression!(container, cost_expr)
+    set_expression!(container, ProductionCostExpression, cost_expr, component, time_period)
     return
 end
