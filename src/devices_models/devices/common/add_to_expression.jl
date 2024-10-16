@@ -1522,7 +1522,7 @@ function add_to_expression!(
     cost_expression::Union{JuMP.AbstractJuMPScalar, Float64},
     component::T,
     time_period::Int,
-) where {S <: CostExpressions, T <: PSY.Component}
+) where {S <: Union{CostExpressions, FuelConsumptionExpression}, T <: PSY.Component}
     if has_container_key(container, S, T)
         device_cost_expression = get_expression(container, S(), T)
         component_name = PSY.get_name(component)
@@ -1568,6 +1568,8 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     time_steps = get_time_steps(container)
     base_power = get_base_power(container)
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
         var_cost = PSY.get_variable(PSY.get_operation_cost(d))
         if !(var_cost isa PSY.FuelCurve)
@@ -1586,14 +1588,39 @@ function add_to_expression!(
                 device_base_power,
             )
             for t in time_steps
-                fuel_expr = variable[name, t] * prop_term_per_unit
+                fuel_expr = variable[name, t] * prop_term_per_unit * dt
                 JuMP.add_to_expression!(
                     expression[name, t],
                     fuel_expr,
                 )
             end
-        else
-            error("Not implemented yet")
+        elseif value_curve isa PSY.QuadraticCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            quadratic_term = PSY.get_quadratic_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            quad_term_per_unit = get_quadratic_cost_per_system_unit(
+                quadratic_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            for t in time_steps
+                fuel_expr =
+                    (
+                        variable[name, t] .^ 2 * quad_term_per_unit +
+                        variable[name, t] * prop_term_per_unit
+                    ) * dt
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
         end
     end
 end
