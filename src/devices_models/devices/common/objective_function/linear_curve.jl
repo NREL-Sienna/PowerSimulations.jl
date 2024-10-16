@@ -116,24 +116,10 @@ function _add_fuel_linear_variable_cost!(
     container::OptimizationContainer,
     ::T,
     component::V,
-    heat_rate::Float64, # already normalized in MMBTU/p.u.
+    ::Float64, # already normalized in MMBTU/p.u.
     fuel_cost::IS.TimeSeriesKey,
 ) where {T <: VariableType, V <: PSY.Component}
-    parameter = get_parameter_array(container, FuelCostParameter(), V)
-    multiplier = get_parameter_multiplier_array(container, FuelCostParameter(), V)
-    expression = get_expression(container, FuelConsumptionExpression(), V)
-    name = PSY.get_name(component)
-    for t in get_time_steps(container)
-        cost_expr = expression[name, t] * parameter[name, t] * multiplier[name, t]
-        add_to_expression!(
-            container,
-            ProductionCostExpression,
-            cost_expr,
-            component,
-            t,
-        )
-        add_to_objective_variant_expression!(container, cost_expr)
-    end
+    _add_time_varying_fuel_variable_cost!(container, T(), component, fuel_cost)
     return
 end
 
