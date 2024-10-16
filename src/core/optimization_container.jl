@@ -35,8 +35,12 @@ function get_objective_expression(v::ObjectiveFunction)
     else
         # JuMP doesn't support expression conversion from Affn to QuadExpressions
         if isa(v.invariant_terms, JuMP.GenericQuadExpr)
-            return JuMP.add_to_expression!(v.invariant_terms, v.variant_terms)
+            # Avoid mutation of invariant term
+            temp_expr = JuMP.QuadExpr()
+            JuMP.add_to_expression!(temp_expr, v.invariant_terms)
+            return JuMP.add_to_expression!(temp_expr, v.variant_terms)
         else
+            # This will mutate the variant terms, but these are reseted at each step.
             return JuMP.add_to_expression!(v.variant_terms, v.invariant_terms)
         end
     end
