@@ -275,11 +275,16 @@ function _add_parameters!(
 } where {D <: PSY.Component}
     ts_type = get_default_time_series_type(container)
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
-        error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
+        error(
+            "add_parameters! for ObjectiveFunctionParameter is not compatible with $ts_type",
+        )
     end
     time_steps = get_time_steps(container)
     # TODO: Check for timeseries only for fuel cost
     device_names = [PSY.get_name(x) for x in devices if PSY.has_time_series(x)]
+    if isempty(device_names)
+        return
+    end
     jump_model = get_jump_model(container)
 
     param_container = add_param_container!(
