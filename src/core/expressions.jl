@@ -17,6 +17,7 @@ struct InterfaceTotalFlow <: ExpressionType end
 struct PTDFBranchFlow <: ExpressionType end
 
 should_write_resulting_value(::Type{<:CostExpressions}) = true
+should_write_resulting_value(::Type{FuelConsumptionExpression}) = true
 should_write_resulting_value(::Type{InterfaceTotalFlow}) = true
 should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true
