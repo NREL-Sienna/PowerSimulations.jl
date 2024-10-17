@@ -1641,23 +1641,25 @@ function deserialize_key(container::OptimizationContainer, name::AbstractString)
 end
 
 function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
+    aux_var_keys = keys(get_aux_variables(container))
+    pf_aux_var_keys = filter(is_from_power_flow ∘ get_entry_type, aux_var_keys)
+    non_pf_aux_var_keys = setdiff(aux_var_keys, pf_aux_var_keys)
+    # We should only have power flow aux vars if we have power flow evaluators
+    @assert isempty(pf_aux_var_keys) || !isempty(get_power_flow_evaluation_data(container))
+
     reset_power_flow_is_solved!(container)
-    # PERF currently we update the aux vars after each power flow because aux vars are how
-    # power flows pass information to each other. This shouldn't be a huge problem because
-    # there shouldn't ever be more than a few power flows, but we could record which aux
-    # vars are power flow-related and calculate the rest only once at the end.
+    # Power flow-related aux vars get calculated once per power flow
     for (i, pf_e_data) in enumerate(get_power_flow_evaluation_data(container))
         @debug "Processing power flow $i"
         solve_powerflow!(pf_e_data, container)
-        for key in keys(get_aux_variables(container))
+        for key in pf_aux_var_keys
             calculate_aux_variable_value!(container, key, system)
         end
     end
 
-    if isempty(get_power_flow_evaluation_data(container))
-        for key in keys(get_aux_variables(container))
-            calculate_aux_variable_value!(container, key, system)
-        end
+    # Other aux vars get calculated once at the end
+    for key in non_pf_aux_var_keys
+        calculate_aux_variable_value!(container, key, system)
     end
     return RunStatus.SUCCESSFULLY_FINALIZED
 end

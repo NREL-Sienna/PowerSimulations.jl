@@ -36,3 +36,10 @@ struct PowerFlowLineActivePower <: AuxVariableType end
 convert_result_to_natural_units(::Type{PowerOutput}) = true
 convert_result_to_natural_units(::Type{PowerFlowLineReactivePower}) = true
 convert_result_to_natural_units(::Type{PowerFlowLineActivePower}) = true
+
+"Whether the auxiliary variable is calculated using a `PowerFlowEvaluationModel`"
+is_from_power_flow(::Type{<:AuxVariableType}) = false
+is_from_power_flow(::Type{PowerFlowVoltageAngle}) = true
+is_from_power_flow(::Type{PowerFlowVoltageMagnitude}) = true
+is_from_power_flow(::Type{PowerFlowLineReactivePower}) = true
+is_from_power_flow(::Type{PowerFlowLineActivePower}) = true

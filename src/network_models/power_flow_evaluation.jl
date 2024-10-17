@@ -93,6 +93,7 @@ function _make_injection_map!(
         for comp_name in comp_names
             name_bus_ix_map[comp_name] = temp_component_bus_map[comp_type][comp_name]
         end
+        pf_data_opt_container_map[key] = name_bus_ix_map
     end
 
     pf_e_data.injection_key_map = pf_data_opt_container_map
@@ -172,11 +173,14 @@ function add_power_flow_data!(
     _add_aux_variables!(container, bus_aux_var_components)
 end
 
+asdf = 1
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
     container::OptimizationContainer,
     key::OptimizationContainerKey,
     bus_index_map)
+    @show key
+    PowerSimulations.asdf = container
     result = lookup_value(container, key)
     for (device_name, index) in bus_index_map
         injection_values = result[device_name, :]
@@ -243,6 +247,6 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
     # TODO read data back from the power flow
     pf_e_data = latest_solved_power_flow_evaluation_data(container)
     pf_type = typeof(get_power_flow_data(pf_e_data))
-    @warn "Placeholder for power flow write back to optimization container, $pf_type, $key"
+    # @warn "Placeholder for power flow write back to optimization container, $pf_type, $key"
     return
 end
