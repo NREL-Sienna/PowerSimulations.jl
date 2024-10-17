@@ -78,6 +78,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -94,6 +95,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
     add_feedforward_arguments!(container, model, devices)
     return
@@ -193,6 +201,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -209,6 +218,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -307,6 +323,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -323,6 +340,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -419,6 +443,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -435,6 +460,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -524,6 +556,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -540,6 +573,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -618,6 +658,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -634,6 +675,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -711,6 +759,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -727,6 +776,13 @@ function construct_device!(
         devices,
         model,
         network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
     )
 
     add_feedforward_arguments!(container, model, devices)
@@ -803,7 +859,6 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
-
     add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
@@ -931,6 +986,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -948,6 +1004,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1073,6 +1139,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1090,6 +1157,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1213,6 +1290,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1230,6 +1308,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1337,6 +1425,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1354,6 +1443,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1456,6 +1555,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1473,6 +1573,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1576,6 +1686,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1593,6 +1704,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1672,6 +1793,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1705,6 +1827,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
     return
 end
 
@@ -1789,6 +1921,7 @@ function construct_device!(
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1806,6 +1939,16 @@ function construct_device!(
         model,
         network_model,
     )
+    #TODO: Implement for AbovePowerMinimum
+    #=
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,,
+        devices,
+        model,
+    )
+    =#
     return
 end
 

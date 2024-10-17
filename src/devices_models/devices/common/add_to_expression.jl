@@ -41,7 +41,9 @@ function add_expressions!(
         PSY.get_name(d) for
         d in devices if PSY.get_variable(PSY.get_operation_cost(d)) isa PSY.FuelCurve
     ]
-    add_expression_container!(container, T(), D, names, time_steps)
+    if !isempty(names)
+        add_expression_container!(container, T(), D, names, time_steps)
+    end
     return
 end
 
@@ -1562,9 +1564,8 @@ function add_to_expression!(
     T <: FuelConsumptionExpression,
     U <: ActivePowerVariable,
     V <: PSY.ThermalGen,
-    W <: AbstractThermalDispatchFormulation,
+    W <: AbstractDeviceFormulation,
 }
-    expression = get_expression(container, T(), V)
     variable = get_variable(container, U(), V)
     time_steps = get_time_steps(container)
     base_power = get_base_power(container)
@@ -1575,6 +1576,7 @@ function add_to_expression!(
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
+        expression = get_expression(container, T(), V)
         name = PSY.get_name(d)
         device_base_power = PSY.get_base_power(d)
         value_curve = PSY.get_value_curve(var_cost)
@@ -1610,6 +1612,8 @@ function add_to_expression!(
                 base_power,
                 device_base_power,
             )
+            # TODO: Fix this FuelConsumptionExpression AffExpr to QuadExpr
+            #=
             for t in time_steps
                 fuel_expr =
                     (
@@ -1621,9 +1625,89 @@ function add_to_expression!(
                     fuel_expr,
                 )
             end
+            =#
         end
     end
 end
+
+#TODO: FuelConsumption for PowerAboveMinimumVariable
+#=
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: FuelConsumptionExpression,
+    U <: PowerAboveMinimumVariable,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+}
+    variable = get_variable(container, U(), V)
+    time_steps = get_time_steps(container)
+    base_power = get_base_power(container)
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
+    for d in devices
+        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        if !(var_cost isa PSY.FuelCurve)
+            continue
+        end
+        expression = get_expression(container, T(), V)
+        name = PSY.get_name(d)
+        device_base_power = PSY.get_base_power(d)
+        value_curve = PSY.get_value_curve(var_cost)
+        if value_curve isa PSY.LinearCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            for t in time_steps
+                fuel_expr = variable[name, t] * prop_term_per_unit * dt
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
+        elseif value_curve isa PSY.QuadraticCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            quadratic_term = PSY.get_quadratic_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            quad_term_per_unit = get_quadratic_cost_per_system_unit(
+                quadratic_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            # TODO: Fix this FuelConsumptionExpression AffExpr to QuadExpr
+            #=
+            for t in time_steps
+                fuel_expr =
+                    (
+                        variable[name, t] .^ 2 * quad_term_per_unit +
+                        variable[name, t] * prop_term_per_unit
+                    ) * dt
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
+            =#
+        end
+    end
+end
+=#
 
 #=
 function add_to_expression!(
