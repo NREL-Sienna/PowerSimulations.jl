@@ -967,3 +967,63 @@ end
     end
     psi_checkobjfun_test(model, GAEVF)
 end
+
+@testset "Thermal with fuel cost time series" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_re_fuel_cost")
+
+    template = ProblemTemplate(
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+        ),
+    )
+
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        store_variable_names = true,
+        optimizer_solve_log_print = false,
+    )
+    models = SimulationModels(;
+        decision_models = [
+            model,
+        ],
+    )
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "compact_sim",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        initial_time = DateTime("2024-01-01T00:00:00"),
+        simulation_folder = mktempdir(),
+    )
+
+    build!(sim; console_level = Logging.Error, serialize = false)
+    moi_tests(model, 432, 0, 192, 120, 72, false)
+    execute!(sim; enable_progress_bar = true)
+
+    sim_res = SimulationResults(sim)
+    res_uc = get_decision_problem_results(sim_res, "UC")
+    th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
+    p_brighton = th_uc[!, "Brighton"]
+    p_solitude = th_uc[!, "Solitude"]
+
+    @test sum(p_brighton[1:24]) < 50.0 # Barely used when expensive
+    @test sum(p_brighton[25:48]) > 5000.0 # Used a lot when cheap
+    @test sum(p_solitude[1:24]) > 5000.0 # Used a lot when cheap
+    @test sum(p_solitude[25:48]) < 50.0 # Barely used when expensive
+end

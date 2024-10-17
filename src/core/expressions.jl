@@ -8,6 +8,7 @@ struct EmergencyUp <: ExpressionType end
 struct EmergencyDown <: ExpressionType end
 struct RawACE <: ExpressionType end
 struct ProductionCostExpression <: CostExpressions end
+struct FuelConsumptionExpression <: ExpressionType end
 struct ActivePowerRangeExpressionLB <: RangeConstraintLBExpressions end
 struct ActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentReserveUpBalanceExpression <: ExpressionType end
@@ -16,6 +17,7 @@ struct InterfaceTotalFlow <: ExpressionType end
 struct PTDFBranchFlow <: ExpressionType end
 
 should_write_resulting_value(::Type{<:CostExpressions}) = true
+should_write_resulting_value(::Type{FuelConsumptionExpression}) = true
 should_write_resulting_value(::Type{InterfaceTotalFlow}) = true
 should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true

@@ -115,12 +115,12 @@ end
 function _add_fuel_linear_variable_cost!(
     container::OptimizationContainer,
     ::T,
-    component::PSY.Component,
-    fuel_curve::Float64,
+    component::V,
+    ::Float64, # already normalized in MMBTU/p.u.
     fuel_cost::IS.TimeSeriesKey,
-) where {T <: VariableType}
-    error("Not implemented yet")
-    _add_linearcurve_variable_cost!(container, T(), component, fuel_curve)
+) where {T <: VariableType, V <: PSY.Component}
+    _add_time_varying_fuel_variable_cost!(container, T(), component, fuel_cost)
+    return
 end
 
 """
