@@ -54,7 +54,7 @@ function _make_temp_component_bus_map(::PFS.SystemPowerFlowContainer, sys::PSY.S
     return temp_component_bus_map
 end
 
-function _make_injection_map!(
+function _make_pf_input_map!(
     pf_e_data::PowerFlowEvaluationData,
     container::OptimizationContainer,
     sys::PSY.System,
@@ -91,15 +91,14 @@ function _make_injection_map!(
         pf_data_opt_container_map[key] = name_bus_ix_map
     end
 
-    pf_e_data.injection_key_map = pf_data_opt_container_map
+    pf_e_data.input_key_map = pf_data_opt_container_map
     return
 end
 
 # Trait that determines what branch aux vars we can get from each PowerFlowContainer
 branch_aux_vars(::PFS.ACPowerFlowData) =
     [PowerFlowLineActivePower, PowerFlowLineReactivePower]
-branch_aux_vars(::PFS.ABAPowerFlowData) =
-    [PowerFlowLineActivePower, PowerFlowLineReactivePower]
+branch_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowLineActivePower]
 branch_aux_vars(::PFS.PTDFPowerFlowData) = [PowerFlowLineActivePower]
 branch_aux_vars(::PFS.vPTDFPowerFlowData) = [PowerFlowLineActivePower]
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
@@ -161,7 +160,7 @@ function add_power_flow_data!(
                 get!(bus_aux_var_components, bus_aux_var, Set{Tuple{<:DataType, <:Int}}())
             push!.(Ref(to_add_to), my_bus_components)
         end
-        _make_injection_map!(pf_e_data, container, sys)
+        _make_pf_input_map!(pf_e_data, container, sys)
         push!(container.power_flow_evaluation_data, pf_e_data)
     end
 
@@ -175,7 +174,6 @@ function _write_value_to_pf_data!(
     container::OptimizationContainer,
     key::OptimizationContainerKey,
     bus_index_map)
-    @show key
     PowerSimulations.asdf = container
     result = lookup_value(container, key)
     for (device_name, index) in bus_index_map
@@ -193,7 +191,7 @@ function update_pf_data!(
 )
     pf_data = get_power_flow_data(pf_e_data)
     PFS.clear_injection_data!(pf_data)
-    key_map = get_injection_key_map(pf_e_data)
+    key_map = get_input_key_map(pf_e_data)
     for (key, bus_index_map) in key_map
         _write_value_to_pf_data!(pf_data, container, key, bus_index_map)
     end
@@ -217,7 +215,7 @@ function update_pf_data!(
     container::OptimizationContainer,
 )
     pf_data = get_power_flow_data(pf_e_data)
-    key_map = get_injection_key_map(pf_e_data)
+    key_map = get_input_key_map(pf_e_data)
     update_pf_system!(PFS.get_system(pf_data), container, key_map)
     return
 end
@@ -242,10 +240,32 @@ calculate_aux_variable_value!(::OptimizationContainer,
     ::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
     ::PSY.System, ::PowerFlowEvaluationData{PFS.PSSEExporter}) = nothing
 
+_get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
+    PFS.get_bus_angles(pf_data)
+_get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
+    PFS.get_bus_magnitude(pf_data)
+_get_pf_result(::Type{PowerFlowLineActivePower}, pf_data::PFS.PowerFlowData) =
+    PFS.get_branch_flow_values(pf_data)
+# TODO implement method for PowerFlowLineReactivePower -- I don't think we have a PowerFlowData field for this?
+# _fetch_pf_result(pf_data::PFS.PowerFlowData, ::Type{PowerFlowLineActivePower}) = ...
+
+_get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
+_get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =
+    PFS.get_branch_lookup(pf_data)
+
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
-    system::PSY.System, pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData})
-    @warn "TODO"  # TODO
+    key::AuxVarKey{T, U},
+    system::PSY.System, pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData},
+) where {T <: PowerFlowAuxVariableType, U}
+    @debug "Updating $key from PowerFlowData"
+    pf_data = get_power_flow_data(pf_e_data)
+    src = _get_pf_result(T, pf_data)
+    lookup = _get_pf_lookup(U, pf_data)
+    dest = get_aux_variable(container, key)
+    for component_id in axes(dest, 1)  # these are bus numbers or branch names
+        dest[component_id, :] = src[lookup[component_id], :]
+    end
+    return
 end
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
