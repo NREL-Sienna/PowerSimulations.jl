@@ -1,8 +1,3 @@
-function add_power_flow_data!(::OptimizationContainer, ::Nothing, ::PSY.System)
-    # NO OP function
-    return
-end
-
 function _add_aux_variables!(
     container::OptimizationContainer,
     component_map::Dict{Type{<:AuxVariableType}, <:Set{<:Tuple{DataType, Any}}},
@@ -100,20 +95,21 @@ function _make_injection_map!(
     return
 end
 
-# Trait that determines what branch aux vars we can get from each type of power flow
-branch_aux_vars(::PFS.ACPowerFlow) = [PowerFlowLineActivePower, PowerFlowLineReactivePower]
-branch_aux_vars(::PFS.DCPowerFlow) = [PowerFlowLineActivePower, PowerFlowLineReactivePower]
-branch_aux_vars(::PFS.PTDFDCPowerFlow) = [PowerFlowLineActivePower]
-branch_aux_vars(::PFS.vPTDFDCPowerFlow) = [PowerFlowLineActivePower]
-branch_aux_vars(::PFS.PSSEExportPowerFlow) =
+# Trait that determines what branch aux vars we can get from each PowerFlowContainer
+branch_aux_vars(::PFS.ACPowerFlowData) =
     [PowerFlowLineActivePower, PowerFlowLineReactivePower]
+branch_aux_vars(::PFS.ABAPowerFlowData) =
+    [PowerFlowLineActivePower, PowerFlowLineReactivePower]
+branch_aux_vars(::PFS.PTDFPowerFlowData) = [PowerFlowLineActivePower]
+branch_aux_vars(::PFS.vPTDFPowerFlowData) = [PowerFlowLineActivePower]
+branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
-bus_aux_vars(::PFS.ACPowerFlow) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
-bus_aux_vars(::PFS.DCPowerFlow) = [PowerFlowVoltageAngle]
-bus_aux_vars(::PFS.PTDFDCPowerFlow) = Vector{DataType}[]
-bus_aux_vars(::PFS.vPTDFDCPowerFlow) = Vector{DataType}[]
-bus_aux_vars(::PFS.PSSEExportPowerFlow) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+bus_aux_vars(::PFS.ACPowerFlowData) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
+bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
+bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
+bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 _get_branch_component_tuples(pfd::PFS.PowerFlowData) =
     zip(PFS.get_branch_type(pfd), keys(PFS.get_branch_lookup(pfd)))
@@ -146,8 +142,8 @@ function add_power_flow_data!(
         pf_data = PFS.make_power_flow_container(evaluator, sys;
             time_steps = length(get_time_steps(container)))
         pf_e_data = PowerFlowEvaluationData(pf_data)
-        my_branch_aux_vars = branch_aux_vars(evaluator)
-        my_bus_aux_vars = bus_aux_vars(evaluator)
+        my_branch_aux_vars = branch_aux_vars(pf_data)
+        my_bus_aux_vars = bus_aux_vars(pf_data)
 
         my_branch_components = _get_branch_component_tuples(pf_data)
         for branch_aux_var in my_branch_aux_vars
@@ -241,12 +237,23 @@ function solve_powerflow!(
     return
 end
 
+# Currently nothing to write back to the optimization container from a PSSEExporter
+calculate_aux_variable_value!(::OptimizationContainer,
+    ::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
+    ::PSY.System, ::PowerFlowEvaluationData{PFS.PSSEExporter}) = nothing
+
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key,
+    key::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
+    system::PSY.System, pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData})
+    @warn "TODO"  # TODO
+end
+
+function calculate_aux_variable_value!(container::OptimizationContainer,
+    key::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
     system::PSY.System)
-    # TODO read data back from the power flow
     pf_e_data = latest_solved_power_flow_evaluation_data(container)
-    pf_type = typeof(get_power_flow_data(pf_e_data))
-    # @warn "Placeholder for power flow write back to optimization container, $pf_type, $key"
-    return
+    pf_data = get_power_flow_data(pf_e_data)
+    # Skip the aux vars that the current power flow isn't meant to update
+    (key in branch_aux_vars(pf_data) || key in bus_aux_vars(pf_data)) && return
+    calculate_aux_variable_value!(container, key, system, pf_e_data)
 end
