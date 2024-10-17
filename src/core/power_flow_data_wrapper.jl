@@ -2,9 +2,9 @@ mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowContainer}
     power_flow_data::T
     """
     Records which PSI keys are read as input to the power flow and how the data are mapped.
-    For `PowerFlowData`, values are `Dict{String, Int}` mapping component name to matrix
-    index; for `SystemPowerFlowContainer`, values are Dict{String, String} mapping component
-    name to component name.
+    For `PowerFlowData`, values are `Dict{String, Int64}` mapping component name to matrix
+    index of bus; for `SystemPowerFlowContainer`, values are Dict{Union{String, Int64},
+    Union{String, Int64}} mapping component name/bus number to component name/bus number.
     """
     input_key_map::Dict{<:OptimizationContainerKey, <:Any}
     is_solved::Bool

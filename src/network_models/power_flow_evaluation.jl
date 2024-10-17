@@ -18,40 +18,50 @@ function _add_aux_variables!(
     end
 end
 
-# Trait that determines what keys serve as input to each type of power flow
-# Currently there is only the default; written this way so as to be easily overridable
-pf_input_keys(::PFS.PowerFlowContainer) =
+# Trait that determines what keys serve as input to each type of power flow, if they exist
+pf_input_keys(::PFS.PowerFlowData) =
     [ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter]
+pf_input_keys(::PFS.PSSEExporter) =
+    [ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter,
+        PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
 
 # Maps the StaticInjection component type by name to the
 # index in the PowerFlow data arrays going from Bus number to bus index
-function _make_temp_component_bus_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
-    temp_component_bus_map = Dict{DataType, Dict{String, Int}}()
+function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
+    temp_component_map = Dict{DataType, Dict{String, Int}}()
     available_injectors = PSY.get_components(PSY.get_available, PSY.StaticInjection, sys)
     bus_lookup = PFS.get_bus_lookup(pf_data)
     for comp in available_injectors
         comp_type = typeof(comp)
-        bus_dict = get!(temp_component_bus_map, comp_type, Dict{String, Int}())
+        bus_dict = get!(temp_component_map, comp_type, Dict{String, Int}())
         bus_number = PSY.get_number(PSY.get_bus(comp))
         bus_dict[get_name(comp)] = bus_lookup[bus_number]
     end
-    return temp_component_bus_map
+    return temp_component_map
 end
 
-# Creates Sets of components by type
-function _make_temp_component_bus_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
-    temp_component_bus_map = Dict{DataType, Dict{String, String}}()
-    # TODO `ComponentSelector` use case
-    available_injectors =
-        collect(PSY.get_components(PSY.get_available, PSY.StaticInjection, sys))
-    for comp_type in unique(typeof.(available_injectors))
-        temp_component_bus_map[comp_type] =
+_get_temp_component_map_id(comp::PSY.Component) = PSY.get_name(comp)
+_get_temp_component_map_id(comp::PSY.Bus) = PSY.get_number(comp)
+
+# Creates dicts of components by type
+function _make_temp_component_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
+    temp_component_map =
+        Dict{DataType, Dict{Union{String, Int64}, Union{String, Int64}}}()
+    # TODO don't hardcode the types here, handle get_available more elegantly, likely `ComponentSelector` use case
+    relevant_components = vcat(
+        collect.([
+            PSY.get_components(PSY.get_available, PSY.StaticInjection, sys),
+            PSY.get_components(Union{PSY.Bus, PSY.Branch}, sys)],
+        )...,
+    )
+    for comp_type in unique(typeof.(relevant_components))
+        temp_component_map[comp_type] =
             Dict(
-                PSY.get_name(c) => PSY.get_name(c) for
-                c in available_injectors if c isa comp_type
+                _get_temp_component_map_id(c) => _get_temp_component_map_id(c) for
+                c in relevant_components if c isa comp_type
             )
     end
-    return temp_component_bus_map
+    return temp_component_map
 end
 
 function _make_pf_input_map!(
@@ -60,9 +70,9 @@ function _make_pf_input_map!(
     sys::PSY.System,
 )
     pf_data = get_power_flow_data(pf_e_data)
-    temp_component_bus_map = _make_temp_component_bus_map(pf_data, sys)
-    map_type = valtype(temp_component_bus_map)  # Dict{String, Int} for PowerFlowData, Dict{String, String} for SystemPowerFlowContainer
-    injection_keys = pf_input_keys(pf_data)
+    temp_component_map = _make_temp_component_map(pf_data, sys)
+    map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{Union{String, Int64}, Union{String, Int64}} for SystemPowerFlowContainer
+    input_keys = pf_input_keys(pf_data)
 
     # Second map that persists to store the bus index that the variable
     # has to be added/substracted to in the power flow data dictionary
@@ -74,7 +84,7 @@ function _make_pf_input_map!(
         get_parameters(container),
     ])
         # Skip irrelevant keys
-        (get_entry_type(key) in injection_keys) || continue
+        (get_entry_type(key) in input_keys) || continue
 
         comp_type = get_component_type(key)
         # Skip types that have already been handled (prefer variable over aux variable, aux variable over parameter)
@@ -86,7 +96,7 @@ function _make_pf_input_map!(
         comp_names =
             (key isa ParameterKey) ? get_component_names(get_attributes(val)) : axes(val)[1]
         for comp_name in comp_names
-            name_bus_ix_map[comp_name] = temp_component_bus_map[comp_type][comp_name]
+            name_bus_ix_map[comp_name] = temp_component_map[comp_type][comp_name]
         end
         pf_data_opt_container_map[key] = name_bus_ix_map
     end
@@ -160,12 +170,16 @@ function add_power_flow_data!(
                 get!(bus_aux_var_components, bus_aux_var, Set{Tuple{<:DataType, <:Int}}())
             push!.(Ref(to_add_to), my_bus_components)
         end
-        _make_pf_input_map!(pf_e_data, container, sys)
         push!(container.power_flow_evaluation_data, pf_e_data)
     end
 
     _add_aux_variables!(container, branch_aux_var_components)
     _add_aux_variables!(container, bus_aux_var_components)
+
+    # Make the input maps after adding aux vars so output of one power flow can be input of another
+    for pf_e_data in get_power_flow_evaluation_data(container)
+        _make_pf_input_map!(pf_e_data, container, sys)
+    end
 end
 
 asdf = 1
@@ -173,12 +187,14 @@ function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
     container::OptimizationContainer,
     key::OptimizationContainerKey,
-    bus_index_map)
+    component_map)
     PowerSimulations.asdf = container
     result = lookup_value(container, key)
-    for (device_name, index) in bus_index_map
+    for (device_name, index) in component_map
         injection_values = result[device_name, :]
         for t in axes(result)[2]
+            # NOTE in the future we may want to update more than just
+            # bus_activepower_injection; see update_pf_system! for a design for this
             pf_data.bus_activepower_injection[index, t] += jump_value(injection_values[t])
         end
     end
@@ -191,32 +207,49 @@ function update_pf_data!(
 )
     pf_data = get_power_flow_data(pf_e_data)
     PFS.clear_injection_data!(pf_data)
-    key_map = get_input_key_map(pf_e_data)
-    for (key, bus_index_map) in key_map
-        _write_value_to_pf_data!(pf_data, container, key, bus_index_map)
+    input_map = get_input_key_map(pf_e_data)
+    for (key, component_map) in input_map
+        _write_value_to_pf_data!(pf_data, container, key, component_map)
     end
     return
 end
 
-function update_pf_system!(sys::PSY.System, container::OptimizationContainer, key_map)
+_lookup_component(type::Type{<:PSY.Component}, sys::PSY.System, id::AbstractString) =
+    PSY.get_component(type, sys, id)
+_lookup_component(::Type{<:PSY.Bus}, sys::PSY.System, id::Int) =
+    PSY.get_bus(sys, id)
+
+_update_component(
+    ::Type{<:Union{ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter}},
+    comp::PSY.Component,
+    value,
+) =
+    comp.active_power = value
+_update_component(::Type{PowerFlowVoltageAngle}, comp::PSY.Component, value) =
+    comp.angle = value
+_update_component(::Type{PowerFlowVoltageMagnitude}, comp::PSY.Component, value) =
+    comp.magnitude = value
+
+function update_pf_system!(sys::PSY.System, container::OptimizationContainer, input_map)
     TIME = 1  # TODO figure out how to handle multiple time periods here
-    for (key, bus_index_map) in key_map
+    for (key, component_map) in input_map
         result = lookup_value(container, key)
-        for (device_name, _) in bus_index_map
-            injection_values = result[device_name, :]
-            comp = PSY.get_component(get_component_type(key), sys, device_name)
-            comp.active_power = jump_value(injection_values[TIME])
+        for (device_id, _) in component_map
+            injection_values = result[device_id, :]
+            comp = _lookup_component(get_component_type(key), sys, device_id)
+            _update_component(get_entry_type(key), comp, jump_value(injection_values[TIME]))
         end
     end
 end
 
 function update_pf_data!(
-    pf_e_data::PowerFlowEvaluationData{<:PFS.SystemPowerFlowContainer},
+    pf_e_data::PowerFlowEvaluationData{PFS.PSSEExporter},
     container::OptimizationContainer,
 )
     pf_data = get_power_flow_data(pf_e_data)
-    key_map = get_input_key_map(pf_e_data)
-    update_pf_system!(PFS.get_system(pf_data), container, key_map)
+    input_map = get_input_key_map(pf_e_data)
+    update_pf_system!(PFS.get_system(pf_data), container, input_map)
+    isnothing(pf_data.step) || (pf_data.step += 1)
     return
 end
 
