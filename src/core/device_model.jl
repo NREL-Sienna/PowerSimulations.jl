@@ -77,7 +77,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
             time_series_names,
             attributes_,
             nothing,
-            Dict{EventKey, EventModel}()
+            Dict{EventKey, EventModel}(),
         )
     end
 end
@@ -121,3 +121,15 @@ function _set_model!(
 end
 
 has_service_model(model::DeviceModel) = !isempty(get_services(model))
+
+function set_event_model!(
+    model::DeviceModel{D, B},
+    key::EventKey,
+    event_model::EventModel,
+) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+    if haskey(model.events, key)
+        error("EventModel $key already exists in model for device $D")
+    end
+    model.events[key] = event_model
+    return
+end
