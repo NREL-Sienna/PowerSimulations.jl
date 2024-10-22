@@ -899,6 +899,148 @@ function construct_device!(
     return
 end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalPhysicalLoss},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(model, sys)
+
+    #####################
+    ##### Variables #####
+    #####################
+    V = HVDCTwoTerminalPhysicalLoss
+    # Add Power Variable
+    add_variables!(container, ActivePowerVariable, devices, V()) # p_c^{ac}
+    add_variables!(container, DCVoltage, devices, V()) # v_dc
+    add_variables!(container, ConverterPowerDirection, devices, V()) #κ
+    # Add Current Variables: i, δ^i, z^i, i+, i-
+    add_variables!(container, ConverterCurrent, devices, V()) # i
+    add_variables!(container, SquaredConverterCurrent, devices, V()) # i^sq
+    add_variables!(
+        container,
+        InterpolationSquaredCurrentVariable,
+        devices,
+        V(),
+    ) # δ^i
+    add_variables!(
+        container,
+        InterpolationBinarySquaredCurrentVariable,
+        devices,
+        V(),
+    ) #  z^i
+    add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
+    add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
+    add_variables!(
+        container,
+        ConverterBinaryAbsoluteValueCurrent,
+        devices,
+        V(),
+    ) # ν
+    # Add Voltage Variables: v^sq, δ^v, z^v
+    add_variables!(container, SquaredDCVoltage, devices, V())
+    add_variables!(
+        container,
+        InterpolationSquaredVoltageVariable,
+        devices,
+        V(),
+    ) # δ^v
+    add_variables!(
+        container,
+        InterpolationBinarySquaredVoltageVariable,
+        devices,
+        V(),
+    ) # z^v
+    # Add Bilinear Variables: γ, γ^{sq}
+    add_variables!(
+        container,
+        AuxBilinearConverterVariable,
+        devices,
+        V(),
+    ) # γ
+    add_variables!(
+        container,
+        AuxBilinearSquaredConverterVariable,
+        devices,
+        V(),
+    ) # γ^{sq}
+    add_variables!(
+        container,
+        InterpolationSquaredBilinearVariable,
+        devices,
+        V(),
+    ) # δ^γ
+    add_variables!(
+        container,
+        InterpolationBinarySquaredBilinearVariable,
+        devices,
+        V(),
+    ) # z^γ
+
+    #####################
+    #### Expressions ####
+    #####################
+
+    # No losses for now: ActivePowerVariable = DCPower and ACPower
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalPhysicalLoss},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(model, sys)
+    # TODO Constraints
+    add_constraints!(
+        container,
+        sys,
+        ConverterCurrentBalanceConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterDirectionConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterMcCormickEnvelopes,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
 ############################# Phase Shifter Transformer Models #############################
 
 function construct_device!(
