@@ -202,7 +202,7 @@ function _add_event_to_model(
     sim_model::OperationModel,
     key::EventKey{T, U},
     event_model::EventModel,
-) where {T <: PSY.SupplementalAttribute, U <: PSY.Device}
+) where {T <: PSY.Contingency, U <: PSY.Device}
     device_model = get_model(get_template(sim_model), U)
     set_event_model!(device_model, key, event_model)
     return
