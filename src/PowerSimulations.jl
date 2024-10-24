@@ -530,6 +530,10 @@ include("feedforward/feedforwards.jl")
 include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
 
+include("contingency_model/contingency.jl")
+include("contingency_model/contingency_arguments.jl")
+include("contingency_model/contingency_constraints.jl")
+
 include("parameters/add_parameters.jl")
 
 include("simulation/optimization_output_cache.jl")
