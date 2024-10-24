@@ -1025,7 +1025,7 @@ function construct_device!(
     #### Expressions ####
     #####################
 
-    # HVDCActivePowerReceivedFromVariable: AC Power
+    # HVDCActivePowerReceivedFromVariable: DC Power Received on From Bus
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1034,7 +1034,7 @@ function construct_device!(
         model,
         network_model,
     )
-    # HVDCActivePowerReceivedToVariable: AC Power
+    # HVDCActivePowerReceivedToVariable: DC Power Received on To Bus
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1043,6 +1043,7 @@ function construct_device!(
         model,
         network_model,
     )
+    # TODO: Add losses to balance expression to get full AC
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1054,17 +1055,8 @@ function construct_device!(
     model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalPhysicalLoss},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
-    error("here")
     devices = get_available_components(model, sys)
     # TODO Constraints
-    add_constraints!(
-        container,
-        sys,
-        ConverterCurrentBalanceConstraint,
-        devices,
-        model,
-        network_model,
-    )
     add_constraints!(
         container,
         ConverterPowerCalculationConstraint,
@@ -1086,6 +1078,7 @@ function construct_device!(
         model,
         network_model,
     )
+    error("here")
 
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, get_network_formulation(network_model))

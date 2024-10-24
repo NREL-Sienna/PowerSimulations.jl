@@ -799,3 +799,362 @@ function add_constraints!(
     end
     return
 end
+
+##### Two Terminal Physical Loss ####
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: ConverterPowerCalculationConstraint,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalPhysicalLoss,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    # power vars #
+    from_power_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
+    to_power_var = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
+    # voltage vars #
+    from_voltage_var = get_variable(container, DCVoltageFrom(), U)
+    to_voltage_var = get_variable(container, DCVoltageTo(), U)
+    from_voltage_sq_var = get_variable(container, SquaredDCVoltageFrom(), U)
+    to_voltage_sq_var = get_variable(container, SquaredDCVoltageTo(), U)
+    # current vars #
+    current_var = get_variable(container, ConverterCurrent(), U) # From direction
+    current_sq_var = get_variable(container, SquaredConverterCurrent(), U) # From direction
+    # bilinear vars #
+    from_bilinear_var = get_variable(container, AuxBilinearConverterVariableFrom(), U)
+    from_bilinear_sq_var =
+        get_variable(container, AuxBilinearSquaredConverterVariableFrom(), U)
+    to_bilinear_var = get_variable(container, AuxBilinearConverterVariableTo(), U)
+    to_bilinear_sq_var = get_variable(container, AuxBilinearSquaredConverterVariableTo(), U)
+
+    constraint_from_calc = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "from_calc",
+    )
+    constraint_from_aux = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "from_aux",
+    )
+    constraint_to_calc = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "to_calc",
+    )
+    constraint_to_aux = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "to_aux",
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            constraint_from_calc[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                from_power_var[name, t] ==
+                0.5 * (
+                    from_bilinear_sq_var[name, t] - from_voltage_sq_var[name, t] -
+                    current_sq_var[name, t]
+                )
+            )
+            constraint_to_calc[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                to_power_var[name, t] ==
+                0.5 * (
+                    to_bilinear_sq_var[name, t] - to_voltage_sq_var[name, t] -
+                    current_sq_var[name, t]
+                )
+            )
+            constraint_from_aux[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                from_bilinear_var[name, t] ==
+                from_voltage_var[name, t] + current_var[name, t]
+            )
+            constraint_to_aux[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                to_bilinear_var[name, t] == to_voltage_var[name, t] - current_var[name, t] # change current sign
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: ConverterDirectionConstraint,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalPhysicalLoss,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # power vars #
+    from_power_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
+    to_power_var = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
+    # current vars #
+    current_var = get_variable(container, ConverterCurrent(), U) # From direction
+    direction_var = get_variable(container, ConverterPowerDirection(), U)
+
+    constraint_from_power_ub = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "from_power_ub",
+    )
+    constraint_from_power_lb = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "from_power_lb",
+    )
+    constraint_current_ub = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "current_ub",
+    )
+    constraint_current_lb = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "current_lb",
+    )
+    constraint_to_power_ub = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "to_power_ub",
+    )
+    constraint_to_power_lb = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps;
+        meta = "to_power_lb",
+    )
+    for d in devices
+        name = PSY.get_name(d)
+        I_max = PSY.get_max_dc_current(d)
+        I_neg = -I_max
+        P_min_from, P_max_from = PSY.get_active_power_limits_from(d)
+        P_min_to, P_max_to = PSY.get_active_power_limits_to(d)
+        for t in time_steps
+            constraint_from_power_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                from_power_var[name, t] <= P_max_from * direction_var[name, t]
+            )
+            constraint_from_power_lb[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                from_power_var[name, t] >= P_min_from * (1.0 - direction_var[name, t])
+            )
+            constraint_current_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var[name, t] <= I_max * direction_var[name, t]
+            )
+            constraint_current_lb[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var[name, t] >= I_neg * (1.0 - direction_var[name, t])
+            )
+            constraint_to_power_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                to_power_var[name, t] <= P_max_to * (1.0 - direction_var[name, t])
+            )
+            constraint_to_power_lb[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                to_power_var[name, t] >= P_min_to * direction_var[name, t]
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: ConverterMcCormickEnvelopes,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalPhysicalLoss,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # power vars #
+    from_power_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
+    to_power_var = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
+    # current vars #
+    current_var = get_variable(container, ConverterCurrent(), U) # From direction
+    # voltage vars #
+    from_voltage_var = get_variable(container, DCVoltageFrom(), U)
+    to_voltage_var = get_variable(container, DCVoltageTo(), U)
+
+    from_constraint1_under =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "from_under_1",
+        )
+    from_constraint2_under =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "from_under_2",
+        )
+    from_constraint1_over =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "from_over_1",
+        )
+    from_constraint2_over =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "from_over_2",
+        )
+    to_constraint1_under =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "to_under_1",
+        )
+    to_constraint2_under =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "to_under_2",
+        )
+    to_constraint1_over =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "to_over_1",
+        )
+    to_constraint2_over =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            names,
+            time_steps;
+            meta = "to_over_2",
+        )
+
+    for d in devices
+        name = PSY.get_name(d)
+        V_min, V_max = PSY.get_voltage_limits(d)
+        I_max = PSY.get_max_dc_current(d)
+        I_neg = -I_max
+        for t in time_steps
+            from_constraint1_under[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                from_power_var[name, t] >=
+                V_min * current_var[name, t] + from_voltage_var[name, t] * I_neg -
+                I_neg * V_min
+            )
+            from_constraint2_under[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                from_power_var[name, t] >=
+                V_max * current_var[name, t] + from_voltage_var[name, t] * I_max -
+                I_max * V_max
+            )
+            from_constraint1_over[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                from_power_var[name, t] <=
+                V_max * current_var[name, t] + from_voltage_var[name, t] * I_neg -
+                I_neg * V_max
+            )
+            from_constraint2_over[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                from_power_var[name, t] <=
+                V_min * current_var[name, t] + from_voltage_var[name, t] * I_max -
+                I_max * V_min
+            )
+            to_constraint1_under[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                to_power_var[name, t] >=
+                V_min * (-current_var[name, t]) + to_voltage_var[name, t] * I_neg -
+                I_neg * V_min
+            )
+            to_constraint2_under[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                to_power_var[name, t] >=
+                V_max * (-current_var[name, t]) + to_voltage_var[name, t] * I_max -
+                I_max * V_max
+            )
+            to_constraint1_over[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                to_power_var[name, t] <=
+                V_max * (-current_var[name, t]) + to_voltage_var[name, t] * I_neg -
+                I_neg * V_max
+            )
+            to_constraint2_over[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                to_power_var[name, t] <=
+                V_min * (-current_var[name, t]) + to_voltage_var[name, t] * I_max -
+                I_max * V_min
+            )
+        end
+    end
+    return
+end
