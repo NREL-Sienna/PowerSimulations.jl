@@ -913,9 +913,39 @@ function construct_device!(
     #####################
     V = HVDCTwoTerminalPhysicalLoss
     # Add Power Variable
-    add_variables!(container, ActivePowerVariable, devices, V()) # p_c^{ac}
-    add_variables!(container, DCVoltage, devices, V()) # v_dc
+    add_variables!(container, HVDCActivePowerReceivedFromVariable, devices, V()) # p_c^{ac,from}
+    add_variables!(container, HVDCActivePowerReceivedToVariable, devices, V()) # p_c^{ac,from}
     add_variables!(container, ConverterPowerDirection, devices, V()) #κ
+    # Add Voltage Variables: v_dc, v^sq, δ^v, z^v
+    add_variables!(container, DCVoltageFrom, devices, V()) # v_dc^{from}
+    add_variables!(container, DCVoltageTo, devices, V()) # v_dc^{from}
+    add_variables!(container, SquaredDCVoltageFrom, devices, V()) # v_dc^{sq, from}
+    add_variables!(container, SquaredDCVoltageTo, devices, V()) # # v_dc^{sq, to}
+    add_variables!(
+        container,
+        InterpolationSquaredVoltageVariableFrom,
+        devices,
+        V(),
+    ) # δ^{v,from}
+    add_variables!(
+        container,
+        InterpolationSquaredVoltageVariableTo,
+        devices,
+        V(),
+    ) # δ^{v,to}
+    add_variables!(
+        container,
+        InterpolationBinarySquaredVoltageVariableFrom,
+        devices,
+        V(),
+    ) # z^{v,from}
+    add_variables!(
+        container,
+        InterpolationBinarySquaredVoltageVariableTo,
+        devices,
+        V(),
+    ) # z^{v,to}
+
     # Add Current Variables: i, δ^i, z^i, i+, i-
     add_variables!(container, ConverterCurrent, devices, V()) # i
     add_variables!(container, SquaredConverterCurrent, devices, V()) # i^sq
@@ -939,55 +969,76 @@ function construct_device!(
         devices,
         V(),
     ) # ν
-    # Add Voltage Variables: v^sq, δ^v, z^v
-    add_variables!(container, SquaredDCVoltage, devices, V())
-    add_variables!(
-        container,
-        InterpolationSquaredVoltageVariable,
-        devices,
-        V(),
-    ) # δ^v
-    add_variables!(
-        container,
-        InterpolationBinarySquaredVoltageVariable,
-        devices,
-        V(),
-    ) # z^v
+
     # Add Bilinear Variables: γ, γ^{sq}
     add_variables!(
         container,
-        AuxBilinearConverterVariable,
+        AuxBilinearConverterVariableFrom,
         devices,
         V(),
-    ) # γ
+    ) # γ^{from}
     add_variables!(
         container,
-        AuxBilinearSquaredConverterVariable,
+        AuxBilinearSquaredConverterVariableFrom,
         devices,
         V(),
-    ) # γ^{sq}
+    ) # γ^{sq,from}
     add_variables!(
         container,
-        InterpolationSquaredBilinearVariable,
+        InterpolationSquaredBilinearVariableFrom,
         devices,
         V(),
-    ) # δ^γ
+    ) # δ^{γ,from}
     add_variables!(
         container,
-        InterpolationBinarySquaredBilinearVariable,
+        InterpolationBinarySquaredBilinearVariableFrom,
         devices,
         V(),
-    ) # z^γ
+    ) # z^{γ,from}
+
+    add_variables!(
+        container,
+        AuxBilinearConverterVariableTo,
+        devices,
+        V(),
+    ) # γ^{to}
+    add_variables!(
+        container,
+        AuxBilinearSquaredConverterVariableTo,
+        devices,
+        V(),
+    ) # γ^{sq,to}
+    add_variables!(
+        container,
+        InterpolationSquaredBilinearVariableTo,
+        devices,
+        V(),
+    ) # δ^{γ,to}
+    add_variables!(
+        container,
+        InterpolationBinarySquaredBilinearVariableTo,
+        devices,
+        V(),
+    ) # z^{γ,to}
 
     #####################
     #### Expressions ####
     #####################
 
-    # No losses for now: ActivePowerVariable = DCPower and ACPower
+    # HVDCActivePowerReceivedFromVariable: AC Power
     add_to_expression!(
         container,
         ActivePowerBalance,
-        ActivePowerVariable,
+        HVDCActivePowerReceivedFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    # HVDCActivePowerReceivedToVariable: AC Power
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActivePowerReceivedToVariable,
         devices,
         model,
         network_model,
@@ -1003,6 +1054,7 @@ function construct_device!(
     model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalPhysicalLoss},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
+    error("here")
     devices = get_available_components(model, sys)
     # TODO Constraints
     add_constraints!(
