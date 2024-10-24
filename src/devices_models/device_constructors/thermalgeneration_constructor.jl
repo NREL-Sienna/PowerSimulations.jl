@@ -107,7 +107,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
     add_feedforward_arguments!(container, device_model, devices)
     add_event_arguments!(container, devices, device_model, network_model)
@@ -154,13 +154,13 @@ function construct_device!(
     add_constraints!(container, RampConstraint, devices, device_model, network_model)
     add_constraints!(container, DurationConstraint, devices, device_model, network_model)
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -1972,7 +1972,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
     add_event_arguments!(container, devices, device_model, network_model)
     return
