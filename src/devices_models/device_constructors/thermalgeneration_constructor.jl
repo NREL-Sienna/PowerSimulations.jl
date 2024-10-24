@@ -83,8 +83,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -113,7 +113,8 @@ function construct_device!(
         add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
         add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
     end
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
+    add_event_arguments!(container, devices, device_model, network_model)
     return
 end
 
@@ -219,8 +220,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -283,10 +284,10 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
-    add_constraints!(container, RampConstraint, devices, model, network_model)
-    add_constraints!(container, DurationConstraint, devices, model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
+    add_constraints!(container, RampConstraint, devices, device_model, network_model)
+    add_constraints!(container, DurationConstraint, devices, device_model, network_model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -354,8 +355,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -439,7 +440,7 @@ function construct_device!(
     )
     add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -450,7 +451,7 @@ function construct_device!(
         )
     end
 
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, device_model, devices)
 
     objective_function!(
         container,
@@ -498,8 +499,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -573,15 +574,15 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
-            network_model,
+            device_model,
+            device_      network_model,
         )
     end
 
@@ -636,8 +637,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -763,8 +764,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -889,8 +890,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_odel)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1000,8 +1001,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1141,8 +1142,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1246,14 +1247,14 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    add_constraints!(container, ActiveRangeICConstraint, devices, device_model, network_model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -1322,8 +1323,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1421,14 +1422,14 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    add_constraints!(container, ActiveRangeICConstraint, devices, device_model, network_model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -1501,8 +1502,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1581,16 +1582,16 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
-    add_constraints!(container, RampConstraint, devices, model, network_model)
-    add_constraints!(container, DurationConstraint, devices, model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
+    add_constraints!(container, RampConstraint, devices, device_model, network_model)
+    add_constraints!(container, DurationConstraint, devices, device_model, network_model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -1656,8 +1657,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1680,6 +1681,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
+        device_model,
         model,
     )
     if get_use_slacks(model)
@@ -1696,7 +1698,9 @@ function construct_device!(
             ThermalCompactUnitCommitment(),
         )
     end
-    add_feedforward_arguments!(container, model, devices)
+
+    add_feedforward_arguments!(container, device_model, devices)
+    add_event_arguments!(container, devices, device_model, network_model)
     return
 end
 
@@ -1726,16 +1730,16 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
-    add_constraints!(container, RampConstraint, devices, model, network_model)
-    add_constraints!(container, DurationConstraint, devices, model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
+    add_constraints!(container, RampConstraint, devices, device_model, network_model)
+    add_constraints!(container, DurationConstraint, devices, device_model, network_model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -1806,8 +1810,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1886,14 +1890,14 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -1957,8 +1961,8 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1981,7 +1985,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
     if get_use_slacks(model)
         add_variables!(
@@ -1997,7 +2001,8 @@ function construct_device!(
             ThermalBasicCompactUnitCommitment(),
         )
     end
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
+    add_event_arguments!(container, devices, device_model, network_model)
     return
 end
 
@@ -2027,14 +2032,14 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -2072,7 +2077,7 @@ function construct_device!(
         add_parameters!(container, FuelCostParameter, devices, model)
     end
 
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
@@ -2082,11 +2087,11 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         device_model,
-        network_model,
+        network_model,device_
     )
 
-    add_expressions!(container, ProductionCostExpression, devices, model)
-    add_expressions!(container, FuelConsumptionExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
+    add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
