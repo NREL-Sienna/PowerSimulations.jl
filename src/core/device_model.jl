@@ -85,6 +85,7 @@ end
 get_component_type(
     ::DeviceModel{D, B},
 ) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = D
+get_events(m::DeviceModel) = m.events
 get_formulation(
     ::DeviceModel{D, B},
 ) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = B
