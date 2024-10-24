@@ -2087,7 +2087,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         device_model,
-        network_model,device_
+        network_model,
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
