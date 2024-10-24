@@ -70,6 +70,10 @@ get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
 get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
 
+struct EventParametersAttributes{T <: PSY.Outage} <: ParameterAttributes
+    affected_devices::Vector{<:PSY.Component}
+end
+
 struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
     parameter_array::T
@@ -289,7 +293,7 @@ Parameter to define variable lower bound
 struct LowerBoundValueParameter <: VariableValueParameter end
 
 """
-Parameter to define unit commitment status
+Parameter to define unit commitment status updated from the system state
 """
 struct OnStatusParameter <: VariableValueParameter end
 
@@ -305,7 +309,12 @@ struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-struct EventParameter <: ParameterType end
+abstract type EventParameter <: ParameterType end
+
+"""
+Parameter to define unit commitment status updated from the system state
+"""
+struct AvailableStatusParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
