@@ -17,6 +17,37 @@ get_variable_binary(
     ::AbstractTwoTerminalDCLineFormulation,
 ) = true
 
+get_variable_binary(
+    _,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalPhysicalLoss,
+) = false
+get_variable_binary(
+    ::InterpolationBinarySquaredVoltageVariableFrom,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalPhysicalLoss,
+) = true
+get_variable_binary(
+    ::InterpolationBinarySquaredVoltageVariableTo,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalPhysicalLoss,
+) = true
+get_variable_binary(
+    ::InterpolationBinarySquaredBilinearVariableFrom,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalPhysicalLoss,
+) = true
+get_variable_binary(
+    ::InterpolationBinarySquaredBilinearVariableTo,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalPhysicalLoss,
+) = true
+get_variable_binary(
+    ::ConverterPowerDirection,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalPhysicalLoss,
+) = true
+
 get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, _) =
     NaN
 get_parameter_multiplier(
@@ -81,6 +112,7 @@ get_variable_upper_bound(
     ::AbstractTwoTerminalDCLineFormulation,
 ) = nothing
 
+### Two Terminal Dispatch ###
 get_variable_lower_bound(
     ::HVDCLosses,
     d::PSY.TwoTerminalHVDCLine,
@@ -113,25 +145,25 @@ get_variable_lower_bound(
 
 get_variable_upper_bound(
     ::HVDCActivePowerReceivedFromVariable,
-    d::PSY.TwoTerminalHVDCLine,
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_from(d).max
 
 get_variable_lower_bound(
     ::HVDCActivePowerReceivedFromVariable,
-    d::PSY.TwoTerminalHVDCLine,
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_from(d).min
 
 get_variable_upper_bound(
     ::HVDCActivePowerReceivedToVariable,
-    d::PSY.TwoTerminalHVDCLine,
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_to(d).max
 
 get_variable_lower_bound(
     ::HVDCActivePowerReceivedToVariable,
-    d::PSY.TwoTerminalHVDCLine,
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_to(d).min
 
@@ -165,6 +197,55 @@ get_variable_lower_bound(
     ::HVDCPiecewiseLossVariable,
     d::PSY.TwoTerminalHVDCLine,
     ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
+) = 0.0
+
+### Two Terminal Physical Loss ###
+get_variable_upper_bound(
+    ::Union{DCVoltageFrom, DCVoltageTo},
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalPhysicalLoss,
+) = PSY.get_voltage_limits(d).max
+
+get_variable_lower_bound(
+    ::Union{DCVoltageFrom, DCVoltageTo},
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalPhysicalLoss,
+) = PSY.get_voltage_limits(d).min
+
+get_variable_upper_bound(
+    ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalPhysicalLoss,
+) = PSY.get_voltage_limits(d).max^2
+
+get_variable_lower_bound(
+    ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalPhysicalLoss,
+) = 0.0
+
+get_variable_upper_bound(
+    ::Union{
+        InterpolationSquaredVoltageVariableFrom,
+        InterpolationSquaredVoltageVariableTo,
+        InterpolationSquaredCurrentVariable,
+        InterpolationSquaredBilinearVariableFrom,
+        InterpolationSquaredBilinearVariableTo,
+    },
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalPhysicalLoss,
+) = 1.0
+
+get_variable_lower_bound(
+    ::Union{
+        InterpolationSquaredVoltageVariableFrom,
+        InterpolationSquaredVoltageVariableTo,
+        InterpolationSquaredCurrentVariable,
+        InterpolationSquaredBilinearVariableFrom,
+        InterpolationSquaredBilinearVariableTo,
+    },
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalPhysicalLoss,
 ) = 0.0
 
 function get_default_time_series_names(
