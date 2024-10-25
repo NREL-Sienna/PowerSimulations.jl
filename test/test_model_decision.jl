@@ -236,6 +236,8 @@ end
     @test isa(get_realized_timestamps(res), StepRange{DateTime})
     @test isa(IS.Optimization.get_source_data(res), PSY.System)
     @test length(get_timestamps(res)) == 24
+    @test collect(get_components(ThermalStandard, res)) ==
+          collect(get_available_components(ThermalStandard, get_system(res)))
 end
 
 @testset "Solve DecisionModelModel with auto-build" begin

@@ -313,6 +313,11 @@ function test_decision_problem_results_values(
     @test IS.get_uuid(get_system(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
     @test IS.get_uuid(get_system(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
 
+    @test collect(get_components(ThermalStandard, results_uc)) ==
+          collect(get_available_components(ThermalStandard, get_system(results_uc)))
+    @test collect(get_components(ThermalStandard, results_ed)) ==
+          collect(get_available_components(ThermalStandard, get_system(results_ed)))
+
     @test isempty(setdiff(UC_EXPECTED_VARS, list_variable_names(results_uc)))
     @test isempty(setdiff(ED_EXPECTED_VARS, list_variable_names(results_ed)))
 
