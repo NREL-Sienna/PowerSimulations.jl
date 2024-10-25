@@ -396,6 +396,10 @@ import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_k
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
 
+# PowerSystems imports
+import PowerSystems:
+    get_components, get_available_components, get_component
+
 export get_name
 export get_model_base_power
 export get_optimizer_stats
