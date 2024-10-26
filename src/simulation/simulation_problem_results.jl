@@ -742,3 +742,8 @@ function get_component(
     system = _validate_source_data_type(get_system(res))
     return get_available_component(T, system, name)
 end
+
+function get_groups(selector::PSY.ComponentSelector, res::ProblemResultsTypes)
+    system = _validate_source_data_type(get_system(res))
+    return get_available_groups(selector, system)
+end

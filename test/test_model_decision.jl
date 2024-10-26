@@ -236,8 +236,13 @@ end
     @test isa(get_realized_timestamps(res), StepRange{DateTime})
     @test isa(IS.Optimization.get_source_data(res), PSY.System)
     @test length(get_timestamps(res)) == 24
+
+    PSY.set_available!(first(get_components(ThermalStandard, get_system(res))), false)
     @test collect(get_components(ThermalStandard, res)) ==
           collect(get_available_components(ThermalStandard, get_system(res)))
+    sel = PSY.make_selector(ThermalStandard; groupby = :each)
+    @test collect(get_groups(sel, res)) ==
+          collect(get_available_groups(sel, get_system(res)))
 end
 
 @testset "Solve DecisionModelModel with auto-build" begin

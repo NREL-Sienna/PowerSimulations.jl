@@ -398,7 +398,8 @@ import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_k
 
 # PowerSystems imports
 import PowerSystems:
-    get_components, get_available_components, get_component
+    get_components, get_available_components, get_component,
+    get_groups, get_available_groups
 
 export get_name
 export get_model_base_power
