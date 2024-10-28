@@ -182,20 +182,33 @@ function add_power_flow_data!(
     end
 end
 
-asdf = 1
+# How to update the PowerFlowData given a component type. A bit duplicative of code in PowerFlows.jl.
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Type{<:PSY.StaticInjection},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_injection[index, t] += value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Type{<:PSY.ElectricLoad},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_withdrawals[index, t] += value)
+
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
     container::OptimizationContainer,
     key::OptimizationContainerKey,
     component_map)
-    PowerSimulations.asdf = container
     result = lookup_value(container, key)
     for (device_name, index) in component_map
         injection_values = result[device_name, :]
-        for t in axes(result)[2]
-            # NOTE in the future we may want to update more than just
-            # bus_activepower_injection; see update_pf_system! for a design for this
-            pf_data.bus_activepower_injection[index, t] += jump_value(injection_values[t])
+        for t in get_time_steps(container)
+            value = jump_value(injection_values[t])
+            _update_pf_data_component!(pf_data, get_component_type(key), index, t, value)
         end
     end
     return
@@ -223,8 +236,13 @@ _update_component(
     ::Type{<:Union{ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter}},
     comp::PSY.Component,
     value,
-) =
-    comp.active_power = value
+) = (comp.active_power = value)
+# Sign is flipped for loads (TODO can we rely on some existing function that encodes this information?)
+_update_component(
+    ::Type{<:Union{ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter}},
+    comp::PSY.ElectricLoad,
+    value,
+) = (comp.active_power = -value)
 _update_component(::Type{PowerFlowVoltageAngle}, comp::PSY.Component, value) =
     comp.angle = value
 _update_component(::Type{PowerFlowVoltageMagnitude}, comp::PSY.Component, value) =
@@ -237,7 +255,8 @@ function update_pf_system!(sys::PSY.System, container::OptimizationContainer, in
         for (device_id, _) in component_map
             injection_values = result[device_id, :]
             comp = _lookup_component(get_component_type(key), sys, device_id)
-            _update_component(get_entry_type(key), comp, jump_value(injection_values[TIME]))
+            val = jump_value(injection_values[TIME])
+            _update_component(get_entry_type(key), comp, val)
         end
     end
 end
