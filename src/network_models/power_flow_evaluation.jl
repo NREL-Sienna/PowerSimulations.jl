@@ -92,7 +92,6 @@ function _make_pf_input_map!(
         push!(added_injection_types, comp_type)
 
         name_bus_ix_map = map_type()
-        # Maybe this should be rewritten as multiple dispatch but it should not be rewritten as a copypasted loop
         comp_names =
             (key isa ParameterKey) ? get_component_names(get_attributes(val)) : axes(val)[1]
         for comp_name in comp_names
@@ -180,6 +179,7 @@ function add_power_flow_data!(
     for pf_e_data in get_power_flow_evaluation_data(container)
         _make_pf_input_map!(pf_e_data, container, sys)
     end
+    return
 end
 
 # How to update the PowerFlowData given a component type. A bit duplicative of code in PowerFlows.jl.
