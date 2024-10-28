@@ -248,27 +248,44 @@ _update_component(::Type{PowerFlowVoltageAngle}, comp::PSY.Component, value) =
 _update_component(::Type{PowerFlowVoltageMagnitude}, comp::PSY.Component, value) =
     comp.magnitude = value
 
-function update_pf_system!(sys::PSY.System, container::OptimizationContainer, input_map)
-    TIME = 1  # TODO figure out how to handle multiple time periods here
+function update_pf_system!(
+    sys::PSY.System,
+    container::OptimizationContainer,
+    input_map::Dict{<:OptimizationContainerKey, <:Any},
+    time_step::Int,
+)
     for (key, component_map) in input_map
         result = lookup_value(container, key)
         for (device_id, _) in component_map
             injection_values = result[device_id, :]
             comp = _lookup_component(get_component_type(key), sys, device_id)
-            val = jump_value(injection_values[TIME])
+            val = jump_value(injection_values[time_step])
             _update_component(get_entry_type(key), comp, val)
         end
     end
 end
 
+"""
+Update a `PowerFlowEvaluationData` containing a `PowerFlowContainer` that does not
+`supports_multi_period` using a single `time_step` of the `OptimizationContainer`. To
+properly keep track of outer step number, time steps must be passed in sequentially,
+starting with 1.
+"""
 function update_pf_data!(
     pf_e_data::PowerFlowEvaluationData{PFS.PSSEExporter},
     container::OptimizationContainer,
+    time_step::Int,
 )
     pf_data = get_power_flow_data(pf_e_data)
     input_map = get_input_key_map(pf_e_data)
-    update_pf_system!(PFS.get_system(pf_data), container, input_map)
-    isnothing(pf_data.step) || (pf_data.step += 1)
+    update_pf_system!(PFS.get_system(pf_data), container, input_map, time_step)
+    if !isnothing(pf_data.step)
+        outer_step, _ = pf_data.step
+        # time_step == 1 means we have rolled over to a new outer step
+        # (TODO it works but seems a little brittle, consider redesigning)
+        (time_step == 1) && (outer_step += 1)
+        pf_data.step = (outer_step, time_step)
+    end
     return
 end
 
@@ -281,8 +298,16 @@ end
 function solve_powerflow!(
     pf_e_data::PowerFlowEvaluationData,
     container::OptimizationContainer)
-    update_pf_data!(pf_e_data, container)
-    PFS.solve_powerflow!(get_power_flow_data(pf_e_data))
+    pf_data = get_power_flow_data(pf_e_data)
+    if PFS.supports_multi_period(pf_data)
+        update_pf_data!(pf_e_data, container)
+        PFS.solve_powerflow!(pf_data)
+    else
+        for t in get_time_steps(container)
+            update_pf_data!(pf_e_data, container, t)
+            PFS.solve_powerflow!(pf_data)
+        end
+    end
     pf_e_data.is_solved = true
     return
 end
