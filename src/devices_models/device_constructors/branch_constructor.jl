@@ -921,50 +921,11 @@ function construct_device!(
     add_variables!(container, DCVoltageTo, devices, V()) # v_dc^{from}
     add_variables!(container, SquaredDCVoltageFrom, devices, V()) # v_dc^{sq, from}
     add_variables!(container, SquaredDCVoltageTo, devices, V()) # # v_dc^{sq, to}
-    #=
-    add_variables!(
-        container,
-        InterpolationSquaredVoltageVariableFrom,
-        devices,
-        V(),
-    ) # δ^{v,from}
-    add_variables!(
-        container,
-        InterpolationSquaredVoltageVariableTo,
-        devices,
-        V(),
-    ) # δ^{v,to}    
-    add_variables!(
-        container,
-        InterpolationBinarySquaredVoltageVariableFrom,
-        devices,
-        V(),
-    ) # z^{v,from}
-    add_variables!(
-        container,
-        InterpolationBinarySquaredVoltageVariableTo,
-        devices,
-        V(),
-    ) # z^{v,to}
-     =#
 
     # Add Current Variables: i, δ^i, z^i, i+, i-
     add_variables!(container, ConverterCurrent, devices, V()) # i
     add_variables!(container, SquaredConverterCurrent, devices, V()) # i^sq
-    #=
-    add_variables!(
-        container,
-        InterpolationSquaredCurrentVariable,
-        devices,
-        V(),
-    ) # δ^i
-    add_variables!(
-        container,
-        InterpolationBinarySquaredCurrentVariable,
-        devices,
-        V(),
-    ) #  z^i
-     =#
+    # TODO: Activate Abs Value method
     #add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
     #add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
     add_variables!(
@@ -987,20 +948,6 @@ function construct_device!(
         devices,
         V(),
     ) # γ^{sq,from}
-    #=
-    add_variables!(
-        container,
-        InterpolationSquaredBilinearVariableFrom,
-        devices,
-        V(),
-    ) # δ^{γ,from}
-    add_variables!(
-        container,
-        InterpolationBinarySquaredBilinearVariableFrom,
-        devices,
-        V(),
-    ) # z^{γ,from}
-    =#
     add_variables!(
         container,
         AuxBilinearConverterVariableTo,
@@ -1013,20 +960,6 @@ function construct_device!(
         devices,
         V(),
     ) # γ^{sq,to}
-    #=
-    add_variables!(
-        container,
-        InterpolationSquaredBilinearVariableTo,
-        devices,
-        V(),
-    ) # δ^{γ,to}
-    add_variables!(
-        container,
-        InterpolationBinarySquaredBilinearVariableTo,
-        devices,
-        V(),
-    ) # z^{γ,to}
-     =#
     _add_sparse_pwl_interpolation_variables!(container, devices, model)
 
     #####################
