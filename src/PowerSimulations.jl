@@ -318,6 +318,9 @@ export UpperBoundValueParameter
 export LowerBoundValueParameter
 export FixValueParameter
 
+# Event Parameters
+export AvailableStatusParameter
+
 # Expressions
 export SystemBalanceExpressions
 export RangeConstraintLBExpressions
@@ -554,6 +557,7 @@ include("simulation/simulation_partition_results.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
+include("simulation/simulation_events.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 include("operation/operation_model_simulation_interface.jl")
