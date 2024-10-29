@@ -20,32 +20,32 @@ get_variable_binary(
 get_variable_binary(
     _,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = false
 get_variable_binary(
     ::InterpolationBinarySquaredVoltageVariableFrom,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredVoltageVariableTo,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredBilinearVariableFrom,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredBilinearVariableTo,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::ConverterPowerDirection,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = true
 
 get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, _) =
@@ -203,25 +203,25 @@ get_variable_lower_bound(
 get_variable_upper_bound(
     ::Union{DCVoltageFrom, DCVoltageTo},
     d::PSY.TwoTerminalHVDCDetailedLine,
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = PSY.get_voltage_limits(d).max
 
 get_variable_lower_bound(
     ::Union{DCVoltageFrom, DCVoltageTo},
     d::PSY.TwoTerminalHVDCDetailedLine,
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = PSY.get_voltage_limits(d).min
 
 get_variable_upper_bound(
     ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
     d::PSY.TwoTerminalHVDCDetailedLine,
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = PSY.get_voltage_limits(d).max^2
 
 get_variable_lower_bound(
     ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
     d::PSY.TwoTerminalHVDCDetailedLine,
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = 0.0
 
 get_variable_upper_bound(
@@ -233,7 +233,7 @@ get_variable_upper_bound(
         InterpolationSquaredBilinearVariableTo,
     },
     d::PSY.TwoTerminalHVDCDetailedLine,
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = 1.0
 
 get_variable_lower_bound(
@@ -245,7 +245,7 @@ get_variable_lower_bound(
         InterpolationSquaredBilinearVariableTo,
     },
     d::PSY.TwoTerminalHVDCDetailedLine,
-    ::HVDCTwoTerminalPhysicalLoss,
+    ::HVDCTwoTerminalVSCLoss,
 ) = 0.0
 
 function get_default_time_series_names(
@@ -267,6 +267,60 @@ get_initial_conditions_device_model(
     ::DeviceModel{T, U},
 ) where {T <: PSY.TwoTerminalHVDCLine, U <: AbstractTwoTerminalDCLineFormulation} =
     DeviceModel(T, U)
+
+#### PWL Variables ####
+
+function _add_sparse_pwl_interpolation_variables!(
+    container::OptimizationContainer,
+    devices,
+    ::DeviceModel{D, HVDCTwoTerminalVSCLoss},
+) where {D <: PSY.TwoTerminalHVDCDetailedLine}
+    # TODO: Implement approach for deciding segment length
+    # Create Variables
+    time_steps = get_time_steps(container)
+    formulation = HVDCTwoTerminalVSCLoss()
+    len_segments = DEFAULT_INTERPOLATION_LENGTH
+    vars_vector = [
+        # Voltage v #
+        InterpolationSquaredVoltageVariableFrom,
+        InterpolationSquaredVoltageVariableTo,
+        InterpolationBinarySquaredVoltageVariableFrom,
+        InterpolationBinarySquaredVoltageVariableTo,
+        # Current i #
+        InterpolationSquaredCurrentVariable,
+        InterpolationBinarySquaredCurrentVariable,
+        # Bilinear γ #
+        InterpolationSquaredBilinearVariableFrom,
+        InterpolationSquaredBilinearVariableTo,
+        InterpolationBinarySquaredBilinearVariableFrom,
+        InterpolationBinarySquaredBilinearVariableTo,
+    ]
+    for T in vars_vector
+        var_container = lazy_container_addition!(container, T(), D)
+        binary_flag = get_variable_binary(T(), D, formulation)
+
+        for d in devices
+            name = PSY.get_name(d)
+            for t in time_steps
+                pwlvars = Array{JuMP.VariableRef}(undef, len_segments)
+                for i in 1:len_segments
+                    pwlvars[i] =
+                        var_container[(name, i, t)] = JuMP.@variable(
+                            get_jump_model(container),
+                            base_name = "$(T)_$(name)_{pwl_$(i), $(t)}",
+                            binary = binary_flag
+                        )
+                    ub = get_variable_upper_bound(T(), d, formulation)
+                    ub !== nothing && JuMP.set_upper_bound(var_container[name, i, t], ub)
+
+                    lb = get_variable_lower_bound(T(), d, formulation)
+                    lb !== nothing && JuMP.set_lower_bound(var_container[name, i, t], lb)
+                end
+            end
+        end
+    end
+    return
+end
 
 ####################################### PWL Constraints #######################################################
 
@@ -811,7 +865,7 @@ function add_constraints!(
 ) where {
     T <: ConverterPowerCalculationConstraint,
     U <: PSY.TwoTerminalHVDCDetailedLine,
-    V <: HVDCTwoTerminalPhysicalLoss,
+    V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -908,7 +962,7 @@ function add_constraints!(
 ) where {
     T <: ConverterDirectionConstraint,
     U <: PSY.TwoTerminalHVDCDetailedLine,
-    V <: HVDCTwoTerminalPhysicalLoss,
+    V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -1013,7 +1067,7 @@ function add_constraints!(
 ) where {
     T <: ConverterMcCormickEnvelopes,
     U <: PSY.TwoTerminalHVDCDetailedLine,
-    V <: HVDCTwoTerminalPhysicalLoss,
+    V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
