@@ -903,7 +903,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalPhysicalLoss},
+    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalVSCLoss},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(model, sys)
@@ -911,7 +911,7 @@ function construct_device!(
     #####################
     ##### Variables #####
     #####################
-    V = HVDCTwoTerminalPhysicalLoss
+    V = HVDCTwoTerminalVSCLoss
     # Add Power Variable
     add_variables!(container, HVDCActivePowerReceivedFromVariable, devices, V()) # p_c^{ac,from}
     add_variables!(container, HVDCActivePowerReceivedToVariable, devices, V()) # p_c^{ac,from}
@@ -921,6 +921,7 @@ function construct_device!(
     add_variables!(container, DCVoltageTo, devices, V()) # v_dc^{from}
     add_variables!(container, SquaredDCVoltageFrom, devices, V()) # v_dc^{sq, from}
     add_variables!(container, SquaredDCVoltageTo, devices, V()) # # v_dc^{sq, to}
+    #=
     add_variables!(
         container,
         InterpolationSquaredVoltageVariableFrom,
@@ -932,7 +933,7 @@ function construct_device!(
         InterpolationSquaredVoltageVariableTo,
         devices,
         V(),
-    ) # δ^{v,to}
+    ) # δ^{v,to}    
     add_variables!(
         container,
         InterpolationBinarySquaredVoltageVariableFrom,
@@ -945,10 +946,12 @@ function construct_device!(
         devices,
         V(),
     ) # z^{v,to}
+     =#
 
     # Add Current Variables: i, δ^i, z^i, i+, i-
     add_variables!(container, ConverterCurrent, devices, V()) # i
     add_variables!(container, SquaredConverterCurrent, devices, V()) # i^sq
+    #=
     add_variables!(
         container,
         InterpolationSquaredCurrentVariable,
@@ -961,8 +964,9 @@ function construct_device!(
         devices,
         V(),
     ) #  z^i
-    add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
-    add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
+     =#
+    #add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
+    #add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
     add_variables!(
         container,
         ConverterBinaryAbsoluteValueCurrent,
@@ -983,6 +987,7 @@ function construct_device!(
         devices,
         V(),
     ) # γ^{sq,from}
+    #=
     add_variables!(
         container,
         InterpolationSquaredBilinearVariableFrom,
@@ -995,7 +1000,7 @@ function construct_device!(
         devices,
         V(),
     ) # z^{γ,from}
-
+    =#
     add_variables!(
         container,
         AuxBilinearConverterVariableTo,
@@ -1008,6 +1013,7 @@ function construct_device!(
         devices,
         V(),
     ) # γ^{sq,to}
+    #=
     add_variables!(
         container,
         InterpolationSquaredBilinearVariableTo,
@@ -1020,6 +1026,8 @@ function construct_device!(
         devices,
         V(),
     ) # z^{γ,to}
+     =#
+    _add_sparse_pwl_interpolation_variables!(container, devices, model)
 
     #####################
     #### Expressions ####
@@ -1052,7 +1060,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalPhysicalLoss},
+    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalVSCLoss},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(model, sys)

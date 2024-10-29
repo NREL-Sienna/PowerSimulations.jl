@@ -141,7 +141,7 @@ struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 """
 Branch type to represent physical lossy model on two terminal DC lines
 """
-struct HVDCTwoTerminalPhysicalLoss <: AbstractTwoTerminalDCLineFormulation end
+struct HVDCTwoTerminalVSCLoss <: AbstractTwoTerminalDCLineFormulation end
 
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end

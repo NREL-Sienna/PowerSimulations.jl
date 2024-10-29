@@ -393,7 +393,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: HVDCActivePowerReceivedFromVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalPhysicalLoss},
+    W <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalVSCLoss},
     X <: AbstractPTDFModel,
 }
     var = get_variable(container, U(), V)
@@ -430,7 +430,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: HVDCActivePowerReceivedToVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalPhysicalLoss},
+    W <: Union{HVDCTwoTerminalPiecewiseLoss, HVDCTwoTerminalVSCLoss},
     X <: AbstractPTDFModel,
 }
     var = get_variable(container, U(), V)

@@ -454,3 +454,18 @@ The specified constraints are formulated as:
 ```
 """
 struct ConverterMcCormickEnvelopes <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the voltage.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c >= V^{min} i_c + v_c I^{min} - I^{min}V^{min},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c >= V^{max} i_c + v_c I^{max} - I^{max}V^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c <= V^{max} i_c + v_c I^{min} - I^{min}V^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c <= V^{min} i_c + v_c I^{max} - I^{max}V^{min},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationVoltageConstraints <: ConstraintType end
