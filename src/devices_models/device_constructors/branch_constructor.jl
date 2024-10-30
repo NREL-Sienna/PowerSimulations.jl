@@ -1014,12 +1014,40 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        ConverterCurrentBalanceConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
         ConverterMcCormickEnvelopes,
         devices,
         model,
         network_model,
     )
-    error("here")
+    add_constraints!(
+        container,
+        InterpolationVoltageConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationCurrentConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationBilinearConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    #error("here")
 
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, get_network_formulation(network_model))

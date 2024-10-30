@@ -262,6 +262,17 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 
+function get_default_attributes(
+    ::Type{U},
+    ::Type{V},
+) where {U <: PSY.TwoTerminalHVDCDetailedLine, V <: HVDCTwoTerminalVSCLoss}
+    return Dict{String, Any}(
+        "voltage_segments" => 3,
+        "current_segments" => 6,
+        "bilinear_segments" => 10,
+    )
+end
+
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, U},
@@ -273,29 +284,31 @@ get_initial_conditions_device_model(
 function _add_sparse_pwl_interpolation_variables!(
     container::OptimizationContainer,
     devices,
-    ::DeviceModel{D, HVDCTwoTerminalVSCLoss},
+    model::DeviceModel{D, HVDCTwoTerminalVSCLoss},
 ) where {D <: PSY.TwoTerminalHVDCDetailedLine}
     # TODO: Implement approach for deciding segment length
     # Create Variables
     time_steps = get_time_steps(container)
     formulation = HVDCTwoTerminalVSCLoss()
-    len_segments = DEFAULT_INTERPOLATION_LENGTH
+    v_segments = PSI.get_attribute(model, "voltage_segments")
+    i_segments = PSI.get_attribute(model, "current_segments")
+    γ_segments = PSI.get_attribute(model, "bilinear_segments")
     vars_vector = [
         # Voltage v #
-        InterpolationSquaredVoltageVariableFrom,
-        InterpolationSquaredVoltageVariableTo,
-        InterpolationBinarySquaredVoltageVariableFrom,
-        InterpolationBinarySquaredVoltageVariableTo,
+        (InterpolationSquaredVoltageVariableFrom, v_segments),
+        (InterpolationSquaredVoltageVariableTo, v_segments),
+        (InterpolationBinarySquaredVoltageVariableFrom, v_segments),
+        (InterpolationBinarySquaredVoltageVariableTo, v_segments),
         # Current i #
-        InterpolationSquaredCurrentVariable,
-        InterpolationBinarySquaredCurrentVariable,
+        (InterpolationSquaredCurrentVariable, i_segments),
+        (InterpolationBinarySquaredCurrentVariable, i_segments),
         # Bilinear γ #
-        InterpolationSquaredBilinearVariableFrom,
-        InterpolationSquaredBilinearVariableTo,
-        InterpolationBinarySquaredBilinearVariableFrom,
-        InterpolationBinarySquaredBilinearVariableTo,
+        (InterpolationSquaredBilinearVariableFrom, γ_segments),
+        (InterpolationSquaredBilinearVariableTo, γ_segments),
+        (InterpolationBinarySquaredBilinearVariableFrom, γ_segments),
+        (InterpolationBinarySquaredBilinearVariableTo, γ_segments),
     ]
-    for T in vars_vector
+    for (T, len_segments) in vars_vector
         var_container = lazy_container_addition!(container, T(), D)
         binary_flag = get_variable_binary(T(), D, formulation)
         # Binaries have one less segment than the interpolation continuous variable
@@ -1240,7 +1253,7 @@ function _get_breakpoints_for_pwl_function(
     return x_bkpts, y_bkpts
 end
 
-function _add_generic_incremental_interpolation_constraint(
+function _add_generic_incremental_interpolation_constraint!(
     container::OptimizationContainer,
     ::R, # original var : x
     ::S, # approximated var : y = f(x)
@@ -1248,8 +1261,9 @@ function _add_generic_incremental_interpolation_constraint(
     ::U, # binary interpolation var : z
     ::V, # constraint
     devices::IS.FlattenIteratorWrapper{W},
-    var_bkpts::Vector{Float64},
-    function_bkpts::Vector{Float64},
+    dic_var_bkpts::Dict{String, Vector{Float64}},
+    dic_function_bkpts::Dict{String, Vector{Float64}};
+    meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {
     R <: VariableType,
     S <: VariableType,
@@ -1262,11 +1276,10 @@ function _add_generic_incremental_interpolation_constraint(
     names = [PSY.get_name(d) for d in devices]
     JuMPmodel = get_jump_model(container)
 
-    x_var = get_variable(container, R(), W())
-    y_var = get_variable(container, S(), W())
-    δ_var = get_variable(container, T(), W())
-    z_var = get_variable(container, U(), W())
-    num_segments = length(var_bkpts) - 1
+    x_var = get_variable(container, R(), W)
+    y_var = get_variable(container, S(), W)
+    δ_var = get_variable(container, T(), W)
+    z_var = get_variable(container, U(), W)
 
     const_container_var = add_constraints_container!(
         container,
@@ -1274,7 +1287,7 @@ function _add_generic_incremental_interpolation_constraint(
         W,
         names,
         time_steps;
-        meta = "pwl_variable",
+        meta = "$(meta)pwl_variable",
     )
 
     const_container_function = add_constraints_container!(
@@ -1283,11 +1296,14 @@ function _add_generic_incremental_interpolation_constraint(
         W,
         names,
         time_steps;
-        meta = "pwl_function",
+        meta = "$(meta)pwl_function",
     )
 
     for d in devices
         name = PSY.get_name(d)
+        var_bkpts = dic_var_bkpts[name]
+        function_bkpts = dic_function_bkpts[name]
+        num_segments = length(var_bkpts) - 1
         for t in time_steps
             const_container_var[name, t] = JuMP.@constraint(
                 JuMPmodel,
@@ -1319,14 +1335,189 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     devices::IS.FlattenIteratorWrapper{U},
-    ::DeviceModel{U, V},
+    model::DeviceModel{U, V},
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: InterpolationVoltageConstraints,
     U <: PSY.TwoTerminalHVDCDetailedLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
+    dic_var_bkpts = Dict{String, Vector{Float64}}()
+    dic_function_bkpts = Dict{String, Vector{Float64}}()
+    num_segments = get_attribute(model, "voltage_segments")
+    for d in devices
+        name = PSY.get_name(d)
+        vmin, vmax = PSY.get_voltage_limits(d)
+        var_bkpts, function_bkpts =
+            _get_breakpoints_for_pwl_function(vmin, vmax, x -> x^2; num_segments)
+        dic_var_bkpts[name] = var_bkpts
+        dic_function_bkpts[name] = function_bkpts
+    end
 
-    # TODO
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        DCVoltageFrom(),
+        SquaredDCVoltageFrom(),
+        InterpolationSquaredVoltageVariableFrom(),
+        InterpolationBinarySquaredVoltageVariableFrom(),
+        InterpolationVoltageConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts;
+        meta = "from_",
+    )
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        DCVoltageTo(),
+        SquaredDCVoltageTo(),
+        InterpolationSquaredVoltageVariableTo(),
+        InterpolationBinarySquaredVoltageVariableTo(),
+        InterpolationVoltageConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts;
+        meta = "to_",
+    )
+    return
+end
 
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: InterpolationCurrentConstraints,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalVSCLoss,
+}
+    dic_var_bkpts = Dict{String, Vector{Float64}}()
+    dic_function_bkpts = Dict{String, Vector{Float64}}()
+    num_segments = get_attribute(model, "current_segments")
+    for d in devices
+        name = PSY.get_name(d)
+        Imax = PSY.get_max_dc_current(d)
+        Imin = -Imax
+        var_bkpts, function_bkpts =
+            _get_breakpoints_for_pwl_function(Imin, Imax, x -> x^2; num_segments)
+        dic_var_bkpts[name] = var_bkpts
+        dic_function_bkpts[name] = function_bkpts
+    end
+
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        ConverterCurrent(),
+        SquaredConverterCurrent(),
+        InterpolationSquaredCurrentVariable(),
+        InterpolationBinarySquaredCurrentVariable(),
+        InterpolationCurrentConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts,
+    )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: InterpolationBilinearConstraints,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalVSCLoss,
+}
+    dic_var_bkpts = Dict{String, Vector{Float64}}()
+    dic_function_bkpts = Dict{String, Vector{Float64}}()
+    num_segments = get_attribute(model, "bilinear_segments")
+    for d in devices
+        name = PSY.get_name(d)
+        vmin, vmax = PSY.get_voltage_limits(d)
+        Imax = PSY.get_max_dc_current(d)
+        Imin = -Imax
+        γ_min = vmin * Imin
+        γ_max = vmax * Imax
+        var_bkpts, function_bkpts =
+            _get_breakpoints_for_pwl_function(γ_min, γ_max, x -> x^2; num_segments)
+        dic_var_bkpts[name] = var_bkpts
+        dic_function_bkpts[name] = function_bkpts
+    end
+
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        AuxBilinearConverterVariableFrom(),
+        AuxBilinearSquaredConverterVariableFrom(),
+        InterpolationSquaredBilinearVariableFrom(),
+        InterpolationBinarySquaredBilinearVariableFrom(),
+        InterpolationBilinearConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts;
+        meta = "from_",
+    )
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        AuxBilinearConverterVariableTo(),
+        AuxBilinearSquaredConverterVariableTo(),
+        InterpolationSquaredBilinearVariableTo(),
+        InterpolationBinarySquaredBilinearVariableTo(),
+        InterpolationBilinearConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts;
+        meta = "to_",
+    )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: ConverterCurrentBalanceConstraint,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalVSCLoss,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # current vars #
+    current_var = get_variable(container, ConverterCurrent(), U) # From direction
+    # voltage vars #
+    from_voltage_var = get_variable(container, DCVoltageFrom(), U)
+    to_voltage_var = get_variable(container, DCVoltageTo(), U)
+
+    constraint = add_constraints_container!(
+        container,
+        T(),
+        U,
+        names,
+        time_steps,
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        g = PSY.get_g(d)
+        for t in time_steps
+            if g != 0.0
+                constraint[name, t] = JuMP.@constraint(
+                    JuMPmodel,
+                    current_var[name, t] ==
+                    g * (from_voltage_var[name, t] - to_voltage_var[name, t])
+                )
+            else
+                constraint[name, t] = JuMP.@constraint(
+                    JuMPmodel,
+                    from_voltage_var[name, t] == to_voltage_var[name, t]
+                )
+            end
+        end
+    end
+    return
 end
