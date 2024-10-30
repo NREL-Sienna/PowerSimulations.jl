@@ -298,12 +298,14 @@ function _add_sparse_pwl_interpolation_variables!(
     for T in vars_vector
         var_container = lazy_container_addition!(container, T(), D)
         binary_flag = get_variable_binary(T(), D, formulation)
+        # Binaries have one less segment than the interpolation continuous variable
+        len_segs = binary_flag ? (len_segments - 1) : len_segments
 
         for d in devices
             name = PSY.get_name(d)
             for t in time_steps
-                pwlvars = Array{JuMP.VariableRef}(undef, len_segments)
-                for i in 1:len_segments
+                pwlvars = Array{JuMP.VariableRef}(undef, len_segs)
+                for i in 1:len_segs
                     pwlvars[i] =
                         var_container[(name, i, t)] = JuMP.@variable(
                             get_jump_model(container),
@@ -1211,4 +1213,120 @@ function add_constraints!(
         end
     end
     return
+end
+
+####### PWL Interpolation for Function #######
+
+function _get_breakpoints_for_pwl_function(
+    min_val::Float64,
+    max_val::Float64,
+    f;
+    num_segments = DEFAULT_INTERPOLATION_LENGTH,
+)
+    # num_segments is the number of variables
+    # num_bkpts is the total breakpoints for the segments
+    num_bkpts = num_segments + 1
+    step = (max_val - min_val) / num_segments
+    x_bkpts = Vector{Float64}(undef, num_bkpts)
+    y_bkpts = Vector{Float64}(undef, num_bkpts)
+    # first breakpoint is always the minimum value
+    x_bkpts[1] = min_val
+    y_bkpts[1] = f(min_val)
+    for i in 1:num_segments
+        x_val = min_val + step * i
+        x_bkpts[i + 1] = x_val
+        y_bkpts[i + 1] = f(x_val)
+    end
+    return x_bkpts, y_bkpts
+end
+
+function _add_generic_incremental_interpolation_constraint(
+    container::OptimizationContainer,
+    ::R, # original var : x
+    ::S, # approximated var : y = f(x)
+    ::T, # interpolation var : δ
+    ::U, # binary interpolation var : z
+    ::V, # constraint
+    devices::IS.FlattenIteratorWrapper{W},
+    var_bkpts::Vector{Float64},
+    function_bkpts::Vector{Float64},
+) where {
+    R <: VariableType,
+    S <: VariableType,
+    T <: VariableType,
+    U <: VariableType,
+    V <: ConstraintType,
+    W <: PSY.Component,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+
+    x_var = get_variable(container, R(), W())
+    y_var = get_variable(container, S(), W())
+    δ_var = get_variable(container, T(), W())
+    z_var = get_variable(container, U(), W())
+    num_segments = length(var_bkpts) - 1
+
+    const_container_var = add_constraints_container!(
+        container,
+        V(),
+        W,
+        names,
+        time_steps;
+        meta = "pwl_variable",
+    )
+
+    const_container_function = add_constraints_container!(
+        container,
+        V(),
+        W,
+        names,
+        time_steps;
+        meta = "pwl_function",
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        for t in time_steps
+            const_container_var[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                x_var[name, t] ==
+                var_bkpts[1] + sum(
+                    δ_var[name, i, t] * (var_bkpts[i + 1] - var_bkpts[i]) for
+                    i in 1:num_segments
+                )
+            )
+            const_container_function[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                y_var[name, t] ==
+                function_bkpts[1] + sum(
+                    δ_var[name, i, t] * (function_bkpts[i + 1] - function_bkpts[i]) for
+                    i in 1:num_segments
+                )
+            )
+
+            for i in 1:(num_segments - 1)
+                JuMP.@constraint(JuMPmodel, z_var[name, i, t] >= δ_var[name, i + 1, t])
+                JuMP.@constraint(JuMPmodel, z_var[name, i, t] <= δ_var[name, i, t])
+            end
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: InterpolationVoltageConstraints,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalVSCLoss,
+}
+
+    # TODO
+
 end
