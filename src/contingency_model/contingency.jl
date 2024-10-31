@@ -1,4 +1,5 @@
 #! format: off
-get_parameter_type(::Type{<:PSY.Outage}, ::Type{<:AbstractEventModel}, ::Type{<:PSY.Device}) = AvailableStatusParameter
-get_parameter_multiplier(::AvailableStatusParameter, ::PSY.Device, ::AbstractDeviceFormulation) = 1.0
+get_parameter_type(::Type{<:PSY.Outage}, ::EventModel, ::Type{<:PSY.Device}) = AvailableStatusParameter
+# This value could change depending on the event modeling choices
+get_parameter_multiplier(::AvailableStatusParameter, ::PSY.Device, ::EventModel) = 1.0
 #! format: on
