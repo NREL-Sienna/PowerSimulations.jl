@@ -50,7 +50,7 @@ function _update_parameter_values!(
     components = get_available_components(device_model, get_system(model))
     ts_uuids = Set{String}()
     for component in components
-        ts_uuid = string(IS.get_time_series_uuid(U, component, ts_name))
+        ts_uuid = _get_ts_uuid(attributes, PSY.get_name(component))
         if !(ts_uuid in ts_uuids)
             ts_vector = get_time_series_values!(
                 U,
@@ -87,7 +87,7 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
-    ts_uuid = string(IS.get_time_series_uuid(U, service, ts_name))
+    ts_uuid = _get_ts_uuid(attributes, PSY.get_name(service))
     ts_vector = get_time_series_values!(
         U,
         model,
@@ -120,7 +120,7 @@ function _update_parameter_values!(
     ts_name = get_time_series_name(attributes)
     ts_uuids = Set{String}()
     for component in components
-        ts_uuid = string(IS.get_time_series_uuid(U, component, ts_name))
+        ts_uuid = _get_ts_uuid(attributes, PSY.get_name(component))
         if !(ts_uuid in ts_uuids)
             # Note: This interface reads one single value per component at a time.
             value = get_time_series_values!(
