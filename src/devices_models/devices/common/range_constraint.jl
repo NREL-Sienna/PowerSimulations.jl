@@ -764,7 +764,7 @@ function add_parameterized_upper_bound_range_constraints(
     ::Type{T},
     ::Type{U},
     ::Type{P},
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
@@ -821,7 +821,7 @@ function upper_bound_range_with_parameter!(
     constraint_container::JuMPConstraintArray,
     lhs_array,
     param::P,
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     ::DeviceModel{V, W},
 ) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     param_array = get_parameter_array(container, param, V)
@@ -871,7 +871,7 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     ::Type{T},
     array,
     param::P,
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
 ) where {
     T <: ConstraintType,
