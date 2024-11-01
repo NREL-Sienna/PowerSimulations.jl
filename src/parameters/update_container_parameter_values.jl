@@ -344,6 +344,32 @@ function _update_parameter_values!(
     return
 end
 
+function _update_parameter_values!(
+    parameter_array::AbstractArray{T},
+    attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage},
+    ::Type{U},
+    model::DecisionModel,
+    input::DatasetContainer{InMemoryDataset},
+) where {
+    T <: Union{JuMP.VariableRef, Float64},
+    U <: PSY.Component,
+}
+    @error("update parameters here $(get_name(model))")
+end
+
+function _update_parameter_values!(
+    parameter_array::AbstractArray{T},
+    attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage},
+    ::Type{U},
+    model::EmulationModel,
+    input::DatasetContainer{InMemoryDataset},
+) where {
+    T <: Union{JuMP.VariableRef, Float64},
+    U <: PSY.Component,
+}
+    @error("update parameters here $(get_name(model))")
+end
+
 """
 Update parameter function an OperationModel
 """

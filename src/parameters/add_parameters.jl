@@ -62,7 +62,7 @@ function add_parameters!(
     U <: Vector{D},
     V <: PSY.Contingency,
     W <: AbstractDeviceFormulation,
-    X <: AbstractEventModel,
+    X <: AbstractEventCondition,
 } where {D <: PSY.Component}
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
