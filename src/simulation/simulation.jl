@@ -1006,6 +1006,9 @@ function _execute!(
                         if model_number == execution_order[end]
                             _update_system_state!(sim, model)
                             _write_state_to_store!(store, sim)
+                            # This function needs to be called last so make sure that the update to the
+                            # state get written AFTER the models run.
+                            apply_simulation_events!(sim)
                         end
                     end
                 end
