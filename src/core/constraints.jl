@@ -502,3 +502,29 @@ The specified constraints are formulated as:
 ```
 """
 struct InterpolationBilinearConstraints <: ConstraintType end
+
+"""
+Struct to create the constraints that set the absolute value for the current to use in losses through a lossy Interconnecting Power Converter.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraint is formulated as:
+```math
+\\begin{align*}
+& i_c^{dc} = i_c^+ - i_c^-, \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
+& i_c^+ \\le I_max \\cdot \\nu_c,  \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
+& i_c^+ \\le I_max \\cdot (1 - \\nu_c),  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+\\end{align*}
+```
+"""
+struct CurrentAbsoluteValueConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that set the losses for the converter to use in losses through a lossy Interconnecting Power Converter.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraint is formulated as:
+```math
+\\begin{align*}
+& p_c^{loss} = a_c + b_c |i_c| + c_c i_c^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+\\end{align*}
+```
+"""
+struct ConverterLossesCalculationConstraint <: ConstraintType end

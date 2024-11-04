@@ -225,6 +225,12 @@ Docs abbreviation: ``i_c^{-,dc}``
 struct ConverterNegativeCurrent <: VariableType end
 
 """
+Struct to dispatch the creation of DC Converter Absolute Value direction Term Current Variables for DC formulations
+Docs abbreviation: ``\\nu_c^``
+"""
+struct ConverterCurrentDirection <: VariableType end
+
+"""
 Struct to dispatch the creation of DC Converter Binary for Absolute Value Current Variables for DC formulations
 Docs abbreviation: `\\nu_c``
 """

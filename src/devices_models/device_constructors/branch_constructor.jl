@@ -925,9 +925,12 @@ function construct_device!(
     # Add Current Variables: i, δ^i, z^i, i+, i-
     add_variables!(container, ConverterCurrent, devices, V()) # i
     add_variables!(container, SquaredConverterCurrent, devices, V()) # i^sq
-    # TODO: Activate Abs Value method
-    #add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
-    #add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
+    # Losses
+    add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
+    add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
+    add_variables!(container, ConverterCurrentDirection, devices, V())
+    add_variables!(container, HVDCLosses, devices, V())
+
     add_variables!(
         container,
         ConverterBinaryAbsoluteValueCurrent,
@@ -1043,6 +1046,20 @@ function construct_device!(
     add_constraints!(
         container,
         InterpolationBilinearConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        CurrentAbsoluteValueConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterLossesCalculationConstraint,
         devices,
         model,
         network_model,

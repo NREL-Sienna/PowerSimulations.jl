@@ -47,6 +47,11 @@ get_variable_binary(
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
+get_variable_binary(
+    ::ConverterCurrentDirection,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalVSCLoss,
+) = true
 
 get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, _) =
     NaN
@@ -220,6 +225,12 @@ get_variable_upper_bound(
 
 get_variable_lower_bound(
     ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
+    d::PSY.TwoTerminalHVDCDetailedLine,
+    ::HVDCTwoTerminalVSCLoss,
+) = 0.0
+
+get_variable_lower_bound(
+    ::Union{ConverterPositiveCurrent, ConverterNegativeCurrent},
     d::PSY.TwoTerminalHVDCDetailedLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = 0.0
@@ -1517,6 +1528,134 @@ function add_constraints!(
                     from_voltage_var[name, t] == to_voltage_var[name, t]
                 )
             end
+        end
+    end
+    return
+end
+
+####### Absolute Value for Current #########
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: CurrentAbsoluteValueConstraint,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalVSCLoss,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # current vars #
+    current_var = get_variable(container, ConverterCurrent(), U) # From direction
+    current_var_pos = get_variable(container, ConverterPositiveCurrent(), U) # From direction
+    current_var_neg = get_variable(container, ConverterNegativeCurrent(), U) # From direction
+    current_dir = get_variable(container, ConverterCurrentDirection(), U)
+
+    constraint =
+        add_constraints_container!(
+            container,
+            CurrentAbsoluteValueConstraint(),
+            U,
+            names,
+            time_steps,
+        )
+    constraint_pos_ub =
+        add_constraints_container!(
+            container,
+            CurrentAbsoluteValueConstraint(),
+            U,
+            names,
+            time_steps;
+            meta = "pos_ub",
+        )
+    constraint_neg_ub =
+        add_constraints_container!(
+            container,
+            CurrentAbsoluteValueConstraint(),
+            U,
+            names,
+            time_steps;
+            meta = "neg_ub",
+        )
+
+    for d in devices
+        name = PSY.get_name(d)
+        I_max = PSY.get_max_dc_current(d)
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var[name, t] == current_var_pos[name, t] - current_var_neg[name, t]
+            )
+            constraint_pos_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var_pos[name, t] <= I_max * current_dir[name, t]
+            )
+            constraint_neg_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var_neg[name, t] <= I_max * (1 - current_dir[name, t])
+            )
+        end
+    end
+    return
+end
+
+function _get_converter_loss_terms(loss::PSY.LinearCurve)
+    a = PSY.get_constant_term(loss)
+    b = PSY.get_proportional_term(loss)
+    return (a, b, 0.0)
+end
+
+function _get_converter_loss_terms(loss::PSY.QuadraticCurve)
+    a = PSY.get_constant_term(loss)
+    b = PSY.get_proportional_term(loss)
+    c = PSY.get_quadratic_term(loss)
+    return (a, b, c)
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: ConverterLossesCalculationConstraint,
+    U <: PSY.TwoTerminalHVDCDetailedLine,
+    V <: HVDCTwoTerminalVSCLoss,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # current vars #
+    losses_var = get_variable(container, HVDCLosses(), U) # From direction
+    current_var_pos = get_variable(container, ConverterPositiveCurrent(), U) # From direction
+    current_var_neg = get_variable(container, ConverterNegativeCurrent(), U) # From direction
+    current_sq_var = get_variable(container, SquaredConverterCurrent(), U)
+
+    constraint =
+        add_constraints_container!(
+            container,
+            ConverterLossesCalculationConstraint(),
+            U,
+            names,
+            time_steps,
+        )
+
+    for d in devices
+        name = PSY.get_name(d)
+        loss = PSY.get_converter_loss(d)
+        a, b, c = _get_converter_loss_terms(loss)
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                losses_var[name, t] ==
+                a + b * (current_var_pos[name, t] + current_var_neg[name, t]) +
+                c * current_sq_var[name, t]
+            )
         end
     end
     return
