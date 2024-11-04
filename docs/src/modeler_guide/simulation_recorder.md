@@ -5,7 +5,7 @@ during a simulation. These events can be post-processed to help debug problems.
 
 By default only SimulationStepEvent and ProblemExecutionEvent are recorded.  Here is an example.
 
-Suppose a simulation is run in the directory ./output.
+Suppose a simulation is run in the directory `./output`.
 
 Assume that setup commands have been run:
 

@@ -332,23 +332,8 @@ The specified constraint is formulated as:
 ```
 """
 struct PhaseAngleControlLimit <: ConstraintType end
-"""
-Struct to create the constraints that set the losses through a lossy HVDC two-terminal line.
-
-For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
-
-The specified constraints are formulated as:
-
-```math
-\\begin{align*}
-& f_t^\\text{to-from} - f_t^\\text{from-to} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
-& f_t^\\text{from-to} - f_t^\\text{to-from} \\le \\ell_t,\\quad \\forall t \\in \\{1,\\dots, T\\}
-\\end{align*}
-```
-"""
-struct HVDCLossesAbsoluteValue <: ConstraintType end
-struct HVDCDirection <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
+struct HVDCFlowCalculationConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 """

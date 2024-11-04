@@ -1,6 +1,16 @@
 #! format: off
 get_multiplier_value(::FromToFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = -1.0 * PSY.get_from_to_flow_limit(d)
 get_multiplier_value(::ToFromFlowLimitParameter, d::PSY.AreaInterchange, ::AbstractBranchFormulation) = PSY.get_to_from_flow_limit(d)
+
+get_parameter_multiplier(::FixValueParameter, ::PSY.AreaInterchange, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::LowerBoundValueParameter, ::PSY.AreaInterchange, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.AreaInterchange, ::AbstractBranchFormulation) = 1.0
+
+get_initial_conditions_device_model(
+    ::OperationModel,
+    model::DeviceModel{PSY.AreaInterchange, T},
+) where {T <: AbstractBranchFormulation} = DeviceModel(PSY.AreaInterchange, T)
+
 #! format: on
 
 function get_default_time_series_names(
@@ -26,7 +36,7 @@ function add_variables!(
     model::NetworkModel{T},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     formulation::AbstractBranchFormulation,
-) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+) where {T <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
 
     variable = add_variable_container!(
@@ -47,6 +57,18 @@ function add_variables!(
     return
 end
 
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{FlowActivePowerVariable},
+    model::NetworkModel{CopperPlatePowerModel},
+    devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
+    formulation::AbstractBranchFormulation,
+)
+    @warn(
+        "CopperPlatePowerModel ignores AreaInterchanges. Instead use AreaBalancePowerModel."
+    )
+end
+
 """
 Add flow constraints for area interchanges
 """
@@ -56,7 +78,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     model::DeviceModel{PSY.AreaInterchange, StaticBranch},
     ::NetworkModel{T},
-) where {T <: Union{AreaBalancePowerModel, AreaPTDFPowerModel}}
+) where {T <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
@@ -139,13 +161,14 @@ function add_constraints!(
     ::Type{LineFlowBoundConstraint},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     model::DeviceModel{PSY.AreaInterchange, <:AbstractBranchFormulation},
-    network_model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel{T},
     inter_area_branch_map::Dict{
         Tuple{PSY.Area, PSY.Area},
         Dict{DataType, Vector{<:PSY.ACBranch}},
     },
-)
+) where {T <: AbstractPTDFModel}
     @assert !isempty(inter_area_branch_map)
+
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in devices]
 
@@ -173,13 +196,16 @@ function add_constraints!(
         inter_change_name = PSY.get_name(area_interchange)
         area_from = PSY.get_from_area(area_interchange)
         area_to = PSY.get_to_area(area_interchange)
+        direction_branch_map = Dict{Float64, Dict{DataType, Vector{<:PSY.ACBranch}}}()
         if haskey(inter_area_branch_map, (area_from, area_to))
-            inter_area_branches = inter_area_branch_map[(area_from, area_to)]
-            mult = 1.0
-        elseif haskey(inter_area_branch_map, (area_to, area_from))
-            inter_area_branches = inter_area_branch_map[(area_to, area_from)]
-            mult = -1.0
-        else
+            # 1 is the multiplier
+            direction_branch_map[1.0] = inter_area_branch_map[(area_from, area_to)]
+        end
+        if haskey(inter_area_branch_map, (area_to, area_from))
+            # -1 is the multiplier because the direction is reversed
+            direction_branch_map[-1.0] = inter_area_branch_map[(area_to, area_from)]
+        end
+        if isempty(direction_branch_map)
             @warn(
                 "There are no branches modeled in Area InterChange $(summary(area_interchange)) \
           LineFlowBoundConstraint not created"
@@ -189,11 +215,13 @@ function add_constraints!(
 
         for t in time_steps
             sum_of_flows = JuMP.AffExpr()
-            for (type, branches) in inter_area_branches
-                flow_vars = get_variable(container, FlowActivePowerVariable(), type)
-                for b in branches
-                    b_name = PSY.get_name(b)
-                    _add_to_jump_expression!(sum_of_flows, flow_vars[b_name, t], mult)
+            for (mult, inter_area_branches) in direction_branch_map
+                for (type, branches) in inter_area_branches
+                    flow_vars = get_variable(container, FlowActivePowerVariable(), type)
+                    for b in branches
+                        b_name = PSY.get_name(b)
+                        _add_to_jump_expression!(sum_of_flows, flow_vars[b_name, t], mult)
+                    end
                 end
             end
             con_ub[inter_change_name, t] =

@@ -2,51 +2,56 @@
 
 Thermal generation formulations define the optimization models that describe thermal units mathematical model in different operational settings, such as economic dispatch and unit commitment.
 
+!!! note
+    
+    Thermal units can include multiple terms added to the objective function, such as no-load cost, turn-on/off cost, fixed cost and variable cost. In addition, variable costs can be linear, quadratic or piecewise-linear formulations. These methods are properly described in the [cost function page](@ref pwl_cost).
 
 !!! note
-    Thermal units can include multiple terms added to the objective function, such as no-load cost, turn-on/off cost, fixed cost and variable cost. In addition, variable costs can be linear, quadratic or piecewise-linear formulations. These methods are properly described in the [cost function page](@ref pwl_cost). 
-
-
-!!! note
+    
     The use of reactive power variables and constraints will depend on the network model used, i.e., whether it uses (or does not use) reactive power. If the network model is purely active power-based,  reactive power variables and related constraints are not created.
 
 !!! note
+    
     Reserve variables for services are not included in the formulation, albeit their inclusion change the variables, expressions, constraints and objective functions created. A detailed description of the implications in the optimization models is described in the [Service formulation](@ref service_formulations) section.
 
 ### Table of Contents
 
-1. [`ThermalBasicDispatch`](#ThermalBasicDispatch)
-2. [`ThermalDispatchNoMin`](#ThermalDispatchNoMin)
-3. [`ThermalCompactDispatch`](#ThermalCompactDispatch)
-4. [`ThermalStandardDispatch`](#ThermalStandardDispatch)
-5. [`ThermalBasicUnitCommitment`](#ThermalBasicUnitCommitment)
-6. [`ThermalBasicCompactUnitCommitment`](#ThermalBasicCompactUnitCommitment)
-7. [`ThermalStandardUnitCommitment`](#ThermalStandardUnitCommitment)
-8. [`ThermalMultiStartUnitCommitment`](#ThermalMultiStartUnitCommitment)
-9. [Valid configurations](#Valid-configurations)
+ 1. [`ThermalBasicDispatch`](#ThermalBasicDispatch)
+ 2. [`ThermalDispatchNoMin`](#ThermalDispatchNoMin)
+ 3. [`ThermalCompactDispatch`](#ThermalCompactDispatch)
+ 4. [`ThermalStandardDispatch`](#ThermalStandardDispatch)
+ 5. [`ThermalBasicUnitCommitment`](#ThermalBasicUnitCommitment)
+ 6. [`ThermalBasicCompactUnitCommitment`](#ThermalBasicCompactUnitCommitment)
+ 7. [`ThermalStandardUnitCommitment`](#ThermalStandardUnitCommitment)
+ 8. [`ThermalMultiStartUnitCommitment`](#ThermalMultiStartUnitCommitment)
+ 9. [Valid configurations](#Valid-configurations)
 
----
+* * *
 
 ## `ThermalBasicDispatch`
 
 ```@docs
 ThermalBasicDispatch
 ```
+
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Objective:**
 
@@ -67,8 +72,7 @@ For each thermal unit creates the range constraints for its active and reactive 
 \end{align*}
 ```
 
----
-
+* * *
 
 ## `ThermalDispatchNoMin`
 
@@ -78,18 +82,21 @@ ThermalDispatchNoMin
 
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Objective:**
 
@@ -110,7 +117,7 @@ For each thermal unit creates the range constraints for its active and reactive 
 \end{align}
 ```
 
----
+* * *
 
 ## `ThermalCompactDispatch`
 
@@ -120,30 +127,35 @@ ThermalCompactDispatch
 
 **Variables:**
 
-- [`PowerAboveMinimumVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``\Delta p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
+  - [`PowerAboveMinimumVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\Delta p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
 
 **Auxiliary Variables:**
-- [`PowerOutput`](@ref):
-  - Symbol: ``P^\text{th}``
-  - Definition: ``P^\text{th} = \text{on}^\text{th}P^\text{min} + \Delta p^\text{th}``
+
+  - [`PowerOutput`](@ref):
+    
+      + Symbol: ``P^\text{th}``
+      + Definition: ``P^\text{th} = \text{on}^\text{th}P^\text{min} + \Delta p^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
-- ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
+  - ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
 
 **Variable Value Parameters:**
 
-- ``\text{on}^\text{th}``: Used in feedforwards to define if the unit is on/off at each time-step from another problem. If no feedforward is used, the parameter takes a {0,1} value if the unit is available or not.
+  - ``\text{on}^\text{th}``: Used in feedforwards to define if the unit is on/off at each time-step from another problem. If no feedforward is used, the parameter takes a {0,1} value if the unit is available or not.
 
 **Objective:**
 
@@ -166,8 +178,7 @@ For each thermal unit creates the range constraints for its active and reactive 
 \end{align*}
 ```
 
----
-
+* * *
 
 ## `ThermalStandardDispatch`
 
@@ -177,21 +188,24 @@ ThermalStandardDispatch
 
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
-- ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
+  - ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
 
 **Objective:**
 
@@ -214,7 +228,7 @@ For each thermal unit creates the range constraints for its active and reactive 
 \end{align*}
 ```
 
----
+* * *
 
 ## `ThermalBasicUnitCommitment`
 
@@ -224,30 +238,34 @@ ThermalBasicUnitCommitment
 
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
-- [`OnVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``u_t^\text{th}``
-- [`StartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``v_t^\text{th}``
-- [`StopVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``w_t^\text{th}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p^\text{th}``
 
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
+  - [`OnVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``u_t^\text{th}``
+  - [`StartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``v_t^\text{th}``
+  - [`StopVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``w_t^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Objective:**
 
@@ -271,7 +289,7 @@ For each thermal unit creates the range constraints for its active and reactive 
 \end{align*}
 ```
 
----
+* * *
 
 ## `ThermalBasicCompactUnitCommitment`
 
@@ -279,38 +297,43 @@ For each thermal unit creates the range constraints for its active and reactive 
 ThermalBasicCompactUnitCommitment
 ```
 
-
 **Variables:**
 
-- [`PowerAboveMinimumVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``\Delta p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
-- [`OnVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``u_t^\text{th}``
-- [`StartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``v_t^\text{th}``
-- [`StopVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``w_t^\text{th}``
+  - [`PowerAboveMinimumVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\Delta p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
+  - [`OnVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``u_t^\text{th}``
+  - [`StartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``v_t^\text{th}``
+  - [`StopVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``w_t^\text{th}``
 
 **Auxiliary Variables:**
-- [`PowerOutput`](@ref):
-  - Symbol: ``P^\text{th}``
-  - Definition: ``P^\text{th} = u^\text{th}P^\text{min} + \Delta p^\text{th}``
 
+  - [`PowerOutput`](@ref):
+    
+      + Symbol: ``P^\text{th}``
+      + Definition: ``P^\text{th} = u^\text{th}P^\text{min} + \Delta p^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
 
 **Objective:**
 
@@ -318,7 +341,7 @@ Add a cost to the objective function depending on the defined cost structure of 
 
 **Expressions:**
 
-Adds ``u^\text{th}P^\text{th,min} +  \Delta p^\text{th}`` to the `ActivePowerBalance` expression and ``q^\text{th}`` to the `ReactivePowerBalance`, to be used in the supply-balance constraint depending on the network model used.
+Adds ``u^\text{th}P^\text{th,min} + \Delta p^\text{th}`` to the `ActivePowerBalance` expression and ``q^\text{th}`` to the `ReactivePowerBalance`, to be used in the supply-balance constraint depending on the network model used.
 
 **Constraints:**
 
@@ -334,7 +357,7 @@ For each thermal unit creates the range constraints for its active and reactive 
 \end{align*}
 ```
 
----
+* * *
 
 ## `ThermalCompactUnitCommitment`
 
@@ -344,44 +367,54 @@ ThermalCompactUnitCommitment
 
 **Variables:**
 
-- [`PowerAboveMinimumVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``\Delta p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
-- [`OnVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``u_t^\text{th}``
-- [`StartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``v_t^\text{th}``
-- [`StopVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``w_t^\text{th}``
+  - [`PowerAboveMinimumVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\Delta p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
+  - [`OnVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``u_t^\text{th}``
+  - [`StartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``v_t^\text{th}``
+  - [`StopVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``w_t^\text{th}``
 
 **Auxiliary Variables:**
-- [`PowerOutput`](@ref):
-  - Symbol: ``P^\text{th}``
-  - Definition: ``P^\text{th} = u^\text{th}P^\text{min} + \Delta p^\text{th}``
-- [`TimeDurationOn`](@ref):
-  - Symbol: ``V_t^\text{th}``
-  - Definition: Computed post optimization by adding consecutive turned on variable ``u_t^\text{th}``
-- [`TimeDurationOff`](@ref):
-  - Symbol: ``W_t^\text{th}``
-  - Definition: Computed post optimization by adding consecutive turned off variable ``1 - u_t^\text{th}``
+
+  - [`PowerOutput`](@ref):
+    
+      + Symbol: ``P^\text{th}``
+      + Definition: ``P^\text{th} = u^\text{th}P^\text{min} + \Delta p^\text{th}``
+
+  - [`TimeDurationOn`](@ref):
+    
+      + Symbol: ``V_t^\text{th}``
+      + Definition: Computed post optimization by adding consecutive turned on variable ``u_t^\text{th}``
+  - [`TimeDurationOff`](@ref):
+    
+      + Symbol: ``W_t^\text{th}``
+      + Definition: Computed post optimization by adding consecutive turned off variable ``1 - u_t^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
-- ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
-- ``D^\text{min,up}`` = `PowerSystems.get_time_limits(device).up`
-- ``D^\text{min,dn}`` = `PowerSystems.get_time_limits(device).down`
-
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
+  - ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
+  - ``D^\text{min,up}`` = `PowerSystems.get_time_limits(device).up`
+  - ``D^\text{min,dn}`` = `PowerSystems.get_time_limits(device).down`
 
 **Objective:**
 
@@ -389,7 +422,7 @@ Add a cost to the objective function depending on the defined cost structure of 
 
 **Expressions:**
 
-Adds ``u^\text{th}P^\text{th,min} +  \Delta p^\text{th}`` to the `ActivePowerBalance` expression and ``q^\text{th}`` to the `ReactivePowerBalance`, to be used in the supply-balance constraint depending on the network model used.
+Adds ``u^\text{th}P^\text{th,min} + \Delta p^\text{th}`` to the `ActivePowerBalance` expression and ``q^\text{th}`` to the `ReactivePowerBalance`, to be used in the supply-balance constraint depending on the network model used.
 
 **Constraints:**
 
@@ -412,6 +445,7 @@ In addition, this formulation adds duration constraints, i.e. minimum-up time an
 The duration times ``D^\text{min,up}`` and ``D^\text{min,dn}`` are processed to be used in multiple of the time-steps, given the resolution of the specific problem. In addition, parameters ``D^\text{init,up}`` and ``D^\text{init,dn}`` are used to identify how long the unit was on or off, respectively, before the simulation started.
 
 Minimum up-time constraint for ``t \in \{1,\dots T\}``:
+
 ```math
 \begin{align*}
 &  \text{If } t \leq D^\text{min,up} - D^\text{init,up} \text{ and } D^\text{init,up} > 0: \\
@@ -422,6 +456,7 @@ Minimum up-time constraint for ``t \in \{1,\dots T\}``:
 ```
 
 Minimum down-time constraint for ``t \in \{1,\dots T\}``:
+
 ```math
 \begin{align*}
 &  \text{If } t \leq D^\text{min,dn} - D^\text{init,dn} \text{ and } D^\text{init,up} > 0: \\
@@ -431,7 +466,7 @@ Minimum down-time constraint for ``t \in \{1,\dots T\}``:
 \end{align*}
 ```
 
----
+* * *
 
 ## `ThermalStandardUnitCommitment`
 
@@ -441,41 +476,50 @@ ThermalStandardUnitCommitment
 
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
-- [`OnVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``u_t^\text{th}``
-- [`StartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``v_t^\text{th}``
-- [`StopVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``w_t^\text{th}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
+  - [`OnVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``u_t^\text{th}``
+  - [`StartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``v_t^\text{th}``
+  - [`StopVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``w_t^\text{th}``
 
 **Auxiliary Variables:**
-- [`TimeDurationOn`](@ref):
-  - Symbol: ``V_t^\text{th}``
-  - Definition: Computed post optimization by adding consecutive turned on variable ``u_t^\text{th}``
-- [`TimeDurationOff`](@ref):
-  - Symbol: ``W_t^\text{th}``
-  - Definition: Computed post optimization by adding consecutive turned off variable ``1 - u_t^\text{th}``
+
+  - [`TimeDurationOn`](@ref):
+    
+      + Symbol: ``V_t^\text{th}``
+      + Definition: Computed post optimization by adding consecutive turned on variable ``u_t^\text{th}``
+
+  - [`TimeDurationOff`](@ref):
+    
+      + Symbol: ``W_t^\text{th}``
+      + Definition: Computed post optimization by adding consecutive turned off variable ``1 - u_t^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
-- ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
-- ``D^\text{min,up}`` = `PowerSystems.get_time_limits(device).up`
-- ``D^\text{min,dn}`` = `PowerSystems.get_time_limits(device).down`
-
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
+  - ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
+  - ``D^\text{min,up}`` = `PowerSystems.get_time_limits(device).up`
+  - ``D^\text{min,dn}`` = `PowerSystems.get_time_limits(device).down`
 
 **Objective:**
 
@@ -506,6 +550,7 @@ In addition, this formulation adds duration constraints, i.e. minimum-up time an
 The duration times ``D^\text{min,up}`` and ``D^\text{min,dn}`` are processed to be used in multiple of the time-steps, given the resolution of the specific problem. In addition, parameters ``D^\text{init,up}`` and ``D^\text{init,dn}`` are used to identify how long the unit was on or off, respectively, before the simulation started.
 
 Minimum up-time constraint for ``t \in \{1,\dots T\}``:
+
 ```math
 \begin{align*}
 &  \text{If } t \leq D^\text{min,up} - D^\text{init,up} \text{ and } D^\text{init,up} > 0: \\
@@ -516,6 +561,7 @@ Minimum up-time constraint for ``t \in \{1,\dots T\}``:
 ```
 
 Minimum down-time constraint for ``t \in \{1,\dots T\}``:
+
 ```math
 \begin{align*}
 &  \text{If } t \leq D^\text{min,dn} - D^\text{init,dn} \text{ and } D^\text{init,up} > 0: \\
@@ -525,8 +571,7 @@ Minimum down-time constraint for ``t \in \{1,\dots T\}``:
 \end{align*}
 ```
 
-
----
+* * *
 
 ## `ThermalMultiStartUnitCommitment`
 
@@ -534,61 +579,73 @@ Minimum down-time constraint for ``t \in \{1,\dots T\}``:
 ThermalMultiStartUnitCommitment
 ```
 
-
 **Variables:**
 
-- [`PowerAboveMinimumVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``\Delta p^\text{th}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Symbol: ``q^\text{th}``
-- [`OnVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``u_t^\text{th}``
-- [`StartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``v_t^\text{th}``
-- [`StopVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``w_t^\text{th}``
-- [`ColdStartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``x_t^\text{th}``
-- [`WarmStartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``y_t^\text{th}``
-- [`HotStartVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Symbol: ``z_t^\text{th}``
+  - [`PowerAboveMinimumVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\Delta p^\text{th}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q^\text{th}``
+  - [`OnVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``u_t^\text{th}``
+  - [`StartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``v_t^\text{th}``
+  - [`StopVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``w_t^\text{th}``
+  - [`ColdStartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``x_t^\text{th}``
+  - [`WarmStartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``y_t^\text{th}``
+  - [`HotStartVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``z_t^\text{th}``
 
 **Auxiliary Variables:**
-- [`PowerOutput`](@ref):
-  - Symbol: ``P^\text{th}``
-  - Definition: ``P^\text{th} = u^\text{th}P^\text{min} + \Delta p^\text{th}``
-- [`TimeDurationOn`](@ref):
-  - Symbol: ``V_t^\text{th}``
-  - Definition: Computed post optimization by adding consecutive turned on variable ``u_t^\text{th}``
-- [`TimeDurationOff`](@ref):
-  - Symbol: ``W_t^\text{th}``
-  - Definition: Computed post optimization by adding consecutive turned off variable ``1 - u_t^\text{th}``
+
+  - [`PowerOutput`](@ref):
+    
+      + Symbol: ``P^\text{th}``
+      + Definition: ``P^\text{th} = u^\text{th}P^\text{min} + \Delta p^\text{th}``
+
+  - [`TimeDurationOn`](@ref):
+    
+      + Symbol: ``V_t^\text{th}``
+      + Definition: Computed post optimization by adding consecutive turned on variable ``u_t^\text{th}``
+  - [`TimeDurationOff`](@ref):
+    
+      + Symbol: ``W_t^\text{th}``
+      + Definition: Computed post optimization by adding consecutive turned off variable ``1 - u_t^\text{th}``
 
 **Static Parameters:**
 
-- ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
-- ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
-- ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
-- ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
-- ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
-- ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
-- ``D^\text{min,up}`` = `PowerSystems.get_time_limits(device).up`
-- ``D^\text{min,dn}`` = `PowerSystems.get_time_limits(device).down`
-- ``D^\text{cold}`` = `PowerSystems.get_start_time_limits(device).cold`
-- ``D^\text{warm}`` = `PowerSystems.get_start_time_limits(device).warm`
-- ``D^\text{hot}`` = `PowerSystems.get_start_time_limits(device).hot`
-- ``P^\text{th,startup}`` = `PowerSystems.get_power_trajectory(device).startup`
-- ``P^\text{th, shdown}`` = `PowerSystems.get_power_trajectory(device).shutdown`
-
+  - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
+  - ``P^\text{th,max}`` = `PowerSystems.get_active_power_limits(device).max`
+  - ``Q^\text{th,min}`` = `PowerSystems.get_reactive_power_limits(device).min`
+  - ``Q^\text{th,max}`` = `PowerSystems.get_reactive_power_limits(device).max`
+  - ``R^\text{th,up}`` = `PowerSystems.get_ramp_limits(device).up`
+  - ``R^\text{th,dn}`` = `PowerSystems.get_ramp_limits(device).down`
+  - ``D^\text{min,up}`` = `PowerSystems.get_time_limits(device).up`
+  - ``D^\text{min,dn}`` = `PowerSystems.get_time_limits(device).down`
+  - ``D^\text{cold}`` = `PowerSystems.get_start_time_limits(device).cold`
+  - ``D^\text{warm}`` = `PowerSystems.get_start_time_limits(device).warm`
+  - ``D^\text{hot}`` = `PowerSystems.get_start_time_limits(device).hot`
+  - ``P^\text{th,startup}`` = `PowerSystems.get_power_trajectory(device).startup`
+  - ``P^\text{th, shdown}`` = `PowerSystems.get_power_trajectory(device).shutdown`
 
 **Objective:**
 
@@ -596,7 +653,7 @@ Add a cost to the objective function depending on the defined cost structure of 
 
 **Expressions:**
 
-Adds ``u^\text{th}P^\text{th,min} +  \Delta p^\text{th}`` to the `ActivePowerBalance` expression and ``q^\text{th}`` to the `ReactivePowerBalance`, to be used in the supply-balance constraint depending on the network model used.
+Adds ``u^\text{th}P^\text{th,min} + \Delta p^\text{th}`` to the `ActivePowerBalance` expression and ``q^\text{th}`` to the `ReactivePowerBalance`, to be used in the supply-balance constraint depending on the network model used.
 
 **Constraints:**
 
@@ -620,6 +677,7 @@ In addition, this formulation adds duration constraints, i.e. minimum-up time an
 The duration times ``D^\text{min,up}`` and ``D^\text{min,dn}`` are processed to be used in multiple of the time-steps, given the resolution of the specific problem. In addition, parameters ``D^\text{init,up}`` and ``D^\text{init,dn}`` are used to identify how long the unit was on or off, respectively, before the simulation started.
 
 Minimum up-time constraint for ``t \in \{1,\dots T\}``:
+
 ```math
 \begin{align*}
 &  \text{If } t \leq D^\text{min,up} - D^\text{init,up} \text{ and } D^\text{init,up} > 0: \\
@@ -630,6 +688,7 @@ Minimum up-time constraint for ``t \in \{1,\dots T\}``:
 ```
 
 Minimum down-time constraint for ``t \in \{1,\dots T\}``:
+
 ```math
 \begin{align*}
 &  \text{If } t \leq D^\text{min,dn} - D^\text{init,dn} \text{ and } D^\text{init,up} > 0: \\
@@ -653,8 +712,7 @@ Finally, multi temperature start/stop constraints are implemented using the foll
 \end{align*}
 ```
 
-
----
+* * *
 
 ## Valid configurations
 
@@ -668,9 +726,13 @@ using Latexify
 combos = PowerSimulations.generate_device_formulation_combinations()
 filter!(x -> x["device_type"] <: ThermalGen, combos)
 combo_table = DataFrame(
-    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
-    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
+    "Valid DeviceModel" =>
+        ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Device Type" => [
+        "[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)"
+        for c in combos
+    ],
     "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```

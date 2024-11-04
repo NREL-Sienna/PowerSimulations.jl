@@ -8,7 +8,7 @@ Once a `DecisionModel` is solved, results are accessed using `OptimizationProble
 
 ```julia
 # The DecisionModel is already constructed
-build!(model, output_dir = mktempdir())
+build!(model; output_dir = mktempdir())
 solve!(model)
 
 results = OptimizationProblemResults(model)
@@ -90,7 +90,8 @@ Then the following code can be used to read results:
 thermal_active_power = read_variable(results, "ActivePowerVariable__ThermalStandard")
 
 # Read max active power parameter of RenewableDispatch
-renewable_param = read_parameter(results, "ActivePowerTimeSeriesParameter__RenewableDispatch")
+renewable_param =
+    read_parameter(results, "ActivePowerTimeSeriesParameter__RenewableDispatch")
 
 # Read cost expressions of ThermalStandard units
 cost_thermal = read_expression(results, "ProductionCostExpression__ThermalStandard")
@@ -109,7 +110,7 @@ Results will be in the form of DataFrames that can be easily explored.
 ```julia
 # The Simulation is already constructed
 build!(sim)
-execute!(sim; enable_progress_bar=true)
+execute!(sim; enable_progress_bar = true)
 
 results_sim = SimulationResults(sim)
 ```
@@ -151,7 +152,9 @@ In this case, using `read_variable` (or read expression, parameter or dual), wil
 ```julia
 thermal_active_power = read_variable(results_uc, "ActivePowerVariable__ThermalStandard")
 ```
+
 will return:
+
 ```
 DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 8 entries:
   DateTime("2020-10-02T00:00:00") => 72×54 DataFrame…
@@ -163,6 +166,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 8 entries:
   DateTime("2020-10-08T00:00:00") => 72×54 DataFrame…
   DateTime("2020-10-09T00:00:00") => 72×54 DataFrame…
 ```
+
 That is, a sorted dictionary for each simulation step, using as a key the initial timestamp for that specific simulation step.
 
 Note that in this case, each DataFrame, has a dimension of ``72 \times 54``, since the horizon is 72 hours (number of rows), but the interval is only 24 hours. Indeed, note the initial timestamp of each simulation step is the beginning of each day, i.e. 24 hours. Finally, there 54 columns, since this example system has 53 `ThermalStandard` units (plus 1 column for the timestamps). The user is free to explore the solution of any simulation step as needed.
@@ -172,10 +176,14 @@ Note that in this case, each DataFrame, has a dimension of ``72 \times 54``, sin
 Using `read_realized_variable` (or read realized expression, parameter or dual), will return the DataFrame of the realized solution of any specific variable. That is, it will concatenate the corresponding simulation step with the specified interval of that step, to construct a single DataFrame with the "realized solution" of the entire simulation.
 
 For example, the code:
+
 ```julia
-th_realized_power = read_realized_variable(results_uc, "ActivePowerVariable__ThermalStandard")
+th_realized_power =
+    read_realized_variable(results_uc, "ActivePowerVariable__ThermalStandard")
 ```
+
 will return:
+
 ```raw
 92×54 DataFrame
  Row │ DateTime             322_CT_6      321_CC_1  202_STEAM_3   223_CT_4  123_STEAM_2    213_CT_1  223_CT_6  313_CC_1  101_STEAM_3  123_C ⋯
@@ -196,6 +204,5 @@ will return:
  192 │ 2020-10-09T23:00:00   0.0             0.0    60.6667            0.0  117.81              0.0       0.0     0.0        76.0     0.0
                                                                                                               44 columns and 180 rows omitted
 ```
+
 In this case, the 8 simulation steps of 24 hours (192 hours), in a single DataFrame, to enable easy exploration of the realized results for the user.
-
-

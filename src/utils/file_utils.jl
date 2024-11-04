@@ -3,7 +3,7 @@ Return a decoded JSON file.
 """
 function read_json(filename::AbstractString)
     open(filename, "r") do io
-        JSON.parse(io)
+        JSON3.read(io)
     end
 end
 
@@ -11,9 +11,7 @@ end
 Return a DataFrame from a CSV file.
 """
 function read_dataframe(filename::AbstractString)
-    open(filename, "r") do io
-        DataFrames.DataFrame(CSV.File(io))
-    end
+    return CSV.read(filename, DataFrames.DataFrame)
 end
 
 """
@@ -28,7 +26,7 @@ end
 
 function read_file_hashes(path)
     data = open(joinpath(path, IS.HASH_FILENAME), "r") do io
-        JSON.parse(io)
+        JSON3.read(io)
     end
 
     return data["files"]

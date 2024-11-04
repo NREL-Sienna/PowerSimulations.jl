@@ -3,7 +3,7 @@ Container for the initial condition data
 """
 mutable struct InitialCondition{
     T <: InitialConditionType,
-    U <: Union{JuMP.VariableRef, Float64},
+    U <: Union{JuMP.VariableRef, Float64, Nothing},
 }
     component::PSY.Component
     value::U
@@ -39,16 +39,22 @@ function get_condition(
     return jump_value(p.value)
 end
 
+function get_condition(
+    ::InitialCondition{T, Nothing},
+) where {T <: InitialConditionType}
+    return nothing
+end
+
 get_component(ic::InitialCondition) = ic.component
 get_value(ic::InitialCondition) = ic.value
 get_component_name(ic::InitialCondition) = PSY.get_name(ic.component)
 get_component_type(ic::InitialCondition) = typeof(ic.component)
 get_ic_type(
     ::Type{InitialCondition{T, U}},
-) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64, Nothing}} = T
 get_ic_type(
     ::InitialCondition{T, U},
-) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64}} = T
+) where {T <: InitialConditionType, U <: Union{JuMP.VariableRef, Float64, Nothing}} = T
 
 """
 Stores data to populate initial conditions before the build call

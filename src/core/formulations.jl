@@ -134,6 +134,11 @@ struct HVDCTwoTerminalLossless <: AbstractTwoTerminalDCLineFormulation end
 Branch type to represent lossy power flow on DC lines
 """
 struct HVDCTwoTerminalDispatch <: AbstractTwoTerminalDCLineFormulation end
+"""
+Branch type to represent piecewise lossy power flow on two terminal DC lines
+"""
+struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
+
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
 
@@ -167,7 +172,7 @@ Approximation to represent inter-area flow with each area represented as a singl
 """
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balacing areas independently.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balancing areas independently.
 """
 struct AreaPTDFPowerModel <: AbstractPTDFModel end
 

@@ -42,6 +42,11 @@ function is_dirty(cache::OptimizationOutputCache, timestamp)
     return timestamp >= first(cache.dirty_timestamps)
 end
 
+"""
+    Base.empty!(cache::OptimizationOutputCache)
+
+Empty the [`OptimizationOutputCache`](@ref)
+"""
 function Base.empty!(cache::OptimizationOutputCache)
     @assert isempty(cache.dirty_timestamps) "dirty cache was still present $(cache.key) $(cache.dirty_timestamps)"
     empty!(cache.data)

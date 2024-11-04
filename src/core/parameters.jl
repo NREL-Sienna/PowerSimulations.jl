@@ -6,6 +6,7 @@ struct TimeSeriesAttributes{T <: PSY.TimeSeriesData} <: ParameterAttributes
     name::String
     multiplier_id::Base.RefValue{Int}
     component_name_to_ts_uuid::Dict{String, String}
+    subsystem::Base.RefValue{String}
 end
 
 function TimeSeriesAttributes(
@@ -18,6 +19,7 @@ function TimeSeriesAttributes(
         name,
         Base.RefValue{Int}(multiplier_id),
         component_name_to_ts_uuid,
+        Base.RefValue{String}(""),
     )
 end
 
@@ -28,6 +30,13 @@ function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
     attr.multiplier_id[] = val
     return
 end
+
+get_subsystem(attr::TimeSeriesAttributes) = attr.subsystem[]
+function set_subsystem!(attr::TimeSeriesAttributes, val::String)
+    attr.subsystem[] = val
+    return
+end
+set_subsystem!(::TimeSeriesAttributes, ::Nothing) = nothing
 
 function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::String)
     if haskey(attr.component_name_to_ts_uuid, name)

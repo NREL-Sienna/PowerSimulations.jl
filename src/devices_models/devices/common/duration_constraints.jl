@@ -52,7 +52,10 @@ function device_duration_retrospective!(
     varstart = get_variable(container, var_types[2], T)
     varstop = get_variable(container, var_types[3], T)
 
-    set_names = [get_component_name(ic) for ic in initial_duration[:, 1]]
+    set_names = [
+        get_component_name(ic) for
+        ic in initial_duration[:, 1] if !isnothing(get_value(ic))
+    ]
     con_up = add_constraints_container!(
         container,
         cons_type,
@@ -72,6 +75,7 @@ function device_duration_retrospective!(
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -84,10 +88,11 @@ function device_duration_retrospective!(
                 JuMP.add_to_expression!(lhs_on, 1)
             end
             con_up[name, t] =
-                JuMP.@constraint(container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+                JuMP.@constraint(get_jump_model(container), lhs_on - varon[name, t] <= 0.0)
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -100,11 +105,12 @@ function device_duration_retrospective!(
                 JuMP.add_to_expression!(lhs_off, 1)
             end
             con_down[name, t] =
-                JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+                JuMP.@constraint(get_jump_model(container), lhs_off + varon[name, t] <= 1.0)
         end
     end
     return
 end
+
 @doc raw"""
 This formulation of the duration constraints looks ahead in the time frame of the model.
 
@@ -165,6 +171,7 @@ function device_duration_look_ahead!(
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -177,12 +184,13 @@ function device_duration_look_ahead!(
                 lhs_on += get_value(ic)
             end
             con_up[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 varstop[name, t] * duration_data[ix].up - lhs_on <= 0.0
             )
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -195,7 +203,7 @@ function device_duration_look_ahead!(
                 lhs_off += get_value(ic)
             end
             con_down[name, t] = JuMP.@constraint(
-                container.JuMPmodel,
+                get_jump_model(container),
                 varstart[name, t] * duration_data[ix].down - lhs_off <= 0.0
             )
         end
@@ -278,8 +286,8 @@ function device_duration_parameters!(
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
-
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].up + 1), t)
@@ -294,16 +302,20 @@ function device_duration_parameters!(
             if t <= duration_data[ix].up
                 lhs_on += get_value(ic)
                 con_up[name, t] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     varstop[name, t] * duration_data[ix].up - lhs_on <= 0.0
                 )
             else
                 con_up[name, t] =
-                    JuMP.@constraint(container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+                    JuMP.@constraint(
+                        get_jump_model(container),
+                        lhs_on - varon[name, t] <= 0.0
+                    )
             end
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -319,12 +331,15 @@ function device_duration_parameters!(
             if t <= duration_data[ix].down
                 lhs_off += get_value(ic)
                 con_down[name, t] = JuMP.@constraint(
-                    container.JuMPmodel,
+                    get_jump_model(container),
                     varstart[name, t] * duration_data[ix].down - lhs_off <= 0.0
                 )
             else
                 con_down[name, t] =
-                    JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+                    JuMP.@constraint(
+                        get_jump_model(container),
+                        lhs_off + varon[name, t] <= 1.0
+                    )
             end
         end
     end
@@ -395,6 +410,7 @@ function device_duration_compact_retrospective!(
     total_time_steps = length(time_steps)
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -413,10 +429,11 @@ function device_duration_compact_retrospective!(
                 continue
             end
             con_up[name, t] =
-                JuMP.@constraint(container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+                JuMP.@constraint(get_jump_model(container), lhs_on - varon[name, t] <= 0.0)
         end
 
         for (ix, ic) in enumerate(initial_duration[:, 2])
+            isnothing(get_value(ic)) && continue
             name = get_component_name(ic)
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
@@ -435,7 +452,7 @@ function device_duration_compact_retrospective!(
                 continue
             end
             con_down[name, t] =
-                JuMP.@constraint(container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+                JuMP.@constraint(get_jump_model(container), lhs_off + varon[name, t] <= 1.0)
         end
     end
     for c in [con_up, con_down]

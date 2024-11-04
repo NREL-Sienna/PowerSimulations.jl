@@ -60,8 +60,8 @@ end
 function InitialConditionUpdateEvent(
     simulation_time,
     ic::InitialCondition,
-    previous_value::Float64,
-    model_name,
+    previous_value::Union{Nothing, Float64},
+    model_name::Symbol,
 )
     return InitialConditionUpdateEvent(
         IS.RecorderEventCommon("InitialConditionUpdateEvent"),
@@ -69,8 +69,8 @@ function InitialConditionUpdateEvent(
         string(get_ic_type(ic)),
         string(get_component_type(ic)),
         get_component_name(ic),
-        get_condition(ic),
-        previous_value,
+        isnothing(get_condition(ic)) ? 1e8 : get_condition(ic),
+        isnothing(previous_value) ? 1e8 : previous_value,
         string(model_name),
     )
 end

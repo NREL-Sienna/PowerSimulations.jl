@@ -302,21 +302,6 @@ function _add_pwl_term!(
         device_base_power,
     )
 
-    compact_status = validate_compact_pwl_data(component, data, base_power)
-    if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
-        error(
-            "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
-        )
-        # data = _convert_to_full_variable_cost(data, component)
-    elseif uses_compact_power(component, V()) && compact_status != COMPACT_PWL_STATUS.VALID
-        @warn(
-            "The cost data provided is not in compact form. Will attempt to convert. Errors may occur."
-        )
-        data = convert_to_compact_variable_cost(data)
-    else
-        @debug uses_compact_power(component, V()) compact_status name T V
-    end
-
     cost_is_convex = PSY.is_convex(data)
     if !cost_is_convex
         error("MarketBidCost for component $(name) is non-convex")

@@ -104,13 +104,26 @@ end
 
 function solve_impl!(model::OperationModel)
     container = get_optimization_container(model)
+    model_name = get_name(model)
+    ts = get_current_timestamp(model)
+    output_dir = get_output_dir(model)
+
+    if get_export_optimization_model(get_settings(model))
+        model_output_dir = joinpath(output_dir, "optimization_model_exports")
+        mkpath(model_output_dir)
+        tss = replace("$(ts)", ":" => "_")
+        model_export_path = joinpath(model_output_dir, "exported_$(model_name)_$(tss).json")
+        serialize_optimization_model(container, model_export_path)
+        write_lp_file(
+            get_jump_model(container),
+            replace(model_export_path, ".json" => ".lp"),
+        )
+    end
+
     status = solve_impl!(container, get_system(model))
     set_run_status!(model, status)
     if status != RunStatus.SUCCESSFULLY_FINALIZED
         settings = get_settings(model)
-        model_name = get_name(model)
-        ts = get_current_timestamp(model)
-        output_dir = get_output_dir(model)
         infeasible_opt_path = joinpath(output_dir, "infeasible_$(model_name).json")
         @error("Serializing Infeasible Problem at $(infeasible_opt_path)")
         serialize_optimization_model(container, infeasible_opt_path)
@@ -429,16 +442,6 @@ function serialize_optimization_model(model::OperationModel)
         get_optimization_container(model),
         joinpath(get_output_dir(model), _JUMP_MODEL_FILENAME),
     )
-    return
-end
-
-function update_model!(model::OperationModel, source, ini_cond_chronology)
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        update_parameters!(model, get_decision_states(source))
-    end
-    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        update_initial_conditions!(model, source, ini_cond_chronology)
-    end
     return
 end
 

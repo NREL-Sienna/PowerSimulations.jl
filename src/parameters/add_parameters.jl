@@ -216,6 +216,7 @@ function _add_time_series_parameters!(
         time_steps,
     )
     set_time_series_multiplier_id!(get_attributes(param_container), time_series_mult_id)
+    set_subsystem!(get_attributes(param_container), get_subsystem(model))
     jump_model = get_jump_model(container)
 
     for (ts_uuid, ts_values) in initial_values
@@ -282,6 +283,7 @@ function _add_parameters!(
     )
 
     set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
+    set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())
@@ -311,6 +313,52 @@ function _add_parameters!(
     parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
     jump_model = get_jump_model(container)
     for d in devices
+        name = PSY.get_name(d)
+        if get_variable_warm_start_value(U(), d, W()) === nothing
+            inital_parameter_value = 0.0
+        else
+            inital_parameter_value = get_variable_warm_start_value(U(), d, W())
+        end
+        for t in time_steps
+            set_multiplier!(
+                parameter_container,
+                get_parameter_multiplier(T(), d, W()),
+                name,
+                t,
+            )
+            set_parameter!(
+                parameter_container,
+                jump_model,
+                inital_parameter_value,
+                name,
+                t,
+            )
+        end
+    end
+    return
+end
+
+function _add_parameters!(
+    container::OptimizationContainer,
+    ::T,
+    key::VariableKey{U, D},
+    model::DeviceModel{D, W},
+    devices::V,
+) where {
+    T <: OnStatusParameter,
+    U <: OnVariable,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractThermalFormulation,
+} where {D <: PSY.ThermalGen}
+    @debug "adding" T D U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    names = [PSY.get_name(device) for device in devices if !PSY.get_must_run(device)]
+    time_steps = get_time_steps(container)
+    parameter_container = add_param_container!(container, T(), D, key, names, time_steps)
+    jump_model = get_jump_model(container)
+    for d in devices
+        if PSY.get_must_run(d)
+            continue
+        end
         name = PSY.get_name(d)
         if get_variable_warm_start_value(U(), d, W()) === nothing
             inital_parameter_value = 0.0

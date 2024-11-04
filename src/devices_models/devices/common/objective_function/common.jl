@@ -11,6 +11,7 @@ function add_variable_cost!(
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         _add_variable_cost_to_objective!(container, U(), d, op_cost_data, V())
+        _add_vom_cost_to_objective!(container, U(), d, op_cost_data, V())
     end
     return
 end
@@ -27,6 +28,7 @@ function add_shut_down_cost!(
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
+        PSY.get_must_run(d) && continue
         op_cost_data = PSY.get_operation_cost(d)
         cost_term = shut_down_cost(op_cost_data, d, V())
         iszero(cost_term) && continue
@@ -40,7 +42,6 @@ end
 ##################################
 ####### Proportional Cost ########
 ##################################
-
 function add_proportional_cost!(
     container::OptimizationContainer,
     ::U,
@@ -53,8 +54,42 @@ function add_proportional_cost!(
         cost_term = proportional_cost(op_cost_data, U(), d, V())
         iszero(cost_term) && continue
         for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
+    end
+    return
+end
+
+##################################
+########## VOM Cost ##############
+##################################
+
+function _add_vom_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::PSY.OperationalCost,
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    variable_cost_data = variable_cost(op_cost, T(), component, U())
+    power_units = PSY.get_power_units(variable_cost_data)
+    vom_cost = PSY.get_vom_cost(variable_cost_data)
+    multiplier = 1.0 # VOM Cost is always positive
+    cost_term = PSY.get_proportional_term(vom_cost)
+    iszero(cost_term) && return
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    cost_term_normalized = get_proportional_cost_per_system_unit(
+        cost_term,
+        power_units,
+        base_power,
+        device_base_power,
+    )
+    for t in get_time_steps(container)
+        exp =
+            _add_proportional_term!(container, T(), d, cost_term_normalized * multiplier, t)
+        add_to_expression!(container, ProductionCostExpression, exp, d, t)
     end
     return
 end
@@ -68,15 +103,24 @@ function add_proportional_cost!(
     ::U,
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
-) where {T <: PSY.ThermalGen, U <: OnVariable, V <: AbstractCompactUnitCommitment}
+) where {T <: PSY.ThermalGen, U <: OnVariable, V <: AbstractThermalUnitCommitment}
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
         cost_term = proportional_cost(op_cost_data, U(), d, V())
         iszero(cost_term) && continue
         for t in get_time_steps(container)
-            exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
-            add_to_expression!(container, ProductionCostExpression, exp, d, t)
+            if !PSY.get_must_run(d)
+                exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+                add_to_expression!(container, ProductionCostExpression, exp, d, t)
+            end
+            add_to_expression!(
+                container,
+                ProductionCostExpression,
+                cost_term * multiplier,
+                d,
+                t,
+            )
         end
     end
     return
@@ -114,6 +158,7 @@ function _add_start_up_cost_to_objective!(
     op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    PSY.get_must_run(component) && return
     cost_term = start_up_cost(op_cost, component, U())
     iszero(cost_term) && return
     multiplier = objective_function_multiplier(T(), U())
@@ -136,6 +181,7 @@ function _add_start_up_cost_to_objective!(
     op_cost::PSY.ThermalGenerationCost,
     ::U,
 ) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
+    PSY.get_must_run(component) && return
     cost_terms = start_up_cost(op_cost, component, U())
     cost_term = cost_terms[MULTI_START_COST_MAP[T]]
     iszero(cost_term) && return

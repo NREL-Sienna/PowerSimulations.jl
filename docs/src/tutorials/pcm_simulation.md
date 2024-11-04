@@ -77,8 +77,8 @@ In addition to the manual specification process demonstrated in the OperationsPr
 example, PSI also provides pre-specified templates for some standard problems:
 
 ```@example pcm
-template_ed = template_economic_dispatch(
-    network = NetworkModel(PTDFPowerModel, use_slacks = true),
+template_ed = template_economic_dispatch(;
+    network = NetworkModel(PTDFPowerModel; use_slacks = true),
 )
 ```
 
@@ -91,10 +91,10 @@ a stage. In this case, we want to define two stages with the `ProblemTemplate`s
 and the `System`s that we've already created.
 
 ```@example pcm
-models = SimulationModels(
+models = SimulationModels(;
     decision_models = [
-        DecisionModel(template_uc, sys_DA, optimizer = solver, name = "UC"),
-        DecisionModel(template_ed, sys_RT, optimizer = solver, name = "ED"),
+        DecisionModel(template_uc, sys_DA; optimizer = solver, name = "UC"),
+        DecisionModel(template_ed, sys_RT; optimizer = solver, name = "ED"),
     ],
 )
 ```
@@ -111,8 +111,8 @@ Let's review some of the `SimulationSequence` arguments.
 In PowerSimulations, chronologies define where information is flowing. There are two types
 of chronologies.
 
-- inter-stage chronologies: Define how information flows between stages. e.g. day-ahead solutions are used to inform economic dispatch problems
-- intra-stage chronologies: Define how information flows between multiple executions of a single stage. e.g. the dispatch setpoints of the first period of an economic dispatch problem are constrained by the ramping limits from setpoints in the final period of the previous problem.
+  - inter-stage chronologies: Define how information flows between stages. e.g. day-ahead solutions are used to inform economic dispatch problems
+  - intra-stage chronologies: Define how information flows between multiple executions of a single stage. e.g. the dispatch setpoints of the first period of an economic dispatch problem are constrained by the ramping limits from setpoints in the final period of the previous problem.
 
 ### `FeedForward`
 
@@ -125,7 +125,7 @@ in the economic dispatch problems based on the value of the unit-commitment vari
 ```@example pcm
 feedforward = Dict(
     "ED" => [
-        SemiContinuousFeedforward(
+        SemiContinuousFeedforward(;
             component_type = ThermalStandard,
             source = OnVariable,
             affected_values = [ActivePowerVariable],
@@ -140,19 +140,18 @@ The stage problem length, look-ahead, and other details surrounding the temporal
 of stages are controlled using the structure of the time series data in the `System`s.
 So, to define a typical day-ahead - real-time sequence:
 
-- Day ahead problems should represent 48 hours, advancing 24 hours after each execution (24-hour look-ahead)
-- Real time problems should represent 1 hour (12 5-minute periods), advancing 15 min after each execution (15 min look-ahead)
+  - Day ahead problems should represent 48 hours, advancing 24 hours after each execution (24-hour look-ahead)
+  - Real time problems should represent 1 hour (12 5-minute periods), advancing 15 min after each execution (15 min look-ahead)
 
 We can adjust the time series data to reflect this structure in each `System`:
 
-- `transform_single_time_series!(sys_DA, 48, Hour(1))`
-- `transform_single_time_series!(sys_RT, 12, Minute(15))`
-
+  - `transform_single_time_series!(sys_DA, 48, Hour(1))`
+  - `transform_single_time_series!(sys_RT, 12, Minute(15))`
 
 Now we can put it all together to define a `SimulationSequence`
 
 ```@example pcm
-DA_RT_sequence = SimulationSequence(
+DA_RT_sequence = SimulationSequence(;
     models = models,
     ini_cond_chronology = InterProblemChronology(),
     feedforwards = feedforward,
@@ -166,7 +165,7 @@ that we've defined.
 
 ```@example pcm
 path = mkdir(joinpath(".", "rts-store")) #hide
-sim = Simulation(
+sim = Simulation(;
     name = "rts-test",
     steps = 2,
     models = models,
@@ -187,7 +186,7 @@ the following command returns the status of the simulation (0: is proper executi
 stores the results in a set of HDF5 files on disk.
 
 ```@example pcm
-execute!(sim, enable_progress_bar = false)
+execute!(sim; enable_progress_bar = false)
 ```
 
 ## Results
@@ -245,13 +244,15 @@ problem definition), we can use:
 ```@example pcm
 read_parameter(
     ed_results,
-    "ActivePowerTimeSeriesParameter__RenewableNonDispatch",
+    "ActivePowerTimeSeriesParameter__RenewableNonDispatch";
     initial_time = DateTime("2020-01-01T06:00:00"),
     count = 5,
 )
 ```
 
 !!! info
+    
+
 note that this returns the results of each execution step in a separate dataframe
 If you want the realized results (without lookahead periods), you can call `read_realized_*`:
 
@@ -260,9 +261,8 @@ read_realized_variables(
     uc_results,
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"],
 )
-rm(path, force = true, recursive = true) #hide
+rm(path; force = true, recursive = true) #hide
 ```
-
 
 ## Plotting
 

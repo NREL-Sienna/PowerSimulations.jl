@@ -28,8 +28,8 @@ get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::Abstr
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power(d)
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
-get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power_limits(d).min
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power_limits(d).max
 
 ############## OnVariable, ThermalGen ####################
 get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
@@ -61,7 +61,7 @@ get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionLB, d
 get_expression_multiplier(::OnStatusParameter, ::ActivePowerBalance, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
 
 #################### Initial Conditions for models ###############
-initial_condition_default(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d)
+initial_condition_default(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 initial_condition_variable(::DeviceStatus, d::PSY.ThermalGen, ::AbstractThermalFormulation) = OnVariable()
 initial_condition_default(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
 initial_condition_variable(::DevicePower, d::PSY.ThermalGen, ::AbstractThermalFormulation) = ActivePowerVariable()
@@ -75,8 +75,10 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 
 ########################Objective Function##################################################
 # TODO: Decide what is the cost for OnVariable, if fixed or constant term in variable
-#proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = no_load_cost(cost, S, T, U)
-proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation) = PSY.get_fixed(cost)
+function proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
+    return onvar_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
+end
+
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
@@ -109,17 +111,16 @@ variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.Ther
 """
 Theoretical Cost at power output zero. Mathematically is the intercept with the y-axis
 """
-function no_load_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return _no_load_cost(PSY.get_variable(cost), d)
+function onvar_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
+    return _onvar_cost(PSY.get_variable(cost), d)
 end
 
-function _no_load_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
-    value_curve = PSY.get_value_curve(cost_function)
-    cost = PSY.get_function_data(value_curve)
-    return last(first(PSY.get_points(cost)))
+function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+    # OnVariableCost is included in the Point itself for PiecewisePointCurve
+    return 0.0
 end
 
-function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+function _onvar_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     # Always in \$/h
@@ -127,13 +128,22 @@ function _no_load_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.
     return constant_term
 end
 
-function _no_load_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
-    # value_curve = PSY.get_value_curve(cost_function)
-    # cost = PSY.get_function_data(value_curve)
+function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+    # Input at min is used to transform to InputOutputCurve
     return 0.0
 end
 
-function _no_load_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+function _onvar_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+    # OnVariableCost is included in the Point itself for PiecewisePointCurve
+    return 0.0
+end
+
+function _onvar_cost(cost_function::PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+    # Input at min is used to transform to InputOutputCurve
+    return 0.0
+end
+
+function _onvar_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     # In Unit/h (unit typically in )
@@ -307,7 +317,7 @@ function add_variable!(
     devices::U,
     formulation::AbstractThermalFormulation,
 ) where {
-    T <: OnVariable,
+    T <: Union{OnVariable, StartVariable, StopVariable},
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.ThermalGen}
     @assert !isempty(devices)
@@ -319,23 +329,25 @@ function add_variable!(
         container,
         variable_type,
         D,
-        [PSY.get_name(d) for d in devices],
+        [PSY.get_name(d) for d in devices if !PSY.get_must_run(d)],
         time_steps,
     )
 
-    for t in time_steps, d in devices
-        name = PSY.get_name(d)
-        variable[name, t] = JuMP.@variable(
-            get_jump_model(container),
-            base_name = "$(T)_$(D)_{$(name), $(t)}",
-            binary = binary
-        )
-        if get_warm_start(settings)
-            init = get_variable_warm_start_value(variable_type, d, formulation)
-            init !== nothing && JuMP.set_start_value(variable[name, t], init)
-        end
+    for d in devices
         if PSY.get_must_run(d)
-            JuMP.fix(variable[name, t], 1.0; force = true)
+            continue
+        end
+        name = PSY.get_name(d)
+        for t in time_steps
+            variable[name, t] = JuMP.@variable(
+                get_jump_model(container),
+                base_name = "$(T)_$(D)_{$(name), $(t)}",
+                binary = binary
+            )
+            if get_warm_start(settings)
+                init = get_variable_warm_start_value(variable_type, d, formulation)
+                init !== nothing && JuMP.set_start_value(variable[name, t], init)
+            end
         end
     end
 
@@ -717,26 +729,35 @@ function add_constraints!(
 
     for ic in initial_conditions
         name = PSY.get_name(get_component(ic))
-        constraint[name, 1] = JuMP.@constraint(
-            get_jump_model(container),
-            varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
-        )
-        aux_constraint[name, 1] = JuMP.@constraint(
-            get_jump_model(container),
-            varstart[name, 1] + varstop[name, 1] <= 1.0
-        )
+        if !PSY.get_must_run(get_component(ic))
+            constraint[name, 1] = JuMP.@constraint(
+                get_jump_model(container),
+                varon[name, 1] == get_value(ic) + varstart[name, 1] - varstop[name, 1]
+            )
+            aux_constraint[name, 1] = JuMP.@constraint(
+                get_jump_model(container),
+                varstart[name, 1] + varstop[name, 1] <= 1.0
+            )
+        end
     end
 
-    for t in time_steps[2:end], ic in initial_conditions
-        name = get_component_name(ic)
-        constraint[name, t] = JuMP.@constraint(
-            get_jump_model(container),
-            varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
-        )
-        aux_constraint[name, t] = JuMP.@constraint(
-            get_jump_model(container),
-            varstart[name, t] + varstop[name, t] <= 1.0
-        )
+    for ic in initial_conditions
+        if PSY.get_must_run(get_component(ic))
+            continue
+        else
+            name = get_component_name(ic)
+            for t in time_steps[2:end]
+                constraint[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    varon[name, t] ==
+                    varon[name, t - 1] + varstart[name, t] - varstop[name, t]
+                )
+                aux_constraint[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    varstart[name, t] + varstop[name, t] <= 1.0
+                )
+            end
+        end
     end
     return
 end
@@ -807,14 +828,19 @@ function calculate_aux_variable_value!(
     time_steps = get_time_steps(container)
 
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      JuMP.axes(on_variable_results)[1][ix]
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      get_component_name(ini_cond[ix])
-        on_var = jump_value.(on_variable_results.data[ix, :])
-        ini_cond_value = get_condition(ini_cond[ix])
-        aux_variable_container.data[ix, :] .= ini_cond_value
-        sum_on_var = sum(on_var)
+        # if its nothing it means the thermal unit was on must run
+        # so there is nothing to do but to add the total number of time steps
+        # to the count
+        if isnothing(get_value(ini_cond[ix]))
+            sum_on_var = time_steps[end]
+        else
+            on_var_name = get_component_name(ini_cond[ix])
+            ini_cond_value = get_condition(ini_cond[ix])
+            # On Var doesn't exist for a unit that has must_run = true
+            on_var = jump_value.(on_variable_results[on_var_name, :])
+            aux_variable_container.data[ix, :] .= ini_cond_value
+            sum_on_var = sum(on_var)
+        end
         if sum_on_var == time_steps[end] # Unit was always on
             aux_variable_container.data[ix, :] += time_steps
         elseif sum_on_var == 0.0 # Unit was always off
@@ -848,14 +874,18 @@ function calculate_aux_variable_value!(
 
     time_steps = get_time_steps(container)
     for ix in eachindex(JuMP.axes(aux_variable_container)[1])
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      JuMP.axes(on_variable_results)[1][ix]
-        IS.@assert_op JuMP.axes(aux_variable_container)[1][ix] ==
-                      get_component_name(ini_cond[ix])
-        on_var = jump_value.(on_variable_results.data[ix, :])
-        ini_cond_value = get_condition(ini_cond[ix])
-        aux_variable_container.data[ix, :] .= ini_cond_value
-        sum_on_var = sum(on_var)
+        # if its nothing it means the thermal unit was on must_run = true
+        # so there is nothing to do but continue
+        if isnothing(get_value(ini_cond[ix]))
+            sum_on_var = 0.0
+        else
+            on_var_name = get_component_name(ini_cond[ix])
+            # On Var doesn't exist for a unit that has must run
+            on_var = jump_value.(on_variable_results[on_var_name, :])
+            ini_cond_value = get_condition(ini_cond[ix])
+            aux_variable_container.data[ix, :] .= ini_cond_value
+            sum_on_var = sum(on_var)
+        end
         if sum_on_var == time_steps[end] # Unit was always on
             aux_variable_container.data[ix, :] .= 0.0
         elseif sum_on_var == 0.0 # Unit was always off

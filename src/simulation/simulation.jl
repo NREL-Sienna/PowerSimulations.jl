@@ -8,17 +8,17 @@
         initial_time::Union{Nothing, Dates.DateTime}
     )
 
-Construct the Simulation structure to run the sequence of decision and emulation models specified.
+Construct the `Simulation` structure to run the sequence of decision and emulation models specified.
 
 # Arguments
 
-  -`sequence::SimulationSequence`: Simulation sequence that specify how the decision and emulation models will be executed.
-  -`name::String`: Name of the Simulation
-  -`steps::Int`: Number of steps on which the sequence of models will be executed
-  -`models::SimulationModels`: List of Decision and Emulation Models
-  -`simulation_folder::String`: Folder on which results will be stored
-  -`initial_time::Union{Nothing, Dates.DateTime} = nothing`: Initial time of which the simulation starts. If nothing it will default to the first timestamp
-    of time series of the system.
+  - `sequence::SimulationSequence`: Simulation sequence that specify how the decision and emulation models will be executed.
+  - `name::String`: Name of the Simulation
+  - `steps::Int`: Number of steps on which the sequence of models will be executed
+  - `models::SimulationModels`: List of Decision and Emulation Models
+  - `simulation_folder::String`: Folder on which results will be stored
+  - `initial_time::Union{Nothing, Dates.DateTime} = nothing`: Initial time of which the
+    simulation starts. If nothing it will default to the first timestamp of time series of the system.
 
 # Example
 

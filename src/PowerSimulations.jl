@@ -232,6 +232,7 @@ export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
+export PieceWiseLinearCostVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -306,9 +307,13 @@ export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
+# Cost Parameters
+export CostFunctionParameter
+
 # Feedforward Parameters
 export OnStatusParameter
 export UpperBoundValueParameter
+export LowerBoundValueParameter
 export FixValueParameter
 
 # Expressions
@@ -417,7 +422,6 @@ import TimeSeries
 
 # I/O Imports
 import DataFrames
-import JSON
 import CSV
 import HDF5
 import PrettyTables
@@ -520,7 +524,6 @@ include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
 
 include("parameters/add_parameters.jl")
-include("parameters/update_parameters.jl")
 
 include("simulation/optimization_output_cache.jl")
 include("simulation/optimization_output_caches.jl")
@@ -541,6 +544,10 @@ include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
+include("operation/operation_model_simulation_interface.jl")
+include("parameters/update_container_parameter_values.jl")
+include("parameters/update_cost_parameters.jl")
+include("parameters/update_parameters.jl")
 
 include("devices_models/devices/common/objective_function/common.jl")
 include("devices_models/devices/common/objective_function/linear_curve.jl")

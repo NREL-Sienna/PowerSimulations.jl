@@ -2,8 +2,8 @@
 
 This section contains instructions to:
 
-- [Run a Simulation in Parallel on a local computer](@ref)
-- [Run a Simulation in Parallel on an HPC](@ref)
+  - [Run a Simulation in Parallel on a local computer](@ref)
+  - [Run a Simulation in Parallel on an HPC](@ref)
 
 ## Run a Simulation in Parallel on a local computer
 
@@ -15,11 +15,11 @@ and then join the results.
 Create a Julia script to build and run simulations. It must meet the requirements below.
 A full example is in the PowerSimulations repository in `test/run_partitioned_simulation.jl`.
 
-- Call `using PowerSimulations`.
+  - Call `using PowerSimulations`.
 
-- Implement a build function that matches the signature below.
-  It must construct a `Simulation`, call `build!`, and then return the `Simulation` instance.
-  It must throw an exception if the build fails.
+  - Implement a build function that matches the signature below.
+    It must construct a `Simulation`, call `build!`, and then return the `Simulation` instance.
+    It must throw an exception if the build fails.
 
 ```
 function build_simulation(
@@ -46,8 +46,8 @@ Here is example code to construct the `Simulation` with these parameters:
     end
 ```
 
-- Implement an execute function that matches the signature below. It must throw an exception
-  if the execute fails.
+  - Implement an execute function that matches the signature below. It must throw an exception
+    if the execute fails.
 
 ```
 function execute_simulation(sim, args...; kwargs...)
@@ -99,15 +99,15 @@ to a new Julia package.
 
 ### Setup
 
-1. Create a conda environment and install the Python package `NREL-jade`:
-   https://nrel.github.io/jade/installation.html. The rest of this page assumes that
-   the environment is called `jade`.
-2. Activate the environment with `conda activate jade`.
-3. Locate the path to that conda environment. It will likely be `~/.conda-envs/jade` or
-   `~/.conda/envs/jade`.
-4. Load the Julia environment that you use to run simulations. Add the packages `Conda` and
-   `PyCall`.
-5. Setup Conda to use the existing `jade` environment by running these commands:
+ 1. Create a conda environment and install the Python package `NREL-jade`:
+    https://nrel.github.io/jade/installation.html. The rest of this page assumes that
+    the environment is called `jade`.
+ 2. Activate the environment with `conda activate jade`.
+ 3. Locate the path to that conda environment. It will likely be `~/.conda-envs/jade` or
+    `~/.conda/envs/jade`.
+ 4. Load the Julia environment that you use to run simulations. Add the packages `Conda` and
+    `PyCall`.
+ 5. Setup Conda to use the existing `jade` environment by running these commands:
 
 ```
 julia> run(`conda create -n conda_jl python conda`)
@@ -115,9 +115,9 @@ julia> ENV["CONDA_JL_HOME"] = joinpath(ENV["HOME"], ".conda-envs", "jade")  # ch
 pkg> build Conda
 ```
 
-6. Copy the code below into a Julia file called `configure_parallel_simulation.jl`.
-   This is an interface to Jade through PyCall. It will be used to create a Jade configuration.
-   (It may eventually be moved to a separate package.)
+ 6. Copy the code below into a Julia file called `configure_parallel_simulation.jl`.
+    This is an interface to Jade through PyCall. It will be used to create a Jade configuration.
+    (It may eventually be moved to a separate package.)
 
 ```
 function configure_parallel_simulation(
@@ -154,14 +154,14 @@ function configure_parallel_simulation(
 end
 ```
 
-7. Create a Julia script to build and run simulations. It must meet the requirements below.
-   A full example is in the PowerSimulations repository in `test/run_partitioned_simulation.jl`.
+ 7. Create a Julia script to build and run simulations. It must meet the requirements below.
+    A full example is in the PowerSimulations repository in `test/run_partitioned_simulation.jl`.
 
-- Call `using PowerSimulations`.
+  - Call `using PowerSimulations`.
 
-- Implement a build function that matches the signature below.
-  It must construct a `Simulation`, call `build!`, and then return the `Simulation` instance.
-  It must throw an exception if the build fails.
+  - Implement a build function that matches the signature below.
+    It must construct a `Simulation`, call `build!`, and then return the `Simulation` instance.
+    It must throw an exception if the build fails.
 
 ```
 function build_simulation(
@@ -188,8 +188,8 @@ Here is example code to construct the `Simulation` with these parameters:
     end
 ```
 
-- Implement an execute function that matches the signature below. It must throw an exception
-  if the execute fails.
+  - Implement an execute function that matches the signature below. It must throw an exception
+    if the execute fails.
 
 ```
 function execute_simulation(sim, args...; kwargs...)
@@ -200,8 +200,8 @@ function execute_simulation(sim, args...; kwargs...)
 end
 ```
 
-- Make the script runnable as a CLI command by including the following code at the bottom of the
-file.
+  - Make the script runnable as a CLI command by including the following code at the bottom of the
+    file.
 
 ```
 function main()
@@ -215,11 +215,11 @@ end
 
 ### Execution
 
-1. Create a Jade configuration that defines the partitioned simulation jobs. Load your Julia
-   environment.
-
-   This example splits a year-long simulation into weekly partitions for a total of 53 individual
-   jobs.
+ 1. Create a Jade configuration that defines the partitioned simulation jobs. Load your Julia
+    environment.
+    
+    This example splits a year-long simulation into weekly partitions for a total of 53 individual
+    jobs.
 
 ```
 julia> include("configure_parallel_simulation.jl")
@@ -238,26 +238,26 @@ Created Jade configuration in config.json. Run 'jade submit-jobs [options] confi
 
 Exit Julia.
 
-2. View the configuration for accuracy.
+ 2. View the configuration for accuracy.
 
 ```
 $ jade config show config.json
 ```
 
-3. Start an interactive session on a debug node. *Do not submit the jobs on a login node!* The submission
-   step will run a full build of the simulation and that may consume too many CPU and memory resources
-   for the login node.
+ 3. Start an interactive session on a debug node. *Do not submit the jobs on a login node!* The submission
+    step will run a full build of the simulation and that may consume too many CPU and memory resources
+    for the login node.
 
 ```
 $ salloc -t 01:00:00 -N1 --account=<your-account> --partition=debug
 ```
 
-4. Follow the instructions at https://nrel.github.io/jade/tutorial.html to submit the jobs.
-   The example below will configure Jade to run each partition on its own compute node. Depending on
-   the compute and memory constraints of your simulation, you may be able to pack more jobs on each
-   node.
-
-   Adjust the walltime as necessary.
+ 4. Follow the instructions at https://nrel.github.io/jade/tutorial.html to submit the jobs.
+    The example below will configure Jade to run each partition on its own compute node. Depending on
+    the compute and memory constraints of your simulation, you may be able to pack more jobs on each
+    node.
+    
+    Adjust the walltime as necessary.
 
 ```
 $ jade config hpc -c hpc_config.toml -t slurm  --walltime=04:00:00 -a <your-account>
@@ -273,8 +273,8 @@ $ jade submit-jobs config.json --per-node-batch-size=1 -o output --resource-moni
 Jade will create HTML plots of the resource utilization in `output/stats`. You may be able to customize
 `--per-node-batch-size` and `--num-processes` to finish the simulations more quickly.
 
-5. Jade will run a final command to join the simulation partitions into one unified file. You can load the
-   results as you normally would.
+ 5. Jade will run a final command to join the simulation partitions into one unified file. You can load the
+    results as you normally would.
 
 ```
 julia> results = SimulationResults("<output-dir>/job-outputs/<simulation-name>")

@@ -178,12 +178,17 @@ function _lower_bound_range_with_parameter!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     time_steps = axes(constraint_container)[2]
-    for device in devices, t in time_steps
+    for device in devices
+        if hasmethod(PSY.get_must_run, Tuple{V})
+            PSY.get_must_run(device) && continue
+        end
         name = PSY.get_name(device)
-        constraint_container[name, t] = JuMP.@constraint(
-            jump_model,
-            lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
-        )
+        for t in time_steps
+            constraint_container[name, t] = JuMP.@constraint(
+                jump_model,
+                lhs_array[name, t] >= param_multiplier[name, t] * param_array[name, t]
+            )
+        end
     end
     return
 end
@@ -197,12 +202,17 @@ function _upper_bound_range_with_parameter!(
     devices::IS.FlattenIteratorWrapper{V},
 ) where {V <: PSY.Component}
     time_steps = axes(constraint_container)[2]
-    for device in devices, t in time_steps
+    for device in devices
+        if hasmethod(PSY.get_must_run, Tuple{V})
+            PSY.get_must_run(device) && continue
+        end
         name = PSY.get_name(device)
-        constraint_container[name, t] = JuMP.@constraint(
-            jump_model,
-            lhs_array[name, t] <= param_multiplier[name, t] * param_array[name, t]
-        )
+        for t in time_steps
+            constraint_container[name, t] = JuMP.@constraint(
+                jump_model,
+                lhs_array[name, t] <= param_multiplier[name, t] * param_array[name, t]
+            )
+        end
     end
     return
 end
@@ -456,7 +466,6 @@ function add_feedforward_constraints!(
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ff::FixValueFeedforward,
 ) where {T <: PSY.Component}
-    time_steps = get_time_steps(container)
     parameter_type = get_default_parameter_type(ff, T)
     source_key = get_optimization_container_key(ff)
     var_type = get_entry_type(source_key)
@@ -466,7 +475,6 @@ function add_feedforward_constraints!(
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
         IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
-        #IS.@assert_op set_time == time_steps
 
         for t in set_time, name in set_name
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)

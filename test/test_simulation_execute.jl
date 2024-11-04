@@ -1,4 +1,5 @@
-function test_single_stage_sequential(in_memory, rebuild)
+function test_single_stage_sequential(in_memory, rebuild, export_model)
+    tmp_dir = mktempdir(; cleanup = true)
     template_ed = get_template_nomin_ed_simulation()
     c_sys = PSB.build_system(PSITestSystems, "c_sys5_uc")
     models = SimulationModels([
@@ -8,6 +9,7 @@ function test_single_stage_sequential(in_memory, rebuild)
             name = "ED",
             optimizer = ipopt_optimizer,
             rebuild_model = rebuild,
+            export_optimization_model = export_model,
         ),
     ])
     test_sequence =
@@ -20,18 +22,27 @@ function test_single_stage_sequential(in_memory, rebuild)
         steps = 2,
         models = models,
         sequence = test_sequence,
-        simulation_folder = mktempdir(; cleanup = true),
+        simulation_folder = tmp_dir,
     )
     build_out = build!(sim_single)
     @test build_out == PSI.SimulationBuildStatus.BUILT
     execute_out = execute!(sim_single; in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    return tmp_dir
 end
 
 @testset "Single stage sequential tests" begin
     for in_memory in (true, false), rebuild in (true, false)
-        test_single_stage_sequential(in_memory, rebuild)
+        test_single_stage_sequential(in_memory, rebuild, false)
     end
+end
+
+@testset "Test model export at each solve" begin
+    folder = test_single_stage_sequential(true, false, true)
+    test_path =
+        joinpath(folder, "consecutive", "problems", "ED", "optimization_model_exports")
+    @test ispath(test_path)
+    @test length(readdir(test_path)) == 4
 end
 
 function test_2_stage_decision_models_with_feedforwards(in_memory)

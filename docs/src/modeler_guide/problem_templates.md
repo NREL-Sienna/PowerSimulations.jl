@@ -22,7 +22,7 @@ set_service_model!(template, VariableReserve{ReserveUp}, RangeReserve)
 `PowerSimulations.jl` provides default templates for common operation problems. You can retrieve a default template and modify it according
 to your requirements. Currently supported default templates are:
 
-```@docs
+```@docs; canonical=false
 template_economic_dispatch
 ```
 
@@ -31,7 +31,7 @@ using PowerSimulations #hide
 template_economic_dispatch()
 ```
 
-```@docs
+```@docs; canonical=false
 template_unit_commitment
 ```
 

@@ -3,16 +3,17 @@
 Electric load formulations define the optimization models that describe load units (demand) mathematical model in different operational settings, such as economic dispatch and unit commitment.
 
 !!! note
+    
     The use of reactive power variables and constraints will depend on the network model used, i.e., whether it uses (or does not use) reactive power. If the network model is purely active power-based, reactive power variables and related constraints are not created.
 
 ### Table of contents
 
-1. [`StaticPowerLoad`](#StaticPowerLoad)
-2. [`PowerLoadInterruption`](#PowerLoadInterruption)
-3. [`PowerLoadDispatch`](#PowerLoadDispatch)
-4. [Valid configurations](#Valid-configurations)
+ 1. [`StaticPowerLoad`](#StaticPowerLoad)
+ 2. [`PowerLoadInterruption`](#PowerLoadInterruption)
+ 3. [`PowerLoadDispatch`](#PowerLoadDispatch)
+ 4. [Valid configurations](#Valid-configurations)
 
----
+* * *
 
 ## `StaticPowerLoad`
 
@@ -37,8 +38,8 @@ combos = PowerSimulations.get_default_time_series_names(ElectricLoad, StaticPowe
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Expressions:**
@@ -49,7 +50,7 @@ Subtracts the parameters listed above from the respective active and reactive po
 
 No constraints are created
 
----
+* * *
 
 ## `PowerLoadInterruption`
 
@@ -59,22 +60,27 @@ PowerLoadInterruption
 
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Symbol: ``p^\text{ld}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: 0.0
-  - Symbol: ``q^\text{ld}``
-- [`OnVariable`](@ref):
-  - Bounds: ``\{0,1\}``
-  - Default initial value: 1
-  - Symbol: ``u^\text{ld}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Symbol: ``p^\text{ld}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Symbol: ``q^\text{ld}``
+  - [`OnVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Default initial value: 1
+      + Symbol: ``u^\text{ld}``
 
 **Static Parameters:**
-- ``P^\text{ld,max}`` = `PowerSystems.get_max_active_power(device)`
-- ``Q^\text{ld,max}`` = `PowerSystems.get_max_reactive_power(device)`
+
+  - ``P^\text{ld,max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{ld,max}`` = `PowerSystems.get_max_reactive_power(device)`
 
 **Time Series Parameters:**
 
@@ -87,18 +93,17 @@ combos = PowerSimulations.get_default_time_series_names(ElectricLoad, PowerLoadI
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Objective:**
 
 Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``p^\text{ld}``.
 
-
 **Expressions:**
 
-- Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+  - Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -108,9 +113,10 @@ Creates an objective function term based on the [`FunctionData` Options](@ref) w
 &  q_t^\text{re} = \text{pf} \cdot p_t^\text{re}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
 ```
+
 on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
 
----
+* * *
 
 ## `PowerLoadDispatch`
 
@@ -120,18 +126,22 @@ PowerLoadDispatch
 
 **Variables:**
 
-- [`ActivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: `PowerSystems.get_active_power(device)`
-  - Symbol: ``p^\text{ld}``
-- [`ReactivePowerVariable`](@ref):
-  - Bounds: [0.0, ]
-  - Default initial value: `PowerSystems.get_reactive_power(device)`
-  - Symbol: ``q^\text{ld}``
+  - [`ActivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: `PowerSystems.get_active_power(device)`
+      + Symbol: ``p^\text{ld}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: `PowerSystems.get_reactive_power(device)`
+      + Symbol: ``q^\text{ld}``
 
 **Static Parameters:**
-- ``P^\text{ld,max}`` = `PowerSystems.get_max_active_power(device)`
-- ``Q^\text{ld,max}`` = `PowerSystems.get_max_reactive_power(device)`
+
+  - ``P^\text{ld,max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{ld,max}`` = `PowerSystems.get_max_reactive_power(device)`
 
 **Time Series Parameters:**
 
@@ -144,18 +154,17 @@ combos = PowerSimulations.get_default_time_series_names(ElectricLoad, PowerLoadD
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```
 
 **Objective:**
 
 Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``p^\text{ld}``.
 
-
 **Expressions:**
 
-- Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+  - Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -165,6 +174,7 @@ Creates an objective function term based on the [`FunctionData` Options](@ref) w
 &  q_t^\text{ld} = \text{pf} \cdot p_t^\text{ld}, \quad \forall t \in \{1,\dots, T\}\\
 \end{aligned}
 ```
+
 on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
 
 ## Valid configurations
@@ -179,9 +189,13 @@ using Latexify
 combos = PowerSimulations.generate_device_formulation_combinations()
 filter!(x -> x["device_type"] <: ElectricLoad, combos)
 combo_table = DataFrame(
-    "Valid DeviceModel" => ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
-    "Device Type" => ["[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)" for c in combos],
+    "Valid DeviceModel" =>
+        ["`DeviceModel($(c["device_type"]), $(c["formulation"]))`" for c in combos],
+    "Device Type" => [
+        "[$(c["device_type"])](https://nrel-Sienna.github.io/PowerSystems.jl/stable/model_library/generated_$(c["device_type"])/)"
+        for c in combos
+    ],
     "Formulation" => ["[$(c["formulation"])](@ref)" for c in combos],
-    )
-mdtable(combo_table, latex = false)
+)
+mdtable(combo_table; latex = false)
 ```

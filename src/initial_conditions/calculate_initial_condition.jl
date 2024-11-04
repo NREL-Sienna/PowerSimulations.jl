@@ -23,3 +23,10 @@ function set_ic_quantity!(
     ic.value = var_value
     return
 end
+
+function set_ic_quantity!(
+    ::InitialCondition{T, Nothing},
+    ::Float64,
+) where {T <: InitialConditionType}
+    return
+end
