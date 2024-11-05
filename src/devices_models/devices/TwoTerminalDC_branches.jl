@@ -18,7 +18,28 @@ get_variable_binary(
 ) = true
 
 get_variable_binary(
-    _,
+    ::Union{
+        HVDCActiveDCPowerSentFromVariable,
+        HVDCActiveDCPowerSentToVariable,
+        DCVoltageFrom,
+        DCVoltageTo,
+        SquaredDCVoltageFrom,
+        SquaredDCVoltageTo,
+        ConverterCurrent,
+        SquaredConverterCurrent,
+        ConverterPositiveCurrent,
+        ConverterNegativeCurrent,
+        HVDCLosses,
+        AuxBilinearConverterVariableFrom,
+        AuxBilinearSquaredConverterVariableFrom,
+        AuxBilinearConverterVariableTo,
+        AuxBilinearSquaredConverterVariableTo,
+        InterpolationSquaredVoltageVariableFrom,
+        InterpolationSquaredVoltageVariableTo,
+        InterpolationSquaredCurrentVariable,
+        InterpolationSquaredBilinearVariableFrom,
+        InterpolationSquaredBilinearVariableTo,
+    },
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = false
@@ -29,6 +50,11 @@ get_variable_binary(
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredVoltageVariableTo,
+    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::HVDCTwoTerminalVSCLoss,
+) = true
+get_variable_binary(
+    ::InterpolationBinarySquaredCurrentVariable,
     ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
@@ -149,25 +175,25 @@ get_variable_lower_bound(
 ) = PSY.get_active_power_limits_to(d).min
 
 get_variable_upper_bound(
-    ::HVDCActivePowerReceivedFromVariable,
+    ::Union{HVDCActivePowerReceivedFromVariable, HVDCActiveDCPowerSentFromVariable},
     d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_from(d).max
 
 get_variable_lower_bound(
-    ::HVDCActivePowerReceivedFromVariable,
+    ::Union{HVDCActivePowerReceivedFromVariable, HVDCActiveDCPowerSentFromVariable},
     d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_from(d).min
 
 get_variable_upper_bound(
-    ::HVDCActivePowerReceivedToVariable,
+    ::Union{HVDCActivePowerReceivedToVariable, HVDCActiveDCPowerSentToVariable},
     d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_to(d).max
 
 get_variable_lower_bound(
-    ::HVDCActivePowerReceivedToVariable,
+    ::Union{HVDCActivePowerReceivedToVariable, HVDCActiveDCPowerSentToVariable},
     d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_to(d).min
@@ -613,6 +639,8 @@ function _add_hvdc_flow_constraints!(
         FlowActivePowerToFromVariable,
         HVDCActivePowerReceivedFromVariable,
         HVDCActivePowerReceivedToVariable,
+        HVDCActiveDCPowerSentFromVariable,
+        HVDCActiveDCPowerSentToVariable,
     },
     constraint::Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
 ) where {T <: PSY.TwoTerminalHVDCLine}
@@ -896,8 +924,8 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
     # power vars #
-    from_power_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
-    to_power_var = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
+    from_power_var = get_variable(container, HVDCActiveDCPowerSentFromVariable(), U)
+    to_power_var = get_variable(container, HVDCActiveDCPowerSentToVariable(), U)
     # voltage vars #
     from_voltage_var = get_variable(container, DCVoltageFrom(), U)
     to_voltage_var = get_variable(container, DCVoltageTo(), U)
@@ -994,8 +1022,8 @@ function add_constraints!(
     names = [PSY.get_name(d) for d in devices]
     JuMPmodel = get_jump_model(container)
     # power vars #
-    from_power_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
-    to_power_var = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
+    from_power_var = get_variable(container, HVDCActiveDCPowerSentFromVariable(), U)
+    to_power_var = get_variable(container, HVDCActiveDCPowerSentToVariable(), U)
     # current vars #
     current_var = get_variable(container, ConverterCurrent(), U) # From direction
     direction_var = get_variable(container, ConverterPowerDirection(), U)
@@ -1099,8 +1127,8 @@ function add_constraints!(
     names = [PSY.get_name(d) for d in devices]
     JuMPmodel = get_jump_model(container)
     # power vars #
-    from_power_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), U)
-    to_power_var = get_variable(container, HVDCActivePowerReceivedToVariable(), U)
+    from_power_var = get_variable(container, HVDCActiveDCPowerSentFromVariable(), U)
+    to_power_var = get_variable(container, HVDCActiveDCPowerSentToVariable(), U)
     # current vars #
     current_var = get_variable(container, ConverterCurrent(), U) # From direction
     # voltage vars #

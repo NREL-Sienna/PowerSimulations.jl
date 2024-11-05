@@ -913,8 +913,8 @@ function construct_device!(
     #####################
     V = HVDCTwoTerminalVSCLoss
     # Add Power Variable
-    add_variables!(container, HVDCActivePowerReceivedFromVariable, devices, V()) # p_c^{ac,from}
-    add_variables!(container, HVDCActivePowerReceivedToVariable, devices, V()) # p_c^{ac,from}
+    add_variables!(container, HVDCActiveDCPowerSentFromVariable, devices, V()) # p_c^{ac,from}
+    add_variables!(container, HVDCActiveDCPowerSentToVariable, devices, V()) # p_c^{ac,from}
     add_variables!(container, ConverterPowerDirection, devices, V()) #κ
     # Add Voltage Variables: v_dc, v^sq, δ^v, z^v
     add_variables!(container, DCVoltageFrom, devices, V()) # v_dc^{from}
@@ -930,13 +930,6 @@ function construct_device!(
     add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
     add_variables!(container, ConverterCurrentDirection, devices, V())
     add_variables!(container, HVDCLosses, devices, V())
-
-    add_variables!(
-        container,
-        ConverterBinaryAbsoluteValueCurrent,
-        devices,
-        V(),
-    ) # ν
 
     # Add Bilinear Variables: γ, γ^{sq}
     add_variables!(
@@ -973,7 +966,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        HVDCActivePowerReceivedFromVariable,
+        HVDCActiveDCPowerSentFromVariable,
         devices,
         model,
         network_model,
@@ -982,7 +975,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
-        HVDCActivePowerReceivedToVariable,
+        HVDCActiveDCPowerSentToVariable,
         devices,
         model,
         network_model,

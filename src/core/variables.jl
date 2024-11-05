@@ -231,12 +231,6 @@ Docs abbreviation: ``\\nu_c^``
 struct ConverterCurrentDirection <: VariableType end
 
 """
-Struct to dispatch the creation of DC Converter Binary for Absolute Value Current Variables for DC formulations
-Docs abbreviation: `\\nu_c``
-"""
-struct ConverterBinaryAbsoluteValueCurrent <: VariableType end
-
-"""
 Struct to dispatch the creation of Binary Variable for Converter Power Direction
 Docs abbreviation: ``\\kappa_c^{dc}``
 """
@@ -337,6 +331,20 @@ Struct to dispatch the creation of Binary Interpolation Variable for Squared Con
 Docs abbreviation: ``z_c^{\\gamma}``
 """
 struct InterpolationBinarySquaredBilinearVariableTo <: SparseVariableType end
+
+"""
+Struct to dispatch the creation of HVDC Received Flow at From Bus Variables for PWL formulations
+
+Docs abbreviation: ``x``
+"""
+struct HVDCActiveDCPowerSentFromVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of HVDC Received Flow at To Bus Variables for PWL formulations
+
+Docs abbreviation: ``y``
+"""
+struct HVDCActiveDCPowerSentToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of bidirectional Active Power Flow Variables
