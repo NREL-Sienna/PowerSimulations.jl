@@ -1007,16 +1007,14 @@ function construct_device!(
         model,
         network_model,
     )
-    #TODO: Implement for AbovePowerMinimum
-    #=
+
     add_to_expression!(
         container,
         FuelConsumptionExpression,
-        PowerAboveMinimumVariable,,
+        PowerAboveMinimumVariable,
         devices,
         model,
     )
-    =#
 
     add_to_expression!(
         container,
@@ -1187,16 +1185,14 @@ function construct_device!(
         model,
         network_model,
     )
-    #TODO: Implement for AbovePowerMinimum
-    #=
+
     add_to_expression!(
         container,
         FuelConsumptionExpression,
-        PowerAboveMinimumVariable,,
+        PowerAboveMinimumVariable,
         devices,
         model,
     )
-    =#
 
     add_to_expression!(
         container,
@@ -1365,16 +1361,14 @@ function construct_device!(
         model,
         network_model,
     )
-    #TODO: Implement for AbovePowerMinimum
-    #=
+
     add_to_expression!(
         container,
         FuelConsumptionExpression,
-        PowerAboveMinimumVariable,,
+        PowerAboveMinimumVariable,
         devices,
         model,
     )
-    =#
 
     add_to_expression!(
         container,
@@ -1658,16 +1652,14 @@ function construct_device!(
         model,
         network_model,
     )
-    #TODO: Implement for AbovePowerMinimum
-    #=
+
     add_to_expression!(
         container,
         FuelConsumptionExpression,
-        PowerAboveMinimumVariable,,
+        PowerAboveMinimumVariable,
         devices,
         model,
     )
-    =#
 
     add_to_expression!(
         container,
