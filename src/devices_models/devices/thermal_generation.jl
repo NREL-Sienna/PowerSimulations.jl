@@ -117,7 +117,7 @@ function onvar_cost(container::OptimizationContainer, cost::PSY.ThermalGeneratio
     return _onvar_cost(container, PSY.get_variable(cost), d, t)
 end
 
-function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen, ::Int)
     # OnVariableCost is included in the Point itself for PiecewisePointCurve
     return 0.0
 end
