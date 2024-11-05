@@ -1787,6 +1787,7 @@ function add_to_expression!(
         name = PSY.get_name(d)
         device_base_power = PSY.get_base_power(d)
         value_curve = PSY.get_value_curve(var_cost)
+        P_min = PSY.get_active_power_limits(d).min
         if value_curve isa PSY.LinearCurve
             power_units = PSY.get_power_units(var_cost)
             proportional_term = PSY.get_proportional_term(value_curve)
@@ -1797,46 +1798,31 @@ function add_to_expression!(
                 device_base_power,
             )
             for t in time_steps
-                fuel_expr = variable[name, t] * prop_term_per_unit * dt
+                sos_status = _get_sos_value(container, W, d)
+                if sos_status == SOSStatusVariable.NO_VARIABLE
+                    bin = 1.0
+                elseif sos_status == SOSStatusVariable.PARAMETER
+                    param = get_default_on_parameter(d)
+                    bin = get_parameter(container, param, V).parameter_array[name, t]
+                elseif sos_status == SOSStatusVariable.VARIABLE
+                    var = get_default_on_variable(d)
+                    bin = get_variable(container, var, V)[name, t]
+                else
+                    @assert false
+                end
+                fuel_expr =
+                    variable[name, t] * prop_term_per_unit * dt +
+                    P_min * bin * prop_term_per_unit * dt
                 JuMP.add_to_expression!(
                     expression[name, t],
                     fuel_expr,
                 )
             end
         elseif value_curve isa PSY.QuadraticCurve
-            power_units = PSY.get_power_units(var_cost)
-            proportional_term = PSY.get_proportional_term(value_curve)
-            quadratic_term = PSY.get_quadratic_term(value_curve)
-            prop_term_per_unit = get_proportional_cost_per_system_unit(
-                proportional_term,
-                power_units,
-                base_power,
-                device_base_power,
-            )
-            quad_term_per_unit = get_quadratic_cost_per_system_unit(
-                quadratic_term,
-                power_units,
-                base_power,
-                device_base_power,
-            )
-            # TODO: Fix this FuelConsumptionExpression AffExpr to QuadExpr
-            #=
-            for t in time_steps
-                fuel_expr =
-                    (
-                        variable[name, t] .^ 2 * quad_term_per_unit +
-                        variable[name, t] * prop_term_per_unit
-                    ) * dt
-                JuMP.add_to_expression!(
-                    expression[name, t],
-                    fuel_expr,
-                )
-            end
-            =#
+            error("Quadratic Curves are not accepted with Compact Formulation: $W")
         end
     end
 end
-=#
 
 #=
 function add_to_expression!(
