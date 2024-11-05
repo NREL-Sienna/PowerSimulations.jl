@@ -45,6 +45,7 @@ export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded
 export PhaseAngleControl
+export HVDCTwoTerminalVSCLoss
 # export VoltageSourceDC
 
 ######## HVDC models ########
