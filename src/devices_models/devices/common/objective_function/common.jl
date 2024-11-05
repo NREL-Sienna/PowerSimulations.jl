@@ -107,9 +107,9 @@ function add_proportional_cost!(
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
-        cost_term = proportional_cost(op_cost_data, U(), d, V())
-        iszero(cost_term) && continue
         for t in get_time_steps(container)
+            cost_term = proportional_cost(container, op_cost_data, U(), d, V(), t)
+            iszero(cost_term) && continue
             if !PSY.get_must_run(d)
                 exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
                 add_to_expression!(container, ProductionCostExpression, exp, d, t)
