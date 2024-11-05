@@ -1057,7 +1057,6 @@ function construct_device!(
         model,
         network_model,
     )
-    #error("here")
 
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, get_network_formulation(network_model))
