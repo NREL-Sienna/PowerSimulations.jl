@@ -1612,6 +1612,7 @@ function add_to_expression!(
                 base_power,
                 device_base_power,
             )
+            error("TODO: Implement FuelConsumptionExpression AffExpr to QuadExpr")
             # TODO: Fix this FuelConsumptionExpression AffExpr to QuadExpr
             #=
             for t in time_steps
