@@ -1027,3 +1027,81 @@ end
     @test sum(p_solitude[1:24]) > 5000.0 # Used a lot when cheap
     @test sum(p_solitude[25:48]) < 50.0 # Barely used when expensive
 end
+
+@testset "Thermal with fuel cost time series with Quadratic and PWL" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_re_fuel_cost")
+
+    template = ProblemTemplate(
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+        ),
+    )
+
+    solitude = get_component(ThermalStandard, sys, "Solitude")
+    op_cost = get_operation_cost(solitude)
+    ts = deepcopy(get_time_series(Deterministic, solitude, "fuel_cost"))
+    remove_time_series!(sys, Deterministic, solitude, "fuel_cost")
+    quad_curve = QuadraticCurve(0.05, 1.0, 0.0)
+    new_th_cost = ThermalGenerationCost(;
+        variable = FuelCurve(;
+            value_curve = quad_curve,
+            fuel_cost = 1.0,
+        ),
+        fixed = op_cost.fixed,
+        start_up = op_cost.start_up,
+        shut_down = op_cost.shut_down,
+    )
+
+    set_operation_cost!(solitude, new_th_cost)
+    add_time_series!(
+        sys,
+        solitude,
+        ts,
+    )
+
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        store_variable_names = true,
+        optimizer_solve_log_print = false,
+    )
+    models = SimulationModels(;
+        decision_models = [
+            model,
+        ],
+    )
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "compact_sim",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        initial_time = DateTime("2024-01-01T00:00:00"),
+        simulation_folder = mktempdir(),
+    )
+
+    build!(sim; console_level = Logging.Error, serialize = false)
+    # TODO Tests
+    moi_tests(model, 1, 2, 3, 4, 5, false)
+    execute!(sim; enable_progress_bar = true)
+
+    sim_res = SimulationResults(sim)
+    res_uc = get_decision_problem_results(sim_res, "UC")
+    th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
+    p_brighton = th_uc[!, "Brighton"]
+    p_solitude = th_uc[!, "Solitude"]
+end
