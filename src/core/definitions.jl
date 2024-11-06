@@ -40,7 +40,7 @@ const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 const TwoTerminalHVDCTypes = Union{
     PSY.TwoTerminalHVDCLine,
     PSY.TwoTerminalVSCDCLine,
-    PSY.TwoTerminalHVDCDetailedLine,
+    PSY.TwoTerminalVSCLine,
 }
 # Settings constants
 const UNSET_HORIZON = Dates.Millisecond(0)

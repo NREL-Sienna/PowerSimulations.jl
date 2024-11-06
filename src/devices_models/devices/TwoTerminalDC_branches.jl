@@ -40,42 +40,42 @@ get_variable_binary(
         InterpolationSquaredBilinearVariableFrom,
         InterpolationSquaredBilinearVariableTo,
     },
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = false
 get_variable_binary(
     ::InterpolationBinarySquaredVoltageVariableFrom,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredVoltageVariableTo,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredCurrentVariable,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredBilinearVariableFrom,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::InterpolationBinarySquaredBilinearVariableTo,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::ConverterPowerDirection,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 get_variable_binary(
     ::ConverterCurrentDirection,
-    ::Type{<:PSY.TwoTerminalHVDCDetailedLine},
+    ::Type{<:PSY.TwoTerminalVSCLine},
     ::HVDCTwoTerminalVSCLoss,
 ) = true
 
@@ -176,25 +176,25 @@ get_variable_lower_bound(
 
 get_variable_upper_bound(
     ::Union{HVDCActivePowerReceivedFromVariable, HVDCActiveDCPowerSentFromVariable},
-    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_from(d).max
 
 get_variable_lower_bound(
     ::Union{HVDCActivePowerReceivedFromVariable, HVDCActiveDCPowerSentFromVariable},
-    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_from(d).min
 
 get_variable_upper_bound(
     ::Union{HVDCActivePowerReceivedToVariable, HVDCActiveDCPowerSentToVariable},
-    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_to(d).max
 
 get_variable_lower_bound(
     ::Union{HVDCActivePowerReceivedToVariable, HVDCActiveDCPowerSentToVariable},
-    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalHVDCDetailedLine},
+    d::Union{PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = PSY.get_active_power_limits_to(d).min
 
@@ -233,31 +233,31 @@ get_variable_lower_bound(
 ### Two Terminal Physical Loss ###
 get_variable_upper_bound(
     ::Union{DCVoltageFrom, DCVoltageTo},
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = PSY.get_voltage_limits(d).max
 
 get_variable_lower_bound(
     ::Union{DCVoltageFrom, DCVoltageTo},
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = PSY.get_voltage_limits(d).min
 
 get_variable_upper_bound(
     ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = PSY.get_voltage_limits(d).max^2
 
 get_variable_lower_bound(
     ::Union{SquaredDCVoltageFrom, SquaredDCVoltageTo},
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = 0.0
 
 get_variable_lower_bound(
     ::Union{ConverterPositiveCurrent, ConverterNegativeCurrent},
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = 0.0
 
@@ -269,7 +269,7 @@ get_variable_upper_bound(
         InterpolationSquaredBilinearVariableFrom,
         InterpolationSquaredBilinearVariableTo,
     },
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = 1.0
 
@@ -281,7 +281,7 @@ get_variable_lower_bound(
         InterpolationSquaredBilinearVariableFrom,
         InterpolationSquaredBilinearVariableTo,
     },
-    d::PSY.TwoTerminalHVDCDetailedLine,
+    d::PSY.TwoTerminalVSCLine,
     ::HVDCTwoTerminalVSCLoss,
 ) = 0.0
 
@@ -302,7 +302,7 @@ end
 function get_default_attributes(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.TwoTerminalHVDCDetailedLine, V <: HVDCTwoTerminalVSCLoss}
+) where {U <: PSY.TwoTerminalVSCLine, V <: HVDCTwoTerminalVSCLoss}
     return Dict{String, Any}(
         "voltage_segments" => 3,
         "current_segments" => 6,
@@ -322,7 +322,7 @@ function _add_sparse_pwl_interpolation_variables!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel{D, HVDCTwoTerminalVSCLoss},
-) where {D <: PSY.TwoTerminalHVDCDetailedLine}
+) where {D <: PSY.TwoTerminalVSCLine}
     # TODO: Implement approach for deciding segment length
     # Create Variables
     time_steps = get_time_steps(container)
@@ -918,7 +918,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: ConverterPowerCalculationConstraint,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
@@ -1015,7 +1015,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: ConverterDirectionConstraint,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
@@ -1120,7 +1120,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: ConverterMcCormickEnvelopes,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
@@ -1378,7 +1378,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: InterpolationVoltageConstraints,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     dic_var_bkpts = Dict{String, Vector{Float64}}()
@@ -1428,7 +1428,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: InterpolationCurrentConstraints,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     dic_var_bkpts = Dict{String, Vector{Float64}}()
@@ -1466,7 +1466,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: InterpolationBilinearConstraints,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     dic_var_bkpts = Dict{String, Vector{Float64}}()
@@ -1520,7 +1520,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: ConverterCurrentBalanceConstraint,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
@@ -1571,7 +1571,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: CurrentAbsoluteValueConstraint,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)
@@ -1652,7 +1652,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: ConverterLossesCalculationConstraint,
-    U <: PSY.TwoTerminalHVDCDetailedLine,
+    U <: PSY.TwoTerminalVSCLine,
     V <: HVDCTwoTerminalVSCLoss,
 }
     time_steps = get_time_steps(container)

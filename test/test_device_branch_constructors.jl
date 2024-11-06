@@ -753,7 +753,7 @@ end
 
     hvdc = first(get_components(TwoTerminalHVDCLine, c_sys5))
 
-    hvdc_new = TwoTerminalHVDCDetailedLine(;
+    hvdc_new = TwoTerminalVSCLine(;
         name = get_name(hvdc),
         available = get_available(hvdc),
         active_power_flow = get_active_power_flow(hvdc),
@@ -772,7 +772,7 @@ end
 
     template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
     dev_model = DeviceModel(
-        TwoTerminalHVDCDetailedLine,
+        TwoTerminalVSCLine,
         PSI.HVDCTwoTerminalVSCLoss;
         attributes = Dict{String, Any}(
             "voltage_segments" => 10,

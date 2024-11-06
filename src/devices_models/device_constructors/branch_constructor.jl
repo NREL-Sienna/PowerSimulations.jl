@@ -903,7 +903,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalVSCLoss},
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLoss},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(model, sys)
@@ -980,6 +980,14 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
     # TODO: Add losses to balance expression to get full AC
     add_feedforward_arguments!(container, model, devices)
     return
@@ -989,7 +997,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{PSY.TwoTerminalHVDCDetailedLine, HVDCTwoTerminalVSCLoss},
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLoss},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(model, sys)
