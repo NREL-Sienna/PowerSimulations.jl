@@ -565,6 +565,36 @@ function add_to_expression!(
     return
 end
 
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: Union{ReceivedHVDCActivePowerFromExpression, ReceivedHVDCActivePowerToExpression},
+    U <:
+    Union{HVDCActiveDCPowerSentFromVariable, HVDCActiveDCPowerSentToVariable, HVDCLosses},
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalVSCLoss,
+    X <: AbstractPTDFModel,
+}
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), V)
+    for d in devices
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[name, t],
+                variable[name, t],
+                -1.0,
+            )
+        end
+    end
+    return
+end
+
 """
 Default implementation to add branch variables to SystemBalanceExpressions
 """

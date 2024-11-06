@@ -961,6 +961,51 @@ function construct_device!(
     #####################
     #### Expressions ####
     #####################
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        devices,
+        model,
+    )
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        devices,
+        model,
+    )
+
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCActiveDCPowerSentFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCActiveDCPowerSentToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
 
     # HVDCActivePowerReceivedFromVariable: DC Power Received on From Bus
     add_to_expression!(

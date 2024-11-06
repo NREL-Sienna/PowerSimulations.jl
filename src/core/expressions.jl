@@ -12,6 +12,8 @@ struct ActivePowerRangeExpressionLB <: RangeConstraintLBExpressions end
 struct ActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
 struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end
+struct ReceivedHVDCActivePowerFromExpression <: ExpressionType end
+struct ReceivedHVDCActivePowerToExpression <: ExpressionType end
 struct InterfaceTotalFlow <: ExpressionType end
 struct PTDFBranchFlow <: ExpressionType end
 
@@ -20,5 +22,7 @@ should_write_resulting_value(::Type{InterfaceTotalFlow}) = true
 should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true
 should_write_resulting_value(::Type{ReactivePowerBalance}) = true
+should_write_resulting_value(::Type{ReceivedHVDCActivePowerFromExpression}) = true
+should_write_resulting_value(::Type{ReceivedHVDCActivePowerToExpression}) = true
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
