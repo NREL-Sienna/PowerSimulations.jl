@@ -45,7 +45,7 @@ function add_expressions!(
         D,
         PSY.get_name.(devices),
         time_steps;
-        meta = PSY.get_name(first(devices)),
+        meta = get_service_name(model),
     )
     return
 end
