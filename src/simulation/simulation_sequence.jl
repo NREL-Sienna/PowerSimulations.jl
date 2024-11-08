@@ -209,16 +209,18 @@ function _add_event_to_model(
 end
 
 function _add_model_to_event_map!(
-    event_maps::Dict{EventKey, Vector{Symbol}},
+    event_maps::Dict{EventKey, T},
     model::OperationModel,
     sys::PSY.System,
-    event_models::Vector,
-)
+    event_models::Vector{T},
+) where T <: EventModel
     model_name = get_name(model)
     for event_model in event_models
         event_type = get_event_type(event_model)
         if isempty(PSY.get_supplemental_attributes(event_type, sys))
-            @warn "There is no data for $event_type in $(model_name). Ignoring event model."
+            error(
+                "There is no data for $event_type in $(model_name). \
+            Since events are simulation-wide objects, they need to be added to all models.")
             continue
         end
         for event in PSY.get_supplemental_attributes(event_type, sys)
@@ -227,29 +229,20 @@ function _add_model_to_event_map!(
             for device_type in device_types_with_attribute
                 key = EventKey(event_type, device_type)
                 _add_event_to_model(model, key, event_model)
-                participating_models = get!(event_maps, key, Symbol[])
-                push!(participating_models, model_name)
+                if !haskey(event_maps, key)
+                    event_maps[key] = event_model
+                end
             end
         end
     end
     return
 end
 
-function _attach_events(models::SimulationModels, event_models::Vector{<:EventModel})
-    event_maps = Dict{EventKey, Vector{Symbol}}()
+function _attach_events(models::SimulationModels, event_models::Vector{T}) where T <: EventModel
+    event_maps = Dict{EventKey, T}()
     for model in get_decision_models(models)
         sys = get_system(model)
         _add_model_to_event_map!(event_maps, model, sys, event_models)
-    end
-
-    decision_model_names = string.(get_name.(get_decision_models(models)))
-    for (key, models) in event_maps
-        event_type = get_entry_type(key)
-        if length(models) < length(decision_model_names)
-            missing_models = setdiff(decision_model_names, string.(models))
-            @warn "The following DecisionModels are missing $(event_type) data: $(missing_models) \
-            This can lead to unexpected outcomes in the Simulation"
-        end
     end
 
     em_model = get_emulation_model(models)
@@ -314,7 +307,7 @@ mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Dates.Millisecond}
     intervals::OrderedDict{Symbol, Dates.Millisecond}
     feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
-    events::Dict{EventKey, Vector{Symbol}}
+    events::Dict{EventKey, <:EventModel}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
     executions_by_model::OrderedDict{Symbol, Int}
@@ -369,4 +362,5 @@ function get_interval(sequence::SimulationSequence, model::DecisionModel)
     return sequence.intervals[get_name(model)]
 end
 
+get_events(sequence::SimulationSequence) = sequence.events
 get_execution_order(sequence::SimulationSequence) = sequence.execution_order
