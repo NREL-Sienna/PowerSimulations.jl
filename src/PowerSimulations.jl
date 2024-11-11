@@ -419,6 +419,9 @@ import PowerModels
 import TimerOutputs
 import ProgressMeter
 import Distributed
+import Distributions: Bernoulli, Geometric
+import Random
+import Random: AbstractRNG, rand
 
 # Base Imports
 import Base.getindex
