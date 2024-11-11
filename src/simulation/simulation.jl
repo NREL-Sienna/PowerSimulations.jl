@@ -157,6 +157,7 @@ get_logs_folder(sim::Simulation) = sim.internal.logs_dir
 get_recorder_folder(sim::Simulation) = sim.internal.recorder_dir
 get_console_level(sim::Simulation) = sim.internal.console_level
 get_file_level(sim::Simulation) = sim.internal.file_level
+get_rng(sim::Simulation) = sim.internal.rng
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::SimulationBuildStatus) =
