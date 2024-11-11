@@ -451,6 +451,14 @@ function get_system_state_value(
     return get_system_state_value(state, ConstraintKey(T, U))
 end
 
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_value(state, ParameterKey(T, U))
+end
+
 function get_system_state_data(
     state::SimulationState,
     ::T,
@@ -473,4 +481,12 @@ function get_system_state_data(
     ::Type{U},
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     return get_system_state_data(state, ConstraintKey(T, U))
+end
+
+function get_system_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_system_state_data(state, ParameterKey(T, U))
 end
