@@ -213,14 +213,15 @@ function _add_model_to_event_map!(
     model::OperationModel,
     sys::PSY.System,
     event_models::Vector{T},
-) where T <: EventModel
+) where {T <: EventModel}
     model_name = get_name(model)
     for event_model in event_models
         event_type = get_event_type(event_model)
         if isempty(PSY.get_supplemental_attributes(event_type, sys))
             error(
                 "There is no data for $event_type in $(model_name). \
-            Since events are simulation-wide objects, they need to be added to all models.")
+            Since events are simulation-wide objects, they need to be added to all models.",
+            )
             continue
         end
         for event in PSY.get_supplemental_attributes(event_type, sys)
@@ -238,7 +239,10 @@ function _add_model_to_event_map!(
     return
 end
 
-function _attach_events(models::SimulationModels, event_models::Vector{T}) where T <: EventModel
+function _attach_events(
+    models::SimulationModels,
+    event_models::Vector{T},
+) where {T <: EventModel}
     event_maps = Dict{EventKey, T}()
     for model in get_decision_models(models)
         sys = get_system(model)
