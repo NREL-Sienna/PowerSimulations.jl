@@ -45,6 +45,7 @@ export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded
 export PhaseAngleControl
+export HVDCTwoTerminalVSCLoss
 # export VoltageSourceDC
 
 ######## HVDC models ########
@@ -233,6 +234,23 @@ export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
+export HVDCActiveDCPowerSentFromVariable
+export HVDCActiveDCPowerSentToVariable
+export ConverterPowerDirection
+export DCVoltageFrom
+export DCVoltageTo
+export SquaredDCVoltageFrom
+export SquaredDCVoltageTo
+export ConverterCurrent
+export SquaredConverterCurrent
+export ConverterPositiveCurrent
+export ConverterNegativeCurrent
+export ConverterCurrentDirection
+export HVDCLosses
+export AuxBilinearConverterVariableFrom
+export AuxBilinearSquaredConverterVariableFrom
+export AuxBilinearConverterVariableTo
+export AuxBilinearSquaredConverterVariableTo
 
 # Auxiliary variables
 export TimeDurationOn
@@ -270,7 +288,6 @@ export FlowReactivePowerFromToConstraint
 export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
-export HVDCLosses
 export HVDCFlowDirectionVariable
 export InputActivePowerVariableLimitsConstraint
 export NetworkFlowConstraint
