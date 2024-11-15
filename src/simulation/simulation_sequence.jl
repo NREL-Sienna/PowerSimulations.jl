@@ -204,12 +204,15 @@ function _add_event_to_model(
     event_model::EventModel,
 ) where {T <: PSY.Contingency, U <: PSY.Device}
     device_model = get_model(get_template(sim_model), U)
-    set_event_model!(device_model, key, event_model)
+    if !haskey(get_events(device_model), key)
+        set_event_model!(device_model, key, event_model)
+    else
+        @debug "Event Model with key $key already in the device model"
+    end
     return
 end
 
 function _add_model_to_event_map!(
-    event_maps::Dict{EventKey, T},
     model::OperationModel,
     sys::PSY.System,
     event_models::Vector{T},
@@ -224,42 +227,51 @@ function _add_model_to_event_map!(
             )
             continue
         end
+        event_model.attribute_device_map[model_name] =
+            Dict{Base.UUID, Dict{DataType, String}}()
+        @show event_model.attribute_device_map[model_name]
+        @show length(PSY.get_supplemental_attributes(event_type, sys))
         for event in PSY.get_supplemental_attributes(event_type, sys)
+            @show event_uuid = PSY.IS.get_uuid(event) model_name
             devices_with_attribute = PSY.get_components(sys, event)
-            device_types_with_attribute = Set(typeof.(devices_with_attribute))
+            device_types_with_attribute = Set{DataType}()
+            event_model.attribute_device_map[model_name][event_uuid] =
+                Dict{DataType, String}()
+            for device in devices_with_attribute
+                dtype = typeof(device)
+                push!(device_types_with_attribute, dtype)
+                event_model.attribute_device_map[model_name][event_uuid][dtype] =
+                    PSY.get_name(device)
+            end
             for device_type in device_types_with_attribute
                 key = EventKey(event_type, device_type)
                 _add_event_to_model(model, key, event_model)
-                if !haskey(event_maps, key)
-                    event_maps[key] = event_model
-                end
             end
         end
+        @show event_model.attribute_device_map[model_name]
     end
     return
 end
 
-function _attach_events(
+function _attach_events!(
     models::SimulationModels,
     event_models::Vector{T},
 ) where {T <: EventModel}
-    event_maps = Dict{EventKey, T}()
     for model in get_decision_models(models)
         sys = get_system(model)
-        _add_model_to_event_map!(event_maps, model, sys, event_models)
+        _add_model_to_event_map!(model, sys, event_models)
     end
 
     em_model = get_emulation_model(models)
     if !isnothing(em_model)
         _add_model_to_event_map!(
-            event_maps,
             em_model,
             get_system(em_model),
             event_models,
         )
     end
 
-    return event_maps
+    return
 end
 
 """
@@ -311,7 +323,7 @@ mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Dates.Millisecond}
     intervals::OrderedDict{Symbol, Dates.Millisecond}
     feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
-    events::Dict{EventKey, <:EventModel}
+    events::Vector{<:EventModel}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
     executions_by_model::OrderedDict{Symbol, Int}
@@ -342,11 +354,12 @@ mutable struct SimulationSequence
         executions_by_model = _get_num_executions_by_model(models, execution_order)
         sequence_uuid = IS.make_uuid()
         initialize_simulation_internals!(models, sequence_uuid)
+        _attach_events!(models, events)
         new(
             horizons,
             intervals,
             _attach_feedforwards(models, feedforwards),
-            _attach_events(models, events),
+            events,
             ini_cond_chronology,
             execution_order,
             executions_by_model,
