@@ -18,6 +18,7 @@ end
 
 mutable struct EventModel{D <: PSY.Contingency, B <: AbstractEventCondition}
     condition::B
+    attribute_device_map::Dict{Symbol, Dict{Base.UUID, Dict{DataType, String}}}
     attributes::Dict{String, Any}
 
     function EventModel(
@@ -25,7 +26,11 @@ mutable struct EventModel{D <: PSY.Contingency, B <: AbstractEventCondition}
         condition::B;
         attributes = Dict{String, Any}(),
     ) where {D <: PSY.Contingency, B <: AbstractEventCondition}
-        new{D, B}(condition, attributes)
+        new{D, B}(
+            condition,
+            Dict{Symbol, Dict{Base.UUID, Dict{DataType, String}}}(),
+            attributes,
+        )
     end
 end
 
@@ -36,3 +41,5 @@ get_event_type(
 get_event_condition(
     e::EventModel{D, B},
 ) where {D <: PSY.Contingency, B <: AbstractEventCondition} = e.condition
+
+get_attribute_device_map(e::EventModel) = e.attribute_device_map
