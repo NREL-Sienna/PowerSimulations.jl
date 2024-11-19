@@ -40,13 +40,13 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
     return temp_component_map
 end
 
-_get_temp_component_map_id(comp::PSY.Component) = PSY.get_name(comp)
-_get_temp_component_map_id(comp::PSY.Bus) = PSY.get_number(comp)
+_get_temp_component_map_lhs(comp::PSY.Component) = PSY.get_name(comp)
+_get_temp_component_map_lhs(comp::PSY.Bus) = PSY.get_number(comp)
 
 # Creates dicts of components by type
 function _make_temp_component_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
     temp_component_map =
-        Dict{DataType, Dict{Union{String, Int64}, Union{String, Int64}}}()
+        Dict{DataType, Dict{Union{String, Int64}, String}}()
     # TODO don't hardcode the types here, handle get_available more elegantly, likely `ComponentSelector` use case
     relevant_components = vcat(
         collect.([
@@ -55,9 +55,10 @@ function _make_temp_component_map(::PFS.SystemPowerFlowContainer, sys::PSY.Syste
         )...,
     )
     for comp_type in unique(typeof.(relevant_components))
+        # NOTE we avoid using bus numbers here because PSY.get_bus(system, number) is O(n)
         temp_component_map[comp_type] =
             Dict(
-                _get_temp_component_map_id(c) => _get_temp_component_map_id(c) for
+                _get_temp_component_map_lhs(c) => PSY.get_name(c) for
                 c in relevant_components if c isa comp_type
             )
     end
@@ -71,7 +72,7 @@ function _make_pf_input_map!(
 )
     pf_data = get_power_flow_data(pf_e_data)
     temp_component_map = _make_temp_component_map(pf_data, sys)
-    map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{Union{String, Int64}, Union{String, Int64}} for SystemPowerFlowContainer
+    map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{Union{String, Int64}, String} for SystemPowerFlowContainer
     input_keys = pf_input_keys(pf_data)
 
     # Second map that persists to store the bus index that the variable
@@ -227,11 +228,6 @@ function update_pf_data!(
     return
 end
 
-_lookup_component(type::Type{<:PSY.Component}, sys::PSY.System, id::AbstractString) =
-    PSY.get_component(type, sys, id)
-_lookup_component(::Type{<:PSY.Bus}, sys::PSY.System, id::Int) =
-    PSY.get_bus(sys, id)
-
 _update_component(
     ::Type{<:Union{ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter}},
     comp::PSY.Component,
@@ -256,9 +252,9 @@ function update_pf_system!(
 )
     for (key, component_map) in input_map
         result = lookup_value(container, key)
-        for (device_id, _) in component_map
+        for (device_id, device_name) in component_map
             injection_values = result[device_id, :]
-            comp = _lookup_component(get_component_type(key), sys, device_id)
+            comp = PSY.get_component(get_component_type(key), sys, device_name)
             val = jump_value(injection_values[time_step])
             _update_component(get_entry_type(key), comp, val)
         end
