@@ -37,13 +37,17 @@ function apply_affect!(
         <:AbstractEventCondition,
     },
     parameter_value::Float64,
-    device_types::Set{DataType},
+    device_type_maps::Dict{DataType, Set{String}},
 )
-    for dtype in [PSY.ThermalStandard] #device_types
+    for (dtype, device_names) in device_type_maps
+        if dtype == PSY.RenewableDispatch
+            continue
+        end
         current_status_data =
             get_system_state_data(state, AvailableStatusParameter(), dtype)
+        decision_status_data =
+            get_decision_state_data(state, AvailableStatusParameter(), dtype)
         current_status_values = get_last_recorded_value(current_status_data)
-        device_names = axes(current_status_values)[1]
         for d in device_names
             if current_status_values[d] < 1.0
                 continue
