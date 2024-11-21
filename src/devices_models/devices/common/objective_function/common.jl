@@ -88,8 +88,8 @@ function _add_vom_cost_to_objective!(
     )
     for t in get_time_steps(container)
         exp =
-            _add_proportional_term!(container, T(), d, cost_term_normalized * multiplier, t)
-        add_to_expression!(container, ProductionCostExpression, exp, d, t)
+            _add_proportional_term!(container, T(), component, cost_term_normalized * multiplier, t)
+        add_to_expression!(container, ProductionCostExpression, exp, component, t)
     end
     return
 end
