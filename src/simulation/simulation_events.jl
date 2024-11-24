@@ -14,9 +14,7 @@ function apply_simulation_events!(simulation::Simulation)
             for (event_uuid, device_types) in event_model.attribute_device_map[model_name]
                 @show event_uuid
                 event = PSY.get_supplemental_attribute(sys, event_uuid)
-                λ = PSY.get_outage_transition_probability(event)
-                parameter_value = Float64(rand(get_rng(simulation), Bernoulli(λ)))
-                apply_affect!(simulation_state, event_model, parameter_value, device_types)
+                apply_affect!(simulation, event_model, event, device_types)
             end
         end
     end
@@ -31,29 +29,38 @@ function check_condition(
 end
 
 function apply_affect!(
-    state::SimulationState,
+    simulation::Simulation,
     event_model::EventModel{
         PSY.GeometricDistributionForcedOutage,
         <:AbstractEventCondition,
     },
-    parameter_value::Float64,
+    event::PSY.GeometricDistributionForcedOutage,
     device_type_maps::Dict{DataType, Set{String}},
 )
+    sim_state = get_simulation_state(simulation)
+    sim_time = get_current_time(simulation)
+    rng = get_rng(simulation)
+    λ = PSY.get_outage_transition_probability(event)
+    mttr = PSY.get_mean_time_to_recovery(event)
+    outage_status = Float64(rand(rng, Bernoulli(λ)))
     for (dtype, device_names) in device_type_maps
         if dtype == PSY.RenewableDispatch
             continue
         end
         current_status_data =
-            get_system_state_data(state, AvailableStatusParameter(), dtype)
-        decision_status_data =
-            get_decision_state_data(state, AvailableStatusParameter(), dtype)
+            get_system_state_data(sim_state, AvailableStatusParameter(), dtype)
         current_status_values = get_last_recorded_value(current_status_data)
+        em_model = get_emulation_model(get_models(simulation))
+        em_model_store = get_store_params(em_model)
         for d in device_names
             if current_status_values[d] < 1.0
                 continue
             else
                 @show d
-                @show current_status_values[d] = parameter_value
+                @show current_status_values[d] = outage_status
+                update_decision_state!(sim_state, ParameterKey(AvailableStatusParameter, dtype), mttr, sim_time, em_model_store)
+                # update_decision_state!(sim_state, VariableKey(ActivePowerVariable, dtype), mttr, sim_time, em_model_store)
+                error()
             end
         end
     end

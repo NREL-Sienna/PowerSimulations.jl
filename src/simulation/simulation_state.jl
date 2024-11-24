@@ -241,6 +241,46 @@ end
 
 function update_decision_state!(
     state::SimulationState,
+    key::Union{ParameterKey{AvailableStatusParameter, T}, VariableKey{ActivePowerVariable, T}},
+    mttr::Float64,
+    simulation_time::Dates.DateTime,
+    ::ModelStoreParams,
+) where {T <: PSY.Component}
+    state_data = get_decision_state_data(state, key)
+    @show column_names = get_column_names(key, state_data)[1]
+    # This is required since the data for outages (mttr and λ) is always assumed to be on hourly resolution
+    mttr_resolution = Dates.Hour(1)
+    state_resolution = get_data_resolution(state_data)
+    @show resolution_ratio = mttr_resolution ÷ state_resolution
+    state_timestamps = state_data.timestamps
+    @assert_op resolution_ratio >= 1
+    # When we are back to the beggining of the simulation step.
+    if simulation_time > get_end_of_step_timestamp(state_data)
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
+    else
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    end
+
+    @show off_time_step_count = Int(mttr)*resolution_ratio + rem(state_data_index, resolution_ratio) - 1
+    set_update_timestamp!(state_data, simulation_time)
+    for t in range(start = state_data_index; length = off_time_step_count)
+        @show t
+        for name in column_names
+            @show state_data.values[name, t] = 0.0
+        end
+        set_last_recorded_row!(state_data, t)
+    end
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
     key::AuxVarKey{S, T},
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
@@ -305,6 +345,38 @@ end
 
 function get_decision_state_value(state::SimulationState, key::OptimizationContainerKey)
     return get_dataset_values(get_decision_states(state), key)
+end
+
+function get_decision_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_decision_state_data(state, VariableKey(T, U))
+end
+
+function get_decision_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
+    return get_decision_state_data(state, AuxVarKey(T, U))
+end
+
+function get_decision_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    return get_decision_state_data(state, ConstraintKey(T, U))
+end
+
+function get_decision_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_decision_state_data(state, ParameterKey(T, U))
 end
 
 function get_decision_state_value(
