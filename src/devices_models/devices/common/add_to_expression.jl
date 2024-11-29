@@ -44,14 +44,22 @@ function add_expressions!(
         if fuel_curve isa PSY.FuelCurve
             push!(names, PSY.get_name(d))
             if !found_quad_fuel_functions
-                found_quad_fuel_functions = PSY.get_value_curve(fuel_curve) isa PSY.QuadraticCurve
+                found_quad_fuel_functions =
+                    PSY.get_value_curve(fuel_curve) isa PSY.QuadraticCurve
             end
         end
     end
 
     if !isempty(names)
         expr_type = found_quad_fuel_functions ? JuMP.QuadExpr : GAE
-        add_expression_container!(container, T(), D, names, time_steps; expr_type = expr_type)
+        add_expression_container!(
+            container,
+            T(),
+            D,
+            names,
+            time_steps;
+            expr_type = expr_type,
+        )
     end
     return
 end
