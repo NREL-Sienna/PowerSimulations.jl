@@ -241,13 +241,14 @@ end
 
 function update_decision_state!(
     state::SimulationState,
-    key::Union{ParameterKey{AvailableStatusParameter, T}, VariableKey{ActivePowerVariable, T}},
-    mttr::Float64,
+    key::OptimizationContainerKey,
+    column_names::Set{String},
+    event::PSY.GeometricDistributionForcedOutage,
     simulation_time::Dates.DateTime,
     ::ModelStoreParams,
-) where {T <: PSY.Component}
+)
+    mttr = PSY.get_mean_time_to_recovery(event)
     state_data = get_decision_state_data(state, key)
-    @show column_names = get_column_names(key, state_data)[1]
     # This is required since the data for outages (mttr and λ) is always assumed to be on hourly resolution
     mttr_resolution = Dates.Hour(1)
     state_resolution = get_data_resolution(state_data)
@@ -409,6 +410,34 @@ function update_system_state!(
     set_update_timestamp!(dataset, simulation_time)
     set_dataset_values!(state, key, 1, res)
     set_last_recorded_row!(dataset, 1)
+    return
+end
+
+function update_system_state!(
+    state::SimulationState,
+    key::OptimizationContainerKey,
+    column_names::Set{String},
+    event::PSY.GeometricDistributionForcedOutage,
+    simulation_time::Dates.DateTime,
+)
+    # rng = get_rng(simulation)
+    λ = PSY.get_outage_transition_probability(event)
+    outage_status = 0.0 # Float64(rand(rng, Bernoulli(λ)))
+    sym_state = get_system_states(state)
+    system_dataset = get_dataset(sym_state, key)
+    # Writes the timestamp of the value used for the update
+    set_update_timestamp!(system_dataset, simulation_time)
+    current_status_data = get_system_state_data(state, key)
+    current_status_values = get_last_recorded_value(current_status_data)
+
+    for name in column_names
+        @show name
+        if current_status_values[name] == 0.0
+            continue
+        else
+            @show current_status_values[name] = outage_status
+        end
+    end
     return
 end
 
