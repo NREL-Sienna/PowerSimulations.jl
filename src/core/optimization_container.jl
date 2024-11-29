@@ -1442,11 +1442,12 @@ function add_expression_container!(
     ::T,
     ::Type{U},
     axs...;
+    expr_type = GAE,
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    return _add_expression_container!(container, expr_key, GAE, axs...; sparse = sparse)
+    return _add_expression_container!(container, expr_key, expr_type, axs...; sparse = sparse)
 end
 
 function add_expression_container!(
