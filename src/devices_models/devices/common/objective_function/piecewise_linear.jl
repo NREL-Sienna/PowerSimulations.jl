@@ -538,7 +538,7 @@ function _add_variable_cost_to_objective!(
     pwl_fuel_consumption_expressions =
         _add_pwl_term!(container, component, cost_function, T(), U())
 
-    is_time_variant = is_time_variant(cost_function)
+    is_time_variant_ = is_time_variant(cost_function)
     for t in get_time_steps(container)
         fuel_cost_value = _get_fuel_cost_value(
             container,
@@ -560,7 +560,7 @@ function _add_variable_cost_to_objective!(
             component,
             t,
         )
-        if is_time_variant
+        if is_time_variant_
             add_to_objective_variant_expression!(container, pwl_cost_expression)
         else
             add_to_objective_invariant_expression!(container, pwl_cost_expression)
