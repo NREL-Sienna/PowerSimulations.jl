@@ -25,5 +25,3 @@ HiGHS_optimizer = JuMP.optimizer_with_attributes(
     "time_limit" => 100.0,
     "log_to_console" => false,
 )
-
-cbc_optimizer = JuMP.optimizer_with_attributes(Cbc.Optimizer)
