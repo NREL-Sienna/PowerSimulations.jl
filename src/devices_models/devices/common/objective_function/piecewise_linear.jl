@@ -537,7 +537,8 @@ function _add_variable_cost_to_objective!(
     end
     pwl_fuel_consumption_expressions =
         _add_pwl_term!(container, component, cost_function, T(), U())
-    is_time_variant = PSY.has_time_series(component)
+
+    is_time_variant = is_time_variant(cost_function)
     for t in get_time_steps(container)
         fuel_cost_value = _get_fuel_cost_value(
             container,
