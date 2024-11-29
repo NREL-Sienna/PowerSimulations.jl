@@ -37,12 +37,21 @@ function add_expressions!(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
-    names = [
-        PSY.get_name(d) for
-        d in devices if PSY.get_variable(PSY.get_operation_cost(d)) isa PSY.FuelCurve
-    ]
+    names = String[]
+    found_quad_fuel_functions = false
+    for d in devices
+        fuel_curve = PSY.get_variable(PSY.get_operation_cost(d))
+        if fuel_curve isa PSY.FuelCurve
+            push!(names, PSY.get_name(d))
+            if !found_quad_fuel_functions
+                found_quad_fuel_functions = PSY.get_value_curve(fuel_curve) isa PSY.QuadraticCurve
+            end
+        end
+    end
+
     if !isempty(names)
-        add_expression_container!(container, T(), D, names, time_steps)
+        expr_type = found_quad_fuel_functions ? JuMP.QuadExpr : GAE
+        add_expression_container!(container, T(), D, names, time_steps; expr_type = expr_type)
     end
     return
 end
@@ -1612,9 +1621,6 @@ function add_to_expression!(
                 base_power,
                 device_base_power,
             )
-            error("TODO: Implement FuelConsumptionExpression AffExpr to QuadExpr")
-            # TODO: Fix this FuelConsumptionExpression AffExpr to QuadExpr
-            #=
             for t in time_steps
                 fuel_expr =
                     (
@@ -1626,7 +1632,6 @@ function add_to_expression!(
                     fuel_expr,
                 )
             end
-            =#
         end
     end
 end
@@ -1758,6 +1763,7 @@ function add_to_expression!(
         end
     end
 end
+=#
 
 #=
 function add_to_expression!(
