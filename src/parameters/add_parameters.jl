@@ -197,7 +197,8 @@ function _add_time_series_parameters!(
     device_names = String[]
     initial_values = Dict{String, AbstractArray}()
     for device in devices
-        if !PSY.has_time_series(device)
+        if !PSY.has_time_series(device, ts_type, ts_name)
+            @debug "skipped time series for $D, $(PSY.get_name(device))"
             continue
         end
         push!(device_names, PSY.get_name(device))
@@ -229,7 +230,7 @@ function _add_time_series_parameters!(
     end
 
     for device in devices
-        if !PSY.has_time_series(device)
+        if !PSY.has_time_series(device, ts_type, ts_name)
             continue
         end
         name = PSY.get_name(device)
