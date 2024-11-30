@@ -1060,7 +1060,8 @@ end
         ts,
     )
 
-    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    # There is no free MIQP solver, we need to use ThermalDisptchNoMin for testing
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
 
@@ -1068,13 +1069,14 @@ end
         template,
         sys;
         name = "UC",
-        optimizer = HiGHS_optimizer,
+        optimizer = ipopt_optimizer,
         system_to_file = false,
         store_variable_names = true,
         optimizer_solve_log_print = false,
     )
     @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 648, 0, 312, 120, 192, true)
+    solve!(model)
+    moi_tests(model, 288, 0, 192, 120, 72, false)
     container = PSI.get_optimization_container(model)
     @test isa(PSI.get_invariant_terms(PSI.get_objective_expression(container)), JuMP.QuadExpr)
 end
