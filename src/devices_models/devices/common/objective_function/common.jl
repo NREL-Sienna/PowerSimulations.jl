@@ -270,21 +270,26 @@ end
 ################## Fuel Cost #####################
 ##################################################
 
-function _get_fuel_cost_value(
+function get_fuel_cost_value(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
+    ::Val{true},
 ) where {T <: PSY.Component}
-    # TODO: Check time series for derating to work later
-    if PSY.has_time_series(component)
-        parameter_array = get_parameter_array(container, FuelCostParameter(), T)
-        parameter_multiplier =
-            get_parameter_multiplier_array(container, FuelCostParameter(), T)
-        name = PSY.get_name(component)
-        return parameter_array[name, time_period] * parameter_multiplier[name, time_period]
-    else
-        return PSY.get_fuel_cost(component)
-    end
+    parameter_array = get_parameter_array(container, FuelCostParameter(), T)
+    parameter_multiplier =
+        get_parameter_multiplier_array(container, FuelCostParameter(), T)
+    name = PSY.get_name(component)
+    return parameter_array[name, time_period] * parameter_multiplier[name, time_period]
+end
+
+function get_fuel_cost_value(
+    ::OptimizationContainer,
+    component::T,
+    ::Int,
+    ::Val{false},
+) where {T <: PSY.Component}
+    return PSY.get_fuel_cost(component)
 end
 
 function _add_time_varying_fuel_variable_cost!(

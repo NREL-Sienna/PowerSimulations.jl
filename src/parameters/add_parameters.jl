@@ -281,8 +281,9 @@ function _add_parameters!(
         )
     end
     time_steps = get_time_steps(container)
-    # TODO: Check for timeseries only for fuel cost
-    device_names = [PSY.get_name(x) for x in devices if PSY.has_time_series(x)]
+    ts_name = get_time_series_names(model)[T]
+    device_names =
+        [PSY.get_name(x) for x in devices if PSY.has_time_series(x, ts_type, ts_name)]
     if isempty(device_names)
         return
     end
@@ -300,10 +301,8 @@ function _add_parameters!(
         time_steps,
     )
 
-    ts_name = get_time_series_names(model)[T]
-
     for device in devices
-        if !PSY.has_time_series(device)
+        if !PSY.has_time_series(device, ts_type, ts_name)
             continue
         end
         ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)

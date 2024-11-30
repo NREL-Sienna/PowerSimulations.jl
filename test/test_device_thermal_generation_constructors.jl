@@ -1074,9 +1074,13 @@ end
         store_variable_names = true,
         optimizer_solve_log_print = false,
     )
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     solve!(model)
     moi_tests(model, 288, 0, 192, 120, 72, false)
     container = PSI.get_optimization_container(model)
-    @test isa(PSI.get_invariant_terms(PSI.get_objective_expression(container)), JuMP.QuadExpr)
+    @test isa(
+        PSI.get_invariant_terms(PSI.get_objective_expression(container)),
+        JuMP.QuadExpr,
+    )
 end
