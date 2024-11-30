@@ -1073,35 +1073,8 @@ end
         store_variable_names = true,
         optimizer_solve_log_print = false,
     )
-    models = SimulationModels(;
-        decision_models = [
-            model,
-        ],
-    )
-    sequence = SimulationSequence(;
-        models = models,
-        feedforwards = Dict(
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-
-    sim = Simulation(;
-        name = "compact_sim",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        initial_time = DateTime("2024-01-01T00:00:00"),
-        simulation_folder = mktempdir(),
-    )
-
-    build!(sim; console_level = Logging.Error, serialize = false)
-    # TODO Tests
-    moi_tests(model, 1, 2, 3, 4, 5, false)
-    execute!(sim; enable_progress_bar = true)
-
-    sim_res = SimulationResults(sim)
-    res_uc = get_decision_problem_results(sim_res, "UC")
-    th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
-    p_brighton = th_uc[!, "Brighton"]
-    p_solitude = th_uc[!, "Solitude"]
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    moi_tests(model, 648, 0, 312, 120, 192, true)
+    container = PSI.get_optimization_container(model)
+    @test isa(PSI.get_invariant_terms(PSI.get_objective_expression(container)), JuMP.QuadExpr)
 end
