@@ -252,7 +252,7 @@ function update_decision_state!(
     # This is required since the data for outages (mttr and λ) is always assumed to be on hourly resolution
     mttr_resolution = Dates.Hour(1)
     state_resolution = get_data_resolution(state_data)
-    @show resolution_ratio = mttr_resolution ÷ state_resolution
+    resolution_ratio = mttr_resolution ÷ state_resolution
     state_timestamps = state_data.timestamps
     @assert_op resolution_ratio >= 1
     # When we are back to the beggining of the simulation step.
@@ -268,12 +268,12 @@ function update_decision_state!(
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
 
-    @show off_time_step_count = Int(mttr)*resolution_ratio + rem(state_data_index, resolution_ratio) - 1
+    off_time_step_count =
+        Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) - 1
     set_update_timestamp!(state_data, simulation_time)
-    for t in range(start = state_data_index; length = off_time_step_count)
-        @show t
+    for t in range(; start = state_data_index, length = off_time_step_count)
         for name in column_names
-            @show state_data.values[name, t] = 0.0
+            state_data.values[name, t] = 0.0
         end
         set_last_recorded_row!(state_data, t)
     end
@@ -419,10 +419,10 @@ function update_system_state!(
     column_names::Set{String},
     event::PSY.GeometricDistributionForcedOutage,
     simulation_time::Dates.DateTime,
+    rng,
 )
-    # rng = get_rng(simulation)
     λ = PSY.get_outage_transition_probability(event)
-    outage_status = 0.0 # Float64(rand(rng, Bernoulli(λ)))
+    outage_status = Float64(rand(rng, Bernoulli(λ)))
     sym_state = get_system_states(state)
     system_dataset = get_dataset(sym_state, key)
     # Writes the timestamp of the value used for the update
@@ -431,11 +431,10 @@ function update_system_state!(
     current_status_values = get_last_recorded_value(current_status_data)
 
     for name in column_names
-        @show name
         if current_status_values[name] == 0.0
             continue
         else
-            @show current_status_values[name] = outage_status
+            current_status_values[name] = outage_status
         end
     end
     return
@@ -460,10 +459,15 @@ function update_system_state!(
         return
     end
 
-    if get_update_timestamp(system_dataset) > ts
-        error("Trying to update with past data a future state timestamp \\
-            key: $(encode_key_as_string(key)), $(simulation_time), $ts")
-    end
+    # Note: This protection is disabled because the rate of update of the emulator
+    # is now higher than the decision rate. If the event happens in the middle of an "hourly"
+    # rate decision variable then the whole hour is updated creating a problem.
+
+    # New logic will be needed to maintain the protection.
+    #if get_update_timestamp(system_dataset) > ts
+    #    error("Trying to update with past data a future state timestamp \\
+    #        key: $(encode_key_as_string(key)), $(simulation_time), $ts")
+    #end
 
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_dataset, ts)
