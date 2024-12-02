@@ -229,10 +229,10 @@ function _add_model_to_event_map!(
         end
         event_model.attribute_device_map[model_name] =
             Dict{Base.UUID, Dict{DataType, Set{String}}}()
-        @show event_model.attribute_device_map[model_name]
-        @show length(PSY.get_supplemental_attributes(event_type, sys))
+        event_model.attribute_device_map[model_name]
         for event in PSY.get_supplemental_attributes(event_type, sys)
-            @show event_uuid = PSY.IS.get_uuid(event) model_name
+            event_uuid = PSY.IS.get_uuid(event)
+            @debug "Attaching $event_uuid to $model_name"
             devices_with_attribute = PSY.get_components(sys, event)
             device_types_with_attribute = Set{DataType}()
             event_model.attribute_device_map[model_name][event_uuid] =
@@ -240,7 +240,11 @@ function _add_model_to_event_map!(
             for device in devices_with_attribute
                 dtype = typeof(device)
                 push!(device_types_with_attribute, dtype)
-                name_set = get!(event_model.attribute_device_map[model_name][event_uuid], dtype, Set{String}())
+                name_set = get!(
+                    event_model.attribute_device_map[model_name][event_uuid],
+                    dtype,
+                    Set{String}(),
+                )
                 push!(name_set, PSY.get_name(device))
             end
             for device_type in device_types_with_attribute
@@ -248,7 +252,7 @@ function _add_model_to_event_map!(
                 _add_event_to_model(model, key, event_model)
             end
         end
-        @show event_model.attribute_device_map[model_name]
+        event_model.attribute_device_map[model_name]
     end
     return
 end
