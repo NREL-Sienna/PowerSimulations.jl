@@ -74,6 +74,8 @@ struct EventParametersAttributes{T <: PSY.Outage} <: ParameterAttributes
     affected_devices::Vector{<:PSY.Component}
 end
 
+get_attribute_key(attr::EventParametersAttributes) = attr.attribute_key
+
 struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
     parameter_array::T
