@@ -204,6 +204,7 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 )
+    @error key
     state_data = get_decision_state_data(state, key)
     column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
@@ -434,6 +435,7 @@ function update_system_state!(
         if current_status_values[name] == 0.0
             continue
         else
+            @error "Changed status for $name"
             current_status_values[name] = outage_status
         end
     end

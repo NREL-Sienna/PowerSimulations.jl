@@ -337,7 +337,7 @@ mutable struct SimulationSequence
     function SimulationSequence(;
         models::SimulationModels,
         feedforwards = Dict{String, Vector{<:AbstractAffectFeedforward}}(),
-        events = Vector{<:EventModel}(),
+        events = Vector{EventModel}(),
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
