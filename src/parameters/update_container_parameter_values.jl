@@ -404,12 +404,25 @@ function _update_parameter_values!(
     attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage},
     ::Type{U},
     model::EmulationModel,
-    input::DatasetContainer{InMemoryDataset},
+    state::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.Component,
 }
-    @error("update parameters here $(get_name(model))")
+    current_time = get_current_time(model)
+    #@show state_data = get_dataset(state, get_attribute_key(attributes))
+    state_values =
+        get_dataset_values(state, AvailableStatusParameter(), PSY.ThermalStandard)
+    component_names, _ = axes(parameter_array)
+    state_data = get_dataset(state, AvailableStatusParameter(), PSY.ThermalStandard)
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+
+    for name in component_names
+        # Pass indices in this way since JuMP DenseAxisArray don't support view()
+        _set_param_value!(parameter_array, state_values[name, state_data_index], name, 1)
+    end
+    return
 end
 
 """
