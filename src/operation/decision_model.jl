@@ -74,8 +74,9 @@ function DecisionModel{M}(
     elseif name isa String
         name = Symbol(name)
     end
+    ts_type = get_deterministic_time_series_type(sys)
     internal = IS.Optimization.ModelInternal(
-        OptimizationContainer(sys, settings, jump_model, PSY.Deterministic),
+        OptimizationContainer(sys, settings, jump_model, ts_type),
     )
 
     template_ = deepcopy(template)

@@ -534,9 +534,9 @@ function construct_service!(
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.TransmissionInterface}
     interfaces = get_available_components(model, sys)
+    interface = PSY.get_component(T, sys, get_service_name(model))
     if get_use_slacks(model)
         # Adding the slacks can be done in a cleaner fashion
-        interface = PSY.get_component(T, sys, get_service_name(model))
         @assert PSY.get_available(interface)
         transmission_interface_slacks!(container, interface)
     end
@@ -548,7 +548,8 @@ function construct_service!(
         PSY.get_name.(interfaces),
         get_time_steps(container),
     )
-    #add_feedforward_arguments!(container, model, service)
+    # TODO:broken
+    # add_feedforward_arguments!(container, model, interface)
     return
 end
 

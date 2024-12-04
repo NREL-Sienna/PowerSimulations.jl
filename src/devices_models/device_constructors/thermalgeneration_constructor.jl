@@ -56,6 +56,10 @@ function construct_device!(
 
     initial_conditions!(container, devices, D())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -134,6 +138,17 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -164,6 +179,10 @@ function construct_device!(
 
     initial_conditions!(container, devices, D())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -227,6 +246,16 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -255,6 +284,10 @@ function construct_device!(
     add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -335,6 +368,17 @@ function construct_device!(
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
+
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
@@ -360,6 +404,10 @@ function construct_device!(
     add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -423,6 +471,16 @@ function construct_device!(
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -829,6 +887,10 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -931,6 +993,16 @@ function construct_device!(
         network_model,
     )
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -964,6 +1036,10 @@ function construct_device!(
     add_variables!(container, TimeDurationOn, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -1053,6 +1129,16 @@ function construct_device!(
         network_model,
     )
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1091,6 +1177,10 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalCompactUnitCommitment())
 
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -1169,6 +1259,16 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1201,6 +1301,10 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalCompactUnitCommitment())
 
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -1270,6 +1374,16 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1306,6 +1420,10 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalBasicCompactUnitCommitment())
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -1382,6 +1500,16 @@ function construct_device!(
         network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1412,6 +1540,10 @@ function construct_device!(
     add_variables!(container, PowerOutput, devices, ThermalBasicCompactUnitCommitment())
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -1479,6 +1611,16 @@ function construct_device!(
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
