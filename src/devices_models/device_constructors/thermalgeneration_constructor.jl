@@ -975,6 +975,10 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1019,22 +1023,6 @@ function construct_device!(
         devices,
         model,
         network_model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
     )
 
     add_to_expression!(
@@ -1158,6 +1146,10 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1194,22 +1186,6 @@ function construct_device!(
         devices,
         model,
         network_model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
     )
 
     add_to_expression!(
@@ -1332,6 +1308,10 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1367,22 +1347,6 @@ function construct_device!(
         devices,
         model,
         network_model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
     )
 
     add_to_expression!(
@@ -1489,6 +1453,10 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1617,6 +1585,10 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1652,22 +1624,6 @@ function construct_device!(
         devices,
         model,
         network_model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
-    )
-
-    add_to_expression!(
-        container,
-        FuelConsumptionExpression,
-        PowerAboveMinimumVariable,
-        devices,
-        model,
     )
 
     add_to_expression!(
@@ -1768,6 +1724,10 @@ function construct_device!(
 
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
     end
 
     add_to_expression!(
