@@ -6,6 +6,11 @@ end
 
 @testset "NetworkModel Tests" begin
     @test_throws ArgumentError NetworkModel(PM.AbstractPowerModel)
+    @test NetworkModel(
+        PTDFPowerModel;
+        use_slacks = true,
+        power_flow_evaluation = [DCPowerFlow(), PSSEExportPowerFlow(:v33, "exports", true)],
+    ) isa NetworkModel
 end
 
 #=
