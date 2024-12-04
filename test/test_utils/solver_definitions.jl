@@ -1,6 +1,5 @@
 # Solvers
 using Ipopt
-using GLPK
 using SCS
 using HiGHS
 using Cbc
