@@ -303,6 +303,11 @@ Parameter to define cost function coefficient
 """
 struct CostFunctionParameter <: ObjectiveFunctionParameter end
 
+"""
+Parameter to define fuel cost time series
+"""
+struct FuelCostParameter <: ObjectiveFunctionParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 struct EventParameter <: ParameterType end
