@@ -7,7 +7,7 @@
         force_build = true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = HiGHS_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT

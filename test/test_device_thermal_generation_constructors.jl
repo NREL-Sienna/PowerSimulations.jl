@@ -723,7 +723,7 @@ end
         UnitCommitmentProblem,
         template,
         sys;
-        optimizer = cbc_optimizer,
+        optimizer = HiGHS_optimizer,
         initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT

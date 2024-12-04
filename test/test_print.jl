@@ -22,10 +22,10 @@ end
     template = get_thermal_dispatch_template_network()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
 
-    dm_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    dm_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(dm_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    @test solve!(dm_model; optimizer = GLPK_optimizer) ==
+    @test solve!(dm_model; optimizer = HiGHS_optimizer) ==
           PSI.RunStatus.SUCCESSFULLY_FINALIZED
     results = OptimizationProblemResults(dm_model)
     variables = read_variables(results)

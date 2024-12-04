@@ -1,4 +1,4 @@
-# Note to devs. Use GLPK or Cbc for models with linear constraints and linear cost functions
+# Note to devs. Use HiGHS for models with linear constraints and linear cost functions
 # Use OSQP for models with quadratic cost function and linear constraints and ipopt otherwise
 
 @testset "All PowerModels models construction" begin
@@ -59,7 +59,7 @@ end
     ps_model_re = DecisionModel(
         template,
         PSB.build_system(PSITestSystems, "c_sys5_re");
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
     )
     @test build!(ps_model_re; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -121,7 +121,7 @@ end
         )
     end
     # PTDF input Error testing
-    ps_model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
@@ -644,7 +644,7 @@ end
         set_device_model!(template_uc, ThermalStandard, thermal_model)
 
         ##### Solve Reduced Model ####
-        solver = GLPK_optimizer
+        solver = HiGHS_optimizer
         uc_model_red = DecisionModel(
             template_uc,
             new_sys;

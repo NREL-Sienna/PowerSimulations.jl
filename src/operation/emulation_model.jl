@@ -536,8 +536,8 @@ keyword arguments to that function.
 # Examples
 
 ```julia
-status = run!(model; optimizer = GLPK.Optimizer, executions = 10)
-status = run!(model; output_dir = ./model_output, optimizer = GLPK.Optimizer, executions = 10)
+status = run!(model; optimizer = HiGHS.Optimizer, executions = 10)
+status = run!(model; output_dir = ./model_output, optimizer = HiGHS.Optimizer, executions = 10)
 ```
 """
 function run!(
