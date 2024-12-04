@@ -113,9 +113,9 @@ function add_proportional_cost!(
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
-        cost_term = proportional_cost(op_cost_data, U(), d, V())
-        iszero(cost_term) && continue
         for t in get_time_steps(container)
+            cost_term = proportional_cost(container, op_cost_data, U(), d, V(), t)
+            iszero(cost_term) && continue
             if !PSY.get_must_run(d)
                 exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
                 add_to_expression!(container, ProductionCostExpression, exp, d, t)
@@ -270,19 +270,48 @@ end
 ################## Fuel Cost #####################
 ##################################################
 
-function _get_fuel_cost_value(
-    ::OptimizationContainer,
-    fuel_cost::Float64,
-    ::Int,
-)
-    return fuel_cost
+function get_fuel_cost_value(
+    container::OptimizationContainer,
+    component::T,
+    time_period::Int,
+    ::Val{true},
+) where {T <: PSY.Component}
+    parameter_array = get_parameter_array(container, FuelCostParameter(), T)
+    parameter_multiplier =
+        get_parameter_multiplier_array(container, FuelCostParameter(), T)
+    name = PSY.get_name(component)
+    return parameter_array[name, time_period] * parameter_multiplier[name, time_period]
 end
 
-function _get_fuel_cost_value(
+function get_fuel_cost_value(
+    ::OptimizationContainer,
+    component::T,
+    ::Int,
+    ::Val{false},
+) where {T <: PSY.Component}
+    return PSY.get_fuel_cost(component)
+end
+
+function _add_time_varying_fuel_variable_cost!(
     container::OptimizationContainer,
+    ::T,
+    component::V,
     fuel_cost::IS.TimeSeriesKey,
-    time_period::Int,
-)
-    error("Not implemented yet fuel cost")
-    return fuel_cost
+) where {T <: VariableType, V <: PSY.Component}
+    parameter = get_parameter_array(container, FuelCostParameter(), V)
+    multiplier = get_parameter_multiplier_array(container, FuelCostParameter(), V)
+    expression = get_expression(container, FuelConsumptionExpression(), V)
+    name = PSY.get_name(component)
+    for t in get_time_steps(container)
+        cost_expr = expression[name, t] * parameter[name, t] * multiplier[name, t]
+        add_to_expression!(
+            container,
+            ProductionCostExpression,
+            cost_expr,
+            component,
+            t,
+        )
+        add_to_objective_variant_expression!(container, cost_expr)
+    end
+    return
 end
