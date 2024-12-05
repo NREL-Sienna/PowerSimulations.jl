@@ -1,9 +1,7 @@
 # Solvers
 using Ipopt
-using GLPK
 using SCS
 using HiGHS
-using Cbc
 
 ipopt_optimizer =
     JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
