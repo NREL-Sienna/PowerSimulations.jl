@@ -60,10 +60,9 @@ function SimulationProblemResults{T}(
     )
 end
 
-const ProblemResultsTypes = Union{OptimizationProblemResults, SimulationProblemResults}
-
 get_model_name(res::SimulationProblemResults) = res.problem
 get_system(res::SimulationProblemResults) = res.system
+get_source_data(res::SimulationProblemResults) = get_system(res)  # Needed for compatibility with the IS.Results interface
 get_resolution(res::SimulationProblemResults) = res.resolution
 get_execution_path(res::SimulationProblemResults) = res.execution_path
 get_model_base_power(res::SimulationProblemResults) = res.base_power
@@ -155,7 +154,7 @@ will include all data. If that was not configured then the returned system will 
 all data except time series data.
 """
 function get_system!(
-    results::ProblemResultsTypes;
+    results::Union{OptimizationProblemResults, SimulationProblemResults};
     kwargs...,
 )
     !isnothing(get_system(results)) && return get_system(results)
@@ -698,52 +697,3 @@ end
 try_resolve_store(user::SimulationStore, results::Union{Nothing, SimulationStore}) = user
 try_resolve_store(user::Nothing, results::SimulationStore) = results
 try_resolve_store(user::Nothing, results::Nothing) = nothing
-
-_validate_source_data_type(::Nothing) =
-    throw(ArgumentError("No system attached, need to call set_system!"))
-
-# In the case of OptimizationProblemResults, our "system" might be an IS type rather than a
-# PSY.System. If `IS.get_components` were the same as `PSY.get_components` etc., this
-# wouldn't be a problem, but in the status quo it is
-# (see https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/388#issuecomment-2438344086)
-_validate_source_data_type(::IS.InfrastructureSystemsType) =
-    throw(
-        IS.NotImplementedError(
-            "Currently can only call get_components on a set of results whose source data/system is a PowerSystems.jl System",
-        ),
-    )
-
-_validate_source_data_type(data::PSY.System) = data  # Pass through on success
-
-function get_components(::Type{T}, res::ProblemResultsTypes) where {T <: PSY.Component}
-    system = _validate_source_data_type(get_system(res))
-    return get_available_components(T, system)
-end
-
-function get_components(
-    filter_func::Function,
-    ::Type{T},
-    res::ProblemResultsTypes,
-) where {T <: PSY.Component}
-    system = _validate_source_data_type(get_system(res))
-    return get_available_components(filter_func, T, system)
-end
-
-function get_components(selector::PSY.ComponentSelector, res::ProblemResultsTypes)
-    system = _validate_source_data_type(get_system(res))
-    return get_available_components(selector, system)
-end
-
-function get_component(
-    ::Type{T},
-    res::ProblemResultsTypes,
-    name::AbstractString,
-) where {T <: PSY.Component}
-    system = _validate_source_data_type(get_system(res))
-    return get_available_component(T, system, name)
-end
-
-function get_groups(selector::PSY.ComponentSelector, res::ProblemResultsTypes)
-    system = _validate_source_data_type(get_system(res))
-    return get_available_groups(selector, system)
-end
