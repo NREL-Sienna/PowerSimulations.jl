@@ -476,9 +476,9 @@ function _add_variable_cost_to_objective!(
     initial_time = get_initial_time(container)
     incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
     decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
-    if isnothing(decremental_cost_curves)
-        error("Component $(component_name) is not allowed to participate as a demand.")
-    end
+    # if isnothing(decremental_cost_curves)
+    #     error("Component $(component_name) is not allowed to participate as a demand.")
+    # end
     #=
     variable_cost_forecast = PSY.get_variable_cost(
         component,
@@ -583,3 +583,33 @@ function _add_service_bid_cost!(
 end
 
 function _add_service_bid_cost!(::OptimizationContainer, ::PSY.Component, ::PSY.Service) end
+
+function _add_vom_cost_to_objective!(
+    container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::PSY.MarketBidCost,
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    incremental_cost_curves = PSY.get_incremental_offer_curves(op_cost)
+    decremental_cost_curves = PSY.get_decremental_offer_curves(op_cost)
+    power_units = PSY.get_power_units(incremental_cost_curves)
+    vom_cost = PSY.get_vom_cost(incremental_cost_curves)
+    multiplier = 1.0 # VOM Cost is always positive
+    cost_term = PSY.get_proportional_term(vom_cost)
+    iszero(cost_term) && return
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    cost_term_normalized = get_proportional_cost_per_system_unit(
+        cost_term,
+        power_units,
+        base_power,
+        device_base_power,
+    )
+    for t in get_time_steps(container)
+        exp =
+            _add_proportional_term!(container, T(), d, cost_term_normalized * multiplier, t)
+        add_to_expression!(container, ProductionCostExpression, exp, d, t)
+    end
+    return
+end
