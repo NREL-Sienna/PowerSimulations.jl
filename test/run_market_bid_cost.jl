@@ -41,19 +41,19 @@ get_bus(th_solitude)
 #### Add MarketBidCost
 
 proposed_offer_curve = make_market_bid_curve(
-    [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0], 
-    [25.0, 25.5, 26.0, 27.0, 28.0, 30.0], 
-    10.0
+    [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
+    [25.0, 25.5, 26.0, 27.0, 28.0, 30.0],
+    10.0,
 )
 
 set_operation_cost!(
-    th_solitude, 
+    th_solitude,
     MarketBidCost(;
-    no_load_cost=0.0, 
-    start_up = (hot=3.0, warm=0.0, cold=0.0), 
-    shut_down = 1.5, 
-    incremental_offer_curves = proposed_offer_curve
-    )
+        no_load_cost = 0.0,
+        start_up = (hot = 3.0, warm = 0.0, cold = 0.0),
+        shut_down = 1.5,
+        incremental_offer_curves = proposed_offer_curve,
+    ),
 )
 
 #### PowerSimulations Stuff ###
