@@ -28,9 +28,10 @@ function get_time_series(
     component::PSY.Component,
     forecast_name::String,
 )
+    ts_type = get_default_time_series_type(container)
     return _get_time_series(
         container,
         component,
-        TimeSeriesAttributes(PSY.Deterministic, forecast_name),
+        TimeSeriesAttributes(ts_type, forecast_name),
     )
 end

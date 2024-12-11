@@ -414,13 +414,15 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     if was_built_for_recurrent_solves
         set_execution_count!(model, 0)
     end
+    sys = get_system(model)
+    ts_type = get_deterministic_time_series_type(sys)
     IS.Optimization.set_container!(
         get_internal(model),
         OptimizationContainer(
             get_system(model),
             get_settings(model),
             nothing,
-            PSY.Deterministic,
+            ts_type,
         ),
     )
     get_optimization_container(model).built_for_recurrent_solves =
