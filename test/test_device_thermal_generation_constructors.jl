@@ -85,7 +85,7 @@ end
                 name = "UC_$(i)",
                 optimizer = HiGHS_optimizer,
                 system_to_file = false,
-                optimizer_solve_log_print = true
+                optimizer_solve_log_print = true,
             )
             @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
