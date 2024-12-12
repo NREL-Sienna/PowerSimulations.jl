@@ -79,12 +79,14 @@ end
             template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
             set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
             set_device_model!(template, PowerLoad, StaticPowerLoad)
-            model = DecisionModel(template,
+            model = DecisionModel(
+                template,
                 sys;
                 name = "UC_$(i)",
                 optimizer = HiGHS_optimizer,
                 system_to_file = false,
-                optimizer_solve_log_print = true)
+                optimizer_solve_log_print = true
+            )
             @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             results = OptimizationProblemResults(model)
