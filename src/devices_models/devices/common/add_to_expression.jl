@@ -30,6 +30,44 @@ function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
     devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: FuelConsumptionExpression,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    time_steps = get_time_steps(container)
+    names = String[]
+    found_quad_fuel_functions = false
+    for d in devices
+        fuel_curve = PSY.get_variable(PSY.get_operation_cost(d))
+        if fuel_curve isa PSY.FuelCurve
+            push!(names, PSY.get_name(d))
+            if !found_quad_fuel_functions
+                found_quad_fuel_functions =
+                    PSY.get_value_curve(fuel_curve) isa PSY.QuadraticCurve
+            end
+        end
+    end
+
+    if !isempty(names)
+        expr_type = found_quad_fuel_functions ? JuMP.QuadExpr : GAE
+        add_expression_container!(
+            container,
+            T(),
+            D,
+            names,
+            time_steps;
+            expr_type = expr_type,
+        )
+    end
+    return
+end
+
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
     model::ServiceModel{V, W},
 ) where {
     T <: ExpressionType,
@@ -1503,7 +1541,7 @@ function add_to_expression!(
     cost_expression::Union{JuMP.AbstractJuMPScalar, Float64},
     component::T,
     time_period::Int,
-) where {S <: CostExpressions, T <: PSY.Component}
+) where {S <: Union{CostExpressions, FuelConsumptionExpression}, T <: PSY.Component}
     if has_container_key(container, S, T)
         device_cost_expression = get_expression(container, S(), T)
         component_name = PSY.get_name(component)
@@ -1531,6 +1569,142 @@ function add_to_expression!(
         )
     end
     return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: FuelConsumptionExpression,
+    U <: ActivePowerVariable,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+}
+    variable = get_variable(container, U(), V)
+    time_steps = get_time_steps(container)
+    base_power = get_base_power(container)
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
+    for d in devices
+        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        if !(var_cost isa PSY.FuelCurve)
+            continue
+        end
+        expression = get_expression(container, T(), V)
+        name = PSY.get_name(d)
+        device_base_power = PSY.get_base_power(d)
+        value_curve = PSY.get_value_curve(var_cost)
+        if value_curve isa PSY.LinearCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            for t in time_steps
+                fuel_expr = variable[name, t] * prop_term_per_unit * dt
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
+        elseif value_curve isa PSY.QuadraticCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            quadratic_term = PSY.get_quadratic_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            quad_term_per_unit = get_quadratic_cost_per_system_unit(
+                quadratic_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            for t in time_steps
+                fuel_expr =
+                    (
+                        variable[name, t] .^ 2 * quad_term_per_unit +
+                        variable[name, t] * prop_term_per_unit
+                    ) * dt
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
+        end
+    end
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: FuelConsumptionExpression,
+    U <: PowerAboveMinimumVariable,
+    V <: PSY.ThermalGen,
+    W <: AbstractDeviceFormulation,
+}
+    variable = get_variable(container, U(), V)
+    time_steps = get_time_steps(container)
+    base_power = get_base_power(container)
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
+    for d in devices
+        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        if !(var_cost isa PSY.FuelCurve)
+            continue
+        end
+        expression = get_expression(container, T(), V)
+        name = PSY.get_name(d)
+        device_base_power = PSY.get_base_power(d)
+        value_curve = PSY.get_value_curve(var_cost)
+        P_min = PSY.get_active_power_limits(d).min
+        if value_curve isa PSY.LinearCurve
+            power_units = PSY.get_power_units(var_cost)
+            proportional_term = PSY.get_proportional_term(value_curve)
+            prop_term_per_unit = get_proportional_cost_per_system_unit(
+                proportional_term,
+                power_units,
+                base_power,
+                device_base_power,
+            )
+            for t in time_steps
+                sos_status = _get_sos_value(container, W, d)
+                if sos_status == SOSStatusVariable.NO_VARIABLE
+                    bin = 1.0
+                elseif sos_status == SOSStatusVariable.PARAMETER
+                    param = get_default_on_parameter(d)
+                    bin = get_parameter(container, param, V).parameter_array[name, t]
+                elseif sos_status == SOSStatusVariable.VARIABLE
+                    var = get_default_on_variable(d)
+                    bin = get_variable(container, var, V)[name, t]
+                else
+                    @assert false
+                end
+                fuel_expr =
+                    variable[name, t] * prop_term_per_unit * dt +
+                    P_min * bin * prop_term_per_unit * dt
+                JuMP.add_to_expression!(
+                    expression[name, t],
+                    fuel_expr,
+                )
+            end
+        elseif value_curve isa PSY.QuadraticCurve
+            error("Quadratic Curves are not accepted with Compact Formulation: $W")
+        end
+    end
 end
 
 #=

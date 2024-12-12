@@ -96,7 +96,7 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
-    model = DecisionModel(template, c_sys5_uc; optimizer = cbc_optimizer)
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(model, 984, 0, 576, 216, 168, true)

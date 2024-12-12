@@ -11,7 +11,7 @@ get_variable_lower_bound(_, ::PSY.Component, __) = nothing
 get_variable_upper_bound(_, ::PSY.Component, __) = nothing
 
 get_multiplier_value(x, y::PSY.Component, z) =
-    error("Unable to get parameter $x for device $y for formulation $z")
+    error("Unable to get parameter $x for device $(IS.summary(y)) for formulation $z")
 
 get_expression_type_for_reserve(_, y::Type{<:PSY.Component}, z) =
     error("`get_expression_type_for_reserve` must be implemented for $y and $z")
