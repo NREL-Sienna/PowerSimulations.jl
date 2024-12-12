@@ -296,7 +296,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
 end
 
-################################### No Minimum Dispatch tests ##############################
+################################### Basic Dispatch tests ###################################
 @testset "ThermalStandard with ThermalBasicDispatch With DC - PF" begin
     device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -345,6 +345,78 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 288, 0, 96, 96, 96, false)
     psi_checkobjfun_test(model, GAEVF)
+end
+
+################################### No Minimum Dispatch tests ##############################
+@testset "Thermal Dispatch NoMin With DC - PF" begin
+    device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 120, 0, 120, 120, 0, false)
+    key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+    moi_lbvalue_test(model, key, 0.0)
+    psi_checkobjfun_test(model, GAEVF)
+
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 120, 0, 120, 120, 0, false)
+    key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+    moi_lbvalue_test(model, key, 0.0)
+    psi_checkobjfun_test(model, GQEVF)
+end
+
+@testset "Thermal Dispatch NoMin With AC - PF" begin
+    device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 240, 0, 240, 240, 0, false)
+    key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+    moi_lbvalue_test(model, key, 0.0)
+    psi_checkobjfun_test(model, GAEVF)
+
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 240, 0, 240, 240, 0, false)
+    key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
+    moi_lbvalue_test(model, key, 0.0)
+    psi_checkobjfun_test(model, GQEVF)
+end
+
+@testset "Thermal Dispatch NoMin With DC - PF" begin
+    device_model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    @test_throws IS.ConflictingInputsError mock_construct_device!(model, device_model)
+end
+
+@testset "ThermalMultiStart Dispatch NoMin With AC - PF" begin
+    device_model = DeviceModel(ThermalMultiStart, ThermalDispatchNoMin)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5;)
+    @test_throws IS.ConflictingInputsError mock_construct_device!(model, device_model)
+end
+
+@testset "Operation Model ThermalDispatchNoMin - and PWL Non Convex" begin
+    c_sys5_pwl_ed_nonconvex = PSB.build_system(PSITestSystems, "c_sys5_pwl_ed_nonconvex")
+    template = get_thermal_dispatch_template_network()
+    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
+    model = DecisionModel(
+        MockOperationProblem,
+        CopperPlatePowerModel,
+        c_sys5_pwl_ed_nonconvex;
+        export_pwl_vars = true,
+        initialize_model = false,
+    )
+    @test_throws IS.InvalidValue mock_construct_device!(
+        model,
+        DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+    )
 end
 
 ################################## Ramp Limited Testing ##################################
