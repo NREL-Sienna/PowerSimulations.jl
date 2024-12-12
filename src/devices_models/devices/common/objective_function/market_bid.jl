@@ -556,7 +556,7 @@ function _add_variable_cost_to_objective!(
     initial_time = get_initial_time(container)
     incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
     decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
-    if isnothing(decremental_cost_curves)
+    if !isnothing(decremental_cost_curves)
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     #=
