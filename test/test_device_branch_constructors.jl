@@ -729,7 +729,7 @@ end
     @test sum(vars[!, "2"]) >= -1e-6
 end
 
-@testset "HVDC VSC Loss Model" begin
+@testset "HVDC VSC Loss Piecewise Linear Model" begin
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
     thermal_names = ["Solitude", "Park City", "Alta", "Brighton"]
     for name in thermal_names
@@ -853,5 +853,67 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(ps_model, 192, 24, 40, 40, 46, false)
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end
+
+@testset "HVDC VSC Loss Quadratic AC Model" begin
+    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
+    thermal_names = ["Solitude", "Park City", "Alta", "Brighton"]
+    for name in thermal_names
+        thermal = get_component(ThermalStandard, c_sys5, name)
+        op_cost = get_operation_cost(thermal)
+        new_opcost = ThermalGenerationCost(;
+            variable = CostCurve(;
+                value_curve = PSY.QuadraticCurve(
+                    0.0,
+                    get_proportional_term(op_cost.variable.value_curve) / 2.0,
+                    0.0,
+                ),
+                power_units = UnitSystem.NATURAL_UNITS,
+            ),
+            fixed = op_cost.fixed,
+            start_up = op_cost.start_up,
+            shut_down = op_cost.shut_down,
+        )
+        set_operation_cost!(thermal, new_opcost)
+    end
+
+    hvdc = first(get_components(TwoTerminalHVDCLine, c_sys5))
+
+    hvdc_new = TwoTerminalVSCLine(;
+        name = get_name(hvdc),
+        available = get_available(hvdc),
+        active_power_flow = get_active_power_flow(hvdc),
+        rating = 2.0,
+        active_power_limits_from = (min = -2.0, max = 2.0),
+        active_power_limits_to = (min = -2.0, max = 2.0),
+        arc = get_arc(hvdc),
+        converter_loss = QuadraticCurve(0.0001, 0.01, 0.0),
+        dc_current = 0.0,
+        max_dc_current = 3.0,
+        g = 50.0, # r = 0.02
+        voltage_limits = (min = 0.9, max = 1.1),
+        reactive_power_limits_from = (min = -1.0, max = 1.0),
+        reactive_power_limits_to = (min = -1.0, max = 1.0),
+    )
+    remove_component!(c_sys5, hvdc)
+    add_component!(c_sys5, hvdc_new)
+
+    template = get_thermal_dispatch_template_network(NetworkModel(ACPPowerModel))
+    dev_model = DeviceModel(
+        TwoTerminalVSCLine,
+        PSI.HVDCTwoTerminalVSCLossQuadratic,
+    )
+    set_device_model!(template, dev_model)
+    ps_model = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = ipopt_optimizer,
+        store_variable_names = true,
+        horizon = Hour(2),
+    )
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 186, 24, 40, 40, 46, false)
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
