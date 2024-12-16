@@ -523,10 +523,15 @@ struct CurrentAbsoluteValueConstraint <: ConstraintType end
 """
 Struct to create the constraints that set the losses for the converter to use in losses through a lossy Interconnecting Power Converter.
 For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
-The specified constraint is formulated as:
+The specified constraint for the bilinear model is formulated as:
 ```math
 \\begin{align*}
 & p_c^{loss} = a_c + b_c |i_c| + c_c i_c^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+\\end{align*}
+
+For the quadratic model is formulated as:
+\\begin{align*}
+& p_c^{loss} = a_c + b_c |p_c^{from}| + c_c (p_c^{from})^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}  
 \\end{align*}
 ```
 """
@@ -569,3 +574,15 @@ The specified constraints are formulated as:
 ```
 """
 struct FlowApparentPowerLimitConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that balance the DC Power to the VSC Line.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c^{from} = - p_c^{to} - p_c^{loss}, \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct ConverterPowerBalanceConstraint <: ConstraintType end
