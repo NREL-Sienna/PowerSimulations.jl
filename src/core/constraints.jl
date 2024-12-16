@@ -336,6 +336,7 @@ struct InterfaceFlowLimit <: ConstraintType end
 struct HVDCFlowCalculationConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
+
 """
 Struct to create the constraint to limit active power input expressions.
 For more information check [Device Formulations](@ref formulation_intro).
@@ -401,6 +402,8 @@ struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
 struct OutageConstraint <: EventConstraint end
+
+################ HVDC VSC McCormick Model ##################
 
 """
 Struct to create the constraints that set the losses through a lossy Interconnecting Power Converter.
@@ -528,3 +531,41 @@ The specified constraint is formulated as:
 ```
 """
 struct ConverterLossesCalculationConstraint <: ConstraintType end
+
+################ HVDC VSC AC Bilinear Model ##################
+
+"""
+Struct to create the constraints that compute the converter DC power based on current and voltage.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c = v_c * i_c, \\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
+struct ConverterACPowerCalculationConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that decide the operation direction of the converter.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c * i_c >= 0.0,  \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct ConverterACDirectionConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that decide the flow apparent power limits to the VSC Line.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c^2 + q_c^2 <= rating^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct FlowApparentPowerLimitConstraint <: ConstraintType end

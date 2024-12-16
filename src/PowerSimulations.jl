@@ -236,6 +236,8 @@ export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
 export HVDCActiveDCPowerSentFromVariable
 export HVDCActiveDCPowerSentToVariable
+export HVDCReactivePowerSentFromVariable
+export HVDCReactivePowerSentToVariable
 export ConverterPowerDirection
 export DCVoltageFrom
 export DCVoltageTo
@@ -289,6 +291,17 @@ export FlowReactivePowerToFromConstraint
 export FrequencyResponseConstraint
 export HVDCPowerBalance
 export HVDCFlowDirectionVariable
+export ConverterACPowerCalculationConstraint
+export ConverterCurrentBalanceConstraint
+export ConverterLossesCalculationConstraint
+export FlowApparentPowerLimitConstraint
+export ConverterPowerCalculationConstraint
+export ConverterDirectionConstraint
+export ConverterMcCormickEnvelopes
+export InterpolationVoltageConstraints
+export InterpolationCurrentConstraints
+export InterpolationBilinearConstraints
+export CurrentAbsoluteValueConstraint
 export InputActivePowerVariableLimitsConstraint
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
@@ -342,6 +355,8 @@ export RawACE
 export ProductionCostExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
+export ReceivedHVDCActivePowerFromExpression
+export ReceivedHVDCActivePowerToExpression
 
 #################################################################################
 # Imports

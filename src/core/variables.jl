@@ -333,18 +333,32 @@ Docs abbreviation: ``z_c^{\\gamma}``
 struct InterpolationBinarySquaredBilinearVariableTo <: SparseVariableType end
 
 """
-Struct to dispatch the creation of HVDC Received Flow at From Bus Variables for PWL formulations
+Struct to dispatch the creation of HVDC Sent Flow at From Bus Variables for PWL and bilinear formulations
 
 Docs abbreviation: ``x``
 """
 struct HVDCActiveDCPowerSentFromVariable <: VariableType end
 
 """
-Struct to dispatch the creation of HVDC Received Flow at To Bus Variables for PWL formulations
+Struct to dispatch the creation of HVDC Sent Flow at To Bus Variables for PWL and bilinear formulations
 
 Docs abbreviation: ``y``
 """
 struct HVDCActiveDCPowerSentToVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of HVDC Sent Reactive Flow at From Bus Variables for bilinear formulations
+
+Docs abbreviation: ``x``
+"""
+struct HVDCReactivePowerSentFromVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of HVDC Sent Reactive Flow at To Bus Variables for bilinear formulations
+
+Docs abbreviation: ``y``
+"""
+struct HVDCReactivePowerSentToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of bidirectional Active Power Flow Variables

@@ -142,6 +142,10 @@ struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 Branch type to represent physical lossy model on two terminal DC lines
 """
 struct HVDCTwoTerminalVSCLoss <: AbstractTwoTerminalDCLineFormulation end
+"""
+Branch type to represent physical lossy model using a bilinear model. Only usable with AC Network Models.
+"""
+struct HVDCTwoTerminalVSCLossBilinear <: AbstractTwoTerminalDCLineFormulation end
 
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
