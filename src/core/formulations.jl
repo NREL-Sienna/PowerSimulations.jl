@@ -135,17 +135,21 @@ Branch type to represent lossy power flow on DC lines
 """
 struct HVDCTwoTerminalDispatch <: AbstractTwoTerminalDCLineFormulation end
 """
-Branch type to represent piecewise lossy power flow on two terminal DC lines
+Branch type to represent piecewise lossy power flow (with respect to power) on two terminal DC lines
 """
 struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 """
-Branch type to represent physical lossy model on two terminal DC lines
+Branch type to represent physical lossy model on two terminal DC lines using interpolation methods for quadratic losses
 """
 struct HVDCTwoTerminalVSCLoss <: AbstractTwoTerminalDCLineFormulation end
 """
 Branch type to represent physical lossy model using a bilinear model. Only usable with AC Network Models.
 """
 struct HVDCTwoTerminalVSCLossBilinear <: AbstractTwoTerminalDCLineFormulation end
+"""
+Branch type to represent physical lossy model using a quadratic loss model with respect to power. Only usable with AC Network Models.
+"""
+struct HVDCTwoTerminalVSCLossQuadratic <: AbstractTwoTerminalDCLineFormulation end
 
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
