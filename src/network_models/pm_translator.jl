@@ -344,7 +344,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalVSCLine,
-    ::Type{HVDCTwoTerminalVSCLossBilinear},
+    ::Union{Type{HVDCTwoTerminalVSCLossBilinear}, Type{HVDCTwoTerminalVSCLossQuadratic}},
     ::Type{<:PM.AbstractPowerModel},
 )
     return Dict{String, Any}()
@@ -439,7 +439,8 @@ function get_branches_to_pm(
         comp_type = get_component_type(device_model)
         !(comp_type <: T) && continue
         if comp_type <: PSY.TwoTerminalVSCLine &&
-           get_formulation(device_model) <: HVDCTwoTerminalVSCLossBilinear
+           get_formulation(device_model) <:
+           Union{HVDCTwoTerminalVSCLossBilinear, HVDCTwoTerminalVSCLossQuadratic}
             continue
         end
         start_idx += length(PM_branches)
