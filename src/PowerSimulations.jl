@@ -45,7 +45,10 @@ export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded
 export PhaseAngleControl
+export HVDCTwoTerminalPiecewiseLoss
 export HVDCTwoTerminalVSCLoss
+export HVDCTwoTerminalVSCLossBilinear
+export HVDCTwoTerminalVSCLossQuadratic
 # export VoltageSourceDC
 
 ######## HVDC models ########
@@ -295,6 +298,7 @@ export ConverterACPowerCalculationConstraint
 export ConverterCurrentBalanceConstraint
 export ConverterLossesCalculationConstraint
 export FlowApparentPowerLimitConstraint
+export ConverterPowerBalanceConstraint
 export ConverterPowerCalculationConstraint
 export ConverterDirectionConstraint
 export ConverterMcCormickEnvelopes
