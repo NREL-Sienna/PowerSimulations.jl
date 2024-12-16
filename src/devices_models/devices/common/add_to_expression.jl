@@ -504,7 +504,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: HVDCActiveDCPowerSentFromVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: HVDCTwoTerminalVSCLossBilinear,
+    W <: Union{HVDCTwoTerminalVSCLossBilinear, HVDCTwoTerminalVSCLossQuadratic},
     X <: PM.AbstractPowerModel,
 }
     var = get_variable(container, U(), V)
@@ -571,7 +571,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: HVDCActiveDCPowerSentToVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: HVDCTwoTerminalVSCLossBilinear,
+    W <: Union{HVDCTwoTerminalVSCLossBilinear, HVDCTwoTerminalVSCLossQuadratic},
     X <: PM.AbstractPowerModel,
 }
     var = get_variable(container, U(), V)
@@ -668,7 +668,7 @@ function add_to_expression!(
     T <: ReactivePowerBalance,
     U <: HVDCReactivePowerSentFromVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: HVDCTwoTerminalVSCLossBilinear,
+    W <: Union{HVDCTwoTerminalVSCLossBilinear, HVDCTwoTerminalVSCLossQuadratic},
     X <: PM.AbstractPowerModel,
 }
     var = get_variable(container, U(), V)
@@ -698,7 +698,7 @@ function add_to_expression!(
     T <: ReactivePowerBalance,
     U <: HVDCReactivePowerSentToVariable,
     V <: TwoTerminalHVDCTypes,
-    W <: HVDCTwoTerminalVSCLossBilinear,
+    W <: Union{HVDCTwoTerminalVSCLossBilinear, HVDCTwoTerminalVSCLossQuadratic},
     X <: PM.AbstractPowerModel,
 }
     var = get_variable(container, U(), V)
@@ -726,7 +726,11 @@ function add_to_expression!(
     U <:
     Union{HVDCActiveDCPowerSentFromVariable, HVDCActiveDCPowerSentToVariable, HVDCLosses},
     V <: TwoTerminalHVDCTypes,
-    W <: Union{HVDCTwoTerminalVSCLoss, HVDCTwoTerminalVSCLossBilinear},
+    W <: Union{
+        HVDCTwoTerminalVSCLoss,
+        HVDCTwoTerminalVSCLossBilinear,
+        HVDCTwoTerminalVSCLossQuadratic,
+    },
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)

@@ -43,7 +43,11 @@ get_variable_binary(
         InterpolationSquaredBilinearVariableTo,
     },
     ::Type{<:PSY.TwoTerminalVSCLine},
-    ::Union{HVDCTwoTerminalVSCLoss, HVDCTwoTerminalVSCLossBilinear},
+    ::Union{
+        HVDCTwoTerminalVSCLoss,
+        HVDCTwoTerminalVSCLossBilinear,
+        HVDCTwoTerminalVSCLossQuadratic,
+    },
 ) = false
 get_variable_binary(
     ::InterpolationBinarySquaredVoltageVariableFrom,
@@ -1830,7 +1834,7 @@ function add_constraints!(
 ) where {
     T <: FlowApparentPowerLimitConstraint,
     U <: PSY.TwoTerminalVSCLine,
-    V <: HVDCTwoTerminalVSCLossBilinear,
+    V <: Union{HVDCTwoTerminalVSCLossBilinear, HVDCTwoTerminalVSCLossQuadratic},
 }
     time_steps = get_time_steps(container)
     names = [PSY.get_name(d) for d in devices]
@@ -1875,6 +1879,7 @@ function add_constraints!(
     return
 end
 
+### Currently not used but could be used in the future (looks redundant) ###
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
@@ -1923,6 +1928,90 @@ function add_constraints!(
             constraint_to_power[name, t] = JuMP.@constraint(
                 JuMPmodel,
                 to_power_var[name, t] * (-current_var[name, t]) >= 0.0
+            )
+        end
+    end
+    return
+end
+
+###### Quadratic Loss AC Model Constraints #######
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {
+    T <: ConverterLossesCalculationConstraint,
+    U <: PSY.TwoTerminalVSCLine,
+    V <: HVDCTwoTerminalVSCLossQuadratic,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # current vars #
+    losses_var = get_variable(container, HVDCLosses(), U) # From direction
+    power_var = get_variable(container, HVDCActiveDCPowerSentFromVariable(), U) # From direction
+
+    constraint =
+        add_constraints_container!(
+            container,
+            ConverterLossesCalculationConstraint(),
+            U,
+            names,
+            time_steps,
+        )
+
+    for d in devices
+        name = PSY.get_name(d)
+        loss = PSY.get_converter_loss(d)
+        a, b, c = _get_converter_loss_terms(loss)
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                losses_var[name, t] ==
+                a + b * abs(power_var[name, t]) + c * power_var[name, t]^2
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {
+    T <: ConverterPowerBalanceConstraint,
+    U <: PSY.TwoTerminalVSCLine,
+    V <: HVDCTwoTerminalVSCLossQuadratic,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # current vars #
+    losses_var = get_variable(container, HVDCLosses(), U) # From direction
+    power_from_var = get_variable(container, HVDCActiveDCPowerSentFromVariable(), U) # From direction
+    power_to_var = get_variable(container, HVDCActiveDCPowerSentToVariable(), U) # To direction
+
+    constraint =
+        add_constraints_container!(
+            container,
+            ConverterPowerBalanceConstraint(),
+            U,
+            names,
+            time_steps,
+        )
+
+    for d in devices
+        name = PSY.get_name(d)
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                power_from_var[name, t] == -power_to_var[name, t] - losses_var[name, t]
             )
         end
     end
