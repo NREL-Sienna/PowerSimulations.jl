@@ -146,6 +146,13 @@ function construct_network!(
             sys,
             model,
         )
+        add_to_expression!(
+            container,
+            ReactivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+        )
         objective_function!(container, sys, model)
     end
 
