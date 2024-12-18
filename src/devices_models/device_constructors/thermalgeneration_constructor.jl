@@ -546,7 +546,7 @@ function construct_device!(
             ActivePowerRangeExpressionUB,
             devices,
             device_model,
-            device_      network_model,
+            network_model,
         )
     end
 
