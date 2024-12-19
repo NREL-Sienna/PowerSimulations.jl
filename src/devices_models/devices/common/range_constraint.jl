@@ -875,7 +875,7 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {
     T <: ConstraintType,
-    P <: ParameterType,
+    P <: TimeSeriesParameter,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
@@ -888,6 +888,28 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
         return
     end
 
+    constraint =
+        add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
+
+    upper_bound_range_with_parameter!(container, constraint, array, param, devices, model)
+    return
+end
+
+function _add_parameterized_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    ::Type{T},
+    array,
+    param::P,
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    model::DeviceModel{V, W},
+) where {
+    T <: ConstraintType,
+    P <: ParameterType,
+    V <: PSY.Component,
+    W <: AbstractDeviceFormulation,
+}
+    time_steps = get_time_steps(container)
+    names = PSY.get_name.(devices)
     constraint =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
 
