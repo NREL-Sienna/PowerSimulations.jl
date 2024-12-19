@@ -58,12 +58,12 @@ function construct_device!(
 
     initial_conditions!(container, devices, D())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -200,11 +200,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, D())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -240,7 +240,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -285,7 +285,7 @@ function construct_device!(
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -323,11 +323,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -371,7 +371,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -424,7 +424,7 @@ function construct_device!(
             ActivePowerVariableTimeSeriesLimitsConstraint,
             ActivePowerRangeExpressionUB,
             devices,
-            model,
+            device_model,
             network_model,
         )
     end
@@ -461,11 +461,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -501,7 +501,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -539,7 +539,7 @@ function construct_device!(
     )
 
     add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -580,8 +580,8 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -625,7 +625,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -701,8 +701,8 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -738,7 +738,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -805,8 +805,8 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model,)
     end
 
     add_to_expression!(
@@ -826,7 +826,7 @@ function construct_device!(
         network_model,
     )
 
-    add_expressions!(container, FuelConsumptionExpression, devices, device_odel)
+    add_expressions!(container, FuelConsumptionExpression, devices, device_model)
     add_expressions!(container, ProductionCostExpression, devices, device_model)
 
     add_to_expression!(
@@ -850,7 +850,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -920,8 +920,8 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -957,7 +957,7 @@ function construct_device!(
         FuelConsumptionExpression,
         ActivePowerVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -1037,11 +1037,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -1094,7 +1094,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -1161,7 +1161,7 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, ActiveRangeICConstraint, devices, device_model, network_model)
+
     if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
@@ -1212,11 +1212,11 @@ function construct_device!(
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -1261,7 +1261,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -1322,7 +1322,7 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, ActiveRangeICConstraint, devices, device_model, network_model)
+
     if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
@@ -1378,11 +1378,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -1426,7 +1426,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -1519,11 +1519,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -1566,8 +1566,8 @@ function construct_device!(
         container,
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
-        device_devices,
-        model,
+        devices,
+        device_model,
     )
     add_feedforward_arguments!(container, device_model, devices)
     add_event_arguments!(container, devices, device_model, network_model)
@@ -1634,7 +1634,7 @@ function construct_device!(
     device_model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
 
     add_variables!(
         container,
@@ -1656,11 +1656,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -1688,7 +1688,7 @@ function construct_device!(
         ActivePowerRangeExpressionLB,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
         network_model,
     )
     add_to_expression!(
@@ -1696,7 +1696,7 @@ function construct_device!(
         ActivePowerRangeExpressionUB,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
         network_model,
     )
     add_to_expression!(
@@ -1704,10 +1704,10 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
 
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
     add_event_arguments!(container, devices, device_model, network_model)
     return
 end
@@ -1719,7 +1719,7 @@ function construct_device!(
     device_model::DeviceModel{T, ThermalBasicCompactUnitCommitment},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen}
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
 
     add_constraints!(
         container,
@@ -1793,11 +1793,11 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
 
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_to_expression!(
@@ -1875,7 +1875,7 @@ function construct_device!(
     )
 
     add_constraints!(container, CommitmentConstraint, devices, device_model, network_model)
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerVariableTimeSeriesLimitsConstraint,
@@ -1915,8 +1915,8 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, device_model)
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -1929,7 +1929,7 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         device_model,
-        network_model,device_
+        network_model,
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
@@ -2042,8 +2042,8 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, device_model)
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
+    if haskey(get_time_series_names(device_model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, device_model)
     end
 
     add_feedforward_arguments!(container, device_model, devices)
@@ -2092,7 +2092,7 @@ function construct_device!(
         FuelConsumptionExpression,
         PowerAboveMinimumVariable,
         devices,
-        model,
+        device_model,
     )
     add_event_arguments!(container, devices, device_model, network_model)
     return
