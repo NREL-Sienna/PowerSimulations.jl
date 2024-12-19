@@ -6,7 +6,7 @@ function add_event_constraints!(
 ) where {
     T <: Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     V <: AbstractDeviceFormulation,
-    W <: PM.AbstractActivePowerModel,
+    W <: PM.AbstractPowerModel,
 } where {U <: PSY.StaticInjection}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)

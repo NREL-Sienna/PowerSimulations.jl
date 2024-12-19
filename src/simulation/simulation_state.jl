@@ -213,7 +213,6 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 )
-    @error key
     state_data = get_decision_state_data(state, key)
     column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
