@@ -1213,7 +1213,7 @@ function _add_param_container!(
     param_axs,
     time_steps;
     sparse = false,
-) where {T <: AvailableStatusParameter, U <: PSY.Component, V <: PSY.Contingency}
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
         param_type = JuMP.VariableRef
     else

@@ -321,9 +321,14 @@ abstract type AuxVariableValueParameter <: RightHandSideParameter end
 abstract type EventParameter <: ParameterType end
 
 """
-Parameter to define unit commitment status updated from the system state
+Parameter to define component availability status updated from the system state
 """
 struct AvailableStatusParameter <: EventParameter end
+
+"""
+Parameter to record that the component changed in the availability status
+"""
+struct AvailableStatusChangeParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 should_write_resulting_value(::Type{<:EventParameter}) = true
