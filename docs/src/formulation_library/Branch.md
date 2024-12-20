@@ -15,9 +15,9 @@
  7. [`HVDCTwoTerminalPiecewiseLoss`](#HVDCTwoTerminalPiecewiseLoss)
  8. [`HVDCTwoTerminalVSCLoss`](#HVDCTwoTerminalVSCLoss)
  9. [`HVDCTwoTerminalVSCLossBilinear`](#HVDCTwoTerminalVSCLossBilinear)
- 10. [`HVDCTwoTerminalVSCLossQuadratic`](#HVDCTwoTerminalVSCLossQuadratic)
- 11. [`PhaseAngleControl`](#PhaseAngleControl)
- 12. [Valid configurations](#Valid-configurations)
+10. [`HVDCTwoTerminalVSCLossQuadratic`](#HVDCTwoTerminalVSCLossQuadratic)
+11. [`PhaseAngleControl`](#PhaseAngleControl)
+12. [Valid configurations](#Valid-configurations)
 
 ## `StaticBranch`
 
@@ -310,7 +310,6 @@ In addition, the `HVDCLosses` are subtracted to the `from` bus in the `ActivePow
 
 * * *
 
-
 ## `HVDCTwoTerminalPiecewiseLoss`
 
 Formulation valid for `PTDFPowerModel` Network model
@@ -327,6 +326,7 @@ This formulation creates uses ``S`` segments to define different loss factors (p
     
       + Bounds: ``[R^\text{from,min}, R^\text{from,max}]``
       + Symbol: ``f^\text{from}``
+
   - [`HVDCActivePowerReceivedToVariable`](@ref):
     
       + Bounds: ``[R^\text{to,min}, R^\text{to,max}]``
@@ -378,6 +378,7 @@ Define ``n=2S+2``, then the following constraints are used to specify the segmen
     0 \le w_i \le z_i  \text {      for } i=1, ..., n-1 &&
 \end{align*}
 ```
+
 with ``w_{S+1} = 0`` to prevent a solution in the deadband. Then the receiving flows can be computed as:
 
 ```math
@@ -403,6 +404,7 @@ HVDCTwoTerminalVSCLoss
     
       + Bounds: ``[P^\text{from,min}, P^\text{from,max}]``
       + Symbol: ``p_c^\text{from}``
+
   - [`HVDCActiveDCPowerSentToVariable`](@ref):
     
       + Bounds: ``[P^\text{to,min}, P^\text{to,max}]``
@@ -584,7 +586,6 @@ Each `HVDCActiveDCPowerSentFromVariable` ``f^\text{from}`` and `HVDCActiveDCPowe
 \end{align*}
 ```
 
-
 * * *
 
 ## `HVDCTwoTerminalVSCLossBilinear`
@@ -601,6 +602,7 @@ HVDCTwoTerminalVSCLossBilinear
     
       + Bounds: ``[P^\text{from,min}, P^\text{from,max}]``
       + Symbol: ``p_c^\text{from}``
+
   - [`HVDCActiveDCPowerSentToVariable`](@ref):
     
       + Bounds: ``[P^\text{to,min}, P^\text{to,max}]``
@@ -628,7 +630,6 @@ HVDCTwoTerminalVSCLossBilinear
   - [`HVDCLosses`](@ref):
     
       + Symbol: ``p_c^{loss}``
-
 
 **Static Parameters**
 
@@ -663,7 +664,6 @@ Each `HVDCActiveDCPowerSentFromVariable` ``p^\text{from}`` and `HVDCActiveDCPowe
  (p_{c,t}^{from})^2 + (q_{c,t}^{from})^2 \le \text{rating}^2, & \ \forall c \in \mathcal{C}, \ \forall t \in \mathcal{T} \\
  (p_{c,t}^{to})^2 + (q_{c,t}^{to})^2 \le \text{rating}^2, & \  \forall c \in \mathcal{C}, \ \forall t \in \mathcal{T} 
 \end{align*}
-
 ```
 
 * * *
@@ -682,6 +682,7 @@ HVDCTwoTerminalVSCLossQuadratic
     
       + Bounds: ``[P^\text{from,min}, P^\text{from,max}]``
       + Symbol: ``p_c^\text{from}``
+
   - [`HVDCActiveDCPowerSentToVariable`](@ref):
     
       + Bounds: ``[P^\text{to,min}, P^\text{to,max}]``
@@ -714,11 +715,11 @@ The `loss` term is a `PowerSystems.QuadraticCurve` that has the quadratic term `
 
 **Expressions:**
 
-Each `HVDCActiveDCPowerSentFromVariable` ``p^\text{from}`` and `HVDCActiveDCPowerSentToVariable` ``p^\text{to}``  is added to the nodal balance expression `ActivePowerBalance`, by subtracting the received flow to the respective  bus. That is,  ``p^\text{from}`` subtract the flow to the `from` bus, while ``p^\text{to}`` subtract the flow to the `to` bus. Similarly for the reactive power variables. 
+Each `HVDCActiveDCPowerSentFromVariable` ``p^\text{from}`` and `HVDCActiveDCPowerSentToVariable` ``p^\text{to}``  is added to the nodal balance expression `ActivePowerBalance`, by subtracting the received flow to the respective  bus. That is,  ``p^\text{from}`` subtract the flow to the `from` bus, while ``p^\text{to}`` subtract the flow to the `to` bus. Similarly for the reactive power variables.
 
 **Constraints:**
 
-The quadratic model only approximates losses in the `from` side of the line, proportional to the `from` power sent or received. 
+The quadratic model only approximates losses in the `from` side of the line, proportional to the `from` power sent or received.
 
 ```math
 \begin{align*}
@@ -727,7 +728,6 @@ The quadratic model only approximates losses in the `from` side of the line, pro
  (p_{c,t}^{from})^2 + (q_{c,t}^{from})^2 \le \text{rating}^2, & \   \forall c \in \mathcal{C}, & \ \forall t \in \mathcal{T} \\
  (p_{c,t}^{to})^2 + (q_{c,t}^{to})^2 \le \text{rating}^2, & \  \forall c \in \mathcal{C}, \ \forall t \in \mathcal{T} 
 \end{align*}
-
 ```
 
 * * *

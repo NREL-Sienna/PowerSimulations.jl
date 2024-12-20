@@ -2011,7 +2011,7 @@ function add_constraints!(
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
                 JuMPmodel,
-                power_from_var[name, t] - losses_var[name, t] == -power_to_var[name, t] 
+                power_from_var[name, t] - losses_var[name, t] == -power_to_var[name, t]
             )
         end
     end
