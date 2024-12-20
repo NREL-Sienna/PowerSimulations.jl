@@ -318,6 +318,7 @@ export FixValueParameter
 
 # Event Parameters
 export AvailableStatusParameter
+export AvailableStatusChangeParameter
 
 # Expressions
 export SystemBalanceExpressions
