@@ -237,6 +237,10 @@ export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
+export HVDCActivePowerReceivedFromVariable
+export HVDCActivePowerReceivedToVariable
+export HVDCPiecewiseLossVariable
+export HVDCPiecewiseBinaryLossVariable
 export HVDCActiveDCPowerSentFromVariable
 export HVDCActiveDCPowerSentToVariable
 export HVDCReactivePowerSentFromVariable
