@@ -423,21 +423,21 @@ struct HVDCFlowDirectionVariable <: VariableType end
 """
 Struct to dispatch the creation of HVDC Received Flow at From Bus Variables for PWL formulations
 
-Docs abbreviation: ``x``
+Docs abbreviation: ``f^{from}``
 """
 struct HVDCActivePowerReceivedFromVariable <: VariableType end
 
 """
 Struct to dispatch the creation of HVDC Received Flow at To Bus Variables for PWL formulations
 
-Docs abbreviation: ``y``
+Docs abbreviation: ``f^{to}``
 """
 struct HVDCActivePowerReceivedToVariable <: VariableType end
 
 """
 Struct to dispatch the creation of HVDC Piecewise Loss Variables
 
-Docs abbreviation: ``h`` or ``w``
+Docs abbreviation: ``w``
 """
 struct HVDCPiecewiseLossVariable <: SparseVariableType end
 
@@ -526,6 +526,10 @@ convert_result_to_natural_units(::Type{FlowActivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
+convert_result_to_natural_units(::Type{HVDCActiveDCPowerSentFromVariable}) = true
+convert_result_to_natural_units(::Type{HVDCActiveDCPowerSentToVariable}) = true
+convert_result_to_natural_units(::Type{HVDCReactivePowerSentFromVariable}) = true
+convert_result_to_natural_units(::Type{HVDCReactivePowerSentToVariable}) = true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackUp}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackDown}) = true
