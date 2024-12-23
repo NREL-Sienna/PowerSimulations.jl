@@ -1,7 +1,7 @@
 name = "PowerSimulations"
 uuid = "e690365d-45e2-57bb-ac84-44ba829e73c4"
 authors = ["Jose Daniel Lara", "Clayton Barrows", "Daniel Thom", "Dheepak Krishnamurthy", "Sourabh Dalvi"]
-version = "0.29.0"
+version = "0.29.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -13,7 +13,6 @@ DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 InfrastructureSystems = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
-JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
