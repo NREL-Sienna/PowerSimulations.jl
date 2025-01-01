@@ -1471,6 +1471,31 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    W <: AreaBalancePowerModel,
+}
+    variable = get_variable(container, U(), PSY.Area)
+    expression = get_expression(container, T(), PSY.Area)
+    @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
+    # We uses axis here to avoid double addition of the slacks to the aggregated buses
+    for t in get_time_steps(container), n in axes(expression, 1)
+        _add_to_jump_expression!(
+            expression[n, t],
+            variable[n, t],
+            get_variable_multiplier(U(), PSY.Area, W),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    sys::PSY.System,
+    ::NetworkModel{W},
+) where {
+    T <: ActivePowerBalance,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractActivePowerModel,
 }
     variable = get_variable(container, U(), PSY.ACBus)
