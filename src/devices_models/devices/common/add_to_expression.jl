@@ -1238,6 +1238,33 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: Union{ActivePowerRangeExpressionUB, ActivePowerRangeExpressionLB},
+    U <: Union{ActivePowerVariableSlackUB, ActivePowerVariableSlackLB},
+    V <: PSY.Device,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    variable = get_variable(container, U(), V)
+    if !has_container_key(container, T, V)
+        add_expressions!(container, T, devices, model)
+    end
+    expression = get_expression(container, T(), V)
+    for d in devices, t in get_time_steps(container)
+        mult = get_expression_multiplier(U(), T(), d, W())
+        name = PSY.get_name(d)
+        _add_to_jump_expression!(expression[name, t], variable[name, t], mult)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::ServiceModel{X, W},
 ) where {
