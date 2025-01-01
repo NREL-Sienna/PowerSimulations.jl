@@ -1476,7 +1476,6 @@ function add_to_expression!(
     variable = get_variable(container, U(), PSY.Area)
     expression = get_expression(container, T(), PSY.Area)
     @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
-    # We uses axis here to avoid double addition of the slacks to the aggregated buses
     for t in get_time_steps(container), n in axes(expression, 1)
         _add_to_jump_expression!(
             expression[n, t],
