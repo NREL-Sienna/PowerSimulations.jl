@@ -721,7 +721,7 @@ end
         (i < 3) ? set_area!(comp, areas[1]) : set_area!(comp, areas[2])
     end
     # Deactivate generators on Area 1: as there is no area interchange defined,
-    # slacks will be required for fesibility
+    # slacks will be required for feasibility
     for gen in get_components(x -> (get_area(get_bus(x)) == areas[1]), Generator, c_sys)
         set_available!(gen, false)
     end
