@@ -108,24 +108,8 @@ function construct_device!(
         model,
     )
     if get_use_slacks(model)
-        add_variables!(container, ActivePowerVariableSlackUB, devices, D())
-        add_variables!(container, ActivePowerVariableSlackLB, devices, D())
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
-        )
+        add_variables!(container, ActivePowerVariableSlackUp, devices, D())
+        add_variables!(container, ActivePowerVariableSlackDown, devices, D())
     end
     add_feedforward_arguments!(container, model, devices)
     return
@@ -254,24 +238,8 @@ function construct_device!(
         model,
     )
     if get_use_slacks(model)
-        add_variables!(container, ActivePowerVariableSlackUB, devices, D())
-        add_variables!(container, ActivePowerVariableSlackLB, devices, D())
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
-        )
+        add_variables!(container, ActivePowerVariableSlackUp, devices, D())
+        add_variables!(container, ActivePowerVariableSlackDown, devices, D())
     end
 
     add_feedforward_arguments!(container, model, devices)
@@ -401,31 +369,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalBasicUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalBasicUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -554,31 +506,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalBasicUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalBasicUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -701,31 +637,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalStandardDispatch(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalStandardDispatch(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -837,31 +757,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalStandardDispatch(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalStandardDispatch(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -970,24 +874,8 @@ function construct_device!(
         model,
     )
     if get_use_slacks(model)
-        add_variables!(container, ActivePowerVariableSlackUB, devices, D())
-        add_variables!(container, ActivePowerVariableSlackLB, devices, D())
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
-        )
+        add_variables!(container, ActivePowerVariableSlackUp, devices, D())
+        add_variables!(container, ActivePowerVariableSlackDown, devices, D())
     end
 
     add_feedforward_arguments!(container, model, devices)
@@ -1090,24 +978,8 @@ function construct_device!(
         model,
     )
     if get_use_slacks(model)
-        add_variables!(container, ActivePowerVariableSlackUB, devices, D())
-        add_variables!(container, ActivePowerVariableSlackLB, devices, D())
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
-        )
+        add_variables!(container, ActivePowerVariableSlackUp, devices, D())
+        add_variables!(container, ActivePowerVariableSlackDown, devices, D())
     end
 
     add_feedforward_arguments!(container, model, devices)
@@ -1242,31 +1114,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalMultiStartUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalMultiStartUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -1425,31 +1281,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalMultiStartUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalMultiStartUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -1606,31 +1446,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalCompactUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalCompactUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -1771,31 +1595,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalCompactUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalCompactUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
     add_feedforward_arguments!(container, model, devices)
@@ -1931,31 +1739,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalBasicCompactUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalBasicCompactUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
 
@@ -2092,31 +1884,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalBasicCompactUnitCommitment(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalBasicCompactUnitCommitment(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
     add_feedforward_arguments!(container, model, devices)
@@ -2246,31 +2022,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalCompactDispatch(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalCompactDispatch(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
     return
@@ -2389,31 +2149,15 @@ function construct_device!(
     if get_use_slacks(model)
         add_variables!(
             container,
-            ActivePowerVariableSlackUB,
+            ActivePowerVariableSlackUp,
             devices,
             ThermalCompactDispatch(),
         )
         add_variables!(
             container,
-            ActivePowerVariableSlackLB,
+            ActivePowerVariableSlackDown,
             devices,
             ThermalCompactDispatch(),
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionLB,
-            ActivePowerVariableSlackLB,
-            devices,
-            model,
-            network_model,
-        )
-        add_to_expression!(
-            container,
-            ActivePowerRangeExpressionUB,
-            ActivePowerVariableSlackUB,
-            devices,
-            model,
-            network_model,
         )
     end
     return
