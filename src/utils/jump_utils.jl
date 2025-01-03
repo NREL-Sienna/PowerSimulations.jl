@@ -11,10 +11,10 @@ function write_data(base_power::Float64, save_path::String)
 end
 
 function jump_value(input::JuMP.VariableRef)::Float64
-    if JuMP.has_values(input.model)
-        return JuMP.value(input)
-    elseif JuMP.is_fixed(input)
+    if JuMP.is_fixed(input)
         return JuMP.fix_value(input)
+    elseif JuMP.has_values(input.model)
+        return JuMP.value(input)
     else
         return NaN
     end
