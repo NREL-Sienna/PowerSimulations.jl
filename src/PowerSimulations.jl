@@ -233,8 +233,8 @@ export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
-export ActivePowerVariableSlackUB
-export ActivePowerVariableSlackLB
+export ActivePowerVariableSlackUp
+export ActivePowerVariableSlackDown
 
 # Auxiliary variables
 export TimeDurationOn
