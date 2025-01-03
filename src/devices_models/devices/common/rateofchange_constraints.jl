@@ -33,6 +33,24 @@ function _get_ramp_constraint_devices(
     return filtered_device
 end
 
+function _get_ramp_slack_vars(
+    container::OptimizationContainer,
+    model::DeviceModel{V, W},
+    name::String,
+    t::Int,
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    if get_use_slacks(model)
+        slack_ub = get_variable(container, ActivePowerVariableSlackUp(), V)
+        slack_lb = get_variable(container, ActivePowerVariableSlackDown(), V)
+        sl_ub = slack_ub[name, t]
+        sl_lb = slack_lb[name, t]
+    else
+        sl_ub = 0.0
+        sl_lb = 0.0
+    end
+    return sl_ub, sl_lb
+end
+
 @doc raw"""
 Constructs allowed rate-of-change constraints from variables, initial condtions, and rate data.
 
@@ -90,23 +108,26 @@ function add_linear_ramp_constraints!(
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
+        sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, 1)
         con_up[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            expr_up[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
+            expr_up[name, 1] - ic_power - sl_ub <= ramp_limits.up * minutes_per_period
         )
         con_down[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            ic_power - expr_dn[name, 1] >= -1 * ramp_limits.down * minutes_per_period
+            ic_power - expr_dn[name, 1] + sl_lb >=
+            -1 * ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
+            sl_ub, sl_lb = _get_ramp_slack_vals(model, name, t)
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                expr_up[name, t] - variable[name, t - 1] <=
+                expr_up[name, t] - variable[name, t - 1] - sl_ub <=
                 ramp_limits.up * minutes_per_period
             )
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                variable[name, t - 1] - expr_dn[name, t] >=
+                variable[name, t - 1] - expr_dn[name, t] + sl_lb >=
                 -1 * ramp_limits.down * minutes_per_period
             )
         end
@@ -144,23 +165,25 @@ function add_linear_ramp_constraints!(
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
         @assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
+        sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, 1)
         con_up[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            variable[name, 1] - ic_power <= ramp_limits.up * minutes_per_period
+            variable[name, 1] - ic_power - sl_ub <= ramp_limits.up * minutes_per_period
         )
         con_down[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            ic_power - variable[name, 1] <= ramp_limits.down * minutes_per_period
+            ic_power - variable[name, 1] - sl_lb <= ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
+            sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, t)
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                variable[name, t] - variable[name, t - 1] <=
+                variable[name, t] - variable[name, t - 1] - sl_ub <=
                 ramp_limits.up * minutes_per_period
             )
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                variable[name, t - 1] - variable[name, t] <=
+                variable[name, t - 1] - variable[name, t] - sl_lb <=
                 ramp_limits.down * minutes_per_period
             )
         end
@@ -195,7 +218,7 @@ function add_semicontinuous_ramp_constraints!(
     T::Type{<:ConstraintType},
     U::Type{S},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    model::DeviceModel{V, W},
     ::Type{<:PM.AbstractPowerModel},
 ) where {
     S <: Union{PowerAboveMinimumVariable, ActivePowerVariable},
@@ -246,10 +269,10 @@ function add_semicontinuous_ramp_constraints!(
             rhd_dn =
                 ramp_limits.down * minutes_per_period + power_limits.min * varstop[name, 1]
         end
-
+        sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, 1)
         con_up[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            expr_up[name, 1] - ic_power <=
+            expr_up[name, 1] - ic_power - sl_ub <=
             if must_run
                 ramp_limits.up * minutes_per_period
             else
@@ -258,7 +281,7 @@ function add_semicontinuous_ramp_constraints!(
         )
         con_down[name, 1] = JuMP.@constraint(
             get_jump_model(container),
-            ic_power - expr_dn[name, 1] <=
+            ic_power - expr_dn[name, 1] - sl_lb <=
             if must_run
                 ramp_limits.down * minutes_per_period
             else
@@ -266,9 +289,10 @@ function add_semicontinuous_ramp_constraints!(
             end
         )
         for t in time_steps[2:end]
+            sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, t)
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                expr_up[name, t] - variable[name, t - 1] <=
+                expr_up[name, t] - variable[name, t - 1] - sl_ub <=
                 if must_run
                     ramp_limits.up * minutes_per_period
                 else
@@ -277,7 +301,7 @@ function add_semicontinuous_ramp_constraints!(
             )
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                variable[name, t - 1] - expr_dn[name, t] <=
+                variable[name, t - 1] - expr_dn[name, t] - sl_lb <=
                 if must_run
                     ramp_limits.down * minutes_per_period
                 else
