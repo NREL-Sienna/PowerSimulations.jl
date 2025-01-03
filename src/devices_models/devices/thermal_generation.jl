@@ -51,13 +51,11 @@ get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariab
 
 ############## SlackVariables, ThermalGen ####################
 # LB Slack #
-get_variable_binary(::ActivePowerVariableSlackLB, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-get_variable_lower_bound(::ActivePowerVariableSlackLB, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
-get_expression_multiplier(::ActivePowerVariableSlackLB, ::ActivePowerRangeExpressionLB, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
+get_variable_binary(::ActivePowerVariableSlackDown, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
+get_variable_lower_bound(::ActivePowerVariableSlackDown, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
 # UB Slack #
-get_variable_binary(::ActivePowerVariableSlackUB, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-get_variable_lower_bound(::ActivePowerVariableSlackUB, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
-get_expression_multiplier(::ActivePowerVariableSlackUB, ::ActivePowerRangeExpressionUB, d::PSY.ThermalGen, ::AbstractThermalFormulation) = -1.0
+get_variable_binary(::ActivePowerVariableSlackUp, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
+get_variable_lower_bound(::ActivePowerVariableSlackUp, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
 
 
 ########################### Parameter related set functions ################################
@@ -94,7 +92,7 @@ end
 
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
 
-proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{ActivePowerVariableSlackUB, ActivePowerVariableSlackLB}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
+proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{ActivePowerVariableSlackUp, ActivePowerVariableSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
 
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
@@ -1452,8 +1450,8 @@ function objective_function!(
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
     if get_use_slacks(model)
-        add_proportional_cost!(container, ActivePowerVariableSlackUB(), devices, U())
-        add_proportional_cost!(container, ActivePowerVariableSlackLB(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackUp(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackDown(), devices, U())
     end
     return
 end
@@ -1469,8 +1467,8 @@ function objective_function!(
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
     if get_use_slacks(model)
-        add_proportional_cost!(container, ActivePowerVariableSlackUB(), devices, U())
-        add_proportional_cost!(container, ActivePowerVariableSlackLB(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackUp(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackDown(), devices, U())
     end
     return
 end
@@ -1488,8 +1486,8 @@ function objective_function!(
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
     if get_use_slacks(model)
-        add_proportional_cost!(container, ActivePowerVariableSlackUB(), devices, U())
-        add_proportional_cost!(container, ActivePowerVariableSlackLB(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackUp(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackDown(), devices, U())
     end
     return
 end
@@ -1502,8 +1500,8 @@ function objective_function!(
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     if get_use_slacks(model)
-        add_proportional_cost!(container, ActivePowerVariableSlackUB(), devices, U())
-        add_proportional_cost!(container, ActivePowerVariableSlackLB(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackUp(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackDown(), devices, U())
     end
     return
 end
@@ -1516,8 +1514,8 @@ function objective_function!(
 ) where {T <: PSY.ThermalGen, U <: ThermalCompactDispatch}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
     if get_use_slacks(model)
-        add_proportional_cost!(container, ActivePowerVariableSlackUB(), devices, U())
-        add_proportional_cost!(container, ActivePowerVariableSlackLB(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackUp(), devices, U())
+        add_proportional_cost!(container, ActivePowerVariableSlackDown(), devices, U())
     end
     return
 end
