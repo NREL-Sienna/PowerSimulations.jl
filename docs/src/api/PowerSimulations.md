@@ -150,6 +150,8 @@ For a list of variables for each device refer to its Formulations page.
 ActivePowerVariable
 ReactivePowerVariable
 PieceWiseLinearCostVariable
+ActivePowerVariableSlackUp
+ActivePowerVariableSlackDown
 ```
 
 ### Thermal Unit Variables
