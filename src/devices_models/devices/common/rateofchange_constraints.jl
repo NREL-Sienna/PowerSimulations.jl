@@ -119,7 +119,7 @@ function add_linear_ramp_constraints!(
             -1 * ramp_limits.down * minutes_per_period
         )
         for t in time_steps[2:end]
-            sl_ub, sl_lb = _get_ramp_slack_vals(model, name, t)
+            sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, t)
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 expr_up[name, t] - variable[name, t - 1] - sl_ub <=
