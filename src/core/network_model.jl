@@ -135,7 +135,7 @@ function instantiate_network_model(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
                 model specification radial_network_reduction = false. Set the keyword argument \\
-                radial_network_reduction = true in your network model" )
+                radial_network_reduction = true in your network model"),
         )
     end
 
@@ -143,6 +143,7 @@ function instantiate_network_model(
         @assert !isempty(model.PTDF_matrix.radial_network_reduction)
         model.radial_network_reduction = model.PTDF_matrix.radial_network_reduction
     end
+
     get_PTDF_matrix(model).subnetworks
     model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
     if length(model.subnetworks) > 1
