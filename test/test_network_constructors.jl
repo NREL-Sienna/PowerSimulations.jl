@@ -727,7 +727,7 @@ end
     end
 
     template = get_thermal_dispatch_template_network(
-        NetworkModel(AreaBalancePowerModel, use_slacks=true)
+        NetworkModel(AreaBalancePowerModel; use_slacks = true),
     )
     ps_model = DecisionModel(template, c_sys; optimizer = HiGHS_optimizer)
 
@@ -742,8 +742,8 @@ end
 
     results = OptimizationProblemResults(ps_model)
     slacks_up = read_variable(results, "SystemBalanceSlackUp__Area")
-    @test all(slacks_up[!, "Area_1"] .> 0.)
-    @test all(slacks_up[!, "Area_2"] .≈ 0.)
+    @test all(slacks_up[!, "Area_1"] .> 0.0)
+    @test all(slacks_up[!, "Area_2"] .≈ 0.0)
 end
 
 @testset "2 Areas AreaBalance PowerModel" begin
