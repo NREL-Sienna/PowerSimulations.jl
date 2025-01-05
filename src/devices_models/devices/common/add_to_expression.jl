@@ -236,6 +236,7 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
+    @assert !isempty(radial_network_reduction)
     for d in devices
         name = PSY.get_name(d)
         @show PSY.get_bus(d)
