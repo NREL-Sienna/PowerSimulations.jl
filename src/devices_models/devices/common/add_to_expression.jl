@@ -236,14 +236,18 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
+        @show PSY.get_bus(d)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
-        _add_to_jump_expression!(
-            expression[bus_no, t],
-            variable[name, t],
-            get_variable_multiplier(U(), V, W()),
-        )
+        @show bus_no
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[bus_no, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
     end
     return
 end
