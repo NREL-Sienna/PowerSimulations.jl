@@ -303,13 +303,13 @@ Struct to dispatch the creation of Slack variables for UB limits
 
 Docs abbreviation: ``p^\\text{x,ubsl}``
 """
-struct ActivePowerVariableSlackUp <: VariableType end
+struct RateofChangeConstraintSlackUp <: VariableType end
 """
 Struct to dispatch the creation of Slack variables for LB limits
 
 Docs abbreviation: ``p^\\text{x,lbsl}``
 """
-struct ActivePowerVariableSlackDown <: VariableType end
+struct RateofChangeConstraintSlackDown <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
@@ -325,8 +325,8 @@ convert_result_to_natural_units(::Type{EnergyVariable}) = true
 convert_result_to_natural_units(::Type{ReactivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerReserveVariable}) = true
 convert_result_to_natural_units(::Type{ServiceRequirementVariable}) = true
-convert_result_to_natural_units(::Type{ActivePowerVariableSlackUp}) = true
-convert_result_to_natural_units(::Type{ActivePowerVariableSlackDown}) = true
+convert_result_to_natural_units(::Type{RateofChangeConstraintSlackUp}) = true
+convert_result_to_natural_units(::Type{RateofChangeConstraintSlackDown}) = true
 convert_result_to_natural_units(::Type{AreaMismatchVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerUpVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerDownVariable}) = true

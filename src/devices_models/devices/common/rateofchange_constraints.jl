@@ -40,8 +40,8 @@ function _get_ramp_slack_vars(
     t::Int,
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     if get_use_slacks(model)
-        slack_ub = get_variable(container, ActivePowerVariableSlackUp(), V)
-        slack_lb = get_variable(container, ActivePowerVariableSlackDown(), V)
+        slack_ub = get_variable(container, RateofChangeConstraintSlackUp(), V)
+        slack_lb = get_variable(container, RateofChangeConstraintSlackDown(), V)
         sl_ub = slack_ub[name, t]
         sl_lb = slack_lb[name, t]
     else
