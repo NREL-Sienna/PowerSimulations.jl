@@ -1442,14 +1442,14 @@ end
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     add_start_up_cost!(container, StartVariable(), devices, U())
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
         add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
     end
@@ -1459,14 +1459,14 @@ end
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
     add_start_up_cost!(container, StartVariable(), devices, U())
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
         add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
     end
@@ -1476,7 +1476,7 @@ end
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, U},
+    device_model::DeviceModel{PSY.ThermalMultiStart, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {U <: ThermalMultiStartUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
@@ -1485,7 +1485,7 @@ function objective_function!(
     end
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
         add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
     end
@@ -1495,11 +1495,11 @@ end
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
         add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
     end
@@ -1509,11 +1509,11 @@ end
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: ThermalCompactDispatch}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
         add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
     end
