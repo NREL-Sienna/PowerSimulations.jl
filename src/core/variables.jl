@@ -299,15 +299,15 @@ Docs abbreviation: ``p^\\text{ff,lbsl}``
 struct LowerBoundFeedForwardSlack <: VariableType end
 
 """
-Struct to dispatch the creation of Slack variables for UB limits
+Struct to dispatch the creation of Slack variables for rate of change constraints up limits
 
-Docs abbreviation: ``p^\\text{x,ubsl}``
+Docs abbreviation: ``p^\\text{sl,up}``
 """
 struct RateofChangeConstraintSlackUp <: VariableType end
 """
-Struct to dispatch the creation of Slack variables for LB limits
+Struct to dispatch the creation of Slack variables for rate of change constraints down limits
 
-Docs abbreviation: ``p^\\text{x,lbsl}``
+Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct RateofChangeConstraintSlackDown <: VariableType end
 
