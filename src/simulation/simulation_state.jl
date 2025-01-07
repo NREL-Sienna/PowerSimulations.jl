@@ -159,7 +159,7 @@ function _initialize_system_states!(
         if has_dataset(emulator_states, key)
             em_cols = get_column_names(key, get_dataset(emulator_states, key))
             @assert_op length(dm_cols) == length(em_cols)
-            if !isempty(symdiff(dm_cols, em_cols))
+            if !isempty(symdiff(first(dm_cols), first(em_cols)))
                 error(
                     "Mismatch in column names for dataset $key: $(symdiff(dm_cols, em_cols))",
                 )
