@@ -107,6 +107,10 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -233,6 +237,10 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -358,6 +366,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -481,6 +503,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -598,6 +634,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalStandardDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalStandardDispatch(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -704,6 +754,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalStandardDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalStandardDispatch(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -809,6 +873,10 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -909,6 +977,10 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1039,6 +1111,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1192,6 +1278,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1343,6 +1443,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1478,6 +1592,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+    end
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1608,6 +1736,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1739,6 +1881,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+    end
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1863,6 +2019,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactDispatch(),
+        )
+    end
     return
 end
 
@@ -1976,6 +2146,20 @@ function construct_device!(
         devices,
         model,
     )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactDispatch(),
+        )
+    end
     return
 end
 

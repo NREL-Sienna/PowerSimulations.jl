@@ -233,6 +233,8 @@ export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
+export RateofChangeConstraintSlackUp
+export RateofChangeConstraintSlackDown
 
 # Auxiliary variables
 export TimeDurationOn

@@ -1301,7 +1301,7 @@ function add_to_expression!(
                 _add_to_jump_expression!(
                     expression[service_name, t],
                     variable[name, t],
-                    direction,
+                    Float64(direction),
                 )
             end
         end
