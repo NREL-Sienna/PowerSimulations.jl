@@ -236,14 +236,16 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         bus_no = PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_bus(d))
-        _add_to_jump_expression!(
-            expression[bus_no, t],
-            variable[name, t],
-            get_variable_multiplier(U(), V, W()),
-        )
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[bus_no, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
     end
     return
 end
@@ -1457,6 +1459,30 @@ function add_to_expression!(
             expression[n, t],
             variable[n, t],
             get_variable_multiplier(U(), PSY.Area, AreaPTDFPowerModel()),
+        )
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    sys::PSY.System,
+    ::NetworkModel{W},
+) where {
+    T <: ActivePowerBalance,
+    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    W <: AreaBalancePowerModel,
+}
+    variable = get_variable(container, U(), PSY.Area)
+    expression = get_expression(container, T(), PSY.Area)
+    @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
+    for t in get_time_steps(container), n in axes(expression, 1)
+        _add_to_jump_expression!(
+            expression[n, t],
+            variable[n, t],
+            get_variable_multiplier(U(), PSY.Area, W),
         )
     end
     return
