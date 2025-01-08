@@ -999,3 +999,63 @@ end
         JuMP.QuadExpr,
     )
 end
+
+@testset "Thermal UC With Slack on Ramps" begin
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
+    ]
+
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "dn"),
+    ]
+
+    aux_variables_keys = [
+        PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
+    ]
+    # Unit Commitment #
+    device_model =
+        DeviceModel(ThermalStandard, ThermalStandardUnitCommitment; use_slacks = true)
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 720, 0, 480, 120, 120, true)
+    psi_constraint_test(model, uc_constraint_keys)
+    psi_checkbinvar_test(model, bin_variable_keys)
+    psi_checkobjfun_test(model, GAEVF)
+    psi_aux_variable_test(model, aux_variables_keys)
+
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 720, 0, 240, 120, 120, true)
+    psi_checkbinvar_test(model, bin_variable_keys)
+    psi_checkobjfun_test(model, GQEVF)
+
+    # Dispatch #
+    device_model =
+        DeviceModel(ThermalStandard, ThermalStandardDispatch; use_slacks = true)
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
+    ]
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 360, 0, 168, 168, 0, false)
+    psi_constraint_test(model, uc_constraint_keys)
+    psi_checkobjfun_test(model, GAEVF)
+
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 360, 0, 120, 120, 0, false)
+    psi_checkobjfun_test(model, GQEVF)
+end
