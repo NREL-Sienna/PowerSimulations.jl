@@ -157,6 +157,34 @@ function _get_pwl_cost_expression(container::OptimizationContainer,
         dt)
 end
 
+function _get_pwl_cost_expression_decremental(container::OptimizationContainer,
+    component::T,
+    time_period::Int,
+    cost_function::PSY.MarketBidCost,
+    ::PSY.PiecewiseStepData,
+    ::U,
+    ::V) where {T <: PSY.Component, U <: VariableType,
+    V <: AbstractDeviceFormulation}
+    decremental_curve = PSY.get_decremental_offer_curves(cost_function)
+    value_curve = PSY.get_value_curve(decremental_curve)
+    power_units = PSY.get_power_units(decremental_curve)
+    cost_component = PSY.get_function_data(value_curve)
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    cost_data_normalized = get_piecewise_incrementalcurve_per_system_unit(cost_component,
+        power_units,
+        base_power,
+        device_base_power)
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
+    multiplier = objective_function_multiplier(U(), V()) * dt
+    return _get_pwl_cost_expression(container,
+        component,
+        time_period,
+        cost_data_normalized,
+        multiplier)
+end
+
 """
 Get cost expression for StepwiseCostReserve
 """
@@ -251,6 +279,20 @@ end
 ###############################################
 
 """
+Check if deceremental pwl offer curve is monotonically decreasing.
+"""
+function _is_convex_decremental(pwl:: PSY.PiecewiseStepData)
+    y_coords = PSY.get_y_coords(pwl)
+    for ix in 1:(length(y_coords) - 1)
+        if y_coords[ix] < y_coords[ix + 1]
+            @debug y_coords
+            return false
+        end
+    end
+    return true
+end
+
+"""
 Add PWL cost terms for data coming from the MarketBidCost
 with a fixed incremental offer curve
 """
@@ -286,6 +328,44 @@ function _add_pwl_term!(container::OptimizationContainer,
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, cost_function, data,
+            U(), V())
+        pwl_cost_expressions[t] = pwl_cost
+    end
+    return pwl_cost_expressions
+end
+
+function _add_pwl_term_decremental!(container::OptimizationContainer,
+    component::T,
+    cost_function::PSY.MarketBidCost,
+    ::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
+    ::U,
+    ::V) where {T <: PSY.Component, U <: VariableType,
+    V <: AbstractDeviceFormulation}
+    name = PSY.get_name(component)
+    decremental_offer_curve = PSY.get_decremental_offer_curves(cost_function)
+    value_curve = PSY.get_value_curve(decremental_offer_curve)
+    cost_component = PSY.get_function_data(value_curve)
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    power_units = PSY.get_power_units(decremental_offer_curve)
+
+    data = get_piecewise_incrementalcurve_per_system_unit(cost_component,
+        power_units,
+        base_power,
+        device_base_power)
+        
+    cost_is_convex = _is_convex_decremental(data)
+    if !cost_is_convex
+        error("MarketBidCost for component $(name) is non-convex")
+    end
+
+    break_points = PSY.get_x_coords(data)
+    time_steps = get_time_steps(container)
+    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
+    for t in time_steps
+        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_constraint!(container, component, U(), break_points, t)
+        pwl_cost = _get_pwl_cost_expression_decremental(container, component, t, cost_function, data,
             U(), V())
         pwl_cost_expressions[t] = pwl_cost
     end
@@ -507,6 +587,81 @@ function _add_variable_cost_to_objective!(container::OptimizationContainer,
     return
 end
 
+function _add_variable_cost_to_objective!(container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    cost_function::PSY.MarketBidCost,
+    ::U) where {T <: VariableType,
+    U <: AbstractControllablePowerLoadFormulation}
+    component_name = PSY.get_name(component)
+    @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    time_steps = get_time_steps(container)
+    initial_time = get_initial_time(container)
+    incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
+    decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
+    if !(isnothing(incremental_cost_curves))
+        error("Component $(component_name) is not allowed to participate as a supply.")
+    end
+    #=
+    variable_cost_forecast = PSY.get_variable_cost(
+        component,
+        op_cost;
+        start_time = initial_time,
+        len = length(time_steps),
+    )
+    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
+    parameter_container = _get_cost_function_parameter_container(
+        container,
+        CostFunctionParameter(),
+        component,
+        T(),
+        U(),
+        eltype(variable_cost_forecast_values),
+    )
+    =#
+    pwl_cost_expressions = _add_pwl_term_decremental!(container,
+        component,
+        cost_function,
+        decremental_cost_curves,
+        T(),
+        U())
+    jump_model = get_jump_model(container)
+    for t in time_steps
+        #=
+        set_multiplier!(
+            parameter_container,
+            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
+            #  of base power times the time delta.
+            1.0,
+            component_name,
+            t,
+        )
+        set_parameter!(
+            parameter_container,
+            jump_model,
+            variable_cost_forecast_values[t],
+            component_name,
+            t,
+        )
+        =#
+        add_to_expression!(container,
+            ProductionCostExpression,
+            pwl_cost_expressions[t],
+            component,
+            t)
+        add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+    end
+
+    # Service Cost Bid
+    #=
+    ancillary_services = PSY.get_ancillary_service_offers(op_cost)
+    for service in ancillary_services
+        _add_service_bid_cost!(container, component, service)
+    end
+    =#
+    return
+end
+
 function _add_service_bid_cost!(container::OptimizationContainer,
     component::PSY.Component,
     service::T) where {T <: PSY.Reserve{<:PSY.ReserveDirection}}
@@ -552,6 +707,34 @@ function _add_vom_cost_to_objective!(container::OptimizationContainer,
     decremental_cost_curves = PSY.get_decremental_offer_curves(op_cost)
     power_units = PSY.get_power_units(incremental_cost_curves)
     vom_cost = PSY.get_vom_cost(incremental_cost_curves)
+    multiplier = 1.0 # VOM Cost is always positive
+    cost_term = PSY.get_proportional_term(vom_cost)
+    iszero(cost_term) && return
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+    cost_term_normalized = get_proportional_cost_per_system_unit(cost_term,
+        power_units,
+        base_power,
+        device_base_power)
+    for t in get_time_steps(container)
+        exp = _add_proportional_term!(container, T(), d, cost_term_normalized * multiplier,
+            t)
+        add_to_expression!(container, ProductionCostExpression, exp, d, t)
+    end
+    return
+end
+
+
+function _add_vom_cost_to_objective!(container::OptimizationContainer,
+    ::T,
+    component::PSY.Component,
+    op_cost::PSY.MarketBidCost,
+    ::U) where {T <: VariableType,
+    U <: AbstractControllablePowerLoadFormulation}
+    incremental_cost_curves = PSY.get_incremental_offer_curves(op_cost)
+    decremental_cost_curves = PSY.get_decremental_offer_curves(op_cost)
+    power_units = PSY.get_power_units(decremental_cost_curves)
+    vom_cost = PSY.get_vom_cost(decremental_cost_curves)
     multiplier = 1.0 # VOM Cost is always positive
     cost_term = PSY.get_proportional_term(vom_cost)
     iszero(cost_term) && return
