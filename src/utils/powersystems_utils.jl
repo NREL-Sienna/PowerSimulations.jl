@@ -383,3 +383,7 @@ function get_deterministic_time_series_type(sys::PSY.System)
         )
     end
 end
+
+
+"""Overload get_variable for MarketBidCost. Returns nothing"""
+PSY.get_variable(value::PSY.MarketBidCost) = nothing
