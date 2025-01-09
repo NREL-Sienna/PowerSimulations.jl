@@ -158,7 +158,16 @@ function _initialize_system_states!(
         dm_cols = get_column_names(key, get_dataset(decision_states, key))
         if has_dataset(emulator_states, key)
             em_cols = get_column_names(key, get_dataset(emulator_states, key))
-            @assert_op dm_cols == em_cols
+            if length(dm_cols) != length(em_cols)
+                error(
+                    "The number of dimensions between the decision states and emulator states don't match",
+                )
+            end
+            if !isempty(symdiff(first(dm_cols), first(em_cols)))
+                error(
+                    "Mismatch in column names for dataset $key: $(symdiff(dm_cols, em_cols))",
+                )
+            end
             continue
         end
 

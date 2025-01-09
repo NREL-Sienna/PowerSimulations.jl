@@ -712,6 +712,40 @@ end
     end
 end
 
+@testset "2 Areas AreaBalance PowerModel - with slacks" begin
+    c_sys = build_system(PSITestSystems, "c_sys5_uc")
+    # Extend the system with two areas
+    areas = [Area("Area_1", 0, 0, 0), Area("Area_2", 0, 0, 0)]
+    add_components!(c_sys, areas)
+    for (i, comp) in enumerate(get_components(ACBus, c_sys))
+        (i < 3) ? set_area!(comp, areas[1]) : set_area!(comp, areas[2])
+    end
+    # Deactivate generators on Area 1: as there is no area interchange defined,
+    # slacks will be required for feasibility
+    for gen in get_components(x -> (get_area(get_bus(x)) == areas[1]), Generator, c_sys)
+        set_available!(gen, false)
+    end
+
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(AreaBalancePowerModel; use_slacks = true),
+    )
+    ps_model = DecisionModel(template, c_sys; optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    results = OptimizationProblemResults(ps_model)
+    slacks_up = read_variable(results, "SystemBalanceSlackUp__Area")
+    @test all(slacks_up[!, "Area_1"] .> 0.0)
+    @test all(slacks_up[!, "Area_2"] .≈ 0.0)
+end
+
 @testset "2 Areas AreaBalance PowerModel" begin
     c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
     transform_single_time_series!(c_sys, Hour(24), Hour(1))
