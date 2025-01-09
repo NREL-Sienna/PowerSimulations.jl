@@ -65,7 +65,6 @@ end
 end
 
 @testset "PowerLoadDispatch AC- PF with MarketBidCost" begin
-    models = [PowerLoadDispatch]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     iloadbus4 = get_component(InterruptiblePowerLoad, c_sys5_il, "IloadBus4")
     set_operation_cost!(
@@ -75,21 +74,13 @@ end
             start_up=(hot=0.0, warm=0.0, cold=0.0),
             shut_down=0.0,
             decremental_offer_curves = make_market_bid_curve(
-                [0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0],
-                [30.0, 28.0, 27.0, 26.0, 25.5, 25.0],
+                [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0],
+                [90.0, 85.0, 75.0, 70.0, 60.0, 50.0, 45.0, 40.0, 30.0, 25.0],
                 0.0
             )
         )
         ) 
-    networks = [ACPPowerModel]
-    # for m in models, n in networks
-    #     device_model = DeviceModel(InterruptiblePowerLoad, m)
-    #     model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-    #     mock_construct_device!(model, device_model)
-    #     moi_tests(model, 192, 0, 168, 0, 48, false)
-    #     psi_checkobjfun_test(model, GAEVF)
-    # end
-    template = ProblemTemplate(NetworkModel(CopperPlatePowerModel; duals=[CopperPlateBalanceConstraint]))
+    template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
     model = DecisionModel(template,
@@ -102,14 +93,10 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     results = OptimizationProblemResults(model)
     expr = read_expression(results, "ProductionCostExpression__InterruptiblePowerLoad")
-    println(expr)
-    p_th = read_variable(results, "ActivePowerVariable__ThermalStandard")
-    println(p_th)
-    price = read_dual(results, "CopperPlateBalanceConstraint__System")
-    println(price)
-    var_unit_cost = sum(expr[!, "IloadBus4"])
-    @test isapprox(var_unit_cost, 50; atol = 1)
-    @test expr[!, "IloadBus4"][end] == 0.0
+    p_l = read_variable(results, "ActivePowerVariable__InterruptiblePowerLoad")
+    index = findfirst(row -> isapprox(100, row; atol = 1e-6), p_l.IloadBus4)
+    calculated_cost = expr[index, "IloadBus4"][1]
+    @test isapprox(-5700, calculated_cost; atol=1)
 end
 
 @testset "PowerLoadInterruption DC- PF" begin
