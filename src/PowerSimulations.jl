@@ -393,8 +393,14 @@ import InfrastructureSystems.Optimization:
 import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
     encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
     convert_result_to_natural_units, to_matrix, get_store_container_type
+import InfrastructureSystems.Optimization: get_source_data
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
+
+# PowerSystems imports
+import PowerSystems:
+    get_components, get_component, get_available_components, get_available_component,
+    get_groups, get_available_groups
 
 export get_name
 export get_model_base_power
@@ -530,6 +536,7 @@ include("simulation/simulation_store_params.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")
+include("simulation/get_components_interface.jl")
 include("simulation/decision_model_simulation_results.jl")
 include("simulation/emulation_model_simulation_results.jl")
 include("simulation/realized_meta.jl")
