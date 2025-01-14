@@ -201,7 +201,7 @@ function _get_pwl_cost_expression_decremental(container::OptimizationContainer,
     )
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    multiplier = objective_function_multiplier(U(), V()) * dt
+    multiplier = OBJECTIVE_FUNCTION_NEGATIVE * dt
     return _get_pwl_cost_expression(container,
         component,
         time_period,
