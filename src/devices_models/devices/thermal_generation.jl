@@ -90,6 +90,10 @@ function proportional_cost(container::OptimizationContainer, cost::PSY.ThermalGe
     return onvar_cost(container, cost, S, T, U, t) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
 end
 
+function proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
+    return proportional_cost(cost, S, T, U)
+end
+
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
 
 proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{RateofChangeConstraintSlackUp, RateofChangeConstraintSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
