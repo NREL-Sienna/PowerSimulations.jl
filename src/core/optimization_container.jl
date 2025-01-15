@@ -1209,7 +1209,7 @@ end
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
-    attribute::EventParametersAttributes{V},
+    attribute::EventParametersAttributes{V, T},
     param_axs,
     time_steps;
     sparse = false,
@@ -1307,9 +1307,10 @@ function add_param_container!(
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
     param_key = ParameterKey(T, U, meta)
-    attributes = EventParametersAttributes{V}(PSY.ThermalStandard[])
+    attributes = EventParametersAttributes{V, T}(U[])
     return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
+
 
 function add_param_container!(
     container::OptimizationContainer,

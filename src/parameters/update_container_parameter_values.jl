@@ -346,22 +346,23 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage},
-    ::Type{U},
+    attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage, U},
+    ::Type{V},
     model::DecisionModel,
     state::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
-    U <: PSY.Component,
+    U <: EventParameter,
+    V <: PSY.Component,
 }
     current_time = get_current_time(model)
     # state_values = get_dataset_values(state, get_attribute_key(attributes))
     state_values =
-        get_dataset_values(state, AvailableStatusParameter(), PSY.ThermalStandard)
+        get_dataset_values(state, U(), V)
     component_names, time = axes(parameter_array)
     model_resolution = get_resolution(model)
     #@show state_data = get_dataset(state, get_attribute_key(attributes))
-    state_data = get_dataset(state, AvailableStatusParameter(), PSY.ThermalStandard)
+    state_data = get_dataset(state, U(), V)
     state_timestamps = state_data.timestamps
     max_state_index = get_num_rows(state_data)
     if model_resolution < state_data.resolution
@@ -401,20 +402,20 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage},
-    ::Type{U},
+    ::EventParametersAttributes{PSY.GeometricDistributionForcedOutage, U},
+    ::Type{V},
     model::EmulationModel,
     state::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
-    U <: PSY.Component,
+    U <: EventParameter,
+    V <: PSY.Component,
 }
     current_time = get_current_time(model)
     #@show state_data = get_dataset(state, get_attribute_key(attributes))
-    state_values =
-        get_dataset_values(state, AvailableStatusParameter(), PSY.ThermalStandard)
+    state_values = get_dataset_values(state, U(), V)
     component_names, _ = axes(parameter_array)
-    state_data = get_dataset(state, AvailableStatusParameter(), PSY.ThermalStandard)
+    state_data = get_dataset(state, U(), V)
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
 
@@ -434,6 +435,22 @@ function update_container_parameter_values!(
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: EventParameter, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
