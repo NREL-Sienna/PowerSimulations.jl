@@ -72,11 +72,13 @@ get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
 get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
 
-struct EventParametersAttributes{T <: PSY.Outage} <: ParameterAttributes
+struct EventParametersAttributes{T <: PSY.Outage, U <: ParameterType} <: ParameterAttributes
     affected_devices::Vector{<:PSY.Component}
 end
 
-get_attribute_key(attr::EventParametersAttributes) = attr.attribute_key
+function get_param_type(::EventParametersAttributes{T, U}) where {T <: PSY.Outage, U <: ParameterType}
+    return U
+end
 
 struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
@@ -154,6 +156,16 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
+    return jump_value.(param_array).*multiplier_array
+end
+
+function get_parameter_values(
+    attr::EventParametersAttributes,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
+    @error "$attr"
+    @show jump_value.(param_array)
     return jump_value.(param_array)
 end
 
