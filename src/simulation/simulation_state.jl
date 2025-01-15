@@ -250,16 +250,18 @@ end
 
 function update_decision_state!(
     state::SimulationState,
-    key::OptimizationContainerKey,
+    key::ParameterKey{AvailableStatusChangeParameter, T},
     column_names::Set{String},
     event::PSY.GeometricDistributionForcedOutage,
     simulation_time::Dates.DateTime,
     ::ModelStoreParams,
-)
-    mttr = PSY.get_mean_time_to_recovery(event)
-    state_data = get_decision_state_data(state, key)
+) where {T <: PSY.Component}
+    event_ocurrence_data = get_system_state_data(state, AvailableStatusChangeParameter(), T)
+    @show event_ocurrence_values = get_last_recorded_value(event_ocurrence_data)
     # This is required since the data for outages (mttr and λ) is always assumed to be on hourly resolution
+    mttr = PSY.get_mean_time_to_recovery(event)
     mttr_resolution = Dates.Hour(1)
+    state_data = get_decision_state_data(state, key)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = mttr_resolution ÷ state_resolution
     state_timestamps = state_data.timestamps
@@ -280,12 +282,105 @@ function update_decision_state!(
     off_time_step_count =
         Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) - 1
     set_update_timestamp!(state_data, simulation_time)
-    for t in range(; start = state_data_index, length = off_time_step_count)
-        for name in column_names
-            state_data.values[name, t] = 0.0
+    for name in column_names
+        state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
+        if event_ocurrence_values[name, 1] == 1.0
+            # Set future event occurrence to change after the MTTR has passed
+            state_data.values[name, state_data_index + off_time_step_count] = 1.0
+            @error "update $name to come back online after $off_time_step_count"
         end
-        set_last_recorded_row!(state_data, t)
     end
+    #set_last_recorded_row!(state_data, t)
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
+    key::ParameterKey{AvailableStatusParameter, T},
+    column_names::Set{String},
+    event::PSY.GeometricDistributionForcedOutage,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: PSY.Component}
+    event_ocurrence_data = get_decision_state_data(state, AvailableStatusChangeParameter(), T)
+    state_data = get_decision_state_data(state, key)
+    column_names = get_column_names(key, state_data)[1]
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = state_data.timestamps
+    @assert_op resolution_ratio >= 1
+
+    if simulation_time > get_end_of_step_timestamp(state_data)
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
+    else
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    end
+#=
+    offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[2]
+    set_update_timestamp!(state_data, simulation_time)
+
+    for t in result_time_index
+        state_range = state_data_index:(state_data_index + offset)
+        for name in column_names, i in state_range
+            state_data.values[name, i] = store_data[name, t]
+        end
+        set_last_recorded_row!(state_data, state_range[end])
+        state_data_index += resolution_ratio
+    end
+    =#
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
+    key::VariableKey{T, U},
+    column_names::Set{String},
+    event::PSY.GeometricDistributionForcedOutage,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: VariableType, U <: PSY.Component}
+    event_ocurrence_data = get_decision_state_data(state, AvailableStatusParameter(), U)
+    state_data = get_decision_state_data(state, key)
+    column_names = get_column_names(key, state_data)[1]
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = state_data.timestamps
+    @assert_op resolution_ratio >= 1
+
+    if simulation_time > get_end_of_step_timestamp(state_data)
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
+    else
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    end
+#=
+    offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[2]
+    set_update_timestamp!(state_data, simulation_time)
+
+    for t in result_time_index
+        state_range = state_data_index:(state_data_index + offset)
+        for name in column_names, i in state_range
+            state_data.values[name, i] = store_data[name, t]
+        end
+        set_last_recorded_row!(state_data, state_range[end])
+        state_data_index += resolution_ratio
+    end
+    =#
     return
 end
 
@@ -423,28 +518,80 @@ function update_system_state!(
 end
 
 function update_system_state!(
+    state::DatasetContainer{InMemoryDataset},
+    key::ParameterKey{AvailableStatusChangeParameter, T},
+    store::SimulationStore,
+    model_name::Symbol,
+    simulation_time::Dates.DateTime,
+) where T <: PSY.Device
+    em_data = get_em_data(store)
+    ix = get_last_recorded_row(em_data, key)
+    @show model_name
+    @show res = read_result(DenseAxisArray, store, model_name, key, ix)
+    dataset = get_dataset(state, key)
+    set_update_timestamp!(dataset, simulation_time)
+    set_dataset_values!(state, key, 1, res)
+    set_last_recorded_row!(dataset, 1)
+    return
+end
+
+function update_system_state!(
     state::SimulationState,
-    key::OptimizationContainerKey,
-    column_names::Set{String},
+    key::ParameterKey{AvailableStatusChangeParameter, T},
+    column_names_::Set{String},
     event::PSY.GeometricDistributionForcedOutage,
     simulation_time::Dates.DateTime,
     rng,
-)
+) where {T <: PSY.Component}
     λ = PSY.get_outage_transition_probability(event)
-    outage_status = Float64(rand(rng, Bernoulli(λ)))
+    # Outage status = 1.0 means that the unit was subject to an outage
+    @show outage_ocurrence = Float64(rand(rng, Bernoulli(λ)))
     sym_state = get_system_states(state)
     system_dataset = get_dataset(sym_state, key)
     # Writes the timestamp of the value used for the update
+    current_status_data = get_system_state_data(state, AvailableStatusParameter(), T)
+    state_data = get_system_state_data(state, key)
+    column_names = axes(state_data.values)[1]
+    current_status_values = get_last_recorded_value(current_status_data)
     set_update_timestamp!(system_dataset, simulation_time)
+    data_set_value = zeros(length(column_names))
+
+    for (ix, name) in enumerate(column_names)
+        current_status = current_status_values[name]
+        if current_status == 1.0 && outage_ocurrence == 1.0
+            data_set_value[ix] = outage_ocurrence
+            @error "Changed status for $name, $outage_ocurrence"
+        else
+            @warn "$name status $current_status, outage draw: $outage_ocurrence"
+        end
+    end
+    @show data_set_value
+    set_dataset_values!(sym_state, key, 1, data_set_value)
+    return
+end
+
+function update_system_state!(
+    state::SimulationState,
+    key::VariableKey{T, U},
+    column_names::Set{String},
+    ::PSY.GeometricDistributionForcedOutage,
+    simulation_time::Dates.DateTime,
+    rng,
+) where {T <: VariableType, U <: PSY.Component}
+    sym_state = get_system_states(state)
+    event_ocurrence_data = get_system_state_data(state, AvailableStatusChangeParameter(), U)
+    event_ocurrence_values = get_last_recorded_value(event_ocurrence_data)
+
+    system_dataset = get_dataset(sym_state, key)
     current_status_data = get_system_state_data(state, key)
     current_status_values = get_last_recorded_value(current_status_data)
 
+    set_update_timestamp!(system_dataset, simulation_time)
     for name in column_names
-        if current_status_values[name] == 0.0
-            continue
-        else
-            @error "Changed status for $name"
-            current_status_values[name] = outage_status
+        if event_ocurrence_values[name] == 1.0
+            old_value = current_status_values[name]
+            current_status_values[name] = 0.0
+            @error "Changed $T for $name from: $old_value to: 0.0"
         end
     end
     return
