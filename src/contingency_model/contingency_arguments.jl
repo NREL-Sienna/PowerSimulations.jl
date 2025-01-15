@@ -13,13 +13,15 @@ function add_event_arguments!(
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
         parameter_type = get_parameter_type(event_type, event_model, U)
-        add_parameters!(
-            container,
-            parameter_type,
-            devices_with_attrbts,
-            device_model,
-            event_model,
-        )
+        for p_type in [AvailableStatusChangeParameter, parameter_type]
+            add_parameters!(
+                container,
+                p_type,
+                devices_with_attrbts,
+                device_model,
+                event_model,
+            )
+        end
     end
 
     return
@@ -27,21 +29,22 @@ end
 
 function _add_parameters!(
     container,
-    ::AvailableStatusParameter,
+    ::T,
     devices::Vector{U},
     device_model::DeviceModel{U, W},
     event_model::EventModel{V, X},
 ) where {
+    T <: EventParameter,
     U <: PSY.Component,
     V <: PSY.Contingency,
     W <: AbstractDeviceFormulation,
     X <: AbstractEventCondition,
 }
-    @debug "adding" AvailableStatusParameter U V _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+    @debug "adding" T U V _group = LOG_GROUP_OPTIMIZATION_CONTAINER
     time_steps = get_time_steps(container)
     parameter_container = add_param_container!(
         container,
-        AvailableStatusParameter(),
+        T(),
         U,
         V,
         PSY.get_name.(devices),
@@ -51,18 +54,19 @@ function _add_parameters!(
     jump_model = get_jump_model(container)
 
     for d in devices
+        ini_val = get_initial_parameter_value(T(), d, event_model)
         name = PSY.get_name(d)
         for t in time_steps
             set_multiplier!(
                 parameter_container,
-                get_parameter_multiplier(AvailableStatusParameter(), d, event_model),
+                get_parameter_multiplier(T(), d, event_model),
                 name,
                 t,
             )
             set_parameter!(
                 parameter_container,
                 jump_model,
-                1.0, # Initial Value as available
+                ini_val,
                 name,
                 t,
             )
