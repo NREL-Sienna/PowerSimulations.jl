@@ -29,18 +29,34 @@ Auxiliary Variable for the bus voltage magnitued results from power flow evaluat
 struct PowerFlowVoltageMagnitude <: PowerFlowAuxVariableType end
 
 """
-Auxiliary Variable for the line reactive flow from power flow evaluation
+Auxiliary Variable for the line reactive flow in the from -> to direction from power flow evaluation
 """
-struct PowerFlowLineReactivePower <: PowerFlowAuxVariableType end
+struct PowerFlowLineReactivePowerFromTo <: PowerFlowAuxVariableType end
 
 """
-Auxiliary Variable for the line active flow from power flow evaluation
+Auxiliary Variable for the line reactive flow in the to -> from direction from power flow evaluation
 """
-struct PowerFlowLineActivePower <: PowerFlowAuxVariableType end
+struct PowerFlowLineReactivePowerToFrom <: PowerFlowAuxVariableType end
+
+"""
+Auxiliary Variable for the line active flow in the from -> to direction from power flow evaluation
+"""
+struct PowerFlowLineActivePowerFromTo <: PowerFlowAuxVariableType end
+
+"""
+Auxiliary Variable for the line active flow in the to -> from direction from power flow evaluation
+"""
+struct PowerFlowLineActivePowerToFrom <: PowerFlowAuxVariableType end
 
 convert_result_to_natural_units(::Type{PowerOutput}) = true
-convert_result_to_natural_units(::Type{PowerFlowLineReactivePower}) = true
-convert_result_to_natural_units(::Type{PowerFlowLineActivePower}) = true
+convert_result_to_natural_units(
+    ::Type{
+        <:Union{
+            PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom,
+            PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom,
+        },
+    },
+) = true
 
 "Whether the auxiliary variable is calculated using a `PowerFlowEvaluationModel`"
 is_from_power_flow(::Type{<:AuxVariableType}) = false

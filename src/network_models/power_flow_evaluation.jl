@@ -107,10 +107,14 @@ end
 
 # Trait that determines what branch aux vars we can get from each PowerFlowContainer
 branch_aux_vars(::PFS.ACPowerFlowData) =
-    [PowerFlowLineActivePower, PowerFlowLineReactivePower]
-branch_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowLineActivePower]
-branch_aux_vars(::PFS.PTDFPowerFlowData) = [PowerFlowLineActivePower]
-branch_aux_vars(::PFS.vPTDFPowerFlowData) = [PowerFlowLineActivePower]
+    [PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom,
+        PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+branch_aux_vars(::PFS.ABAPowerFlowData) =
+    [PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+branch_aux_vars(::PFS.PTDFPowerFlowData) =
+    [PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+branch_aux_vars(::PFS.vPTDFPowerFlowData) =
+    [PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
@@ -317,10 +321,14 @@ _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_angles(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_magnitude(pf_data)
-_get_pf_result(::Type{PowerFlowLineActivePower}, pf_data::PFS.PowerFlowData) =
-    PFS.get_branch_flow_values(pf_data)
-# TODO implement method for PowerFlowLineReactivePower -- I don't think we have a PowerFlowData field for this?
-# _fetch_pf_result(pf_data::PFS.PowerFlowData, ::Type{PowerFlowLineActivePower}) = ...
+_get_pf_result(::Type{PowerFlowLineReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
+    PFS.get_branch_reactivepower_flow_from_to(pf_data)
+_get_pf_result(::Type{PowerFlowLineReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =
+    PFS.get_branch_reactivepower_flow_to_from(pf_data)
+_get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowData) =
+    PFS.get_branch_activepower_flow_from_to(pf_data)
+_get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
+    PFS.get_branch_activepower_flow_to_from(pf_data)
 
 _get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
 _get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =

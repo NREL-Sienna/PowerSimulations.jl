@@ -240,8 +240,8 @@ export TimeDurationOff
 export PowerOutput
 export PowerFlowVoltageAngle
 export PowerFlowVoltageMagnitude
-export PowerFlowLineReactivePower
-export PowerFlowLineActivePower
+export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom
+export PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom
 
 # Constraints
 export AbsoluteValueConstraint
