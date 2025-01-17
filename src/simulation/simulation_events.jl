@@ -24,6 +24,59 @@ function check_condition(
     return true
 end
 
+function check_condition(
+    simulation_state::SimulationState,
+    event_model::EventModel{<:PSY.Contingency, PresetTimeCondition},
+)
+    condition = get_event_condition(event_model)
+    event_times = get_time_stamps(condition)
+    current_time = get_current_time(simulation_state)
+    if current_time in event_times
+        #@error "PresetTimeCondition is true at $current_time"
+        return true
+    else
+        #@error "PresetTimeCondition is false at $current_time"
+        return false
+    end
+end
+
+function check_condition(
+    simulation_state::SimulationState,
+    event_model::EventModel{<:PSY.Contingency, StateVariableValueCondition},
+)
+    system_states = get_system_states(simulation_state)
+    condition = get_event_condition(event_model)
+    variable_type = get_variable_type(condition)
+    device_type = device_type(condition)
+    device_name = get_device_name(condition)
+    event_value = get_value(condition)
+    system_value =
+        system_states.variables[VariableKey{variable_type, device_type}("")].values[
+            device_name,
+            1,
+        ]
+    if system_value == event_value
+        #@error "$device_name turned on at time $(get_current_time(simulation_state)) causing the event to trigger"
+        return true
+    else
+        return false
+    end
+end
+
+function check_condition(
+    simulation_state::SimulationState,
+    event_model::EventModel{<:PSY.Contingency, DiscreteEventCondition},
+)
+    condition = get_event_condition(event_model)
+    f = condition.condition_function
+    if f(simulation_state)
+        @error "User defined function evaluated to true at time $(get_current_time(simulation_state)) causing event to trigger"
+        return true
+    else
+        return false
+    end
+end
+
 function apply_affect!(
     simulation::Simulation,
     ::EventModel{
