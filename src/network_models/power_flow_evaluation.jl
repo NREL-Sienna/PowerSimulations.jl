@@ -201,7 +201,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_withdrawals[index, t] += value)
+) = (pf_data.bus_activepower_withdrawals[index, t] -= value)
 
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
