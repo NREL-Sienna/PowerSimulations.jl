@@ -23,8 +23,15 @@ PSY.get_components(
 ) where {T <: IS.InfrastructureSystemsComponent} =
     IS.get_components(filter_func, T, res; subsystem_name = subsystem_name)
 
-PSY.get_components(selector::IS.ComponentSelector, res::IS.Results; kwargs...) =
-    IS.get_components(selector, res; kwargs...)
+PSY.get_components(
+    scope_limiter::Union{Function, Nothing},
+    selector::IS.ComponentSelector,
+    res::IS.Results,
+) =
+    IS.get_components(scope_limiter, selector, res)
+
+PSY.get_components(selector::IS.ComponentSelector, res::IS.Results) =
+    IS.get_components(selector, res)
 
 # get_component
 """
@@ -41,13 +48,27 @@ PSY.get_component(
 ) where {T <: IS.InfrastructureSystemsComponent} =
     IS.get_component(T, res, name)
 
-PSY.get_component(selector::IS.SingularComponentSelector, res::IS.Results; kwargs...) =
-    IS.get_component(selector, res; kwargs...)
+PSY.get_component(
+    scope_limiter::Union{Function, Nothing},
+    selector::IS.SingularComponentSelector,
+    res::IS.Results,
+) =
+    IS.get_component(scope_limiter, selector, res)
+
+PSY.get_component(selector::IS.SingularComponentSelector, res::IS.Results) =
+    IS.get_component(selector, res)
 
 # get_groups
 """
 Calling `get_groups` on a `Results` is the same as calling [`get_available_groups`](@ref) on
 the system attached to the results.
 """
-PSY.get_groups(selector::IS.ComponentSelector, res::IS.Results; kwargs...) =
-    IS.get_groups(selector, res; kwargs...)
+PSY.get_groups(
+    scope_limiter::Union{Function, Nothing},
+    selector::IS.ComponentSelector,
+    res::IS.Results,
+) =
+    IS.get_groups(scope_limiter, selector, res)
+
+PSY.get_groups(selector::IS.ComponentSelector, res::IS.Results) =
+    IS.get_groups(selector, res)
