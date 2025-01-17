@@ -5,16 +5,25 @@ struct PresetTimeCondition <: AbstractEventCondition
     time_stamps::Vector{Dates.DateTime}
 end
 
+get_time_stamps(c::PresetTimeCondition) = c.time_stamps
+
 struct StateVariableValueCondition <: AbstractEventCondition
-    variable::VariableType
+    variable_type::Type{<:VariableType}
     device_type::Type{<:PSY.Device}
+    device_name::String
     value::Float64
 end
 
-struct DiscreteEvent <: AbstractEventCondition
+get_variable_type(c::StateVariableValueCondition) = c.variable_type
+get_device_type(c::StateVariableValueCondition) = c.device_type
+get_device_name(c::StateVariableValueCondition) = c.device_name
+get_value(c::StateVariableValueCondition) = c.value
+
+struct DiscreteEventCondition <: AbstractEventCondition
     condition_function::Function
-    value::Float64
 end
+
+get_condition_function(c::DiscreteEventCondition) = c.condition_function
 
 mutable struct EventModel{D <: PSY.Contingency, B <: AbstractEventCondition}
     condition::B
