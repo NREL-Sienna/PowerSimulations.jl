@@ -107,7 +107,8 @@ function _update_pwl_cost_expression(
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            slopes[i] * upb[i] * dt * pwl_var_container[(component_name, i, time_period)],
+            slopes[i] * upb[i] * dt,
+            pwl_var_container[(component_name, i, time_period)],
         )
     end
     return gen_cost

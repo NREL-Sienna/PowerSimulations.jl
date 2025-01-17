@@ -137,11 +137,12 @@ function _get_pwl_cost_expression(
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PieceWiseLinearBlockOffer(), T)
     gen_cost = JuMP.AffExpr(0.0)
-    cost_data = PSY.get_y_coords(cost_data)
-    for (i, cost) in enumerate(cost_data)
+    _cost_data = PSY.get_y_coords(cost_data)
+    for (i, cost) in enumerate(_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            cost * multiplier,
+             pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -196,7 +197,8 @@ function _get_pwl_cost_expression(
     for i in 1:length(slopes)
         JuMP.add_to_expression!(
             ordc_cost,
-            slopes[i] * multiplier * pwl_var_container[(name, i, time_period)],
+            slopes[i] * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return ordc_cost
@@ -241,7 +243,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            cost * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
