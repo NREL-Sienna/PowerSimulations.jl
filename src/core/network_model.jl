@@ -127,7 +127,7 @@ function instantiate_network_model(
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         model.PTDF_matrix =
-            PNM.PTDF(sys; reduce_radial_branches = model.reduce_radial_branches)
+            PNM.VirtualPTDF(sys; reduce_radial_branches = model.reduce_radial_branches)
     end
 
     if !model.reduce_radial_branches && !isempty(model.PTDF_matrix.radial_network_reduction)
