@@ -164,6 +164,10 @@ Linear active power approximation using the power transfer distribution factor [
 """
 struct PTDFPowerModel <: AbstractPTDFModel end
 """
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages
+"""
+struct SecurityConstrainedPTDFPowerModel <: AbstractPTDFModel end
+"""
 Infinite capacity approximation of network flow to represent entire system with a single node.
 """
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
@@ -172,9 +176,13 @@ Approximation to represent inter-area flow with each area represented as a singl
 """
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balancing areas independently.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balancing areas as well as synchrounous regions.
 """
 struct AreaPTDFPowerModel <: AbstractPTDFModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages. Balancing areas as well as synchrounous regions.
+"""
+struct SecurityConstrainedAreaPTDFPowerModel <: AbstractPTDFModel end
 
 #================================================
     # exact non-convex models
