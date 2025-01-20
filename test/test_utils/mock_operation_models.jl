@@ -196,8 +196,8 @@ function create_simulation_build_test_problems(
 )
     return SimulationModels(;
         decision_models = [
-            DecisionModel(template_uc, sys_uc; name = "UC", optimizer = GLPK_optimizer),
-            DecisionModel(template_ed, sys_ed; name = "ED", optimizer = GLPK_optimizer),
+            DecisionModel(template_uc, sys_uc; name = "UC", optimizer = HiGHS_optimizer),
+            DecisionModel(template_ed, sys_ed; name = "ED", optimizer = HiGHS_optimizer),
         ],
     )
 end

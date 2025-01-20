@@ -47,8 +47,9 @@ function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::Str
     return
 end
 
-get_component_names(attr::TimeSeriesAttributes) = keys(attr.component_name_to_ts_uuid)
-_get_ts_uuid(attr::TimeSeriesAttributes, name) = attr.component_name_to_ts_uuid[name]
+function _get_ts_uuid(attr::TimeSeriesAttributes, name)
+    return attr.component_name_to_ts_uuid[name]
+end
 
 struct VariableValueAttributes{T <: OptimizationContainerKey} <: ParameterAttributes
     attribute_key::T
@@ -303,6 +304,11 @@ struct FixValueParameter <: VariableValueParameter end
 Parameter to define cost function coefficient
 """
 struct CostFunctionParameter <: ObjectiveFunctionParameter end
+
+"""
+Parameter to define fuel cost time series
+"""
+struct FuelCostParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 

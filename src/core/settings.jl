@@ -57,7 +57,7 @@ function Settings(
         optimizer_ = MOI.OptimizerWithAttributes(optimizer)
     else
         error(
-            "The provided input for optimizer is invalid. Provide a JuMP.OptimizerWithAttributes object or a valid Optimizer constructor (e.g. GLPK.Optimizer).",
+            "The provided input for optimizer is invalid. Provide a JuMP.OptimizerWithAttributes object or a valid Optimizer constructor (e.g. HiGHS.Optimizer).",
         )
     end
 

@@ -198,6 +198,22 @@ ThermalStandardDispatch
       + Bounds: [0.0, ]
       + Symbol: ``q^\text{th}``
 
+If Slack variables are enabled (`use_slacks = true`):
+
+  - [`RateofChangeConstraintSlackUp`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 2e5
+      + Symbol: ``p^\text{sl,up}``
+
+  - [`RateofChangeConstraintSlackDown`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 2e5
+      + Symbol: ``p^\text{sl,dn}``
+
 **Static Parameters:**
 
   - ``P^\text{th,min}`` = `PowerSystems.get_active_power_limits(device).min`
@@ -223,8 +239,10 @@ For each thermal unit creates the range constraints for its active and reactive 
 \begin{align*}
 &  P^\text{th,min} \le p^\text{th}_t \le P^\text{th,max}, \quad \forall t\in \{1, \dots, T\} \\
 &  Q^\text{th,min} \le q^\text{th}_t \le Q^\text{th,max}, \quad \forall t\in \{1, \dots, T\} \\
-& -R^\text{th,dn} \le  p_1^\text{th} - p^\text{th, init} \le R^\text{th,up} \\
-& -R^\text{th,dn} \le p_t^\text{th} - p_{t-1}^\text{th} \le R^\text{th,up}, \quad \forall  t\in \{2, \dots, T\}
+& p_1^\text{th} - p^\text{th, init} - p_1^\text{sl,up} \le R^\text{th,up} \\
+& p_t^\text{th} - p_{t-1}^\text{th} - p_t^\text{sl,up}\le R^\text{th,up}, \quad \forall  t\in \{2, \dots, T\} \\
+& -R^\text{th,dn} \le  p_1^\text{th} - p^\text{th, init} + p_1^\text{sl,dn} \\
+&  -R^\text{th,dn} \le p_t^\text{th} - p_{t-1}^\text{th} + p_t^\text{sl,dn}, \quad \forall  t\in \{2, \dots, T\} \\
 \end{align*}
 ```
 
@@ -498,6 +516,22 @@ ThermalStandardUnitCommitment
       + Bounds: ``\{0,1\}``
       + Symbol: ``w_t^\text{th}``
 
+If Slack variables are enabled (`use_slacks = true`):
+
+  - [`RateofChangeConstraintSlackUp`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 2e5
+      + Symbol: ``p^\text{sl,up}``
+
+  - [`RateofChangeConstraintSlackDown`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Default initial value: 0.0
+      + Default proportional cost: 2e5
+      + Symbol: ``p^\text{sl,dn}``
+
 **Auxiliary Variables:**
 
   - [`TimeDurationOn`](@ref):
@@ -537,8 +571,10 @@ For each thermal unit creates the range constraints for its active and reactive 
 \begin{align*}
 &  u^\text{th}_t P^\text{th,min} \le  p^\text{th}_t \le u^\text{th}_t P^\text{th,max}, \quad \forall t\in \{1, \dots, T\} \\
 &  u_t^\text{th} Q^\text{th,min} \le q^\text{th}_t \le u_t^\text{th} Q^\text{th,max}, \quad \forall t\in \{1, \dots, T\} \\
-& -R^\text{th,dn} \le p_1^\text{th} -  p^\text{th, init} \le R^\text{th,up} \\
-& -R^\text{th,dn} \le  p_t^\text{th} -  p_{t-1}^\text{th} \le R^\text{th,up}, \quad \forall  t\in \{2, \dots, T\} \\
+& p_1^\text{th} -  p^\text{th, init} - p_1^\text{sl,up} \le R^\text{th,up} \\
+& p_t^\text{th} -  p_{t-1}^\text{th} - p_t^\text{sl,up} \le R^\text{th,up}, \quad \forall  t\in \{2, \dots, T\} \\
+& -R^\text{th,dn} \le p_1^\text{th} -  p^\text{th, init} + p_1^\text{sl,dn} \\
+& -R^\text{th,dn} \le  p_t^\text{th} -  p_{t-1}^\text{th} + p_t^\text{sl,dn}, \quad \forall  t\in \{2, \dots, T\} \\
 & u_1^\text{th} = u^\text{th,init} + v_1^\text{th} - w_1^\text{th} \\
 & u_t^\text{th} = u_{t-1}^\text{th} + v_t^\text{th} - w_t^\text{th}, \quad \forall t \in \{2,\dots,T\} \\
 & v_t^\text{th} + w_t^\text{th} \le 1, \quad \forall t \in \{1,\dots,T\} 

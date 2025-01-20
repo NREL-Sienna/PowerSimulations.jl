@@ -56,6 +56,14 @@ function construct_device!(
 
     initial_conditions!(container, devices, D())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -74,6 +82,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -91,6 +100,17 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -134,6 +154,17 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -164,6 +195,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, D())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -174,6 +212,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -191,6 +230,17 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -227,6 +277,16 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -256,6 +316,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -274,6 +341,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -291,6 +359,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -335,6 +424,17 @@ function construct_device!(
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
+
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
@@ -361,6 +461,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -371,6 +478,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -388,6 +496,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -423,6 +552,16 @@ function construct_device!(
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -448,6 +587,10 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -466,6 +609,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -483,6 +627,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalStandardDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalStandardDispatch(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -550,6 +715,10 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -560,6 +729,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -577,6 +747,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalStandardDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalStandardDispatch(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -635,6 +826,10 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -653,6 +848,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -670,6 +866,17 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -731,6 +938,10 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -741,6 +952,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -758,6 +970,17 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
+        add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -829,6 +1052,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalMultiStartUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -856,6 +1086,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -873,6 +1104,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -931,6 +1183,16 @@ function construct_device!(
         network_model,
     )
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -965,6 +1227,13 @@ function construct_device!(
     add_variables!(container, TimeDurationOff, devices, ThermalMultiStartUnitCommitment())
     add_variables!(container, PowerOutput, devices, ThermalMultiStartUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -984,6 +1253,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1001,6 +1271,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalMultiStartUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1053,6 +1344,16 @@ function construct_device!(
         network_model,
     )
     add_constraints!(container, ActiveRangeICConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1092,6 +1393,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1110,6 +1418,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1127,6 +1436,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1169,6 +1499,16 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1202,6 +1542,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalCompactUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1220,6 +1567,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1237,6 +1585,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactUnitCommitment(),
+        )
+    end
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1270,6 +1639,16 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1307,6 +1686,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1325,6 +1711,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1342,6 +1729,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+    end
 
     add_feedforward_arguments!(container, model, devices)
     return
@@ -1382,6 +1790,16 @@ function construct_device!(
         network_model,
     )
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1413,6 +1831,13 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
 
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -1431,6 +1856,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1448,6 +1874,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalBasicCompactUnitCommitment(),
+        )
+    end
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1479,6 +1926,16 @@ function construct_device!(
     )
 
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -1503,6 +1960,10 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, model)
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_feedforward_arguments!(container, model, devices)
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
@@ -1517,6 +1978,7 @@ function construct_device!(
     )
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1550,6 +2012,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactDispatch(),
+        )
+    end
     return
 end
 
@@ -1611,6 +2094,10 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, model)
 
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
     add_feedforward_arguments!(container, model, devices)
 
     add_to_expression!(
@@ -1634,6 +2121,7 @@ function construct_device!(
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
 
     add_to_expression!(
         container,
@@ -1651,6 +2139,27 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        PowerAboveMinimumVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalCompactDispatch(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalCompactDispatch(),
+        )
+    end
     return
 end
 

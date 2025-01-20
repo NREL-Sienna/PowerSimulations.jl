@@ -37,6 +37,23 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    T <: FuelCostParameter,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    _add_parameters!(container, T(), devices, model)
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
     ff::LowerBoundFeedforward,
     model::ServiceModel{S, W},
     devices::V,
@@ -197,6 +214,10 @@ function _add_time_series_parameters!(
     device_names = String[]
     initial_values = Dict{String, AbstractArray}()
     for device in devices
+        if !PSY.has_time_series(device, ts_type, ts_name)
+            @debug "skipped time series for $D, $(PSY.get_name(device))"
+            continue
+        end
         push!(device_names, PSY.get_name(device))
         ts_uuid = string(IS.get_time_series_uuid(ts_type, device, ts_name))
         if !(ts_uuid in keys(initial_values))
@@ -226,6 +247,9 @@ function _add_time_series_parameters!(
     end
 
     for device in devices
+        if !PSY.has_time_series(device, ts_type, ts_name)
+            continue
+        end
         name = PSY.get_name(device)
         multiplier = get_multiplier_value(T(), device, W())
         for step in time_steps
@@ -250,7 +274,55 @@ function _add_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    _add_time_series_parameters!(container, param, devices, model)
+    ts_type = get_default_time_series_type(container)
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
+        error(
+            "add_parameters! for ObjectiveFunctionParameter is not compatible with $ts_type",
+        )
+    end
+    time_steps = get_time_steps(container)
+    ts_name = get_time_series_names(model)[T]
+    device_names =
+        [PSY.get_name(x) for x in devices if PSY.has_time_series(x, ts_type, ts_name)]
+    if isempty(device_names)
+        return
+    end
+    jump_model = get_jump_model(container)
+
+    param_container = add_param_container!(
+        container,
+        param,
+        D,
+        ActivePowerVariable,
+        PSI.SOSStatusVariable.NO_VARIABLE,
+        false,
+        Float64,
+        device_names,
+        time_steps,
+    )
+
+    for device in devices
+        if !PSY.has_time_series(device, ts_type, ts_name)
+            continue
+        end
+        ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)
+        name = PSY.get_name(device)
+        for step in time_steps
+            PSI.set_parameter!(
+                param_container,
+                jump_model,
+                ts_vals[step],
+                name,
+                step,
+            )
+            PSI.set_multiplier!(
+                param_container,
+                get_multiplier_value(T(), device, W()),
+                name,
+                step,
+            )
+        end
+    end
     return
 end
 

@@ -723,7 +723,7 @@ end
         UnitCommitmentProblem,
         template,
         sys;
-        optimizer = cbc_optimizer,
+        optimizer = HiGHS_optimizer,
         initialize_model = false,
     )
     @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
@@ -920,4 +920,227 @@ end
             @test "Sundance" ∉ names(v)
         end
     end
+end
+
+@testset "Thermal with max_active_power time series" begin
+    device_model = DeviceModel(
+        ThermalStandard,
+        ThermalStandardUnitCommitment;
+        time_series_names = Dict(ActivePowerTimeSeriesParameter => "max_active_power"))
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+
+    derate_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
+    data_ts = collect(
+        DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+            "1/1/2024  23:00:00",
+            "d/m/y  H:M:S",
+        ),
+    )
+    for t in 1:2
+        ini_time = data_ts[1] + Day(t - 1)
+        derate_data[ini_time] =
+            TimeArray(data_ts + Day(t - 1), fill!(Vector{Float64}(undef, 24), 0.8))
+    end
+    solitude = get_component(ThermalStandard, c_sys5, "Solitude")
+    PSY.add_time_series!(
+        c_sys5,
+        solitude,
+        PSY.Deterministic("max_active_power", derate_data),
+    )
+
+    model = DecisionModel(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5)
+
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 480, 0, 504, 120, 120, true)
+    key = PSI.ConstraintKey(
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        ThermalStandard,
+        "ub",
+    )
+    constraint = PSI.get_constraint(PSI.get_optimization_container(model), key)
+    ub_value = get_max_active_power(solitude) * 0.8
+    for ix in eachindex(constraint)
+        @test JuMP.normalized_rhs(constraint[ix]) == ub_value
+    end
+    psi_checkobjfun_test(model, GAEVF)
+end
+
+@testset "Thermal with fuel cost time series" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_re_fuel_cost")
+
+    template = ProblemTemplate(
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+        ),
+    )
+
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        store_variable_names = true,
+        optimizer_solve_log_print = false,
+    )
+    models = SimulationModels(;
+        decision_models = [
+            model,
+        ],
+    )
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "compact_sim",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        initial_time = DateTime("2024-01-01T00:00:00"),
+        simulation_folder = mktempdir(),
+    )
+
+    build!(sim; console_level = Logging.Error, serialize = false)
+    moi_tests(model, 432, 0, 192, 120, 72, false)
+    execute!(sim; enable_progress_bar = true)
+
+    sim_res = SimulationResults(sim)
+    res_uc = get_decision_problem_results(sim_res, "UC")
+    th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
+    p_brighton = th_uc[!, "Brighton"]
+    p_solitude = th_uc[!, "Solitude"]
+
+    @test sum(p_brighton[1:24]) < 50.0 # Barely used when expensive
+    @test sum(p_brighton[25:48]) > 5000.0 # Used a lot when cheap
+    @test sum(p_solitude[1:24]) > 5000.0 # Used a lot when cheap
+    @test sum(p_solitude[25:48]) < 50.0 # Barely used when expensive
+end
+
+@testset "Thermal with fuel cost time series with Quadratic and PWL" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5_re_fuel_cost")
+
+    template = ProblemTemplate(
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+        ),
+    )
+
+    solitude = get_component(ThermalStandard, sys, "Solitude")
+    op_cost = get_operation_cost(solitude)
+    ts = deepcopy(get_time_series(Deterministic, solitude, "fuel_cost"))
+    remove_time_series!(sys, Deterministic, solitude, "fuel_cost")
+    quad_curve = QuadraticCurve(0.05, 1.0, 0.0)
+    new_th_cost = ThermalGenerationCost(;
+        variable = FuelCurve(;
+            value_curve = quad_curve,
+            fuel_cost = 1.0,
+        ),
+        fixed = op_cost.fixed,
+        start_up = op_cost.start_up,
+        shut_down = op_cost.shut_down,
+    )
+
+    set_operation_cost!(solitude, new_th_cost)
+    add_time_series!(
+        sys,
+        solitude,
+        ts,
+    )
+
+    # There is no free MIQP solver, we need to use ThermalDisptchNoMin for testing
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC",
+        optimizer = ipopt_optimizer,
+        system_to_file = false,
+        store_variable_names = true,
+        optimizer_solve_log_print = false,
+    )
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(model)
+    moi_tests(model, 288, 0, 192, 120, 72, false)
+    container = PSI.get_optimization_container(model)
+    @test isa(
+        PSI.get_invariant_terms(PSI.get_objective_expression(container)),
+        JuMP.QuadExpr,
+    )
+end
+
+@testset "Thermal UC With Slack on Ramps" begin
+    bin_variable_keys = [
+        PSI.VariableKey(OnVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StartVariable, PSY.ThermalStandard),
+        PSI.VariableKey(StopVariable, PSY.ThermalStandard),
+    ]
+
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(DurationConstraint, PSY.ThermalStandard, "dn"),
+    ]
+
+    aux_variables_keys = [
+        PSI.AuxVarKey(PSI.TimeDurationOff, ThermalStandard),
+        PSI.AuxVarKey(PSI.TimeDurationOn, ThermalStandard),
+    ]
+    # Unit Commitment #
+    device_model =
+        DeviceModel(ThermalStandard, ThermalStandardUnitCommitment; use_slacks = true)
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 720, 0, 480, 120, 120, true)
+    psi_constraint_test(model, uc_constraint_keys)
+    psi_checkbinvar_test(model, bin_variable_keys)
+    psi_checkobjfun_test(model, GAEVF)
+    psi_aux_variable_test(model, aux_variables_keys)
+
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 720, 0, 240, 120, 120, true)
+    psi_checkbinvar_test(model, bin_variable_keys)
+    psi_checkobjfun_test(model, GQEVF)
+
+    # Dispatch #
+    device_model =
+        DeviceModel(ThermalStandard, ThermalStandardDispatch; use_slacks = true)
+    uc_constraint_keys = [
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "up"),
+        PSI.ConstraintKey(RampConstraint, PSY.ThermalStandard, "dn"),
+    ]
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 360, 0, 168, 168, 0, false)
+    psi_constraint_test(model, uc_constraint_keys)
+    psi_checkobjfun_test(model, GAEVF)
+
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 360, 0, 120, 120, 0, false)
+    psi_checkobjfun_test(model, GQEVF)
 end
