@@ -60,10 +60,12 @@ function add_constraints!(
     for t in time_steps
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
         for reserve_variable in reserve_variables
-            JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+            JuMP.add_to_expression!(resource_expression,
+                JuMP.@expression(container.JuMPmodel, sum(reserve_variable[:, t])))
+            # consider a for loop to add the reserve variables
         end
         if use_slacks
-            resource_expression += slack_vars[t]
+            JuMP.add_to_expression!(resource_expression, slack_vars[t])
         end
         constraint[service_name, t] =
             JuMP.@constraint(container.JuMPmodel, resource_expression >= requirement)

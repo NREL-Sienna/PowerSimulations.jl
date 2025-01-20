@@ -196,7 +196,8 @@ function device_duration_look_ahead!(
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
-                    JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
+                    JuMP.add_to_expression!(lhs_off, 1)
+                    JuMP.add_to_expression!(lhs_off, -1, varon[name, i])
                 end
             end
             if t <= duration_data[ix].down
@@ -322,7 +323,8 @@ function device_duration_parameters!(
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
-                        JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
+                        JuMP.add_to_expression!(lhs_off, 1)
+                        JuMP.add_to_expression!(lhs_off, -1, varon[name, i])
                     end
                 else
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])

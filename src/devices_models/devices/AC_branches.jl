@@ -606,6 +606,7 @@ function _make_flow_expressions!(
             sum(
                 ptdf_col[i] * nodal_balance_expressions[i, t] for
                 i in 1:length(ptdf_col)
+                # maybe only sum if nonempy?
             )
         )
     end

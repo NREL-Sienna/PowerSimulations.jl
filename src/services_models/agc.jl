@@ -152,14 +152,14 @@ function add_constraints!(
     const_container = add_constraints_container!(container, T(), PSY.System, time_steps)
 
     for t in time_steps
-        system_balance = sum(area_balance.data[:, t])
+        system_balance = JuMP.@expression(container.JuMPmodel, sum(area_balance.data[:, t]))
         for agc in agcs
             a = PSY.get_name(agc)
             area_name = PSY.get_name(PSY.get_area(agc))
             JuMP.add_to_expression!(system_balance, R_up[a, t])
-            JuMP.add_to_expression!(system_balance, -1 * R_dn[a, t])
+            JuMP.add_to_expression!(system_balance, -1, R_dn[a, t])
             JuMP.add_to_expression!(system_balance, R_up_emergency[area_name, t])
-            JuMP.add_to_expression!(system_balance, -1 * R_dn_emergency[area_name, t])
+            JuMP.add_to_expression!(system_balance, -1, R_dn_emergency[area_name, t])
         end
         const_container[t] = JuMP.@constraint(
             container.JuMPmodel,
@@ -303,6 +303,7 @@ function add_proportional_cost!(
 ) where {T <: PSY.AGC, U <: LiftVariable}
     lift_variable = get_variable(container, U(), T)
     for index in Iterators.product(axes(lift_variable)...)
+        # TODO
         add_to_objective_invariant_expression!(
             container,
             SERVICES_SLACK_COST * lift_variable[index...],
