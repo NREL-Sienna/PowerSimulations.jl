@@ -8,6 +8,10 @@ function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
     end
 end
 
+_maybe_flatten_pfem(pfem::Vector{PFS.PowerFlowEvaluationModel}) = pfem
+_maybe_flatten_pfem(pfem::PFS.PowerFlowEvaluationModel) =
+    PFS.flatten_power_flow_evaluation_model(pfem)
+
 """
 Establishes the model for the network specified by type.
 
@@ -45,7 +49,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         reduce_radial_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
-        power_flow_evaluation = Vector{PFS.PowerFlowEvaluationModel}[],
+        power_flow_evaluation::Union{PFS.PowerFlowEvaluationModel, Vector{PFS.PowerFlowEvaluationModel}} = PFS.PowerFlowEvaluationModel[],
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(
@@ -56,7 +60,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.RadialNetworkReduction(),
             reduce_radial_branches,
-            power_flow_evaluation,
+            _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
             Vector{DataType}(),
         )

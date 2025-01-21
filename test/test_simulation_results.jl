@@ -1029,7 +1029,7 @@ end
             duals = [CopperPlateBalanceConstraint],
             use_slacks = true,
             power_flow_evaluation =
-            [DCPowerFlow(), PSSEExportPowerFlow(:v33, pf_path, true)],
+            ACPowerFlow(; exporter = PSSEExportPowerFlow(:v33, pf_path, true, false)),
         ),
     )
     results = SimulationResults(sim)
