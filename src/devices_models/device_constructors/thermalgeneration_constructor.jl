@@ -109,7 +109,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
         add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
     end
@@ -246,7 +246,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
         add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
     end
@@ -381,7 +381,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -525,7 +525,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -663,7 +663,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -790,7 +790,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -916,7 +916,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
         add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
     end
@@ -1027,7 +1027,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(container, RateofChangeConstraintSlackUp, devices, D())
         add_variables!(container, RateofChangeConstraintSlackDown, devices, D())
     end
@@ -1168,7 +1168,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -1349,7 +1349,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -1528,7 +1528,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -1684,7 +1684,7 @@ function construct_device!(
         device_model,
         model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -1836,7 +1836,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -1987,7 +1987,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -2132,7 +2132,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
@@ -2266,7 +2266,7 @@ function construct_device!(
         devices,
         device_model,
     )
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             RateofChangeConstraintSlackUp,
