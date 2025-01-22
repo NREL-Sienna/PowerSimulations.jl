@@ -763,7 +763,9 @@ function build_impl!(
     @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
-    add_power_flow_data!(container, get_power_flow_evaluation(transmission_model), sys)
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Power Flow Initialization" begin
+        add_power_flow_data!(container, get_power_flow_evaluation(transmission_model), sys)
+    end
     check_optimization_container(container)
     return
 end
@@ -1664,13 +1666,15 @@ function calculate_aux_variables!(container::OptimizationContainer, system::PSY.
     # We should only have power flow aux vars if we have power flow evaluators
     @assert isempty(pf_aux_var_keys) || !isempty(get_power_flow_evaluation_data(container))
 
-    reset_power_flow_is_solved!(container)
-    # Power flow-related aux vars get calculated once per power flow
-    for (i, pf_e_data) in enumerate(get_power_flow_evaluation_data(container))
-        @debug "Processing power flow $i"
-        solve_powerflow!(pf_e_data, container)
-        for key in pf_aux_var_keys
-            calculate_aux_variable_value!(container, key, system)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Power Flow Evaluation" begin
+        reset_power_flow_is_solved!(container)
+        # Power flow-related aux vars get calculated once per power flow
+        for (i, pf_e_data) in enumerate(get_power_flow_evaluation_data(container))
+            @debug "Processing power flow $i"
+            solve_powerflow!(pf_e_data, container)
+            for key in pf_aux_var_keys
+                calculate_aux_variable_value!(container, key, system)
+            end
         end
     end
 
