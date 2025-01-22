@@ -49,7 +49,10 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         reduce_radial_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
-        power_flow_evaluation::Union{PFS.PowerFlowEvaluationModel, Vector{PFS.PowerFlowEvaluationModel}} = PFS.PowerFlowEvaluationModel[],
+        power_flow_evaluation::Union{
+            PFS.PowerFlowEvaluationModel,
+            Vector{PFS.PowerFlowEvaluationModel},
+        } = PFS.PowerFlowEvaluationModel[],
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(

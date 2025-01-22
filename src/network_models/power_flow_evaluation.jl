@@ -1,3 +1,12 @@
+# Defines the order of precedence for each type of information that could be sent to PowerFlows.jl
+const PF_INPUT_KEY_PRECEDENCES = Dict(
+    :active_power => [ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter],
+    :reactive_power => [ReactivePowerVariable, ReactivePowerTimeSeriesParameter],
+    :voltage_angle => [PowerFlowVoltageAngle],
+    :voltage_magnitude => [PowerFlowVoltageMagnitude],
+)
+# TODO define separate categories :active_power_from_power_flow, etc. for exporter
+
 function _add_aux_variables!(
     container::OptimizationContainer,
     component_map::Dict{Type{<:AuxVariableType}, <:Set{<:Tuple{DataType, Any}}},
@@ -18,12 +27,17 @@ function _add_aux_variables!(
     end
 end
 
-# Trait that determines what keys serve as input to each type of power flow, if they exist
-pf_input_keys(::PFS.PowerFlowData) =
-    [ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter]
+# Trait that determines which types of information are needed for each type of power flow
+pf_input_keys(::PFS.ABAPowerFlowData) =
+    [:active_power]
+pf_input_keys(::PFS.PTDFPowerFlowData) =
+    [:active_power]
+pf_input_keys(::PFS.vPTDFPowerFlowData) =
+    [:active_power]
+pf_input_keys(::PFS.ACPowerFlowData) =
+    [:active_power, :reactive_power]
 pf_input_keys(::PFS.PSSEExporter) =
-    [ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter,
-        PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+    [:active_power, :reactive_power, :voltage_angle, :voltage_magnitude]
 
 # Maps the StaticInjection component type by name to the
 # index in the PowerFlow data arrays going from Bus number to bus index
@@ -73,35 +87,48 @@ function _make_pf_input_map!(
     pf_data = get_power_flow_data(pf_e_data)
     temp_component_map = _make_temp_component_map(pf_data, sys)
     map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{Union{String, Int64}, String} for SystemPowerFlowContainer
-    input_keys = pf_input_keys(pf_data)
+    pf_e_data.input_key_map = Dict{Symbol, Dict{OptimizationContainerKey, map_type}}()
 
-    # Second map that persists to store the bus index that the variable
-    # has to be added/substracted to in the power flow data dictionary
-    pf_data_opt_container_map = Dict{OptimizationContainerKey, map_type}()
-    added_injection_types = DataType[]
-    for (key, val) in Iterators.flatten([
-        get_variables(container),
-        get_aux_variables(container),
-        get_parameters(container),
-    ])
-        # Skip irrelevant keys
-        (get_entry_type(key) in input_keys) || continue
+    # available_keys is a vector of Pair{OptimizationContainerKey, data} containing all possibly relevant data sources to iterate over
+    available_keys = vcat(
+        [
+            collect(pairs(f(container))) for
+            f in [get_variables, get_aux_variables, get_parameters]
+        ]...,
+    )
+    # Separate map for each category
+    for category in pf_input_keys(pf_data)
+        # Map that persists to store the bus index to which the variable maps in the PowerFlowData, etc.
+        pf_data_opt_container_map = Dict{OptimizationContainerKey, map_type}()
+        @info "Adding input map to send $category to $(nameof(typeof(pf_data)))"
+        precedence = PF_INPUT_KEY_PRECEDENCES[category]
+        added_injection_types = DataType[]
+        # For each data source that is relevant to this category in order of precedence,
+        # loop over the component types where data exists at that source and record the
+        # association
+        for entry_type in precedence
+            for (key, val) in available_keys
+                (get_entry_type(key) === entry_type) || continue
+                comp_type = get_component_type(key)
+                # Skip types that have already been handled by something of higher precedence
+                (comp_type in added_injection_types) && continue
+                push!(added_injection_types, comp_type)
 
-        comp_type = get_component_type(key)
-        # Skip types that have already been handled (prefer variable over aux variable, aux variable over parameter)
-        (comp_type in added_injection_types) && continue
-        push!(added_injection_types, comp_type)
-
-        name_bus_ix_map = map_type()
-        comp_names =
-            (key isa ParameterKey) ? get_component_names(get_attributes(val)) : axes(val)[1]
-        for comp_name in comp_names
-            name_bus_ix_map[comp_name] = temp_component_map[comp_type][comp_name]
+                name_bus_ix_map = map_type()
+                comp_names =
+                    if (key isa ParameterKey)
+                        get_component_names(get_attributes(val))
+                    else
+                        axes(val)[1]
+                    end
+                for comp_name in comp_names
+                    name_bus_ix_map[comp_name] = temp_component_map[comp_type][comp_name]
+                end
+                pf_data_opt_container_map[key] = name_bus_ix_map
+            end
         end
-        pf_data_opt_container_map[key] = name_bus_ix_map
+        pf_e_data.input_key_map[category] = pf_data_opt_container_map
     end
-
-    pf_e_data.input_key_map = pf_data_opt_container_map
     return
 end
 
@@ -190,6 +217,7 @@ end
 # How to update the PowerFlowData given a component type. A bit duplicative of code in PowerFlows.jl.
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
+    ::Val{:active_power},
     ::Type{<:PSY.StaticInjection},
     index,
     t,
@@ -197,14 +225,32 @@ _update_pf_data_component!(
 ) = (pf_data.bus_activepower_injection[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
+    ::Val{:active_power},
     ::Type{<:PSY.ElectricLoad},
     index,
     t,
     value,
 ) = (pf_data.bus_activepower_withdrawals[index, t] -= value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:reactive_power},
+    ::Type{<:PSY.StaticInjection},
+    index,
+    t,
+    value,
+) = (pf_data.bus_reactivepower_injection[index, t] += value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:reactive_power},
+    ::Type{<:PSY.ElectricLoad},
+    index,
+    t,
+    value,
+) = (pf_data.bus_reactivepower_withdrawals[index, t] -= value)
 
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
+    category::Symbol,
     container::OptimizationContainer,
     key::OptimizationContainerKey,
     component_map)
@@ -213,7 +259,14 @@ function _write_value_to_pf_data!(
         injection_values = result[device_name, :]
         for t in get_time_steps(container)
             value = jump_value(injection_values[t])
-            _update_pf_data_component!(pf_data, get_component_type(key), index, t, value)
+            _update_pf_data_component!(
+                pf_data,
+                Val(category),
+                get_component_type(key),
+                index,
+                t,
+                value,
+            )
         end
     end
     return
@@ -226,41 +279,41 @@ function update_pf_data!(
     pf_data = get_power_flow_data(pf_e_data)
     PFS.clear_injection_data!(pf_data)
     input_map = get_input_key_map(pf_e_data)
-    for (key, component_map) in input_map
-        _write_value_to_pf_data!(pf_data, container, key, component_map)
+    for (category, inputs) in input_map
+        @info "Writing $category to $(nameof(typeof(pf_data)))"
+        for (key, component_map) in inputs
+            _write_value_to_pf_data!(pf_data, category, container, key, component_map)
+        end
     end
     return
 end
 
-_update_component(
-    ::Type{<:Union{ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter}},
-    comp::PSY.Component,
-    value,
-) = (comp.active_power = value)
+_update_component!(comp::PSY.Component, ::Val{:active_power}, value) =
+    (comp.active_power = value)
 # Sign is flipped for loads (TODO can we rely on some existing function that encodes this information?)
-_update_component(
-    ::Type{<:Union{ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter}},
-    comp::PSY.ElectricLoad,
-    value,
-) = (comp.active_power = -value)
-_update_component(::Type{PowerFlowVoltageAngle}, comp::PSY.Component, value) =
+_update_component!(comp::PSY.ElectricLoad, ::Val{:active_power}, value) =
+    (comp.active_power = -value)
+_update_component!(comp::PSY.Component, ::Val{:voltage_angle}, value) =
     comp.angle = value
-_update_component(::Type{PowerFlowVoltageMagnitude}, comp::PSY.Component, value) =
+_update_component!(comp::PSY.Component, ::Val{:voltage_magnitude}, value) =
     comp.magnitude = value
 
 function update_pf_system!(
     sys::PSY.System,
     container::OptimizationContainer,
-    input_map::Dict{<:OptimizationContainerKey, <:Any},
+    input_map::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Any}},
     time_step::Int,
 )
-    for (key, component_map) in input_map
-        result = lookup_value(container, key)
-        for (device_id, device_name) in component_map
-            injection_values = result[device_id, :]
-            comp = PSY.get_component(get_component_type(key), sys, device_name)
-            val = jump_value(injection_values[time_step])
-            _update_component(get_entry_type(key), comp, val)
+    for (category, inputs) in input_map
+        @debug "Writing $category to (possibly internal) System"
+        for (key, component_map) in inputs
+            result = lookup_value(container, key)
+            for (device_id, device_name) in component_map
+                injection_values = result[device_id, :]
+                comp = PSY.get_component(get_component_type(key), sys, device_name)
+                val = jump_value(injection_values[time_step])
+                _update_component!(comp, Val(category), val)
+            end
         end
     end
 end
