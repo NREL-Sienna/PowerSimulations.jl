@@ -42,15 +42,13 @@ function check_condition(
     simulation_state::SimulationState,
     event_model::EventModel{<:PSY.Contingency, StateVariableValueCondition},
 )
-    system_states = get_system_states(simulation_state)
     condition = get_event_condition(event_model)
     variable_type = get_variable_type(condition)
     device_type = get_device_type(condition)
     device_name = get_device_name(condition)
     event_value = get_value(condition)
-    variable_key = VariableKey{variable_type, device_type}("")  #TODO: does not generalize to variables for reserves 
-    variables = get_variables_values(system_states)
-    system_value = variables[variable_key].values[device_name, 1]
+ 
+    system_value = get_system_state_data(simulation_state, variable_type, device_type).values[device_name, 1]
     if isapprox(system_value, event_value; atol = ABSOLUTE_TOLERANCE)
         return true
     else
