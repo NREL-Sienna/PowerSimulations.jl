@@ -24,6 +24,51 @@ function check_condition(
     return true
 end
 
+function check_condition(
+    simulation_state::SimulationState,
+    event_model::EventModel{<:PSY.Contingency, PresetTimeCondition},
+)
+    condition = get_event_condition(event_model)
+    event_times = get_time_stamps(condition)
+    current_time = get_current_time(simulation_state)
+    if current_time in event_times
+        return true
+    else
+        return false
+    end
+end
+
+function check_condition(
+    simulation_state::SimulationState,
+    event_model::EventModel{<:PSY.Contingency, StateVariableValueCondition},
+)
+    condition = get_event_condition(event_model)
+    variable_type = get_variable_type(condition)
+    device_type = get_device_type(condition)
+    device_name = get_device_name(condition)
+    event_value = get_value(condition)
+ 
+    system_value = get_system_state_data(simulation_state, variable_type, device_type).values[device_name, 1]
+    if isapprox(system_value, event_value; atol = ABSOLUTE_TOLERANCE)
+        return true
+    else
+        return false
+    end
+end
+
+function check_condition(
+    simulation_state::SimulationState,
+    event_model::EventModel{<:PSY.Contingency, DiscreteEventCondition},
+)
+    condition = get_event_condition(event_model)
+    f = condition.condition_function
+    if f(simulation_state)
+        return true
+    else
+        return false
+    end
+end
+
 function apply_affect!(
     simulation::Simulation,
     ::EventModel{
