@@ -1144,3 +1144,44 @@ end
     moi_tests(model, 360, 0, 120, 120, 0, false)
     psi_checkobjfun_test(model, GQEVF)
 end
+
+@testset "ThermalDispatchNoMin with PWL Costs" begin
+    sys = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+
+    template = ProblemTemplate(NetworkModel(PTDFPowerModel))
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, TapTransformer, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+
+    solver = HiGHS_optimizer
+    problem = DecisionModel(template, sys;
+        optimizer = solver,
+        horizon = Hour(1),
+        optimizer_solve_log_print = true,
+        calculate_conflict = true,
+        store_variable_names = true,
+        detailed_optimizer_stats = false,
+    )
+
+    build!(problem; output_dir = mktempdir())
+
+    solve!(problem)
+
+    res = OptimizationProblemResults(problem)
+
+    # Test that plant 101_STEAM_3 (using max power) have proper cost expression
+    cost = read_expression(res, "ProductionCostExpression__ThermalStandard")
+    p_th = read_variable(res, "ActivePowerVariable__ThermalStandard")
+    steam3 = get_component(ThermalStandard, sys, "101_STEAM_3")
+    val_curve = PSY.get_value_curve(PSY.get_variable(PSY.get_operation_cost(steam3)))
+    io_curve = InputOutputCurve(val_curve)
+    fuel_cost = PSY.get_fuel_cost(steam3)
+    x_last = last(io_curve.function_data.points).x
+    y_last = last(io_curve.function_data.points).y * fuel_cost
+    p_steam3 = p_th[!, "101_STEAM_3"]
+    cost_steam3 = cost[!, "101_STEAM_3"]
+    @test isapprox(p_steam3[1], x_last) # max
+    @test isapprox(cost_steam3[1], y_last) # last cost
+end
