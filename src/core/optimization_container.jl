@@ -1627,7 +1627,7 @@ function add_to_objective_invariant_expression!(
 ) where {T <: JuMP.AbstractJuMPScalar}
     T_cf = typeof(container.objective_function.invariant_terms)
     if T_cf <: JuMP.GenericAffExpr && T <: JuMP.GenericQuadExpr
-        # why not add_to...???
+        # TODO: why not add_to...???
         container.objective_function.invariant_terms += cost_expr
     else
         JuMP.add_to_expression!(container.objective_function.invariant_terms, cost_expr)

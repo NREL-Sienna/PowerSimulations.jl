@@ -387,6 +387,7 @@ function add_constraints!(
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
 
+    # TODO: loop order
     for device in devices
         ci_name = PSY.get_name(device)
         if ci_name ∈ PNM.get_radial_branches(radial_network_reduction)
@@ -394,6 +395,7 @@ function add_constraints!(
         end
         limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
         for t in time_steps
+            # TODO: ternary
             con_ub[ci_name, t] =
                 JuMP.@constraint(get_jump_model(container),
                     array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
@@ -649,7 +651,7 @@ function _make_flow_expressions!(
 
     #= Leaving serial code commented out for debugging purposes in the future
     for name in branches
-        ptdf_col = ptdf[name, :]
+        ptdf_col = @view ptdf[name, :]
         branch_flow_expr[name, :] .= _make_flow_expressions!(
             jump_model,
             name,
@@ -734,7 +736,7 @@ function add_constraints!(
     jump_model = get_jump_model(container)
     for br in devices
         name = PSY.get_name(br)
-        ptdf_col = ptdf[name, :]
+        ptdf_col = @view ptdf[name, :]
         inv_x = 1 / PSY.get_x(br)
         for t in time_steps
             branch_flow[name, t] = JuMP.@constraint(
@@ -915,12 +917,12 @@ function add_constraints!(
     for br in devices
         name = PSY.get_name(br)
         inv_x = 1.0 / PSY.get_x(br)
-        flow_variables_ = flow_variables[name, :]
+        flow_variables_ = @view flow_variables[name, :]
         from_bus = PSY.get_name(PSY.get_from(PSY.get_arc(br)))
         to_bus = PSY.get_name(PSY.get_to(PSY.get_arc(br)))
-        angle_variables_ = ps_angle_variables[name, :]
-        bus_angle_from = bus_angle_variables[from_bus, :]
-        bus_angle_to = bus_angle_variables[to_bus, :]
+        angle_variables_ = @view ps_angle_variables[name, :]
+        bus_angle_from = @view bus_angle_variables[from_bus, :]
+        bus_angle_to = @view bus_angle_variables[to_bus, :]
         @assert inv_x > 0.0
         for t in time_steps
             branch_flow[name, t] = JuMP.@constraint(

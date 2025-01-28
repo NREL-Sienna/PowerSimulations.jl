@@ -181,7 +181,7 @@ function device_duration_look_ahead!(
                 end
             end
             if t <= duration_data[ix].up
-                lhs_on += get_value(ic)
+                JuMP.add_to_expression!(lhs_on, get_value(ic))
             end
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -201,7 +201,7 @@ function device_duration_look_ahead!(
                 end
             end
             if t <= duration_data[ix].down
-                lhs_off += get_value(ic)
+                JuMP.add_to_expression!(lhs_off, get_value(ic))
             end
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -301,7 +301,7 @@ function device_duration_parameters!(
                 end
             end
             if t <= duration_data[ix].up
-                lhs_on += get_value(ic)
+                JuMP.add_to_expression!(lhs_on, get_value(ic))
                 con_up[name, t] = JuMP.@constraint(
                     get_jump_model(container),
                     varstop[name, t] * duration_data[ix].up - lhs_on <= 0.0
@@ -331,7 +331,7 @@ function device_duration_parameters!(
                 end
             end
             if t <= duration_data[ix].down
-                lhs_off += get_value(ic)
+                JuMP.add_to_expression!(lhs_off, get_value(ic))
                 con_down[name, t] = JuMP.@constraint(
                     get_jump_model(container),
                     varstart[name, t] * duration_data[ix].down - lhs_off <= 0.0

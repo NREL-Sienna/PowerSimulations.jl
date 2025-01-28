@@ -152,7 +152,7 @@ function add_constraints!(
     const_container = add_constraints_container!(container, T(), PSY.System, time_steps)
 
     for t in time_steps
-        system_balance = JuMP.@expression(container.JuMPmodel, sum(area_balance.data[:, t]))
+        system_balance = JuMP.@expression(container.JuMPmodel, sum(@view area_balance.data[:, t]))
         for agc in agcs
             a = PSY.get_name(agc)
             area_name = PSY.get_name(PSY.get_area(agc))

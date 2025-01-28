@@ -467,14 +467,15 @@ function _add_hvdc_flow_constraints!(
         check_hvdc_line_limits_consistency(d)
         max_rate = get_variable_upper_bound(var, d, HVDCTwoTerminalDispatch())
         min_rate = get_variable_lower_bound(var, d, HVDCTwoTerminalDispatch())
+        name = PSY.get_name(d)
         for t in time_steps
-            constraint_ub[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                variable[PSY.get_name(d), t] <= max_rate
+                variable[name, t] <= max_rate
             )
-            constraint_lb[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                min_rate <= variable[PSY.get_name(d), t]
+                min_rate <= variable[name, t]
             )
         end
     end
@@ -684,32 +685,32 @@ function add_constraints!(
         R_min_from, R_max_from = PSY.get_active_power_limits_from(d)
         R_min_to, R_max_to = PSY.get_active_power_limits_to(d)
         for t in get_time_steps(container)
-            constraint_tf_ub[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_tf_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 tf_var[name, t] <= R_max_to * direction_var[name, t]
             )
-            constraint_tf_lb[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_tf_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 tf_var[name, t] >= R_min_to * (1 - direction_var[name, t])
             )
-            constraint_ft_ub[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_ft_ub[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 ft_var[name, t] <= R_max_from * (1 - direction_var[name, t])
             )
-            constraint_ft_lb[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_ft_lb[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 ft_var[name, t] >= R_min_from * direction_var[name, t]
             )
-            constraint_loss[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_loss[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 tf_var[name, t] + ft_var[name, t] == losses[name, t]
             )
-            constraint_loss_aux1[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_loss_aux1[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 losses[name, t] >=
                 l1 * ft_var[name, t] + l0 - M_VALUE * direction_var[name, t]
             )
-            constraint_loss_aux2[PSY.get_name(d), t] = JuMP.@constraint(
+            constraint_loss_aux2[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 losses[name, t] >=
                 l1 * tf_var[name, t] + l0 - M_VALUE * (1 - direction_var[name, t])

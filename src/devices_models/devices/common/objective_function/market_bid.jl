@@ -142,7 +142,7 @@ function _get_pwl_cost_expression(
         JuMP.add_to_expression!(
             gen_cost,
             cost * multiplier,
-             pwl_var_container[(name, i, time_period)],
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost

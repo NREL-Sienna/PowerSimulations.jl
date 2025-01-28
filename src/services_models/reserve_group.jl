@@ -61,7 +61,7 @@ function add_constraints!(
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
         for reserve_variable in reserve_variables
             JuMP.add_to_expression!(resource_expression,
-                JuMP.@expression(container.JuMPmodel, sum(reserve_variable[:, t])))
+                JuMP.@expression(container.JuMPmodel, sum(@view reserve_variable[:, t])))
             # consider a for loop to add the reserve variables
         end
         if use_slacks
