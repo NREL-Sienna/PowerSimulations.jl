@@ -518,20 +518,34 @@ function update_system_state!(
 end
 
 function update_system_state!(
-    state::DatasetContainer{InMemoryDataset},
-    key::ParameterKey{AvailableStatusChangeParameter, T},
-    store::SimulationStore,
-    model_name::Symbol,
+    state::SimulationState,
+    key::ParameterKey{AvailableStatusParameter, T},
+    column_names_::Set{String},
+    event::PSY.GeometricDistributionForcedOutage,
     simulation_time::Dates.DateTime,
+    rng,
 ) where T <: PSY.Device
-    em_data = get_em_data(store)
-    ix = get_last_recorded_row(em_data, key)
-    @show model_name
-    @show res = read_result(DenseAxisArray, store, model_name, key, ix)
-    dataset = get_dataset(state, key)
-    set_update_timestamp!(dataset, simulation_time)
-    set_dataset_values!(state, key, 1, res)
-    set_last_recorded_row!(dataset, 1)
+
+    status_change_data  = get_last_recorded_value(get_system_state_data(state, AvailableStatusChangeParameter(), T))
+    sym_state = get_system_states(state)
+    state_data = get_system_state_data(state, key)
+    column_names = axes(state_data.values)[1]
+    status_data = get_last_recorded_value(get_dataset(sym_state, key))
+
+
+    updated_status_value = status_data.data
+
+    for (ix, name) in enumerate(column_names)
+        status = status_data[name]
+        status_change = status_change_data[name]
+        if status == 1.0 && status_change == 1.0 
+            @error " $name was available and had an outage, setting to unavailable."
+            updated_status_value[ix] = 0.0 
+        end 
+    end 
+    @warn "AvailableStatusParameter data to be written:"
+    @show updated_status_value
+    set_dataset_values!(sym_state, key, 1, updated_status_value)
     return
 end
 
@@ -565,6 +579,7 @@ function update_system_state!(
             @warn "$name status $current_status, outage draw: $outage_ocurrence"
         end
     end
+    @warn "AvailableStatusChangeParameter data to be written:"
     @show data_set_value
     set_dataset_values!(sym_state, key, 1, data_set_value)
     return
