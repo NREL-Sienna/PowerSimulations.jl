@@ -40,7 +40,7 @@ and name
   - `value::Float64`: value to compare to in p.u.
 """
 struct StateVariableValueCondition <: AbstractEventCondition
-    variable_type::Type{<:VariableType}
+    variable_type::VariableType
     device_type::Type{<:PSY.Device}
     device_name::String
     value::Float64
