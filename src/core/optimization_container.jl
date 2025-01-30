@@ -1311,7 +1311,6 @@ function add_param_container!(
     return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
 
-
 function add_param_container!(
     container::OptimizationContainer,
     ::T,

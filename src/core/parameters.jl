@@ -76,7 +76,9 @@ struct EventParametersAttributes{T <: PSY.Outage, U <: ParameterType} <: Paramet
     affected_devices::Vector{<:PSY.Component}
 end
 
-function get_param_type(::EventParametersAttributes{T, U}) where {T <: PSY.Outage, U <: ParameterType}
+function get_param_type(
+    ::EventParametersAttributes{T, U},
+) where {T <: PSY.Outage, U <: ParameterType}
     return U
 end
 
@@ -156,7 +158,7 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
-    return jump_value.(param_array).*multiplier_array
+    return jump_value.(param_array) .* multiplier_array
 end
 
 function get_parameter_values(

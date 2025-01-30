@@ -49,8 +49,12 @@ function check_condition(
     device_type = get_device_type(condition)
     device_name = get_device_name(condition)
     event_value = get_value(condition)
- 
-    system_value = get_system_state_data(simulation_state, variable_type, device_type).values[device_name, 1]
+
+    system_value =
+        get_system_state_data(simulation_state, variable_type, device_type).values[
+            device_name,
+            1,
+        ]
     if isapprox(system_value, event_value; atol = ABSOLUTE_TOLERANCE)
         return true
     else

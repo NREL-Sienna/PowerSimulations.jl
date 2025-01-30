@@ -293,7 +293,7 @@ function update_decision_state!(
             @error "update $name to come back online after $off_time_step_count"
         end
     end
-    @warn "AvailableStatusChangeParameter decision state after update: $state_data" 
+    @warn "AvailableStatusChangeParameter decision state after update: $state_data"
     #set_last_recorded_row!(state_data, t)
     return
 end
@@ -306,7 +306,8 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
-    event_ocurrence_data = get_decision_state_data(state, AvailableStatusChangeParameter(), T)
+    event_ocurrence_data =
+        get_decision_state_data(state, AvailableStatusChangeParameter(), T)
     state_data = get_decision_state_data(state, key)
     @warn "State data for AvailableStatusParameter decision before any updates: $state_data"
     #column_names = get_column_names(key, state_data)[1]
@@ -332,29 +333,29 @@ function update_decision_state!(
     for name in column_names
         if event_ocurrence_data.values[name, state_data_index] == 1.0
             outage_index = state_data_index + 1     #outage occurs at the following timestep
-            while true 
-                state_data.values[name, outage_index] = 0.0 
-                if (event_ocurrence_data.values[name, outage_index] == 1.0) || outage_index == length(state_data.values[name, :])  #If another change is detected or you have reached the end of the state
+            while true
+                state_data.values[name, outage_index] = 0.0
+                if (event_ocurrence_data.values[name, outage_index] == 1.0) ||
+                   outage_index == length(state_data.values[name, :])  #If another change is detected or you have reached the end of the state
                     break
-                end 
+                end
                 outage_index += 1
-            end 
-
-        end 
-    end 
-#=     offset = resolution_ratio - 1
-    result_time_index = axes(store_data)[2]
-    set_update_timestamp!(state_data, simulation_time)
-
-    for t in result_time_index
-        state_range = state_data_index:(state_data_index + offset)
-        for name in column_names, i in state_range
-            state_data.values[name, i] = store_data[name, t]
+            end
         end
-        set_last_recorded_row!(state_data, state_range[end])
-        state_data_index += resolution_ratio
-    end =#
-    @warn "AvailableStatusParameter decision state after update: $state_data" 
+    end
+    #=     offset = resolution_ratio - 1
+        result_time_index = axes(store_data)[2]
+        set_update_timestamp!(state_data, simulation_time)
+
+        for t in result_time_index
+            state_range = state_data_index:(state_data_index + offset)
+            for name in column_names, i in state_range
+                state_data.values[name, i] = store_data[name, t]
+            end
+            set_last_recorded_row!(state_data, state_range[end])
+            state_data_index += resolution_ratio
+        end =#
+    @warn "AvailableStatusParameter decision state after update: $state_data"
 
     return
 end
@@ -387,20 +388,20 @@ function update_decision_state!(
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
-#=
-    offset = resolution_ratio - 1
-    result_time_index = axes(store_data)[2]
-    set_update_timestamp!(state_data, simulation_time)
+    #=
+        offset = resolution_ratio - 1
+        result_time_index = axes(store_data)[2]
+        set_update_timestamp!(state_data, simulation_time)
 
-    for t in result_time_index
-        state_range = state_data_index:(state_data_index + offset)
-        for name in column_names, i in state_range
-            state_data.values[name, i] = store_data[name, t]
+        for t in result_time_index
+            state_range = state_data_index:(state_data_index + offset)
+            for name in column_names, i in state_range
+                state_data.values[name, i] = store_data[name, t]
+            end
+            set_last_recorded_row!(state_data, state_range[end])
+            state_data_index += resolution_ratio
         end
-        set_last_recorded_row!(state_data, state_range[end])
-        state_data_index += resolution_ratio
-    end
-    =#
+        =#
     return
 end
 
@@ -544,21 +545,23 @@ function update_system_state!(
     event::PSY.GeometricDistributionForcedOutage,
     simulation_time::Dates.DateTime,
     rng,
-) where T <: PSY.Device
+) where {T <: PSY.Device}
     available_status_parameter = get_system_state_data(state, key)
     available_status_parameter_values = get_last_recorded_value(available_status_parameter)
 
-    available_status_change_parameter = get_system_state_data(state, AvailableStatusChangeParameter(), T)
-    available_status_change_parameter_values = get_last_recorded_value(available_status_change_parameter)
+    available_status_change_parameter =
+        get_system_state_data(state, AvailableStatusChangeParameter(), T)
+    available_status_change_parameter_values =
+        get_last_recorded_value(available_status_change_parameter)
 
     for name in column_names_
         current_status = available_status_parameter_values[name]
         current_status_change = available_status_change_parameter_values[name]
-        if current_status == 1.0 && current_status_change == 1.0 
+        if current_status == 1.0 && current_status_change == 1.0
             @error "$name was available and had an outage, setting to unavailable."
-            available_status_parameter.values[name, 1] = 0.0 
-        end 
-    end 
+            available_status_parameter.values[name, 1] = 0.0
+        end
+    end
     return
 end
 
@@ -587,7 +590,7 @@ function update_system_state!(
     for name in column_names_
         current_status = available_status_parameter_values[name]
         if current_status == 1.0 && outage_ocurrence == 1.0
-            available_status_change_parameter.values[name, 1] = outage_ocurrence 
+            available_status_change_parameter.values[name, 1] = outage_ocurrence
             @error "Changed AvailableStatusChangeParameter for $name  to $outage_ocurrence in system state"
         end
     end
