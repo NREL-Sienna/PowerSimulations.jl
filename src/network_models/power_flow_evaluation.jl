@@ -5,7 +5,9 @@ const PF_INPUT_KEY_PRECEDENCES = Dict(
     :voltage_angle => [PowerFlowVoltageAngle],
     :voltage_magnitude => [PowerFlowVoltageMagnitude],
 )
-# TODO define separate categories :active_power_from_power_flow, etc. for exporter
+
+const RELEVANT_COMPONENTS_SELECTOR =
+    PSY.make_selector(Union{PSY.StaticInjection, PSY.Bus, PSY.Branch})
 
 function _add_aux_variables!(
     container::OptimizationContainer,
@@ -43,7 +45,7 @@ pf_input_keys(::PFS.PSSEExporter) =
 # index in the PowerFlow data arrays going from Bus number to bus index
 function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
     temp_component_map = Dict{DataType, Dict{String, Int}}()
-    available_injectors = PSY.get_components(PSY.get_available, PSY.StaticInjection, sys)
+    available_injectors = PSY.get_available_components(PSY.StaticInjection, sys)
     bus_lookup = PFS.get_bus_lookup(pf_data)
     for comp in available_injectors
         comp_type = typeof(comp)
@@ -61,13 +63,7 @@ _get_temp_component_map_lhs(comp::PSY.Bus) = PSY.get_number(comp)
 function _make_temp_component_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
     temp_component_map =
         Dict{DataType, Dict{Union{String, Int64}, String}}()
-    # TODO don't hardcode the types here, handle get_available more elegantly, likely `ComponentSelector` use case
-    relevant_components = vcat(
-        collect.([
-            PSY.get_components(PSY.get_available, PSY.StaticInjection, sys),
-            PSY.get_components(Union{PSY.Bus, PSY.Branch}, sys)],
-        )...,
-    )
+    relevant_components = PSY.get_available_components(RELEVANT_COMPONENTS_SELECTOR, sys)
     for comp_type in unique(typeof.(relevant_components))
         # NOTE we avoid using bus numbers here because PSY.get_bus(system, number) is O(n)
         temp_component_map[comp_type] =
@@ -158,8 +154,10 @@ bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 _get_branch_component_tuples(pfd::PFS.PowerFlowData) =
     zip(PFS.get_branch_type(pfd), keys(PFS.get_branch_lookup(pfd)))
 
-_get_branch_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
-    [(typeof(c), get_name(c)) for c in PSY.get_components(PSY.Branch, PFS.get_system(pfd))]
+_get_branch_component_tuples(pfd::PFS.SystemPowerFlowContainer) = [
+    (typeof(c), get_name(c)) for
+    c in PSY.get_available_components(PSY.Branch, PFS.get_system(pfd))
+]
 
 _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
     tuple.(PSY.ACBus, keys(PFS.get_bus_lookup(pfd)))  # get_bus_type returns a ACBusTypes, not the DataType we need here
@@ -167,7 +165,7 @@ _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
 _get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
     [
         (typeof(c), PSY.get_number(c)) for
-        c in PSY.get_components(PSY.Bus, PFS.get_system(pfd))
+        c in PSY.get_available_components(PSY.Bus, PFS.get_system(pfd))
     ]
 
 function add_power_flow_data!(
