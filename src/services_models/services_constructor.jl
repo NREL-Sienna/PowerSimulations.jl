@@ -548,8 +548,8 @@ function construct_service!(
         PSY.get_name.(interfaces),
         get_time_steps(container),
     )
-    # TODO:broken
-    # add_feedforward_arguments!(container, model, interface)
+
+    add_feedforward_arguments!(container, model, interface)
     return
 end
 
@@ -641,7 +641,8 @@ function construct_service!(
             add_parameters!(container, MaxInterfaceFlowLimitParameter, device, model)
         end
     end
-    #add_feedforward_arguments!(container, model, service)
+    interface = PSY.get_component(T, sys, get_service_name(model))
+    add_feedforward_arguments!(container, model, interface)
     return
 end
 
