@@ -56,10 +56,13 @@ function _add_parameters!(
     for d in devices
         ini_val = get_initial_parameter_value(T(), d, event_model)
         name = PSY.get_name(d)
+        @error T
+        @error get_parameter_multiplier(T(), d, event_model)
         for t in time_steps
             set_multiplier!(
                 parameter_container,
-                get_parameter_multiplier(T(), d, event_model),
+                1.0,
+                #get_parameter_multiplier(T(), d, event_model),
                 name,
                 t,
             )

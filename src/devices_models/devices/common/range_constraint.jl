@@ -823,6 +823,30 @@ function upper_bound_range_with_parameter!(
     param::P,
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     ::DeviceModel{V, W},
+) where {P <: AvailableStatusParameter, V <: PSY.Component, W <: AbstractDeviceFormulation}
+    param_array = get_parameter_array(container, param, V)
+    param_multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        ub = PSY.get_max_active_power(device)
+        name = PSY.get_name(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            lhs_array[name, t] <= ub * param_array[name, t]
+        )
+    end
+    return
+end
+
+# This function is re-used in SemiContinuousFeedforward
+function upper_bound_range_with_parameter!(
+    container::OptimizationContainer,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param::P,
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    ::DeviceModel{V, W},
 ) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     param_array = get_parameter_array(container, param, V)
     param_multiplier = get_parameter_multiplier_array(container, P(), V)
