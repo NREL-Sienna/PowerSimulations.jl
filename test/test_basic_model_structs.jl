@@ -9,7 +9,21 @@ end
     @test NetworkModel(
         PTDFPowerModel;
         use_slacks = true,
-        power_flow_evaluation = [DCPowerFlow(), PSSEExportPowerFlow(:v33, "exports", true)],
+        power_flow_evaluation = [DCPowerFlow(), PSSEExportPowerFlow(:v33, "exports")],
+    ) isa NetworkModel
+    @test NetworkModel(
+        PTDFPowerModel;
+        use_slacks = true,
+        power_flow_evaluation = ACPowerFlow(;
+            exporter =
+            PSSEExportPowerFlow(
+                :v33,
+                "exports";
+                name = "my_export_name",
+                write_comments = true,
+                overwrite = true,
+            ),
+        ),
     ) isa NetworkModel
 end
 

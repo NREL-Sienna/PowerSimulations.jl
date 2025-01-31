@@ -108,23 +108,27 @@ function _make_pf_input_map!(
         # association
         for entry_type in precedence
             for (key, val) in available_keys
-                (get_entry_type(key) === entry_type) || continue
-                comp_type = get_component_type(key)
-                # Skip types that have already been handled by something of higher precedence
-                (comp_type in added_injection_types) && continue
-                push!(added_injection_types, comp_type)
-
-                name_bus_ix_map = map_type()
-                comp_names =
-                    if (key isa ParameterKey)
-                        get_component_names(get_attributes(val))
-                    else
-                        axes(val)[1]
+                if get_entry_type(key) === entry_type
+                    comp_type = get_component_type(key)
+                    # Skip types that have already been handled by something of higher precedence
+                    if comp_type in added_injection_types
+                        continue
                     end
-                for comp_name in comp_names
-                    name_bus_ix_map[comp_name] = temp_component_map[comp_type][comp_name]
+                    push!(added_injection_types, comp_type)
+
+                    name_bus_ix_map = map_type()
+                    comp_names =
+                        if (key isa ParameterKey)
+                            get_component_names(get_attributes(val))
+                        else
+                            axes(val)[1]
+                        end
+                    for comp_name in comp_names
+                        name_bus_ix_map[comp_name] =
+                            temp_component_map[comp_type][comp_name]
+                    end
+                    pf_data_opt_container_map[key] = name_bus_ix_map
                 end
-                pf_data_opt_container_map[key] = name_bus_ix_map
             end
         end
         pf_e_data.input_key_map[category] = pf_data_opt_container_map
@@ -333,9 +337,10 @@ function update_pf_data!(
     input_map = get_input_key_map(pf_e_data)
     update_pf_system!(PFS.get_system(pf_data), container, input_map, time_step)
     if !isnothing(pf_data.step)
-        outer_step, _ = pf_data.step
+        outer_step, _... = pf_data.step
         # time_step == 1 means we have rolled over to a new outer step
-        # (TODO it works but seems a little brittle, consider redesigning)
+        # NOTE this is a bit brittle but there is currently no way of getting this
+        # information from upstream, may change in the future
         (time_step == 1) && (outer_step += 1)
         pf_data.step = (outer_step, time_step)
     end
