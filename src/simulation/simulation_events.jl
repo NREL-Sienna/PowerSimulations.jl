@@ -78,12 +78,12 @@ end
 function apply_affect!(
     simulation::Simulation,
     ::EventModel{
-        PSY.GeometricDistributionForcedOutage,
+        T,
         <:AbstractEventCondition,
     },
-    event::PSY.GeometricDistributionForcedOutage,
+    event::T,
     device_type_maps::Dict{DataType, Set{String}},
-)
+) where {T <: PSY.Contingency}
     sim_state = get_simulation_state(simulation)
     sim_time = get_current_time(simulation)
     rng = get_rng(simulation)
