@@ -283,7 +283,7 @@ function update_decision_state!(
     end
     @show state_data_index
     off_time_step_count =
-        Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) #TODO -check if just removing (-1) is correct. 
+        Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) #TODO -check if just removing (-1) is correct.
     set_update_timestamp!(state_data, simulation_time)
     for name in column_names
         state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
@@ -381,17 +381,17 @@ function update_decision_state!(
         if event_ocurrence_data.values[name, state_data_index] == 1.0
             outage_index = state_data_index + 1     #outage occurs at the following timestep
             while true
-                if event_status_data.values[name, outage_index] == 0.0 
-                    state_data.values[name, outage_index] = 0.0 
+                if event_status_data.values[name, outage_index] == 0.0
+                    state_data.values[name, outage_index] = 0.0
                     @info "forcing $key to zero at index $outage_index because status was zero for $name"
-                else 
+                else
                     break
-                end 
-                if outage_index == length(state_data.values[name, :]) 
+                end
+                if outage_index == length(state_data.values[name, :])
                     break
-                end 
-                outage_index += 1 
-            end 
+                end
+                outage_index += 1
+            end
         end
     end
     return
@@ -557,17 +557,33 @@ function update_system_state!(
     return
 end
 
+function _get_outage_ocurrence(event::PSY.GeometricDistributionForcedOutage, rng)
+    λ = PSY.get_outage_transition_probability(event)
+    # Outage status = 1.0 means that the unit was subject to an outage
+    outage_ocurrence = Float64(rand(rng, Bernoulli(λ)))
+    return outage_ocurrence
+end
+
+function _get_outage_ocurrence(event::PSY.TimeSeriesForcedOutage, rng, current_time)
+    ts = PSY.get_time_series(IS.SingleTimeSeries, event, PSY.get_outage_status_scenario(event))
+    vals = PSY.get_time_series_values(
+        event,
+        ts,
+        current_time;
+        len = 1,
+    )
+    return vals
+end
+
 function update_system_state!(
     state::SimulationState,
     key::ParameterKey{AvailableStatusChangeParameter, T},
     column_names_::Set{String},
-    event::PSY.GeometricDistributionForcedOutage,
+    event::PSY.Outage,
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: PSY.Component}
-    λ = PSY.get_outage_transition_probability(event)
-    # Outage status = 1.0 means that the unit was subject to an outage
-    outage_ocurrence = Float64(rand(rng, Bernoulli(λ)))
+    outage_ocurrence(event, rng)
     @warn "Result of outage occurence draw: $outage_ocurrence"
     sym_state = get_system_states(state)
     system_dataset = get_dataset(sym_state, key)
