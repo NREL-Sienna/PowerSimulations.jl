@@ -270,11 +270,12 @@ function add_constraints!(
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
         JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
         if use_slacks
-            resource_expression = JuMP.@expression(jump_model,
+            resource_expression = JuMP.@expression(
+                jump_model,
                 sum(@view reserve_variable[:, t]) + slack_vars[t])
-
         else
-            resource_expression = JuMP.@expression(jump_model,
+            resource_expression = JuMP.@expression(
+                jump_model,
                 sum(@view reserve_variable[:, t]))
         end
         constraint[service_name, t] =
