@@ -1155,7 +1155,6 @@ function _get_branch_map(
     sys::PSY.System,
 )
     @assert !isempty(network_model.modeled_branch_types)
-
     inter_area_branch_map =
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
     for branch_type in network_model.modeled_branch_types
@@ -1184,6 +1183,10 @@ function _get_branch_map(
                 end
             end
         end
+    end
+    if isempty(inter_area_branch_map)
+        @error network_model.modeled_branch_types
+        error("The inter_area_branch_map is empty. Please check that there are lines defined that connect the areas and all the line types are formulated")
     end
     return inter_area_branch_map
 end
