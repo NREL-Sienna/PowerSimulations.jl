@@ -227,8 +227,8 @@ function add_constraints!(
                 R_dn[name, t] ==
                 (p_factor.dn * area_reserve_dn[agc_name, t]) + R_dn_emergency[name, t]
             )
-            JuMP.add_to_expression!(expr_up[area_name, t], -1 * R_up_emergency[name, t])
-            JuMP.add_to_expression!(expr_dn[area_name, t], -1 * R_dn_emergency[name, t])
+            JuMP.add_to_expression!(expr_up[area_name, t], -1.0, R_up_emergency[name, t])
+            JuMP.add_to_expression!(expr_dn[area_name, t], -1.0, R_dn_emergency[name, t])
         end
     end
 
