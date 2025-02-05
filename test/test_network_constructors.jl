@@ -632,7 +632,6 @@ end
 # These models are easier to test due to their lossless nature
 @testset "StandardPTDF/DCPPowerModel Radial Branches Test" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
-
     for net_model in [DCPPowerModel, PTDFPowerModel]
         template_uc = template_unit_commitment(;
             network = NetworkModel(net_model;
