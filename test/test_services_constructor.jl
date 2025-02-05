@@ -584,5 +584,5 @@ end
         sequence = sequence,
         simulation_folder = mktempdir(; cleanup = true),
     )
-    @test_throws ArgumentError build!(sim)
+    @test_throws ArgumentError build!(sim; console_level = Logging.AboveMaxLevel)
 end
