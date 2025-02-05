@@ -161,9 +161,11 @@ function add_constraints!(
         param = get_parameter_column_refs(param_container, service_name)
         for t in time_steps
             if use_slacks
-                resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
+                resource_expression = JuMP.@expression(
+                    jump_model, sum(@view reserve_variable[:, t]) + slack_vars[t])
             else
-                resource_expression = sum(reserve_variable[:, t])
+                resource_expression = JuMP.@expression(
+                    jump_model, sum(@view reserve_variable[:, t]))
             end
             constraint[service_name, t] =
                 JuMP.@constraint(jump_model, resource_expression >= param[t] * requirement)
@@ -171,9 +173,11 @@ function add_constraints!(
     else
         for t in time_steps
             if use_slacks
-                resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
+                resource_expression = JuMP.@expression(
+                    jump_model, sum(@view reserve_variable[:, t]) + slack_vars[t])
             else
-                resource_expression = sum(reserve_variable[:, t])
+                resource_expression = JuMP.@expression(
+                    jump_model, sum(@view reserve_variable[:, t]))
             end
             constraint[service_name, t] = JuMP.@constraint(
                 jump_model,
@@ -224,12 +228,12 @@ function add_constraints!(
             cons[name, t] =
                 JuMP.@constraint(
                     jump_model,
-                    var_r[name, t] <= param[t] * requirement * max_participation_factor
+                    var_r[name, t] <= (requirement * max_participation_factor) * param[t]
                 )
         else
             cons[name, t] = JuMP.@constraint(
                 jump_model,
-                var_r[name, t] <= ts_vector[t] * requirement * max_participation_factor
+                var_r[name, t] <= (requirement * max_participation_factor) * ts_vector[t]
             )
         end
     end
@@ -268,15 +272,11 @@ function add_constraints!(
     jump_model = get_jump_model(container)
     for t in time_steps
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
-        JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+        JuMP.add_to_expression!(resource_expression,
+            JuMP.@expression(jump_model, sum(@view reserve_variable[:, t])))
+        # consider a for loop
         if use_slacks
-            resource_expression = JuMP.@expression(
-                jump_model,
-                sum(@view reserve_variable[:, t]) + slack_vars[t])
-        else
-            resource_expression = JuMP.@expression(
-                jump_model,
-                sum(@view reserve_variable[:, t]))
+            JuMP.add_to_expression!(resource_expression, slack_vars[t])
         end
         constraint[service_name, t] =
             JuMP.@constraint(jump_model, resource_expression >= requirement)
@@ -322,7 +322,7 @@ function add_constraints!(
     for t in time_steps
         constraint[service_name, t] = JuMP.@constraint(
             jump_model,
-            sum(reserve_variable[:, t]) >= requirement_variable[service_name, t]
+            sum(@view reserve_variable[:, t]) >= requirement_variable[service_name, t]
         )
     end
 
@@ -559,6 +559,7 @@ function add_proportional_cost!(
     for index in Iterators.product(axes(reserve_variable)...)
         add_to_objective_invariant_expression!(
             container,
+            # possibly decouple
             DEFAULT_RESERVE_COST / base_p * reserve_variable[index...],
         )
     end
