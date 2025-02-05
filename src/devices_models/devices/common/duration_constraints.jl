@@ -181,7 +181,7 @@ function device_duration_look_ahead!(
                 end
             end
             if t <= duration_data[ix].up
-                lhs_on += get_value(ic)
+                JuMP.add_to_expression!(lhs_on, get_value(ic))
             end
             con_up[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -196,11 +196,12 @@ function device_duration_look_ahead!(
             lhs_off = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0)
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if i in time_steps
-                    JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
+                    JuMP.add_to_expression!(lhs_off, 1)
+                    JuMP.add_to_expression!(lhs_off, -1, varon[name, i])
                 end
             end
             if t <= duration_data[ix].down
-                lhs_off += get_value(ic)
+                JuMP.add_to_expression!(lhs_off, get_value(ic))
             end
             con_down[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -300,7 +301,7 @@ function device_duration_parameters!(
                 end
             end
             if t <= duration_data[ix].up
-                lhs_on += get_value(ic)
+                JuMP.add_to_expression!(lhs_on, get_value(ic))
                 con_up[name, t] = JuMP.@constraint(
                     get_jump_model(container),
                     varstop[name, t] * duration_data[ix].up - lhs_on <= 0.0
@@ -322,14 +323,15 @@ function device_duration_parameters!(
             for i in UnitRange{Int}(Int(t - duration_data[ix].down + 1), t)
                 if t <= duration_data[ix].down
                     if in(i, time_steps)
-                        JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
+                        JuMP.add_to_expression!(lhs_off, 1)
+                        JuMP.add_to_expression!(lhs_off, -1, varon[name, i])
                     end
                 else
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
                 end
             end
             if t <= duration_data[ix].down
-                lhs_off += get_value(ic)
+                JuMP.add_to_expression!(lhs_off, get_value(ic))
                 con_down[name, t] = JuMP.@constraint(
                     get_jump_model(container),
                     varstart[name, t] * duration_data[ix].down - lhs_off <= 0.0

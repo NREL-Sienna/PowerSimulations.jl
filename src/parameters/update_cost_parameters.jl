@@ -107,7 +107,8 @@ function _update_pwl_cost_expression(
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            slopes[i] * upb[i] * dt * pwl_var_container[(component_name, i, time_period)],
+            slopes[i] * upb[i] * dt,
+            pwl_var_container[(component_name, i, time_period)],
         )
     end
     return gen_cost
@@ -131,7 +132,7 @@ function update_variable_cost!(
     end
     mult_ = parameter_multiplier[component_name, time_period]
     variable = get_variable(container, get_variable_type(attributes)(), T)
-    gen_cost = variable[component_name, time_period] * mult_ * cost_data * base_power * dt
+    gen_cost = variable[component_name, time_period] * (mult_ * cost_data * base_power * dt)
     add_to_objective_variant_expression!(container, gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
@@ -160,6 +161,7 @@ function update_variable_cost!(
             PSY.PiecewiseLinearData(cost_data),
         )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
+    # TODO: missing _mult below?
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
 end
@@ -180,8 +182,9 @@ function update_variable_cost!(
     end
     mult_ = parameter_multiplier[component_name, time_period]
     expression = get_expression(container, FuelConsumptionExpression(), T)
-    cost_expr = expression[component_name, time_period] * fuel_cost * mult_
+    cost_expr = expression[component_name, time_period] * (fuel_cost * mult_)
     add_to_objective_variant_expression!(container, cost_expr)
+    # TODO: missing _mult below?
     set_expression!(container, ProductionCostExpression, cost_expr, component, time_period)
     return
 end

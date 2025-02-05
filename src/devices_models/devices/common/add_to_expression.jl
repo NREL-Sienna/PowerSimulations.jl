@@ -1633,10 +1633,10 @@ function add_to_expression!(
                 device_base_power,
             )
             for t in time_steps
-                fuel_expr = variable[name, t] * prop_term_per_unit * dt
                 JuMP.add_to_expression!(
                     expression[name, t],
-                    fuel_expr,
+                    prop_term_per_unit * dt,
+                    variable[name, t],
                 )
             end
         elseif value_curve isa PSY.QuadraticCurve
@@ -1709,22 +1709,33 @@ function add_to_expression!(
             for t in time_steps
                 sos_status = _get_sos_value(container, W, d)
                 if sos_status == SOSStatusVariable.NO_VARIABLE
-                    bin = 1.0
+                    JuMP.add_to_expression!(
+                        expression[name, t],
+                        P_min * prop_term_per_unit * dt,
+                    )
                 elseif sos_status == SOSStatusVariable.PARAMETER
                     param = get_default_on_parameter(d)
                     bin = get_parameter(container, param, V).parameter_array[name, t]
+                    JuMP.add_to_expression!(
+                        expression[name, t],
+                        P_min * prop_term_per_unit * dt,
+                        bin
+                    )
                 elseif sos_status == SOSStatusVariable.VARIABLE
                     var = get_default_on_variable(d)
                     bin = get_variable(container, var, V)[name, t]
+                    JuMP.add_to_expression!(
+                        expression[name, t],
+                        P_min * prop_term_per_unit * dt,
+                        bin
+                    )
                 else
                     @assert false
                 end
-                fuel_expr =
-                    variable[name, t] * prop_term_per_unit * dt +
-                    P_min * bin * prop_term_per_unit * dt
                 JuMP.add_to_expression!(
                     expression[name, t],
-                    fuel_expr,
+                    prop_term_per_unit * dt,
+                    variable[name, t],
                 )
             end
         elseif value_curve isa PSY.QuadraticCurve

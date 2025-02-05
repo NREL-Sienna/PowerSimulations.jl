@@ -87,8 +87,8 @@ function add_constraints!(
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
         reactive = get_variable(container, U(), V)[name, t]
-        real = get_variable(container, ActivePowerVariable(), V)[name, t] * pf
-        constraint[name, t] = JuMP.@constraint(jump_model, reactive == real)
+        real = get_variable(container, ActivePowerVariable(), V)[name, t]
+        constraint[name, t] = JuMP.@constraint(jump_model, reactive == real * pf)
     end
 end
 
