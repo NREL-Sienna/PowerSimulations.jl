@@ -248,23 +248,40 @@ function update_decision_state!(
     return
 end
 
+function _get_time_to_recover(event::PSY.GeometricDistributionForcedOutage)
+    return PSY.get_mean_time_to_recovery(event)
+end
+
+function _get_time_to_recover(event::PSY.TimeSeriesForcedOutage, simulation_time, length)
+    ts = PSY.get_time_series(IS.SingleTimeSeries, event, PSY.get_outage_status_scenario(event))
+    vals = PSY.get_time_series_values(
+        event,
+        ts,
+        current_time;
+        len = state_length,
+    )
+    return # do the math on the vals difference
+end
+
 function update_decision_state!(
     state::SimulationState,
     key::ParameterKey{AvailableStatusChangeParameter, T},
     column_names::Set{String},
-    event::PSY.GeometricDistributionForcedOutage,
+    event::PSY.Outage,
     simulation_time::Dates.DateTime,
     ::ModelStoreParams,
 ) where {T <: PSY.Component}
     event_ocurrence_data = get_system_state_data(state, AvailableStatusChangeParameter(), T)
     event_ocurrence_values = get_last_recorded_value(event_ocurrence_data)
     # This is required since the data for outages (mttr and λ) is always assumed to be on hourly resolution
-    mttr = PSY.get_mean_time_to_recovery(event)
+
     mttr_resolution = Dates.Hour(1)
     state_data = get_decision_state_data(state, key)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = mttr_resolution ÷ state_resolution
     state_timestamps = state_data.timestamps
+
+    mttr = _get_time_to_recover(event, simulation_time, state_length)
 
     @show current_time = get_current_time(state)
     @show state_timestamps
