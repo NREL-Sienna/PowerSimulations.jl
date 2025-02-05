@@ -270,7 +270,12 @@ function add_constraints!(
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
         JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
         if use_slacks
-            resource_expression += slack_vars[t]
+            resource_expression = JuMP.@expression(jump_model,
+                sum(@view reserve_variable[:, t]) + slack_vars[t])
+
+        else
+            resource_expression = JuMP.@expression(jump_model,
+                sum(@view reserve_variable[:, t]))
         end
         constraint[service_name, t] =
             JuMP.@constraint(jump_model, resource_expression >= requirement)
@@ -473,7 +478,7 @@ function add_constraints!(
                 PSY.get_active_power_limits(d).min +
                 (reserve_response_time - startup_time) * minutes_per_period * ramp_limits.up
         else
-            reserve_limit = 0
+            reserve_limit = 0.0
         end
         for t in time_steps
             cons[name, t] = JuMP.@constraint(
