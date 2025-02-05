@@ -131,7 +131,7 @@ function update_variable_cost!(
     end
     mult_ = parameter_multiplier[component_name, time_period]
     variable = get_variable(container, get_variable_type(attributes)(), T)
-    gen_cost = variable[component_name, time_period] * mult_ * cost_data * base_power * dt
+    gen_cost = variable[component_name, time_period] * ()
     add_to_objective_variant_expression!(container, gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
