@@ -253,7 +253,11 @@ function _get_time_to_recover(event::PSY.GeometricDistributionForcedOutage)
 end
 
 function _get_time_to_recover(event::PSY.TimeSeriesForcedOutage, simulation_time, length)
-    ts = PSY.get_time_series(IS.SingleTimeSeries, event, PSY.get_outage_status_scenario(event))
+    ts = PSY.get_time_series(
+        IS.SingleTimeSeries,
+        event,
+        PSY.get_outage_status_scenario(event),
+    )
     vals = PSY.get_time_series_values(
         event,
         ts,
@@ -373,7 +377,8 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 ) where {T <: VariableType, U <: PSY.Component}
     @error "UPDATE DECISION STATE $key"
-    event_ocurrence_data = get_decision_state_data(state, AvailableStatusChangeParameter(), U)
+    event_ocurrence_data =
+        get_decision_state_data(state, AvailableStatusChangeParameter(), U)
     event_status_data = get_decision_state_data(state, AvailableStatusParameter(), U)
 
     state_data = get_decision_state_data(state, key)
@@ -396,19 +401,7 @@ function update_decision_state!(
     end
     for name in column_names
         if event_ocurrence_data.values[name, state_data_index] == 1.0
-            outage_index = state_data_index + 1     #outage occurs at the following timestep
-            while true
-                if event_status_data.values[name, outage_index] == 0.0
-                    state_data.values[name, outage_index] = 0.0
-                    @info "forcing $key to zero at index $outage_index because status was zero for $name"
-                else
-                    break
-                end
-                if outage_index == length(state_data.values[name, :])
-                    break
-                end
-                outage_index += 1
-            end
+            state_data.values[name, (state_data_index + 1):end] .= 0.0
         end
     end
     return
@@ -582,7 +575,11 @@ function _get_outage_ocurrence(event::PSY.GeometricDistributionForcedOutage, rng
 end
 
 function _get_outage_ocurrence(event::PSY.TimeSeriesForcedOutage, rng, current_time)
-    ts = PSY.get_time_series(IS.SingleTimeSeries, event, PSY.get_outage_status_scenario(event))
+    ts = PSY.get_time_series(
+        IS.SingleTimeSeries,
+        event,
+        PSY.get_outage_status_scenario(event),
+    )
     vals = PSY.get_time_series_values(
         event,
         ts,
