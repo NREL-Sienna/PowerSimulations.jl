@@ -1719,7 +1719,7 @@ function add_to_expression!(
                     JuMP.add_to_expression!(
                         expression[name, t],
                         P_min * prop_term_per_unit * dt,
-                        bin
+                        bin,
                     )
                 elseif sos_status == SOSStatusVariable.VARIABLE
                     var = get_default_on_variable(d)
@@ -1727,7 +1727,7 @@ function add_to_expression!(
                     JuMP.add_to_expression!(
                         expression[name, t],
                         P_min * prop_term_per_unit * dt,
-                        bin
+                        bin,
                     )
                 else
                     @assert false
