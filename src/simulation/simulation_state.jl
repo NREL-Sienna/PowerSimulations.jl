@@ -597,7 +597,7 @@ function update_system_state!(
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: PSY.Component}
-    outage_ocurrence = _get_outage_ocurrenc(event, rng, simulation_time)
+    outage_ocurrence = _get_outage_ocurrence(event, rng, simulation_time)
     @warn "Result of outage occurence draw: $outage_ocurrence"
     sym_state = get_system_states(state)
     system_dataset = get_dataset(sym_state, key)
