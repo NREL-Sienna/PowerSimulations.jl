@@ -346,12 +346,13 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    attributes::EventParametersAttributes{PSY.GeometricDistributionForcedOutage, U},
+    attributes::EventParametersAttributes{W, U},
     ::Type{V},
     model::DecisionModel,
     state::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
+    W <: PSY.Contingency,
     U <: EventParameter,
     V <: PSY.Component,
 }
@@ -402,12 +403,13 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    ::EventParametersAttributes{PSY.GeometricDistributionForcedOutage, U},
+    ::EventParametersAttributes{W, U},
     ::Type{V},
     model::EmulationModel,
     state::DatasetContainer{InMemoryDataset},
 ) where {
     T <: Union{JuMP.VariableRef, Float64},
+    W <: PSY.Contingency,
     U <: EventParameter,
     V <: PSY.Component,
 }
