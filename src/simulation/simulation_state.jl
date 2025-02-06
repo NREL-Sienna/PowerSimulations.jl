@@ -248,7 +248,7 @@ function update_decision_state!(
     return
 end
 
-function _get_time_to_recover(event::PSY.GeometricDistributionForcedOutage)
+function _get_time_to_recover(event::PSY.GeometricDistributionForcedOutage, simulation_time, length)
     return PSY.get_mean_time_to_recovery(event)
 end
 
@@ -261,10 +261,12 @@ function _get_time_to_recover(event::PSY.TimeSeriesForcedOutage, simulation_time
     vals = PSY.get_time_series_values(
         event,
         ts,
-        current_time;
+        simulation_time;
         len = state_length,
     )
-    return # do the math on the vals difference
+    next_outage_start = findfirst(isequal(1.0), vals)
+    next_outage_length = findfirst(isequal(0.0), vals[next_outage_start:end]) - 1 
+    return next_outage_length
 end
 
 function update_decision_state!(
@@ -285,8 +287,6 @@ function update_decision_state!(
     resolution_ratio = mttr_resolution ÷ state_resolution
     state_timestamps = state_data.timestamps
 
-    mttr = _get_time_to_recover(event, simulation_time, state_length)
-
     @show current_time = get_current_time(state)
     @show state_timestamps
     @assert_op resolution_ratio >= 1
@@ -302,9 +302,10 @@ function update_decision_state!(
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
-    @show state_data_index
+    state_length = length(state_timestamps) - state_data_index 
+    mttr = _get_time_to_recover(event, simulation_time, state_length)  
     off_time_step_count =
-        Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) #TODO -check if just removing (-1) is correct.
+        Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) 
     set_update_timestamp!(state_data, simulation_time)
     for name in column_names
         state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
@@ -323,7 +324,7 @@ function update_decision_state!(
     state::SimulationState,
     key::ParameterKey{AvailableStatusParameter, T},
     column_names::Set{String},
-    event::PSY.GeometricDistributionForcedOutage,
+    event::PSY.GeometricDistributionForcedOutage,   #TODO next: generalize 
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -544,7 +545,7 @@ function update_system_state!(
     state::SimulationState,
     key::ParameterKey{AvailableStatusParameter, T},
     column_names_::Set{String},
-    event::PSY.GeometricDistributionForcedOutage,
+    event::PSY.Outage,
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: PSY.Device}
@@ -567,7 +568,7 @@ function update_system_state!(
     return
 end
 
-function _get_outage_ocurrence(event::PSY.GeometricDistributionForcedOutage, rng)
+function _get_outage_ocurrence(event::PSY.GeometricDistributionForcedOutage, rng, current_time)
     λ = PSY.get_outage_transition_probability(event)
     # Outage status = 1.0 means that the unit was subject to an outage
     outage_ocurrence = Float64(rand(rng, Bernoulli(λ)))
@@ -623,7 +624,7 @@ function update_system_state!(
     state::SimulationState,
     key::VariableKey{T, U},
     column_names::Set{String},
-    ::PSY.GeometricDistributionForcedOutage,
+    ::PSY.Outage, 
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: VariableType, U <: PSY.Component}
