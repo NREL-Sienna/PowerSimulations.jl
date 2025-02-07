@@ -118,6 +118,10 @@ function add_variables!(
         ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
         if ref_bus_from != ref_bus_to
             push!(inter_network_branches, d)
+        else
+            @warn(
+                "HVDC Line $(PSY.get_name(d)) is in the same subnetwork, so the line will not be modeled."
+            )
         end
     end
     if !isempty(inter_network_branches)
