@@ -248,11 +248,20 @@ function update_decision_state!(
     return
 end
 
-function _get_time_to_recover(event::PSY.GeometricDistributionForcedOutage, simulation_time, length)
+function _get_time_to_recover(
+    event::PSY.GeometricDistributionForcedOutage,
+    simulation_time,
+    length,
+)
     return PSY.get_mean_time_to_recovery(event)
 end
 
-function _get_time_to_recover(event::PSY.TimeSeriesForcedOutage, simulation_time, length)
+function _get_time_to_recover(
+    event::PSY.TimeSeriesForcedOutage,
+    simulation_time,
+    state_length,
+)
+    @warn "This method only currently works if timeseries outage is entirely within current the simulation state"
     ts = PSY.get_time_series(
         IS.SingleTimeSeries,
         event,
@@ -264,9 +273,7 @@ function _get_time_to_recover(event::PSY.TimeSeriesForcedOutage, simulation_time
         simulation_time;
         len = state_length,
     )
-    next_outage_start = findfirst(isequal(1.0), vals)
-    next_outage_length = findfirst(isequal(0.0), vals[next_outage_start:end]) - 1 
-    return next_outage_length
+    return findfirst(isequal(1.0), vals[2:end])
 end
 
 function update_decision_state!(
@@ -302,15 +309,16 @@ function update_decision_state!(
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     end
-    state_length = length(state_timestamps) - state_data_index 
-    mttr = _get_time_to_recover(event, simulation_time, state_length)  
-    off_time_step_count =
-        Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio) 
-    set_update_timestamp!(state_data, simulation_time)
+
     for name in column_names
         state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
         if event_ocurrence_values[name, 1] == 1.0
             # Set future event occurrence to change after the MTTR has passed
+            state_length = length(state_timestamps) - state_data_index      #NOTE: should go outside the name loop, but fails with current implementation.
+            mttr = _get_time_to_recover(event, simulation_time, state_length)
+            off_time_step_count =
+                Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio)
+            set_update_timestamp!(state_data, simulation_time)
             state_data.values[name, state_data_index + off_time_step_count] = 1.0
             @error "update $name to come back online after $off_time_step_count"
         end
@@ -324,7 +332,7 @@ function update_decision_state!(
     state::SimulationState,
     key::ParameterKey{AvailableStatusParameter, T},
     column_names::Set{String},
-    event::PSY.GeometricDistributionForcedOutage,   #TODO next: generalize 
+    event::PSY.Outage,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -373,7 +381,7 @@ function update_decision_state!(
     state::SimulationState,
     key::VariableKey{T, U},
     column_names::Set{String},
-    event::PSY.GeometricDistributionForcedOutage,
+    event::PSY.Outage,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: VariableType, U <: PSY.Component}
@@ -568,7 +576,11 @@ function update_system_state!(
     return
 end
 
-function _get_outage_ocurrence(event::PSY.GeometricDistributionForcedOutage, rng, current_time)
+function _get_outage_ocurrence(
+    event::PSY.GeometricDistributionForcedOutage,
+    rng,
+    current_time,
+)
     λ = PSY.get_outage_transition_probability(event)
     # Outage status = 1.0 means that the unit was subject to an outage
     outage_ocurrence = Float64(rand(rng, Bernoulli(λ)))
@@ -587,7 +599,7 @@ function _get_outage_ocurrence(event::PSY.TimeSeriesForcedOutage, rng, current_t
         current_time;
         len = 1,
     )
-    return vals
+    return vals[1]
 end
 
 function update_system_state!(
@@ -615,6 +627,8 @@ function update_system_state!(
         if current_status == 1.0 && outage_ocurrence == 1.0
             available_status_change_parameter.values[name, 1] = outage_ocurrence
             @error "Changed AvailableStatusChangeParameter for $name  to $outage_ocurrence in system state"
+        else
+            available_status_change_parameter.values[name, 1] = 0.0
         end
     end
     return
@@ -624,7 +638,7 @@ function update_system_state!(
     state::SimulationState,
     key::VariableKey{T, U},
     column_names::Set{String},
-    ::PSY.Outage, 
+    ::PSY.Outage,
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: VariableType, U <: PSY.Component}
