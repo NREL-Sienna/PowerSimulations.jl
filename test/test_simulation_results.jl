@@ -352,7 +352,7 @@ function test_decision_problem_results_values(
         @test size(v) == (12, 6)
     end
 
-    loss_factors = read_variable(results_ed, PowerFlowLossFactors)
+    loss_factors = read_aux_variable(results_ed, PowerFlowLossFactors)
     @test length(keys(loss_factors)) == 48
     println("loss factors: $loss_factors")
 
