@@ -342,6 +342,29 @@ function is_time_variant(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve})
     return isa(PSY.get_fuel_cost(cost_function), IS.TimeSeriesKey)
 end
 
+function create_temporary_cost_function_in_system_per_unit(
+    original_cost_function::PSY.CostCurve,
+    new_data::PSY.PiecewiseLinearData,
+)
+    return PSY.CostCurve(
+        PSY.PiecewisePointCurve(new_data),
+        PSY.UnitSystem.SYSTEM_BASE,
+        PSY.get_vom_cost(original_cost_function),
+    )
+end
+
+function create_temporary_cost_function_in_system_per_unit(
+    original_cost_function::PSY.FuelCurve,
+    new_data::PSY.PiecewiseLinearData,
+)
+    return PSY.FuelCurve(
+        PSY.PiecewisePointCurve(new_data),
+        PSY.UnitSystem.SYSTEM_BASE,
+        PSY.get_fuel_cost(original_cost_function),
+        PSY.get_vom_cost(original_cost_function),
+    )
+end
+
 function get_deterministic_time_series_type(sys::PSY.System)
     time_series_types = IS.get_time_series_counts_by_type(sys.data)
     existing_types = Set(d["type"] for d in time_series_types)

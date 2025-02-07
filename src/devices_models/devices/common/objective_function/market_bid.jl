@@ -2,7 +2,7 @@
 ################# PWL Variables ##################
 ##################################################
 
-# For Market Bid 
+# For Market Bid
 function _add_pwl_variables!(
     container::OptimizationContainer,
     ::Type{T},
@@ -70,7 +70,7 @@ function _add_pwl_constraint!(
     )
     =#
 
-    # TODO: Parameter for this 
+    # TODO: Parameter for this
     for ix in 1:len_cost_data
         JuMP.@constraint(
             jump_model,
@@ -137,8 +137,8 @@ function _get_pwl_cost_expression(
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PieceWiseLinearBlockOffer(), T)
     gen_cost = JuMP.AffExpr(0.0)
-    cost_data = PSY.get_y_coords(cost_data)
-    for (i, cost) in enumerate(cost_data)
+    y_coords_cost_data = PSY.get_y_coords(cost_data)
+    for (i, cost) in enumerate(y_coords_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
             cost * multiplier * pwl_var_container[(name, i, time_period)],
@@ -233,7 +233,7 @@ function _get_pwl_cost_expression(
 end
 
 #=
-# For Market Bid 
+# For Market Bid
 function _add_pwl_variables!(
     container::OptimizationContainer,
     ::Type{T},
