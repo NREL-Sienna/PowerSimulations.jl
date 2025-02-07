@@ -145,7 +145,7 @@ branch_aux_vars(::PFS.vPTDFPowerFlowData) =
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
-bus_aux_vars(::PFS.ACPowerFlowData) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+bus_aux_vars(::PFS.ACPowerFlowData) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude, PowerFlowLossFactors]
 bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
 bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
@@ -385,6 +385,8 @@ _get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowDat
     PFS.get_branch_activepower_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_activepower_flow_to_from(pf_data)
+_get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
+    [PFS.penalty_factors(aux_vars) for aux_vars in pf_data.aux_variables]
 
 _get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
 _get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =

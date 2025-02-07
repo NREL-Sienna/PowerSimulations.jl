@@ -306,6 +306,9 @@ function test_simulation_results(
                     ThermalStandard,
                 )],
             )
+            @test !isempty(
+                sim.internal.store.dm_data[:ED].variables[PowerFlowLossFactors],
+            )
             @test !isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
             empty!(sim.internal.store)
             @test isempty(sim.internal.store.dm_data[:ED].variables)
@@ -348,6 +351,10 @@ function test_decision_problem_results_values(
     for v in values(p_thermal_standard_ed)
         @test size(v) == (12, 6)
     end
+
+    loss_factors = read_variable(results_ed, PowerFlowLossFactors)
+    @test length(keys(loss_factors)) == 48
+    println("loss factors: $loss_factors")
 
     ren_dispatch_params =
         read_parameter(results_ed, ActivePowerTimeSeriesParameter, RenewableDispatch)
