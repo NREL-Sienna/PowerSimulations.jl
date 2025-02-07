@@ -145,7 +145,8 @@ branch_aux_vars(::PFS.vPTDFPowerFlowData) =
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
-bus_aux_vars(::PFS.ACPowerFlowData) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude, PowerFlowLossFactors]
+bus_aux_vars(::PFS.ACPowerFlowData) =
+    [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude, PowerFlowLossFactors]
 bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
 bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
