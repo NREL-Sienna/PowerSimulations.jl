@@ -278,13 +278,14 @@ end
 
 function update_decision_state!(
     state::SimulationState,
-    key::ParameterKey{AvailableStatusChangeParameter, T},
+    key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
     column_names::Set{String},
     event::PSY.Outage,
     simulation_time::Dates.DateTime,
     ::ModelStoreParams,
 ) where {T <: PSY.Component}
-    event_ocurrence_data = get_system_state_data(state, AvailableStatusChangeParameter(), T)
+    event_ocurrence_data =
+        get_system_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     event_ocurrence_values = get_last_recorded_value(event_ocurrence_data)
     # This is required since the data for outages (mttr and λ) is always assumed to be on hourly resolution
 
@@ -337,7 +338,7 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
     event_ocurrence_data =
-        get_decision_state_data(state, AvailableStatusChangeParameter(), T)
+        get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     state_data = get_decision_state_data(state, key)
     #column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
@@ -387,7 +388,7 @@ function update_decision_state!(
 ) where {T <: VariableType, U <: PSY.Component}
     @error "UPDATE DECISION STATE $key"
     event_ocurrence_data =
-        get_decision_state_data(state, AvailableStatusChangeParameter(), U)
+        get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), U)
     event_status_data = get_decision_state_data(state, AvailableStatusParameter(), U)
 
     state_data = get_decision_state_data(state, key)
@@ -561,7 +562,7 @@ function update_system_state!(
     available_status_parameter_values = get_last_recorded_value(available_status_parameter)
 
     available_status_change_parameter =
-        get_system_state_data(state, AvailableStatusChangeParameter(), T)
+        get_system_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     available_status_change_parameter_values =
         get_last_recorded_value(available_status_change_parameter)
 
@@ -604,7 +605,7 @@ end
 
 function update_system_state!(
     state::SimulationState,
-    key::ParameterKey{AvailableStatusChangeParameter, T},
+    key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
     column_names_::Set{String},
     event::PSY.Outage,
     simulation_time::Dates.DateTime,
@@ -626,7 +627,7 @@ function update_system_state!(
         current_status = available_status_parameter_values[name]
         if current_status == 1.0 && outage_ocurrence == 1.0
             available_status_change_parameter.values[name, 1] = outage_ocurrence
-            @error "Changed AvailableStatusChangeParameter for $name  to $outage_ocurrence in system state"
+            @error "Changed AvailableStatusChangeCountdownParameter for $name  to $outage_ocurrence in system state"
         else
             available_status_change_parameter.values[name, 1] = 0.0
         end
@@ -643,7 +644,8 @@ function update_system_state!(
     rng,
 ) where {T <: VariableType, U <: PSY.Component}
     sym_state = get_system_states(state)
-    event_ocurrence_data = get_system_state_data(state, AvailableStatusChangeParameter(), U)
+    event_ocurrence_data =
+        get_system_state_data(state, AvailableStatusChangeCountdownParameter(), U)
     event_ocurrence_values = get_last_recorded_value(event_ocurrence_data)
 
     system_dataset = get_dataset(sym_state, key)

@@ -93,11 +93,11 @@ function apply_affect!(
         end
         em_model = get_emulation_model(get_models(simulation))
         em_model_store = get_store_params(em_model)
-        # Order is required here. The AvailableStatusChangeParameter needs to be updated first
+        # Order is required here. The AvailableStatusChangeCountdownParameter needs to be updated first
         # to indicate that there is a change in the othe parameters
         update_system_state!(
             sim_state,
-            ParameterKey(AvailableStatusChangeParameter, dtype),
+            ParameterKey(AvailableStatusChangeCountdownParameter, dtype),
             device_names,
             event,
             sim_time,
@@ -127,11 +127,11 @@ function apply_affect!(
             sim_time,
             rng,
         )
-        # Order is required here too AvailableStatusChangeParameter needs to
+        # Order is required here too AvailableStatusChangeCountdownParameter needs to
         # go first to indicate that there is a change in the other values
         update_decision_state!(
             sim_state,
-            ParameterKey(AvailableStatusChangeParameter, dtype),
+            ParameterKey(AvailableStatusChangeCountdownParameter, dtype),
             device_names,
             event,
             sim_time,
