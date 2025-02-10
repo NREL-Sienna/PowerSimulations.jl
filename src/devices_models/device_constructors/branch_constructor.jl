@@ -282,6 +282,18 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{SecurityConstrainedTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    contruct_device!(container, sys, ArgumentConstructStage(), model, network_model)
+    add_expression!(container, OutageActivePowerFlows, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:AbstractPTDFModel},
@@ -289,6 +301,23 @@ function construct_device!(
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, PTDFPowerModel)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+    add_constraints!(container, RateLimitConstraint, devices, model, network_model)
+    add_constraints!(container, OutageActivePowerFlowsConstraint, sys, model)
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
