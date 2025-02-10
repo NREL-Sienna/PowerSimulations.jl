@@ -402,7 +402,7 @@ function update_decision_state!(
     resolution_ratio = model_resolution ÷ state_resolution
     @assert_op resolution_ratio >= 1
 
-if simulation_time > get_end_of_step_timestamp(state_data)
+    if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
             range(
@@ -411,8 +411,8 @@ if simulation_time > get_end_of_step_timestamp(state_data)
                 length = get_num_rows(state_data),
             )
     else
-    state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
-end
+        state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
+    end
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[2]

@@ -390,7 +390,7 @@ function _update_parameter_values!(
                      Consider reviewing your models' horizon and interval definitions",
                 )
             end
-            if 0.0 > value 
+            if 0.0 > value
                 error(
                     "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is less than 0.0",
                 )
