@@ -299,17 +299,7 @@ function update_decision_state!(
     @show state_timestamps
     @assert_op resolution_ratio >= 1
     # When we are back to the beggining of the simulation step.
-    if simulation_time > get_end_of_step_timestamp(state_data)
-        state_data_index = 1
-        state_data.timestamps[:] .=
-            range(
-                simulation_time;
-                step = state_resolution,
-                length = get_num_rows(state_data),
-            )
-    else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    end
 
     for name in column_names
         state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
@@ -347,17 +337,7 @@ function update_decision_state!(
     state_timestamps = state_data.timestamps
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > get_end_of_step_timestamp(state_data)
-        state_data_index = 1
-        state_data.timestamps[:] .=
-            range(
-                simulation_time;
-                step = state_resolution,
-                length = get_num_rows(state_data),
-            )
-    else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    end
     @show current_time = get_current_time(state)
     @show state_data_index
     for name in column_names
@@ -398,17 +378,7 @@ function update_decision_state!(
     state_timestamps = state_data.timestamps
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > get_end_of_step_timestamp(state_data)
-        state_data_index = 1
-        state_data.timestamps[:] .=
-            range(
-                simulation_time;
-                step = state_resolution,
-                length = get_num_rows(state_data),
-            )
-    else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    end
     for name in column_names
         if event_ocurrence_data.values[name, state_data_index] == 1.0
             state_data.values[name, (state_data_index + 1):end] .= 0.0
