@@ -3,6 +3,7 @@ function apply_simulation_events!(simulation::Simulation)
     events = get_events(sequence)
     simulation_state = get_simulation_state(simulation)
     for event_model in events
+        extend_event_parameters!(simulation, event_model)
         if check_condition(simulation_state, event_model)
             @warn "Condition evaluated to true at time $(get_current_time(simulation))"
             # TODO: for other event categories we need to do something else
@@ -14,6 +15,50 @@ function apply_simulation_events!(simulation::Simulation)
                 event = PSY.get_supplemental_attribute(sys, event_uuid)
                 @warn "Applying affect for $device_type_maps"
                 apply_affect!(simulation, event_model, event, device_type_maps)
+            end
+        end
+    end
+end
+
+function extend_event_parameters!(simulation::Simulation, event_model)
+    sequence = get_sequence(simulation)
+    sim_state = get_simulation_state(simulation)
+    em_model = get_emulation_model(get_models(simulation))
+    model_name = get_name(em_model)
+    for (event_uuid, device_type_maps) in
+        event_model.attribute_device_map[model_name]
+        sim_time = get_current_time(simulation)
+        for (dtype, device_names) in device_type_maps
+            if dtype == PSY.RenewableDispatch
+                continue
+            end
+            em_model = get_emulation_model(get_models(simulation))
+            status_change_countdown_data = get_decision_state_data(
+                sim_state,
+                ParameterKey(AvailableStatusChangeCountdownParameter, dtype),
+            )
+            status_data = get_decision_state_data(
+                sim_state,
+                ParameterKey(AvailableStatusParameter, dtype),
+            )
+            state_timestamps = status_data.timestamps
+            state_data_index = find_timestamp_index(state_timestamps, sim_time)
+            if state_data_index == 1
+                for name in device_names
+                    if status_change_countdown_data.values[name, 1] > 1.0
+                        starting_count = status_change_countdown_data.values[name, 1]
+                        for i in 1:length(status_change_countdown_data.values)
+                            countdown_val = max(starting_count + 1 - i, 0.0)
+                            if countdown_val == 0.0
+                                status_val = 1.0
+                            else
+                                status_val = 0.0
+                            end
+                            status_change_countdown_data.values[name, i] = countdown_val
+                            status_data.values[name, i] = status_val
+                        end
+                    end
+                end
             end
         end
     end
