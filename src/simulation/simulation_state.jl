@@ -267,12 +267,8 @@ function _get_time_to_recover(
         event,
         PSY.get_outage_status_scenario(event),
     )
-    vals = PSY.get_time_series_values(
-        event,
-        ts,
-        simulation_time;
-        len = state_length,
-    )
+    current_time_index = findfirst(isequal(simulation_time), TimeSeries.timestamp(ts.data))
+    vals = TimeSeries.values(ts.data)[current_time_index:end]
     return findfirst(isequal(1.0), vals[2:end])
 end
 
@@ -299,7 +295,7 @@ function update_decision_state!(
     @show state_timestamps
     @assert_op resolution_ratio >= 1
     # When we are back to the beggining of the simulation step.
-        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
 
     for name in column_names
         state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
@@ -310,11 +306,17 @@ function update_decision_state!(
             off_time_step_count =
                 Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio)
             set_update_timestamp!(state_data, simulation_time)
-            state_data.values[name, state_data_index + off_time_step_count] = 1.0
+
+            for (ix, countdown) in enumerate(off_time_step_count:-1.0:1.0)
+                if state_data_index + ix > length(state_timestamps) #outage extends beyond current state
+                    break
+                end
+                state_data.values[name, state_data_index + ix] = countdown
+            end
             @error "update $name to come back online after $off_time_step_count"
         end
     end
-    @warn "AvailableStatusChangeParameter decision state after update: $state_data"
+    @warn "AvailableStatusChangeCountdownParameter decision state after update: $state_data"
     #set_last_recorded_row!(state_data, t)
     return
 end
@@ -337,7 +339,7 @@ function update_decision_state!(
     state_timestamps = state_data.timestamps
     @assert_op resolution_ratio >= 1
 
-        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     @show current_time = get_current_time(state)
     @show state_data_index
     for name in column_names
@@ -378,7 +380,7 @@ function update_decision_state!(
     state_timestamps = state_data.timestamps
     @assert_op resolution_ratio >= 1
 
-        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     for name in column_names
         if event_ocurrence_data.values[name, state_data_index] == 1.0
             state_data.values[name, (state_data_index + 1):end] .= 0.0
@@ -400,7 +402,7 @@ function update_decision_state!(
     resolution_ratio = model_resolution ÷ state_resolution
     @assert_op resolution_ratio >= 1
 
-    if simulation_time > get_end_of_step_timestamp(state_data)
+if simulation_time > get_end_of_step_timestamp(state_data)
         state_data_index = 1
         state_data.timestamps[:] .=
             range(
@@ -409,8 +411,8 @@ function update_decision_state!(
                 length = get_num_rows(state_data),
             )
     else
-        state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
-    end
+    state_data_index = find_timestamp_index(state_data.timestamps, simulation_time)
+end
 
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[2]
