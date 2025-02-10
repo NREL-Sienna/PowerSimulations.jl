@@ -246,9 +246,9 @@ function construct_network!(
         )
         objective_function!(container, sys, model)
     end
+
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
-    add_constraints!(container, OutageActivePowerFlowsConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end
