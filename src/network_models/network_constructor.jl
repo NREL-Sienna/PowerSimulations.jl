@@ -227,6 +227,32 @@ function construct_network!(
     return
 end
 
+function construct_network!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    ::ProblemTemplate,
+)
+    if get_use_slacks(model)
+        add_variables!(container, SystemBalanceSlackUp, sys, model)
+        add_variables!(container, SystemBalanceSlackDown, sys, model)
+        add_to_expression!(container, ActivePowerBalance, SystemBalanceSlackUp, sys, model)
+        add_to_expression!(
+            container,
+            ActivePowerBalance,
+            SystemBalanceSlackDown,
+            sys,
+            model,
+        )
+        objective_function!(container, sys, model)
+    end
+    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
+    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
+    add_constraints!(container, OutageActivePowerFlowsConstraint, sys, model)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
 #=
 # AbstractIVRModel models not currently supported
 function construct_network!(

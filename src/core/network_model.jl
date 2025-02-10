@@ -29,7 +29,8 @@ Establishes the model for the network specified by type.
 # Example
 
 ptdf_array = PTDF(system)
-nw = NetworkModel(PTDFPowerModel, ptdf = ptdf_array),
+nw = NetworkModel(PTDFPowerModel, ptdf = ptdf_array)
+nw = NetworkModel(PTDFPowerModel, lodf = lodf_array)
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
@@ -182,6 +183,16 @@ function instantiate_network_model(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
+    return
+end
+
+function instantiate_network_model(
+    model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    sys::PSY.System,
+)
+    instantiate_network_model(PTDFPowerModel, sys)
+
+    # Add new checkd for the LODF
     return
 end
 
