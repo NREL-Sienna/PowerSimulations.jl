@@ -5,7 +5,6 @@ function apply_simulation_events!(simulation::Simulation)
     for event_model in events
         extend_event_parameters!(simulation, event_model)
         if check_condition(simulation_state, event_model)
-            @warn "Condition evaluated to true at time $(get_current_time(simulation))"
             # TODO: for other event categories we need to do something else
             em_model = get_emulation_model(get_models(simulation))
             sys = get_system(em_model)
@@ -13,7 +12,6 @@ function apply_simulation_events!(simulation::Simulation)
             for (event_uuid, device_type_maps) in
                 event_model.attribute_device_map[model_name]
                 event = PSY.get_supplemental_attribute(sys, event_uuid)
-                @warn "Applying affect for $device_type_maps"
                 apply_affect!(simulation, event_model, event, device_type_maps)
             end
         end

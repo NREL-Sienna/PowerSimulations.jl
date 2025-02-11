@@ -307,9 +307,6 @@ function update_decision_state!(
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = mttr_resolution ÷ state_resolution
     state_timestamps = state_data.timestamps
-
-    @show current_time = get_current_time(state)
-    @show state_timestamps
     @assert_op resolution_ratio >= 1
     # When we are back to the beggining of the simulation step.
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
@@ -319,6 +316,7 @@ function update_decision_state!(
         if event_ocurrence_values[name, 1] == 1.0
             # Set future event occurrence to change after the MTTR has passed
             mttr = _get_time_to_recover(event, event_model, simulation_time)
+            @warn "Generator $name to come back online after $mttr hours"
             off_time_step_count =
                 Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio)
             set_update_timestamp!(state_data, simulation_time)
@@ -329,10 +327,8 @@ function update_decision_state!(
                 end
                 state_data.values[name, state_data_index + ix] = countdown
             end
-            @error "update $name to come back online after $off_time_step_count"
         end
     end
-    @warn "AvailableStatusChangeCountdownParameter decision state after update: $state_data"
     #set_last_recorded_row!(state_data, t)
     return
 end
@@ -349,7 +345,6 @@ function update_decision_state!(
     event_ocurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     state_data = get_decision_state_data(state, key)
-    #column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
@@ -357,8 +352,6 @@ function update_decision_state!(
     @assert_op resolution_ratio >= 1
 
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    @show current_time = get_current_time(state)
-    @show state_data_index
     for name in column_names
         if event_ocurrence_data.values[name, state_data_index] == 1.0
             outage_index = state_data_index + 1     #outage occurs at the following timestep
@@ -372,8 +365,6 @@ function update_decision_state!(
             end
         end
     end
-    @warn "AvailableStatusParameter decision state after update: $state_data"
-
     return
 end
 
@@ -386,7 +377,6 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: VariableType, U <: PSY.Component}
-    @error "UPDATE DECISION STATE $key"
     event_ocurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), U)
     event_status_data = get_decision_state_data(state, AvailableStatusParameter(), U)
@@ -561,7 +551,6 @@ function update_system_state!(
         current_status = available_status_parameter_values[name]
         current_status_change = available_status_change_parameter_values[name]
         if current_status == 1.0 && current_status_change == 1.0
-            @error "$name was available and had an outage, setting to unavailable."
             available_status_parameter.values[name, 1] = 0.0
         end
     end
@@ -621,7 +610,6 @@ function update_system_state!(
     rng,
 ) where {T <: PSY.Component}
     outage_ocurrence = _get_outage_ocurrence(event, event_model, rng, simulation_time)
-    @warn "Result of outage occurence draw: $outage_ocurrence"
     sym_state = get_system_states(state)
     system_dataset = get_dataset(sym_state, key)
 
@@ -635,8 +623,8 @@ function update_system_state!(
     for name in column_names_
         current_status = available_status_parameter_values[name]
         if current_status == 1.0 && outage_ocurrence == 1.0
+            @warn "Outage occurred at time $simulation_time for devices $column_names_"
             available_status_change_parameter.values[name, 1] = outage_ocurrence
-            @error "Changed AvailableStatusChangeCountdownParameter for $name  to $outage_ocurrence in system state"
         else
             available_status_change_parameter.values[name, 1] = 0.0
         end
@@ -666,7 +654,6 @@ function update_system_state!(
         if event_ocurrence_values[name] == 1.0
             old_value = current_status_values[name]
             current_status_values[name] = 0.0
-            @error "Changed $T for $name from: $old_value to: 0.0"
         end
     end
     return

@@ -166,8 +166,6 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
-    @error "$attr"
-    @show jump_value.(param_array)
     return jump_value.(param_array)
 end
 
