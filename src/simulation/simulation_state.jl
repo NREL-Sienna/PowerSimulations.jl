@@ -250,16 +250,28 @@ end
 
 function _get_time_to_recover(
     event::PSY.GeometricDistributionForcedOutage,
+    event_model::EventModel,
     simulation_time,
-    length,
 )
-    return PSY.get_mean_time_to_recovery(event)
+    timeseries_mapping = event_model.timeseries_mapping
+    if timeseries_mapping[:mean_time_to_recovery] === nothing
+        return PSY.get_mean_time_to_recovery(event)
+    else
+        ts_mttr = PSY.get_time_series(
+            IS.SingleTimeSeries,
+            event,
+            timeseries_mapping[:mean_time_to_recovery];
+            start_time = simulation_time,
+            len = 1,
+        )
+        return TimeSeries.values(ts_mttr.data)[1]
+    end
 end
 
 function _get_time_to_recover(
     event::PSY.TimeSeriesForcedOutage,
+    event_model::EventModel,
     simulation_time,
-    state_length,
 )
     @warn "This method only currently works if timeseries outage is entirely within current the simulation state"
     ts = PSY.get_time_series(
@@ -269,7 +281,11 @@ function _get_time_to_recover(
     )
     current_time_index = findfirst(isequal(simulation_time), TimeSeries.timestamp(ts.data))
     vals = TimeSeries.values(ts.data)[current_time_index:end]
-    return findfirst(isequal(1.0), vals[2:end])
+    if findfirst(isequal(1.0), vals[2:end]) === nothing
+        return length(vals)
+    else
+        return findfirst(isequal(1.0), vals[2:end])
+    end
 end
 
 function update_decision_state!(
@@ -277,6 +293,7 @@ function update_decision_state!(
     key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
     column_names::Set{String},
     event::PSY.Outage,
+    event_model::EventModel,
     simulation_time::Dates.DateTime,
     ::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -301,8 +318,7 @@ function update_decision_state!(
         state_data.values[name, state_data_index] = event_ocurrence_values[name, 1]
         if event_ocurrence_values[name, 1] == 1.0
             # Set future event occurrence to change after the MTTR has passed
-            state_length = length(state_timestamps) - state_data_index      #NOTE: should go outside the name loop, but fails with current implementation.
-            mttr = _get_time_to_recover(event, simulation_time, state_length)
+            mttr = _get_time_to_recover(event, event_model, simulation_time)
             off_time_step_count =
                 Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio)
             set_update_timestamp!(state_data, simulation_time)
@@ -326,6 +342,7 @@ function update_decision_state!(
     key::ParameterKey{AvailableStatusParameter, T},
     column_names::Set{String},
     event::PSY.Outage,
+    event_model::EventModel,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
@@ -365,6 +382,7 @@ function update_decision_state!(
     key::VariableKey{T, U},
     column_names::Set{String},
     event::PSY.Outage,
+    event_model::EventModel,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: VariableType, U <: PSY.Component}
@@ -527,6 +545,7 @@ function update_system_state!(
     key::ParameterKey{AvailableStatusParameter, T},
     column_names_::Set{String},
     event::PSY.Outage,
+    event_model::EventModel,
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: PSY.Device}
@@ -551,16 +570,33 @@ end
 
 function _get_outage_ocurrence(
     event::PSY.GeometricDistributionForcedOutage,
+    event_model::EventModel,
     rng,
     current_time,
 )
-    λ = PSY.get_outage_transition_probability(event)
-    # Outage status = 1.0 means that the unit was subject to an outage
-    outage_ocurrence = Float64(rand(rng, Bernoulli(λ)))
-    return outage_ocurrence
+    timeseries_mapping = event_model.timeseries_mapping
+    if timeseries_mapping[:outage_transition_probability] === nothing
+        λ = PSY.get_outage_transition_probability(event)
+    else
+        ts_outage_prob = PSY.get_time_series(
+            IS.SingleTimeSeries,
+            event,
+            timeseries_mapping[:outage_transition_probability];
+            start_time = current_time,
+            len = 1,
+        )
+        λ = TimeSeries.values(ts_outage_prob.data)[1]
+    end
+    outage_occurrence = Float64(rand(rng, Bernoulli(λ)))
+    return outage_occurrence
 end
 
-function _get_outage_ocurrence(event::PSY.TimeSeriesForcedOutage, rng, current_time)
+function _get_outage_ocurrence(
+    event::PSY.TimeSeriesForcedOutage,
+    event_model::EventModel,
+    rng,
+    current_time,
+)
     ts = PSY.get_time_series(
         IS.SingleTimeSeries,
         event,
@@ -580,10 +616,11 @@ function update_system_state!(
     key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
     column_names_::Set{String},
     event::PSY.Outage,
+    event_model::EventModel,
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: PSY.Component}
-    outage_ocurrence = _get_outage_ocurrence(event, rng, simulation_time)
+    outage_ocurrence = _get_outage_ocurrence(event, event_model, rng, simulation_time)
     @warn "Result of outage occurence draw: $outage_ocurrence"
     sym_state = get_system_states(state)
     system_dataset = get_dataset(sym_state, key)
@@ -612,6 +649,7 @@ function update_system_state!(
     key::VariableKey{T, U},
     column_names::Set{String},
     ::PSY.Outage,
+    event_model::EventModel,
     simulation_time::Dates.DateTime,
     rng,
 ) where {T <: VariableType, U <: PSY.Component}

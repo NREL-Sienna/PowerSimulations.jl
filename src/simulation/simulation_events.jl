@@ -122,7 +122,7 @@ end
 
 function apply_affect!(
     simulation::Simulation,
-    ::EventModel{
+    event_model::EventModel{
         T,
         <:AbstractEventCondition,
     },
@@ -145,6 +145,7 @@ function apply_affect!(
             ParameterKey(AvailableStatusChangeCountdownParameter, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             rng,
         )
@@ -153,6 +154,7 @@ function apply_affect!(
             ParameterKey(AvailableStatusParameter, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             rng,
         )
@@ -161,6 +163,7 @@ function apply_affect!(
             VariableKey(ActivePowerVariable, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             rng,
         )
@@ -169,6 +172,7 @@ function apply_affect!(
             VariableKey(OnVariable, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             rng,
         )
@@ -179,6 +183,7 @@ function apply_affect!(
             ParameterKey(AvailableStatusChangeCountdownParameter, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             em_model_store,
         )
@@ -187,6 +192,7 @@ function apply_affect!(
             ParameterKey(AvailableStatusParameter, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             em_model_store,
         )
@@ -195,6 +201,7 @@ function apply_affect!(
             VariableKey(ActivePowerVariable, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             em_model_store,
         )
@@ -203,6 +210,7 @@ function apply_affect!(
             VariableKey(OnVariable, dtype),
             device_names,
             event,
+            event_model,
             sim_time,
             em_model_store,
         )
