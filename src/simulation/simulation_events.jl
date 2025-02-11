@@ -47,7 +47,7 @@ function extend_event_parameters!(simulation::Simulation, event_model)
                 for name in device_names
                     if status_change_countdown_data.values[name, 1] > 1.0
                         starting_count = status_change_countdown_data.values[name, 1]
-                        for i in 1:length(status_change_countdown_data.values)
+                        for i in 1:length(status_change_countdown_data.values[name, :])
                             countdown_val = max(starting_count + 1 - i, 0.0)
                             if countdown_val == 0.0
                                 status_val = 1.0
