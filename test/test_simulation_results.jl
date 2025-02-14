@@ -306,9 +306,6 @@ function test_simulation_results(
                     ThermalStandard,
                 )],
             )
-            @test !isempty(
-                sim.internal.store.dm_data[:ED].variables[PowerFlowLossFactors],
-            )
             @test !isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
             empty!(sim.internal.store)
             @test isempty(sim.internal.store.dm_data[:ED].variables)
@@ -351,10 +348,6 @@ function test_decision_problem_results_values(
     for v in values(p_thermal_standard_ed)
         @test size(v) == (12, 6)
     end
-
-    loss_factors = read_aux_variable(results_ed, PowerFlowLossFactors)
-    @test length(keys(loss_factors)) == 48
-    println("loss factors: $loss_factors")
 
     ren_dispatch_params =
         read_parameter(results_ed, ActivePowerTimeSeriesParameter, RenewableDispatch)
@@ -1037,6 +1030,7 @@ end
             power_flow_evaluation =
             ACPowerFlow(;
                 exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
+                calc_loss_factors = true,
             ),
         ),
     )
@@ -1050,6 +1044,24 @@ end
     )
     first_result = first(thermal_results)
     last_result = last(thermal_results)
+
+    println(list_aux_variable_keys(results_ed))
+
+    loss_factors = read_aux_variable(results_ed, PowerFlowLossFactors, ACBus)
+
+    # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
+    @test loss_factors !== nothing
+
+    loss_factors = first(
+        values(
+            PSI.read_results_with_keys(results_ed,
+                [PSI.AuxVarKey(PowerFlowLossFactors, ACBus)]),
+        ),
+    )
+
+    # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
+    @test loss_factors !== nothing
+    @test nrow(loss_factors) == 576
 
     @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
     first_export = load_pf_export(pf_path, "export_1_1")
