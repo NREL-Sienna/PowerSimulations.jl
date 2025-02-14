@@ -320,7 +320,7 @@ export FixValueParameter
 
 # Event Parameters
 export AvailableStatusParameter
-export AvailableStatusChangeParameter
+export AvailableStatusChangeCountdownParameter
 
 # Expressions
 export SystemBalanceExpressions

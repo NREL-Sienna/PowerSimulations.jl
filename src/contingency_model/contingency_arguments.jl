@@ -13,7 +13,7 @@ function add_event_arguments!(
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
         parameter_type = get_parameter_type(event_type, event_model, U)
-        for p_type in [AvailableStatusChangeParameter, parameter_type]
+        for p_type in [AvailableStatusChangeCountdownParameter, parameter_type]
             add_parameters!(
                 container,
                 p_type,

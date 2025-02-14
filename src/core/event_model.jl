@@ -68,20 +68,40 @@ get_condition_function(c::DiscreteEventCondition) = c.condition_function
 
 mutable struct EventModel{D <: PSY.Contingency, B <: AbstractEventCondition}
     condition::B
+    timeseries_mapping::Dict{Symbol, Union{String, Nothing}}
     attribute_device_map::Dict{Symbol, Dict{Base.UUID, Dict{DataType, Set{String}}}}
     attributes::Dict{String, Any}
 
     function EventModel(
-        ::Type{D},
+        contingency_type::Type{D},
         condition::B;
+        timeseries_mapping = get_empty_timeseries_mapping(contingency_type),
         attributes = Dict{String, Any}(),
     ) where {D <: PSY.Contingency, B <: AbstractEventCondition}
         new{D, B}(
             condition,
+            timeseries_mapping,
             Dict{Symbol, Dict{Base.UUID, Dict{DataType, Set{String}}}}(),
             attributes,
         )
     end
+end
+
+function get_empty_timeseries_mapping(
+    ::Type{PSY.TimeSeriesForcedOutage},
+) where {D <: PSY.Contingency}
+    return Dict{Symbol, Union{String, Nothing}}(
+        :availability => nothing,
+    )
+end
+
+function get_empty_timeseries_mapping(
+    ::Type{PSY.GeometricDistributionForcedOutage},
+) where {D <: PSY.Contingency}
+    return Dict{Symbol, Union{String, Nothing}}(
+        :mean_time_to_recovery => nothing,
+        :outage_transition_probability => nothing,
+    )
 end
 
 get_event_type(

@@ -212,6 +212,37 @@ function _add_event_to_model(
     return
 end
 
+function _validate_event_timeseries_data(
+    sys::PSY.System,
+    event::PSY.Contingency,
+    event_model::EventModel,
+)
+    devices_with_attribute = PSY.get_components(sys, event)
+    for (k, v) in event_model.timeseries_mapping
+        if v !== nothing
+            try
+                PSY.get_time_series(
+                    IS.SingleTimeSeries,
+                    event,
+                    v,
+                )
+            catch e
+                devices_with_attribute = PSY.get_components(sys, event)
+                device_names_with_attribute =
+                    [PSY.get_name(d) for d in devices_with_attribute]
+                error(
+                    "Event $event belonging to devices $device_names_with_attribute missing time series with name $v",
+                )
+            end
+        end
+        if !haskey(get_empty_timeseries_mapping(typeof(event)), k)
+            error(
+                "Key $k passed as part of event time series mapping does not correspond to a parameter.",
+            )
+        end
+    end
+end
+
 function _add_model_to_event_map!(
     model::OperationModel,
     sys::PSY.System,
@@ -231,6 +262,7 @@ function _add_model_to_event_map!(
             Dict{Base.UUID, Dict{DataType, Set{String}}}()
         event_model.attribute_device_map[model_name]
         for event in PSY.get_supplemental_attributes(event_type, sys)
+            _validate_event_timeseries_data(sys, event, event_model)
             event_uuid = PSY.IS.get_uuid(event)
             @debug "Attaching $event_uuid to $model_name"
             devices_with_attribute = PSY.get_components(sys, event)

@@ -166,8 +166,6 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
-    @error "$attr"
-    @show jump_value.(param_array)
     return jump_value.(param_array)
 end
 
@@ -342,7 +340,7 @@ struct AvailableStatusParameter <: EventParameter end
 """
 Parameter to record that the component changed in the availability status
 """
-struct AvailableStatusChangeParameter <: EventParameter end
+struct AvailableStatusChangeCountdownParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 should_write_resulting_value(::Type{<:EventParameter}) = true
