@@ -239,6 +239,13 @@ See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 struct PieceWiseLinearBlockOfferConstraint <: ConstraintType end
 
 """
+Struct to create the PieceWiseLinearBlockDecrementalOfferConstraint associated with a specified variable.
+
+See [Piecewise linear cost functions](@ref pwl_cost) for more information.
+"""
+struct PieceWiseLinearBlockDecrementalOfferConstraint <: ConstraintType end
+
+"""
 Struct to create the PieceWiseLinearUpperBoundConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
