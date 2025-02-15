@@ -22,6 +22,8 @@ export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
 export AreaPTDFPowerModel
+export SecurityConstrainedPTDFPowerModel
+export SecurityConstrainedAreaPTDFPowerModel
 
 ######## Device Models ########
 export DeviceModel
@@ -351,9 +353,11 @@ import PowerSystems
 import InfrastructureSystems
 import PowerFlows
 import PowerNetworkMatrices
-import PowerNetworkMatrices: PTDF, VirtualPTDF
+import PowerNetworkMatrices: PTDF, VirtualPTDF, LODF, VirtualLODF
 export PTDF
 export VirtualPTDF
+export LODF
+export VirtualLODF
 import InfrastructureSystems: @assert_op, list_recorder_events, get_name
 
 # IS.Optimization imports: functions that have PSY methods that IS needs to access (therefore necessary)

@@ -1,5 +1,6 @@
 struct AbsoluteValueConstraint <: ConstraintType end
 """
+
 Struct to create the constraint for starting up ThermalMultiStart units.
 For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
 
@@ -400,4 +401,10 @@ struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConst
 struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
+
 struct OutageConstraint <: EventConstraint end
+
+"""
+add docstring
+"""
+struct OutageActivePowerFlowsConstraint <: ConstraintType end
