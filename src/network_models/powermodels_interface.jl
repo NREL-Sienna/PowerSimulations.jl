@@ -9,7 +9,7 @@
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
-const INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS = [
+const INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS = [
     PM.SparseSDPWRMPowerModel,
 ]
 
@@ -250,12 +250,12 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
 
     network_model = get_network_model(template)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         ac_bus_numbers =
             PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
-        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
+        bus_reduction_map = PNM.get_bus_reduction_map(network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
 
@@ -290,12 +290,12 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
 
     network_model = get_network_model(template)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         ac_bus_numbers =
             PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
-        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
+        bus_reduction_map = PNM.get_bus_reduction_map(network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
 
