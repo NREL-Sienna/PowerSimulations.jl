@@ -242,6 +242,10 @@ export RateofChangeConstraintSlackDown
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export PowerFlowVoltageAngle
+export PowerFlowVoltageMagnitude
+export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom
+export PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom
 
 # Constraints
 export AbsoluteValueConstraint
@@ -347,6 +351,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
+import PowerFlows
 import PowerNetworkMatrices
 import PowerNetworkMatrices: PTDF, VirtualPTDF, LODF, VirtualLODF
 export PTDF
@@ -460,6 +465,7 @@ const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const MOPFM = MOI.FileFormats.Model
 const PNM = PowerNetworkMatrices
+const PFS = PowerFlows
 const TS = TimeSeries
 
 ################################################################################
@@ -503,6 +509,7 @@ include("core/results_by_time.jl")
 
 # Order Required
 include("operation/problem_template.jl")
+include("core/power_flow_data_wrapper.jl")
 include("core/optimization_container.jl")
 include("core/store_common.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
@@ -597,6 +604,7 @@ include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 include("network_models/hvdc_networks.jl")
+include("network_models/power_flow_evaluation.jl")
 
 include("initial_conditions/initialization.jl")
 

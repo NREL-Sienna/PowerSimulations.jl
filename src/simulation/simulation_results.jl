@@ -211,7 +211,6 @@ Return SimulationProblemResults corresponding to a SimulationResults
    the units system with which to populate the results' system, if any (requires
    `populate_system=true`)
 """
-
 function get_decision_problem_results(
     results::SimulationResults,
     problem::String;

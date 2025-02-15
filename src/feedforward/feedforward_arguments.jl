@@ -23,6 +23,23 @@ function add_feedforward_arguments!(
     return
 end
 
+function add_feedforward_arguments!(
+    ::OptimizationContainer,
+    model::ServiceModel,
+    ::PSY.TransmissionInterface,
+)
+    # Currently we do not support feedforwards for TransmissionInterface
+    ffs = get_feedforwards(model)
+    if !isempty(ffs)
+        throw(
+            ArgumentError(
+                "TransmissionInterface data types currently do not support feedforwards.",
+            ),
+        )
+    end
+    return
+end
+
 function _add_feedforward_arguments!(
     container::OptimizationContainer,
     model::DeviceModel{T, U},

@@ -118,6 +118,10 @@ function add_variables!(
         ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
         if ref_bus_from != ref_bus_to
             push!(inter_network_branches, d)
+        else
+            @warn(
+                "HVDC Line $(PSY.get_name(d)) is in the same subnetwork, so the line will not be modeled."
+            )
         end
     end
     if !isempty(inter_network_branches)
@@ -134,12 +138,12 @@ function branch_rate_bounds!(
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
 
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    removed_branches_names = PNM.get_removed_branches(network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
-        if name ∈ radial_branches_names
+        if name ∈ removed_branches_names
             continue
         end
         for t in get_time_steps(container)
@@ -162,12 +166,12 @@ function branch_rate_bounds!(
     ]
 
     time_steps = get_time_steps(container)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    removed_branches_names = PNM.get_removed_branches(network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
-        if name ∈ radial_branches_names
+        if name ∈ removed_branches_names
             continue
         end
         for t in time_steps, var in vars
@@ -353,11 +357,11 @@ function add_constraints!(
     V <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         device_names = [PSY.get_name(d) for d in devices]
     else
-        device_names = PNM.get_meshed_branches(radial_network_reduction)
+        device_names = PNM.get_retained_branches(network_reduction)  #Don't need added branches here? 
     end
 
     con_lb =
@@ -389,7 +393,7 @@ function add_constraints!(
 
     for device in devices
         ci_name = PSY.get_name(device)
-        if ci_name ∈ PNM.get_radial_branches(radial_network_reduction)
+        if ci_name ∈ PNM.get_removed_branches(network_reduction)
             continue
         end
         limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
@@ -440,12 +444,12 @@ function _constraint_without_slacks!(
     constraint::JuMPConstraintArray,
     rating_data::Vector{Tuple{String, Float64}},
     time_steps::UnitRange{Int64},
-    radial_branches_names::Set{String},
+    removed_branches_names::Set{String},
     var1::JuMPVariableArray,
     var2::JuMPVariableArray,
 )
     for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ radial_branches_names
+        if branch_name ∈ removed_branches_names
             continue
         end
         for t in time_steps
@@ -463,13 +467,13 @@ function _constraint_with_slacks!(
     constraint::JuMPConstraintArray,
     rating_data::Vector{Tuple{String, Float64}},
     time_steps::UnitRange{Int64},
-    radial_branches_names::Set{String},
+    removed_branches_names::Set{String},
     var1::JuMPVariableArray,
     var2::JuMPVariableArray,
     slack_ub::JuMPVariableArray,
 )
     for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ radial_branches_names
+        if branch_name ∈ removed_branches_names
             continue
         end
         for t in time_steps
@@ -507,8 +511,8 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    removed_branches_names = PNM.get_removed_branches(network_reduction)
 
     use_slacks = get_use_slacks(device_model)
     if use_slacks
@@ -518,7 +522,7 @@ function add_constraints!(
             constraint,
             rating_data,
             time_steps,
-            radial_branches_names,
+            removed_branches_names,
             var1,
             var2,
             slack_ub,
@@ -530,7 +534,7 @@ function add_constraints!(
         constraint,
         rating_data,
         time_steps,
-        radial_branches_names,
+        removed_branches_names,
         var1,
         var2,
     )
@@ -562,11 +566,11 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    removed_branches_names = PNM.get_removed_branches(network_reduction)
 
     for r in rating_data
-        if r[1] ∈ radial_branches_names
+        if r[1] ∈ removed_branches_names
             continue
         end
         for t in time_steps
@@ -940,7 +944,7 @@ function objective_function!(
 ) where {T <: PSY.ACBranch}
     if get_use_slacks(device_model)
         variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
-        # Use device names because there might be a radial network reduction
+        # Use device names because there might be a network reduction
         for name in axes(variable_up, 1)
             for t in get_time_steps(container)
                 add_to_objective_invariant_expression!(
@@ -962,7 +966,7 @@ function objective_function!(
     if get_use_slacks(device_model)
         variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         variable_dn = get_variable(container, FlowActivePowerSlackLowerBound(), T)
-        # Use device names because there might be a radial network reduction
+        # Use device names because there might be a network reduction
         for name in axes(variable_up, 1)
             for t in get_time_steps(container)
                 add_to_objective_invariant_expression!(

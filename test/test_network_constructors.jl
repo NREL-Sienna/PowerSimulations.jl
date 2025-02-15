@@ -632,7 +632,6 @@ end
 # These models are easier to test due to their lossless nature
 @testset "StandardPTDF/DCPPowerModel Radial Branches Test" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
-
     for net_model in [DCPPowerModel, PTDFPowerModel]
         template_uc = template_unit_commitment(;
             network = NetworkModel(net_model;
@@ -693,10 +692,74 @@ end
     end
 end
 
+@testset "StandardPTDF with Ward reduction Test" begin
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
+    net_model = PTDFPowerModel
+    wr = PNM.get_ward_reduction(new_sys, [1, 2, 3, 4, 5]) #This is currently equivalent to the radial reduciton 
+    template_uc = template_unit_commitment(;
+        network = NetworkModel(net_model;
+            PTDF_matrix = PTDF(new_sys; network_reduction = wr),
+            use_slacks = false,
+        ),
+    )
+    template_uc.network_model.PTDF_matrix.network_reduction.reduction_type
+    template_uc.network_model.network_reduction
+    thermal_model = ThermalStandardUnitCommitment
+    set_device_model!(template_uc, ThermalStandard, thermal_model)
+
+    ##### Solve Reduced Model ####
+    solver = HiGHS_optimizer
+    uc_model_red = DecisionModel(
+        template_uc,
+        new_sys;
+        optimizer = solver,
+        name = "UC_RED",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_red)
+
+    res_red = OptimizationProblemResults(uc_model_red)
+
+    flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+    line_names = DataFrames.names(flow_lines)[2:end]
+
+    ##### Solve Original Model ####
+    template_uc_orig = template_unit_commitment(;
+        network = NetworkModel(net_model;
+            reduce_radial_branches = false,
+            use_slacks = false,
+        ),
+    )
+    set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
+
+    uc_model_orig = DecisionModel(
+        template_uc_orig,
+        new_sys;
+        optimizer = solver,
+        name = "UC_ORIG",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_orig)
+
+    res_orig = OptimizationProblemResults(uc_model_orig)
+
+    flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
+
+    for line in line_names
+        @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
+    end
+end
+
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
-        if network ∈ PSI.INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
+        if network ∈ PSI.INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS
             continue
         end
         template = get_thermal_dispatch_template_network(
