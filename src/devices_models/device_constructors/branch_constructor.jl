@@ -425,6 +425,8 @@ function construct_device!(
             ),
         )
     end
+    devices = get_available_components(device_model, sys)
+    add_feedforward_arguments!(container, device_model, devices)
     return
 end
 
@@ -452,7 +454,7 @@ function construct_device!(
         network_model,
     )
     add_constraint_dual!(container, sys, device_model)
-
+    add_feedforward_constraints!(container, device_model, devices)
     return
 end
 
@@ -466,6 +468,7 @@ function construct_device!(
     devices = get_available_components(device_model, sys)
     branch_rate_bounds!(container, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
+    add_feedforward_constraints!(container, device_model, devices)
     return
 end
 
@@ -494,6 +497,7 @@ function construct_device!(
             model,
             network_model,
         )
+        add_feedforward_arguments!(container, model, devices)
     end
     return
 end
@@ -516,17 +520,20 @@ function construct_device!(
             network_model,
         )
         add_constraint_dual!(container, sys, model)
+        add_feedforward_constraints!(container, model, devices)
     end
     return
 end
 
 function construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{T, HVDCTwoTerminalUnbounded},
+    device_model::DeviceModel{T, HVDCTwoTerminalUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
+    devices = get_available_components(device_model, sys)
+    add_feedforward_arguments!(container, device_model, devices)
     return
 end
 
@@ -537,7 +544,43 @@ function construct_device!(
     device_model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
 )
+    devices = get_available_components(device_model, sys)
     add_constraint_dual!(container, sys, device_model)
+    add_feedforward_constraints!(container, device_model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, HVDCTwoTerminalUnbounded},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    devices = get_available_components(model, sys)
+    add_variables!(container, FlowActivePowerVariable, devices, HVDCTwoTerminalUnbounded())
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        FlowActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{CopperPlatePowerModel},
+)
+    devices = get_available_components(device_model, sys)
+    add_constraint_dual!(container, sys, device_model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -559,6 +602,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -570,17 +614,21 @@ function construct_device!(
     model::DeviceModel{<:TwoTerminalHVDCTypes, HVDCTwoTerminalUnbounded},
     network_model::NetworkModel{<:AbstractPTDFModel},
 )
+    devices = get_available_components(model, sys)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
 function construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
-    ::DeviceModel{T, HVDCTwoTerminalLossless},
+    model::DeviceModel{T, HVDCTwoTerminalLossless},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: TwoTerminalHVDCTypes}
+    devices = get_available_components(model, sys)
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -594,6 +642,7 @@ function construct_device!(
     devices = get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -615,6 +664,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -631,6 +681,7 @@ function construct_device!(
     devices = get_available_components(model, sys)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -680,6 +731,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -694,6 +746,8 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -751,6 +805,7 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraintFromTo, devices, model, network_model)
     add_constraints!(container, FlowRateConstraintToFrom, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 
@@ -795,6 +850,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_arguments!(container, model, devices)
     return
 end
 
@@ -819,6 +875,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_feedforward_constraints!(container, model, devices)
     return
 end
 

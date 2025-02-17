@@ -28,8 +28,8 @@ get_variable_upper_bound(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::Abstr
 ############## ReactivePowerVariable, ThermalGen ####################
 get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power(d)
-get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
-get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
+get_variable_lower_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power_limits(d).min
+get_variable_upper_bound(::ReactivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_reactive_power_limits(d).max
 
 ############## OnVariable, ThermalGen ####################
 get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
@@ -49,7 +49,18 @@ get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFo
 ############## ColdStartVariable, WarmStartVariable, HotStartVariable ############
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
+############## SlackVariables, ThermalGen ####################
+# LB Slack #
+get_variable_binary(::RateofChangeConstraintSlackDown, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
+get_variable_lower_bound(::RateofChangeConstraintSlackDown, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+# UB Slack #
+get_variable_binary(::RateofChangeConstraintSlackUp, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
+get_variable_lower_bound(::RateofChangeConstraintSlackUp, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
+
+
 ########################### Parameter related set functions ################################
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_max_active_power(d)
+get_multiplier_value(::FuelCostParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_parameter_multiplier(::VariableValueParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_expression_multiplier(::OnStatusParameter, ::ActivePowerRangeExpressionUB, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
@@ -75,11 +86,14 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 
 ########################Objective Function##################################################
 # TODO: Decide what is the cost for OnVariable, if fixed or constant term in variable
-function proportional_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return onvar_cost(cost, S, T, U) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
+function proportional_cost(container::OptimizationContainer, cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
+    return onvar_cost(container, cost, S, T, U, t) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
 end
 
 proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
+
+proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{RateofChangeConstraintSlackUp, RateofChangeConstraintSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
+
 
 has_multistart_variables(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=true
@@ -111,16 +125,16 @@ variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.Ther
 """
 Theoretical Cost at power output zero. Mathematically is the intercept with the y-axis
 """
-function onvar_cost(cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation)
-    return _onvar_cost(PSY.get_variable(cost), d)
+function onvar_cost(container::OptimizationContainer, cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
+    return _onvar_cost(container, PSY.get_variable(cost), d, t)
 end
 
-function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen, ::Int)
     # OnVariableCost is included in the Point itself for PiecewisePointCurve
     return 0.0
 end
 
-function _onvar_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+function _onvar_cost(::OptimizationContainer, cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen, ::Int)
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
     # Always in \$/h
@@ -128,31 +142,35 @@ function _onvar_cost(cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.Co
     return constant_term
 end
 
-function _onvar_cost(cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen, ::Int)
     # Input at min is used to transform to InputOutputCurve
     return 0.0
 end
 
-function _onvar_cost(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen)
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen, ::Int)
     # OnVariableCost is included in the Point itself for PiecewisePointCurve
     return 0.0
 end
 
-function _onvar_cost(cost_function::PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen)
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen, ::Int)
     # Input at min is used to transform to InputOutputCurve
     return 0.0
 end
 
-function _onvar_cost(cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen)
+function _onvar_cost(container::OptimizationContainer, cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::T, t::Int) where {T <: PSY.ThermalGen}
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
-    # In Unit/h (unit typically in )
+    # In Unit/h
     constant_term = PSY.get_constant_term(cost_component)
     fuel_cost = PSY.get_fuel_cost(cost_function)
     if typeof(fuel_cost) <: Float64
         return constant_term * fuel_cost
     else
-        error("Time series not implemented yet")
+        parameter_array = get_parameter_array(container, FuelCostParameter(), T)
+        parameter_multiplier =
+            get_parameter_multiplier_array(container, FuelCostParameter(), T)
+        name = PSY.get_name(d)
+        return constant_term * parameter_array[name, t] * parameter_multiplier[name, t]
     end
 end
 
@@ -193,7 +211,9 @@ function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ThermalGen, V <: Union{FixedOutput, AbstractThermalFormulation}}
-    return Dict{Type{<:TimeSeriesParameter}, String}()
+    return Dict{Any, String}(
+        FuelCostParameter => "fuel_cost",
+    )
 end
 
 function get_default_attributes(
@@ -440,6 +460,30 @@ function _get_data_for_range_ic(
         ini_conds[idx, 2] = initial_conditions_status[ix]
     end
     return ini_conds
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerVariableTimeSeriesLimitsConstraint},
+    U::Type{<:Union{ActivePowerVariable, ActivePowerRangeExpressionUB}},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {
+    V <: PSY.ThermalGen,
+    W <: AbstractThermalUnitCommitment,
+    X <: PM.AbstractPowerModel,
+}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
+    return
 end
 
 """
@@ -1398,33 +1442,41 @@ end
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalUnitCommitment}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     add_start_up_cost!(container, StartVariable(), devices, U())
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
+    if get_use_slacks(device_model)
+        add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
+        add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
+    end
     return
 end
 
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractCompactUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
     add_start_up_cost!(container, StartVariable(), devices, U())
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
+    if get_use_slacks(device_model)
+        add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
+        add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
+    end
     return
 end
 
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    ::DeviceModel{PSY.ThermalMultiStart, U},
+    device_model::DeviceModel{PSY.ThermalMultiStart, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {U <: ThermalMultiStartUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
@@ -1433,26 +1485,38 @@ function objective_function!(
     end
     add_shut_down_cost!(container, StopVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
+    if get_use_slacks(device_model)
+        add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
+        add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
+    end
     return
 end
 
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: AbstractThermalDispatchFormulation}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
+    if get_use_slacks(device_model)
+        add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
+        add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
+    end
     return
 end
 
 function objective_function!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, U},
+    device_model::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ThermalGen, U <: ThermalCompactDispatch}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
+    if get_use_slacks(device_model)
+        add_proportional_cost!(container, RateofChangeConstraintSlackUp(), devices, U())
+        add_proportional_cost!(container, RateofChangeConstraintSlackDown(), devices, U())
+    end
     return
 end
 

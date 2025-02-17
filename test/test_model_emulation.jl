@@ -7,7 +7,7 @@
         force_build = true,
     )
 
-    model = EmulationModel(template, c_sys5; optimizer = GLPK_optimizer)
+    model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
@@ -20,7 +20,7 @@
         force_build = true,
     )
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
-    model = EmulationModel(template, c_sys5_uc_re; optimizer = GLPK_optimizer)
+    model = EmulationModel(template, c_sys5_uc_re; optimizer = HiGHS_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -315,7 +315,7 @@ end
     # Deserialize with a different optimizer.
     @test_logs (:warn, r"Original solver was .* new solver is") match_mode = :any EmulationModel(
         path,
-        GLPK_optimizer,
+        HiGHS_optimizer,
     )
 end
 

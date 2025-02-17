@@ -43,6 +43,8 @@ using PowerSimulations
 using PowerSystems
 ```
 
+For information on using the package, see the [stable documentation](https://nrel-sienna.github.io/PowerSimulations.jl/stable/). Use the [in-development documentation](https://nrel-sienna.github.io/PowerSimulations.jl/dev/) for the version of the documentation which contains the unreleased features.
+
 ## Development
 
 Contributions to the development and enhancement of PowerSimulations is welcome. Please see [CONTRIBUTING.md](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/CONTRIBUTING.md) for code contribution guidelines.

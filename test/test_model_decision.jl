@@ -5,7 +5,7 @@
 
     @test_throws MethodError DecisionModel(template, c_sys5; bad_kwarg = 10)
 
-    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
@@ -15,14 +15,14 @@
             NetworkModel(CopperPlatePowerModel; use_slacks = true),
         ),
         c_sys5_re;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
     )
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     model = DecisionModel(
         get_thermal_dispatch_template_network(),
         c_sys5;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
     )
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -35,7 +35,7 @@
         get_thermal_dispatch_template_network(),
         c_sys5,
         my_model;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
     )
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -49,10 +49,10 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    UC = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
-    @test solve!(UC; optimizer = GLPK_optimizer) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    @test solve!(UC; optimizer = HiGHS_optimizer) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(UC)
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
@@ -98,7 +98,7 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     container = PSI.get_optimization_container(model)
@@ -236,6 +236,13 @@ end
     @test isa(get_realized_timestamps(res), StepRange{DateTime})
     @test isa(IS.Optimization.get_source_data(res), PSY.System)
     @test length(get_timestamps(res)) == 24
+
+    PSY.set_available!(first(get_components(ThermalStandard, get_system(res))), false)
+    @test collect(get_components(ThermalStandard, res)) ==
+          collect(get_available_components(ThermalStandard, get_system(res)))
+    sel = PSY.make_selector(ThermalStandard; groupby = :each)
+    @test collect(get_groups(sel, res)) ==
+          collect(get_available_groups(sel, get_system(res)))
 end
 
 @testset "Solve DecisionModelModel with auto-build" begin
@@ -245,10 +252,10 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    UC = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test_throws ErrorException solve!(UC)
-    @test solve!(UC; optimizer = GLPK_optimizer, output_dir = output_dir) ==
+    @test solve!(UC; optimizer = HiGHS_optimizer, output_dir = output_dir) ==
           PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
@@ -357,7 +364,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     valid_bounds =
         (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 9.930296584))
-    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
@@ -387,7 +394,7 @@ end
     template = get_template_basic_uc_simulation()
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc")
     valid_bounds = (min = 0.0, max = 6.0)
-    model = DecisionModel(template, c_sys5; optimizer = GLPK_optimizer)
+    model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
@@ -494,7 +501,7 @@ end
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
     )
-    optimizer = GLPK_optimizer
+    optimizer = HiGHS_optimizer
 
     # Construct and build with default behavior that builds initial conditions.
     model = DecisionModel(template, sys; optimizer = optimizer)
@@ -575,7 +582,7 @@ end
     UC = DecisionModel(
         template,
         c_sys5;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
         detailed_optimizer_stats = true,
     )
     output_dir = mktempdir(; cleanup = true)
@@ -601,7 +608,7 @@ end
     UC = DecisionModel(
         template,
         c_sys5;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
         detailed_optimizer_stats = true,
     )
     output_dir = mktempdir(; cleanup = true)
@@ -645,7 +652,7 @@ end
     UC = DecisionModel(
         template,
         c_sys5;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
         detailed_optimizer_stats = true,
     )
     output_dir = mktempdir(; cleanup = true)
@@ -672,7 +679,7 @@ end
     model = DecisionModel(
         template,
         c_sys5_bat;
-        optimizer = GLPK_optimizer,
+        optimizer = HiGHS_optimizer,
     )
     @test build!(model; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED

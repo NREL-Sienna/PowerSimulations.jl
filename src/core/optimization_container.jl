@@ -35,8 +35,12 @@ function get_objective_expression(v::ObjectiveFunction)
     else
         # JuMP doesn't support expression conversion from Affn to QuadExpressions
         if isa(v.invariant_terms, JuMP.GenericQuadExpr)
-            return JuMP.add_to_expression!(v.invariant_terms, v.variant_terms)
+            # Avoid mutation of invariant term
+            temp_expr = JuMP.QuadExpr()
+            JuMP.add_to_expression!(temp_expr, v.invariant_terms)
+            return JuMP.add_to_expression!(temp_expr, v.variant_terms)
         else
+            # This will mutate the variant terms, but these are reseted at each step.
             return JuMP.add_to_expression!(v.variant_terms, v.invariant_terms)
         end
     end
@@ -78,6 +82,7 @@ mutable struct OptimizationContainer <: IS.Optimization.AbstractOptimizationCont
     built_for_recurrent_solves::Bool
     metadata::IS.Optimization.OptimizationContainerMetadata
     default_time_series_type::Type{<:PSY.TimeSeriesData}
+    power_flow_evaluation_data::Vector{PowerFlowEvaluationData}
 end
 
 function OptimizationContainer(
@@ -120,6 +125,7 @@ function OptimizationContainer(
         false,
         IS.Optimization.OptimizationContainerMetadata(),
         T,
+        Vector{PowerFlowEvaluationData}[],
     )
 end
 
@@ -157,6 +163,8 @@ get_jump_model(container::OptimizationContainer) = container.JuMPmodel
 get_metadata(container::OptimizationContainer) = container.metadata
 get_optimizer_stats(container::OptimizationContainer) = container.optimizer_stats
 get_parameters(container::OptimizationContainer) = container.parameters
+get_power_flow_evaluation_data(container::OptimizationContainer) =
+    container.power_flow_evaluation_data
 get_resolution(container::OptimizationContainer) = get_resolution(container.settings)
 get_settings(container::OptimizationContainer) = container.settings
 get_time_steps(container::OptimizationContainer) = container.time_steps
@@ -169,6 +177,12 @@ is_synchronized(container::OptimizationContainer) =
     container.objective_function.synchronized
 set_time_steps!(container::OptimizationContainer, time_steps::UnitRange{Int64}) =
     container.time_steps = time_steps
+
+function reset_power_flow_is_solved!(container::OptimizationContainer)
+    for pf_e_data in get_power_flow_evaluation_data(container)
+        pf_e_data.is_solved = false
+    end
+end
 
 function has_container_key(
     container::OptimizationContainer,
@@ -749,6 +763,9 @@ function build_impl!(
     @debug "Total operation count $(PSI.get_jump_model(container).operator_counter)" _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Power Flow Initialization" begin
+        add_power_flow_data!(container, get_power_flow_evaluation(transmission_model), sys)
+    end
     check_optimization_container(container)
     return
 end
@@ -800,6 +817,8 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
         end
     end
 
+    # Order is important because if a dual is needed then it could move the results to the
+    # temporary primal container
     _, optimizer_stats.timed_calculate_aux_variables =
         @timed calculate_aux_variables!(container, system)
 
@@ -809,9 +828,7 @@ function solve_impl!(container::OptimizationContainer, system::PSY.System)
     _, optimizer_stats.timed_calculate_dual_variables =
         @timed calculate_dual_variables!(container, system, is_milp(container))
 
-    status = RunStatus.SUCCESSFULLY_FINALIZED
-
-    return status
+    return RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 function compute_conflict!(container::OptimizationContainer)
@@ -1438,11 +1455,18 @@ function add_expression_container!(
     ::T,
     ::Type{U},
     axs...;
+    expr_type = GAE,
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
-    return _add_expression_container!(container, expr_key, GAE, axs...; sparse = sparse)
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
 end
 
 function add_expression_container!(
@@ -1636,8 +1660,26 @@ function deserialize_key(container::OptimizationContainer, name::AbstractString)
 end
 
 function calculate_aux_variables!(container::OptimizationContainer, system::PSY.System)
-    aux_vars = get_aux_variables(container)
-    for key in keys(aux_vars)
+    aux_var_keys = keys(get_aux_variables(container))
+    pf_aux_var_keys = filter(is_from_power_flow ∘ get_entry_type, aux_var_keys)
+    non_pf_aux_var_keys = setdiff(aux_var_keys, pf_aux_var_keys)
+    # We should only have power flow aux vars if we have power flow evaluators
+    @assert isempty(pf_aux_var_keys) || !isempty(get_power_flow_evaluation_data(container))
+
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Power Flow Evaluation" begin
+        reset_power_flow_is_solved!(container)
+        # Power flow-related aux vars get calculated once per power flow
+        for (i, pf_e_data) in enumerate(get_power_flow_evaluation_data(container))
+            @debug "Processing power flow $i"
+            solve_powerflow!(pf_e_data, container)
+            for key in pf_aux_var_keys
+                calculate_aux_variable_value!(container, key, system)
+            end
+        end
+    end
+
+    # Other aux vars get calculated once at the end
+    for key in non_pf_aux_var_keys
         calculate_aux_variable_value!(container, key, system)
     end
     return RunStatus.SUCCESSFULLY_FINALIZED
@@ -1914,3 +1956,14 @@ function get_time_series_initial_values!(
     )
     return ts_values
 end
+
+lookup_value(container::OptimizationContainer, key::VariableKey) =
+    get_variable(container, key)
+lookup_value(container::OptimizationContainer, key::ParameterKey) =
+    calculate_parameter_values(get_parameter(container, key))
+lookup_value(container::OptimizationContainer, key::AuxVarKey) =
+    get_aux_variable(container, key)
+lookup_value(container::OptimizationContainer, key::ExpressionKey) =
+    get_expression(container, key)
+lookup_value(container::OptimizationContainer, key::ConstraintKey) =
+    get_constraint(container, key)

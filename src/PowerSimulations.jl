@@ -260,11 +260,17 @@ export AuxBilinearConverterVariableFrom
 export AuxBilinearSquaredConverterVariableFrom
 export AuxBilinearConverterVariableTo
 export AuxBilinearSquaredConverterVariableTo
+export RateofChangeConstraintSlackUp
+export RateofChangeConstraintSlackDown
 
 # Auxiliary variables
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export PowerFlowVoltageAngle
+export PowerFlowVoltageMagnitude
+export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom
+export PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom
 
 # Constraints
 export AbsoluteValueConstraint
@@ -361,6 +367,7 @@ export EmergencyUp
 export EmergencyDown
 export RawACE
 export ProductionCostExpression
+export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export ReceivedHVDCActivePowerFromExpression
@@ -382,6 +389,7 @@ import LinearAlgebra
 import JSON3
 import PowerSystems
 import InfrastructureSystems
+import PowerFlows
 import PowerNetworkMatrices
 import PowerNetworkMatrices: PTDF, VirtualPTDF
 export PTDF
@@ -430,8 +438,14 @@ import InfrastructureSystems.Optimization:
 import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
     encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
     convert_result_to_natural_units, to_matrix, get_store_container_type
+import InfrastructureSystems.Optimization: get_source_data
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
+
+# PowerSystems imports
+import PowerSystems:
+    get_components, get_component, get_available_components, get_available_component,
+    get_groups, get_available_groups
 
 export get_name
 export get_model_base_power
@@ -487,6 +501,7 @@ const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const MOPFM = MOI.FileFormats.Model
 const PNM = PowerNetworkMatrices
+const PFS = PowerFlows
 const TS = TimeSeries
 
 ################################################################################
@@ -530,6 +545,7 @@ include("core/results_by_time.jl")
 
 # Order Required
 include("operation/problem_template.jl")
+include("core/power_flow_data_wrapper.jl")
 include("core/optimization_container.jl")
 include("core/store_common.jl")
 include("initial_conditions/initial_condition_chronologies.jl")
@@ -567,6 +583,7 @@ include("simulation/simulation_store_params.jl")
 include("simulation/hdf_simulation_store.jl")
 include("simulation/in_memory_simulation_store.jl")
 include("simulation/simulation_problem_results.jl")
+include("simulation/get_components_interface.jl")
 include("simulation/decision_model_simulation_results.jl")
 include("simulation/emulation_model_simulation_results.jl")
 include("simulation/realized_meta.jl")
@@ -596,7 +613,7 @@ include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
 
 # Device Modeling components
-include("devices_models/devices/interfaces.jl")
+include("devices_models/devices/default_interface_methods.jl")
 include("devices_models/devices/common/add_to_expression.jl")
 include("devices_models/devices/common/set_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
@@ -623,6 +640,7 @@ include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")
 include("network_models/area_balance_model.jl")
 include("network_models/hvdc_networks.jl")
+include("network_models/power_flow_evaluation.jl")
 
 include("initial_conditions/initialization.jl")
 

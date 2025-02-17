@@ -488,6 +488,19 @@ Docs abbreviation: ``p^\\text{ff,lbsl}``
 """
 struct LowerBoundFeedForwardSlack <: VariableType end
 
+"""
+Struct to dispatch the creation of Slack variables for rate of change constraints up limits
+
+Docs abbreviation: ``p^\\text{sl,up}``
+"""
+struct RateofChangeConstraintSlackUp <: VariableType end
+"""
+Struct to dispatch the creation of Slack variables for rate of change constraints down limits
+
+Docs abbreviation: ``p^\\text{sl,dn}``
+"""
+struct RateofChangeConstraintSlackDown <: VariableType end
+
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
@@ -512,6 +525,8 @@ convert_result_to_natural_units(::Type{EnergyVariable}) = true
 convert_result_to_natural_units(::Type{ReactivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerReserveVariable}) = true
 convert_result_to_natural_units(::Type{ServiceRequirementVariable}) = true
+convert_result_to_natural_units(::Type{RateofChangeConstraintSlackUp}) = true
+convert_result_to_natural_units(::Type{RateofChangeConstraintSlackDown}) = true
 convert_result_to_natural_units(::Type{AreaMismatchVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerUpVariable}) = true
 convert_result_to_natural_units(::Type{DeltaActivePowerDownVariable}) = true

@@ -96,7 +96,7 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
-    model = DecisionModel(template, c_sys5_uc; optimizer = cbc_optimizer)
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(model, 984, 0, 576, 216, 168, true)
@@ -521,4 +521,68 @@ end
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(model, 312, 0, 288, 288, 168, false)
+end
+
+@testset "Test Transmission Interface with Feedforwards" begin
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    interface = TransmissionInterface(;
+        name = "west_east",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 400.0),
+    )
+    interface_lines = [
+        get_component(Line, c_sys5_uc, "1"),
+        get_component(Line, c_sys5_uc, "2"),
+        get_component(Line, c_sys5_uc, "6"),
+    ]
+    add_service!(c_sys5_uc, interface, interface_lines)
+    c_sys5_uc2 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    interface2 = TransmissionInterface(;
+        name = "west_east",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 400.0),
+    )
+    interface_lines2 = [
+        get_component(Line, c_sys5_uc2, "1"),
+        get_component(Line, c_sys5_uc2, "2"),
+        get_component(Line, c_sys5_uc2, "6"),
+    ]
+    add_service!(c_sys5_uc2, interface2, interface_lines2)
+
+    template = get_thermal_dispatch_template_network(DCPPowerModel)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer, name = "Sys1"),
+            DecisionModel(template, c_sys5_uc2; optimizer = HiGHS_optimizer, name = "Sys2"),
+        ],
+    )
+
+    feedforward = Dict(
+        "Sys2" => [
+            FixValueFeedforward(;
+                component_type = TransmissionInterface,
+                source = PSI.FlowActivePowerVariable,
+                affected_values = [PSI.FlowActivePowerVariable],
+            ),
+        ],
+    )
+
+    sequence = SimulationSequence(;
+        models = models,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforwards = feedforward,
+    )
+
+    sim = Simulation(;
+        name = "interface-fail",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+    @test_throws ArgumentError build!(sim; console_level = Logging.AboveMaxLevel)
 end

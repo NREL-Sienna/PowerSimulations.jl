@@ -8,6 +8,7 @@ using HydroPowerSimulations
 import PowerSystemCaseBuilder: PSITestSystems
 using PowerNetworkMatrices
 using StorageSystemsSimulations
+using PowerFlows
 
 # Test Packages
 using Test

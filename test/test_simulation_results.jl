@@ -155,21 +155,31 @@ function run_simulation(
     export_path;
     in_memory = false,
     system_to_file = true,
+    uc_network_model = nothing,
+    ed_network_model = nothing,
 )
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
+    isnothing(uc_network_model) && (
+        uc_network_model =
+            NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint])
+    )
+    isnothing(ed_network_model) && (
+        ed_network_model =
+            NetworkModel(
+                CopperPlatePowerModel;
+                duals = [CopperPlateBalanceConstraint],
+                use_slacks = true,
+            )
+    )
     set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
     set_network_model!(
         template_uc,
-        NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint]),
+        uc_network_model,
     )
     set_network_model!(
         template_ed,
-        NetworkModel(
-            CopperPlatePowerModel;
-            duals = [CopperPlateBalanceConstraint],
-            use_slacks = true,
-        ),
+        ed_network_model,
     )
     models = SimulationModels(;
         decision_models = [
@@ -312,6 +322,23 @@ function test_decision_problem_results_values(
 )
     @test IS.get_uuid(get_system(results_uc)) === IS.get_uuid(c_sys5_hy_uc)
     @test IS.get_uuid(get_system(results_ed)) === IS.get_uuid(c_sys5_hy_ed)
+
+    # Temporarily mark some stuff unavailable
+    unav_uc = first(PSY.get_available_components(ThermalStandard, get_system(results_uc)))
+    PSY.set_available!(unav_uc, false)
+    unav_ed = first(PSY.get_available_components(ThermalStandard, get_system(results_ed)))
+    PSY.set_available!(unav_ed, false)
+    sel = PSY.make_selector(ThermalStandard; groupby = :each)
+    @test collect(get_components(ThermalStandard, results_uc)) ==
+          collect(get_available_components(ThermalStandard, get_system(results_uc)))
+    @test collect(get_components(ThermalStandard, results_ed)) ==
+          collect(get_available_components(ThermalStandard, get_system(results_ed)))
+    @test collect(get_groups(sel, results_uc)) ==
+          collect(get_available_groups(sel, get_system(results_uc)))
+    @test collect(get_groups(sel, results_ed)) ==
+          collect(get_available_groups(sel, get_system(results_ed)))
+    PSY.set_available!(unav_uc, true)
+    PSY.set_available!(unav_ed, true)
 
     @test isempty(setdiff(UC_EXPECTED_VARS, list_variable_names(results_uc)))
     @test isempty(setdiff(ED_EXPECTED_VARS, list_variable_names(results_ed)))
@@ -976,4 +1003,61 @@ end
     sys_ed = get_system!(ed)
     test_decision_problem_results(results, sys_ed, sys_uc, in_memory)
     test_emulation_problem_results(results, in_memory)
+end
+
+function load_pf_export(root, export_subdir)
+    raw_path, md_path = get_psse_export_paths(export_subdir)
+    sys = System(joinpath(root, raw_path), JSON3.read(joinpath(root, md_path), Dict))
+    set_units_base_system!(sys, "NATURAL_UNITS")
+    return sys
+end
+
+@testset "Test power flow in the loop" begin
+    file_path = mktempdir(; cleanup = true)
+    export_path = mktempdir(; cleanup = true)
+    pf_path = mktempdir(; cleanup = true)
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    sim = run_simulation(
+        c_sys5_hy_uc,
+        c_sys5_hy_ed,
+        file_path,
+        export_path;
+        ed_network_model = NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+            use_slacks = true,
+            power_flow_evaluation =
+            ACPowerFlow(;
+                exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
+            ),
+        ),
+    )
+    results = SimulationResults(sim)
+    results_ed = get_decision_problem_results(results, "ED")
+    thermal_results = first(
+        values(
+            PSI.read_results_with_keys(results_ed,
+                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]),
+        ),
+    )
+    first_result = first(thermal_results)
+    last_result = last(thermal_results)
+
+    @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
+    first_export = load_pf_export(pf_path, "export_1_1")
+    last_export = load_pf_export(pf_path, "export_48_12")
+
+    # Test that the active powers written to the first and last exports line up with the real simulation results
+    for gen_name in get_name.(get_components(ThermalStandard, c_sys5_hy_ed))
+        this_first_result = first_result[gen_name]
+        this_first_exported =
+            get_active_power(get_component(ThermalStandard, first_export, gen_name))
+        @test isapprox(this_first_result, this_first_exported)
+
+        this_last_result = last_result[gen_name]
+        this_last_exported =
+            get_active_power(get_component(ThermalStandard, last_export, gen_name))
+        @test isapprox(this_last_result, this_last_exported)
+    end
 end
