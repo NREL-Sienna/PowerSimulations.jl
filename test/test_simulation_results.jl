@@ -1012,7 +1012,7 @@ function load_pf_export(root, export_subdir)
     return sys
 end
 
-@testset "Test power flow in the loop" begin
+@testset "Test power flow in the loop" for calc_loss_factors in (true, false)
     file_path = mktempdir(; cleanup = true)
     export_path = mktempdir(; cleanup = true)
     pf_path = mktempdir(; cleanup = true)
@@ -1030,7 +1030,7 @@ end
             power_flow_evaluation =
             ACPowerFlow(;
                 exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
-                calc_loss_factors = true,
+                calc_loss_factors = calc_loss_factors,
             ),
         ),
     )
@@ -1045,23 +1045,33 @@ end
     first_result = first(thermal_results)
     last_result = last(thermal_results)
 
-    println(list_aux_variable_keys(results_ed))
+    available_aux_variables = list_aux_variable_keys(results_ed)
 
-    loss_factors = read_aux_variable(results_ed, PowerFlowLossFactors, ACBus)
-
-    # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
-    @test loss_factors !== nothing
-
-    loss_factors = first(
-        values(
-            PSI.read_results_with_keys(results_ed,
-                [PSI.AuxVarKey(PowerFlowLossFactors, ACBus)]),
-        ),
-    )
+    loss_factors_aux_var_key = IS.Optimization.AuxVarKey(PowerFlowLossFactors, ACBus)
 
     # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
-    @test loss_factors !== nothing
-    @test nrow(loss_factors) == 576
+    if calc_loss_factors
+        @test loss_factors_aux_var_key ∈ available_aux_variables
+        loss_factors = read_aux_variable(results_ed, PowerFlowLossFactors, ACBus)
+        @test !isnothing(loss_factors)
+    else
+        @test loss_factors_aux_var_key ∉ available_aux_variables
+    end
+
+    # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
+    if calc_loss_factors
+        @test loss_factors_aux_var_key ∈ available_aux_variables
+        loss_factors = first(
+            values(
+                PSI.read_results_with_keys(results_ed,
+                    [PSI.AuxVarKey(PowerFlowLossFactors, ACBus)]),
+            ),
+        )
+        @test !isnothing(loss_factors)
+        @test nrow(loss_factors) == 48 * 12
+    else
+        @test loss_factors_aux_var_key ∉ available_aux_variables
+    end
 
     @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
     first_export = load_pf_export(pf_path, "export_1_1")
