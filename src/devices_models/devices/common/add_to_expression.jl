@@ -529,7 +529,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,                        # expression
+    T <: ReactivePowerBalance,                        # expression
     U <: HVDCReactivePowerReceivedFromVariable,     # variable
     V <: TwoTerminalHVDCTypes,                      # power system type
     W <: HVDCTwoTerminalLCC,                        # formulation
@@ -560,7 +560,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,                     
+    T <: ReactivePowerBalance,                     
     U <: HVDCReactivePowerReceivedToVariable,       
     V <: TwoTerminalHVDCTypes,                     
     W <: HVDCTwoTerminalLCC,                    

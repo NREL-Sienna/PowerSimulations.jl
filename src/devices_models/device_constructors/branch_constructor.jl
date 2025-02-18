@@ -1091,7 +1091,7 @@ function construct_device!(
     add_to_expression!(
         container,
         ReactivePowerBalance,
-        HVDCRectivePowerReceivedFromVariable,
+        HVDCReactivePowerReceivedFromVariable,
         devices,
         model,
         network_model,
