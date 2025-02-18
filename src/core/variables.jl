@@ -242,6 +242,112 @@ Docs abbreviation: ``y``
 """
 struct HVDCActivePowerReceivedToVariable <: VariableType end
 
+"""
+Struct to dispatch the creation of HVDC Received Reactive Flow From Bus Variables
+
+Docs abbreviation: ``x^r``
+"""
+struct HVDCReactivePowerReceivedFromVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of HVDC Received Reactive Flow To Bus Variables
+
+Docs abbreviation: ``y^i``
+"""
+struct HVDCReactivePowerReceivedToVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Rectifier Delay Angle Variable
+
+Docs abbreviation: ``\\alpha^r``
+"""
+struct HVDCRectifierDelayAngleVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Inverter Extinction Angle Variable
+
+Docs abbreviation: ``\\gamma^i``
+"""
+struct HVDCInverterExtinctionAngleVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Rectifier Power Factor Angle Variable
+
+Docs abbreviation: ``\\phi^r``
+"""
+struct HVDCRectifierPowerFactorAngleVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Inverter Power Factor Angle Variable
+
+Docs abbreviation: ``\\phi^i``
+"""
+struct HVDCInverterPowerFactorAngleVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Rectifier Overlap Angle Variable
+
+Docs abbreviation: ``\\mu^r``
+"""
+struct HVDCRectifierOverlapAngleVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Inverter Overlap Angle Variable
+
+Docs abbreviation: ``\\mu^i``
+"""
+struct HVDCInverterOverlapAngleVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC DC Line Voltage at Rectifier Side
+
+Docs abbreviation: ``\\v_{d}^r``
+"""
+struct HVDCRectifierDCVoltageVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC DC Line Voltage at Inverter Side
+
+Docs abbreviation: ``\\v_{d}^i``
+"""
+struct HVDCInverterDCVoltageVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC AC Line Current flowing into the AC side of Rectifier
+
+Docs abbreviation: ``\\i_{ac}^r``
+"""
+struct HVDCRectifierACCurrentVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC AC Line Current flowing into the AC side of Inverter
+
+Docs abbreviation: ``\\i_{ac}^i``
+"""
+struct HVDCInverterACCurrentVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC DC Line Current Flow
+
+Docs abbreviation: ``\\i_{d}``
+"""
+struct DCLineCurrentFlowVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Tap Setting at Rectifier Transformer
+
+Docs abbreviation: ``\\t^r``
+"""
+struct HVDCRectifierTapSettingVariable <: VariableType end
+
+"""
+Struct to define the creation of HVDC Tap Setting at Inverter Transformer
+
+Docs abbreviation: ``\\t^i``
+"""
+struct HVDCInverterTapSettingVariable <: VariableType end
+
+
 abstract type SparseVariableType <: VariableType end
 
 """

@@ -335,6 +335,113 @@ struct PhaseAngleControlLimit <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
 struct HVDCFlowCalculationConstraint <: ConstraintType end
 
+
+"""
+Struct to create the constraint that calculates the Rectifier DC line voltage.
+
+```math
+v_d^r = \\frac{3}{\\pi}N^r \\left( \\sqrt{2}\frac{a^r v_\\text{ac}^r}{t^r}\\cos{\\alpha^r}-X^r I_d \\right)
+```
+"""
+struct HVDCRectifierDCLineVoltageConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the Inverter DC line voltage.
+
+```math
+v_d^i = \\frac{3}{\\pi}N^i \\left( \\sqrt{2}\frac{a^i v_\\text{ac}^i}{t^i}\\cos{\\gamma^i}-X^i I_d \\right)
+```
+"""
+struct HVDCInverterDCLineVoltageConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the Rectifier Overlap Angle.
+
+```math
+\\mu^r = \\arccos \\left( \\alpha^r - \\frac{\\sqrt{2} I_d X^r t^r}{a^r v_\\text{ac}^r} \\right) - \\alpha^r
+```
+"""
+struct HVDCRectifierOverlapAngleConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the Inverter Overlap Angle.
+
+```math
+\\mu^i = \\arccos \\left( \\gamma^i - \\frac{\\sqrt{2} I_d X^i t^r}{a^i v_\\text{ac}^i} \\right) - \\gamma^i
+```
+"""
+struct HVDCInverterOverlapAngleConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the Rectifier Power Factor Angle.
+
+```math
+\\phi^r = \\arctan \\left( \\frac{2\\mu^r + \\sin(2\\alpha^r) - \\sin(2(\\mu^r + \\alpha^r))}{\\cos(2\alpha^r) - \\cos(2(\\mu^r + \\alpha^r))} \\right)
+```
+"""
+struct HVDCRectifierPowerFactorAngleConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the Inverter Power Factor Angle.
+
+```math
+\\phi^i = \\arctan \\left( \\frac{2\\mu^i + \\sin(2\\gamma^i) - \\sin(2(\\mu^i + \\gamma^i))}{\\cos(2\\gamma^i) - \\cos(2(\\mu^i + \\gamma^i))} \\right)
+```
+"""
+struct HVDCInverterPowerFactorAngleConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the AC Current flowing into the AC side of the rectifier.
+
+```math
+i_\text{ac}^r = \\sqrt{6} \\frac{N^r}{\\pi}I_d
+```
+"""
+struct HVDCRectifierACCurrentFlowConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the AC Current flowing into the AC side of the inverter.
+
+```math
+i_\text{ac}^i = \\sqrt{6} \\frac{N^i}{\\pi}I_d
+```
+"""
+struct HVDCInverterACCurrentFlowConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the AC Power injection at the AC side of the rectifier.
+
+```math
+\\begin{align*}
+p_\\text{ac}^r = \\sqrt{3} i_\\text{ac}^r \\frac{a^r v_\\text{ac}^r}{t^r}\\cos{\\phi^r} \\\\
+q_\\text{ac}^r = \\sqrt{3} i_\\text{ac}^r \\frac{a^r v_\\text{ac}^r}{t^r}\\sin{\\phi^r} \\\\
+\\end{align*}
+```
+"""
+struct HVDCRectifierPowerCalculationConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that calculates the AC Power injection at the AC side of the inverter.
+
+```math
+\\begin{align*}
+p_\\text{ac}^i = \\sqrt{3} i_\\text{ac}^i \\frac{a^i v_\\text{ac}^i}{t^i}\\cos{\\phi^i} \\\\
+q_\\text{ac}^i = \\sqrt{3} i_\\text{ac}^i \\frac{a^i v_\\text{ac}^i}{t^i}\\sin{\\phi^i} \\\\
+\\end{align*}
+```
+"""
+struct HVDCInverterPowerCalculationConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint that links the AC and DC side of the network.
+
+```math
+v_d^i = v_d^r - R_d I_d
+```
+"""
+struct HVDCTransmissionDCLineConstraint <: ConstraintType end
+
+
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 """
 Struct to create the constraint to limit active power input expressions.
