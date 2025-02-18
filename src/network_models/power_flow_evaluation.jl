@@ -391,7 +391,7 @@ _get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowDat
 _get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_activepower_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
-    isnothing(pf_data.loss_factors) ? nothing : pf_data.loss_factors
+    pf_data.loss_factors
 
 _get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
 _get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =
