@@ -1046,17 +1046,7 @@ end
     last_result = last(thermal_results)
 
     available_aux_variables = list_aux_variable_keys(results_ed)
-
-    loss_factors_aux_var_key = IS.Optimization.AuxVarKey(PowerFlowLossFactors, ACBus)
-
-    # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
-    if calc_loss_factors
-        @test loss_factors_aux_var_key ∈ available_aux_variables
-        loss_factors = read_aux_variable(results_ed, PowerFlowLossFactors, ACBus)
-        @test !isnothing(loss_factors)
-    else
-        @test loss_factors_aux_var_key ∉ available_aux_variables
-    end
+    loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
 
     # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
     if calc_loss_factors
@@ -1064,7 +1054,7 @@ end
         loss_factors = first(
             values(
                 PSI.read_results_with_keys(results_ed,
-                    [PSI.AuxVarKey(PowerFlowLossFactors, ACBus)]),
+                    [loss_factors_aux_var_key]),
             ),
         )
         @test !isnothing(loss_factors)
