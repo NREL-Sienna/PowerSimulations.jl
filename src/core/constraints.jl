@@ -335,7 +335,6 @@ struct PhaseAngleControlLimit <: ConstraintType end
 struct InterfaceFlowLimit <: ConstraintType end
 struct HVDCFlowCalculationConstraint <: ConstraintType end
 
-
 """
 Struct to create the constraint that calculates the Rectifier DC line voltage.
 
@@ -440,7 +439,6 @@ v_d^i = v_d^r - R_d I_d
 ```
 """
 struct HVDCTransmissionDCLineConstraint <: ConstraintType end
-
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
 """

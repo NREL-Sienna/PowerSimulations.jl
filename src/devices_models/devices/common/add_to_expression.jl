@@ -498,11 +498,11 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,                     
-    U <: HVDCActivePowerReceivedToVariable,       
-    V <: TwoTerminalHVDCTypes,                     
-    W <: HVDCTwoTerminalLCC,                    
-    X <: ACPPowerModel,                         
+    T <: ActivePowerBalance,
+    U <: HVDCActivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
@@ -560,11 +560,11 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ReactivePowerBalance,                     
-    U <: HVDCReactivePowerReceivedToVariable,       
-    V <: TwoTerminalHVDCTypes,                     
-    W <: HVDCTwoTerminalLCC,                    
-    X <: ACPPowerModel,                         
+    T <: ReactivePowerBalance,
+    U <: HVDCReactivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
 }
     var = get_variable(container, U(), V)
     nodal_expr = get_expression(container, T(), PSY.ACBus)

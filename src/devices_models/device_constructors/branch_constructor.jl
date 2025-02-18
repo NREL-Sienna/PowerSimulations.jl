@@ -1117,20 +1117,85 @@ function construct_device!(
     network_model::NetworkModel{<:PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     devices = get_available_components(model, sys)
-    add_constraints!(container, HVDCRectifierDCLineVoltageConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCInverterDCLineVoltageConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCRectifierOverlapAngleConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCInverterOverlapAngleConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCRectifierPowerFactorAngleConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCInverterPowerFactorAngleConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCRectifierACCurrentFlowConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCInverterACCurrentFlowConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCRectifierPowerCalculationConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCInverterPowerCalculationConstraint, devices, model, network_model)
-    add_constraints!(container, HVDCTransmissionDCLineConstraint, devices, model, network_model)
+    add_constraints!(
+        container,
+        HVDCRectifierDCLineVoltageConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterDCLineVoltageConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierOverlapAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterOverlapAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierPowerFactorAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterPowerFactorAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierACCurrentFlowConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterACCurrentFlowConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCTransmissionDCLineConstraint,
+        devices,
+        model,
+        network_model,
+    )
     return
 end
-
 
 ############################# Phase Shifter Transformer Models #############################
 

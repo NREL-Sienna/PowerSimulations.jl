@@ -511,7 +511,10 @@ end
     )
     set_device_model!(template, DeviceModel(TapTransformer, StaticBranch))
     set_device_model!(template, DeviceModel(Transformer2W, StaticBranch))
-    set_device_model!(template, DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless))
+    set_device_model!(
+        template,
+        DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless),
+    )
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -631,7 +634,10 @@ end
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, TapTransformer, StaticBranchBounds)
     set_device_model!(template, Transformer2W, StaticBranchBounds)
-    set_device_model!(template, DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless))
+    set_device_model!(
+        template,
+        DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless),
+    )
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT

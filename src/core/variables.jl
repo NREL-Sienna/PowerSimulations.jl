@@ -347,7 +347,6 @@ Docs abbreviation: ``\\t^i``
 """
 struct HVDCInverterTapSettingVariable <: VariableType end
 
-
 abstract type SparseVariableType <: VariableType end
 
 """
