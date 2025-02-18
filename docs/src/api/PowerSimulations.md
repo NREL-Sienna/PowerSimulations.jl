@@ -160,13 +160,10 @@ RateofChangeConstraintSlackDown
 OnVariable
 StartVariable
 StopVariable
-TimeDurationOn
-TimeDurationOff
 HotStartVariable
 WarmStartVariable
 ColdStartVariable
 PowerAboveMinimumVariable
-PowerOutput
 ```
 
 ### Storage Unit Variables
@@ -212,6 +209,39 @@ InterfaceFlowSlackDown
 ```@docs
 UpperBoundFeedForwardSlack
 LowerBoundFeedForwardSlack
+```
+
+```@raw html
+&nbsp;
+&nbsp;
+```
+
+* * *
+
+## Auxiliary Variables
+
+### Thermal Unit Auxiliary Variables
+
+```@docs
+TimeDurationOn
+TimeDurationOff
+PowerOutput
+```
+
+### Bus Auxiliary Variables
+
+```@docs
+PowerFlowVoltageAngle
+PowerFlowVoltageMagnitude
+```
+
+### Branch Auxiliary Variables
+
+```@docs
+PowerFlowLineReactivePowerFromTo
+PowerFlowLineReactivePowerToFrom
+PowerFlowLineActivePowerFromTo
+PowerFlowLineActivePowerToFrom
 ```
 
 ```@raw html
