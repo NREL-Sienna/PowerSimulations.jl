@@ -447,18 +447,18 @@ function get_realized_timestamps(
     resolution = get_resolution(res)
     intervals = diff(timestamps)
     if isempty(intervals) && isnothing(resolution)
-        # If Single Interval Step and Single Resolution use dummy resolution
+        # If Single Interval Step and Single Resolution: use dummy resolution/interval
         interval = Dates.Millisecond(1)
         resolution = Dates.Millisecond(1)
     elseif !isempty(intervals) && isnothing(resolution)
-        # Multiple simulation steps but single resolution
+        # Multiple simulation steps but single time step: Set resolution = interval
         interval = first(intervals)
         resolution = interval
     elseif isempty(intervals) && !isnothing(resolution)
-        # There is multiple time steps but single simulation
+        # There is multiple time steps but single simulation step: Set interval = resolution
         interval = resolution
     else
-        # Both data are available
+        # Both data are available: Use existing resolution and grab first interval
         interval = first(intervals)
     end
     horizon = get_forecast_horizon(res)
