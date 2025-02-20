@@ -444,8 +444,23 @@ function get_realized_timestamps(
     len::Union{Int, Nothing} = nothing,
 )
     timestamps = get_timestamps(res)
-    interval = timestamps.step
     resolution = get_resolution(res)
+    intervals = diff(timestamps)
+    if isempty(intervals) && isnothing(resolution)
+        # If Single Interval Step and Single Resolution use dummy resolution
+        interval = Dates.Millisecond(1)
+        resolution = Dates.Millisecond(1)
+    elseif !isempty(intervals) && isnothing(resolution)
+        # Multiple simulation steps but single resolution
+        interval = first(intervals)
+        resolution = interval
+    elseif isempty(intervals) && !isnothing(resolution)
+        # There is multiple time steps but single simulation
+        interval = resolution
+    else
+        # Both data are available
+        interval = first(intervals)
+    end
     horizon = get_forecast_horizon(res)
     start_time = isnothing(start_time) ? first(timestamps) : start_time
     end_time =
