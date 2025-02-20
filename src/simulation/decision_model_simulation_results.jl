@@ -447,7 +447,7 @@ function get_realized_timestamps(
     resolution = get_resolution(res)
     intervals = diff(timestamps)
     if isempty(intervals) && isnothing(resolution)
-        # If Single Interval Step and Single Resolution: use dummy resolution/interval
+        # If Single Interval Step and single time step: use dummy resolution/interval
         interval = Dates.Millisecond(1)
         resolution = Dates.Millisecond(1)
     elseif !isempty(intervals) && isnothing(resolution)
