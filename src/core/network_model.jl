@@ -192,7 +192,6 @@ function instantiate_network_model(
     model::NetworkModel{SecurityConstrainedPTDFPowerModel},
     sys::PSY.System,
 )
-    @info "*** Code is in instantiate_network_model() for SCUC from network_model.jl"
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         if model.reduce_radial_branches

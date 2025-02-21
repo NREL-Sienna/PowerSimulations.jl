@@ -518,7 +518,6 @@ function _make_system_expressions!(
     ::Type{SecurityConstrainedPTDFPowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
-    @info "** Code is in _make_system_expressions!() for SCUC PTDF from optimization_container.jl"
     time_steps = get_time_steps(container)
     if isempty(bus_reduction_map)
         ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
@@ -729,7 +728,6 @@ function build_impl!(
         transmission_model.subnetworks,
         sys,
         transmission_model.network_reduction.bus_reduction_map)
-    
     # Order is required
     @info "** Code is in in build_impl!() from optimization_container.jl - DEVICES ArgumentConstructStage()\n  $transmission"
     for device_model in values(template.devices)
@@ -1594,6 +1592,7 @@ function get_expression(
     ::Type{U},
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    @show ExpressionKey(T, U, meta)
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 

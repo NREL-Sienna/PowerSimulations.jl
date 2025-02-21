@@ -75,7 +75,7 @@ function add_variables!(
         FlowActivePowerSlackLowerBound,
     },
     U <: PSY.ACBranch}
-    @info "**** Code is in add_variables!() for AbstractPTDFModel from AC_branches.jl \n  $T"
+    @info "Model is in add_variables!()"
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     branches_in_ptdf =
@@ -362,7 +362,7 @@ function add_constraints!(
     if isempty(network_reduction)
         device_names = [PSY.get_name(d) for d in devices]
     else
-        device_names = PNM.get_retained_branches(network_reduction)  #Don't need added branches here? 
+        device_names = PNM.get_retained_branches(network_reduction)  #Don't need added branches here?
     end
 
     con_lb =
