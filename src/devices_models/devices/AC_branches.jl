@@ -75,6 +75,7 @@ function add_variables!(
         FlowActivePowerSlackLowerBound,
     },
     U <: PSY.ACBranch}
+    @info "Model is in add_variables!()"
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     branches_in_ptdf =

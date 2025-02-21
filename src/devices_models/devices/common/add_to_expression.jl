@@ -1,6 +1,9 @@
 _system_expression_type(::Type{PTDFPowerModel}) = PSY.System
 _system_expression_type(::Type{CopperPlatePowerModel}) = PSY.System
+_system_expression_type(::Type{SecurityConstrainedPTDFPowerModel}) = PSY.System
+
 _system_expression_type(::Type{AreaPTDFPowerModel}) = PSY.Area
+_system_expression_type(::Type{SecurityConstrainedAreaPTDFPowerModel}) = PSY.Area
 
 function _ref_index(network_model::NetworkModel{<:PM.AbstractPowerModel}, bus::PSY.ACBus)
     return get_reference_bus(network_model, bus)
