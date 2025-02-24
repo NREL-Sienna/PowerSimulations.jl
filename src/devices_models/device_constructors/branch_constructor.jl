@@ -250,6 +250,7 @@ function construct_device!(
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
+    @info "*** Code is in construct_device!() ArgumentConstructStage for StaticBranch in AbstractPTDFModel from branch_constructor.jl"
     devices = get_available_components(model, sys)
     if get_use_slacks(model)
         add_variables!(
@@ -279,17 +280,6 @@ function construct_device!(
     return
 end
 
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{SecurityConstrainedTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    contruct_device!(container, sys, ArgumentConstructStage(), model, network_model)
-    add_expression!(container, OutageActivePowerFlows, sys, model)
-    return
-end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -298,6 +288,7 @@ function construct_device!(
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
+    @info "*** Code is in construct_device!() ArgumentConstructStage for ModelConstructStage in AbstractPTDFModel from branch_constructor.jl"
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
@@ -307,7 +298,47 @@ function construct_device!(
     return
 end
 
-function construct_device!(
+#TODO Check if for SCUC need something else
+#=function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    @info "Model is in construct_device!() from branch_constructor.jl"
+    devices = get_available_components(model, sys)
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            FlowActivePowerSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            FlowActivePowerSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+    end
+
+    add_variables!(
+        container,
+        FlowActivePowerVariable,
+        network_model,
+        devices,
+        StaticBranch(),
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+=#
+
+#TODO Check if for SCUC need something else
+#=function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
@@ -322,7 +353,7 @@ function construct_device!(
     objective_function!(container, devices, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
     return
-end
+end=#
 
 function construct_device!(
     container::OptimizationContainer,
@@ -368,6 +399,54 @@ function construct_device!(
     return
 end
 
+
+#TODO Check if for SCUC need something else
+#=function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, StaticBranchBounds},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
+
+    if get_use_slacks(model)
+        throw(ArgumentError("StaticBranchBounds is not compatible with the use of slacks"))
+    end
+
+    add_variables!(
+        container,
+        FlowActivePowerVariable,
+        network_model,
+        devices,
+        StaticBranchBounds(),
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+#TODO Check if for SCUC need something else
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, StaticBranchBounds},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+    branch_rate_bounds!(
+        container,
+        devices,
+        model,
+        network_model,
+    )
+    add_feedforward_constraints!(container, model, devices)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+=#
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -400,6 +479,42 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
+
+#TODO Check if for SCUC need something else
+#=function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, StaticBranchUnbounded},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
+    add_variables!(
+        container,
+        FlowActivePowerVariable,
+        network_model,
+        devices,
+        StaticBranchUnbounded(),
+    )
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+#TODO Check if for SCUC need something else
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, StaticBranchUnbounded},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
+    add_feedforward_constraints!(container, model, devices)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+=#
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(

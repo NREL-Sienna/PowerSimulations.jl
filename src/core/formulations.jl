@@ -164,7 +164,7 @@ Linear active power approximation using the power transfer distribution factor [
 """
 struct PTDFPowerModel <: AbstractPTDFModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages
 """
 struct SecurityConstrainedPTDFPowerModel <: AbstractPTDFModel end
 """

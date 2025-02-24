@@ -177,6 +177,8 @@ function build_initial_conditions!(model::OperationModel)
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
+        @info "*** Code is in build_initial_conditions!(model::OperationModel) from op_mod_interface.jl: \n $device_type \n$device_model"
+        
         if requires_init
             @debug "initial_conditions required for $device_type" _group =
                 LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -199,6 +201,7 @@ function write_initial_conditions_data!(model::OperationModel)
 end
 
 function handle_initial_conditions!(model::OperationModel)
+    @info "** Code is in handle_initial_conditions!(model::OperationModel) from operation_model_interface.jl"
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Model Initialization" begin
         if isempty(get_template(model))
             return
@@ -448,6 +451,7 @@ end
 function instantiate_network_model(model::OperationModel)
     template = get_template(model)
     network_model = get_network_model(template)
+    @info "** Code is in calling instantiate_network_model(network_model, get_system(model)) from operation_model_interface.jl"
     instantiate_network_model(network_model, get_system(model))
     return
 end
