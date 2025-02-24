@@ -1,6 +1,9 @@
 _system_expression_type(::Type{PTDFPowerModel}) = PSY.System
 _system_expression_type(::Type{CopperPlatePowerModel}) = PSY.System
+_system_expression_type(::Type{SecurityConstrainedPTDFPowerModel}) = PSY.System
+
 _system_expression_type(::Type{AreaPTDFPowerModel}) = PSY.Area
+_system_expression_type(::Type{SecurityConstrainedAreaPTDFPowerModel}) = PSY.Area
 
 function _ref_index(network_model::NetworkModel{<:PM.AbstractPowerModel}, bus::PSY.ACBus)
     return get_reference_bus(network_model, bus)
@@ -578,6 +581,7 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
+    @info "**** Code is in add_to_expression!() for PSY.Branch and AbstractPowerModel from add_to_expression.jl"
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     network_reduction = get_network_reduction(network_model)
@@ -850,6 +854,7 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: AbstractPTDFModel,
 }
+    @info "**** Code is in add_to_expression!() for PSY.StaticInjection and AbstractPTDFModel from add_to_expression.jl"
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
     sys_expr = get_expression(container, T(), _system_expression_type(X))
@@ -859,10 +864,7 @@ function add_to_expression!(
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
         bus_no_ = PSY.get_number(device_bus)
-        @show network_reduction
-        @show bus_no_
         bus_no = PNM.get_mapped_bus_number(network_reduction, bus_no_)
-        @show bus_no
 
         ref_index = _ref_index(network_model, device_bus)
         param = get_parameter_column_refs(param_container, name)
@@ -1040,6 +1042,7 @@ function add_to_expression!(
     W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
+    @info "++++ Code is in add_to_expression!() for PM.AbstractActivePowerModel and PSY.ACBranch from add_to_expression"
     var = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     network_reduction = get_network_reduction(network_model)

@@ -1,6 +1,8 @@
 function get_initial_conditions_template(model::OperationModel)
     # This is done to avoid passing the duals but also not re-allocating the PTDF when it
     # exists
+
+    @info "code is in get_initial_conditions_template() from innitialization.jl \n$(get_network_formulation(model.template)) "
     network_model = NetworkModel(
         get_network_formulation(model.template);
         use_slacks = get_use_slacks(get_network_model(model.template)),
@@ -44,6 +46,7 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.attributes = service_model.attributes
         set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
+    
     return ic_template
 end
 
@@ -89,6 +92,7 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
         false,
     )
     TimerOutputs.disable_timer!(BUILD_PROBLEMS_TIMER)
+    
     build_impl!(
         model.internal.initial_conditions_model_container,
         template,
