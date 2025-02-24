@@ -3,6 +3,8 @@ function get_initial_conditions_template(model::OperationModel)
     # exists
 
     @info "code is in get_initial_conditions_template() from innitialization.jl \n$(get_network_formulation(model.template)) "
+
+    @info "code is in get_initial_conditions_template() from innitialization.jl \n$(get_network_formulation(model.template)) "
     network_model = NetworkModel(
         get_network_formulation(model.template);
         use_slacks = get_use_slacks(get_network_model(model.template)),
