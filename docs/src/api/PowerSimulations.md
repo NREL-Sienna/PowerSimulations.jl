@@ -233,6 +233,7 @@ PowerOutput
 ```@docs
 PowerFlowVoltageAngle
 PowerFlowVoltageMagnitude
+PowerFlowLossFactors
 ```
 
 ### Branch Auxiliary Variables
