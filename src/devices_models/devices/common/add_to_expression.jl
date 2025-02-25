@@ -355,7 +355,6 @@ function add_to_expression!(
     return
 end
 
-
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -1359,7 +1358,6 @@ function add_to_expression!(
     return
 end
 
-
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -1709,7 +1707,9 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     sys::PSY.System,
-    network_model::NetworkModel{Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel}},
+    network_model::NetworkModel{
+        Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
+    },
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},

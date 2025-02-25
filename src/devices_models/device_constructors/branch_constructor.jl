@@ -280,7 +280,6 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -398,7 +397,6 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
-
 
 #TODO Check if for SCUC need something else
 #=function construct_device!(

@@ -728,7 +728,7 @@ function build_impl!(
         transmission_model.subnetworks,
         sys,
         transmission_model.network_reduction.bus_reduction_map)
-    
+
     # Order is required
     @info "** Code is in in build_impl!() from optimization_container.jl - DEVICES ArgumentConstructStage()\n  $transmission"
     for device_model in values(template.devices)
@@ -763,7 +763,7 @@ function build_impl!(
 
     @info "** Code is in in build_impl!() from optimization_container.jl - BRANCHES ArgumentConstructStage()"
     for branch_model in values(template.branches)
-        @info "++Branch Model: $branch_model"
+        @info "++ Branch Model: $branch_model"
         @debug "Building Arguments for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
@@ -808,7 +808,7 @@ function build_impl!(
         @debug "Problem size:" get_problem_size(container) _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     end
-     @info "** Code is in in build_impl!() from optimization_container.jl - BRANCHES ModelConstructStage()"
+    @info "** Code is in in build_impl!() from optimization_container.jl - BRANCHES ModelConstructStage()"
     for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER

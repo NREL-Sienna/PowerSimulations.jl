@@ -205,8 +205,8 @@ function instantiate_network_model(
     end
 
     if !model.reduce_radial_branches &&
-    model.PTDF_matrix.network_reduction.reduction_type ==
-    PNM.NetworkReductionTypes.RADIAL
+       model.PTDF_matrix.network_reduction.reduction_type ==
+       PNM.NetworkReductionTypes.RADIAL
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
@@ -216,7 +216,7 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
-    model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
+       model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
@@ -250,14 +250,14 @@ function instantiate_network_model(
     end
 
     if !model.reduce_radial_branches &&
-        model.LODF_matrix.network_reduction.reduction_type ==
-        PNM.NetworkReductionTypes.RADIAL
-            throw(
-                IS.ConflictingInputsError(
-                    "The provided LODF Matrix has reduced radial branches and mismatches the network \\
-                    model specification reduce_radial_branches = false. Set the keyword argument \\
-                    reduce_radial_branches = true in your network model"),
-            )
+       model.LODF_matrix.network_reduction.reduction_type ==
+       PNM.NetworkReductionTypes.RADIAL
+        throw(
+            IS.ConflictingInputsError(
+                "The provided LODF Matrix has reduced radial branches and mismatches the network \\
+                model specification reduce_radial_branches = false. Set the keyword argument \\
+                reduce_radial_branches = true in your network model"),
+        )
     end
     return
 end
