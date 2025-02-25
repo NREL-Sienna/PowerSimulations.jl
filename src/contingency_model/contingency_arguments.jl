@@ -36,7 +36,7 @@ function add_event_arguments!(
     T <: Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
 } where {U <: PSY.StaticInjection}
     throw(IS.ConflictingInputsError(
-        "Outage Modeling is not compatible with FixedOutut Formulations"
+        "Outage Modeling is not compatible with FixedOutut Formulations used for devices $U"
     ))
     return
 end
