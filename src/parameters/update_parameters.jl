@@ -15,7 +15,7 @@ function update_parameter_values!(
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
-        "event", # TODO: Implement correct update recorder event
+        parameter_attributes,
         get_current_timestamp(model),
         get_name(model),
     )
