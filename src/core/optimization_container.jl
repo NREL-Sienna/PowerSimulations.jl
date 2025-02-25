@@ -647,7 +647,6 @@ function _make_system_expressions!(
     return
 end
 
-
 function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
@@ -1592,7 +1591,6 @@ function get_expression(
     ::Type{U},
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    @show ExpressionKey(T, U, meta)
     return get_expression(container, ExpressionKey(T, U, meta))
 end
 
