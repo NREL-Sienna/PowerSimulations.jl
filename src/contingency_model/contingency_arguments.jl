@@ -27,6 +27,21 @@ function add_event_arguments!(
     return
 end
 
+function add_event_arguments!(
+    ::OptimizationContainer,
+    ::T,
+    ::DeviceModel{U, FixedOutput},
+    ::NetworkModel,
+) where {
+    T <: Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+} where {U <: PSY.StaticInjection}
+    throw(IS.ConflictingInputsError(
+        "Outage Modeling is not compatible with FixedOutut Formulations"
+    ))
+    return
+end
+
+
 function _add_parameters!(
     container,
     ::T,
