@@ -484,7 +484,7 @@ function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
-    ::Type{PTDFPowerModel},
+    ::Type{T},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
     time_steps = get_time_steps(container)
