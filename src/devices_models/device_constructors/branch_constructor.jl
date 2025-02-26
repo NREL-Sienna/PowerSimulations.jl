@@ -284,7 +284,7 @@ function construct_device!(
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{SecurityConstrainedTDFPowerModel},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
 ) where {T <: PSY.ACBranch}
     contruct_device!(container, sys, ArgumentConstructStage(), model, network_model)
     add_expression!(container, OutageActivePowerFlows, sys, model)
