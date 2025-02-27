@@ -64,6 +64,13 @@ Docs abbreviation: ``u``
 struct OnVariable <: VariableType end
 
 """
+Struct to dispatch the creation of a binary commitment status squared variable
+
+Docs abbreviation: ``u^\\text{sq}``
+"""
+struct OnSquareVariable <: VariableType end
+
+"""
 Struct to dispatch the creation of Reactive Power Variables
 
 Docs abbreviation: ``q``
@@ -271,6 +278,13 @@ Struct to dispatch the creation of piecewise linear block offer variables for ob
 Docs abbreviation: ``\\delta``
 """
 struct PieceWiseLinearBlockOffer <: SparseVariableType end
+
+"""
+Struct to dispatch the creation of piecewise linear interpolation variable
+
+Docs abbreviation: ``\\delta``
+"""
+struct PieceWiseInterpolationVariable <: SparseVariableType end
 
 """
 Struct to dispatch the creation of Interface Flow Slack Up variables

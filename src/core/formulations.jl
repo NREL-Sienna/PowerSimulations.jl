@@ -16,6 +16,7 @@ abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
+abstract type AbstractPWLUnitCommitment <: AbstractThermalUnitCommitment end
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
 """
@@ -52,6 +53,10 @@ struct ThermalBasicCompactUnitCommitment <: AbstractCompactUnitCommitment end
 Formulation type to enable thermal compact dispatch
 """
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
+"""
+Formulation type to enable unit commitment with with Linearized Quadratic Term (PWL approximation)
+"""
+struct ThermalPWLUnitCommitment <: AbstractPWLUnitCommitment end
 
 ############################# Electric Load Formulations ###################################
 abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end

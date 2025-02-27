@@ -62,6 +62,7 @@ export RenewableConstantPowerFactor
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
 export ThermalBasicCompactUnitCommitment
+export ThermalPWLUnitCommitment
 export ThermalBasicDispatch
 export ThermalStandardDispatch
 export ThermalDispatchNoMin
@@ -201,6 +202,7 @@ export ColdStartVariable
 export EnergyVariable
 export LiftVariable
 export OnVariable
+export OnSquareVariable
 export ReactivePowerVariable
 export ReservationVariable
 export ActivePowerReserveVariable
