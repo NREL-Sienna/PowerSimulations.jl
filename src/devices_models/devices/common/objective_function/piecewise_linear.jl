@@ -260,8 +260,8 @@ function _get_pwl_cost_expression(
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
     gen_cost = JuMP.AffExpr(0.0)
-    cost_data = PSY.get_y_coords(cost_data)
-    for (i, cost) in enumerate(cost_data)
+    y_coords_cost_data = PSY.get_y_coords(cost_data)
+    for (i, cost) in enumerate(y_coords_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
             cost * multiplier * pwl_var_container[(name, i, time_period)],
@@ -455,11 +455,13 @@ function _add_pwl_term!(
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     break_points = PSY.get_x_coords(data)
     sos_val = _get_sos_value(container, V, component)
+    temp_cost_function =
+        create_temporary_cost_function_in_system_per_unit(cost_function, data)
     for t in time_steps
         _add_pwl_variables!(container, T, name, t, data)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost =
-            _get_pwl_cost_expression(container, component, t, cost_function, U(), V())
+            _get_pwl_cost_expression(container, component, t, temp_cost_function, U(), V())
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
