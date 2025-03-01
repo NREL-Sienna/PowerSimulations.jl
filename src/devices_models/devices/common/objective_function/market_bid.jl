@@ -440,7 +440,7 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         break_points = PSY.get_x_coords(data)
-        _add_pwl_variables!(container, T, name, t, data)
+        _add_pwl_variables!(container, T, name, t, data, PieceWiseLinearBlockOffer)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
