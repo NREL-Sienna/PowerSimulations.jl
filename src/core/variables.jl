@@ -273,6 +273,13 @@ Docs abbreviation: ``\\delta``
 struct PieceWiseLinearBlockOffer <: SparseVariableType end
 
 """
+Struct to dispatch the creation of piecewise linear block decremental offer variables for objective function
+
+Docs abbreviation: ``\\delta_d``
+"""
+struct PieceWiseLinearBlockDecrementalOffer <: SparseVariableType end
+
+"""
 Struct to dispatch the creation of Interface Flow Slack Up variables
 
 Docs abbreviation: ``f^\\text{sl,up}``
@@ -315,6 +322,7 @@ const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
+should_write_resulting_value(::Type{PieceWiseLinearBlockDecrementalOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
