@@ -61,6 +61,8 @@ export RenewableConstantPowerFactor
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
+export ThermalContinousStandardUnitCommitment
+export ThermalContinousBasicUnitCommitment
 export ThermalBasicCompactUnitCommitment
 export ThermalBasicDispatch
 export ThermalStandardDispatch
