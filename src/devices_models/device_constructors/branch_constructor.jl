@@ -250,7 +250,6 @@ function construct_device!(
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
-    @info "*** Code is in construct_device!() ArgumentConstructStage for StaticBranch in AbstractPTDFModel from branch_constructor.jl"
     devices = get_available_components(model, sys)
     if get_use_slacks(model)
         add_variables!(
@@ -287,7 +286,6 @@ function construct_device!(
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACBranch}
-    @info "*** Code is in construct_device!() ArgumentConstructStage for ModelConstructStage in AbstractPTDFModel from branch_constructor.jl"
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
@@ -297,15 +295,30 @@ function construct_device!(
     return
 end
 
-#TODO Check if for SCUC need something else
-#=function construct_device!(
+function _has_outage(
+    sys::PSY.System,
+    outages::InfrastructureSystems.FlattenIteratorWrapper{T},
+    branches::IS.FlattenIteratorWrapper{V},
+) where {
+    T <: PSY.Outage,
+    V <: PSY.ACBranch,
+}
+    outages_v = unique(collect(outages))
+    names_branches = get_name.(collect(branches))
+    #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
+    return filter(
+        b -> PSY.get_name(b) ∈ names_branches,
+        PSY.get_components(sys, first(outages_v)),
+    )
+end
+
+function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
 ) where {T <: PSY.ACBranch}
-    @info "Model is in construct_device!() from branch_constructor.jl"
     devices = get_available_components(model, sys)
     if get_use_slacks(model)
         add_variables!(
@@ -331,13 +344,34 @@ end
         devices,
         StaticBranch(),
     )
+
+    lodf = get_LODF_matrix(network_model)
+    nr = lodf.network_reduction
+    removed_branches = PNM.get_removed_branches(nr)
+    branches = get_available_components(b -> PSY.get_name(b) ∉ removed_branches, T, sys)
+
+    outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
+    branches_outages = _has_outage(sys, outages, branches)
+
+    if isempty(branches_outages)
+        @info "System $(get_name(sys)) has no $T PowerSystems.Outage attributes associated to add the LODF expressions of the requested network formulation $network_model."
+    else
+        add_to_expression!(
+            container,
+            PTDFOutagesBranchFlow,
+            FlowActivePowerVariable,
+            branches,
+            branches_outages,
+            model,
+            network_model,
+        )
+    end
+
     add_feedforward_arguments!(container, model, devices)
     return
 end
-=#
 
-#TODO Check if for SCUC need something else
-#=function construct_device!(
+function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
@@ -347,12 +381,33 @@ end
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
-    add_constraints!(container, OutageActivePowerFlowsConstraint, sys, model)
+
+    lodf = get_LODF_matrix(network_model)
+    nr = lodf.network_reduction
+    removed_branches = PNM.get_removed_branches(nr)
+    branches = get_available_components(b -> PSY.get_name(b) ∉ removed_branches, T, sys)
+
+    outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
+    branches_outages = _has_outage(sys, outages, branches)
+
+    if isempty(branches_outages)
+        @info "System $(get_name(sys)) has no $T PowerSystems.Outage attributes associated to add the LODF Constraints of the requested network formulation $network_model."
+    else
+        add_constraints!(
+            container,
+            OutageActivePowerFlowsConstraint,
+            branches,
+            branches_outages,
+            model,
+            network_model,
+        )
+    end
+
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
     return
-end=#
+end
 
 function construct_device!(
     container::OptimizationContainer,
@@ -398,53 +453,6 @@ function construct_device!(
     return
 end
 
-#TODO Check if for SCUC need something else
-#=function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
-
-    if get_use_slacks(model)
-        throw(ArgumentError("StaticBranchBounds is not compatible with the use of slacks"))
-    end
-
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranchBounds(),
-    )
-    add_feedforward_arguments!(container, model, devices)
-    return
-end
-
-#TODO Check if for SCUC need something else
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranchBounds},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
-    branch_rate_bounds!(
-        container,
-        devices,
-        model,
-        network_model,
-    )
-    add_feedforward_constraints!(container, model, devices)
-    add_constraint_dual!(container, sys, model)
-    return
-end
-=#
-
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -477,42 +485,6 @@ function construct_device!(
     add_constraint_dual!(container, sys, model)
     return
 end
-
-#TODO Check if for SCUC need something else
-#=function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranchUnbounded},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranchUnbounded(),
-    )
-    add_feedforward_arguments!(container, model, devices)
-    return
-end
-
-#TODO Check if for SCUC need something else
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranchUnbounded},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
-    add_feedforward_constraints!(container, model, devices)
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
-    add_constraint_dual!(container, sys, model)
-    return
-end
-=#
 
 # For AC Power only. Implements Bounds on the active power and rating constraints on the aparent power
 function construct_device!(
