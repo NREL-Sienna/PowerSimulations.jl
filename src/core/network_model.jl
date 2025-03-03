@@ -187,7 +187,6 @@ function instantiate_network_model(
     return
 end
 
-#TODO Check if for SCUC need something else
 function instantiate_network_model(
     model::NetworkModel{SecurityConstrainedPTDFPowerModel},
     sys::PSY.System,

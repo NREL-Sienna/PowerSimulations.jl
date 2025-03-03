@@ -315,7 +315,6 @@ function construct_device!(
     model::DeviceModel{L, StaticPowerLoad},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.ElectricLoad}
-    @info "*** Code is in in construct_device!() ArgumentConstructStage from load_constructor.jl - <:PM.AbstractActivePowerModel"
     devices =
         get_available_components(model,
             sys,
@@ -341,7 +340,6 @@ function construct_device!(
     model::DeviceModel{<:PSY.ElectricLoad, StaticPowerLoad},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 )
-    @info "*** construct_device!() ModelConstructStage from load_constructor.jl"
     # Static PowerLoad doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
     return

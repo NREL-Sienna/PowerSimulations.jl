@@ -337,13 +337,10 @@ function build_pre_step!(model::DecisionModel{<:DecisionProblem})
 end
 
 function build_impl!(model::DecisionModel{<:DecisionProblem})
-    @info "* Code is calling build_pre_step!(model) in build_impl!() from decision_model.jl:"
     build_pre_step!(model)
     @info "Instantiating Network Model"
     instantiate_network_model(model)
-    @info "* Code is calling handle_initial_conditions!(model) in build_impl!() from decision_model.jl:"
     handle_initial_conditions!(model)
-    @info "* Code is calling build_model!(model) in build_impl!() from decision_model.jl:"
     build_model!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))
     log_values(get_settings(model))
@@ -408,7 +405,6 @@ Default implementation of build method for Operational Problems for models confo
 DecisionProblem specification. Overload this function to implement a custom build method
 """
 function build_model!(model::DecisionModel{<:DefaultDecisionProblem})
-    @info "* Code is calling build_impl!() from build_model!(model) from decision_model.jl"
     build_impl!(get_optimization_container(model), get_template(model), get_system(model))
     return
 end

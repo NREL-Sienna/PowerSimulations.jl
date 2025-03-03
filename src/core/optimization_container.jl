@@ -604,7 +604,7 @@ function _make_system_expressions!(
     return
 end
 
-#TODO Check if for SCUC need something else
+#TODO Check if for SecurityConstrainedAreaPTDFPowerModel need something else
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
@@ -629,7 +629,6 @@ function _make_system_expressions!(
         # containers
             _make_container_array(sort!(ac_bus_numbers), time_steps),
     )
-
     if length(subnetworks) > 1
         @warn "The system contains $(length(subnetworks)) synchronous regions. \
                When combined with AreaPTDFPowerModel, the model can be infeasible if the data doesn't \
@@ -654,7 +653,6 @@ function initialize_system_expressions!(
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: PM.AbstractPowerModel}
-    @info "** Code is in initialize_system_expressions!() from optimization_container.jl"
     dc_bus_numbers = [
         PSY.get_number(b) for
         b in get_available_components(network_model, PSY.DCBus, system)
@@ -718,7 +716,6 @@ function build_impl!(
     template::ProblemTemplate,
     sys::PSY.System,
 )
-    @info "** Code is in build_impl!() from optimization_container.jl"
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
     initialize_system_expressions!(
@@ -728,13 +725,11 @@ function build_impl!(
         sys,
         transmission_model.network_reduction.bus_reduction_map)
     # Order is required
-    @info "** Code is in in build_impl!() from optimization_container.jl - DEVICES ArgumentConstructStage()\n  $transmission"
     for device_model in values(template.devices)
         @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
             if validate_available_devices(device_model, sys)
-                @info "++ Code is about to call construct_device!() in build_impl!() from optimization_container.jl for \n $device_model"
                 construct_device!(
                     container,
                     sys,
@@ -759,9 +754,7 @@ function build_impl!(
         )
     end
 
-    @info "** Code is in in build_impl!() from optimization_container.jl - BRANCHES ArgumentConstructStage()"
     for branch_model in values(template.branches)
-        @info "++ Branch Model: $branch_model"
         @debug "Building Arguments for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
@@ -778,9 +771,7 @@ function build_impl!(
                 LOG_GROUP_OPTIMIZATION_CONTAINER
         end
     end
-    @info "** Code is in in build_impl!() from optimization_container.jl - DEVICES ModelConstructStage()"
     for device_model in values(template.devices)
-        @info "++ Device Model: $device_model"
         @debug "Building Model for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(device_model))" begin
@@ -806,7 +797,6 @@ function build_impl!(
         @debug "Problem size:" get_problem_size(container) _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     end
-    @info "** Code is in in build_impl!() from optimization_container.jl - BRANCHES ModelConstructStage()"
     for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
