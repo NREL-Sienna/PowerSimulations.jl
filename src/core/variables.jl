@@ -64,6 +64,13 @@ Docs abbreviation: ``u``
 struct OnVariable <: VariableType end
 
 """
+Struct to represent the value of on variable square for continous approximations
+
+Docs abbreviation: ``u^2``
+"""
+struct OnVariableSquared <: VariableType end
+
+"""
 Struct to dispatch the creation of Reactive Power Variables
 
 Docs abbreviation: ``q``
@@ -310,6 +317,13 @@ Struct to dispatch the creation of Slack variables for rate of change constraint
 Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct RateofChangeConstraintSlackDown <: VariableType end
+
+"""
+Struct for interpolation in PWL function approximations
+
+Docs abbreviation: ``\\delta``
+"""
+struct PWLInterpolationVariable <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
