@@ -993,7 +993,7 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices = get_available_components(model, sys)
-    
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,

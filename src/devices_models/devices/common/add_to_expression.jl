@@ -658,7 +658,6 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: SecurityConstrainedPTDFPowerModel,
 }
-    
     branches_v = collect(branches)
     time_steps = get_time_steps(container)
 
