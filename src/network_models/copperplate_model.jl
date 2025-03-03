@@ -42,7 +42,6 @@ function add_constraints!(
     return
 end
 
-#TODO check if any change is needed for SecurityConstrainedPTDFPowerModel
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
