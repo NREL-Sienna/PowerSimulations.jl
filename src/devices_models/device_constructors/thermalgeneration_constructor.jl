@@ -1,3 +1,7 @@
+_is_continous_commitment_formulation(::Type{<:AbstractThermalFormulation}) = false
+_is_continous_commitment_formulation(::Type{ThermalContinousStandardUnitCommitment}) = true
+_is_continous_commitment_formulation(::Type{ThermalContinousBasicUnitCommitment}) = true
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -50,6 +54,11 @@ function construct_device!(
     add_variables!(container, OnVariable, devices, D())
     add_variables!(container, StartVariable, devices, D())
     add_variables!(container, StopVariable, devices, D())
+
+    if _is_continous_commitment_formulation(D)
+        add_variables!(container, OnVariableSquared, devices, D())
+        add_variables!(container, PWLInterpolationVariable, devices, D())
+    end
 
     add_variables!(container, TimeDurationOn, devices, D())
     add_variables!(container, TimeDurationOff, devices, D())
@@ -189,6 +198,11 @@ function construct_device!(
     add_variables!(container, OnVariable, devices, D())
     add_variables!(container, StartVariable, devices, D())
     add_variables!(container, StopVariable, devices, D())
+
+    if _is_continous_commitment_formulation(D)
+        add_variables!(container, OnVariableSquared, devices, D())
+        add_variables!(container, PWLInterpolationVariable, devices, D())
+    end
 
     add_variables!(container, TimeDurationOn, devices, D())
     add_variables!(container, TimeDurationOff, devices, D())
