@@ -933,7 +933,6 @@ function construct_device!(
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
 }
-    @info "*** Code is in construct_device!() ArgumentConstructStage for PSY.ThermalGen-AbstractThermalDispatchFormulation\nin AbstractActivePowerModel from thermalgeneration_constructor.jl"
     devices = get_available_components(model, sys)
 
     add_variables!(container, ActivePowerVariable, devices, D())
@@ -994,8 +993,7 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen}
     devices = get_available_components(model, sys)
-    @info "*** Code is in construct_device!() ModelConstructStage for PSY.ThermalGen-AbstractThermalDispatchFormulation\nin AbstractActivePowerModel from branch_constructor.jl"
-
+    
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,
