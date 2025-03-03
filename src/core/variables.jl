@@ -319,11 +319,11 @@ Docs abbreviation: ``p^\\text{sl,dn}``
 struct RateofChangeConstraintSlackDown <: VariableType end
 
 """
-Struct for interpolation in PWL function approximations
+Struct for interpolation in PieceWiseLinear function approximations
 
 Docs abbreviation: ``\\delta``
 """
-struct PWLInterpolationVariable <: VariableType end
+struct PieceWiseLinearInterpolationVariable <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
