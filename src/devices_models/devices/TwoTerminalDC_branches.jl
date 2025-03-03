@@ -3,8 +3,14 @@ get_variable_binary(
     _,
     ::Type{<:PSY.TwoTerminalHVDCLine},
     ::AbstractTwoTerminalDCLineFormulation,
-) =
-    false
+) = false
+
+get_variable_binary(
+    ::PWLInterpolationVariable,
+    ::Type{<:PSY.TwoTerminalHVDCLine},
+    ::AbstractTwoTerminalDCLineFormulation,
+) = false
+
 get_variable_binary(
     ::FlowActivePowerVariable,
     ::Type{<:PSY.TwoTerminalHVDCLine},
