@@ -545,7 +545,11 @@ function update_system_state!(
     res = read_result(DenseAxisArray, store, model_name, key, ix)
     dataset = get_dataset(state, key)
     set_update_timestamp!(dataset, simulation_time)
-    set_dataset_values!(state, key, 1, res)
+    if typeof(store) == HdfSimulationStore
+        set_dataset_values!(state, key, 1, res)
+    else 
+        set_dataset_values!(state, key, 1, res[:, ix])
+    end 
     set_last_recorded_row!(dataset, 1)
     return
 end
