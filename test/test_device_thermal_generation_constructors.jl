@@ -1182,3 +1182,26 @@ end
     @test isapprox(p_steam3[1], x_last) # max
     @test isapprox(cost_steam3[1], y_last) # last cost
 end
+
+@testset "Continous UC Models Tests" begin
+    device_model = DeviceModel(ThermalStandard, ThermalContinousStandardUnitCommitment)
+
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 480, 0, 480, 120, 120, true)
+    psi_constraint_test(model, uc_constraint_keys)
+    psi_checkbinvar_test(model, bin_variable_keys)
+    psi_checkobjfun_test(model, GAEVF)
+    psi_aux_variable_test(model, aux_variables_keys)
+
+    device_model = DeviceModel(ThermalStandard, ThermalContinousBasicUnitCommitment)
+
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 480, 0, 480, 120, 120, true)
+    psi_constraint_test(model, uc_constraint_keys)
+    psi_checkbinvar_test(model, bin_variable_keys)
+    psi_checkobjfun_test(model, GAEVF)
+    psi_aux_variable_test(model, aux_variables_keys)
+end
