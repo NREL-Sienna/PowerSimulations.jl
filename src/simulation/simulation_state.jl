@@ -69,6 +69,26 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
             end
         end
     end
+    model = get_emulation_model(models)
+    if model !== nothing 
+        container = get_optimization_container(model)
+        model_resolution = get_resolution(model)
+        for type in fieldnames(DatasetContainer)
+            field_containers = getfield(container, type)
+            for key in keys(field_containers)
+                !should_write_resulting_value(key) && continue
+                if !haskey(params, key)
+                    @error "New parameter found in emulator"
+                else
+                    params[key] = (
+                        horizon = params[key].horizon,
+                        resolution = min(params[key].resolution, model_resolution),
+                    )
+                end
+                @debug get_name(model) key params[key]
+            end
+        end
+    end 
     return params
 end
 
