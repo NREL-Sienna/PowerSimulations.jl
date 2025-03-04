@@ -1682,7 +1682,6 @@ function construct_device!(
         PowerAboveMinimumVariable,
         devices,
         device_model,
-        model,
     )
     if get_use_slacks(device_model)
         add_variables!(
