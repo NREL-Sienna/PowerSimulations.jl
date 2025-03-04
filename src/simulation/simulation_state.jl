@@ -397,17 +397,13 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: VariableType, U <: PSY.Component}
+    #state_data and event_occurrence_data can have different ratios because entire 
+    #horizon is set to zero when an outage occurs. 
     event_occurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), U)
-    event_status_data = get_decision_state_data(state, AvailableStatusParameter(), U)
-
     state_data = get_decision_state_data(state, key)
-    model_resolution = get_resolution(model_params)
-    state_resolution = get_data_resolution(state_data)
-    resolution_ratio = model_resolution ÷ state_resolution
-    state_timestamps = state_data.timestamps
-    @assert_op resolution_ratio >= 1
 
+    state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
     for name in column_names
         if event_occurrence_data.values[name, state_data_index] == 1.0
