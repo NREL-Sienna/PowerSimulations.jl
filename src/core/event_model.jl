@@ -89,7 +89,7 @@ end
 
 function get_empty_timeseries_mapping(
     ::Type{PSY.TimeSeriesForcedOutage},
-) where {D <: PSY.Contingency}
+)
     return Dict{Symbol, Union{String, Nothing}}(
         :availability => nothing,
     )
@@ -97,7 +97,7 @@ end
 
 function get_empty_timeseries_mapping(
     ::Type{PSY.GeometricDistributionForcedOutage},
-) where {D <: PSY.Contingency}
+)
     return Dict{Symbol, Union{String, Nothing}}(
         :mean_time_to_recovery => nothing,
         :outage_transition_probability => nothing,
