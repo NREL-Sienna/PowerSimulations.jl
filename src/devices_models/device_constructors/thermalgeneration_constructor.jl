@@ -57,7 +57,7 @@ function construct_device!(
 
     if _is_continous_commitment_formulation(D)
         add_variables!(container, OnVariableSquared, devices, D())
-        add_variables!(container, PWLInterpolationVariable, devices, D())
+        add_variables!(container, PieceWiseLinearInterpolationVariable, devices, D())
     end
 
     add_variables!(container, TimeDurationOn, devices, D())
@@ -131,9 +131,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <:AbstractStandardUnitCommitment},
+    model::DeviceModel{T, U},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: PSY.ThermalGen}
+) where {T <: PSY.ThermalGen, U <: AbstractStandardUnitCommitment}
     devices = get_available_components(model, sys)
 
     add_constraints!(
@@ -163,6 +163,13 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+
+    if _is_continous_commitment_formulation(U)
+        add_constraints!(container, ContinousIntegerApproximation, devices, model)
+        add_constraints!(container, ConvexCombinationUnitary, devices, model)
+        add_constraints!(container, PieceWiseLinearApproximationTangent, devices, model)
+        add_constraints!(container, PieceWiseLinearApproximationSecant, devices, model)
+    end
 
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_constraints!(
@@ -201,7 +208,7 @@ function construct_device!(
 
     if _is_continous_commitment_formulation(D)
         add_variables!(container, OnVariableSquared, devices, D())
-        add_variables!(container, PWLInterpolationVariable, devices, D())
+        add_variables!(container, PieceWiseLinearInterpolationVariable, devices, D())
     end
 
     add_variables!(container, TimeDurationOn, devices, D())
@@ -267,9 +274,9 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <:AbstractStandardUnitCommitment},
+    model::DeviceModel{T, U},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ThermalGen}
+) where {T <: PSY.ThermalGen, U <: AbstractStandardUnitCommitment}
     devices = get_available_components(model, sys)
     add_constraints!(
         container,
@@ -291,6 +298,14 @@ function construct_device!(
     add_constraints!(container, CommitmentConstraint, devices, model, network_model)
     add_constraints!(container, RampConstraint, devices, model, network_model)
     add_constraints!(container, DurationConstraint, devices, model, network_model)
+
+    if _is_continous_commitment_formulation(U)
+        add_constraints!(container, ContinousIntegerApproximation, devices, model)
+        add_constraints!(container, ConvexCombinationUnitary, devices, model)
+        add_constraints!(container, PieceWiseLinearApproximationTangent, devices, model)
+        add_constraints!(container, PieceWiseLinearApproximationSecant, devices, model)
+    end
+
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_constraints!(
             container,
