@@ -1190,7 +1190,7 @@ end
     device_model = DeviceModel(ThermalStandard, ThermalContinousStandardUnitCommitment)
 
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc; store_variable_names = true)
     mock_construct_device!(model, device_model)
     moi_tests(model, 480, 0, 480, 120, 120, true)
     psi_constraint_test(model, uc_constraint_keys)
@@ -1200,7 +1200,7 @@ end
 
     device_model = DeviceModel(ThermalStandard, ThermalContinousBasicUnitCommitment)
 
-    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc; store_variable_names = true)
     mock_construct_device!(model, device_model)
     moi_tests(model, 480, 0, 480, 120, 120, true)
     psi_constraint_test(model, uc_constraint_keys)
