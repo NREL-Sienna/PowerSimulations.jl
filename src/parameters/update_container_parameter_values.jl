@@ -556,3 +556,13 @@ function update_container_parameter_values!(
     _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
     return
 end
+
+#TODO: added to prevent ambiguities, include warning/error?
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: EventParameter, U <: PSY.Service}
+    return
+end
