@@ -509,6 +509,43 @@ p_t \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\
 """
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
+"""
+Struct to create a constraint that approximates a binary as a function with quadratic polynomial
+
+```math
+x^2 - x == 0.0
+````
+"""
+struct ContinousIntegerApproximation <: ConstraintType end
+
+"""
+Struct to create a constraint for the convext combination of breakpoints to represent a PWL approximation
+
+```math
+\\sum^K_{k = 1} x^k \\delta_k == 1.0
+````
+"""
+struct ConvexCombinationApproximation <: ConstraintType end
+
+"""
+Struct to create the unitary constraint in convex combinations
+
+```math
+\\sum^K_{k = 1} \\delta_k == 1.0
+````
+"""
+struct ConvexCombinationUnitary <: ConstraintType end
+
+"""
+Struct to create the tangent constraint in PieceWiseLinear Approximations
+"""
+struct PieceWiseLinearApproximationTangent <: ConstraintType end
+
+"""
+Struct to create the secant constraint in PieceWiseLinear Approximations
+"""
+struct PieceWiseLinearApproximationSecant <: ConstraintType end
+
 struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
