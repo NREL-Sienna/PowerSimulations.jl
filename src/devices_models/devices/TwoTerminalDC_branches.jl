@@ -6,7 +6,7 @@ get_variable_binary(
 ) = false
 
 get_variable_binary(
-    ::PWLInterpolationVariable,
+    ::PieceWiseLinearInterpolationVariable,
     ::Type{<:PSY.TwoTerminalHVDCLine},
     ::AbstractTwoTerminalDCLineFormulation,
 ) = false
