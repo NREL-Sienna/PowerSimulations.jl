@@ -1189,7 +1189,7 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 480, 0, 480, 120, 120, true)
+    moi_tests(model, 960, 0, 720, 480, 360, false)
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
@@ -1199,7 +1199,7 @@ end
 
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 480, 0, 480, 120, 120, true)
+    moi_tests(model, 960, 0, 720, 480, 360, false)
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
