@@ -302,8 +302,8 @@ function construct_device!(
     if _is_continous_commitment_formulation(U)
         add_constraints!(container, ContinousIntegerApproximation, devices, model)
         add_constraints!(container, ConvexCombinationUnitary, devices, model)
-        add_constraints!(container, PieceWiseLinearApproximationTangent, devices, model)
-        add_constraints!(container, PieceWiseLinearApproximationSecant, devices, model)
+        #add_constraints!(container, PieceWiseLinearApproximationTangent, devices, model)
+        #add_constraints!(container, PieceWiseLinearApproximationSecant, devices, model)
     end
 
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
