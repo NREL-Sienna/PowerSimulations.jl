@@ -648,7 +648,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     branches::IS.FlattenIteratorWrapper{V},
-    branches_outages_v::Vector{V},#  Vector{V}#lines_outages::IS.FlattenIteratorWrapper{V},
+    branches_outages_v::Vector{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
