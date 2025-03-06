@@ -36,6 +36,7 @@ get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFor
 get_variable_binary(::OnVariable, ::Type{<:PSY.ThermalGen}, ::Union{ThermalContinousStandardUnitCommitment, ThermalContinousBasicUnitCommitment}) = false
 get_variable_warm_start_value(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_status(d) ? 1.0 : 0.0
 get_variable_lower_bound(::OnVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = PSY.get_must_run(d) ? 1.0 : 0.0
+get_variable_upper_bound(:::OnVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = 1.0
 
 ############## StopVariable, ThermalGen ####################
 get_variable_binary(::StopVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = true
@@ -49,11 +50,14 @@ get_variable_binary(::StartVariable, ::Type{<:PSY.ThermalGen}, ::Union{ThermalCo
 get_variable_lower_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
 get_variable_upper_bound(::StartVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 
+
 ############## ColdStartVariable, WarmStartVariable, HotStartVariable ############
 get_variable_binary(::Union{ColdStartVariable, WarmStartVariable, HotStartVariable}, ::Type{PSY.ThermalMultiStart}, ::AbstractThermalFormulation) = true
 
 ############## On Square ############
 get_variable_binary(::OnVariableSquared, ::Type{<:PSY.ThermalGen}, ::Union{ThermalContinousStandardUnitCommitment, ThermalContinousBasicUnitCommitment}) = false
+get_variable_lower_bound(::OnVariableSquared, d::PSY.ThermalGen, ::Union{ThermalContinousStandardUnitCommitment, ThermalContinousBasicUnitCommitment}) = 0.0
+get_variable_upper_bound(::OnVariableSquared, d::PSY.ThermalGen, ::Union{ThermalContinousStandardUnitCommitment, ThermalContinousBasicUnitCommitment}) = 1.0
 
 ############## SlackVariables, ThermalGen ####################
 # LB Slack #
