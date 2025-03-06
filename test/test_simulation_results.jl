@@ -1012,7 +1012,7 @@ function load_pf_export(root, export_subdir)
     return sys
 end
 
-@testset "Test power flow in the loop" for calc_loss_factors in (true, false)
+@testset "Test power flow in the loop" for calculate_loss_factors in (true, false)
     file_path = mktempdir(; cleanup = true)
     export_path = mktempdir(; cleanup = true)
     pf_path = mktempdir(; cleanup = true)
@@ -1030,7 +1030,7 @@ end
             power_flow_evaluation =
             ACPowerFlow(;
                 exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
-                calc_loss_factors = calc_loss_factors,
+                calculate_loss_factors = calculate_loss_factors,
             ),
         ),
     )
@@ -1049,7 +1049,7 @@ end
     loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
 
     # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
-    if calc_loss_factors
+    if calculate_loss_factors
         @test loss_factors_aux_var_key ∈ available_aux_variables
         loss_factors = first(
             values(
