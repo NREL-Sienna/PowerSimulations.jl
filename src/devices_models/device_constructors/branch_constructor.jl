@@ -305,11 +305,24 @@ function _has_outage(
 }
     outages_v = unique(collect(outages))
     names_branches = get_name.(collect(branches))
-    #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
-    return filter(
-        b -> PSY.get_name(b) ∈ names_branches,
-        PSY.get_components(sys, first(outages_v)),
-    )
+    
+    if isempty(outages_v)
+        @error "System $(get_name(sys)) has no $T attributes to add the LODF expressions/constraints for the requested network formulation."
+        branches_outages = Vector{eltype(collect(branches))}()
+    else
+        try
+            #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
+            branches_outages = filter(
+                b -> PSY.get_name(b) ∈ names_branches,
+                PSY.get_components(sys, first(outages_v)),
+            )
+        catch e
+            @info "System $(get_name(sys)) has no $T attributes associated to branches $V to add the LODF expressions/constraints of the requested network formulation."
+            branches_outages = Vector{eltype(collect(branches))}() 
+        end
+    end
+
+    return branches_outages
 end
 
 function construct_device!(
@@ -352,10 +365,9 @@ function construct_device!(
 
     outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
     branches_outages = _has_outage(sys, outages, branches)
-
-    if isempty(branches_outages)
-        @info "System $(get_name(sys)) has no $T PowerSystems.Outage attributes associated to add the LODF expressions of the requested network formulation $network_model."
-    else
+    @show branches_outages
+    @show T
+    if !isempty(branches_outages)
         add_to_expression!(
             container,
             PTDFOutagesBranchFlow,
@@ -390,9 +402,7 @@ function construct_device!(
     outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
     branches_outages = _has_outage(sys, outages, branches)
 
-    if isempty(branches_outages)
-        @info "System $(get_name(sys)) has no $T PowerSystems.Outage attributes associated to add the LODF Constraints of the requested network formulation $network_model."
-    else
+    if !isempty(branches_outages)
         add_constraints!(
             container,
             OutageActivePowerFlowsConstraint,
