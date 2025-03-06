@@ -40,7 +40,11 @@ function add_expressions!(
     names = String[]
     found_quad_fuel_functions = false
     for d in devices
-        fuel_curve = PSY.get_variable(PSY.get_operation_cost(d))
+        op_cost = PSY.get_operation_cost(d)
+        if op_cost isa PSY.MarketBidCost
+            continue
+        end
+        fuel_curve = PSY.get_variable(op_cost)
         if fuel_curve isa PSY.FuelCurve
             push!(names, PSY.get_name(d))
             if !found_quad_fuel_functions
@@ -1615,7 +1619,11 @@ function add_to_expression!(
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
-        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        op_cost = PSY.get_operation_cost(d)
+        if op_cost isa PSY.MarketBidCost
+            continue
+        end
+        var_cost = PSY.get_variable(op_cost)
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
@@ -1688,7 +1696,11 @@ function add_to_expression!(
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
-        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        op_cost = PSY.get_operation_cost(d)
+        if op_cost isa PSY.MarketBidCost
+            continue
+        end
+        var_cost = PSY.get_variable(op_cost)
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
