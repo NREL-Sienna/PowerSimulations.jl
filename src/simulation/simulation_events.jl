@@ -174,6 +174,25 @@ function apply_affect!(
             sim_time,
             rng,
         )
+
+        update_system_state!(
+            sim_state,
+            AuxVarKey(TimeDurationOn, dtype),
+            device_names,
+            event,
+            event_model,
+            sim_time,
+            rng,
+        )
+        update_system_state!(
+            sim_state,
+            AuxVarKey(TimeDurationOff, dtype),
+            device_names,
+            event,
+            event_model,
+            sim_time,
+            rng,
+        )
         # Order is required here too AvailableStatusChangeCountdownParameter needs to
         # go first to indicate that there is a change in the other values
         update_decision_state!(
@@ -206,6 +225,24 @@ function apply_affect!(
         update_decision_state!(
             sim_state,
             VariableKey(OnVariable, dtype),
+            device_names,
+            event,
+            event_model,
+            sim_time,
+            em_model_store,
+        )
+        update_decision_state!(
+            sim_state,
+            AuxVarKey(TimeDurationOn, dtype),
+            device_names,
+            event,
+            event_model,
+            sim_time,
+            em_model_store,
+        )
+        update_decision_state!(
+            sim_state,
+            AuxVarKey(TimeDurationOff, dtype),
             device_names,
             event,
             event_model,

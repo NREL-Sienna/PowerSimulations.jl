@@ -43,7 +43,6 @@ function add_event_arguments!(
     return
 end
 
-
 function _add_parameters!(
     container,
     ::T,

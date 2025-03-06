@@ -133,7 +133,6 @@ function ParameterUpdateEvent(
     )
 end
 
-
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
     component_type::DataType,

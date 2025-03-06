@@ -70,7 +70,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
         end
     end
     model = get_emulation_model(models)
-    if model !== nothing 
+    if model !== nothing
         container = get_optimization_container(model)
         model_resolution = get_resolution(model)
         for type in fieldnames(DatasetContainer)
@@ -78,7 +78,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
             for key in keys(field_containers)
                 !should_write_resulting_value(key) && continue
                 if !haskey(params, key)
-                    @error "New parameter found in emulator"
+                    @error "New parameter $key found in emulator"
                 else
                     params[key] = (
                         horizon = params[key].horizon,
@@ -88,7 +88,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
                 @debug get_name(model) key params[key]
             end
         end
-    end 
+    end
     return params
 end
 
@@ -384,6 +384,61 @@ end
 
 function update_decision_state!(
     state::SimulationState,
+    key::AuxVarKey{TimeDurationOn, T},
+    column_names::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: PSY.Component}
+    #state_data and event_occurrence_data can have different ratios because entire 
+    #horizon is set to zero when an outage occurs. 
+    event_occurrence_data =
+        get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    state_data = get_decision_state_data(state, key)
+
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+
+    for name in column_names
+        if event_occurrence_data.values[name, state_data_index] == 1.0
+            state_data.values[name, (state_data_index + 1):end] .= 0.0
+        end
+    end
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
+    key::AuxVarKey{TimeDurationOff, T},
+    column_names::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: PSY.Component}
+    #state_data and event_occurrence_data can have different ratios because entire 
+    #horizon is set to zero when an outage occurs. 
+    event_occurrence_data =
+        get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    state_data = get_decision_state_data(state, key)
+
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    timestamps_left =
+        for name in column_names
+            if event_occurrence_data.values[name, state_data_index] == 1.0
+                for (time_off, ix) in
+                    enumerate((state_data_index + 1):length(state_data.values[name, :]))
+                    state_data.values[name, ix] = time_off
+                end
+            end
+        end
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
     key::VariableKey{T, U},
     column_names::Set{String},
     event::PSY.Outage,
@@ -537,9 +592,9 @@ function update_system_state!(
     set_update_timestamp!(dataset, simulation_time)
     if typeof(store) == HdfSimulationStore
         set_dataset_values!(state, key, 1, res)
-    else 
+    else
         set_dataset_values!(state, key, 1, res[:, ix])
-    end 
+    end
     set_last_recorded_row!(dataset, 1)
     return
 end
@@ -648,6 +703,32 @@ end
 
 function update_system_state!(
     state::SimulationState,
+    key::Union{AuxVarKey{TimeDurationOn, T}, AuxVarKey{TimeDurationOff, T}},
+    column_names::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    rng,
+) where {T <: PSY.Component}
+    sym_state = get_system_states(state)
+    event_occurrence_data =
+        get_system_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    event_occurrence_values = get_last_recorded_value(event_occurrence_data)
+
+    system_dataset = get_dataset(sym_state, key)
+    current_status_data = get_system_state_data(state, key)
+    current_status_values = get_last_recorded_value(current_status_data)
+    set_update_timestamp!(system_dataset, simulation_time)
+    for name in column_names
+        if event_occurrence_values[name] == 1.0
+            current_status_values[name] = 0.0
+        end
+    end
+    return
+end
+
+function update_system_state!(
+    state::SimulationState,
     key::VariableKey{T, U},
     column_names::Set{String},
     ::PSY.Outage,
@@ -666,7 +747,6 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, simulation_time)
     for name in column_names
         if event_occurrence_values[name] == 1.0
-            old_value = current_status_values[name]
             current_status_values[name] = 0.0
         end
     end
@@ -736,11 +816,10 @@ function update_system_state!(
         #       key: $(encode_key_as_string(key)), $(simulation_time), $ts"
         return
     end
-
-    if get_update_timestamp(system_dataset) > ts
-        error("Trying to update with past data a future state timestamp \\
-            key: $(encode_key_as_string(key)), $(simulation_time), $ts")
-    end
+    #if get_update_timestamp(system_dataset) > ts
+    #    error("Trying to update with past data a future state timestamp \\
+    #        key: $(encode_key_as_string(key)), $(simulation_time), $ts")
+    #end
 
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_dataset, ts)
