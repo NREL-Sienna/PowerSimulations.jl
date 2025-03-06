@@ -21,7 +21,7 @@ function _add_pwl_variables!(
         pwlvars[i] =
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "$(string(U))_$(component_name)_{pwl_$(i), $time_period}",
+                base_name = "$(nameof(U))_$(component_name)_{pwl_$(i), $time_period}",
                 lower_bound = 0.0,
             )
     end
