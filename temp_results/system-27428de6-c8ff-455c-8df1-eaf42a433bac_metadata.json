@@ -1,0 +1,36 @@
+{
+    "name": "",
+    "description": "",
+    "frequency": 60,
+    "time_series_resolutions_milliseconds": [
+        3600000
+    ],
+    "component_counts": [
+        {
+            "type": "ACBus",
+            "count": 5
+        },
+        {
+            "type": "Arc",
+            "count": 6
+        },
+        {
+            "type": "Line",
+            "count": 6
+        },
+        {
+            "type": "PowerLoad",
+            "count": 3
+        },
+        {
+            "type": "ThermalStandard",
+            "count": 5
+        }
+    ],
+    "time_series_counts": [
+        {
+            "type": "Deterministic",
+            "count": 3
+        }
+    ]
+}
