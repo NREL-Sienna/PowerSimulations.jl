@@ -3,30 +3,30 @@ Stores results data for one DecisionModel
 """
 mutable struct DecisionModelStore <: IS.Optimization.AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
-    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, Any}}
     parameters::Dict{
         ParameterKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+        OrderedDict{Dates.DateTime, Any},
     }
-    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
+    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, Any}}
     aux_variables::Dict{
         AuxVarKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+        OrderedDict{Dates.DateTime, Any},
     }
     expressions::Dict{
         ExpressionKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
+        OrderedDict{Dates.DateTime, Any},
     }
     optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
 end
 
 function DecisionModelStore()
     return DecisionModelStore(
-        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{ConstraintKey, OrderedDict{Dates.DateTime, Any}}(),
+        Dict{ParameterKey, OrderedDict{Dates.DateTime, Any}}(),
+        Dict{VariableKey, OrderedDict{Dates.DateTime, Any}}(),
+        Dict{AuxVarKey, OrderedDict{Dates.DateTime, Any}}(),
+        Dict{ExpressionKey, OrderedDict{Dates.DateTime, Any}}(),
         OrderedDict{Dates.DateTime, OptimizerStats}(),
     )
 end
@@ -46,12 +46,14 @@ function initialize_storage!(
     for type in STORE_CONTAINERS
         field_containers = getfield(container, type)
         results_container = getfield(store, type)
+        @show typeof(results_container)
         for (key, field_container) in field_containers
             !should_write_resulting_value(key) && continue
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             column_names = get_column_names(key, field_container)
-            data = OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}()
+            numb_dimensions = length(column_names) + 1
+            data = OrderedDict{Dates.DateTime, DenseAxisArray{Float64, numb_dimensions}}()
             for timestamp in
                 range(initial_time; step = model_interval, length = num_of_executions)
                 data[timestamp] = fill!(
