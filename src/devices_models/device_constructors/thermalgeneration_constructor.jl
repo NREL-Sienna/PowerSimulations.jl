@@ -329,6 +329,8 @@ function construct_device!(
     add_variables!(container, StartVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
+    add_variables!(container, TimeDurationOn, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalBasicUnitCommitment())
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
     if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
@@ -481,6 +483,8 @@ function construct_device!(
     add_variables!(container, StartVariable, devices, ThermalBasicUnitCommitment())
     add_variables!(container, StopVariable, devices, ThermalBasicUnitCommitment())
 
+    add_variables!(container, TimeDurationOn, devices, ThermalBasicUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalBasicUnitCommitment())
     initial_conditions!(container, devices, ThermalBasicUnitCommitment())
 
     if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
@@ -1782,6 +1786,8 @@ function construct_device!(
     add_variables!(container, StopVariable, devices, ThermalBasicCompactUnitCommitment())
 
     add_variables!(container, PowerOutput, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, TimeDurationOn, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalBasicCompactUnitCommitment())
 
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
 
@@ -1933,7 +1939,8 @@ function construct_device!(
     add_variables!(container, StopVariable, devices, ThermalBasicCompactUnitCommitment())
 
     add_variables!(container, PowerOutput, devices, ThermalBasicCompactUnitCommitment())
-
+    add_variables!(container, TimeDurationOn, devices, ThermalBasicCompactUnitCommitment())
+    add_variables!(container, TimeDurationOff, devices, ThermalBasicCompactUnitCommitment())
     initial_conditions!(container, devices, ThermalBasicCompactUnitCommitment())
 
     if haskey(get_time_series_names(device_model), ActivePowerTimeSeriesParameter)
