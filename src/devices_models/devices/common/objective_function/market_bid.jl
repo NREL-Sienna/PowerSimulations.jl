@@ -317,20 +317,6 @@ end
 ###############################################
 
 """
-Check if deceremental pwl offer curve is monotonically decreasing.
-"""
-function _is_convex_decremental(pwl:: PSY.PiecewiseStepData)
-    y_coords = PSY.get_y_coords(pwl)
-    for ix in 1:(length(y_coords) - 1)
-        if y_coords[ix] < y_coords[ix + 1]
-            @debug y_coords
-            return false
-        end
-    end
-    return true
-end
-
-"""
 Add PWL cost terms for data coming from the MarketBidCost
 with a fixed incremental offer curve
 """
@@ -390,7 +376,7 @@ function _add_pwl_term_helper!(
     elseif offer_type == Decremental
         cost_data = PSY.get_decremental_offer_curves(cost_function)
         data = _get_pwl_data(container, component, cost_data)
-        cost_is_convex = _is_convex_decremental(data)
+        cost_is_convex = PSY.is_concave(data)
         offer_variable = PieceWiseLinearBlockDecrementalOffer
         constraint_variable = PieceWiseLinearBlockDecrementalOfferConstraint
         _get_pwl_cost_expression_function = _get_pwl_cost_expression_decremental
