@@ -69,7 +69,7 @@ function _test_two_stage_outages(c_sys5_em::PSY.System, event_model, add_outage!
     )
     build_out = build!(sim; console_level = Logging.Info)
     @test build_out == PSI.SimulationBuildStatus.BUILT
-    execute_out = execute!(sim; in_memory = in_memory)  
+    execute_out = execute!(sim; in_memory = in_memory)
     @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     results = SimulationResults(sim; ignore_status = true)
 
@@ -92,7 +92,7 @@ end
 
 function _add_time_varying_geometric(sys)
     outage_gens = ["Brighton"]
-    res =  get_time_series_resolutions(sys)[1]
+    res = get_time_series_resolutions(sys)[1]
 
     dates_ts = collect(
         DateTime("2024-01-01T00:00:00"):res:DateTime("2024-01-07T23:55:00"),
@@ -103,7 +103,7 @@ function _add_time_varying_geometric(sys)
     mttr_timeseries = TimeArray(dates_ts, mttr_data)
 
     outage_prob_data = fill!(Vector{Float64}(undef, length(dates_ts)), 0.0)
-    outage_prob_data[outage_index] = 1.0     
+    outage_prob_data[outage_index] = 1.0
     outage_prob_timeseries = TimeArray(dates_ts, outage_prob_data)
     for name in outage_gens
         g = get_component(ThermalStandard, sys, name)
@@ -125,16 +125,18 @@ function _add_time_varying_geometric(sys)
     end
 end
 
-
 emulation_system_1hr = PSB.build_system(PSISystems, "c_sys5_pjm")
 emulation_system_5min = PSB.build_system(PSISystems, "c_sys5_pjm_rt") #This fails with dataset write bug
 
-conditions = [PSI.PresetTimeCondition([DateTime("2024-01-01T04:00:00")]), ] 
+conditions = [PSI.PresetTimeCondition([DateTime("2024-01-01T04:00:00")])]
 
 #All combinations should lead to guaranteed outage at "2024-01-01T04:00:00"
 condition_outage_combinations = [
     (PSI.PresetTimeCondition([DateTime("2024-01-01T04:00:00")]), _add_fixed_geometric),
-    (PSI.PresetTimeCondition([DateTime("2024-01-01T04:00:00")]), _add_time_varying_geometric),
+    (
+        PSI.PresetTimeCondition([DateTime("2024-01-01T04:00:00")]),
+        _add_time_varying_geometric,
+    ),
     (PSI.ContinuousCondition(), _add_time_varying_geometric),
     #TODO: Test StateVariableValueCondition
     #TODO: Test DiscreteEventCondition
@@ -149,7 +151,7 @@ for em_sys in [emulation_system_1hr, emulation_system_5min]
             if f_outage == _add_fixed_geometric
                 event_model = EventModel(
                     GeometricDistributionForcedOutage,
-                    condition
+                    condition,
                 )
             elseif f_outage == _add_time_varying_geometric
                 event_model = EventModel(
@@ -158,20 +160,158 @@ for em_sys in [emulation_system_1hr, emulation_system_5min]
                     timeseries_mapping = Dict(
                         :mean_time_to_recovery => "mttr_profile_1",
                         :outage_transition_probability => "outage_prob_profile_1",
-                    )
+                    ),
                 )
-            else 
+            else
                 error("Unknown outage function")
-            end 
+            end
             p_realized = _test_two_stage_outages(sys, event_model, f_outage, in_memory)
 
-            outage_index = indexin([DateTime("2024-01-01T04:00:00")], p_realized[!, :DateTime])[1]
+            outage_index =
+                indexin([DateTime("2024-01-01T04:00:00")], p_realized[!, :DateTime])[1]
 
             @test p_realized[outage_index, "Brighton"] != 0.0
             @test p_realized[(outage_index + 1), "Brighton"] == 0.0
-        end 
-    end 
-end 
+        end
+    end
+end
 
-#TODO: Test Standard Formulations (ramping, min up/down times)
-#TODO: Test other device types  
+##
+function _add_outage_Brighton(sys)
+    outage_gens = ["Brighton"]
+    for name in outage_gens
+        g = get_component(ThermalStandard, sys, name)
+        transition_data = PSY.GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 3,
+            outage_transition_probability = 1.0,
+        )
+        add_supplemental_attribute!(sys, g, transition_data)
+    end
+end
+
+template_d1 = get_template_standard_uc_simulation()
+template_d2 = get_template_standard_uc_simulation()
+template_em = get_template_nomin_ed_simulation()
+
+set_device_model!(template_em, Line, StaticBranchUnbounded)
+set_device_model!(template_em, ThermalStandard, ThermalBasicDispatch)
+
+empty!(template_em.services)
+
+set_network_model!(template_d1, NetworkModel(
+    CopperPlatePowerModel,
+))
+set_network_model!(
+    template_d2,
+    NetworkModel(
+        CopperPlatePowerModel;
+        duals = [CopperPlateBalanceConstraint],
+        use_slacks = true,
+    ),
+)
+
+function _add_intertemporal_data(sys)
+    #Give all generators a min dispatch 
+    for g in get_components(ThermalStandard, sys)
+        set_active_power_limits!(g, (min = 0.1, max = get_active_power_limits(g).max))
+    end
+    #Set time and ramping limits for outage gen
+    br = get_component(ThermalStandard, sys, "Brighton")
+    set_time_limits!(br, (up = 5.0, down = 5.0))
+    set_ramp_limits!(br, (up = 0.08, down = 0.08))
+end
+c_sys5_d1 = PSB.build_system(PSISystems, "c_sys5_pjm")
+_add_intertemporal_data(c_sys5_d1)
+transform_single_time_series!(c_sys5_d1, Day(2), Day(1))
+c_sys5_d2 = PSB.build_system(PSISystems, "c_sys5_pjm")
+_add_intertemporal_data(c_sys5_d2)
+transform_single_time_series!(c_sys5_d2, Hour(4), Hour(1))
+c_sys5_em = PSB.build_system(PSISystems, "c_sys5_pjm")
+_add_intertemporal_data(c_sys5_em)
+
+for sys in [c_sys5_d1, c_sys5_d2, c_sys5_em]
+    _add_outage_Brighton(sys)
+end
+
+models = SimulationModels(;
+    decision_models = [
+        DecisionModel(
+            template_d1,
+            c_sys5_d1;
+            name = "D1",
+            optimizer = HiGHS_optimizer),
+        DecisionModel(
+            template_d2,
+            c_sys5_d2;
+            name = "D2",
+            optimizer = HiGHS_optimizer,
+        ),
+    ],
+    emulation_model = EmulationModel(
+        template_em,
+        c_sys5_em;
+        name = "EM",
+        optimizer = HiGHS_optimizer,
+    ),
+)
+
+event_model = EventModel(
+    GeometricDistributionForcedOutage,
+    PSI.PresetTimeCondition([DateTime("2024-01-01T04:00:00")]),
+)
+
+sequence = SimulationSequence(;
+    models = models,
+    feedforwards = Dict(
+        # This FeedForward will enable the RAUC model to commit more units and
+        # "LowerBound" the existing ones instead of fixing them. It give a bit more
+        # Flexibility.
+        "D2" => [
+            LowerBoundFeedforward(;
+                component_type = ThermalStandard,
+                source = OnVariable,
+                affected_values = [OnVariable],
+            ),
+        ],
+        # This FeedForward will force the commitment to be kept in the emulator
+        "EM" => [
+            SemiContinuousFeedforward(;
+                component_type = ThermalStandard,
+                source = OnVariable,
+                affected_values = [ActivePowerVariable],
+            ),
+        ],
+    ),
+    ini_cond_chronology = InterProblemChronology(),
+    events = [event_model],
+)
+sim = Simulation(;
+    name = "no_cache",
+    steps = 2,
+    models = models,
+    sequence = sequence,
+    simulation_folder = mktempdir(; cleanup = true),
+)
+build_out = build!(sim; console_level = Logging.Info)
+@test build_out == PSI.SimulationBuildStatus.BUILT
+execute_out = execute!(sim; in_memory = true)
+@test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+results = SimulationResults(sim; ignore_status = true)
+res_em = get_emulation_problem_results(results)
+res_d1 = get_decision_problem_results(results, "D1")
+res_d2 = get_decision_problem_results(results, "D2")
+
+p_em = read_realized_variable(res_em, "ActivePowerVariable__ThermalStandard")
+p_d2 = read_realized_variable(res_d2, "ActivePowerVariable__ThermalStandard")
+
+#Test that outage respects the 5hr minimum down time
+outage_start_ix = indexin([DateTime("2024-01-01T04:00:00")], p_em[!, :DateTime])[1]
+outage_end_ix = indexin([DateTime("2024-01-01T09:00:00")], p_em[!, :DateTime])[1]
+@test p_em[outage_start_ix - 1, "Brighton"] != 0.0
+for i in (outage_start_ix + 1):outage_end_ix
+    @test p_em[i, "Brighton"] == 0.0
+end
+@test p_em[outage_end_ix + 1, "Brighton"] != 0.0
+
+#Test that ramping constraint is respected in D2 when bringing unit back online
+@test p_d2[outage_end_ix + 1, "Brighton"] <= 490.0
