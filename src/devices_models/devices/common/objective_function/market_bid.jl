@@ -1,8 +1,12 @@
-@enum MarketBidOfferType Incremental Decremental
-
 ##################################################
 ################# PWL Variables ##################
 ##################################################
+
+"""
+Enumeration representing the different types of offer curves for a MarketBidCost. 
+Used as an argument for calling the helper functions.
+"""
+@enum MarketBidOfferType Incremental Decremental
 
 # For Market Bid
 function _add_pwl_variables!(
@@ -614,13 +618,13 @@ function _add_variable_cost_helper!(
             error("Component $(component_name) is not allowed to participate as a demand.")
         end
         cost_data = incremental_cost_curves
-        add_pwl_term_function! = _add_pwl_term!
+        _add_pwl_term_function! = _add_pwl_term!
     elseif offer_type == Decremental
         if !(isnothing(incremental_cost_curves))
             error("Component $(component_name) is not allowed to participate as a supply.")
         end
         cost_data = decremental_cost_curves
-        add_pwl_term_function! = _add_pwl_term_decremental!
+        _add_pwl_term_function! = _add_pwl_term_decremental!
     else
         error("Invalid offer_type")
     end
@@ -642,7 +646,7 @@ function _add_variable_cost_helper!(
     )
     =#
     pwl_cost_expressions =
-        add_pwl_term_function!(
+        _add_pwl_term_function!(
             container,
             component,
             cost_function,
