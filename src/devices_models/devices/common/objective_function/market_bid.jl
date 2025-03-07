@@ -16,7 +16,10 @@ function _add_pwl_variables!(
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
     ::Type{U},
-) where {T <: PSY.Component, U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer}}
+) where {
+    T <: PSY.Component,
+    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+}
     var_container = lazy_container_addition!(container, U(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
     break_points = PSY.get_x_coords(cost_data)
@@ -52,9 +55,12 @@ function _add_pwl_constraint!(
     period::Int,
     ::Type{V},
     ::Type{W},
-) where {T <: PSY.Component, U <: VariableType, 
-V <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer}, 
-W <: Union{PieceWiseLinearBlockOfferConstraint, PieceWiseLinearBlockDecrementalOfferConstraint}}
+) where {T <: PSY.Component, U <: VariableType,
+    V <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+    W <: Union{
+        PieceWiseLinearBlockOfferConstraint,
+        PieceWiseLinearBlockDecrementalOfferConstraint,
+    }}
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
@@ -144,8 +150,11 @@ function _get_pwl_cost_expression(
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
     multiplier::Float64,
-    ::Type{U}
-) where {T <: PSY.Component, U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer}}
+    ::Type{U},
+) where {
+    T <: PSY.Component,
+    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+}
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, U(), T)
     gen_cost = JuMP.AffExpr(0.0)
@@ -219,7 +228,7 @@ function _get_pwl_cost_expression_decremental(container::OptimizationContainer,
         cost_data_normalized,
         multiplier,
         PieceWiseLinearBlockDecrementalOffer,
-        )
+    )
 end
 
 """
@@ -363,11 +372,10 @@ function _add_pwl_term_helper!(
     container::OptimizationContainer,
     component::T,
     cost_function::PSY.MarketBidCost,
-    offer_type:: MarketBidOfferType,
+    offer_type::MarketBidOfferType,
     ::U,
     ::V) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
-
     if offer_type == Incremental
         cost_data = PSY.get_incremental_offer_curves(cost_function)
         data = _get_pwl_data(container, component, cost_data)
@@ -569,7 +577,6 @@ function _add_variable_cost_to_objective!(
     cost_function::PSY.MarketBidCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
-
     decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
     if !isnothing(decremental_cost_curves)
         error("Component $(component_name) is not allowed to participate as a demand.")
@@ -580,7 +587,7 @@ function _add_variable_cost_to_objective!(
         component,
         cost_function,
         Incremental,
-        U()
+        U(),
     )
     return
 end
@@ -591,7 +598,6 @@ function _add_variable_cost_to_objective!(container::OptimizationContainer,
     cost_function::PSY.MarketBidCost,
     ::U) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
-
     incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
     if !(isnothing(incremental_cost_curves))
         error("Component $(component_name) is not allowed to participate as a supply.")
@@ -602,7 +608,7 @@ function _add_variable_cost_to_objective!(container::OptimizationContainer,
         component,
         cost_function,
         Decremental,
-        U()
+        U(),
     )
     return
 end
@@ -612,10 +618,9 @@ function _add_variable_cost_helper!(
     ::T,
     component::PSY.Component,
     cost_function::PSY.MarketBidCost,
-    offer_type:: MarketBidOfferType,
+    offer_type::MarketBidOfferType,
     ::U) where {T <: VariableType,
     U <: AbstractDeviceFormulation}
-
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
     time_steps = get_time_steps(container)
@@ -741,11 +746,10 @@ function _add_vom_cost_to_objective!(
         component,
         op_cost,
         incremental_cost_curves,
-        U()
+        U(),
     )
     return
 end
-
 
 function _add_vom_cost_to_objective!(container::OptimizationContainer,
     ::T,
@@ -760,7 +764,7 @@ function _add_vom_cost_to_objective!(container::OptimizationContainer,
         component,
         op_cost,
         decremental_cost_curves,
-        U()
+        U(),
     )
     return
 end
@@ -772,7 +776,6 @@ function _add_vom_cost_to_objective_helper!(container::OptimizationContainer,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U) where {T <: VariableType,
     U <: AbstractDeviceFormulation}
-    
     power_units = PSY.get_power_units(cost_data)
     vom_cost = PSY.get_vom_cost(cost_data)
     multiplier = 1.0 # VOM Cost is always positive
