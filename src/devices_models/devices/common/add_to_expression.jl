@@ -481,7 +481,7 @@ function add_to_expression!(
             PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
         for t in get_time_steps(container)
             flow_variable = var[PSY.get_name(d), t]
-            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, 1.0)
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
         end
     end
     return
