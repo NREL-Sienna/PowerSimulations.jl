@@ -321,7 +321,7 @@ function _has_outage(
             #TODO Modify to consider different Outages Attributes
             aux = PSY.get_components(
                 x -> (PSY.has_supplemental_attributes(x,PSY.GeometricDistributionForcedOutage)), 
-                PSY.Line, 
+                V, 
                 sys)
             branches_outages = filter(b -> get_name(b)∈ names_branches,collect(aux))
 
