@@ -304,18 +304,27 @@ function _has_outage(
     V <: PSY.ACBranch,
 }
     outages_v = unique(collect(outages))
-    names_branches = get_name.(collect(branches))
-    
+    names_branches = PSY.get_name.(collect(branches))
+
     if isempty(outages_v)
-        @error "System $(get_name(sys)) has no $T attributes to add the LODF expressions/constraints for the requested network formulation."
+        @error "System $(PSY.get_name(sys)) has no $T attributes to add the LODF expressions/constraints for the requested network formulation."
         branches_outages = Vector{eltype(collect(branches))}()
     else
         try
             #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
-            branches_outages = filter(
-                b -> PSY.get_name(b) ∈ names_branches,
-                PSY.get_components(sys, first(outages_v)),
-            )
+            #The following filter returns a Vector of Abstract type, but it's needed a Vector of the type of the components in names_branches (already filtered)
+            #Ideally implement a PSY.get_components(::Type, sys, attribute) and it should return an IS.wrapper of type T
+            #branches_outages = filter(
+            #    b -> typeof(b) == V && PSY.get_name(b) ∈ names_branches,
+            #    PSY.get_components(sys, first(outages_v)),
+            #)
+            #TODO Modify to consider different Outages Attributes
+            aux = PSY.get_components(
+                x -> (PSY.has_supplemental_attributes(x,PSY.GeometricDistributionForcedOutage)), 
+                PSY.Line, 
+                sys)
+            branches_outages = filter(b -> get_name(b)∈ names_branches,collect(aux))
+
         catch e
             @info "System $(get_name(sys)) has no $T attributes associated to branches $V to add the LODF expressions/constraints of the requested network formulation."
             branches_outages = Vector{eltype(collect(branches))}() 
@@ -365,8 +374,6 @@ function construct_device!(
 
     outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
     branches_outages = _has_outage(sys, outages, branches)
-    @show branches_outages
-    @show T
     if !isempty(branches_outages)
         add_to_expression!(
             container,
