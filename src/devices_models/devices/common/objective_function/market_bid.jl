@@ -569,6 +569,11 @@ function _add_variable_cost_to_objective!(
     cost_function::PSY.MarketBidCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
+
+    decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
+    if !isnothing(decremental_cost_curves)
+        error("Component $(component_name) is not allowed to participate as a demand.")
+    end
     _add_variable_cost_helper!(
         container,
         T(),
@@ -587,6 +592,10 @@ function _add_variable_cost_to_objective!(container::OptimizationContainer,
     ::U) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
 
+    incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
+    if !(isnothing(incremental_cost_curves))
+        error("Component $(component_name) is not allowed to participate as a supply.")
+    end
     _add_variable_cost_helper!(
         container,
         T(),
@@ -614,15 +623,9 @@ function _add_variable_cost_helper!(
     incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
     decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
     if offer_type == Incremental
-        if !isnothing(decremental_cost_curves)
-            error("Component $(component_name) is not allowed to participate as a demand.")
-        end
         cost_data = incremental_cost_curves
         _add_pwl_term_function! = _add_pwl_term!
     elseif offer_type == Decremental
-        if !(isnothing(incremental_cost_curves))
-            error("Component $(component_name) is not allowed to participate as a supply.")
-        end
         cost_data = decremental_cost_curves
         _add_pwl_term_function! = _add_pwl_term_decremental!
     else
