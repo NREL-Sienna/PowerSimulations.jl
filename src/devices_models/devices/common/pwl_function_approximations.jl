@@ -55,7 +55,7 @@ function add_variable!(
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps, k in breakpoints_range
-            vname = "$(PieceWiseLinearInterpolationVariable)_$(D)_{$(name), $(k), $(t)}"
+            vname = "$(PieceWiseLinearInterpolationVariable)_{$(name), $(k), $(t)}"
             variable[name, k, t] = JuMP.@variable(
                 get_jump_model(container),
                 base_name = vname,
@@ -64,6 +64,111 @@ function add_variable!(
                 upper_bound = 1.0
             )
         end
+    end
+
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{OnVariableBounds},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel,
+) where {T <: PSY.Device}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+
+    constraint = add_constraints_container!(
+        container,
+        OnVariableBounds(),
+        T,
+        PSY.get_name.(devices),
+        time_steps,
+    )
+
+    @show OnVariableBounds
+
+    on_var    = get_variable(container, OnVariable(), T)
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        cname = "$(OnVariableBounds)_{$(name), $(t)}"
+        constraint[name, t] = JuMP.@constraint(
+            get_jump_model(container),
+            base_name = cname, 
+            0.0 <= on_var[name, t] <= 1.0
+        )
+
+    end
+
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{StartVariableBounds},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel,
+) where {T <: PSY.Device}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+
+    constraint = add_constraints_container!(
+        container,
+        StartVariableBounds(),
+        T,
+        PSY.get_name.(devices),
+        time_steps,
+    )
+
+    @show StartVariableBounds
+
+    start_var    = get_variable(container, StartVariable(), T)
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        cname = "$(StartVariableBounds)_{$(name), $(t)}"
+        constraint[name, t] = JuMP.@constraint(
+            get_jump_model(container),
+            base_name = cname, 
+            0.0 <= start_var[name, t] <= 1.0
+        )
+
+    end
+
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{StopVariableBounds},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel,
+) where {T <: PSY.Device}
+    @assert !isempty(devices)
+    time_steps = get_time_steps(container)
+
+    constraint = add_constraints_container!(
+        container,
+        StopVariableBounds(),
+        T,
+        PSY.get_name.(devices),
+        time_steps,
+    )
+
+    @show StopVariableBounds
+
+    stop_var    = get_variable(container, StopVariable(), T)
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        cname = "$(StopVariableBounds)_{$(name), $(t)}"
+        constraint[name, t] = JuMP.@constraint(
+            get_jump_model(container),
+            base_name = cname, 
+            0.0 <= stop_var[name, t] <= 1.0
+        )
+
     end
 
     return
@@ -86,15 +191,20 @@ function add_constraints!(
         time_steps,
     )
 
-    on_var = get_variable(container, OnVariable(), T)
+    @show ContinousIntegerApproximation
+
+    on_var    = get_variable(container, OnVariable(), T)
     on_var_sq = get_variable(container, OnVariableSquared(), T)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
+        cname = "$(ContinousIntegerApproximation)_{$(name), $(t)}"
         constraint[name, t] = JuMP.@constraint(
             get_jump_model(container),
+            base_name = cname, 
             on_var_sq[name, t] - on_var[name, t] == 0.0
         )
+
     end
 
     return
@@ -117,11 +227,15 @@ function add_constraints!(
         time_steps,
     )
 
+    @show ConvexCombinationUnitary
+
     δ = get_variable(container, PieceWiseLinearInterpolationVariable(), T)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
+        cname = "$(ConvexCombinationUnitary)_{$(name), $(t)}"
         constraint[name, t] = JuMP.@constraint(
+            base_name = cname,
             get_jump_model(container),
             sum(δ[name, k, t] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH) == 1.0
         )
@@ -139,6 +253,8 @@ function add_constraints!(
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
 
+    @show ConvexCombinationApproximation
+
     x_bkpts, y_bkpts =
         _get_breakpoints_for_pwl_function(0.0, 1.0, _sq, BINARY_PWL_INTERPOLATION_LENGTH)
 
@@ -147,16 +263,17 @@ function add_constraints!(
         ConvexCombinationApproximation(),
         T,
         PSY.get_name.(devices),
-        time_steps,
-        "x",
+        time_steps;
+        meta = "x",
     )
 
     constraint_y = add_constraints_container!(
         container,
         ConvexCombinationApproximation(),
+        T,
         PSY.get_name.(devices),
-        time_steps,
-        "y",
+        time_steps;
+        meta = "y",
     )
 
     δ = get_variable(container, PieceWiseLinearInterpolationVariable(), T)
@@ -165,12 +282,16 @@ function add_constraints!(
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
+        cname_y = "$(ConvexCombinationApproximation)_y_{$(name), $(t)}"
+        cname_x = "$(ConvexCombinationApproximation)_x_{$(name), $(t)}"
         constraint_y[name, t] = JuMP.@constraint(
             get_jump_model(container),
+            base_name = cname_y,
             sum(δ[name, k, t] * y_bkpts[k] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH) == on_var_sq[name, t]
         )
         constraint_x[name, t] = JuMP.@constraint(
             get_jump_model(container),
+            base_name = cname_x,
             sum(δ[name, k, t] * x_bkpts[k] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH) == on_var[name, t]
         )
     end
@@ -187,11 +308,13 @@ function add_constraints!(
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
 
-    breakpoints_range = 1:(BINARY_PWL_INTERPOLATION_LENGTH - 1)
+    breakpoints_range = 1:BINARY_PWL_INTERPOLATION_LENGTH
     x_bkpts, y_bkpts =
         _get_breakpoints_for_pwl_function(0.0, 1.0, _sq, BINARY_PWL_INTERPOLATION_LENGTH)
     on_var = get_variable(container, OnVariable(), T)
     on_var_sq = get_variable(container, OnVariableSquared(), T)
+
+    @show PieceWiseLinearApproximationSecant
 
     constraint = add_constraints_container!(
         container,
@@ -207,8 +330,10 @@ function add_constraints!(
         for k in breakpoints_range
             slope = (y_bkpts[k + 1] - y_bkpts[k]) / (x_bkpts[k + 1] - x_bkpts[k])
             for t in time_steps
+                cname = "$(PieceWiseLinearApproximationSecant)_{$(name), $(k), $(t)}"
                 constraint[name, k, t] = JuMP.@constraint(
                     get_jump_model(container),
+                    base_name = cname,
                     on_var_sq[name, t] <=
                     y_bkpts[k] + slope * (on_var[name, t] - x_bkpts[k])
                 )
@@ -234,6 +359,8 @@ function add_constraints!(
     on_var = get_variable(container, OnVariable(), T)
     on_var_sq = get_variable(container, OnVariableSquared(), T)
 
+    @show PieceWiseLinearApproximationTangent
+    
     constraint = add_constraints_container!(
         container,
         PieceWiseLinearApproximationTangent(),
@@ -246,8 +373,10 @@ function add_constraints!(
     for d in devices
         name = PSY.get_name(d)
         for t in time_steps, k in breakpoints_range
+            cname = "$(PieceWiseLinearApproximationTangent)_{$(name), $(k), $(t)}"
             constraint[name, k, t] = JuMP.@constraint(
                 get_jump_model(container),
+                base_name = cname,
                 on_var_sq[name, t] >=
                 y_bkpts[k] + 2 * x_bkpts[k] * (on_var[name, t] - x_bkpts[k])
             )

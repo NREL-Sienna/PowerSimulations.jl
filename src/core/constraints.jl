@@ -436,5 +436,9 @@ struct PieceWiseLinearApproximationSecant <: ConstraintType end
 
 struct LineFlowBoundConstraint <: ConstraintType end
 
+struct OnVariableBounds <: ConstraintType end
+struct StartVariableBounds <: ConstraintType end
+struct StopVariableBounds <: ConstraintType end
+
 abstract type EventConstraint <: ConstraintType end
 struct OutageConstraint <: EventConstraint end
