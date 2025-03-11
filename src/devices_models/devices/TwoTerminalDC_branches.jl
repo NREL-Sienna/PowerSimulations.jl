@@ -1112,6 +1112,8 @@ function add_constraints!(
                 #         )
                 #     )
                 # )
+
+                # Approximation of rectifier power factor calculation
                 rect_power_factor_var[name, t] == acos(
                     0.5 * cos(rect_delay_angle_var[name, t]) +
                     0.5 * cos(
@@ -1173,6 +1175,8 @@ function add_constraints!(
                 #         )
                 #     )
                 # )
+                
+                # Approximation of inverter power factor calculation
                 inv_power_factor_var[name, t] == acos(
                     0.5 * cos(inv_extinction_angle_var[name, t]) +
                     0.5 * cos(
