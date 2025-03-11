@@ -1,6 +1,6 @@
 @testset "LCC HVDC System Tests" begin
-    sys_5 = build_system(PSISystems, "2Area 5 Bus System")
-    hvdc = first(get_components(TwoTerminalGenericHVDCLine, sys_5))
+    sys5 = build_system(PSISystems, "2Area 5 Bus System")
+    hvdc = first(get_components(TwoTerminalGenericHVDCLine, sys5))
     lcc = TwoTerminalLCCLine(;
         name = "lcc",
         available = true,
@@ -41,8 +41,8 @@
         reactive_power_limits_to = (min = -3.0, max = 3.0),
     )
 
-    add_component!(sys_5, lcc)
-    remove_component!(sys_5, hvdc)
+    add_component!(sys5, lcc)
+    remove_component!(sys5, hvdc)
 
     template = get_thermal_dispatch_template_network(
             NetworkModel(
