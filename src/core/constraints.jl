@@ -357,7 +357,7 @@ struct HVDCInverterDCLineVoltageConstraint <: ConstraintType end
 Struct to create the constraint that calculates the Rectifier Overlap Angle.
 
 ```math
-\\mu^r = \\arccos \\left( \\alpha^r - \\frac{\\sqrt{2} I_d X^r t^r}{a^r v_\\text{ac}^r} \\right) - \\alpha^r
+\\mu^r = \\arccos \\left( \\cos\\alpha^r - \\frac{\\sqrt{2} I_d X^r t^r}{a^r v_\\text{ac}^r} \\right) - \\alpha^r
 ```
 """
 struct HVDCRectifierOverlapAngleConstraint <: ConstraintType end
@@ -366,7 +366,7 @@ struct HVDCRectifierOverlapAngleConstraint <: ConstraintType end
 Struct to create the constraint that calculates the Inverter Overlap Angle.
 
 ```math
-\\mu^i = \\arccos \\left( \\gamma^i - \\frac{\\sqrt{2} I_d X^i t^r}{a^i v_\\text{ac}^i} \\right) - \\gamma^i
+\\mu^i = \\arccos \\left( \\cos\\gamma^i - \\frac{\\sqrt{2} I_d X^i t^r}{a^i v_\\text{ac}^i} \\right) - \\gamma^i
 ```
 """
 struct HVDCInverterOverlapAngleConstraint <: ConstraintType end
