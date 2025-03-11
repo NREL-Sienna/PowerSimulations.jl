@@ -45,9 +45,9 @@
     remove_component!(sys5, hvdc)
 
     template = get_thermal_dispatch_template_network(
-            NetworkModel(
-                ACPPowerModel;
-                use_slacks = false,
+        NetworkModel(
+            ACPPowerModel;
+            use_slacks = false,
         ),
     )
 
@@ -60,6 +60,7 @@
         optimizer = optimizer_with_attributes(Ipopt.Optimizer),
         horizon = Hour(2),
     )
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
