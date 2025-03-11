@@ -42,7 +42,7 @@ function add_variable!(
     time_steps = get_time_steps(container)
     binary = get_variable_binary(variable_type, D, formulation)
 
-    breakpoints_range = 1:BINARY_PWL_INTERPOLATION_LENGTH
+    breakpoints_range = 1:BINARY_PWL_INTERPOLATION_LENGTH+1
     variable = add_variable_container!(
         container,
         PieceWiseLinearInterpolationVariable(),
@@ -237,7 +237,7 @@ function add_constraints!(
         constraint[name, t] = JuMP.@constraint(
             base_name = cname,
             get_jump_model(container),
-            sum(δ[name, k, t] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH) == 1.0
+            sum(δ[name, k, t] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH+1) == 1.0
         )
     end
 
@@ -279,6 +279,7 @@ function add_constraints!(
     δ = get_variable(container, PieceWiseLinearInterpolationVariable(), T)
     on_var_sq = get_variable(container, OnVariableSquared(), T)
     on_var = get_variable(container, OnVariable(), T)
+    eps = 1e-3
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
@@ -287,12 +288,12 @@ function add_constraints!(
         constraint_y[name, t] = JuMP.@constraint(
             get_jump_model(container),
             base_name = cname_y,
-            sum(δ[name, k, t] * y_bkpts[k] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH) == on_var_sq[name, t]
+            sum(δ[name, k, t] * y_bkpts[k] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH+1) == on_var_sq[name, t]
         )
         constraint_x[name, t] = JuMP.@constraint(
             get_jump_model(container),
             base_name = cname_x,
-            sum(δ[name, k, t] * x_bkpts[k] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH) == on_var[name, t]
+            sum(δ[name, k, t] * x_bkpts[k] for k in 1:BINARY_PWL_INTERPOLATION_LENGTH+1) == on_var[name, t]
         )
     end
 
@@ -353,7 +354,7 @@ function add_constraints!(
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
 
-    breakpoints_range = 1:BINARY_PWL_INTERPOLATION_LENGTH
+    breakpoints_range = 1:BINARY_PWL_INTERPOLATION_LENGTH+1
     x_bkpts, y_bkpts =
         _get_breakpoints_for_pwl_function(0.0, 1.0, _sq, BINARY_PWL_INTERPOLATION_LENGTH)
     on_var = get_variable(container, OnVariable(), T)
