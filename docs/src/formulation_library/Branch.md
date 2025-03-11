@@ -13,7 +13,8 @@
  5. [`HVDCTwoTerminalLossless`](#HVDCTwoTerminalLossless)
  6. [`HVDCTwoTerminalDispatch`](#HVDCTwoTerminalDispatch)
  7. [`PhaseAngleControl`](#PhaseAngleControl)
- 8. [Valid configurations](#Valid-configurations)
+ 8. [`TwoTerminalLCCLine`](#TwoTerminalLCCLine)
+ 9. [Valid configurations](#Valid-configurations)
 
 ## `StaticBranch`
 
@@ -352,6 +353,161 @@ For each branch ``b \in \{1,\dots, B\}`` (in a system with ``N`` buses) the cons
 ```
 
 on which ``\text{PTDF}`` is the ``N \times B`` system Power Transfer Distribution Factors (PTDF) matrix, and ``\text{Bal}_{i,t}`` is the active power bus balance expression (i.e. ``\text{Generation}_{i,t} - \text{Demand}_{i,t}``) at bus ``i`` at time-step ``t``.
+
+* * *
+
+## `TwoTerminalLCCLine`
+
+Formulation valid for `ACPPowerModel` Network model
+
+**Variables:**
+
+- [`HVDCRectifierDelayAngleVariable`](@ref):
+    
+      + Bounds: ``(-\alpha_{r,t}^\text{min},\alpha_{r,t}^\text{max})``
+      + Symbol: ``\alpha_{r,t}``
+
+- [`HVDCInverterExtinctionAngleVariable`](@ref):
+    
+      + Bounds: ``(-\gamma_{i,t}^\text{min},\gamma_{i,t}^\text{max})``
+      + Symbol: ``\gamma_{i,t}``
+
+- [`HVDCRectifierPowerFactorAngleVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``\phi_{r,t}``
+
+- [`HVDCInverterPowerFactorAngleVariable`](@ref):
+    
+      + Bounds: ``\{0,1\}``
+      + Symbol: ``\phi_{i,t}``
+
+- [`HVDCRectifierOverlapAngleVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\mu_{r,t}``
+
+- [`HVDCInverterOverlapAngleVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``\mu_{i,t}``
+
+- [`HVDCRectifierTapSettingVariable`](@ref):
+    
+      + Bounds: ``(t_{r,t}^\text{min},t_{r,t}^\text{max})``
+      + Symbol: ``t_{r,t}``
+
+- [`HVDCInverterTapSettingVariable`](@ref):
+    
+      + Bounds: ``(t_{i,t}^\text{min},t_{i,t}^\text{max})``
+      + Symbol: ``t_{i,t}``
+
+- [`HVDCRectifierDCVoltageVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``v_{r,t}^\text{dc}``
+
+- [`HVDCInverterDCVoltageVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``v_{i,t}^\text{dc}``
+
+- [`HVDCRectifierACCurrentVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``I_{r,t}^\text{ac}``
+
+- [`HVDCInverterACCurrentVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``I_{i,t}^\text{ac}``
+
+- [`DCLineCurrentFlowVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``I^\text{dc}``
+
+- [`HVDCActivePowerReceivedFromVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p_{r,t}^\text{ac}``
+
+- [`HVDCActivePowerReceivedToVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``p_{i,t}^\text{ac}``
+
+- [`HVDCReactivePowerReceivedFromVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q_{r,t}^\text{ac}``
+
+- [`HVDCReactivePowerReceivedToVariable`](@ref):
+    
+      + Bounds: [0.0, ]
+      + Symbol: ``q_{i,t}^\text{ac}``
+
+**Static Parameters**
+
+  - ``R^\text{dc}`` = `PowerSystems.get_r(lcc)`
+  - ``N_r`` = `PowerSystems.get_rectifier_bridges(lcc)`
+  - ``N_i`` = `PowerSystems.get_inverter_bridges(lcc)`
+  - ``X_r`` = `PowerSystems.get_rectifier_xc(lcc)`
+  - ``X_i`` = `PowerSystems.get_inverter_xc(lcc)`
+  - ``a_r`` = `PowerSystems.get_rectifier_transformer_ratio(lcc)`
+  - ``a_i`` = `PowerSystems.get_inverter_transformer_ratio(lcc)`
+  - ``t_r`` = `PowerSystems.get_rectifier_tap_setting(lcc)`
+  - ``t_i`` = `PowerSystems.get_inverter_tap_setting(lcc)`
+  - ``t^\text{min}_r`` = `PowerSystems.get_rectifier_tap_setting(lcc).min`
+  - ``t^\text{max}_r`` = `PowerSystems.get_rectifier_tap_setting(lcc).max`
+  - ``t^\text{min}_i`` = `PowerSystems.get_inverter_tap_setting(lcc).min`
+  - ``t^\text{max}_i`` = `PowerSystems.get_inverter_tap_setting(lcc).max`
+
+**Objective:**
+
+No changes to objective function
+
+**Expressions:**
+
+The variable `HVDCActivePowerReceivedFromVariable` ``p_{r,t}^\text{ac}`` is added to the nodal balance expression `ActivePowerBalance` as a negative load, since the rectifier takes power from the AC system and to injects it into the DC system. On the other hand, the variable `HVDCActivePowerReceivedToVariable` ``p_{i,t}^\text{ac}`` is added to the nodal balance expression `ActivePowerBalance` as a positive load, since it takes the power from the DC system and injects it  back into the AC system.
+
+The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and `HVDCReactivePowerReceivedToVariable` ``q_{i,t}^\text{ac}` are added to the nodal balance expression `ActivePowerBalance` as positive loads, since they consume reactive power from the AC system to allow current transfer in converters during commutation.
+
+**Constraints:**
+
+- **Rectifier:**
+
+```math
+\begin{aligned}
+&  v^\text{dc}_{r,t} = \frac{3}{\pi}N_r \left( \sqrt{2}\frac{a_r v^\text{ac}_{r,t}}{t_{r,t}}\\cos{\alpha_{r,t}}-X_r I^\text{dc}_t \right)\\
+& \mu_{r,t} = \arccos \left( \cos\alpha_{r,t} - \frac{\sqrt{2} I^\text{dc}_t X_r t_{r,t}}{a_r v^\text{ac}_{r,t}} \right) - \alpha_{r,t}\\
+& \phi_{r,t} = \arctan \left( \frac{2\mu_{r,t} + \sin(2\alpha_{r,t}) - \sin(2\mu_{r,t} + 2\alpha_{r,t})}{\cos(2\alpha_{r,t}) - \cos(2\mu_{r,t} + 2\alpha_{r,t})} \right)\\
+& I^\text{ac}_{r,t} = \sqrt{6} \frac{N_r}{\pi} I^\text{dc}_t\\
+& p^\text{ac}_{r,t} = \sqrt{3} I^\text{ac}_{r,t} \frac{a_r v^\text{ac}_{r,t}}{t_{r,t}}\cos{\phi_{r,t}} \\
+& q^\text{ac}_{r,t} = \sqrt{3} I^\text{ac}_{r,t} \frac{a_r v^\text{ac}_{r,t}}{t_{r,t}}\sin{\phi_{r,t}} \\
+\end{aligned}
+```
+
+- **Inverter:**
+
+```math
+\begin{aligned}
+&  v^\text{dc}_{i,t} = \frac{3}{\pi}N_i \left( \sqrt{2}\frac{a_i v^\text{ac}_{i,t}}{t_{i,t}}\\cos{\gamma_{i,t}}-X_i I^\text{dc}_t \right)\\
+& \mu_{i,t} = \arccos \left( \cos\gamma_{i,t} - \frac{\sqrt{2} I^\text{dc}_t X_i t_{i,t}}{a_i v^\text{ac}_{i,t}} \right) - \gamma_{i,t}\\
+& \phi_{i,t} = \arctan \left( \frac{2\mu_{i,t} + \sin(2\gamma_{i,t}) - \sin(2\mu_{i,t} + 2\gamma_{i,t})}{\cos(2\gamma_{i,t}) - \cos(2\mu_{r,t} + 2\gamma_{i,t})} \right)\\
+& I^\text{ac}_{i,t} = \sqrt{6} \frac{N_i}{\pi} I^\text{dc}_t\\
+& p^\text{ac}_{i,t} = \sqrt{3} I^\text{ac}_{i,t} \frac{a_i v^\text{ac}_{i,t}}{t_{i,t}}\cos{\phi_{i,t}} \\
+& q^\text{ac}_{i,t} = \sqrt{3} I^\text{ac}_{i,t} \frac{a_i v^\text{ac}_{i,t}}{t_{i,t}}\sin{\phi_{i,t}} \\
+\end{aligned}
+```
+
+- **DC Transmission Line:**
+
+```math
+\begin{aligned}
+&  v^\text{dc}_{i,t} = v^\text{dc}_{r,t} - R_\text{dc}I^\text{dc}_t
+\end{aligned}
+```
 
 * * *
 
