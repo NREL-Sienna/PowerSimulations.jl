@@ -327,6 +327,8 @@ struct PieceWiseLinearInterpolationVariable <: VariableType end
 
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
 
+should_write_resulting_value(::Type{PieceWiseLinearInterpolationVariable}) = false
+
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
