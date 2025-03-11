@@ -67,6 +67,26 @@ function initialize_storage!(
     return
 end
 
+# TODO: fix 3D variables writing
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{<:Any, 3},
+)
+    @show name
+    columns = axes(array)[1]
+    if eltype(columns) !== String
+        # TODO: This happens because buses are stored by indexes instead of name.
+        columns = string.(columns)
+    end
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] = DenseAxisArray(array.data, columns, 1:size(array)[2])
+    return
+end
+
 function write_result!(
     store::DecisionModelStore,
     name::Symbol,
