@@ -362,90 +362,75 @@ Formulation valid for `ACPPowerModel` Network model
 
 **Variables:**
 
-- [`HVDCRectifierDelayAngleVariable`](@ref):
+  - [`HVDCRectifierDelayAngleVariable`](@ref):
     
-      + Bounds: ``(-\alpha_{r,t}^\text{min},\alpha_{r,t}^\text{max})``
-      + Symbol: ``\alpha_{r,t}``
+        + Bounds: ``(-\alpha_{r,t}^\text{min},\alpha_{r,t}^\text{max})``
+        + Symbol: ``\alpha_{r,t}``
 
-- [`HVDCInverterExtinctionAngleVariable`](@ref):
+  - [`HVDCInverterExtinctionAngleVariable`](@ref):
     
-      + Bounds: ``(-\gamma_{i,t}^\text{min},\gamma_{i,t}^\text{max})``
-      + Symbol: ``\gamma_{i,t}``
-
-- [`HVDCRectifierPowerFactorAngleVariable`](@ref):
+        + Bounds: ``(-\gamma_{i,t}^\text{min},\gamma_{i,t}^\text{max})``
+        + Symbol: ``\gamma_{i,t}``
+  - [`HVDCRectifierPowerFactorAngleVariable`](@ref):
     
-      + Bounds: ``\{0,1\}``
-      + Symbol: ``\phi_{r,t}``
-
-- [`HVDCInverterPowerFactorAngleVariable`](@ref):
+        + Bounds: ``\{0,1\}``
+        + Symbol: ``\phi_{r,t}``
+  - [`HVDCInverterPowerFactorAngleVariable`](@ref):
     
-      + Bounds: ``\{0,1\}``
-      + Symbol: ``\phi_{i,t}``
-
-- [`HVDCRectifierOverlapAngleVariable`](@ref):
+        + Bounds: ``\{0,1\}``
+        + Symbol: ``\phi_{i,t}``
+  - [`HVDCRectifierOverlapAngleVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``\mu_{r,t}``
-
-- [`HVDCInverterOverlapAngleVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``\mu_{r,t}``
+  - [`HVDCInverterOverlapAngleVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``\mu_{i,t}``
-
-- [`HVDCRectifierTapSettingVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``\mu_{i,t}``
+  - [`HVDCRectifierTapSettingVariable`](@ref):
     
-      + Bounds: ``(t_{r,t}^\text{min},t_{r,t}^\text{max})``
-      + Symbol: ``t_{r,t}``
-
-- [`HVDCInverterTapSettingVariable`](@ref):
+        + Bounds: ``(t_{r,t}^\text{min},t_{r,t}^\text{max})``
+        + Symbol: ``t_{r,t}``
+  - [`HVDCInverterTapSettingVariable`](@ref):
     
-      + Bounds: ``(t_{i,t}^\text{min},t_{i,t}^\text{max})``
-      + Symbol: ``t_{i,t}``
-
-- [`HVDCRectifierDCVoltageVariable`](@ref):
+        + Bounds: ``(t_{i,t}^\text{min},t_{i,t}^\text{max})``
+        + Symbol: ``t_{i,t}``
+  - [`HVDCRectifierDCVoltageVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``v_{r,t}^\text{dc}``
-
-- [`HVDCInverterDCVoltageVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``v_{r,t}^\text{dc}``
+  - [`HVDCInverterDCVoltageVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``v_{i,t}^\text{dc}``
-
-- [`HVDCRectifierACCurrentVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``v_{i,t}^\text{dc}``
+  - [`HVDCRectifierACCurrentVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``I_{r,t}^\text{ac}``
-
-- [`HVDCInverterACCurrentVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``I_{r,t}^\text{ac}``
+  - [`HVDCInverterACCurrentVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``I_{i,t}^\text{ac}``
-
-- [`DCLineCurrentFlowVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``I_{i,t}^\text{ac}``
+  - [`DCLineCurrentFlowVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``I^\text{dc}``
-
-- [`HVDCActivePowerReceivedFromVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``I^\text{dc}``
+  - [`HVDCActivePowerReceivedFromVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``p_{r,t}^\text{ac}``
-
-- [`HVDCActivePowerReceivedToVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``p_{r,t}^\text{ac}``
+  - [`HVDCActivePowerReceivedToVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``p_{i,t}^\text{ac}``
-
-- [`HVDCReactivePowerReceivedFromVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``p_{i,t}^\text{ac}``
+  - [`HVDCReactivePowerReceivedFromVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``q_{r,t}^\text{ac}``
-
-- [`HVDCReactivePowerReceivedToVariable`](@ref):
+        + Bounds: [0.0, ]
+        + Symbol: ``q_{r,t}^\text{ac}``
+  - [`HVDCReactivePowerReceivedToVariable`](@ref):
     
-      + Bounds: [0.0, ]
-      + Symbol: ``q_{i,t}^\text{ac}``
+        + Bounds: [0.0, ]
+        + Symbol: ``q_{i,t}^\text{ac}``
 
 **Static Parameters**
 
@@ -471,11 +456,11 @@ No changes to objective function
 
 The variable `HVDCActivePowerReceivedFromVariable` ``p_{r,t}^\text{ac}`` is added to the nodal balance expression `ActivePowerBalance` as a negative load, since the rectifier takes power from the AC system and to injects it into the DC system. On the other hand, the variable `HVDCActivePowerReceivedToVariable` ``p_{i,t}^\text{ac}`` is added to the nodal balance expression `ActivePowerBalance` as a positive load, since it takes the power from the DC system and injects it  back into the AC system.
 
-The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and `HVDCReactivePowerReceivedToVariable` ``q_{i,t}^\text{ac}` are added to the nodal balance expression `ActivePowerBalance` as positive loads, since they consume reactive power from the AC system to allow current transfer in converters during commutation.
+The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and `HVDCReactivePowerReceivedToVariable` ``q_{i,t}^\text{ac}`are added to the nodal balance expression`ActivePowerBalance` as positive loads, since they consume reactive power from the AC system to allow current transfer in converters during commutation.
 
 **Constraints:**
 
-- **Rectifier:**
+  - **Rectifier:**
 
 ```math
 \begin{aligned}
@@ -488,7 +473,7 @@ The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and 
 \end{aligned}
 ```
 
-- **Inverter:**
+  - **Inverter:**
 
 ```math
 \begin{aligned}
@@ -501,7 +486,7 @@ The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and 
 \end{aligned}
 ```
 
-- **DC Transmission Line:**
+  - **DC Transmission Line:**
 
 ```math
 \begin{aligned}
