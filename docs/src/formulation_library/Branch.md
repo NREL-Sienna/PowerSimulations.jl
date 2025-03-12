@@ -467,6 +467,16 @@ The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and 
 &  v^\text{dc}_{r,t} = \frac{3}{\pi}N_r \left( \sqrt{2}\frac{a_r v^\text{ac}_{r,t}}{t_{r,t}}\\cos{\alpha_{r,t}}-X_r I^\text{dc}_t \right)\\
 & \mu_{r,t} = \arccos \left( \cos\alpha_{r,t} - \frac{\sqrt{2} I^\text{dc}_t X_r t_{r,t}}{a_r v^\text{ac}_{r,t}} \right) - \alpha_{r,t}\\
 & \phi_{r,t} = \arctan \left( \frac{2\mu_{r,t} + \sin(2\alpha_{r,t}) - \sin(2\mu_{r,t} + 2\alpha_{r,t})}{\cos(2\alpha_{r,t}) - \cos(2\mu_{r,t} + 2\alpha_{r,t})} \right)\\
+\end{aligned}
+```
+Which can be approximated as:
+```math
+\begin{aligned}
+& \phi_{r,t} = arccos(\frac{1}{2}\cos\alpha_{r,t} + \frac{1}{2}\cos(\alpha_{r,t} + \mu_{r,t}))
+\end{aligned}
+```
+```math
+\begin{aligned}
 & I^\text{ac}_{r,t} = \sqrt{6} \frac{N_r}{\pi} I^\text{dc}_t\\
 & p^\text{ac}_{r,t} = \sqrt{3} I^\text{ac}_{r,t} \frac{a_r v^\text{ac}_{r,t}}{t_{r,t}}\cos{\phi_{r,t}} \\
 & q^\text{ac}_{r,t} = \sqrt{3} I^\text{ac}_{r,t} \frac{a_r v^\text{ac}_{r,t}}{t_{r,t}}\sin{\phi_{r,t}} \\
@@ -480,6 +490,16 @@ The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and 
 &  v^\text{dc}_{i,t} = \frac{3}{\pi}N_i \left( \sqrt{2}\frac{a_i v^\text{ac}_{i,t}}{t_{i,t}}\\cos{\gamma_{i,t}}-X_i I^\text{dc}_t \right)\\
 & \mu_{i,t} = \arccos \left( \cos\gamma_{i,t} - \frac{\sqrt{2} I^\text{dc}_t X_i t_{i,t}}{a_i v^\text{ac}_{i,t}} \right) - \gamma_{i,t}\\
 & \phi_{i,t} = \arctan \left( \frac{2\mu_{i,t} + \sin(2\gamma_{i,t}) - \sin(2\mu_{i,t} + 2\gamma_{i,t})}{\cos(2\gamma_{i,t}) - \cos(2\mu_{r,t} + 2\gamma_{i,t})} \right)\\
+\end{aligned}
+```
+Which can be approximated as:
+```math
+\begin{aligned}
+& \phi_{i,t} = arccos(\frac{1}{2}\cos\gamma_{i,t} + \frac{1}{2}\cos(\gamma_{i,t} + \mu_{i,t}))
+\end{aligned}
+```
+```math
+\begin{aligned}
 & I^\text{ac}_{i,t} = \sqrt{6} \frac{N_i}{\pi} I^\text{dc}_t\\
 & p^\text{ac}_{i,t} = \sqrt{3} I^\text{ac}_{i,t} \frac{a_i v^\text{ac}_{i,t}}{t_{i,t}}\cos{\phi_{i,t}} \\
 & q^\text{ac}_{i,t} = \sqrt{3} I^\text{ac}_{i,t} \frac{a_i v^\text{ac}_{i,t}}{t_{i,t}}\sin{\phi_{i,t}} \\
