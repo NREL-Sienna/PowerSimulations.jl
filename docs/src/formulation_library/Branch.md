@@ -469,12 +469,15 @@ The variables `HVDCReactivePowerReceivedFromVariable` ``q_{r,t}^\text{ac}`` and 
 & \phi_{r,t} = \arctan \left( \frac{2\mu_{r,t} + \sin(2\alpha_{r,t}) - \sin(2\mu_{r,t} + 2\alpha_{r,t})}{\cos(2\alpha_{r,t}) - \cos(2\mu_{r,t} + 2\alpha_{r,t})} \right)\\
 \end{aligned}
 ```
+
 Which can be approximated as:
+
 ```math
 \begin{aligned}
 & \phi_{r,t} = arccos(\frac{1}{2}\cos\alpha_{r,t} + \frac{1}{2}\cos(\alpha_{r,t} + \mu_{r,t}))
 \end{aligned}
 ```
+
 ```math
 \begin{aligned}
 & I^\text{ac}_{r,t} = \sqrt{6} \frac{N_r}{\pi} I^\text{dc}_t\\
@@ -492,12 +495,15 @@ Which can be approximated as:
 & \phi_{i,t} = \arctan \left( \frac{2\mu_{i,t} + \sin(2\gamma_{i,t}) - \sin(2\mu_{i,t} + 2\gamma_{i,t})}{\cos(2\gamma_{i,t}) - \cos(2\mu_{r,t} + 2\gamma_{i,t})} \right)\\
 \end{aligned}
 ```
+
 Which can be approximated as:
+
 ```math
 \begin{aligned}
 & \phi_{i,t} = arccos(\frac{1}{2}\cos\gamma_{i,t} + \frac{1}{2}\cos(\gamma_{i,t} + \mu_{i,t}))
 \end{aligned}
 ```
+
 ```math
 \begin{aligned}
 & I^\text{ac}_{i,t} = \sqrt{6} \frac{N_i}{\pi} I^\text{dc}_t\\
