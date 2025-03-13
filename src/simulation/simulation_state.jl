@@ -330,12 +330,15 @@ function update_decision_state!(
     for name in column_names
         state_data.values[name, state_data_index] = event_occurrence_values[name, 1]
         if event_occurrence_values[name, 1] == 1.0
-            mttr = _get_time_to_recover(event, event_model, simulation_time)
-            @warn "Generator $name to come back online after $mttr hours"
-            off_time_step_count =
-                Int(mttr) * resolution_ratio + rem(state_data_index, resolution_ratio)
+            mttr_hr = _get_time_to_recover(event, event_model, simulation_time)
+            mttr_state_resolution = mttr_hr * resolution_ratio
+            if !isinteger(mttr_state_resolution)
+                @warn "MTTR is not an integer after conversion from hours to $state_resolution resolution 
+                    MTTR will be rounded up to $(Int(ceil(mttr_state_resolution))) steps of $state_resolution"
+                mttr_state_resolution = ceil(mttr_state_resolution)
+            end
+            off_time_step_count = Int(mttr_state_resolution)
             set_update_timestamp!(state_data, simulation_time)
-
             for (ix, countdown) in enumerate(off_time_step_count:-1.0:1.0)
                 if state_data_index + ix > length(state_timestamps) #outage extends beyond current state
                     break
