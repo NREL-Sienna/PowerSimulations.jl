@@ -164,8 +164,10 @@ bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 
-_get_branch_component_tuples(pfd::PFS.PowerFlowData) =
-    zip(PFS.get_branch_type(pfd), keys(PFS.get_branch_lookup(pfd)))
+function _get_branch_component_tuples(pfd::PFS.PowerFlowData)
+    branch_types = PFS.get_branch_type(pfd)
+    return [(branch_types[val], key) for (key, val) in pairs(PFS.get_branch_lookup(pfd))]
+end
 
 _get_branch_component_tuples(pfd::PFS.SystemPowerFlowContainer) = [
     (typeof(c), get_name(c)) for
