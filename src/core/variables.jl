@@ -64,6 +64,13 @@ Docs abbreviation: ``u``
 struct OnVariable <: VariableType end
 
 """
+Struct to represent the value of on variable square for continous approximations
+
+Docs abbreviation: ``u^2``
+"""
+struct OnVariableSquared <: VariableType end
+
+"""
 Struct to dispatch the creation of Reactive Power Variables
 
 Docs abbreviation: ``q``
@@ -311,7 +318,16 @@ Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct RateofChangeConstraintSlackDown <: VariableType end
 
+"""
+Struct for interpolation in PieceWiseLinear function approximations
+
+Docs abbreviation: ``\\delta``
+"""
+struct PieceWiseLinearInterpolationVariable <: VariableType end
+
 const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
+
+should_write_resulting_value(::Type{PieceWiseLinearInterpolationVariable}) = false
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
