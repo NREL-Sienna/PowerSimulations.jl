@@ -2,12 +2,6 @@
 ################# PWL Variables ##################
 ##################################################
 
-"""
-Enumeration representing the different types of offer curves for a MarketBidCost. 
-Used as an argument for calling the helper functions.
-"""
-@enum MarketBidOfferType Incremental Decremental
-
 # For Market Bid
 function _add_pwl_variables!(
     container::OptimizationContainer,
@@ -339,13 +333,23 @@ function _add_pwl_term!(
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    cost_data = PSY.get_incremental_offer_curves(cost_function)
+    data = _get_pwl_data(container, component, cost_data)
+    cost_is_convex = PSY.is_convex(data)
+    name = PSY.get_name(component)
+    if !cost_is_convex
+        error("MarketBidCost for component $(name) is non-convex")
+    end
     return _add_pwl_term_helper!(
         container,
         component,
         cost_function,
-        Incremental,
+        data,
+        _get_pwl_cost_expression,
         U(),
-        V())
+        V(),
+        PieceWiseLinearBlockOffer,
+        PieceWiseLinearBlockOfferConstraint)
 end
 
 """
@@ -359,53 +363,66 @@ function _add_pwl_term_decremental!(container::OptimizationContainer,
     ::U,
     ::V) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
+    cost_data = PSY.get_decremental_offer_curves(cost_function)
+    data = _get_pwl_data(container, component, cost_data)
+    cost_is_concave = PSY.is_concave(data)
+    name = PSY.get_name(component)
+    if !cost_is_concave
+        error("MarketBidCost for component $(name) is non-concave")
+    end
     return _add_pwl_term_helper!(
         container,
         component,
         cost_function,
-        Decremental,
+        data,
+        _get_pwl_cost_expression_decremental,
         U(),
-        V())
+        V(),
+        PieceWiseLinearBlockDecrementalOffer,
+        PieceWiseLinearBlockDecrementalOfferConstraint)
 end
 
 function _add_pwl_term_helper!(
     container::OptimizationContainer,
     component::T,
     cost_function::PSY.MarketBidCost,
-    offer_type::MarketBidOfferType,
+    data::Union{PSY.PiecewiseStepData, PSY.PiecewiseLinearData},
+    get_pwl_cost_expression_function::Function,
     ::U,
-    ::V) where {T <: PSY.Component, U <: VariableType,
-    V <: AbstractDeviceFormulation}
-    if offer_type == Incremental
-        cost_data = PSY.get_incremental_offer_curves(cost_function)
-        data = _get_pwl_data(container, component, cost_data)
-        cost_is_convex = PSY.is_convex(data)
-        offer_variable = PieceWiseLinearBlockOffer
-        constraint_variable = PieceWiseLinearBlockOfferConstraint
-        _get_pwl_cost_expression_function = _get_pwl_cost_expression
-    elseif offer_type == Decremental
-        cost_data = PSY.get_decremental_offer_curves(cost_function)
-        data = _get_pwl_data(container, component, cost_data)
-        cost_is_convex = PSY.is_concave(data)
-        offer_variable = PieceWiseLinearBlockDecrementalOffer
-        constraint_variable = PieceWiseLinearBlockDecrementalOfferConstraint
-        _get_pwl_cost_expression_function = _get_pwl_cost_expression_decremental
-    else
-        error("Invalid offer_type")
-    end
+    ::V,
+    ::Type{W},
+    ::Type{X},
+) where {T <: PSY.Component, U <: VariableType,
+    V <: AbstractDeviceFormulation,
+    W <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+    X <: Union{
+        PieceWiseLinearBlockOfferConstraint,
+        PieceWiseLinearBlockDecrementalOfferConstraint,
+    }}
     name = PSY.get_name(component)
-    if !cost_is_convex
-        error("MarketBidCost for component $(name) is non-convex")
-    end
-
     break_points = PSY.get_x_coords(data)
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
-        _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, t)
-        pwl_cost = _get_pwl_cost_expression_decremental(container, component, t, cost_function, data,
-            U(), V())
+        _add_pwl_variables!(container, T, name, t, data, W)
+        _add_pwl_constraint!(
+            container,
+            component,
+            U(),
+            break_points,
+            t,
+            W,
+            X,
+        )
+        pwl_cost = get_pwl_cost_expression_function(
+            container,
+            component,
+            t,
+            cost_function,
+            data,
+            U(),
+            V(),
+        )
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
@@ -579,6 +596,7 @@ function _add_variable_cost_to_objective!(
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
+    incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
     decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
     if !isnothing(decremental_cost_curves)
         error("Component $(component_name) is not allowed to participate as a demand.")
@@ -588,7 +606,8 @@ function _add_variable_cost_to_objective!(
         T(),
         component,
         cost_function,
-        Incremental,
+        incremental_cost_curves,
+        _add_pwl_term!,
         U(),
     )
     return
@@ -603,6 +622,7 @@ function _add_variable_cost_to_objective!(container::OptimizationContainer,
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
     incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
+    decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
     if !(isnothing(incremental_cost_curves))
         error("Component $(component_name) is not allowed to participate as a supply.")
     end
@@ -611,7 +631,8 @@ function _add_variable_cost_to_objective!(container::OptimizationContainer,
         T(),
         component,
         cost_function,
-        Decremental,
+        decremental_cost_curves,
+        _add_pwl_term_decremental!,
         U(),
     )
     return
@@ -622,22 +643,12 @@ function _add_variable_cost_helper!(
     ::T,
     component::PSY.Component,
     cost_function::PSY.MarketBidCost,
-    offer_type::MarketBidOfferType,
+    cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
+    add_pwl_term_function::Function,
     ::U) where {T <: VariableType,
     U <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
-    incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
-    decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
-    if offer_type == Incremental
-        cost_data = incremental_cost_curves
-        _add_pwl_term_function! = _add_pwl_term!
-    elseif offer_type == Decremental
-        cost_data = decremental_cost_curves
-        _add_pwl_term_function! = _add_pwl_term_decremental!
-    else
-        error("Invalid offer_type")
-    end
     #=
     variable_cost_forecast = PSY.get_variable_cost(
         component,
@@ -656,7 +667,7 @@ function _add_variable_cost_helper!(
     )
     =#
     pwl_cost_expressions =
-        _add_pwl_term_function!(
+        add_pwl_term_function(
             container,
             component,
             cost_function,
