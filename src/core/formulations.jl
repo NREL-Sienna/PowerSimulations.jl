@@ -139,6 +139,11 @@ Branch type to represent piecewise lossy power flow on two terminal DC lines
 """
 struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 
+"""
+Branch type to represent non-linear LCC (line commutated converter) model on two-terminal DC lines
+"""
+struct HVDCTwoTerminalLCC <: AbstractTwoTerminalDCLineFormulation end
+
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
 

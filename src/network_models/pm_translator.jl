@@ -12,7 +12,7 @@ const PM_BUSTYPES = Dict{PSY.ACBusTypes, Int}(
 struct PMmap
     bus::Dict{Int, PSY.ACBus}
     arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
-    arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalHVDCLine}
+    arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalGenericHVDCLine}
 end
 
 function get_branch_to_pm(
@@ -266,7 +266,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.TwoTerminalHVDCLine,
+    branch::PSY.TwoTerminalGenericHVDCLine,
     ::Type{HVDCTwoTerminalDispatch},
     ::Type{<:PM.AbstractDCPModel},
 )
@@ -304,7 +304,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.TwoTerminalHVDCLine,
+    branch::PSY.TwoTerminalGenericHVDCLine,
     ::Type{HVDCTwoTerminalDispatch},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -343,7 +343,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    branch::PSY.TwoTerminalHVDCLine,
+    branch::PSY.TwoTerminalGenericHVDCLine,
     ::Type{<:AbstractTwoTerminalDCLineFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -377,6 +377,15 @@ function get_branch_to_pm(
         "pf" => 0.0,
     )
     return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.TwoTerminalLCCLine,
+    ::Type{HVDCTwoTerminalLCC},
+    ::Type{<:PM.AbstractPowerModel},
+)
+    return Dict{String, Any}()
 end
 
 function get_branches_to_pm(
@@ -429,6 +438,10 @@ function get_branches_to_pm(
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         !(comp_type <: T) && continue
+        if comp_type <: PSY.TwoTerminalLCCLine &&
+           get_formulation(device_model) <: HVDCTwoTerminalLCC
+            continue
+        end
         start_idx += length(PM_branches)
         for (i, branch) in enumerate(get_available_components(device_model, sys))
             ix = i + start_idx

@@ -86,7 +86,7 @@ end
     end
 end
 
-@testset "DC Power Flow Models for TwoTerminalHVDCLine  with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
+@testset "DC Power Flow Models for TwoTerminalGenericHVDCLine  with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
@@ -95,7 +95,7 @@ end
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    hvdc_line = PSY.get_component(TwoTerminalHVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalGenericHVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -111,7 +111,7 @@ end
         template = get_template_dispatch_with_network(
             NetworkModel(model),
         )
-        set_device_model!(template, TwoTerminalHVDCLine, HVDCTwoTerminalLossless)
+        set_device_model!(template, TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless)
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranch))
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranch))
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
@@ -128,7 +128,7 @@ end
         @test check_flow_variable_values(
             model_m,
             FlowActivePowerVariable,
-            TwoTerminalHVDCLine,
+            TwoTerminalGenericHVDCLine,
             "DCLine3",
             limits_min,
             limits_max,
@@ -152,9 +152,9 @@ end
     end
 end
 
-@testset "DC Power Flow Models for Unbounded TwoTerminalHVDCLine , and StaticBranchBounds for TapTransformer & Transformer2W" begin
+@testset "DC Power Flow Models for Unbounded TwoTerminalGenericHVDCLine , and StaticBranchBounds for TapTransformer & Transformer2W" begin
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    hvdc_line = PSY.get_component(TwoTerminalHVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalGenericHVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -172,7 +172,7 @@ end
         )
         set_device_model!(
             template,
-            DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalUnbounded),
+            DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalUnbounded),
         )
         set_device_model!(template, DeviceModel(TapTransformer, StaticBranchBounds))
         set_device_model!(template, DeviceModel(Transformer2W, StaticBranchBounds))
@@ -183,7 +183,7 @@ end
         @test check_variable_unbounded(
             model_m,
             FlowActivePowerVariable,
-            TwoTerminalHVDCLine,
+            TwoTerminalGenericHVDCLine,
         )
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
@@ -193,7 +193,7 @@ end
         @test check_flow_variable_values(
             model_m,
             FlowActivePowerVariable,
-            TwoTerminalHVDCLine,
+            TwoTerminalGenericHVDCLine,
             "DCLine3",
             limits_min,
             limits_max,
@@ -224,7 +224,7 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = TwoTerminalHVDCLine(;
+    hvdc = TwoTerminalGenericHVDCLine(;
         name = get_name(line),
         available = true,
         active_power_flow = 0.0,
@@ -234,7 +234,7 @@ end
         reactive_power_limits_from = (min = -1.0, max = 1.0),
         reactive_power_limits_to = (min = -1.0, max = 1.0),
         arc = get_arc(line),
-        loss = (l0 = 0.00, l1 = 0.00),
+        loss = LinearCurve(0.0),
     )
 
     add_component!(sys_5, hvdc)
@@ -249,7 +249,7 @@ end
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
     set_device_model!(
         template_uc,
-        DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless),
+        DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless),
     )
 
     model = DecisionModel(
@@ -267,7 +267,7 @@ end
     ptdf_values =
         ptdf_vars[PowerSimulations.VariableKey{
             FlowActivePowerVariable,
-            TwoTerminalHVDCLine,
+            TwoTerminalGenericHVDCLine,
         }(
             "",
         )]
@@ -288,7 +288,7 @@ end
     dcp_values =
         dcp_vars[PowerSimulations.VariableKey{
             FlowActivePowerVariable,
-            TwoTerminalHVDCLine,
+            TwoTerminalGenericHVDCLine,
         }(
             "",
         )]
@@ -307,7 +307,7 @@ end
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
 
-    hvdc = TwoTerminalHVDCLine(;
+    hvdc = TwoTerminalGenericHVDCLine(;
         name = get_name(line),
         available = true,
         active_power_flow = 0.0,
@@ -334,7 +334,7 @@ end
             set_device_model!(template_uc, DeviceModel(Line, StaticBranchBounds))
             set_device_model!(
                 template_uc,
-                DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless),
+                DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless),
             )
 
             model_ref = DecisionModel(
@@ -352,7 +352,7 @@ end
                 ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
             hvdc_ref_values = ref_vars[PowerSimulations.VariableKey{
                 FlowActivePowerVariable,
-                TwoTerminalHVDCLine,
+                TwoTerminalGenericHVDCLine,
             }(
                 "",
             )]
@@ -371,7 +371,7 @@ end
             )
             set_device_model!(
                 template_uc,
-                DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalDispatch),
+                DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch),
             )
 
             model = DecisionModel(
@@ -390,13 +390,13 @@ end
                 )]
             hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
-                TwoTerminalHVDCLine,
+                TwoTerminalGenericHVDCLine,
             }(
                 "",
             )]
             hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
                 FlowActivePowerToFromVariable,
-                TwoTerminalHVDCLine,
+                TwoTerminalGenericHVDCLine,
             }(
                 "",
             )]
@@ -445,13 +445,13 @@ end
             dispatch_vars = get_variable_values(OptimizationProblemResults(model_wl))
             dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerFromToVariable,
-                TwoTerminalHVDCLine,
+                TwoTerminalGenericHVDCLine,
             }(
                 "",
             )]
             dispatch_values_tf = dispatch_vars[PowerSimulations.VariableKey{
                 FlowActivePowerToFromVariable,
-                TwoTerminalHVDCLine,
+                TwoTerminalGenericHVDCLine,
             }(
                 "",
             )]
@@ -480,7 +480,7 @@ end
     end
 end
 
-@testset "DC Power Flow Models for TwoTerminalHVDCLine  Dispatch and TapTransformer & Transformer2W Unbounded" begin
+@testset "DC Power Flow Models for TwoTerminalGenericHVDCLine  Dispatch and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Line, "ub"),
@@ -488,13 +488,13 @@ end
         PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
         PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
         PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
-        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "ub"),
-        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
 
-    hvdc_line = PSY.get_component(TwoTerminalHVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalGenericHVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -511,7 +511,10 @@ end
     )
     set_device_model!(template, DeviceModel(TapTransformer, StaticBranch))
     set_device_model!(template, DeviceModel(Transformer2W, StaticBranch))
-    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
+    set_device_model!(
+        template,
+        DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless),
+    )
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -527,7 +530,7 @@ end
     @test check_flow_variable_values(
         model_m,
         FlowActivePowerVariable,
-        TwoTerminalHVDCLine,
+        TwoTerminalGenericHVDCLine,
         "DCLine3",
         limits_max,
     )
@@ -604,19 +607,19 @@ end
     )
 end
 
-@testset "AC Power Flow Models for TwoTerminalHVDCLine  Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
+@testset "AC Power Flow Models for TwoTerminalGenericHVDCLine  Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
         PSI.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
         PSI.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
         PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
-        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "ub"),
-        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalHVDCLine, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
 
-    hvdc_line = PSY.get_component(TwoTerminalHVDCLine, system, "DCLine3")
+    hvdc_line = PSY.get_component(TwoTerminalGenericHVDCLine, system, "DCLine3")
     limits_from = PSY.get_active_power_limits_from(hvdc_line)
     limits_to = PSY.get_active_power_limits_to(hvdc_line)
     limits_min = min(limits_from.min, limits_to.min)
@@ -631,7 +634,10 @@ end
     template = get_template_dispatch_with_network(ACPPowerModel)
     set_device_model!(template, TapTransformer, StaticBranchBounds)
     set_device_model!(template, Transformer2W, StaticBranchBounds)
-    set_device_model!(template, DeviceModel(TwoTerminalHVDCLine, HVDCTwoTerminalLossless))
+    set_device_model!(
+        template,
+        DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless),
+    )
     model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -648,7 +654,7 @@ end
         model_m,
         FlowActivePowerVariable,
         FlowReactivePowerToFromVariable,
-        TwoTerminalHVDCLine,
+        TwoTerminalGenericHVDCLine,
         "DCLine3",
         limits_max,
     )

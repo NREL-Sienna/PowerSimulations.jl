@@ -451,7 +451,8 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
 
@@ -488,7 +489,7 @@ end
     )
 
     # Test forcing flows to 0.0
-    hvdc_link = get_component(TwoTerminalHVDCLine, c_sys5, "nodeC-nodeC2")
+    hvdc_link = get_component(TwoTerminalGenericHVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
@@ -504,7 +505,8 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 
@@ -551,7 +553,8 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
 
@@ -588,7 +591,7 @@ end
     )
 
     # Test forcing flows to 0.0
-    hvdc_link = get_component(PSY.TwoTerminalHVDCLine, c_sys5, "nodeC-nodeC2")
+    hvdc_link = get_component(PSY.TwoTerminalGenericHVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
@@ -604,7 +607,8 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 

@@ -13,7 +13,7 @@ function _default_devices_uc()
         DeviceModel(PSY.Line, StaticBranch),
         DeviceModel(PSY.Transformer2W, StaticBranch),
         DeviceModel(PSY.TapTransformer, StaticBranch),
-        DeviceModel(PSY.TwoTerminalHVDCLine, HVDCTwoTerminalDispatch),
+        DeviceModel(PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch),
     ]
 end
 
