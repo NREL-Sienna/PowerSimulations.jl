@@ -10,6 +10,9 @@ function _ref_index(::NetworkModel{AreaPTDFPowerModel}, device_bus::PSY.ACBus)
     return PSY.get_name(PSY.get_area(device_bus))
 end
 
+_get_variable_if_exists(::PSY.MarketBidCost) = nothing
+_get_variable_if_exists(cost::PSY.OperationalCost) = PSY.get_variable(cost)
+
 function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
@@ -41,10 +44,7 @@ function add_expressions!(
     found_quad_fuel_functions = false
     for d in devices
         op_cost = PSY.get_operation_cost(d)
-        if op_cost isa PSY.MarketBidCost
-            continue
-        end
-        fuel_curve = PSY.get_variable(op_cost)
+        fuel_curve = _get_variable_if_exists(op_cost)
         if fuel_curve isa PSY.FuelCurve
             push!(names, PSY.get_name(d))
             if !found_quad_fuel_functions
@@ -1620,10 +1620,7 @@ function add_to_expression!(
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
         op_cost = PSY.get_operation_cost(d)
-        if op_cost isa PSY.MarketBidCost
-            continue
-        end
-        var_cost = PSY.get_variable(op_cost)
+        var_cost = _get_variable_if_exists(op_cost)
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
@@ -1697,10 +1694,7 @@ function add_to_expression!(
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
         op_cost = PSY.get_operation_cost(d)
-        if op_cost isa PSY.MarketBidCost
-            continue
-        end
-        var_cost = PSY.get_variable(op_cost)
+        var_cost = _get_variable_if_exists(op_cost)
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
