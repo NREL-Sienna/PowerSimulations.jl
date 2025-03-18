@@ -665,6 +665,12 @@ function build_impl!(
                     device_model,
                     transmission_model,
                 )
+                construct_market_bid!(
+                    container,
+                    sys,
+                    ArgumentConstructStage(),
+                    device_model,
+                )
             end
             @debug "Problem size:" get_problem_size(container) _group =
                 LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -712,6 +718,7 @@ function build_impl!(
                     device_model,
                     transmission_model,
                 )
+                construct_market_bid!(container, sys, ModelConstructStage(), device_model)
             end
             @debug "Problem size:" get_problem_size(container) _group =
                 LOG_GROUP_OPTIMIZATION_CONTAINER

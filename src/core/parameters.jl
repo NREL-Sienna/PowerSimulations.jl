@@ -177,22 +177,13 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-function _set_parameter!(
-    array::AbstractArray{Float64},
-    ::JuMP.Model,
-    value::Float64,
-    ixs::Tuple,
-)
-    array[ixs...] = value
-    return
-end
-
+const _ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
     value::T,
     ixs::Tuple,
-) where {T <: IS.FunctionData}
+) where {T <: _ValidDataParamEltypes}
     array[ixs...] = value
     return
 end
@@ -225,18 +216,7 @@ end
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::Float64,
-    ixs...,
-)
-    param_array = get_parameter_array(container)
-    _set_parameter!(param_array, jump_model, parameter, ixs)
-    return
-end
-
-function set_parameter!(
-    container::ParameterContainer,
-    jump_model::JuMP.Model,
-    parameter::IS.FunctionData,
+    parameter::_ValidDataParamEltypes,
     ixs...,
 )
     param_array = get_parameter_array(container)
@@ -310,6 +290,12 @@ struct CostFunctionParameter <: ObjectiveFunctionParameter end
 Parameter to define fuel cost time series
 """
 struct FuelCostParameter <: ObjectiveFunctionParameter end
+
+"Parameter to define startup cost time series"
+struct StartupCostParameter <: ObjectiveFunctionParameter end
+
+"Parameter to define shutdown cost time series"
+struct ShutdownCostParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 

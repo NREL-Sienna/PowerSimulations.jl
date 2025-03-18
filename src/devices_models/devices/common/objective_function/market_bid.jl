@@ -1,4 +1,62 @@
 ##################################################
+################ PWL Parameters  #################
+##################################################
+
+# Determines whether we care about startup and shutdown costs, given the formulation
+# NOTE: currently works based on what has already been added to the container;
+# alternatively we could dispatch on the formulation directly
+_consider_startup_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    haskey(get_variables(container), VariableKey(StartVariable, T))
+_consider_shutdown_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    haskey(get_variables(container), VariableKey(StopVariable, T))
+
+_has_market_bid_cost(device::PSY.StaticInjection) =
+    PSY.get_operation_cost(device) isa PSY.MarketBidCost
+_has_startup_time_series(device::PSY.StaticInjection) =
+    PSY.get_start_up(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+_has_shutdown_time_series(device::PSY.StaticInjection) =
+    PSY.get_shut_down(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+
+function construct_market_bid!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel,
+)
+    devices = collect(get_available_components(model, sys))
+
+    if _consider_startup_time_series(container, model)
+        startup_devices =
+            filter(x -> _has_market_bid_cost(x) && _has_startup_time_series(x), devices)
+        if length(startup_devices) > 0
+            add_parameters!(container, StartupCostParameter, startup_devices, model)
+        end
+    end
+
+    if _consider_shutdown_time_series(container, model)
+        shutdown_devices =
+            filter(x -> _has_market_bid_cost(x) && _has_shutdown_time_series(x), devices)
+        if length(shutdown_devices) > 0
+            add_parameters!(container, ShutdownCostParameter, shutdown_devices, model)
+        end
+    end
+end
+
+# TODO
+construct_market_bid!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel,
+) = nothing
+
+##################################################
 ################# PWL Variables ##################
 ##################################################
 
@@ -10,7 +68,10 @@ function _add_pwl_variables!(
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
     ::Type{U},
-) where {T <: PSY.Component, U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer}}
+) where {
+    T <: PSY.Component,
+    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+}
     var_container = lazy_container_addition!(container, U(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
     break_points = PSY.get_x_coords(cost_data)
@@ -46,9 +107,12 @@ function _add_pwl_constraint!(
     period::Int,
     ::Type{V},
     ::Type{W},
-) where {T <: PSY.Component, U <: VariableType, 
-V <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer}, 
-W <: Union{PieceWiseLinearBlockOfferConstraint, PieceWiseLinearBlockDecrementalOfferConstraint}}
+) where {T <: PSY.Component, U <: VariableType,
+    V <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+    W <: Union{
+        PieceWiseLinearBlockOfferConstraint,
+        PieceWiseLinearBlockDecrementalOfferConstraint,
+    }}
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
@@ -138,8 +202,11 @@ function _get_pwl_cost_expression(
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
     multiplier::Float64,
-    ::Type{U}
-) where {T <: PSY.Component, U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer}}
+    ::Type{U},
+) where {
+    T <: PSY.Component,
+    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+}
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, U(), T)
     gen_cost = JuMP.AffExpr(0.0)
@@ -215,7 +282,7 @@ function _get_pwl_cost_expression_decremental(container::OptimizationContainer,
         cost_data_normalized,
         multiplier,
         PieceWiseLinearBlockDecrementalOffer,
-        )
+    )
 end
 
 """
@@ -317,7 +384,7 @@ end
 """
 Check if deceremental pwl offer curve is monotonically decreasing.
 """
-function _is_convex_decremental(pwl:: PSY.PiecewiseStepData)
+function _is_convex_decremental(pwl::PSY.PiecewiseStepData)
     y_coords = PSY.get_y_coords(pwl)
     for ix in 1:(length(y_coords) - 1)
         if y_coords[ix] < y_coords[ix + 1]
@@ -365,7 +432,15 @@ function _add_pwl_term!(
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
         _add_pwl_variables!(container, T, name, t, data, PieceWiseLinearBlockOffer)
-        _add_pwl_constraint!(container, component, U(), break_points, t, PieceWiseLinearBlockOffer, PieceWiseLinearBlockOfferConstraint)
+        _add_pwl_constraint!(
+            container,
+            component,
+            U(),
+            break_points,
+            t,
+            PieceWiseLinearBlockOffer,
+            PieceWiseLinearBlockOfferConstraint,
+        )
         pwl_cost =
             _get_pwl_cost_expression(container, component, t, cost_function, data, U(), V())
         pwl_cost_expressions[t] = pwl_cost
@@ -392,7 +467,7 @@ function _add_pwl_term_decremental!(container::OptimizationContainer,
         power_units,
         base_power,
         device_base_power)
-        
+
     cost_is_convex = _is_convex_decremental(data)
     if !cost_is_convex
         error("MarketBidCost for component $(name) is non-convex")
@@ -402,9 +477,32 @@ function _add_pwl_term_decremental!(container::OptimizationContainer,
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     for t in time_steps
-        _add_pwl_variables!(container, T, name, t, data, PieceWiseLinearBlockDecrementalOffer)
-        _add_pwl_constraint!(container, component, U(), break_points, t, PieceWiseLinearBlockDecrementalOffer, PieceWiseLinearBlockDecrementalOfferConstraint)
-        pwl_cost = _get_pwl_cost_expression_decremental(container, component, t, cost_function, data, U(), V())
+        _add_pwl_variables!(
+            container,
+            T,
+            name,
+            t,
+            data,
+            PieceWiseLinearBlockDecrementalOffer,
+        )
+        _add_pwl_constraint!(
+            container,
+            component,
+            U(),
+            break_points,
+            t,
+            PieceWiseLinearBlockDecrementalOffer,
+            PieceWiseLinearBlockDecrementalOfferConstraint,
+        )
+        pwl_cost = _get_pwl_cost_expression_decremental(
+            container,
+            component,
+            t,
+            cost_function,
+            data,
+            U(),
+            V(),
+        )
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
@@ -776,7 +874,6 @@ function _add_vom_cost_to_objective!(
     end
     return
 end
-
 
 function _add_vom_cost_to_objective!(container::OptimizationContainer,
     ::T,
