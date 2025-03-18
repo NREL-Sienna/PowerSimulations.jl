@@ -1015,7 +1015,8 @@ end
 read_result_names(results, key::PSI.OptimizationContainerKey) =
     Set(names(only(values(PSI.read_results_with_keys(results, [key])))[!, Not(:DateTime)]))
 
-@testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in (true, false)
+@testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
+                                                                               (true, false)
     file_path = mktempdir(; cleanup = true)
     export_path = mktempdir(; cleanup = true)
     pf_path = mktempdir(; cleanup = true)
