@@ -157,6 +157,69 @@ function add_start_up_cost!(
     return
 end
 
+# Given the output of `start_up_cost`, return the appropriate cost term for the given variable
+_get_cost_term(
+    cost::Float64,
+    ::PSY.ThermalGen,
+    ::VariableType,
+    ::AbstractDeviceFormulation,
+) = cost
+_get_cost_term(
+    cost::StartUpStages,
+    ::PSY.ThermalMultiStart,
+    ::HotStartVariable,
+    ::ThermalMultiStartUnitCommitment,
+) = cost.hot
+_get_cost_term(
+    cost::StartUpStages,
+    ::PSY.ThermalMultiStart,
+    ::WarmStartVariable,
+    ::ThermalMultiStartUnitCommitment,
+) = cost.warm
+_get_cost_term(
+    cost::StartUpStages,
+    ::PSY.ThermalMultiStart,
+    ::ColdStartVariable,
+    ::ThermalMultiStartUnitCommitment,
+) = cost.cold
+
+# Non-time-varying startup cost
+function get_startup_cost_value(
+    ::OptimizationContainer,
+    ::T,
+    component::V,
+    op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
+    ::U,
+    ::Int,
+    ::Val{false},
+) where {T <: VariableType, V <: PSY.Component, U <: AbstractDeviceFormulation}
+    raw_startup_cost = PSY.get_start_up(op_cost)
+    all_cost_terms = start_up_cost(raw_startup_cost, component, U())
+    return _get_cost_term(all_cost_terms, component, T(), U())
+end
+
+# Time-varying startup cost
+function get_startup_cost_value(
+    container::OptimizationContainer,
+    ::T,
+    component::V,
+    op_cost::PSY.MarketBidCost,
+    ::U,
+    time_period::Int,
+    ::Val{true},
+) where {T <: VariableType, V <: PSY.Component, U <: AbstractDeviceFormulation}
+    # PERF this is modeled on the existing get_fuel_cost_value function, but is it really
+    # performant to be fetching the whole array and multiplier array anew for every time step?
+    parameter_array = get_parameter_array(container, StartupCostParameter(), V)
+    parameter_multiplier =
+        get_parameter_multiplier_array(container, StartupCostParameter(), V)
+    name = PSY.get_name(component)
+    raw_startup_cost = parameter_array[name, time_period]
+    all_cost_terms = start_up_cost(raw_startup_cost, component, U())
+    return _get_cost_term(all_cost_terms, component, T(), U()) *
+           parameter_multiplier[name, time_period]
+end
+
 function _add_start_up_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -165,35 +228,20 @@ function _add_start_up_cost_to_objective!(
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     PSY.get_must_run(component) && return
-    cost_term = start_up_cost(op_cost, component, U())
-    iszero(cost_term) && return
-    multiplier = objective_function_multiplier(T(), U())
+    is_time_variant_ = is_time_variant_startup(op_cost)
     for t in get_time_steps(container)
-        _add_proportional_term!(container, T(), component, cost_term * multiplier, t)
-    end
-    return
-end
-
-const MULTI_START_COST_MAP = Dict{DataType, Int}(
-    HotStartVariable => 1,
-    WarmStartVariable => 2,
-    ColdStartVariable => 3,
-)
-
-function _add_start_up_cost_to_objective!(
-    container::OptimizationContainer,
-    ::T,
-    component::PSY.ThermalMultiStart,
-    op_cost::PSY.ThermalGenerationCost,
-    ::U,
-) where {T <: VariableType, U <: ThermalMultiStartUnitCommitment}
-    PSY.get_must_run(component) && return
-    cost_terms = start_up_cost(op_cost, component, U())
-    cost_term = cost_terms[MULTI_START_COST_MAP[T]]
-    iszero(cost_term) && return
-    multiplier = objective_function_multiplier(T(), U())
-    for t in get_time_steps(container)
-        _add_proportional_term!(container, T(), component, cost_term * multiplier, t)
+        my_cost_term = get_startup_cost_value(
+            container,
+            T(),
+            component,
+            op_cost,
+            U(),
+            t,
+            Val(is_time_variant_),
+        )
+        # iszero(my_cost_term) && continue  # TODO do we want this?
+        multiplier = objective_function_multiplier(T(), U())
+        _add_proportional_term!(container, T(), component, my_cost_term * multiplier, t)
     end
     return
 end

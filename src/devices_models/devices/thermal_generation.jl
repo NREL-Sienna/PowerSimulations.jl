@@ -112,12 +112,18 @@ sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.
 sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
 
-start_up_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-# If the formulation used ignores start up costs, the model ignores that data.
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
+# Elsewhere we extract a start-up cost from the cost struct and if necessary select a single
+# time period; here we interpret that cost given the formulation
+start_up_cost(cost::Float64, ::PSY.ThermalGen, ::AbstractThermalFormulation) = cost
+# TODO when we have a single number startup cost and we're modeling a multi-start, is this the desired behavior?
+start_up_cost(cost::Float64, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment) =
+    (hot = cost, warm = cost, cold = cost)
+
+start_up_cost(cost::NTuple{3, Float64}, component::PSY.ThermalGen, ::T) where {T <: AbstractThermalFormulation} =
+    start_up_cost(StartUpStages(cost), component, T())
+# TODO in the opposite case, do we want to get the maximum or the hot?
+start_up_cost(cost::StartUpStages, ::PSY.ThermalGen, ::AbstractThermalFormulation) = maximum(cost)
+start_up_cost(cost::StartUpStages, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment) = cost
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
