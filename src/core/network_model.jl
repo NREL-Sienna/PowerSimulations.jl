@@ -99,7 +99,6 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-#TODO Check this with new ward reduction implementation
 function check_network_reduction_compatibility(
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
@@ -235,7 +234,6 @@ function instantiate_network_model(
         _assign_subnetworks_to_buses(model, sys)
     end
 
-    #LODF
     if get_LODF_matrix(model) === nothing
         @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
         if model.reduce_radial_branches
