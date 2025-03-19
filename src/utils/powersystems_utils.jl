@@ -338,9 +338,11 @@ function _get_piecewise_incrementalcurve_per_system_unit(
     return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
 end
 
-function is_time_variant(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve})
-    return isa(PSY.get_fuel_cost(cost_function), IS.TimeSeriesKey)
-end
+is_time_variant_fuel(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}) =
+    PSY.get_fuel_cost(cost_function) isa IS.TimeSeriesKey
+
+is_time_variant_startup(op_cost::PSY.OperationalCost) =
+    PSY.get_start_up(op_cost) isa IS.TimeSeriesKey
 
 function create_temporary_cost_function_in_system_per_unit(
     original_cost_function::PSY.CostCurve,
@@ -383,7 +385,6 @@ function get_deterministic_time_series_type(sys::PSY.System)
         )
     end
 end
-
 
 """Overload get_variable for MarketBidCost. Returns nothing"""
 PSY.get_variable(value::PSY.MarketBidCost) = nothing
