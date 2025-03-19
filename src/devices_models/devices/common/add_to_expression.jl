@@ -123,6 +123,18 @@ end
 
 function _add_to_jump_expression!(
     expression::T,
+    var1::JuMP.VariableRef,
+    multiplier1::Float64,
+    var2::JuMP.VariableRef,
+    multiplier2::Float64,
+) where {T <: JuMP.AbstractJuMPScalar}
+    _add_to_jump_expression!(expression, var1, multiplier1)
+    _add_to_jump_expression!(expression, var2, multiplier2)
+    return
+end
+
+function _add_to_jump_expression!(
+    expression::T,
     parameter::Float64,
     multiplier::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
@@ -681,7 +693,8 @@ function add_to_expression!(
                         expressions[get_name(branch_outage), get_name(branch), t],
                         variable[get_name(branch), t],
                         1.0,
-                        lodf[get_name(branch_outage), get_name(branch)],
+                        variable[get_name(branch_outage), t],
+                        lodf[get_name(branch), get_name(branch_outage)],
                     )
                 end
             else
