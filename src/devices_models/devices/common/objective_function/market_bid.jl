@@ -195,13 +195,15 @@ function _get_pwl_cost_expression(
     )
 end
 
-function _get_pwl_cost_expression_decremental(container::OptimizationContainer,
+function _get_pwl_cost_expression_decremental(
+    container::OptimizationContainer,
     component::T,
     time_period::Int,
     cost_function::PSY.MarketBidCost,
     ::PSY.PiecewiseStepData,
     ::U,
-    ::V) where {T <: PSY.Component, U <: VariableType,
+    ::V,
+) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
     decremental_curve = PSY.get_decremental_offer_curves(cost_function)
     value_curve = PSY.get_value_curve(decremental_curve)
@@ -356,12 +358,14 @@ end
 Add PWL cost terms for data coming from the MarketBidCost
 with a fixed decremental offer curve
 """
-function _add_pwl_term_decremental!(container::OptimizationContainer,
+function _add_pwl_term_decremental!(
+    container::OptimizationContainer,
     component::T,
     cost_function::PSY.MarketBidCost,
     ::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
-    ::V) where {T <: PSY.Component, U <: VariableType,
+    ::V,
+) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
     cost_data = PSY.get_decremental_offer_curves(cost_function)
     data = _get_pwl_data(container, component, cost_data)
@@ -613,11 +617,13 @@ function _add_variable_cost_to_objective!(
     return
 end
 
-function _add_variable_cost_to_objective!(container::OptimizationContainer,
+function _add_variable_cost_to_objective!(
+    container::OptimizationContainer,
     ::T,
     component::PSY.Component,
     cost_function::PSY.MarketBidCost,
-    ::U) where {T <: VariableType,
+    ::U,
+) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
@@ -650,6 +656,7 @@ function _add_variable_cost_helper!(
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
     #=
+    # Could be helpful for TimeSeries
     variable_cost_forecast = PSY.get_variable_cost(
         component,
         op_cost;
@@ -706,7 +713,8 @@ function _add_variable_cost_helper!(
     return
 end
 
-function _add_service_bid_cost!(container::OptimizationContainer,
+function _add_service_bid_cost!(
+    container::OptimizationContainer,
     component::PSY.Component,
     service::T,
 ) where {T <: PSY.Reserve{<:PSY.ReserveDirection}}
@@ -764,11 +772,13 @@ function _add_vom_cost_to_objective!(
     return
 end
 
-function _add_vom_cost_to_objective!(container::OptimizationContainer,
+function _add_vom_cost_to_objective!(
+    container::OptimizationContainer,
     ::T,
     component::PSY.Component,
     op_cost::PSY.MarketBidCost,
-    ::U) where {T <: VariableType,
+    ::U,
+) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
     decremental_cost_curves = PSY.get_decremental_offer_curves(op_cost)
     _add_vom_cost_to_objective_helper!(
@@ -782,12 +792,14 @@ function _add_vom_cost_to_objective!(container::OptimizationContainer,
     return
 end
 
-function _add_vom_cost_to_objective_helper!(container::OptimizationContainer,
+function _add_vom_cost_to_objective_helper!(
+    container::OptimizationContainer,
     ::T,
     component::PSY.Component,
     ::PSY.MarketBidCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
-    ::U) where {T <: VariableType,
+    ::U,
+) where {T <: VariableType,
     U <: AbstractDeviceFormulation}
     power_units = PSY.get_power_units(cost_data)
     vom_cost = PSY.get_vom_cost(cost_data)
