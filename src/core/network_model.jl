@@ -255,6 +255,16 @@ function instantiate_network_model(
                 reduce_radial_branches = true in your network model"),
         )
     end
+
+    if model.reduce_radial_branches &&
+        model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
+         throw(
+             IS.ConflictingInputsError(
+                 "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
+                 reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
+                 or provide a modified PTDF Matrix without the Ward reduction."),
+         )
+     end
     return
 end
 
