@@ -56,6 +56,20 @@ end
 #### Start/Stop Variable Cost ####
 ##################################
 
+get_shutdown_cost_value(
+    container::OptimizationContainer,
+    component::PSY.Component,
+    time_period::Int,
+    is_time_variant_::Bool,
+) = _lookup_maybe_time_variant_param(
+    container,
+    component,
+    time_period,
+    Val(is_time_variant_),
+    PSY.get_shut_down ∘ PSY.get_operation_cost,
+    ShutdownCostParameter(),
+)
+
 function add_shut_down_cost!(
     container::OptimizationContainer,
     ::U,
@@ -65,11 +79,16 @@ function add_shut_down_cost!(
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         PSY.get_must_run(d) && continue
-        op_cost_data = PSY.get_operation_cost(d)
-        cost_term = shut_down_cost(op_cost_data, d, V())
-        iszero(cost_term) && continue
+
         for t in get_time_steps(container)
-            _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+            my_cost_term = get_shutdown_cost_value(
+                container,
+                d,
+                t,
+                is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(d))),
+            )
+            # iszero(my_cost_term) && continue  # TODO do we want this?
+            _add_proportional_term!(container, U(), d, my_cost_term * multiplier, t)
         end
     end
     return
@@ -246,8 +265,8 @@ function _add_start_up_cost_to_objective!(
     op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    multiplier = objective_function_multiplier(T(), U())
     PSY.get_must_run(component) && return
-    is_time_variant_ = is_time_variant_startup(op_cost)
     for t in get_time_steps(container)
         my_cost_term = get_startup_cost_value(
             container,
@@ -255,10 +274,9 @@ function _add_start_up_cost_to_objective!(
             component,
             U(),
             t,
-            is_time_variant_,
+            is_time_variant(PSY.get_start_up(op_cost)),
         )
         # iszero(my_cost_term) && continue  # TODO do we want this?
-        multiplier = objective_function_multiplier(T(), U())
         _add_proportional_term!(container, T(), component, my_cost_term * multiplier, t)
     end
     return
@@ -338,10 +356,10 @@ end
 
 get_fuel_cost_value(
     container::OptimizationContainer,
-    component::T,
+    component::PSY.Component,
     time_period::Int,
     is_time_variant_::Bool,
-) where {T <: PSY.Component} = _lookup_maybe_time_variant_param(
+) = _lookup_maybe_time_variant_param(
     container,
     component,
     time_period,
