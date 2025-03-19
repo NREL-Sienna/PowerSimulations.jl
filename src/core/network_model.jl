@@ -163,7 +163,7 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
-       model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
+       model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
@@ -183,9 +183,9 @@ function instantiate_network_model(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
-
-    if typeof( model ) == SecurityConstrainedPTDFPowerModel
-        @info "*******************************************************************"
+    
+    if get_network_formulation(model) == SecurityConstrainedPTDFPowerModel
+        
         if get_LODF_matrix(model) === nothing
             @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
             if model.reduce_radial_branches
@@ -209,12 +209,12 @@ function instantiate_network_model(
         end
     
         if model.reduce_radial_branches &&
-            model.LODF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
+            model.LODF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD
              throw(
                  IS.ConflictingInputsError(
                      "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
                      reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
-                     or provide a modified PTDF Matrix without the Ward reduction."),
+                     or provide a modified LODF Matrix without the Ward reduction."),
              )
          end
     end
