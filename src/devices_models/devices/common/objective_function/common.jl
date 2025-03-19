@@ -1,4 +1,40 @@
 ##################################
+######## Helper Functions ########
+##################################
+
+"""
+Either looks up a value in the component using `getter_func` or fetches the value from the
+parameter `U()`, depending on whether we are in the time-variant case or not
+"""
+function _lookup_maybe_time_variant_param(
+    ::OptimizationContainer,
+    component::T,
+    ::Int,
+    ::Val{false},  # not time variant
+    getter_func::F,
+    ::U,
+) where {T <: PSY.Component, F <: Function, U <: ParameterType}
+    return getter_func(component)
+end
+
+function _lookup_maybe_time_variant_param(
+    container::OptimizationContainer,
+    component::T,
+    time_period::Int,
+    ::Val{true},  # yes time variant
+    ::F,
+    ::U,
+) where {T <: PSY.Component, F <: Function, U <: ParameterType}
+    # PERF this is modeled on the old get_fuel_cost_value function, but is it really
+    # performant to be fetching the whole array and multiplier array anew for every time step?
+    parameter_array = get_parameter_array(container, U(), T)
+    parameter_multiplier =
+        get_parameter_multiplier_array(container, U(), T)
+    name = PSY.get_name(component)
+    return parameter_array[name, time_period] .* parameter_multiplier[name, time_period]
+end
+
+##################################
 #### ActivePowerVariable Cost ####
 ##################################
 
@@ -183,41 +219,24 @@ _get_cost_term(
     ::ThermalMultiStartUnitCommitment,
 ) = cost.cold
 
-# Non-time-varying startup cost
-function get_startup_cost_value(
-    ::OptimizationContainer,
-    ::T,
-    component::V,
-    op_cost::Union{PSY.ThermalGenerationCost, PSY.MarketBidCost},
-    ::U,
-    ::Int,
-    ::Val{false},
-) where {T <: VariableType, V <: PSY.Component, U <: AbstractDeviceFormulation}
-    raw_startup_cost = PSY.get_start_up(op_cost)
-    all_cost_terms = start_up_cost(raw_startup_cost, component, U())
-    return _get_cost_term(all_cost_terms, component, T(), U())
-end
-
-# Time-varying startup cost
 function get_startup_cost_value(
     container::OptimizationContainer,
     ::T,
     component::V,
-    op_cost::PSY.MarketBidCost,
     ::U,
     time_period::Int,
-    ::Val{true},
+    is_time_variant_::Bool,
 ) where {T <: VariableType, V <: PSY.Component, U <: AbstractDeviceFormulation}
-    # PERF this is modeled on the existing get_fuel_cost_value function, but is it really
-    # performant to be fetching the whole array and multiplier array anew for every time step?
-    parameter_array = get_parameter_array(container, StartupCostParameter(), V)
-    parameter_multiplier =
-        get_parameter_multiplier_array(container, StartupCostParameter(), V)
-    name = PSY.get_name(component)
-    raw_startup_cost = parameter_array[name, time_period]
+    raw_startup_cost = _lookup_maybe_time_variant_param(
+        container,
+        component,
+        time_period,
+        Val(is_time_variant_),
+        PSY.get_start_up ∘ PSY.get_operation_cost,
+        StartupCostParameter(),
+    )
     all_cost_terms = start_up_cost(raw_startup_cost, component, U())
-    return _get_cost_term(all_cost_terms, component, T(), U()) *
-           parameter_multiplier[name, time_period]
+    return _get_cost_term(all_cost_terms, component, T(), U())
 end
 
 function _add_start_up_cost_to_objective!(
@@ -234,10 +253,9 @@ function _add_start_up_cost_to_objective!(
             container,
             T(),
             component,
-            op_cost,
             U(),
             t,
-            Val(is_time_variant_),
+            is_time_variant_,
         )
         # iszero(my_cost_term) && continue  # TODO do we want this?
         multiplier = objective_function_multiplier(T(), U())
@@ -318,27 +336,19 @@ end
 ################## Fuel Cost #####################
 ##################################################
 
-function get_fuel_cost_value(
+get_fuel_cost_value(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    ::Val{true},
-) where {T <: PSY.Component}
-    parameter_array = get_parameter_array(container, FuelCostParameter(), T)
-    parameter_multiplier =
-        get_parameter_multiplier_array(container, FuelCostParameter(), T)
-    name = PSY.get_name(component)
-    return parameter_array[name, time_period] * parameter_multiplier[name, time_period]
-end
-
-function get_fuel_cost_value(
-    ::OptimizationContainer,
-    component::T,
-    ::Int,
-    ::Val{false},
-) where {T <: PSY.Component}
-    return PSY.get_fuel_cost(component)
-end
+    is_time_variant_::Bool,
+) where {T <: PSY.Component} = _lookup_maybe_time_variant_param(
+    container,
+    component,
+    time_period,
+    Val(is_time_variant_),
+    PSY.get_fuel_cost,
+    FuelCostParameter(),
+)
 
 function _add_time_varying_fuel_variable_cost!(
     container::OptimizationContainer,
