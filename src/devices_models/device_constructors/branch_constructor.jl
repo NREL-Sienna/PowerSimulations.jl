@@ -318,7 +318,6 @@ function _has_outage(
             #    b -> typeof(b) == V && PSY.get_name(b) ∈ names_branches,
             #    PSY.get_components(sys, first(outages_v)),
             #)
-            #TODO Modify to consider different Outages Attributes
             aux = PSY.get_components(
                 x -> (PSY.has_supplemental_attributes(x,PSY.GeometricDistributionForcedOutage)), 
                 V, 
