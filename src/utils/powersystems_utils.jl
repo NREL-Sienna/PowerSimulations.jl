@@ -88,7 +88,7 @@ make_system_filename(sys::PSY.System) = make_system_filename(IS.get_uuid(sys))
 make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"
 
 function check_hvdc_line_limits_consistency(
-    d::Union{PSY.TwoTerminalHVDCLine, PSY.TModelHVDCLine},
+    d::Union{PSY.TwoTerminalGenericHVDCLine, PSY.TModelHVDCLine},
 )
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
@@ -111,7 +111,7 @@ function check_hvdc_line_limits_consistency(
     return
 end
 
-function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalHVDCLine)
+function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalGenericHVDCLine)
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
     from_max = PSY.get_active_power_limits_from(d).max
