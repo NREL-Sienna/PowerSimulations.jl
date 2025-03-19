@@ -4,7 +4,6 @@ const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
 const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
-const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
 const BUILD_PROBLEMS_TIMER = TimerOutputs.TimerOutput()
 const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
