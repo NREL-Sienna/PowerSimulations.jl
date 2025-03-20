@@ -68,12 +68,10 @@ end
 end
 =#
 
-#=
-#TODO: This test
+#TODO: timeseries market_bid_cost
 @testset "Test Thermal Generation MarketBidCost models" begin
-    test_cases = [
-        ("fixed_market_bid_cost", 20532.76),
-        #"market_bid_cost",
+    test_cases = [("fixed_market_bid_cost", 20772.76)
+    #"market_bid_cost",
     ]
     for (i, cost_reference) in test_cases
         @testset "$i" begin
@@ -95,11 +93,10 @@ end
             expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
             var_unit_cost = sum(expr[!, "Test Unit1"])
             @test isapprox(var_unit_cost, cost_reference; atol = 1)
-            @test expr[!, "Test Unit1"][end] == 0.0
+            @test expr[!, "Test Unit2"][end] == 50.0
         end
     end
 end
-=#
 
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin

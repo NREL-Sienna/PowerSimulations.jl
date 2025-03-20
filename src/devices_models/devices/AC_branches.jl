@@ -35,12 +35,12 @@ get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where
 get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
 get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
 # These two methods are defined to avoid ambiguities
-get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCPiecewiseLossVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCActivePowerReceivedFromVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCActivePowerReceivedToVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCPiecewiseBinaryLossVariable, ::Type{<:PSY.TwoTerminalHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = true
+get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCPiecewiseLossVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCActivePowerReceivedFromVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCActivePowerReceivedToVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCPiecewiseBinaryLossVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = true
 get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
 get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
 get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
