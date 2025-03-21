@@ -282,18 +282,6 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    contruct_device!(container, sys, ArgumentConstructStage(), model, network_model)
-    add_expression!(container, OutageActivePowerFlows, sys, model)
-    return
-end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{<:AbstractPTDFModel},
@@ -307,6 +295,100 @@ function construct_device!(
     return
 end
 
+function _has_outage(
+    sys::PSY.System,
+    outages::InfrastructureSystems.FlattenIteratorWrapper{T},
+    branches::IS.FlattenIteratorWrapper{V},
+) where {
+    T <: PSY.Outage,
+    V <: PSY.ACBranch,
+}
+    outages_v = unique(collect(outages))
+    names_branches = PSY.get_name.(collect(branches))
+
+    if isempty(outages_v)
+        @error "System $(PSY.get_name(sys)) has no $T attributes to add the LODF expressions/constraints for the requested network formulation."
+        branches_outages = Vector{eltype(collect(branches))}()
+    else
+        try
+            #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
+            #The following filter returns a Vector of Abstract type, but it's needed a Vector of the type of the components in names_branches (already filtered)
+            #Ideally implement a PSY.get_components(::Type, sys, attribute) and it should return an IS.wrapper of type T
+            #branches_outages = filter(
+            #    b -> typeof(b) == V && PSY.get_name(b) ∈ names_branches,
+            #    PSY.get_components(sys, first(outages_v)),
+            #)
+            aux = PSY.get_components(
+                x -> (PSY.has_supplemental_attributes(x,PSY.GeometricDistributionForcedOutage)), 
+                V, 
+                sys)
+            branches_outages = filter(b -> get_name(b)∈ names_branches,collect(aux))
+
+        catch e
+            @info "System $(get_name(sys)) has no $T attributes associated to branches $V to add the LODF expressions/constraints of the requested network formulation."
+            branches_outages = Vector{eltype(collect(branches))}() 
+        end
+    end
+
+    return branches_outages
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {T <: PSY.ACBranch}
+    devices = get_available_components(model, sys)
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            FlowActivePowerSlackUpperBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+        add_variables!(
+            container,
+            FlowActivePowerSlackLowerBound,
+            network_model,
+            devices,
+            StaticBranch(),
+        )
+    end
+
+    add_variables!(
+        container,
+        FlowActivePowerVariable,
+        network_model,
+        devices,
+        StaticBranch(),
+    )
+
+    lodf = get_LODF_matrix(network_model)
+    nr = lodf.network_reduction
+    removed_branches = PNM.get_removed_branches(nr)
+    branches = get_available_components(b -> PSY.get_name(b) ∉ removed_branches, T, sys)
+
+    outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
+    branches_outages = _has_outage(sys, outages, branches)
+    if !isempty(branches_outages)
+        add_to_expression!(
+            container,
+            PTDFOutagesBranchFlow,
+            FlowActivePowerVariable,
+            branches,
+            branches_outages,
+            model,
+            network_model,
+        )
+    end
+
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -317,7 +399,26 @@ function construct_device!(
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
-    add_constraints!(container, OutageActivePowerFlowsConstraint, sys, model)
+
+    lodf = get_LODF_matrix(network_model)
+    nr = lodf.network_reduction
+    removed_branches = PNM.get_removed_branches(nr)
+    branches = get_available_components(b -> PSY.get_name(b) ∉ removed_branches, T, sys)
+
+    outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
+    branches_outages = _has_outage(sys, outages, branches)
+
+    if !isempty(branches_outages)
+        add_constraints!(
+            container,
+            OutageActivePowerFlowsConstraint,
+            branches,
+            branches_outages,
+            model,
+            network_model,
+        )
+    end
+
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)
     add_constraint_dual!(container, sys, model)
