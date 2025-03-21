@@ -11,16 +11,11 @@ function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::Stri
 end
 
 function _set_param_value!(
-    param::DenseAxisArray{Vector{NTuple{2, Float64}}},
-    value::Vector{NTuple{2, Float64}},
+    param::DenseAxisArray{T},
+    value::T,
     name::String,
     t::Int,
-)
-    param[name, t] = value
-    return
-end
-
-function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
+) where {T}
     param[name, t] = value
     return
 end

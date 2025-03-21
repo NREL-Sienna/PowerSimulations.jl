@@ -109,18 +109,30 @@ sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.
 sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
 
-# Elsewhere we extract a start-up cost from the cost struct and if necessary select a single
-# time period; here we interpret that cost given the formulation
-start_up_cost(cost::Float64, ::PSY.ThermalGen, ::AbstractThermalFormulation) = cost
-# TODO when we have a single number startup cost and we're modeling a multi-start, is this the desired behavior?
-start_up_cost(cost::Float64, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment) =
-    (hot = cost, warm = cost, cold = cost)
+# Startup cost interpretations!
+# Validators: check that the types match (formulation is optional) and redirect to the simpler methods
+start_up_cost(cost, ::PSY.ThermalGen, ::T, ::Union{AbstractThermalFormulation, Nothing} = nothing) where {T <: StartVariable} =
+    start_up_cost(cost, T())
+start_up_cost(cost, ::PSY.ThermalMultiStart, ::T, ::ThermalMultiStartUnitCommitment = ThermalMultiStartUnitCommitment()) where {T <: MultiStartVariables} =
+    start_up_cost(cost, T())
 
-start_up_cost(cost::NTuple{3, Float64}, component::PSY.ThermalGen, ::T) where {T <: AbstractThermalFormulation} =
-    start_up_cost(StartUpStages(cost), component, T())
+# Implementations: given a single number, tuple, or StartUpStages and a variable, do the right thing
+# Single number to anything
+start_up_cost(cost::Float64, ::StartVariable) = cost
+# TODO in the case where we have a single number startup cost and we're modeling a multi-start, do we set all the values to that number?
+start_up_cost(cost::Float64, ::T) where {T <: MultiStartVariables} =
+    start_up_cost((hot = cost, warm = cost, cold = cost), T())
+
+# 3-tuple to anything
+start_up_cost(cost::NTuple{3, Float64}, ::T) where {T <: VariableType} =
+    start_up_cost(StartUpStages(cost), T())
+
+# `StartUpStages` to anything
+start_up_cost(cost::StartUpStages, ::ColdStartVariable) = cost.cold
+start_up_cost(cost::StartUpStages, ::WarmStartVariable) = cost.warm
+start_up_cost(cost::StartUpStages, ::HotStartVariable) = cost.hot
 # TODO in the opposite case, do we want to get the maximum or the hot?
-start_up_cost(cost::StartUpStages, ::PSY.ThermalGen, ::AbstractThermalFormulation) = maximum(cost)
-start_up_cost(cost::StartUpStages, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment) = cost
+start_up_cost(cost::StartUpStages, ::StartVariable) = maximum(cost)
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
@@ -1487,7 +1499,7 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {U <: ThermalMultiStartUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
-    for var_type in START_VARIABLES
+    for var_type in MULTI_START_VARIABLES
         add_start_up_cost!(container, var_type(), devices, U())
     end
     add_shut_down_cost!(container, StopVariable(), devices, U())
