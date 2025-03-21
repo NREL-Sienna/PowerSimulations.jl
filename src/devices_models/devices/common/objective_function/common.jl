@@ -88,7 +88,8 @@ function add_shut_down_cost!(
                 is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(d))),
             )
             # iszero(my_cost_term) && continue  # TODO do we want this?
-            _add_proportional_term!(container, U(), d, my_cost_term * multiplier, t)
+            exp = _add_proportional_term!(container, U(), d, my_cost_term * multiplier, t)
+            add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
     end
     return
@@ -277,7 +278,9 @@ function _add_start_up_cost_to_objective!(
             is_time_variant(PSY.get_start_up(op_cost)),
         )
         # iszero(my_cost_term) && continue  # TODO do we want this?
-        _add_proportional_term!(container, T(), component, my_cost_term * multiplier, t)
+        exp =
+            _add_proportional_term!(container, T(), component, my_cost_term * multiplier, t)
+        add_to_expression!(container, ProductionCostExpression, exp, component, t)
     end
     return
 end
