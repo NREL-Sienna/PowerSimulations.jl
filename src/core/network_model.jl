@@ -185,7 +185,6 @@ function instantiate_network_model(
     end
 
     if get_network_formulation(model) == SecurityConstrainedPTDFPowerModel
-
         if get_LODF_matrix(model) === nothing
             @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
             if model.reduce_radial_branches
@@ -209,14 +208,15 @@ function instantiate_network_model(
         end
 
         if model.reduce_radial_branches &&
-            model.LODF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD
-             throw(
-                 IS.ConflictingInputsError(
-                     "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
-                     reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
-                     or provide a modified LODF Matrix without the Ward reduction."),
-             )
-         end
+           model.LODF_matrix.network_reduction.reduction_type ==
+           PNM.NetworkReductionTypes.WARD
+            throw(
+                IS.ConflictingInputsError(
+                    "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
+                    reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
+                    or provide a modified LODF Matrix without the Ward reduction."),
+            )
+        end
     end
 
     return

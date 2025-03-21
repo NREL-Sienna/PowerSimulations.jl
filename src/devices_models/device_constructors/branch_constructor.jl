@@ -319,10 +319,13 @@ function _has_outage(
             #    PSY.get_components(sys, first(outages_v)),
             #)
             aux = PSY.get_components(
-                x -> (PSY.has_supplemental_attributes(x,PSY.GeometricDistributionForcedOutage)),
+                x -> (PSY.has_supplemental_attributes(
+                    x,
+                    PSY.GeometricDistributionForcedOutage,
+                )),
                 V,
                 sys)
-            branches_outages = filter(b -> get_name(b)∈ names_branches,collect(aux))
+            branches_outages = filter(b -> get_name(b) ∈ names_branches, collect(aux))
 
         catch e
             @info "System $(get_name(sys)) has no $T attributes associated to branches $V to add the LODF expressions/constraints of the requested network formulation."
