@@ -938,7 +938,6 @@ function add_to_expression!(
         device_bus = PSY.get_bus(d)
         bus_no_ = PSY.get_number(device_bus)
         bus_no = PNM.get_mapped_bus_number(network_reduction, bus_no_)
-
         ref_index = _ref_index(network_model, device_bus)
         param = get_parameter_column_refs(param_container, name)
         for t in get_time_steps(container)

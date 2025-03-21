@@ -485,6 +485,7 @@ function _make_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
     ::Type{T},
+    ::Type{T},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
     time_steps = get_time_steps(container)
@@ -518,6 +519,37 @@ function _make_system_expressions!(
     ::Type{SecurityConstrainedPTDFPowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
+    time_steps = get_time_steps(container)
+    if isempty(bus_reduction_map)
+        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    else
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
+    subnetworks = collect(keys(subnetworks))
+    container.expressions = Dict(
+        ExpressionKey(ActivePowerBalance, PSY.System) =>
+            _make_container_array(subnetworks, time_steps),
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        # Bus numbers are sorted to guarantee consistency in the order between the
+        # containers
+            _make_container_array(sort!(ac_bus_numbers), time_steps),
+    )
+
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, time_steps)
+    end
+    return
+end
+
+#TODO Check if for SCUC need something else
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
+    ::Type{SecurityConstrainedPTDFPowerModel},
+    bus_reduction_map::Dict{Int64, Set{Int64}},
+) where {(T <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel})}
     time_steps = get_time_steps(container)
     if isempty(bus_reduction_map)
         ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
@@ -723,7 +755,8 @@ function build_impl!(
         get_network_model(template),
         transmission_model.subnetworks,
         sys,
-        transmission_model.network_reduction.bus_reduction_map)
+        transmission_model.radial_network_reduction.bus_reduction_map)
+
     # Order is required
     for device_model in values(template.devices)
         @debug "Building Arguments for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =

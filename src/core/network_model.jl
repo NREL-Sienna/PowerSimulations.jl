@@ -148,7 +148,7 @@ function instantiate_network_model(
             network_reduction = PNM.NetworkReduction()
         end
         model.PTDF_matrix =
-            PNM.PTDF(sys; network_reduction = network_reduction)
+            PNM.VirtualPTDF(sys; network_reduction = network_reduction)
     end
 
     if !model.reduce_radial_branches &&
@@ -183,9 +183,9 @@ function instantiate_network_model(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
-    
+
     if get_network_formulation(model) == SecurityConstrainedPTDFPowerModel
-        
+
         if get_LODF_matrix(model) === nothing
             @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
             if model.reduce_radial_branches
@@ -196,7 +196,7 @@ function instantiate_network_model(
             model.LODF_matrix =
                 PNM.VirtualLODF(sys; network_reduction = network_reduction)
         end
-    
+
         if !model.reduce_radial_branches &&
            model.LODF_matrix.network_reduction.reduction_type ==
            PNM.NetworkReductionTypes.RADIAL
@@ -207,7 +207,7 @@ function instantiate_network_model(
                     reduce_radial_branches = true in your network model"),
             )
         end
-    
+
         if model.reduce_radial_branches &&
             model.LODF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD
              throw(
