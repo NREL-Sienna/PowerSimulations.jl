@@ -318,7 +318,8 @@ Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct RateofChangeConstraintSlackDown <: VariableType end
 
-const START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
+const MULTI_START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
+const MultiStartVariables = Union{MULTI_START_VARIABLES...}
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false

@@ -279,10 +279,12 @@ _get_time_series_name(::ShutdownCostParameter, device::PSY.Component, ::DeviceMo
 _get_expected_time_series_eltype(::T) where {T <: ParameterType} = Float64
 _get_expected_time_series_eltype(::StartupCostParameter) = NTuple{3, Float64}
 
-# Lookup that defines which variable the ObjectiveFunctionParameter corresponds to
-_param_to_var(::FuelCostParameter) = ActivePowerVariable
-_param_to_var(::StartupCostParameter) = StartVariable
-_param_to_var(::ShutdownCostParameter) = StopVariable
+# Lookup that defines which variables the ObjectiveFunctionParameter corresponds to
+_param_to_vars(::FuelCostParameter, ::AbstractDeviceFormulation) = (ActivePowerVariable,)
+_param_to_vars(::StartupCostParameter, ::AbstractThermalFormulation) = (StartVariable,)
+_param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
+    MULTI_START_VARIABLES
+_param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
 
 function _add_parameters!(
     container::OptimizationContainer,
@@ -315,7 +317,7 @@ function _add_parameters!(
         container,
         param,
         D,
-        _param_to_var(T()),
+        _param_to_vars(T(), W()),
         PSI.SOSStatusVariable.NO_VARIABLE,
         false,
         _get_expected_time_series_eltype(T()),

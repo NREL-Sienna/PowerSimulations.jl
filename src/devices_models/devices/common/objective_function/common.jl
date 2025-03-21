@@ -213,32 +213,6 @@ function add_start_up_cost!(
     return
 end
 
-# Given the output of `start_up_cost`, return the appropriate cost term for the given variable
-_get_cost_term(
-    cost::Float64,
-    ::PSY.ThermalGen,
-    ::VariableType,
-    ::AbstractDeviceFormulation,
-) = cost
-_get_cost_term(
-    cost::StartUpStages,
-    ::PSY.ThermalMultiStart,
-    ::HotStartVariable,
-    ::ThermalMultiStartUnitCommitment,
-) = cost.hot
-_get_cost_term(
-    cost::StartUpStages,
-    ::PSY.ThermalMultiStart,
-    ::WarmStartVariable,
-    ::ThermalMultiStartUnitCommitment,
-) = cost.warm
-_get_cost_term(
-    cost::StartUpStages,
-    ::PSY.ThermalMultiStart,
-    ::ColdStartVariable,
-    ::ThermalMultiStartUnitCommitment,
-) = cost.cold
-
 function get_startup_cost_value(
     container::OptimizationContainer,
     ::T,
@@ -255,8 +229,7 @@ function get_startup_cost_value(
         PSY.get_start_up ∘ PSY.get_operation_cost,
         StartupCostParameter(),
     )
-    all_cost_terms = start_up_cost(raw_startup_cost, component, U())
-    return _get_cost_term(all_cost_terms, component, T(), U())
+    return start_up_cost(raw_startup_cost, component, T(), U())
 end
 
 function _add_start_up_cost_to_objective!(

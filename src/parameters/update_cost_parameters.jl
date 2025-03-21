@@ -64,12 +64,45 @@ function handle_variable_cost_parameter(::Tuple{}, args...)
     end
 end
 
-# TODO implement
-function handle_variable_cost_parameter(::StartupCostParameter, args...)
-    @warn "Not yet implemented"
+# No-op for everything but MarketBidCost
+handle_variable_cost_parameter(
+    ::StartupCostParameter,
+    op_cost::PSY.OperationalCost, args...) = nothing
+handle_variable_cost_parameter(
+    ::ShutdownCostParameter,
+    op_cost::PSY.OperationalCost, args...) = nothing
+
+function handle_variable_cost_parameter(
+    ::StartupCostParameter,
+    op_cost::PSY.MarketBidCost,
+    component,
+    name,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    container,
+    initial_forecast_time,
+    horizon,
+)
+    is_time_variant(PSY.get_start_up(op_cost)) || return
+    ts_vector = PSY.get_start_up(
+        component, op_cost;
+        start_time = initial_forecast_time,
+        len = horizon,
+    )
+    for (t, value) in enumerate(TimeSeries.values(ts_vector))
+        _set_param_value!(parameter_array, Tuple(value), name, t)
+        update_variable_cost!(
+            container,
+            parameter_array,
+            parameter_multiplier,
+            attributes,
+            component,
+            t,
+        )
+    end
 end
 
-# TODO implement
 function handle_variable_cost_parameter(::ShutdownCostParameter, args...)
     @warn "Not yet implemented"
 end
@@ -77,7 +110,7 @@ end
 function handle_variable_cost_parameter(
     ::FuelCostParameter,
     op_cost::PSY.ThermalGenerationCost,
-    component,  # TODO type these
+    component,
     name,
     parameter_array,
     parameter_multiplier,
@@ -139,30 +172,39 @@ function _update_pwl_cost_expression(
     return gen_cost
 end
 
+# General case
+# (TODO this seemed rather decrepit before I got here and made big changes, make sure I didn't break anything)
 function update_variable_cost!(
     container::OptimizationContainer,
-    parameter_array::JuMPFloatArray,
-    parameter_multiplier::JuMPFloatArray,
-    attributes::CostFunctionAttributes{Float64},
-    component::T,
+    parameter_array::DenseAxisArray{T},
+    parameter_multiplier::JuMPFloatArray,  # TODO is the multiplier always `JuMPFloatArray`?
+    attributes::CostFunctionAttributes{T},
+    component::U,
     time_period::Int,
-) where {T <: PSY.Component}
-    resolution = get_resolution(container)
-    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    base_power = get_base_power(container)
+) where {T, U <: PSY.Component}
     component_name = PSY.get_name(component)
-    cost_data = parameter_array[component_name, time_period]  # TODO is this a new-style cost?
-    if iszero(cost_data)
-        return
-    end
+    cost_data = parameter_array[component_name, time_period]
+    # TODO is this really correct? If it's zero now we can just leave it, it won't keep the value from last round?
+    # if iszero(cost_data)
+    #     return
+    # end
     mult_ = parameter_multiplier[component_name, time_period]
-    variable = get_variable(container, get_variable_type(attributes)(), T)
-    gen_cost = variable[component_name, time_period] * ()
-    add_to_objective_variant_expression!(container, gen_cost)
-    set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
-    return
+    for MyVariableType in get_variable_types(attributes)
+        variable = get_variable(container, MyVariableType(), U)
+        my_cost_data = start_up_cost(cost_data, MyVariableType())
+        cost_expr = variable[component_name, time_period] * my_cost_data * mult_
+        add_to_objective_variant_expression!(container, cost_expr)
+        set_expression!(
+            container,
+            ProductionCostExpression,
+            cost_expr,
+            component,
+            time_period,
+        )
+    end
 end
 
+# Special case for PiecewiseLinearData
 function update_variable_cost!(
     container::OptimizationContainer,
     parameter_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
@@ -190,6 +232,7 @@ function update_variable_cost!(
     return
 end
 
+# Special case for fuel cost
 function update_variable_cost!(
     container::OptimizationContainer,
     parameter_array::JuMPFloatArray,
