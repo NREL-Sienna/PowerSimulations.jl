@@ -671,8 +671,8 @@ function add_to_expression!(
     X <: SecurityConstrainedPTDFPowerModel,
 }
     time_steps = get_time_steps(container)
-    
-    if !isempty( branches_outages )
+
+    if !isempty(branches_outages)
         container.expressions[ExpressionKey(PTDFOutagesBranchFlow, V)] =
             _make_container_array(
                 get_name.(branches_outages),
@@ -686,20 +686,20 @@ function add_to_expression!(
         ExpressionKey(PTDFOutagesBranchFlow, V, IS.Optimization.CONTAINER_KEY_EMPTY_META),
     )
     lodf = get_LODF_matrix(network_model)
-    
+
     variable_branches_outages = get_variable(container, U(), V)
 
-    for branch in branches 
-        variable_branches = get_variable(container, U(), typeof(branch) )
+    for branch in branches
+        variable_branches = get_variable(container, U(), typeof(branch))
         branch_name = get_name(branch)
         @show branch_name
-        
+
         for branch_outage in branches_outages
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
             if branch_outage == branch
                 continue
             end
-            
+
             branch_outage_name = get_name(branch_outage)
 
             for t in time_steps
@@ -710,7 +710,7 @@ function add_to_expression!(
                     variable_branches_outages[branch_outage_name, t],
                     lodf[branch_name, branch_outage_name],
                 )
-            end     
+            end
         end
     end
     return
