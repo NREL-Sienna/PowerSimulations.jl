@@ -417,24 +417,23 @@ Add branch rate limit constraints for ACBranch considering LODF and Security Con
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{OutageActivePowerFlowsConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
-    devices_outages_v::Vector{T},
+    branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
+    branches_outages::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, U},
     network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
 ) where {
     T <: PSY.ACBranch,
     U <: AbstractBranchFormulation,
 }
-    #get_name.(branches_outages_v), get_name.(branches_v), time_steps
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = [PSY.get_name(d) for d in branches]
 
     con_lb =
         add_constraints_container!(
             container,
             cons_type(),
             T,
-            get_name.(devices_outages_v),
+            get_name.(branches_outages),
             device_names,
             time_steps;
             meta = "lb",
@@ -445,37 +444,37 @@ function add_constraints!(
             container,
             cons_type(),
             T,
-            get_name.(devices_outages_v),
+            get_name.(branches_outages),
             device_names,
             time_steps;
             meta = "ub",
         )
 
-    array = get_variable(container, FlowActivePowerVariable(), T)
     expressions = get_expression(
         container,
         ExpressionKey(PTDFOutagesBranchFlow, T, IS.Optimization.CONTAINER_KEY_EMPTY_META),
     )
 
-    for branch in devices
+    for branch in branches
         b_name = get_name(branch)
-        for branch_outage in devices_outages_v
+
+        for branch_outage in branches_outages
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
-            if branch != branch_outage
+            if branch == branch_outage
+                continue
+            end
                 b_outage_name = get_name(branch_outage)
                 limits = get_min_max_limits(branch, RateLimitConstraint, U) # depends on constraint type and formulation type
-                for t in time_steps
-                    con_ub[b_outage_name, b_name, t] =
-                        JuMP.@constraint(get_jump_model(container),
-                            expressions[b_outage_name, b_name, t] <=
-                            limits.max)
-                    con_lb[b_outage_name, b_name, t] =
-                        JuMP.@constraint(get_jump_model(container),
-                            expressions[b_outage_name, b_name, t] >=
-                            limits.min)
-                end
-            else
-                continue
+                
+            for t in time_steps
+                con_ub[b_outage_name, b_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[b_outage_name, b_name, t] <=
+                        limits.max)
+                con_lb[b_outage_name, b_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[b_outage_name, b_name, t] >=
+                        limits.min)
             end
         end
     end

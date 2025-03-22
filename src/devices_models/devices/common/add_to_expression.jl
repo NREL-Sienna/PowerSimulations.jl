@@ -655,8 +655,8 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    branches::IS.FlattenIteratorWrapper{V},
-    branches_outages_v::Vector{V},
+    branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
+    branches_outages::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
@@ -666,40 +666,47 @@ function add_to_expression!(
     W <: AbstractDeviceFormulation,
     X <: SecurityConstrainedPTDFPowerModel,
 }
-    branches_v = collect(branches)
     time_steps = get_time_steps(container)
-
-    if !isempty(branches_outages_v)
+    
+    if !isempty( branches_outages )
         container.expressions[ExpressionKey(PTDFOutagesBranchFlow, V)] =
             _make_container_array(
-                get_name.(branches_outages_v),
-                get_name.(branches_v),
+                get_name.(branches_outages),
+                get_name.(branches),
                 time_steps,
             )
     end
 
-    variable = get_variable(container, U(), V)
     expressions = get_expression(
         container,
         ExpressionKey(PTDFOutagesBranchFlow, V, IS.Optimization.CONTAINER_KEY_EMPTY_META),
     )
     lodf = get_LODF_matrix(network_model)
-    for branch in branches_v
-        for branch_outage in branches_outages_v
+    
+    variable_branches_outages = get_variable(container, U(), V)
+
+    for branch in branches 
+        variable_branches = get_variable(container, U(), typeof(branch) )
+        branch_name = get_name(branch)
+        @show branch_name
+        
+        for branch_outage in branches_outages
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
-            if branch != branch_outage
-                for t in time_steps
-                    _add_to_jump_expression!(
-                        expressions[get_name(branch_outage), get_name(branch), t],
-                        variable[get_name(branch), t],
-                        1.0,
-                        variable[get_name(branch_outage), t],
-                        lodf[get_name(branch), get_name(branch_outage)],
-                    )
-                end
-            else
+            if branch_outage == branch
                 continue
             end
+            
+            branch_outage_name = get_name(branch_outage)
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expressions[branch_outage_name, branch_name, t],
+                    variable_branches[branch_name, t],
+                    1.0,
+                    variable_branches_outages[branch_outage_name, t],
+                    lodf[branch_name, branch_outage_name],
+                )
+            end     
         end
     end
     return
