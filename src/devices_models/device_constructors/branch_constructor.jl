@@ -299,22 +299,24 @@ function _has_outage(
     sys::PSY.System,
     outages::InfrastructureSystems.FlattenIteratorWrapper{T},
     branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
-    ::Type{V}
+    ::Type{V},
 ) where {
     T <: PSY.Outage,
     V <: PSY.ACBranch,
-}   
+}
     branches_outages = []
     try
         #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
         branches_outages = PSY.get_components(
-                x -> ( PSY.has_supplemental_attributes( x, first(typeof.(outages)) ) ) && x ∈ branches, 
-                V, 
-                sys)
+            x ->
+                (PSY.has_supplemental_attributes(x, first(typeof.(outages)))) &&
+                    x ∈ branches,
+            V,
+            sys)
     catch e
         @info "System $(get_name(sys)) has no $T attributes associated to branches $V to add the LODF expressions/constraints of the requested network formulation."
     end
-    
+
     return branches_outages
 end
 
@@ -365,27 +367,28 @@ function construct_device!(
 
     #TODO Handle better with HVDC - SCUC
     branch_types_out_scuc = [PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCDCLine]
-    
+
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
-    
+
     outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
 
     if isempty(outages)
-         @error "System $(PSY.get_name(sys)) has no $outages attributes to add the LODF expressions/constraints for the requested $network_model."
+        @error "System $(PSY.get_name(sys)) has no $outages attributes to add the LODF expressions/constraints for the requested $network_model."
     end
 
     lodf = get_LODF_matrix(network_model)
     removed_branches = PNM.get_removed_branches(lodf.network_reduction)
-    branches = get_available_components(b -> PSY.get_name(b) ∉ removed_branches && typeof(b) ∉ branch_types_out_scuc, 
-                                        PSY.ACBranch,
-                                        sys,
-                                        )
-    
+    branches = get_available_components(
+        b -> PSY.get_name(b) ∉ removed_branches && typeof(b) ∉ branch_types_out_scuc,
+        PSY.ACBranch,
+        sys,
+    )
+
     branches_outages = _has_outage(sys, outages, branches, T)
 
-    if !isempty( branches_outages )
+    if !isempty(branches_outages)
         add_to_expression!(
             container,
             PTDFOutagesBranchFlow,
@@ -404,7 +407,7 @@ function construct_device!(
             model,
             network_model,
         )
-    end    
+    end
 
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)

@@ -463,9 +463,9 @@ function add_constraints!(
             if branch == branch_outage
                 continue
             end
-                b_outage_name = get_name(branch_outage)
-                limits = get_min_max_limits(branch, RateLimitConstraint, U) # depends on constraint type and formulation type
-                
+            b_outage_name = get_name(branch_outage)
+            limits = get_min_max_limits(branch, RateLimitConstraint, U) # depends on constraint type and formulation type
+
             for t in time_steps
                 con_ub[b_outage_name, b_name, t] =
                     JuMP.@constraint(get_jump_model(container),
