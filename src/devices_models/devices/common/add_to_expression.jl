@@ -692,7 +692,6 @@ function add_to_expression!(
     for branch in branches
         variable_branches = get_variable(container, U(), typeof(branch))
         branch_name = get_name(branch)
-        @show branch_name
 
         for branch_outage in branches_outages
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
