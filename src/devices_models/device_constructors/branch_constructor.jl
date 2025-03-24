@@ -323,51 +323,10 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
-    devices = get_available_components(model, sys)
-    if get_use_slacks(model)
-        add_variables!(
-            container,
-            FlowActivePowerSlackUpperBound,
-            network_model,
-            devices,
-            StaticBranch(),
-        )
-        add_variables!(
-            container,
-            FlowActivePowerSlackLowerBound,
-            network_model,
-            devices,
-            StaticBranch(),
-        )
-    end
-
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranch(),
-    )
-
-    add_feedforward_arguments!(container, model, devices)
-    return
-end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranch},
     network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
 ) where {T <: PSY.ACBranch}
-
-    #TODO Handle better with HVDC - SCUC
-    branch_types_out_scuc = [PSY.TwoTerminalHVDCLine, PSY.TwoTerminalVSCDCLine]
-
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
@@ -381,7 +340,9 @@ function construct_device!(
     lodf = get_LODF_matrix(network_model)
     removed_branches = PNM.get_removed_branches(lodf.network_reduction)
     branches = get_available_components(
-        b -> PSY.get_name(b) ∉ removed_branches && typeof(b) ∉ branch_types_out_scuc,
+        b ->
+            PSY.get_name(b) ∉ removed_branches &&
+                typeof(b) ∉ Base.uniontypes(TwoTerminalHVDCTypes),
         PSY.ACBranch,
         sys,
     )
