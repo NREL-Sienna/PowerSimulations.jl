@@ -693,7 +693,7 @@ function build_impl!(
         get_network_model(template),
         transmission_model.subnetworks,
         sys,
-        transmission_model.radial_network_reduction.bus_reduction_map)
+        transmission_model.network_reduction.bus_reduction_map)
 
     # Order is required
     for device_model in values(template.devices)
