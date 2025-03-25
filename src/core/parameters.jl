@@ -303,6 +303,10 @@ struct EventParameter <: ParameterType end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
+# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are tuples)
+should_write_resulting_value(::Type{<:FuelCostParameter}) = true
+should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
+
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
