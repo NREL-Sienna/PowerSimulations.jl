@@ -62,15 +62,16 @@ function handle_variable_cost_parameter(::Tuple{}, args...)
             t,
         )
     end
+    return
 end
 
-# No-op for everything but MarketBidCost
+# We only support time series startup and shutdown costs for MarketBidCost, nothing to do for all the others
 handle_variable_cost_parameter(
     ::StartupCostParameter,
-    op_cost::PSY.OperationalCost, args...) = nothing
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 handle_variable_cost_parameter(
     ::ShutdownCostParameter,
-    op_cost::PSY.OperationalCost, args...) = nothing
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
 function handle_variable_cost_parameter(
     ::StartupCostParameter,
@@ -101,10 +102,39 @@ function handle_variable_cost_parameter(
             t,
         )
     end
+    return
 end
 
-function handle_variable_cost_parameter(::ShutdownCostParameter, args...)
-    @warn "Not yet implemented"
+function handle_variable_cost_parameter(
+    ::ShutdownCostParameter,
+    op_cost::PSY.MarketBidCost,
+    component,
+    name,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    container,
+    initial_forecast_time,
+    horizon,
+)
+    is_time_variant(PSY.get_shut_down(op_cost)) || return
+    ts_vector = PSY.get_shut_down(
+        component, op_cost;
+        start_time = initial_forecast_time,
+        len = horizon,
+    )
+    for (t, value) in enumerate(TimeSeries.values(ts_vector))
+        _set_param_value!(parameter_array, value, name, t)
+        update_variable_cost!(
+            container,
+            parameter_array,
+            parameter_multiplier,
+            attributes,
+            component,
+            t,
+        )
+    end
+    return
 end
 
 function handle_variable_cost_parameter(
@@ -147,6 +177,7 @@ function handle_variable_cost_parameter(
             t,
         )
     end
+    return
 end
 
 function _update_pwl_cost_expression(
@@ -172,6 +203,11 @@ function _update_pwl_cost_expression(
     return gen_cost
 end
 
+# For multi-start variables, we need to get a subset of the parameter
+_index_into_param(cost_data, ::T) where {T <: Union{StartVariable, MultiStartVariable}} =
+    start_up_cost(cost_data, T())
+_index_into_param(cost_data, ::VariableType) = cost_data
+
 # General case
 # (TODO this seemed rather decrepit before I got here and made big changes, make sure I didn't break anything)
 function update_variable_cost!(
@@ -191,7 +227,7 @@ function update_variable_cost!(
     mult_ = parameter_multiplier[component_name, time_period]
     for MyVariableType in get_variable_types(attributes)
         variable = get_variable(container, MyVariableType(), U)
-        my_cost_data = start_up_cost(cost_data, MyVariableType())
+        my_cost_data = _index_into_param(cost_data, MyVariableType())
         cost_expr = variable[component_name, time_period] * my_cost_data * mult_
         add_to_objective_variant_expression!(container, cost_expr)
         set_expression!(
@@ -202,6 +238,7 @@ function update_variable_cost!(
             time_period,
         )
     end
+    return
 end
 
 # Special case for PiecewiseLinearData
