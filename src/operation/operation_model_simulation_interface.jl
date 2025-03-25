@@ -1,11 +1,8 @@
 function update_model!(model::OperationModel, source::SimulationState, ini_cond_chronology)
-    @show "REF 112"
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
-        @show "REF 113"
         update_parameters!(model, source)
     end
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Ini Cond Updates" begin
-        @show "REF 114"
         update_initial_conditions!(model, source, ini_cond_chronology)
     end
     return
@@ -26,7 +23,6 @@ function update_parameters!(
         update_parameter_values!(model, key, simulation_state)
     end
     if !is_synchronized(model)
-        @show "REF 120"
         update_objective_function!(get_optimization_container(model))
         obj_func = get_objective_expression(get_optimization_container(model))
         set_synchronized_status!(obj_func, true)
