@@ -485,69 +485,6 @@ function _make_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
     ::Type{T},
-    ::Type{T},
-    bus_reduction_map::Dict{Int64, Set{Int64}},
-)
-    time_steps = get_time_steps(container)
-    if isempty(bus_reduction_map)
-        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
-    else
-        ac_bus_numbers = collect(keys(bus_reduction_map))
-    end
-    subnetworks = collect(keys(subnetworks))
-    container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(subnetworks, time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-        # Bus numbers are sorted to guarantee consistency in the order between the
-        # containers
-            _make_container_array(sort!(ac_bus_numbers), time_steps),
-    )
-
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
-    end
-    return
-end
-
-#TODO Check if for SCUC need something else
-function _make_system_expressions!(
-    container::OptimizationContainer,
-    subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
-    ::Type{SecurityConstrainedPTDFPowerModel},
-    bus_reduction_map::Dict{Int64, Set{Int64}},
-)
-    time_steps = get_time_steps(container)
-    if isempty(bus_reduction_map)
-        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
-    else
-        ac_bus_numbers = collect(keys(bus_reduction_map))
-    end
-    subnetworks = collect(keys(subnetworks))
-    container.expressions = Dict(
-        ExpressionKey(ActivePowerBalance, PSY.System) =>
-            _make_container_array(subnetworks, time_steps),
-        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-        # Bus numbers are sorted to guarantee consistency in the order between the
-        # containers
-            _make_container_array(sort!(ac_bus_numbers), time_steps),
-    )
-
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
-    end
-    return
-end
-
-#TODO Check if for SCUC need something else
-function _make_system_expressions!(
-    container::OptimizationContainer,
-    subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
-    ::Type{SecurityConstrainedPTDFPowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {(T <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel})}
     time_steps = get_time_steps(container)
@@ -750,6 +687,7 @@ function build_impl!(
 )
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
+    
     initialize_system_expressions!(
         container,
         get_network_model(template),
