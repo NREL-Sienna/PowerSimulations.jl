@@ -26,26 +26,29 @@ Docs abbreviation: ``p^\\text{out}``
 """
 struct ActivePowerOutVariable <: VariableType end
 
+"Multi-start startup variables"
+abstract type MultiStartVariable <: VariableType end
+
 """
 Struct to dispatch the creation of Hot Start Variable for Thermal units with temperature considerations
 
 Docs abbreviation: ``z^\\text{th}``
 """
-struct HotStartVariable <: VariableType end
+struct HotStartVariable <: MultiStartVariable end
 
 """
 Struct to dispatch the creation of Warm Start Variable for Thermal units with temperature considerations
 
 Docs abbreviation: ``y^\\text{th}``
 """
-struct WarmStartVariable <: VariableType end
+struct WarmStartVariable <: MultiStartVariable end
 
 """
 Struct to dispatch the creation of Cold Start Variable for Thermal units with temperature considerations
 
 Docs abbreviation: ``x^\\text{th}``
 """
-struct ColdStartVariable <: VariableType end
+struct ColdStartVariable <: MultiStartVariable end
 
 """
 Struct to dispatch the creation of a variable for energy storage level (state of charge)
@@ -423,8 +426,7 @@ Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct RateofChangeConstraintSlackDown <: VariableType end
 
-const MULTI_START_VARIABLES = (HotStartVariable, WarmStartVariable, ColdStartVariable)
-const MultiStartVariables = Union{MULTI_START_VARIABLES...}
+const MULTI_START_VARIABLES = IS.get_all_concrete_subtypes(PSI.MultiStartVariable)
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
