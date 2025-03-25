@@ -9,7 +9,11 @@ _consider_startup_time_series(
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} =
-    haskey(get_variables(container), VariableKey(StartVariable, T))
+    any(
+        haskey.(
+            [get_variables(container)],
+            VariableKey.([StartVariable, MULTI_START_VARIABLES...], [T])),
+    )
 _consider_shutdown_time_series(
     container::OptimizationContainer,
     ::DeviceModel{T, D},
@@ -48,7 +52,7 @@ function construct_market_bid!(
     end
 end
 
-# TODO
+# TODO stub for later implementation
 construct_market_bid!(
     container::OptimizationContainer,
     sys::PSY.System,

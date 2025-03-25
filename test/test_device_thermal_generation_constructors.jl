@@ -1097,6 +1097,103 @@ end
     )
 end
 
+@testset "MarketBidCost with time series startup and shutdown" begin
+    function make_deterministic_ts(name, ini_time, ini_val, res_inc, interval_inc, horizon)
+        time_2 = ini_time + Hour(1)
+        startup_data = OrderedDict(
+            ini_time => [ini_val .+ i * res_inc for i in 0:(horizon - 1)],
+            time_2 => [ini_val .+ (i * res_inc) .+ interval_inc for i in 1:horizon],
+        )
+        return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
+    end
+
+    function add_startup_shutdown_ts!(sys::System)
+        unit1 = get_component(ThermalStandard, sys, "Test Unit1")
+        @assert get_operation_cost(unit1) isa MarketBidCost
+        startup_ts_1 = make_deterministic_ts(
+            "start_up",
+            DateTime("2024-01-01T00:00:00"),
+            (1.0, 1.5, 2.0),
+            0.05,
+            0.01,
+            5,
+        )
+        set_start_up!(sys, unit1, startup_ts_1)
+        shutdown_ts_1 = make_deterministic_ts(
+            "shut_down",
+            DateTime("2024-01-01T00:00:00"),
+            0.5,
+            0.05,
+            0.01,
+            5,
+        )
+        set_shut_down!(sys, unit1, shutdown_ts_1)
+        return startup_ts_1, shutdown_ts_1
+    end
+
+    sys = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    startup_ts_1, shutdown_ts_1 = add_startup_shutdown_ts!(sys)
+
+    template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+    )
+
+    model2 = deepcopy(model)
+    @test build!(model2; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model2) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    models = SimulationModels(;
+        decision_models = [
+            model,
+        ],
+    )
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "compact_sim",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        initial_time = DateTime("2024-01-01T00:00:00"),
+        simulation_folder = mktempdir(),
+    )
+
+    build!(sim; serialize = false)
+    execute!(sim; enable_progress_bar = true)
+    return model, sim
+
+    sim_res = SimulationResults(sim)
+    res_uc = get_decision_problem_results(sim_res, "UC")
+
+    # Test time series <-> parameter correspondence
+    sh_uc = read_parameter(res_uc, PSI.ShutdownCostParameter, PSY.ThermalStandard)
+    for (step_dt, step_df) in pairs(sh_uc)
+        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
+            comp = get_component(ThermalStandard, sys, gen_name)
+            fc_comp =
+                get_shut_down(comp, PSY.get_operation_cost(comp); start_time = step_dt)
+            @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
+            @show step_df[!, gen_name]
+            @show TimeSeries.values(fc_comp)
+            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
+        end
+    end
+    # TODO test StartupCostParameter too when it is implemented
+    # TODO test effect on decision
+    # TODO test with multi-start
+end
+
 @testset "Thermal UC With Slack on Ramps" begin
     bin_variable_keys = [
         PSI.VariableKey(OnVariable, PSY.ThermalStandard),
