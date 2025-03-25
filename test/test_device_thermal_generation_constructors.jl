@@ -1015,6 +1015,21 @@ end
 
     sim_res = SimulationResults(sim)
     res_uc = get_decision_problem_results(sim_res, "UC")
+
+    # Test time series <-> parameter correspondence
+    fc_uc = read_parameter(res_uc, PSI.FuelCostParameter, PSY.ThermalStandard)
+    for (step_dt, step_df) in pairs(fc_uc)
+        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
+            fc_comp = get_fuel_cost(
+                get_component(ThermalStandard, sys, gen_name);
+                start_time = step_dt,
+            )
+            @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
+            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
+        end
+    end
+
+    # Test effect on decision
     th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
     p_brighton = th_uc[!, "Brighton"]
     p_solitude = th_uc[!, "Solitude"]

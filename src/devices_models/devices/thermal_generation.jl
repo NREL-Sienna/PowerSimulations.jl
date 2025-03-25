@@ -113,14 +113,14 @@ sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatus
 # Validators: check that the types match (formulation is optional) and redirect to the simpler methods
 start_up_cost(cost, ::PSY.ThermalGen, ::T, ::Union{AbstractThermalFormulation, Nothing} = nothing) where {T <: StartVariable} =
     start_up_cost(cost, T())
-start_up_cost(cost, ::PSY.ThermalMultiStart, ::T, ::ThermalMultiStartUnitCommitment = ThermalMultiStartUnitCommitment()) where {T <: MultiStartVariables} =
+start_up_cost(cost, ::PSY.ThermalMultiStart, ::T, ::ThermalMultiStartUnitCommitment = ThermalMultiStartUnitCommitment()) where {T <: MultiStartVariable} =
     start_up_cost(cost, T())
 
 # Implementations: given a single number, tuple, or StartUpStages and a variable, do the right thing
 # Single number to anything
 start_up_cost(cost::Float64, ::StartVariable) = cost
 # TODO in the case where we have a single number startup cost and we're modeling a multi-start, do we set all the values to that number?
-start_up_cost(cost::Float64, ::T) where {T <: MultiStartVariables} =
+start_up_cost(cost::Float64, ::T) where {T <: MultiStartVariable} =
     start_up_cost((hot = cost, warm = cost, cold = cost), T())
 
 # 3-tuple to anything
