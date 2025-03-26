@@ -461,6 +461,130 @@ function add_to_expression!(
 end
 
 """
+HVDC LCC implementation to add ActivePowerBalance expression for HVDCActivePowerReceivedFromVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,                        # expression
+    U <: HVDCActivePowerReceivedFromVariable,       # variable
+    V <: TwoTerminalHVDCTypes,                      # power system type
+    W <: HVDCTwoTerminalLCC,                        # formulation
+    X <: ACPPowerModel,                             # network model
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ActivePowerBalance expression for HVDCActivePowerReceivedToVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: HVDCActivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_to =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, 1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ReactivePowerBalance expression for HVDCReactivePowerReceivedFromVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,                        # expression
+    U <: HVDCReactivePowerReceivedFromVariable,     # variable
+    V <: TwoTerminalHVDCTypes,                      # power system type
+    W <: HVDCTwoTerminalLCC,                        # formulation
+    X <: ACPPowerModel,                             # network model
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ReactivePowerBalance expression for HVDCReactivePowerReceivedToVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,
+    U <: HVDCReactivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_to =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
 PWL implementation to add FromTo branch variables to SystemBalanceExpressions
 """
 function add_to_expression!(

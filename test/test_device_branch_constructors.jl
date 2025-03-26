@@ -234,7 +234,7 @@ end
         reactive_power_limits_from = (min = -1.0, max = 1.0),
         reactive_power_limits_to = (min = -1.0, max = 1.0),
         arc = get_arc(line),
-        loss = (l0 = 0.00, l1 = 0.00),
+        loss = LinearCurve(0.0),
     )
 
     add_component!(sys_5, hvdc)

@@ -379,6 +379,15 @@ function get_branch_to_pm(
     return PM_branch
 end
 
+function get_branch_to_pm(
+    ix::Int,
+    branch::PSY.TwoTerminalLCCLine,
+    ::Type{HVDCTwoTerminalLCC},
+    ::Type{<:PM.AbstractPowerModel},
+)
+    return Dict{String, Any}()
+end
+
 function get_branches_to_pm(
     sys::PSY.System,
     network_model::NetworkModel{S},
@@ -429,6 +438,10 @@ function get_branches_to_pm(
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         !(comp_type <: T) && continue
+        if comp_type <: PSY.TwoTerminalLCCLine &&
+           get_formulation(device_model) <: HVDCTwoTerminalLCC
+            continue
+        end
         start_idx += length(PM_branches)
         for (i, branch) in enumerate(get_available_components(device_model, sys))
             ix = i + start_idx
