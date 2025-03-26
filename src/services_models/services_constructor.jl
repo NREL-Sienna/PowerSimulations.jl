@@ -553,6 +553,41 @@ function construct_service!(
     return
 end
 
+# Repeated Methods to avoid ambiguity between ConstantMaxInterfaceFlow and VariableMaxInterfaceFlow
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {T <: PSY.TransmissionInterface}
+    throw(
+        IS.ConflictingInputsError(
+            "AreaBalancePowerModel doesn't model individual line flows and it is not compatible with the addition of TransmissionInterface models",
+        ),
+    )
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{T, VariableMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {T <: PSY.TransmissionInterface}
+    throw(
+        IS.ConflictingInputsError(
+            "AreaBalancePowerModel doesn't model individual line flows and it is not compatible with the addition of TransmissionInterface models",
+        ),
+    )
+    return
+end
+
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
