@@ -11,16 +11,11 @@ function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::Stri
 end
 
 function _set_param_value!(
-    param::DenseAxisArray{Vector{NTuple{2, Float64}}},
-    value::Vector{NTuple{2, Float64}},
+    param::DenseAxisArray{T},
+    value::T,
     name::String,
     t::Int,
-)
-    param[name, t] = value
-    return
-end
-
-function _set_param_value!(param::JuMPFloatArray, value::Float64, name::String, t::Int)
+) where {T}
     param[name, t] = value
     return
 end
@@ -376,6 +371,7 @@ function update_container_parameter_values!(
     parameter_multiplier = get_parameter_multiplier_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(
+        T(),
         parameter_array,
         parameter_multiplier,
         parameter_attributes,
@@ -392,7 +388,7 @@ function update_container_parameter_values!(
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # Note: Do not instantiate a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     # Multiplier is only needed for the objective function since `_update_parameter_values!` also updates the objective function

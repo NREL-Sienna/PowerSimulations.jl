@@ -10,6 +10,12 @@ get_variable_lower_bound(_, ::PSY.Component, __) = nothing
 
 get_variable_upper_bound(_, ::PSY.Component, __) = nothing
 
+get_multiplier_value(::StartupCostParameter, d::PSY.Device, ::AbstractDeviceFormulation) =
+    1.0
+
+get_multiplier_value(::ShutdownCostParameter, d::PSY.Device, ::AbstractDeviceFormulation) =
+    1.0
+
 get_multiplier_value(x, y::PSY.Component, z) =
     error("Unable to get parameter $x for device $(IS.summary(y)) for formulation $z")
 
