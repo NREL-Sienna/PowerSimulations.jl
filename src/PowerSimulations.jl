@@ -304,6 +304,7 @@ export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
+export OutageActivePowerFlowsConstraint
 
 # Parameters
 # Time Series Parameters
