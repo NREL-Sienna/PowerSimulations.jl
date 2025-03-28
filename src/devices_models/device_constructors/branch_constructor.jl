@@ -590,7 +590,7 @@ function construct_device!(
     ::ArgumentConstructStage,
     device_model::DeviceModel{T, HVDCTwoTerminalDispatch},
     ::NetworkModel{AreaBalancePowerModel},
-) where {T <: TwoTerminalHVDCTypes, U <: AbstractTwoTerminalDCLineFormulation}
+) where {T <: TwoTerminalHVDCTypes}
     @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
     return
 end
@@ -601,7 +601,7 @@ function construct_device!(
     ::ModelConstructStage,
     device_model::DeviceModel{T, HVDCTwoTerminalDispatch},
     ::NetworkModel{AreaBalancePowerModel},
-) where {T <: TwoTerminalHVDCTypes, U <: AbstractTwoTerminalDCLineFormulation}
+) where {T <: TwoTerminalHVDCTypes}
     @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
     return
 end
