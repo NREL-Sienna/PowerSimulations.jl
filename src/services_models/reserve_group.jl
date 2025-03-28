@@ -60,7 +60,7 @@ function add_constraints!(
     for t in time_steps
         resource_expression = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}()
         for reserve_variable in reserve_variables
-            JuMP.add_to_expression!(resource_expression, sum(reserve_variable[:, t]))
+            JuMP.add_to_expression!(resource_expression, sum(@view reserve_variable[:, t]))
         end
         if use_slacks
             resource_expression += slack_vars[t]
