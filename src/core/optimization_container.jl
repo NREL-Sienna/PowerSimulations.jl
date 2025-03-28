@@ -592,7 +592,10 @@ function _verify_area_subnetwork_topology(sys::PSY.System, subnetworks::Dict{Int
     area_map = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     for (area, buses) in area_map
         bus_numbers =
-            [PSY.get_number(b) for b in buses if PSY.get_bustype(b) != PSY.ACBusTypes.ISOLATED]
+            [
+                PSY.get_number(b) for
+                b in buses if PSY.get_bustype(b) != PSY.ACBusTypes.ISOLATED
+            ]
         subnets = Int[]
         for (subnet, subnet_bus_numbers) in subnetworks
             if !isdisjoint(bus_numbers, subnet_bus_numbers)
