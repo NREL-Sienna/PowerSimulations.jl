@@ -157,9 +157,9 @@ function add_constraints!(
             a = PSY.get_name(agc)
             area_name = PSY.get_name(PSY.get_area(agc))
             JuMP.add_to_expression!(system_balance, R_up[a, t])
-            JuMP.add_to_expression!(system_balance, -1 * R_dn[a, t])
+            JuMP.add_to_expression!(system_balance, -1.0, R_dn[a, t])
             JuMP.add_to_expression!(system_balance, R_up_emergency[area_name, t])
-            JuMP.add_to_expression!(system_balance, -1 * R_dn_emergency[area_name, t])
+            JuMP.add_to_expression!(system_balance, -1.0, R_dn_emergency[area_name, t])
         end
         const_container[t] = JuMP.@constraint(
             container.JuMPmodel,
