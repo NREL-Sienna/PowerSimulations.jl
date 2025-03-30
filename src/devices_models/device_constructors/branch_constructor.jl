@@ -350,7 +350,11 @@ function construct_device!(
     valid_outages = _get_all_scuc_valid_outages(sys, network_model)
 
     if isempty(valid_outages)
-        @error "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $V to add the LODF expressions/constraints for the requested network model: $network_model."
+        
+        throw( 
+            ArgumentError( 
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACBranch) 
+                to add the LODF expressions/constraints for the requested network model: $network_model." ) )
     end
 
     lodf = get_LODF_matrix(network_model)

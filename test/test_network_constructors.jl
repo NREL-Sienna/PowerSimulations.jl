@@ -237,6 +237,23 @@ end
 
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
+        #Add Outage to a generator and a line which should be neglected for SCUC formulation and test again
+        transition_data_gl = GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 20,
+            outage_transition_probability = 0.9999,
+        )
+        generator = first(get_components(ThermalStandard, sys))
+        lin = first(get_components(Line, sys))
+
+        add_supplemental_attribute!(sys, generator, transition_data_gl)
+        add_supplemental_attribute!(sys, lin, transition_data_gl)
+        #Test Expected error since no SCUC valid attributes were added
+        @test build!(
+                    ps_model;
+                    console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+                    output_dir = mktempdir(; cleanup = true),
+                ) == PSI.ModelBuildStatus.FAILED
+
         for line_name in lines_outages[sys]
             transition_data = GeometricDistributionForcedOutage(;
                 mean_time_to_recovery = 10,
@@ -327,6 +344,23 @@ end
         )
 
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        #Add Outage to a generator and a line which should be neglected for SCUC formulation and test again
+        transition_data_gl = GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 20,
+            outage_transition_probability = 0.9999,
+        )
+        generator = first(get_components(ThermalStandard, sys))
+        lin = first(get_components(Line, sys))
+
+        add_supplemental_attribute!(sys, generator, transition_data_gl)
+        add_supplemental_attribute!(sys, lin, transition_data_gl)
+        #Test Expected error since no SCUC valid attributes were added
+        @test build!(
+                    ps_model;
+                    console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+                    output_dir = mktempdir(; cleanup = true),
+                ) == PSI.ModelBuildStatus.FAILED
 
         for branch_name in lines_outages[sys]
             transition_data = GeometricDistributionForcedOutage(;
