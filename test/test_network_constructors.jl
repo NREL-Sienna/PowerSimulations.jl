@@ -428,7 +428,7 @@ end
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
-        
+
         psi_constraint_test(ps_model, constraint_keys)
 
         moi_tests(
@@ -449,7 +449,6 @@ end
             10000,
         )
 
-
         #Add Outage to a generator and a line which should be neglected for SCUC formulation and test again
         transition_data_g = GeometricDistributionForcedOutage(;
             mean_time_to_recovery = 15,
@@ -469,7 +468,7 @@ end
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
-        
+
         psi_constraint_test(ps_model, constraint_keys)
 
         moi_tests(

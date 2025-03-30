@@ -687,7 +687,7 @@ function build_impl!(
 )
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
-    
+
     initialize_system_expressions!(
         container,
         get_network_model(template),
