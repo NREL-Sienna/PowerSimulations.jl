@@ -295,46 +295,62 @@ function construct_device!(
     return
 end
 
-function _has_outage(
+function _get_all_single_outage_branches_by_type(
     sys::PSY.System,
-    outages::InfrastructureSystems.FlattenIteratorWrapper{T},
+    valid_outages::IS.FlattenIteratorWrapper{T},
     branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
     ::Type{V},
 ) where {
     T <: PSY.Outage,
     V <: PSY.ACBranch,
 }
-    branches_outages = []
-    try
-        #TODO Modify to consider N-2, N-3... by including all the different Outages subtypes
-        branches_outages = PSY.get_components(
-            x ->
-                (PSY.has_supplemental_attributes(x, first(typeof.(outages)))) &&
-                    x ∈ branches,
-            V,
-            sys)
-    catch e
-        @info "System $(get_name(sys)) has no $T attributes associated to branches $V to add the LODF expressions/constraints of the requested network formulation."
+    single_outage_branches = V[]
+    for outage in valid_outages
+        components = PSY.get_associated_components(sys, outage)
+        if !all(c -> c <: V, typeof.(components)) || length(components) != 1
+            continue
+        end
+        component = first(components)
+        if (component in branches) && !(component in single_outage_branches)
+            push!(single_outage_branches, component)
+        end
     end
+    return single_outage_branches
+end
 
-    return branches_outages
+function _get_all_scuc_valid_outages(
+    sys::PSY.System,
+    ::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {
+    T <: PSY.Outage,
+}
+    return PSY.get_supplemental_attributes(
+        sa ->
+            typeof(sa) in Base.uniontypes(OutagesSCUC) &&
+                all(
+                    c -> c <: PSY.ACBranch,
+                    typeof.(PSY.get_associated_components(sys, sa)),
+                ),
+        PSY.Outage,
+        sys,
+    )
 end
 
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranch},
+    model::DeviceModel{V, StaticBranch},
     network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {T <: PSY.ACBranch}
+) where {V <: PSY.ACBranch}
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
 
-    outages = PSY.get_supplemental_attributes(PSY.Outage, sys)
+    valid_outages = _get_all_scuc_valid_outages(sys, network_model)
 
-    if isempty(outages)
-        @error "System $(PSY.get_name(sys)) has no $outages attributes to add the LODF expressions/constraints for the requested $network_model."
+    if isempty(valid_outages)
+        @error "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $V to add the LODF expressions/constraints for the requested network model: $network_model."
     end
 
     lodf = get_LODF_matrix(network_model)
@@ -347,8 +363,9 @@ function construct_device!(
         sys,
     )
 
-    branches_outages = _has_outage(sys, outages, branches, T)
-
+    #TODO Hanlde also N-2 cases
+    branches_outages =
+        _get_all_single_outage_branches_by_type(sys, valid_outages, branches, V)
     if !isempty(branches_outages)
         add_to_expression!(
             container,
@@ -362,16 +379,15 @@ function construct_device!(
 
         add_constraints!(
             container,
-            OutageActivePowerFlowsConstraint,
+            PostContingencyRateLimitConstraintB,
             branches,
             branches_outages,
             model,
             network_model,
         )
     end
-
     add_feedforward_constraints!(container, model, devices)
-    objective_function!(container, devices, model, PTDFPowerModel)
+    objective_function!(container, devices, model, SecurityConstrainedPTDFPowerModel)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1306,6 +1322,7 @@ function construct_device!(
     return
 end
 
+#TODO Check if for SCUC AreaPTDF needs something else
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,

@@ -305,7 +305,7 @@ export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
-export OutageActivePowerFlowsConstraint
+export PostContingencyRateLimitConstraintB
 
 # Parameters
 # Time Series Parameters
@@ -602,6 +602,7 @@ include("services_models/services_constructor.jl")
 
 # Network models
 include("network_models/copperplate_model.jl")
+include("network_models/security_constrained_models.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/pm_translator.jl")
 include("network_models/network_slack_variables.jl")

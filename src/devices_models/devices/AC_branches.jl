@@ -332,6 +332,23 @@ function get_min_max_limits(
 end
 
 """
+Min and max limits for post-contingency branch flows for Abstract Branch Formulation and SecurityConstrainedPTDF Network formulation
+"""
+function get_min_max_limits(
+    branch::PSY.ACBranch,
+    ::Type{<:PostContingencyRateLimitConstraintB},
+    ::Type{<:AbstractBranchFormulation},
+    ::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    if PSY.get_rating_b(branch) === nothing
+        return (min = -1 * PSY.get_rating(branch), max = PSY.get_rating(branch))
+    end
+    @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
+            \n Consider to include post-contingency limits using set_rating_b!()."
+    return (min = -1 * PSY.get_rating_b(branch), max = PSY.get_rating_b(branch))
+end
+
+"""
 Min and max limits for Abstract Branch Formulation
 """
 function get_min_max_limits(
@@ -412,13 +429,13 @@ function add_constraints!(
 end
 
 """
-Add branch rate limit constraints for ACBranch considering LODF and Security Constraints
+Add branch post-contingency rate limit constraints for ACBranch considering LODF and Security Constraints
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{OutageActivePowerFlowsConstraint},
+    cons_type::Type{PostContingencyRateLimitConstraintB},
     branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
-    branches_outages::IS.FlattenIteratorWrapper{T},
+    branches_outages::Vector{T},
     device_model::DeviceModel{T, U},
     network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
 ) where {
@@ -427,7 +444,6 @@ function add_constraints!(
 }
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in branches]
-
     con_lb =
         add_constraints_container!(
             container,
@@ -464,7 +480,12 @@ function add_constraints!(
                 continue
             end
             b_outage_name = get_name(branch_outage)
-            limits = get_min_max_limits(branch, RateLimitConstraint, U) # depends on constraint type and formulation type
+            limits = get_min_max_limits(
+                branch,
+                PostContingencyRateLimitConstraintB,
+                U,
+                network_model,
+            )
 
             for t in time_steps
                 con_ub[b_outage_name, b_name, t] =

@@ -660,14 +660,14 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
-    branches_outages::IS.FlattenIteratorWrapper{V},
+    branches_outages::Vector{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: PTDFOutagesBranchFlow,
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
-    W <: AbstractDeviceFormulation,
+    W <: AbstractBranchFormulation,
     X <: SecurityConstrainedPTDFPowerModel,
 }
     time_steps = get_time_steps(container)

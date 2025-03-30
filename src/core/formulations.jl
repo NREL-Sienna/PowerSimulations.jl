@@ -162,11 +162,15 @@ abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
 """
 Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
 """
+abstract type AbstractSecurityConstrainedPTDFModel <: AbstractPTDFModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages.
+"""
 struct PTDFPowerModel <: AbstractPTDFModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages. If exists, the rating b is considered as the branch power limit for post-contingency flows, otherwise the standard reting is considered.
 """
-struct SecurityConstrainedPTDFPowerModel <: AbstractPTDFModel end
+struct SecurityConstrainedPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 """
 Infinite capacity approximation of network flow to represent entire system with a single node.
 """
@@ -182,7 +186,7 @@ struct AreaPTDFPowerModel <: AbstractPTDFModel end
 """
 Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages. Balancing areas as well as synchrounous regions.
 """
-struct SecurityConstrainedAreaPTDFPowerModel <: AbstractPTDFModel end
+struct SecurityConstrainedAreaPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 
 #================================================
     # exact non-convex models
