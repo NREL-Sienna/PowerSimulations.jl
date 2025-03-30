@@ -184,90 +184,8 @@ function instantiate_network_model(
         _assign_subnetworks_to_buses(model, sys)
     end
 
-    if get_network_formulation(model) == SecurityConstrainedPTDFPowerModel
-        if get_LODF_matrix(model) === nothing
-            @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
-            if model.reduce_radial_branches
-                network_reduction = PNM.get_radial_reduction(sys)
-            else
-                network_reduction = PNM.NetworkReduction()
-            end
-            model.LODF_matrix =
-                PNM.VirtualLODF(sys; network_reduction = network_reduction)
-        end
-
-        if !model.reduce_radial_branches &&
-           model.LODF_matrix.network_reduction.reduction_type ==
-           PNM.NetworkReductionTypes.RADIAL
-            throw(
-                IS.ConflictingInputsError(
-                    "The provided LODF Matrix has reduced radial branches and mismatches the network \\
-                    model specification reduce_radial_branches = false. Set the keyword argument \\
-                    reduce_radial_branches = true in your network model"),
-            )
-        end
-
-        if model.reduce_radial_branches &&
-           model.LODF_matrix.network_reduction.reduction_type ==
-           PNM.NetworkReductionTypes.WARD
-            throw(
-                IS.ConflictingInputsError(
-                    "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
-                    reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
-                    or provide a modified LODF Matrix without the Ward reduction."),
-            )
-        end
-    end
-
-    return
-end
-
-#=function instantiate_network_model(
-    model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-    sys::PSY.System,
-)
-    if get_PTDF_matrix(model) === nothing
-        @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
-        if model.reduce_radial_branches
-            network_reduction = PNM.get_radial_reduction(sys)
-        else
-            network_reduction = PNM.NetworkReduction()
-        end
-        model.PTDF_matrix =
-            PNM.VirtualPTDF(sys; network_reduction = network_reduction)
-    end
-
-    if !model.reduce_radial_branches &&
-       model.PTDF_matrix.network_reduction.reduction_type ==
-       PNM.NetworkReductionTypes.RADIAL
-        throw(
-            IS.ConflictingInputsError(
-                "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
-                model specification reduce_radial_branches = false. Set the keyword argument \\
-                reduce_radial_branches = true in your network model"),
-        )
-    end
-
-    if model.reduce_radial_branches &&
-       model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
-        throw(
-            IS.ConflictingInputsError(
-                "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
-                reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
-                or provide a modified PTDF Matrix without the Ward reduction."),
-        )
-    end
-
-    if model.reduce_radial_branches
-        @assert !isempty(model.PTDF_matrix.network_reduction)
-    end
-    model.network_reduction = model.PTDF_matrix.network_reduction
-
-    get_PTDF_matrix(model).subnetworks
-    model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
-    if length(model.subnetworks) > 1
-        @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
-        _assign_subnetworks_to_buses(model, sys)
+    if !(get_network_formulation(model) <: AbstractSecurityConstrainedPTDFModel)
+        return
     end
 
     if get_LODF_matrix(model) === nothing
@@ -293,17 +211,18 @@ end
     end
 
     if model.reduce_radial_branches &&
-        model.LODF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD       #FIX THIS LINE (SATURDAY)
-         throw(
-             IS.ConflictingInputsError(
-                 "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
-                 reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
-                 or provide a modified PTDF Matrix without the Ward reduction."),
-         )
-     end
+       model.LODF_matrix.network_reduction.reduction_type ==
+       PNM.NetworkReductionTypes.WARD
+        throw(
+            IS.ConflictingInputsError(
+                "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
+                reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
+                or provide a modified LODF Matrix without the Ward reduction."),
+        )
+    end
+
     return
 end
-=#
 
 function _assign_subnetworks_to_buses(
     model::NetworkModel{T},
