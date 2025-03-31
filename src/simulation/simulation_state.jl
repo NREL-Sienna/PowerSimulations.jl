@@ -791,7 +791,7 @@ end
 
 function update_system_state!(
     state::SimulationState,
-    key::Union{AuxVarKey{TimeDurationOn, T}, AuxVarKey{TimeDurationOff, T}},
+    key::AuxVarKey{TimeDurationOn, T},
     column_names::Set{String},
     event::PSY.Outage,
     event_model::EventModel,
@@ -809,7 +809,7 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, simulation_time)
     for name in column_names
         if event_occurrence_values[name] == 1.0
-            current_status_values[name] = 0.0
+            current_status_data.values[name,1] = MISSING_INITIAL_CONDITIONS_TIME_COUNT
         end
     end
     return
@@ -835,7 +835,7 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, simulation_time)
     for name in column_names
         if event_occurrence_values[name] == 1.0
-            current_status_values[name] = 0.0
+            current_status_data.values[name, 1] = 0.0
         end
     end
     return
