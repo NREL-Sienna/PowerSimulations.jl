@@ -313,9 +313,21 @@ function _update_parameter_values!(
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
+    #TODO - fix hardcode for ThermalStandard
+    if haskey(get_parameters_values(state), InfrastructureSystems.Optimization.ParameterKey{AvailableStatusParameter, PSY.ThermalStandard}(""))
+        status_values = get_dataset_values(state, InfrastructureSystems.Optimization.ParameterKey{AvailableStatusParameter, PSY.ThermalStandard}(""))
+        status_data = get_dataset(state, InfrastructureSystems.Optimization.ParameterKey{AvailableStatusParameter, PSY.ThermalStandard}(""))
+        status_timestamps = status_data.timestamps
+        status_data_index = find_timestamp_index(status_timestamps, current_time)
+    end 
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        value = round(state_values[name, state_data_index])
+        if name in status_values.axes[1] && status_values[name, status_data_index] == 0.0 && round(state_values[name, state_data_index]) == 1.0 
+            # Override feed forward based on status parameter
+            value = 0.0 
+        else 
+            value = round(state_values[name, state_data_index])
+        end 
         if !isfinite(value)
             error(
                 "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
