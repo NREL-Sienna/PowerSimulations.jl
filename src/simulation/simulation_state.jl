@@ -432,7 +432,6 @@ function update_decision_state!(
             end
         end
     end
-    #set_last_recorded_row!(state_data, t)
     return
 end
 
@@ -479,18 +478,16 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
-    #state_data and event_occurrence_data can have different ratios because entire 
-    #horizon is set to zero when an outage occurs. 
     event_occurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     state_data = get_decision_state_data(state, key)
 
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-
+    event_occurence_index = find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
     for name in column_names
-        if event_occurrence_data.values[name, state_data_index] == 1.0
-            state_data.values[name, (state_data_index + 1):end] .= 0.0
+        if event_occurrence_data.values[name, event_occurence_index] == 1.0
+            state_data.values[name, (state_data_index + 1):end] .= MISSING_INITIAL_CONDITIONS_TIME_COUNT
         end
     end
     return
@@ -505,17 +502,15 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
-    #state_data and event_occurrence_data can have different ratios because entire 
-    #horizon is set to zero when an outage occurs. 
     event_occurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     state_data = get_decision_state_data(state, key)
 
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    timestamps_left =
+    event_occurence_index = find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
         for name in column_names
-            if event_occurrence_data.values[name, state_data_index] == 1.0
+            if event_occurrence_data.values[name, event_occurence_index] == 1.0
                 for (time_off, ix) in
                     enumerate((state_data_index + 1):length(state_data.values[name, :]))
                     state_data.values[name, ix] = time_off
@@ -534,16 +529,15 @@ function update_decision_state!(
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
 ) where {T <: VariableType, U <: PSY.Component}
-    #state_data and event_occurrence_data can have different ratios because entire 
-    #horizon is set to zero when an outage occurs. 
     event_occurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), U)
     state_data = get_decision_state_data(state, key)
 
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    event_occurence_index = find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
     for name in column_names
-        if event_occurrence_data.values[name, state_data_index] == 1.0
+        if event_occurrence_data.values[name, event_occurence_index] == 1.0
             state_data.values[name, (state_data_index + 1):end] .= 0.0
         end
     end
