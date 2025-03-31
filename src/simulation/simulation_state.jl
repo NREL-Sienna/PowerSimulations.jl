@@ -228,6 +228,91 @@ end
 
 function update_decision_state!(
     state::SimulationState,
+    key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
+    store_data::DenseAxisArray{Float64, 2},
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: PSY.Component}
+    state_data = get_decision_state_data(state, key)
+    column_names = get_column_names(key, state_data)[1]
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = state_data.timestamps
+    @assert_op resolution_ratio >= 1
+    if simulation_time > get_end_of_step_timestamp(state_data)
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
+    else
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    end 
+    offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[2]
+    set_update_timestamp!(state_data, simulation_time)
+    for t in result_time_index
+        state_range = state_data_index:(state_data_index + offset)
+        for name in column_names, (ix, i) in enumerate(state_range)
+            state_data.values[name, i] = maximum([0.0, store_data[name, t] - ix + 1])
+        end
+        set_last_recorded_row!(state_data, state_range[end])
+        state_data_index += resolution_ratio
+    end
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
+    key::ParameterKey{AvailableStatusParameter, T},
+    store_data::DenseAxisArray{Float64, 2},
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: PSY.Component}
+    state_data = get_decision_state_data(state, key)
+    countdown_data = get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    column_names = get_column_names(key, state_data)[1]
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = state_data.timestamps
+    @assert_op resolution_ratio >= 1
+
+    if simulation_time > get_end_of_step_timestamp(state_data)
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
+    else
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    end
+
+    offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[2]
+    set_update_timestamp!(state_data, simulation_time)
+    for t in result_time_index
+        state_range = state_data_index:(state_data_index + offset)
+        for name in column_names, i in state_range
+            if countdown_data.values[name, i] > 0.0
+                state_data.values[name, i] = 0.0
+            else 
+                state_data.values[name, i] = 1.0 
+            end 
+        end
+        set_last_recorded_row!(state_data, state_range[end])
+        state_data_index += resolution_ratio
+    end
+    return
+end
+ 
+function update_decision_state!(
+    state::SimulationState,
     key::OptimizationContainerKey,
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
