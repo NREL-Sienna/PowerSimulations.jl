@@ -842,17 +842,24 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     state = get_simulation_state(sim)
     model_params = get_decision_model_params(store, model_name)
     #Order matters; update parameters first (AvailableStatusChangeCountdownParameter must be updated first if it exists)
-    for field in [:parameters, :duals, :aux_variables, :variables, :expressions] 
+    for field in [:parameters, :duals, :aux_variables, :variables, :expressions]
         #TODO - fix hardcode for ThermalStandard
-        if ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}("") ∈ list_decision_model_keys(store, model_name, field)
-            key = ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}("") 
+        if ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}("") ∈
+           list_decision_model_keys(store, model_name, field)
+            key =
+                ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}(
+                    "",
+                )
             res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
             update_decision_state!(state, key, res, simulation_time, model_params)
-        end 
+        end
         for key in list_decision_model_keys(store, model_name, field)
-            if key == ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}("") 
-                continue 
-            end 
+            if key ==
+               ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}(
+                "",
+            )
+                continue
+            end
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
             update_decision_state!(state, key, res, simulation_time, model_params)

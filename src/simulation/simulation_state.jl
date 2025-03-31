@@ -250,7 +250,7 @@ function update_decision_state!(
             )
     else
         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    end 
+    end
     offset = resolution_ratio - 1
     result_time_index = axes(store_data)[2]
     set_update_timestamp!(state_data, simulation_time)
@@ -273,7 +273,8 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
     state_data = get_decision_state_data(state, key)
-    countdown_data = get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    countdown_data =
+        get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
@@ -301,16 +302,16 @@ function update_decision_state!(
         for name in column_names, i in state_range
             if countdown_data.values[name, i] > 0.0
                 state_data.values[name, i] = 0.0
-            else 
-                state_data.values[name, i] = 1.0 
-            end 
+            else
+                state_data.values[name, i] = 1.0
+            end
         end
         set_last_recorded_row!(state_data, state_range[end])
         state_data_index += resolution_ratio
     end
     return
 end
- 
+
 function update_decision_state!(
     state::SimulationState,
     key::OptimizationContainerKey,
@@ -484,10 +485,12 @@ function update_decision_state!(
 
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    event_occurence_index = find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
+    event_occurence_index =
+        find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
     for name in column_names
         if event_occurrence_data.values[name, event_occurence_index] == 1.0
-            state_data.values[name, (state_data_index + 1):end] .= MISSING_INITIAL_CONDITIONS_TIME_COUNT
+            state_data.values[name, (state_data_index + 1):end] .=
+                MISSING_INITIAL_CONDITIONS_TIME_COUNT
         end
     end
     return
@@ -508,15 +511,16 @@ function update_decision_state!(
 
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    event_occurence_index = find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
-        for name in column_names
-            if event_occurrence_data.values[name, event_occurence_index] == 1.0
-                for (time_off, ix) in
-                    enumerate((state_data_index + 1):length(state_data.values[name, :]))
-                    state_data.values[name, ix] = time_off
-                end
+    event_occurence_index =
+        find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
+    for name in column_names
+        if event_occurrence_data.values[name, event_occurence_index] == 1.0
+            for (time_off, ix) in
+                enumerate((state_data_index + 1):length(state_data.values[name, :]))
+                state_data.values[name, ix] = time_off
             end
         end
+    end
     return
 end
 
@@ -535,7 +539,8 @@ function update_decision_state!(
 
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-    event_occurence_index = find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
+    event_occurence_index =
+        find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
     for name in column_names
         if event_occurrence_data.values[name, event_occurence_index] == 1.0
             state_data.values[name, (state_data_index + 1):end] .= 0.0
@@ -803,7 +808,7 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, simulation_time)
     for name in column_names
         if event_occurrence_values[name] == 1.0
-            current_status_data.values[name,1] = MISSING_INITIAL_CONDITIONS_TIME_COUNT
+            current_status_data.values[name, 1] = MISSING_INITIAL_CONDITIONS_TIME_COUNT
         end
     end
     return
