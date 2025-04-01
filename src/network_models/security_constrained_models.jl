@@ -8,10 +8,10 @@ function get_min_max_limits(
     ::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     if PSY.get_rating_b(branch) === nothing
+        @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
+            \n Consider to include post-contingency limits using set_rating_b!()."
         return (min = -1 * PSY.get_rating(branch), max = PSY.get_rating(branch))
     end
-    @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
-            \n Consider to include post-contingency limits using set_rating_b!()."
     return (min = -1 * PSY.get_rating_b(branch), max = PSY.get_rating_b(branch))
 end
 
