@@ -580,7 +580,7 @@ function construct_device!(
 )
     devices = get_available_components(device_model, sys)
     add_constraint_dual!(container, sys, device_model)
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, device_model, devices)
     return
 end
 
