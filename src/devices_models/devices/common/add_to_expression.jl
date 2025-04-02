@@ -10,6 +10,9 @@ function _ref_index(::NetworkModel{AreaPTDFPowerModel}, device_bus::PSY.ACBus)
     return PSY.get_name(PSY.get_area(device_bus))
 end
 
+_get_variable_if_exists(::PSY.MarketBidCost) = nothing
+_get_variable_if_exists(cost::PSY.OperationalCost) = PSY.get_variable(cost)
+
 function add_expressions!(
     container::OptimizationContainer,
     ::Type{T},
@@ -40,7 +43,8 @@ function add_expressions!(
     names = String[]
     found_quad_fuel_functions = false
     for d in devices
-        fuel_curve = PSY.get_variable(PSY.get_operation_cost(d))
+        op_cost = PSY.get_operation_cost(d)
+        fuel_curve = _get_variable_if_exists(op_cost)
         if fuel_curve isa PSY.FuelCurve
             push!(names, PSY.get_name(d))
             if !found_quad_fuel_functions
@@ -451,6 +455,130 @@ function add_to_expression!(
             if ref_bus_from != ref_bus_to
                 _add_to_jump_expression!(sys_expr[ref_bus_from, t], flow_variable, 1.0)
             end
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ActivePowerBalance expression for HVDCActivePowerReceivedFromVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,                        # expression
+    U <: HVDCActivePowerReceivedFromVariable,       # variable
+    V <: TwoTerminalHVDCTypes,                      # power system type
+    W <: HVDCTwoTerminalLCC,                        # formulation
+    X <: ACPPowerModel,                             # network model
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ActivePowerBalance expression for HVDCActivePowerReceivedToVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: HVDCActivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_to =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, 1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ReactivePowerBalance expression for HVDCReactivePowerReceivedFromVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,                        # expression
+    U <: HVDCReactivePowerReceivedFromVariable,     # variable
+    V <: TwoTerminalHVDCTypes,                      # power system type
+    W <: HVDCTwoTerminalLCC,                        # formulation
+    X <: ACPPowerModel,                             # network model
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_from =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ReactivePowerBalance expression for HVDCReactivePowerReceivedToVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,
+    U <: HVDCReactivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        bus_no_to =
+            PNM.get_mapped_bus_number(radial_network_reduction, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, -1.0)
         end
     end
     return
@@ -1615,7 +1743,8 @@ function add_to_expression!(
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
-        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        op_cost = PSY.get_operation_cost(d)
+        var_cost = _get_variable_if_exists(op_cost)
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
@@ -1688,7 +1817,8 @@ function add_to_expression!(
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for d in devices
-        var_cost = PSY.get_variable(PSY.get_operation_cost(d))
+        op_cost = PSY.get_operation_cost(d)
+        var_cost = _get_variable_if_exists(op_cost)
         if !(var_cost isa PSY.FuelCurve)
             continue
         end
