@@ -790,6 +790,32 @@ end
 
 function update_system_state!(
     state::SimulationState,
+    key::AuxVarKey{TimeDurationOff, T},
+    column_names::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    rng,
+) where {T <: PSY.Component}
+    sym_state = get_system_states(state)
+    event_occurrence_data =
+        get_system_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    event_occurrence_values = get_last_recorded_value(event_occurrence_data)
+
+    system_dataset = get_dataset(sym_state, key)
+    current_status_data = get_system_state_data(state, key)
+    current_status_values = get_last_recorded_value(current_status_data)
+    set_update_timestamp!(system_dataset, simulation_time)
+    for name in column_names
+        if event_occurrence_values[name] == 1.0
+            current_status_data.values[name, 1] = 0.0
+        end
+    end
+    return
+end
+
+function update_system_state!(
+    state::SimulationState,
     key::AuxVarKey{TimeDurationOn, T},
     column_names::Set{String},
     event::PSY.Outage,
