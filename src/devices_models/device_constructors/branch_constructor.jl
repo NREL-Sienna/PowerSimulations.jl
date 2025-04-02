@@ -275,6 +275,11 @@ function construct_device!(
         devices,
         StaticBranch(),
     )
+
+    if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
+        add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
+    end
+
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -350,11 +355,11 @@ function construct_device!(
     valid_outages = _get_all_scuc_valid_outages(sys, network_model)
 
     if isempty(valid_outages)
-        
-        throw( 
-            ArgumentError( 
+        throw(
+            ArgumentError(
                 "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACBranch) 
-                to add the LODF expressions/constraints for the requested network model: $network_model." ) )
+                to add the LODF expressions/constraints for the requested network model: $network_model.",
+            ))
     end
 
     lodf = get_LODF_matrix(network_model)

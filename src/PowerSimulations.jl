@@ -257,7 +257,6 @@ export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
 export CommitmentConstraint
 export CopperPlateBalanceConstraint
-export DynamicLineRatingTimeSeriesConstraint
 export DurationConstraint
 export EnergyBalanceConstraint
 export EqualityConstraint
@@ -311,7 +310,7 @@ export PostContingencyRateLimitConstraintB
 # Time Series Parameters
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
-export DynamicLineRatingTimeSeriesParameter
+export DynamicBranchRatingTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
 # Cost Parameters

@@ -262,7 +262,7 @@ struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 """
 Parameter to define the dynamic rating of a line
 """
-struct DynamicLineRatingTimeSeriesParameter <: TimeSeriesParameter end
+struct DynamicBranchRatingTimeSeriesParameter <: TimeSeriesParameter end
 
 """
 Parameter to define Flow From_To limit time series
@@ -322,7 +322,7 @@ struct EventParameter <: ParameterType end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
-convert_result_to_natural_units(::Type{DynamicLineRatingTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
