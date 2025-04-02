@@ -600,7 +600,7 @@ function _make_system_expressions!(
     )
     if length(subnetworks) > 1
         @warn "The system contains $(length(subnetworks)) synchronous regions. \
-               When combined with AreaPTDFPowerModel, the model can be infeasible if the data doesn't \
+               When combined with SecurityConstrainedAreaPTDFPowerModel, the model can be infeasible if the data doesn't \
                have a well defined topology"
         subnetworks_ref_buses = collect(keys(subnetworks))
         container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
