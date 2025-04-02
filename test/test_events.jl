@@ -1,12 +1,16 @@
-#Used to test the events logic/timing/results for a fixed prob. geometric outage. 
-using Xpress
-optimizer = optimizer_with_attributes(Xpress.Optimizer, "MIPRELSTOP" => 0.01)
-function _add_40_MW_reserves!(sys)
+HiGHS_optimizer_small_gap = JuMP.optimizer_with_attributes(
+    HiGHS.Optimizer,
+    "time_limit" => 100.0,
+    "log_to_console" => false,
+    "mip_rel_gap" => 0.001,
+)
+
+function _add_100_MW_reserves!(sys)
     r_up = ConstantReserve{ReserveUp}(
         "ReserveUp",
         true,
         300,
-        0.6,
+        1.0,
         3600.0,
         1.0,
         1.0,
@@ -46,13 +50,13 @@ function run_events_simulation(;
 
     sys_d1 = PSB.build_system(PSISystems, "c_sys5_pjm")
     _add_minimum_active_power!(sys_d1)
-    _add_40_MW_reserves!(sys_d1)
+    _add_100_MW_reserves!(sys_d1)
     _set_intertemporal_data!(sys_d1)
     transform_single_time_series!(sys_d1, Day(2), Day(1))
 
     sys_d2 = PSB.build_system(PSISystems, "c_sys5_pjm")
     _add_minimum_active_power!(sys_d2)
-    _add_40_MW_reserves!(sys_d2)
+    _add_100_MW_reserves!(sys_d2)
     _set_intertemporal_data!(sys_d2)
     transform_single_time_series!(sys_d2, Hour(4), Hour(1))
 
@@ -99,16 +103,14 @@ function run_events_simulation(;
                 sys_d1;
                 name = "D1",
                 initialize_model = false,
-                optimizer = HiGHS_optimizer,#optimizer# HiGHS_optimizer
+                optimizer = HiGHS_optimizer_small_gap,
             ),
             DecisionModel(
                 template_d2,
                 sys_d2;
                 name = "D2",
                 initialize_model = false,
-                optimizer = optimizer, #optimizer #HiGHS_optimizer,
-                #optimizer_solve_log_print = true,
-                calculate_conflict = true,
+                optimizer = HiGHS_optimizer_small_gap, 
                 store_variable_names = true,
             ),
         ],
@@ -116,8 +118,7 @@ function run_events_simulation(;
             template_em,
             sys_em;
             name = "EM",
-            optimizer = optimizer,# , #HiGHS_optimizer,
-            #optimizer_solve_log_print = true,
+            optimizer = HiGHS_optimizer_small_gap,
             calculate_conflict = true,
             store_variable_names = true,
         ),
@@ -127,14 +128,6 @@ function run_events_simulation(;
             models = models,
             ini_cond_chronology = InterProblemChronology(),
             feedforwards = Dict(
-                #"D2" => [   #enable D2 to commit more units and lowerbound existing ones instead of fixing
-                #    LowerBoundFeedforward(;
-                #        component_type = ThermalStandard,
-                #        source = OnVariable,
-                #        affected_values = [OnVariable],
-                #        add_slacks = false
-                #    ),
-                #],
                 "EM" => [# This FeedForward will force the commitment to be kept in the emulator
                     SemiContinuousFeedforward(;
                         component_type = ThermalStandard,
@@ -150,16 +143,6 @@ function run_events_simulation(;
         sequence = SimulationSequence(;
             models = models,
             ini_cond_chronology = InterProblemChronology(),
-            feedforwards = Dict(
-                "D2" => [   #enable D2 to commit more units and lowerbound existing ones instead of fixing
-                    LowerBoundFeedforward(;
-                        component_type = ThermalStandard,
-                        source = OnVariable,
-                        affected_values = [OnVariable],
-                        add_slacks = false,
-                    ),
-                ],
-            ),
             events = [event_model],
         )
     end
