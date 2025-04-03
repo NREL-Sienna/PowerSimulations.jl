@@ -120,6 +120,22 @@ end
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
     component_type::DataType,
+    attributes::EventParametersAttributes,
+    simulation_time::Dates.DateTime,
+    model_name::Symbol,
+)
+    return ParameterUpdateEvent(
+        parameter_type,
+        component_type,
+        "outage - event",
+        simulation_time,
+        model_name,
+    )
+end
+
+function ParameterUpdateEvent(
+    parameter_type::Type{<:ParameterType},
+    component_type::DataType,
     attributes::VariableValueAttributes,
     simulation_time::Dates.DateTime,
     model_name::Symbol,

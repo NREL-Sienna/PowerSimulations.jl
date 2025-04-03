@@ -105,7 +105,7 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{ActivePowerVariableLimitsConstraint},
+    ::Type{ActivePowerVariableLimitsConstraint},
     U::Type{<:Union{VariableType, ActivePowerRangeExpressionUB}},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},

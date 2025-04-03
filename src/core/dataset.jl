@@ -189,6 +189,11 @@ function set_value!(s::InMemoryDataset{3}, vals::DenseAxisArray{Float64, 2}, ind
     return
 end
 
+function set_value!(s::InMemoryDataset{2}, vals::Array{Float64, 1}, index::Int)
+    s.values[:, index] = vals
+    return
+end
+
 # HDF5Dataset does not account of overwrites in the data. Values are written sequentially.
 mutable struct HDF5Dataset{N} <: AbstractDataset
     values::HDF5.Dataset

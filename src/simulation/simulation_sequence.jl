@@ -198,6 +198,123 @@ function _attach_feedforwards(models::SimulationModels, feedforwards)
     return ff_dict
 end
 
+function _add_event_to_model(
+    sim_model::OperationModel,
+    key::EventKey{T, U},
+    event_model::EventModel,
+) where {T <: PSY.Contingency, U <: PSY.Device}
+    device_model = get_model(get_template(sim_model), U)
+    if !haskey(get_events(device_model), key)
+        set_event_model!(device_model, key, event_model)
+    else
+        @debug "Event Model with key $key already in the device model"
+    end
+    return
+end
+
+function _validate_event_timeseries_data(
+    sys::PSY.System,
+    event::PSY.Contingency,
+    event_model::EventModel,
+)
+    devices_with_attribute = PSY.get_components(sys, event)
+    for (k, v) in event_model.timeseries_mapping
+        if v !== nothing
+            try
+                PSY.get_time_series(
+                    IS.SingleTimeSeries,
+                    event,
+                    v,
+                )
+            catch e
+                devices_with_attribute = PSY.get_components(sys, event)
+                device_names_with_attribute =
+                    [PSY.get_name(d) for d in devices_with_attribute]
+                error(
+                    "Event $event belonging to devices $device_names_with_attribute missing time series with name $v",
+                )
+            end
+        end
+        if !haskey(get_empty_timeseries_mapping(typeof(event)), k)
+            error(
+                "Key $k passed as part of event time series mapping does not correspond to a parameter.",
+            )
+        end
+        if k == :outage_status && v === nothing
+            error(
+                "FixedForcedOutage requires a timeseries mapping for :outage_status parameter",
+            )
+        end
+    end
+end
+
+function _add_model_to_event_map!(
+    model::OperationModel,
+    sys::PSY.System,
+    event_models::Vector{T},
+) where {T <: EventModel}
+    model_name = get_name(model)
+    for event_model in event_models
+        event_type = get_event_type(event_model)
+        if isempty(PSY.get_supplemental_attributes(event_type, sys))
+            error(
+                "There is no data for $event_type in $(model_name). \
+            Since events are simulation-wide objects, they need to be added to all models.",
+            )
+            continue
+        end
+        event_model.attribute_device_map[model_name] =
+            Dict{Base.UUID, Dict{DataType, Set{String}}}()
+        event_model.attribute_device_map[model_name]
+        for event in PSY.get_supplemental_attributes(event_type, sys)
+            _validate_event_timeseries_data(sys, event, event_model)
+            event_uuid = PSY.IS.get_uuid(event)
+            @debug "Attaching $event_uuid to $model_name"
+            devices_with_attribute = PSY.get_components(sys, event)
+            device_types_with_attribute = Set{DataType}()
+            event_model.attribute_device_map[model_name][event_uuid] =
+                Dict{DataType, Set{String}}()
+            for device in devices_with_attribute
+                dtype = typeof(device)
+                push!(device_types_with_attribute, dtype)
+                name_set = get!(
+                    event_model.attribute_device_map[model_name][event_uuid],
+                    dtype,
+                    Set{String}(),
+                )
+                push!(name_set, PSY.get_name(device))
+            end
+            for device_type in device_types_with_attribute
+                key = EventKey(event_type, device_type)
+                _add_event_to_model(model, key, event_model)
+            end
+        end
+        event_model.attribute_device_map[model_name]
+    end
+    return
+end
+
+function _attach_events!(
+    models::SimulationModels,
+    event_models::Vector{T},
+) where {T <: EventModel}
+    for model in get_decision_models(models)
+        sys = get_system(model)
+        _add_model_to_event_map!(model, sys, event_models)
+    end
+
+    em_model = get_emulation_model(models)
+    if !isnothing(em_model)
+        _add_model_to_event_map!(
+            em_model,
+            get_system(em_model),
+            event_models,
+        )
+    end
+
+    return
+end
+
 """
     SimulationSequence(
         models::SimulationModels,
@@ -247,7 +364,7 @@ mutable struct SimulationSequence
     horizons::OrderedDict{Symbol, Dates.Millisecond}
     intervals::OrderedDict{Symbol, Dates.Millisecond}
     feedforwards::Dict{Symbol, Vector{<:AbstractAffectFeedforward}}
-    events::Dict{EventKey, Any}
+    events::Vector{<:EventModel}
     ini_cond_chronology::InitialConditionChronology
     execution_order::Vector{Int}
     executions_by_model::OrderedDict{Symbol, Int}
@@ -257,7 +374,7 @@ mutable struct SimulationSequence
     function SimulationSequence(;
         models::SimulationModels,
         feedforwards = Dict{String, Vector{<:AbstractAffectFeedforward}}(),
-        events = Dict{EventKey, Any}(),
+        events = Vector{EventModel}(),
         ini_cond_chronology = InterProblemChronology(),
     )
         # Allow strings or symbols as keys; convert to symbols.
@@ -278,6 +395,7 @@ mutable struct SimulationSequence
         executions_by_model = _get_num_executions_by_model(models, execution_order)
         sequence_uuid = IS.make_uuid()
         initialize_simulation_internals!(models, sequence_uuid)
+        _attach_events!(models, events)
         new(
             horizons,
             intervals,
@@ -302,4 +420,5 @@ function get_interval(sequence::SimulationSequence, model::DecisionModel)
     return sequence.intervals[get_name(model)]
 end
 
+get_events(sequence::SimulationSequence) = sequence.events
 get_execution_order(sequence::SimulationSequence) = sequence.execution_order
