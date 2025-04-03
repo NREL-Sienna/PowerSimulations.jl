@@ -131,6 +131,14 @@ function set_device_model!(
     return
 end
 
+function set_device_model!(
+    template::ProblemTemplate,
+    model::DeviceModel{<:PSY.HydroReservoir, <:AbstractDeviceFormulation},
+)
+    _set_model!(template.services, model)
+    return
+end
+
 """
 Sets the service model in a template using a name and the service type and formulation.
 Builds a default ServiceModel with use_service_name set to true.
