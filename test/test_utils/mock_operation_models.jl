@@ -73,7 +73,8 @@ function PSI.DecisionModel(::Type{MockOperationProblem}; name = nothing, kwargs.
     add_time_series!(sys, l, forecast)
     settings = PSI.Settings(sys;
         horizon = get(kwargs, :horizon, Hour(24)),
-        resolution = get(kwargs, :resolution, Hour(1)))
+        resolution = get(kwargs, :resolution, Hour(1)),
+        store_variable_names = true,)
     return DecisionModel{MockOperationProblem}(
         ProblemTemplate(CopperPlatePowerModel),
         sys,

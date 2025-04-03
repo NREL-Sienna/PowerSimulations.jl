@@ -61,6 +61,8 @@ export RenewableConstantPowerFactor
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
+export ThermalContinousStandardUnitCommitment
+export ThermalContinousBasicUnitCommitment
 export ThermalBasicCompactUnitCommitment
 export ThermalBasicDispatch
 export ThermalStandardDispatch
@@ -201,6 +203,7 @@ export ColdStartVariable
 export EnergyVariable
 export LiftVariable
 export OnVariable
+export OnVariableSquared
 export ReactivePowerVariable
 export ReservationVariable
 export ActivePowerReserveVariable
@@ -233,6 +236,7 @@ export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
+export PieceWiseLinearInterpolationVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 
@@ -572,6 +576,7 @@ include("devices_models/devices/common/add_constraint_dual.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
+include("devices_models/devices/common/pwl_function_approximations.jl")
 
 # Device Modeling components
 include("devices_models/devices/default_interface_methods.jl")
