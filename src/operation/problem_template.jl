@@ -113,6 +113,18 @@ function set_device_model!(
 end
 
 """
+Set the device model in a template using the reservoir component type.
+"""
+function set_device_model!(
+    template::ProblemTemplate,
+    component_type::Type{<:PSY.HydroReservoir},
+    formulation::Type{<:AbstractDeviceFormulation},
+)
+    set_device_model!(template, DeviceModel(component_type, formulation))
+    return
+end
+
+"""
 Sets the device model in a template using a DeviceModel instance
 """
 function set_device_model!(
@@ -135,7 +147,7 @@ function set_device_model!(
     template::ProblemTemplate,
     model::DeviceModel{<:PSY.HydroReservoir, <:AbstractDeviceFormulation},
 )
-    _set_model!(template.services, model)
+    _set_model!(template.devices, model)
     return
 end
 
