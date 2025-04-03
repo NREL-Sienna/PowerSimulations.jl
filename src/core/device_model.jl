@@ -44,7 +44,7 @@ feedforward to enable passing values between operation model at simulation time
 thermal_gens = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 ```
 """
-mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
+mutable struct DeviceModel{D <: Union{PSY.Device, PSY.HydroReservoir}, B <: AbstractDeviceFormulation}
     feedforwards::Vector{<:AbstractAffectFeedforward}
     use_slacks::Bool
     duals::Vector{DataType}
@@ -61,7 +61,7 @@ mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
         duals = Vector{DataType}(),
         time_series_names = get_default_time_series_names(D, B),
         attributes = Dict{String, Any}(),
-    ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+    ) where {D <: Union{PSY.Device, PSY.HydroReservoir}, B <: AbstractDeviceFormulation}
         attributes_ = get_default_attributes(D, B)
         for (k, v) in attributes
             attributes_[k] = v
@@ -83,10 +83,10 @@ end
 
 get_component_type(
     ::DeviceModel{D, B},
-) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = D
+) where {D <: Union{PSY.Device, PSY.HydroReservoir}, B <: AbstractDeviceFormulation} = D
 get_formulation(
     ::DeviceModel{D, B},
-) where {D <: PSY.Device, B <: AbstractDeviceFormulation} = B
+) where {D <: Union{PSY.Device, PSY.HydroReservoir}, B <: AbstractDeviceFormulation} = B
 get_feedforwards(m::DeviceModel) = m.feedforwards
 get_services(m::DeviceModel) = m.services
 get_services(::Nothing) = nothing
@@ -103,7 +103,7 @@ set_subsystem!(m::DeviceModel, id::String) = m.subsystem = id
 function get_reference_bus(
     m::DeviceModel{T, U},
     d::T,
-) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+) where {T <: Union{PSY.Device, PSY.HydroReservoir}, U <: AbstractDeviceFormulation}
     return get_subnetworks_map(m)[d]
 end
 
