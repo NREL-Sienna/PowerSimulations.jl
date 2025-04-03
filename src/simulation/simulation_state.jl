@@ -375,21 +375,22 @@ function _get_time_to_recover(
 end
 
 function _get_time_to_recover(
-    event::PSY.TimeSeriesForcedOutage,
+    event::PSY.FixedForcedOutage,
     event_model::EventModel,
     simulation_time,
 )
-    ts = PSY.get_time_series(
+    timeseries_mapping = event_model.timeseries_mapping
+    ts_outage_status = PSY.get_time_series(
         IS.SingleTimeSeries,
         event,
-        PSY.get_outage_status_scenario(event),
+        timeseries_mapping[:outage_status];
+        start_time = simulation_time,
     )
-    current_time_index = findfirst(isequal(simulation_time), TimeSeries.timestamp(ts.data))
-    vals = TimeSeries.values(ts.data)[current_time_index:end]
-    if findfirst(isequal(1.0), vals[2:end]) === nothing
+    vals = TimeSeries.values(ts_outage_status.data)
+    if length(vals) < 3 || findfirst(isequal(0.0), vals[3:end]) === nothing
         return length(vals)
     else
-        return findfirst(isequal(1.0), vals[2:end])
+        return findfirst(isequal(0.0), vals[3:end])
     end
 end
 
@@ -737,23 +738,23 @@ function _get_outage_occurrence(
 end
 
 function _get_outage_occurrence(
-    event::PSY.TimeSeriesForcedOutage,
+    event::PSY.FixedForcedOutage,
     event_model::EventModel,
     rng,
     current_time,
 )
+    timeseries_mapping = event_model.timeseries_mapping
     ts = PSY.get_time_series(
         IS.SingleTimeSeries,
         event,
-        PSY.get_outage_status_scenario(event),
+        timeseries_mapping[:outage_status];
+        start_time = current_time,
     )
-    vals = PSY.get_time_series_values(
-        event,
-        ts,
-        current_time;
-        len = 1,
-    )
-    return vals[1]
+    val = TimeSeries.values(ts.data)
+    if length(val) == 1
+        return 0
+    end
+    return val[2]
 end
 
 function update_system_state!(

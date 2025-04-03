@@ -88,10 +88,10 @@ mutable struct EventModel{D <: PSY.Contingency, B <: AbstractEventCondition}
 end
 
 function get_empty_timeseries_mapping(
-    ::Type{PSY.TimeSeriesForcedOutage},
+    ::Type{PSY.FixedForcedOutage},
 )
     return Dict{Symbol, Union{String, Nothing}}(
-        :availability => nothing,
+        :outage_status => nothing,
     )
 end
 
