@@ -1,5 +1,8 @@
 test_path = mktempdir()
 
+const TIME1 = DateTime("2024-01-01T00:00:00")
+const TIME2 = TIME1 + Hour(1)
+
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [
         ("linear_cost_test", 4664.88, ThermalBasicUnitCommitment),
@@ -1005,7 +1008,7 @@ end
         steps = 2,
         models = models,
         sequence = sequence,
-        initial_time = DateTime("2024-01-01T00:00:00"),
+        initial_time = TIME1,
         simulation_folder = mktempdir(),
     )
 
@@ -1097,56 +1100,55 @@ end
     )
 end
 
-@testset "MarketBidCost with time series startup and shutdown" begin
-    function make_deterministic_ts(name, ini_time, ini_val, res_inc, interval_inc, horizon)
-        time_2 = ini_time + Hour(1)
-        startup_data = OrderedDict(
-            ini_time => [ini_val .+ i * res_inc for i in 0:(horizon - 1)],
-            time_2 => [ini_val .+ (i * res_inc) .+ interval_inc for i in 1:horizon],
-        )
-        return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
-    end
+"Helper function to make a time series from an initial value (can be a single number or tuple) and some increments"
+function _make_deterministic_ts(name, ini_val, res_incr, interval_incr, horizon)
+    series1 = [ini_val .+ i * res_incr for i in 0:(horizon - 1)]
+    series2 = [ini_val .+ i * res_incr .+ interval_incr for i in 1:horizon]
+    startup_data = OrderedDict(
+        TIME1 => series1,
+        TIME2 => series2,
+    )
+    return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
+end
 
-    function add_startup_shutdown_ts!(sys::System)
-        unit1 = get_component(ThermalStandard, sys, "Test Unit1")
-        @assert get_operation_cost(unit1) isa MarketBidCost
-        startup_ts_1 = make_deterministic_ts(
-            "start_up",
-            DateTime("2024-01-01T00:00:00"),
-            (1.0, 1.5, 2.0),
-            0.05,
-            0.01,
-            5,
-        )
-        set_start_up!(sys, unit1, startup_ts_1)
-        shutdown_ts_1 = make_deterministic_ts(
-            "shut_down",
-            DateTime("2024-01-01T00:00:00"),
-            0.5,
-            0.05,
-            0.01,
-            5,
-        )
-        set_shut_down!(sys, unit1, shutdown_ts_1)
-        return startup_ts_1, shutdown_ts_1
-    end
+"Add startup and shutdown time series to a certain component. `with_increments`: whether the elements should be increasing over time or constant"
+function add_startup_shutdown_ts!(sys::System, with_increments::Bool)
+    res_incr = with_increments ? 0.05 : 0.0
+    interval_incr = with_increments ? 0.01 : 0.0
+    unit1 = get_component(ThermalStandard, sys, "Test Unit1")
+    @assert get_operation_cost(unit1) isa MarketBidCost
+    startup_ts_1 =
+        _make_deterministic_ts("start_up", (1.0, 1.5, 2.0), res_incr, interval_incr, 5)
+    set_start_up!(sys, unit1, startup_ts_1)
+    shutdown_ts_1 = _make_deterministic_ts("shut_down", 0.5, res_incr, interval_incr, 5)
+    set_shut_down!(sys, unit1, shutdown_ts_1)
+    return startup_ts_1, shutdown_ts_1
+end
 
-    sys = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
-    startup_ts_1, shutdown_ts_1 = add_startup_shutdown_ts!(sys)
-
-    template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+"Run a simple simulation with the system and return information useful for testing time-varying startup and shutdown functionality"
+function run_startup_shutdown_sim(sys::System)
+    template = ProblemTemplate(
+        NetworkModel(
+            CopperPlatePowerModel;
+            duals = [CopperPlateBalanceConstraint],
+        ),
+    )
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+
     model = DecisionModel(
         template,
         sys;
         name = "UC",
+        store_variable_names = true,
         optimizer = HiGHS_optimizer,
         system_to_file = false,
     )
 
-    model2 = deepcopy(model)
-    @test build!(model2; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
-    @test solve!(model2) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    # Test solving the model outside of a Simulation
+    model_ = deepcopy(model)
+    @test build!(model_; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model_) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     models = SimulationModels(;
         decision_models = [
@@ -1165,18 +1167,18 @@ end
         steps = 2,
         models = models,
         sequence = sequence,
-        initial_time = DateTime("2024-01-01T00:00:00"),
+        initial_time = TIME1,
         simulation_folder = mktempdir(),
     )
 
     build!(sim; serialize = false)
     execute!(sim; enable_progress_bar = true)
-    return model, sim
 
     sim_res = SimulationResults(sim)
     res_uc = get_decision_problem_results(sim_res, "UC")
 
-    # Test time series <-> parameter correspondence
+    # Test correctness of written shutdown cost parameters
+    # TODO test startup too once we are able to write those
     sh_uc = read_parameter(res_uc, PSI.ShutdownCostParameter, PSY.ThermalStandard)
     for (step_dt, step_df) in pairs(sh_uc)
         for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
@@ -1184,14 +1186,88 @@ end
             fc_comp =
                 get_shut_down(comp, PSY.get_operation_cost(comp); start_time = step_dt)
             @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
-            @show step_df[!, gen_name]
-            @show TimeSeries.values(fc_comp)
             @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
         end
     end
-    # TODO test StartupCostParameter too when it is implemented
-    # TODO test effect on decision
-    # TODO test with multi-start
+    return model_, model, res_uc
+end
+
+"""
+Read startup and shutdown cost time series from a `System` and multiply by `StartVariable`
+and `StopVariable` in the `SimulationProblemResults` to determine the cost that should have
+been incurred by time-varying `MarketBidCost startup and shutdown costs.
+"""
+function cost_due_to_time_varying_startup_shutdown(
+    sys::System,
+    res_uc::PSI.SimulationProblemResults;
+    gentype = PSY.ThermalStandard,
+)
+    # TODO handle multi-start
+    start_vars = read_variable(res_uc, PSI.StartVariable, gentype)
+    stop_vars = read_variable(res_uc, PSI.StopVariable, gentype)
+    result = SortedDict{DateTime, DataFrame}()
+    @assert all(keys(start_vars) .== keys(stop_vars))
+    for step_dt in keys(start_vars)
+        start_df = start_vars[step_dt]
+        stop_df = stop_vars[step_dt]
+        @assert names(start_df) == names(stop_df)
+        @assert start_df[!, :DateTime] == stop_df[!, :DateTime]
+        result[step_dt] = DataFrame(:DateTime => start_df[!, :DateTime])
+        for gen_name in names(DataFrames.select(start_df, Not(:DateTime)))
+            comp = get_component(ThermalStandard, sys, gen_name)
+            cost = PSY.get_operation_cost(comp)
+            (cost isa PSY.MarketBidCost) || continue
+            PSI.is_time_variant(get_start_up(cost)) || continue
+            @assert PSI.is_time_variant(get_shut_down(cost))
+            startup_ts = get_start_up(comp, cost; start_time = step_dt)
+            shutdown_ts = get_shut_down(comp, cost; start_time = step_dt)
+
+            @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(startup_ts))
+            @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(shutdown_ts))
+            result[step_dt][!, gen_name] =
+                start_df[!, gen_name] .*
+                    getproperty.(TimeSeries.values(startup_ts), :hot) .+
+                stop_df[!, gen_name] .* TimeSeries.values(shutdown_ts)
+        end
+    end
+    return result
+end
+
+@testset "MarketBidCost with time series startup and shutdown" begin
+    # The methodology here is: run a simulation where the startup and shutdown time series
+    # have constant values through time, then run a simulation where the values vary through
+    # time, then test that the objective value changes between the two simulations by the
+    # amount we expect at each step.
+
+    sys1 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    add_startup_shutdown_ts!(sys1, false)
+
+    sys2 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    add_startup_shutdown_ts!(sys2, true)
+
+    model1_, model1, res_uc1 = run_startup_shutdown_sim(sys1)
+    model2_, model2, res_uc2 = run_startup_shutdown_sim(sys2)
+
+    ground_truth_1 = cost_due_to_time_varying_startup_shutdown(sys1, res_uc1)
+    ground_truth_2 = cost_due_to_time_varying_startup_shutdown(sys2, res_uc2)
+    @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
+
+    # Sum across components, time periods to get one value per step
+    total1 = [
+        only(sum(eachcol(combine(val, Not(:DateTime) .=> sum)))) for
+        val in values(ground_truth_1)
+    ]
+    total2 = [
+        only(sum(eachcol(combine(val, Not(:DateTime) .=> sum)))) for
+        val in values(ground_truth_2)
+    ]
+    ground_truth = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
+
+    obj1 = PSI.read_optimizer_stats(res_uc1)[!, "objective_value"]
+    obj2 = PSI.read_optimizer_stats(res_uc2)[!, "objective_value"]
+    obj_diff = obj2 .- obj1
+
+    @test all(isapprox.(obj_diff, ground_truth))
 end
 
 @testset "Thermal UC With Slack on Ramps" begin

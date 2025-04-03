@@ -88,8 +88,9 @@ function add_shut_down_cost!(
                 is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(d))),
             )
             # iszero(my_cost_term) && continue  # TODO do we want this?
-            exp = _add_proportional_term!(container, U(), d, my_cost_term * multiplier, t)
-            # add_to_expression!(container, ProductionCostExpression, exp, d, t)  # TODO do we want this?
+            exp = _add_proportional_term_variant!(
+                container, U(), d, my_cost_term * multiplier, t)
+            # add_to_expression!(container, ProductionCostExpression, exp, component, t)  # TODO do we want this?
         end
     end
     return
@@ -251,8 +252,8 @@ function _add_start_up_cost_to_objective!(
             is_time_variant(PSY.get_start_up(op_cost)),
         )
         # iszero(my_cost_term) && continue  # TODO do we want this?
-        exp =
-            _add_proportional_term!(container, T(), component, my_cost_term * multiplier, t)
+        exp = _add_proportional_term_variant!(
+            container, T(), component, my_cost_term * multiplier, t)
         # add_to_expression!(container, ProductionCostExpression, exp, component, t)  # TODO do we want this?
     end
     return
@@ -294,7 +295,7 @@ function _get_cost_function_parameter_container(
     end
 end
 
-function _add_proportional_term!(
+function _add_proportional_term_helper(
     container::OptimizationContainer,
     ::T,
     component::U,
@@ -305,7 +306,34 @@ function _add_proportional_term!(
     @debug "Linear Variable Cost" _group = LOG_GROUP_COST_FUNCTIONS component_name
     variable = get_variable(container, T(), U)[component_name, time_period]
     lin_cost = variable * linear_term
+    return lin_cost
+end
+
+# Invariant
+function _add_proportional_term!(
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    linear_term::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component}
+    lin_cost = _add_proportional_term_helper(
+        container, T(), component, linear_term, time_period)
     add_to_objective_invariant_expression!(container, lin_cost)
+    return lin_cost
+end
+
+# Variant
+function _add_proportional_term_variant!(
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    linear_term::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component}
+    lin_cost = _add_proportional_term_helper(
+        container, T(), component, linear_term, time_period)
+    add_to_objective_variant_expression!(container, lin_cost)
     return lin_cost
 end
 
