@@ -372,7 +372,7 @@ function construct_device!(
         sys,
     )
 
-    #TODO Hanlde also N-2 cases
+    #TODO Handle also N-2 cases
     branches_outages =
         _get_all_single_outage_branches_by_type(sys, valid_outages, branches, V)
     if !isempty(branches_outages)

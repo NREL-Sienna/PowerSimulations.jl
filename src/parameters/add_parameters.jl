@@ -194,6 +194,23 @@ function _add_parameters!(
     return
 end
 
+function _check_dynamic_branch_rating_ts(
+    ts::AbstractArray,
+    ::T,
+    device::PSY.Device,
+    model::DeviceModel{D, W},
+) where {D <: PSY.Component, T <: TimeSeriesParameter, W <: AbstractDeviceFormulation}
+    if !(T <: DynamicBranchRatingTimeSeriesParameter)
+        return
+    end
+    rating = PSY.get_rating(device)
+    multiplier = get_multiplier_value(T(), device, W())
+    if !all(x -> x >= rating, multiplier * ts)
+        @warn "There are values of Parameter $T associated with the $(typeof(device)) '$(PSY.get_name(device))' lower than the device rating $(PSY.get_rating(device))."
+    end
+    return
+end
+
 function _add_time_series_parameters!(
     container::OptimizationContainer,
     param::T,
@@ -223,6 +240,7 @@ function _add_time_series_parameters!(
         if !(ts_uuid in keys(initial_values))
             initial_values[ts_uuid] =
                 get_time_series_initial_values!(container, ts_type, device, ts_name)
+            _check_dynamic_branch_rating_ts(initial_values[ts_uuid], param, device, model)
         end
     end
 
