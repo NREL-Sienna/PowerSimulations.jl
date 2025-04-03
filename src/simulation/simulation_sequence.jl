@@ -240,6 +240,11 @@ function _validate_event_timeseries_data(
                 "Key $k passed as part of event time series mapping does not correspond to a parameter.",
             )
         end
+        if k == :outage_status && v === nothing
+            error(
+                "FixedForcedOutage requires a timeseries mapping for :outage_status parameter",
+            )
+        end
     end
 end
 
