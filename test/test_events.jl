@@ -110,7 +110,7 @@ function run_events_simulation(;
                 sys_d2;
                 name = "D2",
                 initialize_model = false,
-                optimizer = HiGHS_optimizer_small_gap, 
+                optimizer = HiGHS_optimizer_small_gap,
                 store_variable_names = true,
             ),
         ],
@@ -329,4 +329,130 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
+end
+
+function _run_fixed_forced_outage_sim_with_timeseries(;
+    sys_emulator,
+    outage_status_timeseries,
+)
+    sys_em = deepcopy(sys_emulator)
+    _add_minimum_active_power!(sys_em)
+
+    sys_d1 = PSB.build_system(PSISystems, "c_sys5_pjm")
+    _add_minimum_active_power!(sys_d1)
+    _add_100_MW_reserves!(sys_d1)
+    _set_intertemporal_data!(sys_d1)
+    transform_single_time_series!(sys_d1, Day(2), Day(1))
+
+    sys_d2 = PSB.build_system(PSISystems, "c_sys5_pjm")
+    _add_minimum_active_power!(sys_d2)
+    _add_100_MW_reserves!(sys_d2)
+    _set_intertemporal_data!(sys_d2)
+    transform_single_time_series!(sys_d2, Hour(4), Hour(1))
+
+    event_model = EventModel(
+        FixedForcedOutage,
+        PSI.ContinuousCondition();
+        timeseries_mapping = Dict(
+            :outage_status => "outage_profile_1",
+        ),
+    )
+    template_d1 = get_template_basic_uc_simulation()
+    template_d2 = get_template_basic_uc_simulation()
+    template_em = get_template_nomin_ed_simulation()
+    set_device_model!(template_em, ThermalStandard, ThermalBasicDispatch)
+    set_service_model!(template_d1, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template_d2, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
+
+    for sys in [sys_d1, sys_d2, sys_em]
+        outage_gens = ["Alta"]
+        for name in outage_gens
+            g = get_component(ThermalStandard, sys, name)
+            transition_data = PSY.FixedForcedOutage(;
+                outage_status = 0.0,
+            )
+            add_supplemental_attribute!(sys, g, transition_data)
+            PSY.add_time_series!(
+                sys,
+                transition_data,
+                PSY.SingleTimeSeries("outage_profile_1", outage_status_timeseries),
+            )
+        end
+    end
+
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_d1,
+                sys_d1;
+                name = "D1",
+                initialize_model = false,
+                optimizer = HiGHS_optimizer_small_gap,
+            ),
+            DecisionModel(
+                template_d2,
+                sys_d2;
+                name = "D2",
+                initialize_model = false,
+                optimizer = HiGHS_optimizer_small_gap,
+                store_variable_names = true,
+            ),
+        ],
+        emulation_model = EmulationModel(
+            template_em,
+            sys_em;
+            name = "EM",
+            optimizer = HiGHS_optimizer_small_gap,
+            calculate_conflict = true,
+            store_variable_names = true,
+        ),
+    )
+    sequence = SimulationSequence(;
+        models = models,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforwards = Dict(
+            "EM" => [# This FeedForward will force the commitment to be kept in the emulator
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+            ],
+        ),
+        events = [event_model],
+    )
+
+    sim = Simulation(;
+        name = "no_cache",
+        steps = 1,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+    build_out = build!(sim; console_level = Logging.Info)
+    @test build_out == PSI.SimulationBuildStatus.BUILT
+    execute_out = execute!(sim; in_memory = true)
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    results = SimulationResults(sim; ignore_status = true)
+    return results
+end
+
+@testset "FixedForcedOutage with timeseries" begin
+    dates_ts = collect(
+        DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
+    )
+    outage_data = fill!(Vector{Int64}(undef, 168), 0)
+    outage_data[3] = 1
+    outage_data[10:11] .= 1
+    outage_data[23:22] .= 1
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        outage_status_timeseries = outage_timeseries,
+    )
+    em = get_emulation_problem_results(res)
+    status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard")
+    for (ix, x) in enumerate(outage_data[1:24])
+        @test x != Int64(status[!, "Alta"][ix])
+    end
 end
