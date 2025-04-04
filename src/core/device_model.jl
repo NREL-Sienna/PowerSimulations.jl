@@ -5,7 +5,7 @@ struct FixedOutput <: AbstractDeviceFormulation end
 
 function _check_device_formulation(
     ::Type{D},
-) where {D <: Union{AbstractDeviceFormulation, PSY.Device}}
+) where {D <: Union{AbstractDeviceFormulation, PSY.Device, PSY.HydroReservoir}}
     if !isconcretetype(D)
         throw(
             ArgumentError(
@@ -110,7 +110,7 @@ end
 function _set_model!(
     dict::Dict,
     model::DeviceModel{D, B},
-) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+) where {D <: Union{PSY.Device, PSY.HydroReservoir}, B <: AbstractDeviceFormulation}
     key = Symbol(D)
     if haskey(dict, key)
         @warn "Overwriting $(D) existing model"
