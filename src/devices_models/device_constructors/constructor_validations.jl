@@ -1,7 +1,7 @@
 function validate_available_devices(
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     system::PSY.System,
-) where {T <: PSY.Device}
+) where {T <: Union{PSY.Device, PSY.HydroReservoir}}
     devices =
         get_available_components(model,
             system,
