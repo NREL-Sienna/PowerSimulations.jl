@@ -27,7 +27,7 @@ get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACBranch, ::AbstractB
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
-get_multiplier_value(::DynamicBranchRatingTimeSeriesParameter, d::PSY.ACBranch, ::StaticBranch) = 1.0/PSY.get_base_power(d)
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACBranch, ::StaticBranch) = 1.0/PSY.get_base_power(d)
 
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation} = DeviceModel(T, U)
@@ -343,7 +343,7 @@ function get_min_max_limits(
     return (min = -π / 2, max = π / 2)
 end
 
-function _device_dynamic_branch_rating_time_series(
+function _get_device_dynamic_branch_rating_time_series(
     param_container::ParameterContainer,
     device::PSY.ACBranch,
     ts_name::String,
@@ -351,8 +351,7 @@ function _device_dynamic_branch_rating_time_series(
 )
     device_dlr_params = []
     if PSY.has_time_series(device, ts_type, ts_name)
-        name = get_name(device)
-        device_dlr_params = get_parameter_column_refs(param_container, name)
+        device_dlr_params = get_parameter_column_refs(param_container, get_name(device))
     end
     return device_dlr_params
 end
@@ -406,9 +405,10 @@ function add_constraints!(
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
 
-    flag_dlr_ts = false
-    if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
-        flag_dlr_ts = true
+    has_dlr_ts =
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+
+    if has_dlr_ts
         ts_name =
             get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
         ts_type = get_default_time_series_type(container)
@@ -423,10 +423,9 @@ function add_constraints!(
             continue
         end
 
-        device_dynamic_branch_rating_ts = []
-        if flag_dlr_ts
+        if has_dlr_ts
             device_dynamic_branch_rating_ts =
-                _device_dynamic_branch_rating_time_series(
+                _get_device_dynamic_branch_rating_time_series(
                     param_container,
                     device,
                     ts_name,
@@ -434,12 +433,12 @@ function add_constraints!(
         end
 
         limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
-        name = get_name(device)
+
         for t in time_steps
-            if !isempty(device_dynamic_branch_rating_ts)
+            if has_dlr_ts && !isempty(device_dynamic_branch_rating_ts)
                 limits = (
-                    min = -1 * device_dynamic_branch_rating_ts[t] * mult[name, t],
-                    max = device_dynamic_branch_rating_ts[t] * mult[name, t],
+                    min = -1 * device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
+                    max = device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
                 ) #update limits
             end
 

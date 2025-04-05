@@ -200,13 +200,22 @@ function _check_dynamic_branch_rating_ts(
     device::PSY.Device,
     model::DeviceModel{D, W},
 ) where {D <: PSY.Component, T <: TimeSeriesParameter, W <: AbstractDeviceFormulation}
-    if !(T <: DynamicBranchRatingTimeSeriesParameter)
+    if !(T <: AbstractDynamicBranchRatingTimeSeriesParameter)
         return
     end
+
     rating = PSY.get_rating(device)
+    if (T <: PostContingencyDynamicBranchRatingTimeSeriesParameter)
+        if !(PSY.get_rating_b(device) === nothing)
+            rating = PSY.get_rating_b(device)
+        else
+            @warn "Device $(typeof(device)) '$(PSY.get_name(device))' has Parameter $T but it has no static 'rating_b' defined."
+        end
+    end
+
     multiplier = get_multiplier_value(T(), device, W())
     if !all(x -> x >= rating, multiplier * ts)
-        @warn "There are values of Parameter $T associated with the $(typeof(device)) '$(PSY.get_name(device))' lower than the device rating $(PSY.get_rating(device))."
+        @warn "There are values of Parameter $T associated with $(typeof(device)) '$(PSY.get_name(device))' lower than the device static rating $(rating)."
     end
     return
 end

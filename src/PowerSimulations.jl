@@ -295,6 +295,7 @@ export RangeLimitConstraint
 export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
+export PostContingencyRateLimitConstraintB
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
@@ -304,13 +305,13 @@ export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
-export PostContingencyRateLimitConstraintB
 
 # Parameters
 # Time Series Parameters
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export DynamicBranchRatingTimeSeriesParameter
+export PostContingencyDynamicBranchRatingTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
 # Cost Parameters

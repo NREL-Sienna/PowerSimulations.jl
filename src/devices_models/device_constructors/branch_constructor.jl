@@ -280,6 +280,18 @@ function construct_device!(
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
 
+    if haskey(
+        get_time_series_names(model),
+        PostContingencyDynamicBranchRatingTimeSeriesParameter,
+    )
+        add_parameters!(
+            container,
+            PostContingencyDynamicBranchRatingTimeSeriesParameter,
+            devices,
+            model,
+        )
+    end
+
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -326,9 +338,7 @@ end
 function _get_all_scuc_valid_outages(
     sys::PSY.System,
     ::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {
-    T <: PSY.Outage,
-}
+)
     return PSY.get_supplemental_attributes(
         sa ->
             typeof(sa) in Base.uniontypes(OutagesSCUC) &&

@@ -260,9 +260,21 @@ Parameter to define requirement time series
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
 
 """
-Parameter to define the dynamic rating of a line
+Abstract type for dynamic ratings of AC branches
 """
-struct DynamicBranchRatingTimeSeriesParameter <: TimeSeriesParameter end
+abstract type AbstractDynamicBranchRatingTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define the dynamic rating time series of a branch
+"""
+struct DynamicBranchRatingTimeSeriesParameter <:
+       AbstractDynamicBranchRatingTimeSeriesParameter end
+
+"""
+Parameter to define the dynamic ratings time series of an AC branch for post-contingency condition
+"""
+struct PostContingencyDynamicBranchRatingTimeSeriesParameter <:
+       AbstractDynamicBranchRatingTimeSeriesParameter end
 
 """
 Parameter to define Flow From_To limit time series
@@ -323,6 +335,9 @@ struct EventParameter <: ParameterType end
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
 convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
+convert_result_to_natural_units(
+    ::Type{PostContingencyDynamicBranchRatingTimeSeriesParameter},
+) = true
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
