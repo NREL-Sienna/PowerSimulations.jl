@@ -580,7 +580,75 @@ function construct_device!(
 )
     devices = get_available_components(device_model, sys)
     add_constraint_dual!(container, sys, device_model)
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, device_model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalDispatch},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalDispatch},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
+    return
+end
+
+# Repeated method to avoid ambiguity between HVDCTwoTerminalUnbounded, HVDCTwoTerminalLossless and HVDCTwoTerminalDispatch
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
+    return
+end
+
+# Repeated method to avoid ambiguity between HVDCTwoTerminalUnbounded, HVDCTwoTerminalLossless and HVDCTwoTerminalDispatch
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalLossless},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalLossless},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
     return
 end
 

@@ -141,7 +141,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(y_coords_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            (cost * multiplier),
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -196,7 +197,8 @@ function _get_pwl_cost_expression(
     for i in 1:length(slopes)
         JuMP.add_to_expression!(
             ordc_cost,
-            slopes[i] * multiplier * pwl_var_container[(name, i, time_period)],
+            slopes[i] * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return ordc_cost
@@ -241,7 +243,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            cost * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
