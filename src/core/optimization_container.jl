@@ -665,6 +665,12 @@ function build_impl!(
                     device_model,
                     transmission_model,
                 )
+                construct_market_bid!(
+                    container,
+                    sys,
+                    ArgumentConstructStage(),
+                    device_model,
+                )
             end
             @debug "Problem size:" get_problem_size(container) _group =
                 LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -712,6 +718,7 @@ function build_impl!(
                     device_model,
                     transmission_model,
                 )
+                construct_market_bid!(container, sys, ModelConstructStage(), device_model)
             end
             @debug "Problem size:" get_problem_size(container) _group =
                 LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -1270,17 +1277,17 @@ function add_param_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
-    variable_type::Type{W},
+    variable_types::Tuple{Vararg{Type}},
     sos_variable::SOSStatusVariable = NO_VARIABLE,
     uses_compact_power::Bool = false,
     data_type::DataType = Float64,
     axs...;
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     param_key = ParameterKey(T, U, meta)
     attributes =
-        CostFunctionAttributes{data_type}(variable_type, sos_variable, uses_compact_power)
+        CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
 

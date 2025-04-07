@@ -338,9 +338,8 @@ function _get_piecewise_incrementalcurve_per_system_unit(
     return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
 end
 
-function is_time_variant(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve})
-    return isa(PSY.get_fuel_cost(cost_function), IS.TimeSeriesKey)
-end
+is_time_variant(::IS.TimeSeriesKey) = true
+is_time_variant(::Any) = false
 
 function create_temporary_cost_function_in_system_per_unit(
     original_cost_function::PSY.CostCurve,

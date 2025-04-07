@@ -28,11 +28,7 @@ function jump_value(input::JuMP.ConstraintRef)::Float64
     return JuMP.dual(input)
 end
 
-function jump_value(input::Float64)
-    return input
-end
-
-function jump_value(input::Vector{Tuple{Float64, Float64}})::Vector{Tuple{Float64, Float64}}
+function jump_value(input::JumpSupportedLiterals)
     return input
 end
 

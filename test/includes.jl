@@ -27,6 +27,7 @@ using DataStructures
 import UUIDs
 using Random
 import Serialization
+import LinearAlgebra
 
 const PM = PowerModels
 const PSY = PowerSystems
