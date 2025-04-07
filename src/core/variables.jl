@@ -426,7 +426,7 @@ Docs abbreviation: ``p^\\text{sl,dn}``
 """
 struct RateofChangeConstraintSlackDown <: VariableType end
 
-const MULTI_START_VARIABLES = IS.get_all_concrete_subtypes(PSI.MultiStartVariable)
+const MULTI_START_VARIABLES = Tuple(IS.get_all_concrete_subtypes(PSI.MultiStartVariable))
 
 should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false

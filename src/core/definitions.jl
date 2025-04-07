@@ -35,6 +35,8 @@ const JuMPVariableMatrix = DenseAxisArray{
 const JuMPFloatMatrix = DenseAxisArray{Float64, 2}
 const JuMPFloatArray = DenseAxisArray{Float64}
 const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
+const JumpSupportedLiterals =
+    Union{Number, Vector{<:Tuple{Number, Number}}, Tuple{Vararg{Number}}}
 
 const TwoTerminalHVDCTypes =
     Union{PSY.TwoTerminalGenericHVDCLine, PSY.TwoTerminalVSCLine, PSY.TwoTerminalLCCLine}

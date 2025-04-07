@@ -2,6 +2,7 @@ test_path = mktempdir()
 
 const TIME1 = DateTime("2024-01-01T00:00:00")
 const TIME2 = TIME1 + Hour(1)
+const TIME3 = TIME1 + Day(1)
 
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [
@@ -1101,32 +1102,77 @@ end
 end
 
 "Helper function to make a time series from an initial value (can be a single number or tuple) and some increments"
-function _make_deterministic_ts(name, ini_val, res_incr, interval_incr, horizon)
+function _make_deterministic_ts(name, ini_val, res_incr, interval_incr, horizon, interval)
     series1 = [ini_val .+ i * res_incr for i in 0:(horizon - 1)]
     series2 = [ini_val .+ i * res_incr .+ interval_incr for i in 1:horizon]
     startup_data = OrderedDict(
         TIME1 => series1,
-        TIME2 => series2,
+        TIME1 + interval => series2,
     )
     return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
 end
 
-"Add startup and shutdown time series to a certain component. `with_increments`: whether the elements should be increasing over time or constant"
-function add_startup_shutdown_ts!(sys::System, with_increments::Bool)
+"""
+Add startup and shutdown time series to a certain component. `with_increments`: whether the
+elements should be increasing over time or constant. Version A: designed for
+`c_fixed_market_bid_cost`.
+"""
+function add_startup_shutdown_ts_a!(sys::System, with_increments::Bool)
     res_incr = with_increments ? 0.05 : 0.0
     interval_incr = with_increments ? 0.01 : 0.0
     unit1 = get_component(ThermalStandard, sys, "Test Unit1")
     @assert get_operation_cost(unit1) isa MarketBidCost
-    startup_ts_1 =
-        _make_deterministic_ts("start_up", (1.0, 1.5, 2.0), res_incr, interval_incr, 5)
+    startup_ts_1 = _make_deterministic_ts(
+        "start_up",
+        (1.0, 1.5, 2.0),
+        res_incr,
+        interval_incr,
+        5,
+        Hour(1),
+    )
     set_start_up!(sys, unit1, startup_ts_1)
-    shutdown_ts_1 = _make_deterministic_ts("shut_down", 0.5, res_incr, interval_incr, 5)
+    shutdown_ts_1 =
+        _make_deterministic_ts("shut_down", 0.5, res_incr, interval_incr, 5, Hour(1))
     set_shut_down!(sys, unit1, shutdown_ts_1)
     return startup_ts_1, shutdown_ts_1
 end
 
+"""
+Add startup and shutdown time series to a certain component. `with_increments`: whether the
+elements should be increasing over time or constant. Version B: designed for `c_sys5_pglib`.
+"""
+function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
+    res_incr = with_increments ? 0.05 : 0.0
+    interval_incr = with_increments ? 0.01 : 0.0
+    unit1 = get_component(ThermalMultiStart, sys, "115_STEAM_1")
+    @assert get_operation_cost(unit1) isa MarketBidCost
+    startup_ts_1 = _make_deterministic_ts(
+        "start_up",
+        (300.0, 450.0, 500.0),
+        res_incr,
+        interval_incr,
+        24,
+        Day(1),
+    )
+    set_start_up!(sys, unit1, startup_ts_1)
+    shutdown_ts_1 =
+        _make_deterministic_ts("shut_down", 100.0, res_incr, interval_incr, 24, Day(1))
+    set_shut_down!(sys, unit1, shutdown_ts_1)
+    return startup_ts_1, shutdown_ts_1
+end
+
+_read_one_value(res_uc, var_name, gentype, unit_name) =
+    combine(
+        vcat(values(read_variable(res_uc, var_name, gentype))...), unit_name .=> sum)[
+        1,
+        1,
+    ]
+
 "Run a simple simulation with the system and return information useful for testing time-varying startup and shutdown functionality"
-function run_startup_shutdown_sim(sys::System)
+function run_startup_shutdown_sim(sys::System; multistart::Bool = false)
+    gentype = multistart ? ThermalMultiStart : ThermalStandard
+    genname = multistart ? "115_STEAM_1" : "Test Unit1"
+
     template = ProblemTemplate(
         NetworkModel(
             CopperPlatePowerModel;
@@ -1134,6 +1180,8 @@ function run_startup_shutdown_sim(sys::System)
         ),
     )
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    multistart &&
+        set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
 
     model = DecisionModel(
@@ -1179,31 +1227,78 @@ function run_startup_shutdown_sim(sys::System)
 
     # Test correctness of written shutdown cost parameters
     # TODO test startup too once we are able to write those
-    sh_uc = read_parameter(res_uc, PSI.ShutdownCostParameter, PSY.ThermalStandard)
+    sh_uc = read_parameter(res_uc, PSI.ShutdownCostParameter, gentype)
     for (step_dt, step_df) in pairs(sh_uc)
         for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
-            comp = get_component(ThermalStandard, sys, gen_name)
+            comp = get_component(gentype, sys, gen_name)
             fc_comp =
                 get_shut_down(comp, PSY.get_operation_cost(comp); start_time = step_dt)
             @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
             @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
         end
     end
-    return model_, model, res_uc
+
+    switches = if multistart
+        (
+            _read_one_value(res_uc, PSI.HotStartVariable, gentype, genname),
+            _read_one_value(res_uc, PSI.WarmStartVariable, gentype, genname),
+            _read_one_value(res_uc, PSI.ColdStartVariable, gentype, genname),
+            _read_one_value(res_uc, PSI.StopVariable, gentype, genname),
+        )
+    else
+        (
+            _read_one_value(res_uc, PSI.StartVariable, gentype, genname),
+            _read_one_value(res_uc, PSI.StopVariable, gentype, genname),
+        )
+    end
+    return model_, model, res_uc, switches
+end
+
+"Read the relevant startup variables: no multistart case"
+_read_start_vars(::Val{false}, res_uc::PSI.SimulationProblemResults) =
+    read_variable(res_uc, PSI.StartVariable, ThermalStandard)
+
+"Read the relevant startup variables: yes multistart case"
+function _read_start_vars(::Val{true}, res_uc::PSI.SimulationProblemResults)
+    hot_vars = read_variable(res_uc, PSI.HotStartVariable, ThermalMultiStart)
+    warm_vars = read_variable(res_uc, PSI.WarmStartVariable, ThermalMultiStart)
+    cold_vars = read_variable(res_uc, PSI.ColdStartVariable, ThermalMultiStart)
+
+    @assert all(keys(hot_vars) .== keys(warm_vars))
+    @assert all(keys(hot_vars) .== keys(cold_vars))
+    @assert all(all(hot_vars[k][!, :DateTime] .== warm_vars[k][!, :DateTime]) for k in keys(hot_vars))
+    @assert all(all(hot_vars[k][!, :DateTime] .== cold_vars[k][!, :DateTime]) for k in keys(hot_vars))
+    # Make a dictionary of combined dataframes where the entries are (hot, warm, cold)
+    combined_vars = Dict(
+        k => DataFrame(
+            "DateTime" => hot_vars[k][!, :DateTime],
+            [
+                gen_name => [
+                    (hot, warm, cold) for (hot, warm, cold) in zip(
+                        hot_vars[k][!, gen_name],
+                        warm_vars[k][!, gen_name],
+                        cold_vars[k][!, gen_name],
+                    )
+                ] for gen_name in names(select(hot_vars[k], Not(:DateTime)))
+            ]...,
+        ) for k in keys(hot_vars)
+    )
+    return combined_vars
 end
 
 """
-Read startup and shutdown cost time series from a `System` and multiply by `StartVariable`
-and `StopVariable` in the `SimulationProblemResults` to determine the cost that should have
-been incurred by time-varying `MarketBidCost startup and shutdown costs.
+Read startup and shutdown cost time series from a `System` and multiply by relevant start
+and stop variables in the `SimulationProblemResults` to determine the cost that should have
+been incurred by time-varying `MarketBidCost` startup and shutdown costs. Must run
+separately for multistart vs. not.
 """
 function cost_due_to_time_varying_startup_shutdown(
     sys::System,
     res_uc::PSI.SimulationProblemResults;
-    gentype = PSY.ThermalStandard,
+    multistart = false,
 )
-    # TODO handle multi-start
-    start_vars = read_variable(res_uc, PSI.StartVariable, gentype)
+    gentype = multistart ? ThermalMultiStart : ThermalStandard
+    start_vars = _read_start_vars(Val(multistart), res_uc)
     stop_vars = read_variable(res_uc, PSI.StopVariable, gentype)
     result = SortedDict{DateTime, DataFrame}()
     @assert all(keys(start_vars) .== keys(stop_vars))
@@ -1214,7 +1309,7 @@ function cost_due_to_time_varying_startup_shutdown(
         @assert start_df[!, :DateTime] == stop_df[!, :DateTime]
         result[step_dt] = DataFrame(:DateTime => start_df[!, :DateTime])
         for gen_name in names(DataFrames.select(start_df, Not(:DateTime)))
-            comp = get_component(ThermalStandard, sys, gen_name)
+            comp = get_component(gentype, sys, gen_name)
             cost = PSY.get_operation_cost(comp)
             (cost isa PSY.MarketBidCost) || continue
             PSI.is_time_variant(get_start_up(cost)) || continue
@@ -1224,32 +1319,70 @@ function cost_due_to_time_varying_startup_shutdown(
 
             @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(startup_ts))
             @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(shutdown_ts))
+            startup_values = if multistart
+                TimeSeries.values(startup_ts)
+            else
+                getproperty.(TimeSeries.values(startup_ts), :hot)
+            end
             result[step_dt][!, gen_name] =
-                start_df[!, gen_name] .*
-                    getproperty.(TimeSeries.values(startup_ts), :hot) .+
+                LinearAlgebra.dot.(start_df[!, gen_name], startup_values) .+
                 stop_df[!, gen_name] .* TimeSeries.values(shutdown_ts)
         end
     end
     return result
 end
 
-@testset "MarketBidCost with time series startup and shutdown" begin
-    # The methodology here is: run a simulation where the startup and shutdown time series
-    # have constant values through time, then run a simulation where the values vary through
-    # time, then test that the objective value changes between the two simulations by the
-    # amount we expect at each step.
+"Modifies `c_sys5_pglib` to facilitate the exercise of the multi-start capability in a test simulation"
+function modify_sys_for_multistart!(sys::System, load_mult, therm_mult)
+    for load in get_components(PowerLoad, sys)
+        set_max_active_power!(load, get_max_active_power(load) * load_mult)
+    end
+    for therm in get_components(ThermalStandard, sys)
+        op_cost = get_operation_cost(therm)
+        prop = get_proportional_term(get_value_curve(get_variable(op_cost)))
+        set_variable!(op_cost, CostCurve(LinearCurve(prop * therm_mult)))
+    end
+end
 
-    sys1 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
-    add_startup_shutdown_ts!(sys1, false)
+function create_multistart_sys(with_increments::Bool, load_mult, therm_mult)
+    c_sys5_pglib = Logging.with_logger(Logging.NullLogger()) do
+        PSB.build_system(PSITestSystems, "c_sys5_pglib")
+    end
+    modify_sys_for_multistart!(c_sys5_pglib, load_mult, therm_mult)
+    sel = make_selector(ThermalMultiStart, "115_STEAM_1")
+    ms_comp = get_component(sel, c_sys5_pglib)
+    old_op = get_operation_cost(ms_comp)
+    inc = CostCurve(IncrementalCurve(get_value_curve(get_variable(old_op))))
+    set_operation_cost!(
+        ms_comp,
+        MarketBidCost(;
+            no_load_cost = get_fixed(old_op),
+            start_up = get_start_up(old_op),
+            shut_down = get_shut_down(old_op),
+            incremental_offer_curves = inc,
+        ),
+    )
+    add_startup_shutdown_ts_b!(c_sys5_pglib, with_increments)
+    return c_sys5_pglib
+end
 
-    sys2 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
-    add_startup_shutdown_ts!(sys2, true)
+"""
+The methodology here is: run a simulation where the startup and shutdown time series have
+constant values through time, then run a nearly identical simulation where the values vary
+very slightly through time, not enough to affect the decisions but enough to affect the
+objective value, then compare the size of the objective value change to an expectation
+computed manually.
+"""
+function run_obj_fun_test(sys1, sys2; multistart::Bool = false)
+    model1_, model1, res_uc1, switches1 =
+        run_startup_shutdown_sim(sys1; multistart = multistart)
+    model2_, model2, res_uc2, switches2 =
+        run_startup_shutdown_sim(sys2; multistart = multistart)
 
-    model1_, model1, res_uc1 = run_startup_shutdown_sim(sys1)
-    model2_, model2, res_uc2 = run_startup_shutdown_sim(sys2)
-
-    ground_truth_1 = cost_due_to_time_varying_startup_shutdown(sys1, res_uc1)
-    ground_truth_2 = cost_due_to_time_varying_startup_shutdown(sys2, res_uc2)
+    ground_truth_1 =
+        cost_due_to_time_varying_startup_shutdown(sys1, res_uc1; multistart = multistart)
+    ground_truth_2 =
+        cost_due_to_time_varying_startup_shutdown(sys2, res_uc2; multistart = multistart)
     @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
 
     # Sum across components, time periods to get one value per step
@@ -1267,7 +1400,36 @@ end
     obj2 = PSI.read_optimizer_stats(res_uc2)[!, "objective_value"]
     obj_diff = obj2 .- obj1
 
-    @test all(isapprox.(obj_diff, ground_truth))
+    @test all(isapprox.(obj_diff, ground_truth; atol = 0.0001))
+    return switches1, switches2
+end
+
+@testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
+    sys1 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    add_startup_shutdown_ts_a!(sys1, false)
+    sys2 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    add_startup_shutdown_ts_a!(sys2, true)
+    (switches1, switches2) = run_obj_fun_test(sys1, sys2)
+    @test all(isapprox.(switches1, (2.0, 3.0)))
+    @test all(isapprox.(switches1, switches2))
+end
+
+@testset "MarketBidCost with time series startup and shutdown, ThermalMultiStart" begin
+    # Scenario 1: hot and warm starts
+    c_sys5_pglib1 = create_multistart_sys(false, 1.0, 7.5)
+    c_sys5_pglib2 = create_multistart_sys(true, 1.0, 7.5)
+    (switches1, switches2) =
+        run_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
+    @test all(isapprox.(switches1, (2.0, 1.0, 0.0, 3.0)))
+    @test all(isapprox.(switches1, switches2))
+
+    # Scenario 2: hot and cold starts
+    c_sys5_pglib1 = create_multistart_sys(false, 1.05, 7.5)
+    c_sys5_pglib2 = create_multistart_sys(true, 1.05, 7.5)
+    (switches1, switches2) =
+        run_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
+    @test all(isapprox.(switches1, (1.0, 0.0, 1.0, 1.0)))
+    @test all(isapprox.(switches1, switches2))
 end
 
 @testset "Thermal UC With Slack on Ramps" begin
