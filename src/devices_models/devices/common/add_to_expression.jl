@@ -664,7 +664,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: PTDFOutagesBranchFlow,
+    T <: PTDFPostContingencyBranchFlow,
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
@@ -673,7 +673,7 @@ function add_to_expression!(
     time_steps = get_time_steps(container)
 
     if !isempty(branches_outages)
-        container.expressions[ExpressionKey(PTDFOutagesBranchFlow, V)] =
+        container.expressions[ExpressionKey(PTDFPostContingencyBranchFlow, V)] =
             _make_container_array(
                 get_name.(branches_outages),
                 get_name.(branches),
@@ -683,7 +683,7 @@ function add_to_expression!(
 
     expressions = get_expression(
         container,
-        ExpressionKey(PTDFOutagesBranchFlow, V, IS.Optimization.CONTAINER_KEY_EMPTY_META),
+        ExpressionKey(PTDFPostContingencyBranchFlow, V, IS.Optimization.CONTAINER_KEY_EMPTY_META),
     )
     lodf = get_LODF_matrix(network_model)
 

@@ -337,6 +337,7 @@ export ProductionCostExpression
 export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
+export PTDFPostContingencyBranchFlow
 
 #################################################################################
 # Imports
