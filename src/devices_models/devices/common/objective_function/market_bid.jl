@@ -27,14 +27,12 @@ _has_startup_time_series(device::PSY.StaticInjection) =
 _has_shutdown_time_series(device::PSY.StaticInjection) =
     PSY.get_shut_down(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
 
-function construct_market_bid!(
+function add_market_bid_parameters!(
     container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
+    devices,
     model::DeviceModel,
 )
-    devices = collect(get_available_components(model, sys))
-
+    devices = collect(devices)  # no `filter` for `FlattenIteratorWrapper`
     if _consider_startup_time_series(container, model)
         startup_devices =
             filter(x -> _has_market_bid_cost(x) && _has_startup_time_series(x), devices)
@@ -51,14 +49,6 @@ function construct_market_bid!(
         end
     end
 end
-
-# TODO stub for later implementation
-construct_market_bid!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel,
-) = nothing
 
 ##################################################
 ################# PWL Variables ##################

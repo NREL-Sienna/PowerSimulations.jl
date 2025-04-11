@@ -1266,8 +1266,14 @@ function _read_start_vars(::Val{true}, res_uc::PSI.SimulationProblemResults)
 
     @assert all(keys(hot_vars) .== keys(warm_vars))
     @assert all(keys(hot_vars) .== keys(cold_vars))
-    @assert all(all(hot_vars[k][!, :DateTime] .== warm_vars[k][!, :DateTime]) for k in keys(hot_vars))
-    @assert all(all(hot_vars[k][!, :DateTime] .== cold_vars[k][!, :DateTime]) for k in keys(hot_vars))
+    @assert all(
+        all(hot_vars[k][!, :DateTime] .== warm_vars[k][!, :DateTime]) for
+        k in keys(hot_vars)
+    )
+    @assert all(
+        all(hot_vars[k][!, :DateTime] .== cold_vars[k][!, :DateTime]) for
+        k in keys(hot_vars)
+    )
     # Make a dictionary of combined dataframes where the entries are (hot, warm, cold)
     combined_vars = Dict(
         k => DataFrame(
