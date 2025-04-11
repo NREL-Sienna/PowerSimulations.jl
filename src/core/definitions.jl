@@ -41,7 +41,7 @@ const TwoTerminalHVDCTypes =
     Union{PSY.TwoTerminalGenericHVDCLine, PSY.TwoTerminalVSCLine, PSY.TwoTerminalLCCLine}
 
 const OutagesSCUC =
-    Union{PSY.GeometricDistributionForcedOutage, PSY.TimeSeriesForcedOutage}
+    Union{PSY.GeometricDistributionForcedOutage, PSY.PlannedOutage}
 # Settings constants
 const UNSET_HORIZON = Dates.Millisecond(0)
 const UNSET_RESOLUTION = Dates.Millisecond(0)
