@@ -221,6 +221,14 @@ Docs abbreviation: ``\\ell``
 """
 struct HVDCLosses <: VariableType end
 
+# Necessary as a work around for HVDCTwoTerminal models with losses
+"""
+Struct to dispatch the creation of HVDC Losses Auxiliary Variables
+
+Docs abbreviation: ``\\ell``
+"""
+struct ACLosses <: VariableType end
+
 """
 Struct to dispatch the creation of HVDC Flow Direction Auxiliary Variables
 

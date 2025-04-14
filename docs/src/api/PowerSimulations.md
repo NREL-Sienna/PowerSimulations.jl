@@ -187,6 +187,7 @@ FlowReactivePowerFromToVariable
 FlowReactivePowerToFromVariable
 PhaseShifterAngle
 HVDCLosses
+ACLosses
 HVDCFlowDirectionVariable
 VoltageMagnitude
 VoltageAngle
