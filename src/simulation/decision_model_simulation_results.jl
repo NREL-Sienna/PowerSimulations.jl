@@ -484,6 +484,37 @@ function get_realized_timestamps(
     return requested_range
 end
 
+function get_realized_timestamps(
+    res::SimulationProblemResults;
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
+    len::Union{Int, Nothing} = nothing,
+)
+    timestamps = get_timestamps(res)
+    resolution = get_resolution(res)
+    interval = get_interval(res)
+    horizon = get_forecast_horizon(res)
+    start_time = isnothing(start_time) ? first(timestamps) : start_time
+    end_time =
+        if isnothing(len)
+            last(timestamps) + interval - resolution
+        else
+            start_time + (len - 1) * resolution
+        end
+
+    requested_range = start_time:resolution:end_time
+    available_range =
+        first(timestamps):resolution:(last(timestamps) + (horizon - 1) * resolution)
+    invalid_timestamps = setdiff(requested_range, available_range)
+
+    if !isempty(invalid_timestamps)
+        msg = "Requested time does not match available results"
+        @error msg
+        throw(IS.InvalidValue(msg))
+    end
+
+    return requested_range
+end
+
 """
 High-level function to read a DataFrame of results.
 

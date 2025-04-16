@@ -244,6 +244,7 @@ export PowerFlowVoltageAngle
 export PowerFlowVoltageMagnitude
 export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom
 export PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom
+export PowerFlowLossFactors
 
 # Constraints
 export AbsoluteValueConstraint

@@ -2,8 +2,10 @@
 const PF_INPUT_KEY_PRECEDENCES = Dict(
     :active_power => [ActivePowerVariable, PowerOutput, ActivePowerTimeSeriesParameter],
     :reactive_power => [ReactivePowerVariable, ReactivePowerTimeSeriesParameter],
-    :voltage_angle => [PowerFlowVoltageAngle],
-    :voltage_magnitude => [PowerFlowVoltageMagnitude],
+    :voltage_angle_export => [PowerFlowVoltageAngle, VoltageAngle],
+    :voltage_magnitude_export => [PowerFlowVoltageMagnitude, VoltageMagnitude],
+    :voltage_angle_opf => [VoltageAngle],
+    :voltage_magnitude_opf => [VoltageMagnitude],
 )
 
 const RELEVANT_COMPONENTS_SELECTOR =
@@ -37,9 +39,9 @@ pf_input_keys(::PFS.PTDFPowerFlowData) =
 pf_input_keys(::PFS.vPTDFPowerFlowData) =
     [:active_power]
 pf_input_keys(::PFS.ACPowerFlowData) =
-    [:active_power, :reactive_power]
+    [:active_power, :reactive_power, :voltage_angle_opf, :voltage_magnitude_opf]
 pf_input_keys(::PFS.PSSEExporter) =
-    [:active_power, :reactive_power, :voltage_angle, :voltage_magnitude]
+    [:active_power, :reactive_power, :voltage_angle_export, :voltage_magnitude_export]
 
 # Maps the StaticInjection component type by name to the
 # index in the PowerFlow data arrays going from Bus number to bus index
@@ -53,6 +55,12 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
         bus_number = PSY.get_number(PSY.get_bus(comp))
         bus_dict[get_name(comp)] = bus_lookup[bus_number]
     end
+    # we need this to be able to export the voltage magnitude and voltage angles to data
+    temp_component_map[PSY.ACBus] =
+        Dict(
+            PSY.get_name(c) => bus_lookup[PSY.get_number(c)] for
+            c in get_components(PSY.ACBus, sys)
+        )
     return temp_component_map
 end
 
@@ -145,14 +153,21 @@ branch_aux_vars(::PFS.vPTDFPowerFlowData) =
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
-bus_aux_vars(::PFS.ACPowerFlowData) = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+bus_aux_vars(data::PFS.ACPowerFlowData) =
+    if data.calculate_loss_factors
+        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude, PowerFlowLossFactors]
+    else
+        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+    end
 bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
 bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 
-_get_branch_component_tuples(pfd::PFS.PowerFlowData) =
-    zip(PFS.get_branch_type(pfd), keys(PFS.get_branch_lookup(pfd)))
+function _get_branch_component_tuples(pfd::PFS.PowerFlowData)
+    branch_types = PFS.get_branch_type(pfd)
+    return [(branch_types[val], key) for (key, val) in pairs(PFS.get_branch_lookup(pfd))]
+end
 
 _get_branch_component_tuples(pfd::PFS.SystemPowerFlowContainer) = [
     (typeof(c), get_name(c)) for
@@ -249,6 +264,22 @@ _update_pf_data_component!(
     t,
     value,
 ) = (pf_data.bus_reactivepower_withdrawals[index, t] -= value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
+    ::Type{<:PSY.ACBus},
+    index,
+    t,
+    value,
+) = (pf_data.bus_angles[index, t] = value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Union{Val{:voltage_magnitude_export}, Val{:voltage_magnitude_opf}},
+    ::Type{<:PSY.ACBus},
+    index,
+    t,
+    value,
+) = (pf_data.bus_magnitude[index, t] = value)
 
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
@@ -295,9 +326,21 @@ _update_component!(comp::PSY.Component, ::Val{:active_power}, value) =
 # Sign is flipped for loads (TODO can we rely on some existing function that encodes this information?)
 _update_component!(comp::PSY.ElectricLoad, ::Val{:active_power}, value) =
     (comp.active_power = -value)
-_update_component!(comp::PSY.Component, ::Val{:voltage_angle}, value) =
+_update_component!(comp::PSY.Component, ::Val{:reactive_power}, value) =
+    (comp.reactive_power = value)
+_update_component!(comp::PSY.ElectricLoad, ::Val{:reactive_power}, value) =
+    (comp.reactive_power = -value)
+_update_component!(
+    comp::PSY.ACBus,
+    ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
+    value,
+) =
     comp.angle = value
-_update_component!(comp::PSY.Component, ::Val{:voltage_magnitude}, value) =
+_update_component!(
+    comp::PSY.ACBus,
+    ::Union{Val{:voltage_magnitude_export}, Val{:voltage_magnitude_opf}},
+    value,
+) =
     comp.magnitude = value
 
 function update_pf_system!(
@@ -385,6 +428,8 @@ _get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowDat
     PFS.get_branch_activepower_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_activepower_flow_to_from(pf_data)
+_get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
+    pf_data.loss_factors
 
 _get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
 _get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =

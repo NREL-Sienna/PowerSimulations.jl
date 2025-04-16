@@ -1012,7 +1012,11 @@ function load_pf_export(root, export_subdir)
     return sys
 end
 
-@testset "Test power flow in the loop" begin
+read_result_names(results, key::PSI.OptimizationContainerKey) =
+    Set(names(only(values(PSI.read_results_with_keys(results, [key])))[!, Not(:DateTime)]))
+
+@testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
+                                                                               (true, false)
     file_path = mktempdir(; cleanup = true)
     export_path = mktempdir(; cleanup = true)
     pf_path = mktempdir(; cleanup = true)
@@ -1030,6 +1034,7 @@ end
             power_flow_evaluation =
             ACPowerFlow(;
                 exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
+                calculate_loss_factors = calculate_loss_factors,
             ),
         ),
     )
@@ -1043,6 +1048,24 @@ end
     )
     first_result = first(thermal_results)
     last_result = last(thermal_results)
+
+    available_aux_variables = list_aux_variable_keys(results_ed)
+    loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
+
+    # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
+    if calculate_loss_factors
+        @test loss_factors_aux_var_key ∈ available_aux_variables
+        loss_factors = first(
+            values(
+                PSI.read_results_with_keys(results_ed,
+                    [loss_factors_aux_var_key]),
+            ),
+        )
+        @test !isnothing(loss_factors)
+        @test nrow(loss_factors) == 48 * 12
+    else
+        @test loss_factors_aux_var_key ∉ available_aux_variables
+    end
 
     @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
     first_export = load_pf_export(pf_path, "export_1_1")
@@ -1060,4 +1083,52 @@ end
             get_active_power(get_component(ThermalStandard, last_export, gen_name))
         @test isapprox(this_last_result, this_last_exported)
     end
+end
+
+@testset "Test DC power flow in the loop setup: RTS ED, PTDF, no export" begin
+    sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, Line, StaticBranchUnbounded)
+    set_network_model!(
+        template_ed,
+        NetworkModel(
+            PTDFPowerModel;
+            use_slacks = true,
+            PTDF_matrix = PTDF(sys_rts_rt),
+            power_flow_evaluation = DCPowerFlow(),
+        ),
+    )
+    model = DecisionModel(template_ed, sys_rts_rt; name = "ED", optimizer = HiGHS_optimizer)
+    output_dir = mktempdir(; cleanup = true)
+    build_out = build!(model; output_dir = output_dir, console_level = Logging.Error)
+    @test build_out == PSI.ModelBuildStatus.BUILT
+    execute_out = solve!(model; in_memory = true)
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    results = OptimizationProblemResults(model)
+
+    # Test correspondence between buses in system and buses in power flow in the loop
+    sys_buses = Set(string.(get_number.(get_components(ACBus, sys_rts_rt))))
+    pfe_buses = read_result_names(results, PSI.AuxVarKey(PowerFlowVoltageAngle, ACBus))
+    @test sys_buses == pfe_buses
+
+    # Test correspondence between system and branches in power flow in the loop
+    branch_sel = rebuild_selector(make_selector(
+            make_selector.(PNM.get_ac_branches(sys_rts_rt))...); groupby = typeof)
+    for group in get_groups(branch_sel, sys_rts_rt)
+        sys_branches = Set(get_name.(get_components(group, sys_rts_rt)))
+        pfe_branches = read_result_names(
+            results,
+            PSI.AuxVarKey(
+                PowerFlowLineActivePowerFromTo,
+                getproperty(PSY, Symbol(get_name(group)))),
+        )
+        @test length(sys_branches) == length(pfe_branches)
+        @test sys_branches == pfe_branches
+    end
+
+    # Test correspondence between lines in optimization problem and lines in power flow in the loop
+    opt_names = read_result_names(results, PSI.VariableKey(FlowActivePowerVariable, Line))
+    pfe_names = read_result_names(results,
+        PSI.AuxVarKey(PowerFlowLineActivePowerFromTo, Line))
+    @test opt_names == pfe_names
 end
