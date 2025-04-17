@@ -1,3 +1,4 @@
+# TODO call this for non-thermal generators too?
 function _handle_common_thermal_parameters!(
     container::OptimizationContainer,
     devices,

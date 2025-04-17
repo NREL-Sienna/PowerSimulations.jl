@@ -177,13 +177,13 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-const _ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
+const ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
     value::T,
     ixs::Tuple,
-) where {T <: _ValidDataParamEltypes}
+) where {T <: ValidDataParamEltypes}
     array[ixs...] = value
     return
 end
@@ -216,7 +216,7 @@ end
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::_ValidDataParamEltypes,
+    parameter::ValidDataParamEltypes,
     ixs...,
 )
     param_array = get_parameter_array(container)

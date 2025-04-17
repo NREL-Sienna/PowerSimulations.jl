@@ -220,14 +220,11 @@ function update_variable_cost!(
 ) where {T, U <: PSY.Component}
     component_name = PSY.get_name(component)
     cost_data = parameter_array[component_name, time_period]
-    # TODO is this really correct? If it's zero now we can just leave it, it won't keep the value from last round?
-    # if iszero(cost_data)
-    #     return
-    # end
     mult_ = parameter_multiplier[component_name, time_period]
     for MyVariableType in get_variable_types(attributes)
         variable = get_variable(container, MyVariableType(), U)
         my_cost_data = _index_into_param(cost_data, MyVariableType())
+        iszero(my_cost_data) && continue
         cost_expr = variable[component_name, time_period] * my_cost_data * mult_
         add_to_objective_variant_expression!(container, cost_expr)
         set_expression!(
