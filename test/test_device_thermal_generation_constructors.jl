@@ -70,19 +70,28 @@ end
 
 #TODO: timeseries market_bid_cost
 @testset "Test Thermal Generation MarketBidCost models" begin
-    test_cases = [("fixed_market_bid_cost", 20772.76)
-    #"market_bid_cost",
+    test_cases = [
+        ("Base case", "fixed_market_bid_cost", 20532.76, 30.0, 30.0),
+        ("Greater initial input, no load", "fixed_market_bid_cost", 20532.76, 31.0, 31.0),
+        ("Greater initial input only", "fixed_market_bid_cost", 20532.76, 30.0, 31.0),
     ]
-    for (i, cost_reference) in test_cases
-        @testset "$i" begin
-            sys = build_system(PSITestSystems, "c_$(i)")
+    for (name, sys_name, cost_reference, my_no_load, my_initial_input) in test_cases
+        @testset "$name" begin
+            sys = build_system(PSITestSystems, "c_$(sys_name)")
+            unit1 = get_component(ThermalStandard, sys, "Test Unit1")
+            old_fd = get_function_data(
+                get_value_curve(get_incremental_offer_curves(get_operation_cost(unit1))),
+            )
+            new_vc = PiecewiseIncrementalCurve(old_fd, my_initial_input, my_no_load)
+            set_incremental_offer_curves!(get_operation_cost(unit1), CostCurve(new_vc))
+            set_no_load_cost!(get_operation_cost(unit1), my_no_load)
             template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
             set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
             set_device_model!(template, PowerLoad, StaticPowerLoad)
             model = DecisionModel(
                 template,
                 sys;
-                name = "UC_$(i)",
+                name = "UC_$(sys_name)",
                 optimizer = HiGHS_optimizer,
                 system_to_file = false,
                 optimizer_solve_log_print = true,
@@ -92,8 +101,13 @@ end
             results = OptimizationProblemResults(model)
             expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
             var_unit_cost = sum(expr[!, "Test Unit1"])
-            @test isapprox(var_unit_cost, cost_reference; atol = 1)
-            @test expr[!, "Test Unit2"][end] == 50.0
+            unit_cost_due_to_initial =
+                sum(.~iszero.(expr[!, "Test Unit1"]) .* my_initial_input)
+            @test isapprox(
+                var_unit_cost,
+                cost_reference + unit_cost_due_to_initial;
+                atol = 1,
+            )
         end
     end
 end

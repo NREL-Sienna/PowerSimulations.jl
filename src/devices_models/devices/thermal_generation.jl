@@ -91,10 +91,12 @@ function proportional_cost(container::OptimizationContainer, cost::PSY.ThermalGe
 end
 
 function proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
+    # TODO handle time series case
     return proportional_cost(cost, S, T, U)
 end
 
-proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
+proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) =
+    PSY.get_initial_input(PSY.get_incremental_offer_curves(cost))
 
 proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{RateofChangeConstraintSlackUp, RateofChangeConstraintSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
 
