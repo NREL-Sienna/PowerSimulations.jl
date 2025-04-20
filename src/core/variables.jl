@@ -13,6 +13,12 @@ Docs abbreviation: ``\\Delta p``
 struct PowerAboveMinimumVariable <: VariableType end
 
 """
+Struct to dispatch the creation of Active Power Deviation Variables for Post-Contingency formulations
+Docs abbreviation: ``p^\\text{dev}``
+"""
+struct ActivePowerDeviationVariable <: VariableType end
+
+"""
 Struct to dispatch the creation of Active Power Input Variables for 2-directional devices. For instance storage or pump-hydro
 
 Docs abbreviation: ``p^\\text{in}``

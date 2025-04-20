@@ -290,6 +290,10 @@ struct PostContingencyRateLimitConstraintB <: ConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
+
+#TODO: add docstring
+struct PostContingencyPowerBalanceConstraint <: ConstraintType end
+
 """
 Struct to create the constraint for satisfying active power reserve requirements.
 For more information check [Service Formulations](@ref service_formulations).
