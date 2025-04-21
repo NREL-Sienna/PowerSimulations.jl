@@ -45,7 +45,7 @@ end
         device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
         mock_construct_device!(model, device_model)
-        moi_tests(model, 48, 0, 24, 0, 0, true)
+        moi_tests(model, 48, 0, 48, 0, 0, true)
         psi_checkobjfun_test(model, GAEVF)
     end
 end
@@ -58,7 +58,7 @@ end
         device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
         mock_construct_device!(model, device_model)
-        moi_tests(model, 72, 0, 24, 0, 24, true)
+        moi_tests(model, 72, 0, 48, 0, 24, true)
         psi_checkobjfun_test(model, GAEVF)
     end
 end
