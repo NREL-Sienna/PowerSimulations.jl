@@ -201,6 +201,14 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        ActivePowerVariableLimitsConstraint,
+        OnVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -262,6 +270,14 @@ function construct_device!(
         container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        OnVariable,
         devices,
         model,
         network_model,
