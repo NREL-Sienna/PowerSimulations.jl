@@ -264,6 +264,28 @@ function _add_time_series_parameters!(
     return
 end
 
+# Layer of indirection to deal with the fact that some time series names are stored in the component
+_get_time_series_name(::T, ::PSY.Component, model::DeviceModel) where {T <: ParameterType} =
+    get_time_series_names(model)[T]
+
+_get_time_series_name(::StartupCostParameter, device::PSY.Component, ::DeviceModel) =
+    get_name(PSY.get_start_up(PSY.get_operation_cost(device)))
+
+_get_time_series_name(::ShutdownCostParameter, device::PSY.Component, ::DeviceModel) =
+    get_name(PSY.get_shut_down(PSY.get_operation_cost(device)))
+
+# Layer of indirection to figure out what eltype we expect to find in various time series
+# (we could just read the time series and figure it out dynamically if this becomes too brittle)
+_get_expected_time_series_eltype(::T) where {T <: ParameterType} = Float64
+_get_expected_time_series_eltype(::StartupCostParameter) = NTuple{3, Float64}
+
+# Lookup that defines which variables the ObjectiveFunctionParameter corresponds to
+_param_to_vars(::FuelCostParameter, ::AbstractDeviceFormulation) = (ActivePowerVariable,)
+_param_to_vars(::StartupCostParameter, ::AbstractThermalFormulation) = (StartVariable,)
+_param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
+    MULTI_START_VARIABLES
+_param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
+
 function _add_parameters!(
     container::OptimizationContainer,
     param::T,
@@ -281,9 +303,11 @@ function _add_parameters!(
         )
     end
     time_steps = get_time_steps(container)
-    ts_name = get_time_series_names(model)[T]
     device_names =
-        [PSY.get_name(x) for x in devices if PSY.has_time_series(x, ts_type, ts_name)]
+        [
+            PSY.get_name(x) for x in devices if
+            PSY.has_time_series(x, ts_type, _get_time_series_name(T(), x, model))
+        ]
     if isempty(device_names)
         return
     end
@@ -293,15 +317,16 @@ function _add_parameters!(
         container,
         param,
         D,
-        ActivePowerVariable,
+        _param_to_vars(T(), W()),
         PSI.SOSStatusVariable.NO_VARIABLE,
         false,
-        Float64,
+        _get_expected_time_series_eltype(T()),
         device_names,
         time_steps,
     )
 
     for device in devices
+        ts_name = _get_time_series_name(T(), device, model)
         if !PSY.has_time_series(device, ts_type, ts_name)
             continue
         end

@@ -1,3 +1,16 @@
+# TODO call this for non-thermal generators too?
+function _handle_common_thermal_parameters!(
+    container::OptimizationContainer,
+    devices,
+    model::DeviceModel,
+)
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
+    add_market_bid_parameters!(container, devices, model)
+end
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -60,9 +73,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -198,9 +209,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -319,9 +329,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -464,9 +473,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -587,9 +595,7 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -715,9 +721,7 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -826,9 +830,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -938,9 +940,7 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1055,9 +1055,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1230,9 +1229,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1396,9 +1394,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1545,9 +1542,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1689,9 +1685,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1834,9 +1829,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_to_expression!(
         container,
@@ -1960,9 +1954,7 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, model)
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_feedforward_arguments!(container, model, devices)
 
@@ -2094,9 +2086,7 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, model)
 
-    if haskey(get_time_series_names(model), FuelCostParameter)
-        add_parameters!(container, FuelCostParameter, devices, model)
-    end
+    _handle_common_thermal_parameters!(container, devices, model)
 
     add_feedforward_arguments!(container, model, devices)
 

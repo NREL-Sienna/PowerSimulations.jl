@@ -106,20 +106,35 @@ has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitm
 
 objective_function_multiplier(::VariableType, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
-shut_down_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
-shut_down_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
-
 sos_status(::PSY.ThermalGen, ::AbstractThermalDispatchFormulation)=SOSStatusVariable.NO_VARIABLE
 sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
 
-start_up_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-# If the formulation used ignores start up costs, the model ignores that data.
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
+# Startup cost interpretations!
+# Validators: check that the types match (formulation is optional) and redirect to the simpler methods
+start_up_cost(cost, ::PSY.ThermalGen, ::T, ::Union{AbstractThermalFormulation, Nothing} = nothing) where {T <: StartVariable} =
+    start_up_cost(cost, T())
+start_up_cost(cost, ::PSY.ThermalMultiStart, ::T, ::ThermalMultiStartUnitCommitment = ThermalMultiStartUnitCommitment()) where {T <: MultiStartVariable} =
+    start_up_cost(cost, T())
+
+# Implementations: given a single number, tuple, or StartUpStages and a variable, do the right thing
+# Single number to anything
+start_up_cost(cost::Float64, ::StartVariable) = cost
+# TODO in the case where we have a single number startup cost and we're modeling a multi-start, do we set all the values to that number?
+start_up_cost(cost::Float64, ::T) where {T <: MultiStartVariable} =
+    start_up_cost((hot = cost, warm = cost, cold = cost), T())
+
+# 3-tuple to anything
+start_up_cost(cost::NTuple{3, Float64}, ::T) where {T <: VariableType} =
+    start_up_cost(StartUpStages(cost), T())
+
+# `StartUpStages` to anything
+start_up_cost(cost::StartUpStages, ::ColdStartVariable) = cost.cold
+start_up_cost(cost::StartUpStages, ::WarmStartVariable) = cost.warm
+start_up_cost(cost::StartUpStages, ::HotStartVariable) = cost.hot
+# TODO in the opposite case, do we want to get the maximum or the hot?
+start_up_cost(cost::StartUpStages, ::StartVariable) = maximum(cost)
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
@@ -1486,7 +1501,7 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {U <: ThermalMultiStartUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
-    for var_type in START_VARIABLES
+    for var_type in MULTI_START_VARIABLES
         add_start_up_cost!(container, var_type(), devices, U())
     end
     add_shut_down_cost!(container, StopVariable(), devices, U())

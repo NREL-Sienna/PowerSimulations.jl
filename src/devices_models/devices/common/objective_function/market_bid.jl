@@ -1,4 +1,56 @@
 ##################################################
+################ PWL Parameters  #################
+##################################################
+
+# Determines whether we care about startup and shutdown costs, given the formulation
+# NOTE: currently works based on what has already been added to the container;
+# alternatively we could dispatch on the formulation directly
+_consider_startup_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    any(
+        haskey.(
+            [get_variables(container)],
+            VariableKey.([StartVariable, MULTI_START_VARIABLES...], [T])),
+    )
+_consider_shutdown_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    haskey(get_variables(container), VariableKey(StopVariable, T))
+
+_has_market_bid_cost(device::PSY.StaticInjection) =
+    PSY.get_operation_cost(device) isa PSY.MarketBidCost
+_has_startup_time_series(device::PSY.StaticInjection) =
+    PSY.get_start_up(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+_has_shutdown_time_series(device::PSY.StaticInjection) =
+    PSY.get_shut_down(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+
+function add_market_bid_parameters!(
+    container::OptimizationContainer,
+    devices,
+    model::DeviceModel,
+)
+    devices = collect(devices)  # no `filter` for `FlattenIteratorWrapper`
+    if _consider_startup_time_series(container, model)
+        startup_devices =
+            filter(x -> _has_market_bid_cost(x) && _has_startup_time_series(x), devices)
+        if length(startup_devices) > 0
+            add_parameters!(container, StartupCostParameter, startup_devices, model)
+        end
+    end
+
+    if _consider_shutdown_time_series(container, model)
+        shutdown_devices =
+            filter(x -> _has_market_bid_cost(x) && _has_shutdown_time_series(x), devices)
+        if length(shutdown_devices) > 0
+            add_parameters!(container, ShutdownCostParameter, shutdown_devices, model)
+        end
+    end
+end
+
+##################################################
 ################# PWL Variables ##################
 ##################################################
 

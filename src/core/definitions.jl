@@ -4,7 +4,6 @@ const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
 const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
-const StartUpStages = NamedTuple{(:hot, :warm, :cold), NTuple{3, Float64}}
 
 const BUILD_PROBLEMS_TIMER = TimerOutputs.TimerOutput()
 const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
@@ -36,6 +35,8 @@ const JuMPVariableMatrix = DenseAxisArray{
 const JuMPFloatMatrix = DenseAxisArray{Float64, 2}
 const JuMPFloatArray = DenseAxisArray{Float64}
 const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
+const JumpSupportedLiterals =
+    Union{Number, Vector{<:Tuple{Number, Number}}, Tuple{Vararg{Number}}}
 
 const TwoTerminalHVDCTypes =
     Union{PSY.TwoTerminalGenericHVDCLine, PSY.TwoTerminalVSCLine, PSY.TwoTerminalLCCLine}
