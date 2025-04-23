@@ -636,14 +636,20 @@ function _make_flow_expressions!(
     jump_model = get_jump_model(container)
 
     tasks = map(branches) do name
-        ptdf_col = ptdf[name, :]
-        Threads.@spawn _make_flow_expressions!(
-            jump_model,
-            name,
-            time_steps,
-            ptdf_col,
-            nodal_balance_expressions.data,
-        )
+        try
+            ptdf_col = ptdf[name, :]
+        catch e
+
+            @error "Failed to generate PTDF column values for Line $name"
+            rethrow(e)
+        end
+            Threads.@spawn _make_flow_expressions!(
+                jump_model,
+                name,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions.data,
+            )
     end
     for task in tasks
         name, expressions = fetch(task)
