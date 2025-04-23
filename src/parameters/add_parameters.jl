@@ -274,6 +274,10 @@ _get_time_series_name(::StartupCostParameter, device::PSY.Component, ::DeviceMod
 _get_time_series_name(::ShutdownCostParameter, device::PSY.Component, ::DeviceModel) =
     get_name(PSY.get_shut_down(PSY.get_operation_cost(device)))
 
+# TODO handle the decremental case
+_get_time_series_name(::CostAtMinParameter, device::PSY.Generator, ::DeviceModel) =
+    get_name(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
+
 # Layer of indirection to figure out what eltype we expect to find in various time series
 # (we could just read the time series and figure it out dynamically if this becomes too brittle)
 _get_expected_time_series_eltype(::T) where {T <: ParameterType} = Float64
@@ -285,6 +289,7 @@ _param_to_vars(::StartupCostParameter, ::AbstractThermalFormulation) = (StartVar
 _param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
     MULTI_START_VARIABLES
 _param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
+_param_to_vars(::CostAtMinParameter, ::AbstractDeviceFormulation) = (OnVariable,)
 
 function _add_parameters!(
     container::OptimizationContainer,

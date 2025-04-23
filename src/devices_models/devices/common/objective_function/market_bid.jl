@@ -2,7 +2,7 @@
 ################ PWL Parameters  #################
 ##################################################
 
-# Determines whether we care about startup and shutdown costs, given the formulation
+# Determines whether we care about various types of costs, given the formulation
 # NOTE: currently works based on what has already been added to the container;
 # alternatively we could dispatch on the formulation directly
 _consider_startup_time_series(
@@ -20,34 +20,85 @@ _consider_shutdown_time_series(
 ) where {T, D} =
     haskey(get_variables(container), VariableKey(StopVariable, T))
 
+_consider_initial_input_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    haskey(get_variables(container), VariableKey(OnVariable, T))
+
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 _has_startup_time_series(device::PSY.StaticInjection) =
-    PSY.get_start_up(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+    is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 _has_shutdown_time_series(device::PSY.StaticInjection) =
-    PSY.get_shut_down(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+    is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(device)))
+_has_incremental_initial_input_time_series(device::PSY.StaticInjection) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
+
+function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
+    cost = PSY.get_operation_cost(device)::PSY.MarketBidCost
+    ts_initial = is_time_variant(
+        if decremental
+            PSY.get_decremental_initial_input(cost)
+        else
+            PSY.get_incremental_initial_input(cost)
+        end,
+    )
+    ts_variable = is_time_variant(
+        if decremental
+            PSY.get_decremental_offer_curves(cost)
+        else
+            PSY.get_incremental_offer_curves(cost)
+        end,
+    )
+    label = decremental ? "decremental" : "incremental"
+
+    (ts_initial && !ts_variable) &&
+        @warn "In `MarketBidCost` for $(get_name(device)), found time series for `$(label)_initial_input` but not `$(label)_offer_curves`; will ignore `initial_input` of `$(label)_offer_curves"
+    (ts_variable && !ts_initial) &&
+        throw(
+            ArgumentError(
+                "In `MarketBidCost` for $(get_name(device)), if providing time series for `$(label)_offer_curves`, must also provide time series for `$(label)_initial_input`",
+            ),
+        )
+    return
+end
 
 function add_market_bid_parameters!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel,
 )
-    devices = collect(devices)  # no `filter` for `FlattenIteratorWrapper`
+    devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
+
+    # Startup cost parameters
     if _consider_startup_time_series(container, model)
-        startup_devices =
-            filter(x -> _has_market_bid_cost(x) && _has_startup_time_series(x), devices)
+        startup_devices = filter(_has_startup_time_series, devices)
         if length(startup_devices) > 0
             add_parameters!(container, StartupCostParameter, startup_devices, model)
         end
     end
 
+    # Shutdown cost parameters
     if _consider_shutdown_time_series(container, model)
-        shutdown_devices =
-            filter(x -> _has_market_bid_cost(x) && _has_shutdown_time_series(x), devices)
+        shutdown_devices = filter(_has_shutdown_time_series, devices)
         if length(shutdown_devices) > 0
             add_parameters!(container, ShutdownCostParameter, shutdown_devices, model)
         end
     end
+
+    # Min gen cost parameters
+    # TODO decremental case
+    if _consider_initial_input_time_series(container, model)
+        validate_initial_input_time_series.(devices, false)
+        initial_input_devices = filter(_has_incremental_initial_input_time_series, devices)
+        if length(initial_input_devices) > 0
+            add_parameters!(container, CostAtMinParameter, initial_input_devices, model)
+        end
+    end
+
+    # TODO variable cost parameters
 end
 
 ##################################################

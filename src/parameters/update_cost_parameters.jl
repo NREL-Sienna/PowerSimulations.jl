@@ -65,12 +65,15 @@ function handle_variable_cost_parameter(::Tuple{}, args...)
     return
 end
 
-# We only support time series startup and shutdown costs for MarketBidCost, nothing to do for all the others
+# We only support certain time series costs for MarketBidCost, nothing to do for all the others
 handle_variable_cost_parameter(
     ::StartupCostParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 handle_variable_cost_parameter(
     ::ShutdownCostParameter,
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
+handle_variable_cost_parameter(
+    ::CostAtMinParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
 function handle_variable_cost_parameter(
@@ -119,6 +122,38 @@ function handle_variable_cost_parameter(
 )
     is_time_variant(PSY.get_shut_down(op_cost)) || return
     ts_vector = PSY.get_shut_down(
+        component, op_cost;
+        start_time = initial_forecast_time,
+        len = horizon,
+    )
+    for (t, value) in enumerate(TimeSeries.values(ts_vector))
+        _set_param_value!(parameter_array, value, name, t)
+        update_variable_cost!(
+            container,
+            parameter_array,
+            parameter_multiplier,
+            attributes,
+            component,
+            t,
+        )
+    end
+    return
+end
+
+function handle_variable_cost_parameter(
+    ::CostAtMinParameter,
+    op_cost::PSY.MarketBidCost,
+    component::PSY.Generator,  # TODO handle decremental case
+    name,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    container,
+    initial_forecast_time,
+    horizon,
+)
+    is_time_variant(PSY.get_incremental_initial_input(op_cost)) || return
+    ts_vector = PSY.get_incremental_initial_input(
         component, op_cost;
         start_time = initial_forecast_time,
         len = horizon,

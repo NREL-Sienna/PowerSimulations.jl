@@ -1115,13 +1115,70 @@ end
     )
 end
 
+"Set the no_load_cost and input_at_zero to `nothing` and the initial_input to the old no_load_cost. Not designed for time series"
+function no_load_to_initial_input!(comp::Generator)
+    cost = get_operation_cost(comp)::MarketBidCost
+    no_load = PSY.get_no_load_cost(cost)
+    old_fd = get_function_data(
+        get_value_curve(get_incremental_offer_curves(get_operation_cost(comp))),
+    )::IS.PiecewiseStepData
+    new_vc = PiecewiseIncrementalCurve(old_fd, no_load, nothing)
+    set_incremental_offer_curves!(get_operation_cost(comp), CostCurve(new_vc))
+    set_no_load_cost!(get_operation_cost(comp), nothing)
+    return
+end
+
+no_load_to_initial_input!(
+    sys::PSY.System,
+    sel = make_selector(x -> get_operation_cost(x) isa MarketBidCost, Generator),
+) =
+    no_load_to_initial_input!.(get_components(sel, sys))
+
 "Helper function to make a time series from an initial value (can be a single number or tuple) and some increments"
-function _make_deterministic_ts(name, ini_val, res_incr, interval_incr, horizon, interval)
+function _make_deterministic_ts(
+    name,
+    ini_val::Union{Number, Tuple},
+    res_incr,
+    interval_incr,
+    horizon,
+    interval,
+)
     series1 = [ini_val .+ i * res_incr for i in 0:(horizon - 1)]
     series2 = [ini_val .+ i * res_incr .+ interval_incr for i in 1:horizon]
     startup_data = OrderedDict(
         TIME1 => series1,
         TIME1 + interval => series2,
+    )
+    return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
+end
+
+"Each of `incrs_x`, `incrs_y` is a 3-tuple consisting of a tranche increment plus the same `res_incr` and `interval_incr` as above"
+function _make_deterministic_ts(
+    name,
+    ini_val::PiecewiseStepData,
+    incrs_x,
+    incrs_y,
+    horizon,
+    interval,
+)
+    (tranche_incr_x, res_incr_x, interval_incr_x) = incrs_x
+    (tranche_incr_y, res_incr_y, interval_incr_y) = incrs_y
+
+    # Perturb the baseline curves by the tranche increments
+    xs1, ys1 = deepcopy(get_x_coords(ini_val)), deepcopy(get_y_coords(ini_val))
+    xs1 .+= [i * tranche_incr_x for i in 0:(length(xs1) - 1)]
+    ys1 .+= [i * tranche_incr_y for i in 0:(length(ys1) - 1)]
+    xs2, ys2 = deepcopy(xs1), deepcopy(ys1)
+
+    # Extend the baselines into time series, applying the resolution and interval increments
+    xs1 = [xs1 .+ i * res_incr_x for i in 0:(horizon - 1)]
+    xs2 = [xs2 .+ i * res_incr_x .+ interval_incr_x for i in 1:horizon]
+    ys1 = [ys1 .+ i * res_incr_y for i in 0:(horizon - 1)]
+    ys2 = [ys2 .+ i * res_incr_y .+ interval_incr_y for i in 1:horizon]
+
+    startup_data = OrderedDict(
+        TIME1 => PiecewiseStepData.(xs1, ys1),
+        TIME1 + interval => PiecewiseStepData.(xs2, ys2),
     )
     return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
 end
@@ -1175,6 +1232,57 @@ function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
     return startup_ts_1, shutdown_ts_1
 end
 
+function load_sys_incr()
+    sys = Logging.with_logger(Logging.NullLogger()) do
+        build_system(PSITestSystems, "c_fixed_market_bid_cost")  # note we are using the fixed one so we can add time series ourselves
+    end
+    no_load_to_initial_input!(sys)
+    return sys
+end
+
+function load_sys_decr()
+    sys = Logging.with_logger(Logging.NullLogger()) do
+        build_system(PSITestSystems, "c_sys5_il")  # note we are using the fixed one so we can add time series ourselves
+    end
+    no_load_to_initial_input!(sys)
+    return sys
+end
+
+SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
+SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
+
+function build_sys_incr(initial_varies::Bool, breakpoints_vary::Bool, slopes_vary::Bool)
+    @assert !breakpoints_vary
+    @assert !slopes_vary
+    sys = load_sys_incr()
+    comp = get_component(SEL_INCR, sys)
+    op_cost = get_operation_cost(comp)
+    baseline = get_value_curve(
+        get_incremental_offer_curves(op_cost)::CostCurve,
+    )::PiecewiseIncrementalCurve
+    baseline_initial = get_initial_input(baseline)
+    baseline_pwl = get_function_data(baseline)
+
+    # primes for easier attribution
+    incr_initial = initial_varies ? (0.11, 0.05) : (0.0, 0.0)
+    incr_x = breakpoints_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
+    incr_y = slopes_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
+
+    my_initial_ts = _make_deterministic_ts(
+        "initial_input",
+        baseline_initial,
+        incr_initial...,
+        5,
+        Hour(1),
+    )
+    my_pwl_ts =
+        _make_deterministic_ts("variable_cost", baseline_pwl, incr_x, incr_y, 5, Hour(1))
+
+    set_incremental_initial_input!(sys, comp, my_initial_ts)
+    # set_variable_cost!(sys, comp, my_pwl_ts)  # TODO
+    return sys
+end
+
 _read_one_value(res_uc, var_name, gentype, unit_name) =
     combine(
         vcat(values(read_variable(res_uc, var_name, gentype))...), unit_name .=> sum)[
@@ -1182,11 +1290,7 @@ _read_one_value(res_uc, var_name, gentype, unit_name) =
         1,
     ]
 
-"Run a simple simulation with the system and return information useful for testing time-varying startup and shutdown functionality"
-function run_startup_shutdown_sim(sys::System; multistart::Bool = false)
-    gentype = multistart ? ThermalMultiStart : ThermalStandard
-    genname = multistart ? "115_STEAM_1" : "Test Unit1"
-
+function run_generic_mbc_sim(sys::System; multistart::Bool = false)
     template = ProblemTemplate(
         NetworkModel(
             CopperPlatePowerModel;
@@ -1238,9 +1342,17 @@ function run_startup_shutdown_sim(sys::System; multistart::Bool = false)
 
     sim_res = SimulationResults(sim)
     res_uc = get_decision_problem_results(sim_res, "UC")
+    return model_, model, res_uc
+end
+
+"Run a simple simulation with the system and return information useful for testing time-varying startup and shutdown functionality"
+function run_startup_shutdown_sim(sys::System; multistart::Bool = false)
+    model_, model, res_uc = run_generic_mbc_sim(sys; multistart = multistart)
 
     # Test correctness of written shutdown cost parameters
     # TODO test startup too once we are able to write those
+    gentype = multistart ? ThermalMultiStart : ThermalStandard
+    genname = multistart ? "115_STEAM_1" : "Test Unit1"
     sh_uc = read_parameter(res_uc, PSI.ShutdownCostParameter, gentype)
     for (step_dt, step_df) in pairs(sh_uc)
         for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
@@ -1265,6 +1377,33 @@ function run_startup_shutdown_sim(sys::System; multistart::Bool = false)
             _read_one_value(res_uc, PSI.StopVariable, gentype, genname),
         )
     end
+    return model_, model, res_uc, switches
+end
+
+"Run a simple simulation with the system and return information useful for testing time-varying startup and shutdown functionality"
+function run_mbc_sim(sys::System; is_decremental::Bool = false)
+    model_, model, res_uc = run_generic_mbc_sim(sys)
+
+    ii_uc = read_parameter(res_uc, PSI.CostAtMinParameter, ThermalStandard)
+    for (step_dt, step_df) in pairs(ii_uc)
+        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
+            comp = get_component(ThermalStandard, sys, gen_name)
+            ii_comp = get_incremental_initial_input(
+                comp,
+                PSY.get_operation_cost(comp);
+                start_time = step_dt,
+            )
+            @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(ii_comp))
+            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(ii_comp)))
+        end
+    end
+
+    # NOTE this could be rewritten nicely using PowerAnalytics
+    comp = get_component(is_decremental ? SEL_DECR : SEL_INCR, sys)
+    gentype, genname = typeof(comp), get_name(comp)
+    switches = (
+        _read_one_value(res_uc, PSI.OnVariable, gentype, genname)
+    )
     return model_, model, res_uc, switches
 end
 
@@ -1352,6 +1491,31 @@ function cost_due_to_time_varying_startup_shutdown(
     return result
 end
 
+function cost_due_to_time_varying_mbc(
+    sys::System,
+    res_uc::PSI.SimulationProblemResults;
+    is_decremental = false,
+)
+    is_decremental && throw(IS.NotImplementedError("TODO implement for decremental"))
+    gentype = ThermalStandard
+    on_vars = read_variable(res_uc, PSI.OnVariable, gentype)
+    result = SortedDict{DateTime, DataFrame}()
+    for step_dt in keys(on_vars)
+        on_df = on_vars[step_dt]
+        result[step_dt] = DataFrame(:DateTime => on_df[!, :DateTime])
+        for gen_name in names(DataFrames.select(on_df, Not(:DateTime)))
+            comp = get_component(gentype, sys, gen_name)
+            cost = PSY.get_operation_cost(comp)
+            (cost isa MarketBidCost) || continue
+            PSI.is_time_variant(get_incremental_initial_input(cost)) || continue
+            ii_ts = get_incremental_initial_input(comp, cost; start_time = step_dt)
+            @assert all(on_df[!, :DateTime] .== TimeSeries.timestamp(ii_ts))
+            result[step_dt][!, gen_name] = on_df[!, gen_name] .* TimeSeries.values(ii_ts)
+        end
+    end
+    return result
+end
+
 "Modifies `c_sys5_pglib` to facilitate the exercise of the multi-start capability in a test simulation"
 function modify_sys_for_multistart!(sys::System, load_mult, therm_mult)
     for load in get_components(PowerLoad, sys)
@@ -1368,41 +1532,29 @@ function create_multistart_sys(with_increments::Bool, load_mult, therm_mult)
     c_sys5_pglib = Logging.with_logger(Logging.NullLogger()) do
         PSB.build_system(PSITestSystems, "c_sys5_pglib")
     end
+    no_load_to_initial_input!(c_sys5_pglib)
     modify_sys_for_multistart!(c_sys5_pglib, load_mult, therm_mult)
     sel = make_selector(ThermalMultiStart, "115_STEAM_1")
     ms_comp = get_component(sel, c_sys5_pglib)
     old_op = get_operation_cost(ms_comp)
-    inc = CostCurve(IncrementalCurve(get_value_curve(get_variable(old_op))))
+    old_ic = IncrementalCurve(get_value_curve(get_variable(old_op)))
+    new_ii = get_initial_input(old_ic) + get_fixed(old_op)
+    new_ic = IncrementalCurve(get_function_data(old_ic), new_ii, nothing)
     set_operation_cost!(
         ms_comp,
         MarketBidCost(;
-            no_load_cost = get_fixed(old_op),
+            no_load_cost = nothing,
             start_up = get_start_up(old_op),
             shut_down = get_shut_down(old_op),
-            incremental_offer_curves = inc,
+            incremental_offer_curves = CostCurve(new_ic),
         ),
     )
     add_startup_shutdown_ts_b!(c_sys5_pglib, with_increments)
     return c_sys5_pglib
 end
 
-"""
-The methodology here is: run a simulation where the startup and shutdown time series have
-constant values through time, then run a nearly identical simulation where the values vary
-very slightly through time, not enough to affect the decisions but enough to affect the
-objective value, then compare the size of the objective value change to an expectation
-computed manually.
-"""
-function run_obj_fun_test(sys1, sys2; multistart::Bool = false)
-    model1_, model1, res_uc1, switches1 =
-        run_startup_shutdown_sim(sys1; multistart = multistart)
-    model2_, model2, res_uc2, switches2 =
-        run_startup_shutdown_sim(sys2; multistart = multistart)
-
-    ground_truth_1 =
-        cost_due_to_time_varying_startup_shutdown(sys1, res_uc1; multistart = multistart)
-    ground_truth_2 =
-        cost_due_to_time_varying_startup_shutdown(sys2, res_uc2; multistart = multistart)
+# See run_startup_shutdown_obj_fun_test for explanation
+function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res_uc1, res_uc2)
     @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
 
     # Sum across components, time periods to get one value per step
@@ -1421,17 +1573,56 @@ function run_obj_fun_test(sys1, sys2; multistart::Bool = false)
     obj_diff = obj2 .- obj1
 
     @test all(isapprox.(obj_diff, ground_truth; atol = 0.0001))
+end
+
+"""
+The methodology here is: run a simulation where the startup and shutdown time series have
+constant values through time, then run a nearly identical simulation where the values vary
+very slightly through time, not enough to affect the decisions but enough to affect the
+objective value, then compare the size of the objective value change to an expectation
+computed manually.
+"""
+function run_startup_shutdown_obj_fun_test(sys1, sys2; multistart::Bool = false)
+    model1_, model1, res_uc1, switches1 =
+        run_startup_shutdown_sim(sys1; multistart = multistart)
+    model2_, model2, res_uc2, switches2 =
+        run_startup_shutdown_sim(sys2; multistart = multistart)
+
+    ground_truth_1 =
+        cost_due_to_time_varying_startup_shutdown(sys1, res_uc1; multistart = multistart)
+    ground_truth_2 =
+        cost_due_to_time_varying_startup_shutdown(sys2, res_uc2; multistart = multistart)
+
+    _obj_fun_test_helper(ground_truth_1, ground_truth_2, res_uc1, res_uc2)
+    return switches1, switches2
+end
+
+# Same methodology as run_startup_shutdown_obj_fun_test
+function run_mbc_obj_fun_test(sys1, sys2; is_decremental::Bool = false)
+    model1_, model1, res_uc1, switches1 = run_mbc_sim(sys1; is_decremental = is_decremental)
+    model2_, model2, res_uc2, switches2 = run_mbc_sim(sys2; is_decremental = is_decremental)
+
+    ground_truth_1 =
+        cost_due_to_time_varying_mbc(sys1, res_uc1; is_decremental = is_decremental)
+    ground_truth_2 =
+        cost_due_to_time_varying_mbc(sys2, res_uc2; is_decremental = is_decremental)
+
+    _obj_fun_test_helper(ground_truth_1, ground_truth_2, res_uc1, res_uc2)
     return switches1, switches2
 end
 
 @testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
     sys1 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    no_load_to_initial_input!(sys1)
     add_startup_shutdown_ts_a!(sys1, false)
     sys2 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    no_load_to_initial_input!(sys2)
     add_startup_shutdown_ts_a!(sys2, true)
-    (switches1, switches2) = run_obj_fun_test(sys1, sys2)
-    @test all(isapprox.(switches1, (2.0, 3.0)))
+    (switches1, switches2) = run_startup_shutdown_obj_fun_test(sys1, sys2)
     @test all(isapprox.(switches1, switches2))
+
+    # Make sure our tests included sufficent startups and shutdowns
+    @assert all(>=(1).(switches1))
 end
 
 @testset "MarketBidCost with time series startup and shutdown, ThermalMultiStart" begin
@@ -1439,17 +1630,29 @@ end
     c_sys5_pglib1 = create_multistart_sys(false, 1.0, 7.5)
     c_sys5_pglib2 = create_multistart_sys(true, 1.0, 7.5)
     (switches1, switches2) =
-        run_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
-    @test all(isapprox.(switches1, (2.0, 1.0, 0.0, 3.0)))
+        run_startup_shutdown_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
     @test all(isapprox.(switches1, switches2))
 
     # Scenario 2: hot and cold starts
     c_sys5_pglib1 = create_multistart_sys(false, 1.05, 7.5)
     c_sys5_pglib2 = create_multistart_sys(true, 1.05, 7.5)
-    (switches1, switches2) =
-        run_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
-    @test all(isapprox.(switches1, (1.0, 0.0, 1.0, 1.0)))
+    (switches1_2, switches2_2) =
+        run_startup_shutdown_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
+    @test all(isapprox.(switches1_2, switches2_2))
+
+    # Make sure our tests included all types of startups and shutdowns
+    @assert all(>=(1).(switches1 .+ switches1_2))
+end
+
+@testset "MarketBidCost incremental with time series min gen cost" begin
+    baseline = build_sys_incr(false, false, false)
+    plus_initial = build_sys_incr(true, false, false)
+
+    switches1, switches2 = run_mbc_obj_fun_test(baseline, plus_initial)
     @test all(isapprox.(switches1, switches2))
+    @assert all(>=(1).(switches1))
+
+    # TODO test validate_initial_input_time_series warnings/errors
 end
 
 @testset "Thermal UC With Slack on Ramps" begin

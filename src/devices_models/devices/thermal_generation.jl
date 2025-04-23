@@ -89,14 +89,16 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 function proportional_cost(container::OptimizationContainer, cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
     return onvar_cost(container, cost, S, T, U, t) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
 end
+is_time_variant_term(::OptimizationContainer, ::PSY.ThermalGenerationCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) = false
 
-function proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
-    # TODO handle time series case
-    return proportional_cost(cost, S, T, U)
-end
-
-proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) =
-    PSY.get_initial_input(PSY.get_incremental_offer_curves(cost))
+# TODO decremental case
+proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, ::OnVariable, comp::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) =
+    _lookup_maybe_time_variant_param(container, comp, t,
+    Val(is_time_variant(PSY.get_incremental_initial_input(cost))),
+    PSY.get_initial_input ∘ PSY.get_incremental_offer_curves ∘ PSY.get_operation_cost,
+    CostAtMinParameter())
+# PERF it might be more performant to only mark as time variant if we actually have a time series (that goes for the startup and shutdown too)
+is_time_variant_term(::OptimizationContainer, ::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) = true
 
 proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{RateofChangeConstraintSlackUp, RateofChangeConstraintSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
 

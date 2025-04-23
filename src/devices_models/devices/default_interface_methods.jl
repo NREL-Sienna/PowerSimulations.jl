@@ -12,8 +12,9 @@ get_variable_upper_bound(_, ::PSY.Component, __) = nothing
 
 get_multiplier_value(::StartupCostParameter, d::PSY.Device, ::AbstractDeviceFormulation) =
     1.0
-
 get_multiplier_value(::ShutdownCostParameter, d::PSY.Device, ::AbstractDeviceFormulation) =
+    1.0
+get_multiplier_value(::CostAtMinParameter, d::PSY.Device, ::AbstractDeviceFormulation) =
     1.0
 
 get_multiplier_value(x, y::PSY.Component, z) =
