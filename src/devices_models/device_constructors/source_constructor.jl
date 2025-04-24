@@ -16,7 +16,7 @@ function construct_device!(
     add_variables!(container, ActivePowerInVariable, devices, D())
     add_variables!(container, ActivePowerOutVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
-    add_expressions!(container, NetActivePower, devices, D())
+    add_expressions!(container, NetActivePower, devices, model)
 
     add_to_expression!(
         container,
@@ -105,7 +105,7 @@ function construct_device!(
         model,
         network_model,
     )
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
+    add_constraints!(container, ImportExportBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 
@@ -220,7 +220,7 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, EnergyBudgetConstraint, devices, model, network_model)
+    add_constraints!(container, ImportExportBudgetConstraint, devices, model, network_model)
 
     add_feedforward_constraints!(container, model, devices)
 

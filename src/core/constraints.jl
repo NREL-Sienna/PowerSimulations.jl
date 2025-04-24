@@ -513,7 +513,7 @@ struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConst
 Struct to create the constraint to limit the import and exports in a determined period.
 For more information check [Device Formulations](@ref formulation_intro).
 """
-struct EnergyBudgetConstraint <: ConstraintType end
+struct ImportExportBudgetConstraint <: ConstraintType end
 
 struct LineFlowBoundConstraint <: ConstraintType end
 
