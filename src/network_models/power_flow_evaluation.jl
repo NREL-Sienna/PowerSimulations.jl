@@ -43,19 +43,36 @@ pf_input_keys(::PFS.ACPowerFlowData) =
 pf_input_keys(::PFS.PSSEExporter) =
     [:active_power, :reactive_power, :voltage_angle_export, :voltage_magnitude_export]
 
+# Generalized function to create component maps by name to the index in the PowerFlowData bus arrays
+function _make_temp_component_map(
+    pf_data::PFS.PowerFlowData,
+    sys::PSY.System,
+    component_type::DataType,
+    get_bus_func::Function,
+)
+    temp_component_map = Dict{DataType, Dict{String, Int}}()
+    components = PSY.get_available_components(component_type, sys)
+    bus_lookup = PFS.get_bus_lookup(pf_data)
+    for comp in components
+        comp_type = typeof(comp)
+        bus_dict = get!(temp_component_map, comp_type, Dict{String, Int}())
+        bus_number = PSY.get_number(get_bus_func(comp))
+        bus_dict[PSY.get_name(comp)] = bus_lookup[bus_number]
+    end
+    return temp_component_map
+end
+
 # Maps the StaticInjection component type by name to the
 # index in the PowerFlow data arrays going from Bus number to bus index
 function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
-    temp_component_map = Dict{DataType, Dict{String, Int}}()
-    available_injectors = PSY.get_available_components(PSY.StaticInjection, sys)
+    temp_component_map = _make_temp_component_map(
+        pf_data,
+        sys,
+        PSY.StaticInjection,
+        PSY.get_bus,
+    )
+    # Add ACBus components for voltage magnitude and angle export
     bus_lookup = PFS.get_bus_lookup(pf_data)
-    for comp in available_injectors
-        comp_type = typeof(comp)
-        bus_dict = get!(temp_component_map, comp_type, Dict{String, Int}())
-        bus_number = PSY.get_number(PSY.get_bus(comp))
-        bus_dict[get_name(comp)] = bus_lookup[bus_number]
-    end
-    # we need this to be able to export the voltage magnitude and voltage angles to data
     temp_component_map[PSY.ACBus] =
         Dict(
             PSY.get_name(c) => bus_lookup[PSY.get_number(c)] for
@@ -106,36 +123,99 @@ function _make_pf_input_map!(
         pf_data_opt_container_map = Dict{OptimizationContainerKey, map_type}()
         @info "Adding input map to send $category to $(nameof(typeof(pf_data)))"
         precedence = PF_INPUT_KEY_PRECEDENCES[category]
-        added_injection_types = DataType[]
-        # For each data source that is relevant to this category in order of precedence,
-        # loop over the component types where data exists at that source and record the
-        # association
-        for entry_type in precedence
-            for (key, val) in available_keys
-                if get_entry_type(key) === entry_type
-                    comp_type = get_component_type(key)
-                    # Skip types that have already been handled by something of higher precedence
-                    if comp_type in added_injection_types
-                        continue
-                    end
-                    push!(added_injection_types, comp_type)
+        _add_category_to_map!(
+            precedence,
+            available_keys,
+            temp_component_map,
+            pf_data_opt_container_map,
+        )
+        pf_e_data.input_key_map[category] = pf_data_opt_container_map
+    end
+    # the function to map HVDC power transfers as bus injections is not applicable in this case:
+    pf_data isa PFS.PSSEExporter && return
+    _add_two_terminal_elements_map!(sys, pf_data, available_keys, pf_e_data.input_key_map)
+    return
+end
 
-                    name_bus_ix_map = map_type()
-                    comp_names =
-                        if (key isa ParameterKey)
-                            get_component_names(get_attributes(val))
-                        else
-                            axes(val)[1]
-                        end
-                    for comp_name in comp_names
-                        name_bus_ix_map[comp_name] =
-                            temp_component_map[comp_type][comp_name]
-                    end
-                    pf_data_opt_container_map[key] = name_bus_ix_map
+function _add_category_to_map!(
+    precedence::Vector{DataType},
+    available_keys::Vector{Pair{OptimizationContainerKey, Any}},
+    temp_component_map::Union{
+        Dict{DataType, Dict{String, Int}},
+        Dict{DataType, Dict{Union{Int64, String}, String}},
+    },
+    pf_data_opt_container_map::Union{
+        Dict{OptimizationContainerKey, Dict{String, Int}},
+        Dict{OptimizationContainerKey, Dict{Union{Int64, String}, String}},
+    },
+)
+    added_injection_types = DataType[]
+    for entry_type in precedence
+        for (key, val) in available_keys
+            if get_entry_type(key) === entry_type
+                comp_type = get_component_type(key)
+                # Skip types that have already been handled by something of higher precedence
+                if comp_type in added_injection_types
+                    continue
                 end
+                push!(added_injection_types, comp_type)
+
+                name_bus_ix_map = valtype(temp_component_map)()
+                comp_names =
+                    if (key isa ParameterKey)
+                        get_component_names(get_attributes(val))
+                    else
+                        axes(val)[1]
+                    end
+                for comp_name in comp_names
+                    name_bus_ix_map[comp_name] =
+                        temp_component_map[comp_type][comp_name]
+                end
+                pf_data_opt_container_map[key] = name_bus_ix_map
             end
         end
-        pf_e_data.input_key_map[category] = pf_data_opt_container_map
+    end
+end
+
+function _add_two_terminal_elements_map!(
+    sys::PSY.System,
+    pf_data::PFS.PowerFlowData,
+    available_keys::Vector{Pair{OptimizationContainerKey, Any}},
+    input_key_map::Dict{Symbol, Dict{OptimizationContainerKey, Dict{String, Int64}}},
+)
+    category = :active_power
+    category ∈ pf_input_keys(pf_data) || return
+
+    map_component_from = _make_temp_component_map(
+        pf_data,
+        sys,
+        PSY.TwoTerminalHVDC,
+        PSY.get_from ∘ PSY.get_arc,
+    )
+    isempty(map_component_from) && return
+
+    map_component_to = _make_temp_component_map(
+        pf_data,
+        sys,
+        PSY.TwoTerminalHVDC,
+        PSY.get_to ∘ PSY.get_arc,
+    )
+
+    # here just HVDC components, but could be extended to other two-terminal devices
+
+    entry_types = [FlowActivePowerFromToVariable, FlowActivePowerToFromVariable]
+    temp_component_maps = [map_component_from, map_component_to]
+
+    for (entry_type, temp_component_map) in zip(entry_types, temp_component_maps)
+        pf_data_opt_container_map =
+            Dict{OptimizationContainerKey, valtype(temp_component_map)}()
+        _add_category_to_map!(
+            [entry_type],
+            available_keys,
+            temp_component_map,
+            pf_data_opt_container_map,
+        )
+        merge!(input_key_map[category], pf_data_opt_container_map)
     end
     return
 end
@@ -155,14 +235,28 @@ branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 # Same for bus aux vars
 bus_aux_vars(data::PFS.ACPowerFlowData) =
     if data.calculate_loss_factors
-        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude, PowerFlowLossFactors]
+        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude,
+            PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
+            PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals,
+            PowerFlowLossFactors]
     else
-        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude,
+            PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
+            PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
     end
-bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
-bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
-bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
-bus_aux_vars(::PFS.PSSEExporter) = DataType[]
+bus_aux_vars(::PFS.ABAPowerFlowData) = [
+    PowerFlowVoltageAngle,
+    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
+    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
+bus_aux_vars(::PFS.PTDFPowerFlowData) = [
+    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
+    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
+bus_aux_vars(::PFS.vPTDFPowerFlowData) = [
+    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
+    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
+bus_aux_vars(::PFS.PSSEExporter) = [
+    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
+    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
 
 function _get_branch_component_tuples(pfd::PFS.PowerFlowData)
     branch_types = PFS.get_branch_type(pfd)
@@ -235,7 +329,7 @@ end
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power},
-    ::Type{<:PSY.StaticInjection},
+    ::Union{Type{<:PSY.StaticInjection}, Type{<:PSY.TwoTerminalHVDC}},
     index,
     t,
     value,
@@ -420,6 +514,14 @@ _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_angles(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_magnitude(pf_data)
+_get_pf_result(::Type{PowerFlowBusActivePowerInjection}, pf_data::PFS.PowerFlowData) =
+    PFS.get_bus_activepower_injection(pf_data)
+_get_pf_result(::Type{PowerFlowBusReactivePowerInjection}, pf_data::PFS.PowerFlowData) =
+    PFS.get_bus_reactivepower_injection(pf_data)
+_get_pf_result(::Type{PowerFlowBusActivePowerWithdrawals}, pf_data::PFS.PowerFlowData) =
+    PFS.get_bus_activepower_withdrawals(pf_data)
+_get_pf_result(::Type{PowerFlowBusReactivePowerWithdrawals}, pf_data::PFS.PowerFlowData) =
+    PFS.get_bus_reactivepower_withdrawals(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_reactivepower_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =
