@@ -1874,6 +1874,33 @@ function add_to_expression!(
     end
 end
 
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: NetActivePower,
+    U <: Union{ActivePowerInVariable, ActivePowerOutVariable},
+    V <: PSY.Source,
+    W <: AbstractSourceFormulation,
+}
+    expression = get_expression(container, T(), V)
+    variable = get_variable(container, U(), V)
+    mult = get_variable_multiplier(U(), V, W())
+    for d in devices
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            JuMP.add_to_expression!(
+                expression[name, t],
+                variable[name, t] * mult,
+            )
+        end
+    end
+    return
+end
+
 #=
 function add_to_expression!(
     container::OptimizationContainer,
