@@ -5,12 +5,13 @@ requires_initialization(::ImportExportSourceModel) = false
 
 get_variable_multiplier(::ActivePowerOutVariable, ::Type{<:PSY.Source}, ::AbstractSourceFormulation) = 1.0
 get_variable_multiplier(::ActivePowerInVariable, ::Type{<:PSY.Source}, ::AbstractSourceFormulation) = -1.0
+get_variable_multiplier(::ReactivePowerVariable, ::Type{<:PSY.Source}, ::AbstractSourceFormulation) = 1.0
 ############## ActivePowerVariables, Source ####################
 get_variable_binary(::ActivePowerInVariable, ::Type{<:PSY.Source}, ::AbstractSourceFormulation) = false
 get_variable_binary(::ActivePowerOutVariable, ::Type{<:PSY.Source}, ::AbstractSourceFormulation) = false
-get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).min
-get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).min
-get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).max
+get_variable_lower_bound(::ActivePowerInVariable, d::PSY.Source, ::AbstractSourceFormulation) = 0.0
+get_variable_lower_bound(::ActivePowerOutVariable, d::PSY.Source, ::AbstractSourceFormulation) = 0.0
+get_variable_upper_bound(::ActivePowerInVariable, d::PSY.Source, ::AbstractSourceFormulation) = -PSY.get_active_power_limits(d).min
 get_variable_upper_bound(::ActivePowerOutVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).max
 
 ############## ReactivePowerVariable, Source ####################
@@ -42,6 +43,14 @@ function get_min_max_limits(
     return PSY.get_active_power_limits(device)
 end
 
+function get_min_max_limits(
+    device,
+    ::Type{ReactivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractSourceFormulation},
+)
+    return PSY.get_reactive_power_limits(device)
+end
+
 ##### Constraints ######
 
 function add_constraints!(
@@ -62,7 +71,7 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{EnergyBudgetConstraint},
+    T::Type{ImportExportBudgetConstraint},
     devices::IS.FlattenIteratorWrapper{U},
     model::DeviceModel{U, V},
     network_model::NetworkModel{X},
@@ -81,14 +90,14 @@ function add_constraints!(
     constraint_export =
         add_constraints_container!(
             container,
-            EnergyBudgetConstraint(),
+            ImportExportBudgetConstraint(),
             U,
             names;
             meta = "export",
         )
     constraint_import = add_constraints_container!(
         container,
-        EnergyBudgetConstraint(),
+        ImportExportBudgetConstraint(),
         U,
         names;
         meta = "import",
@@ -97,8 +106,8 @@ function add_constraints!(
     for d in devices
         name = PSY.get_name(d)
         op_cost = PSY.get_operation_cost(d)
-        week_import_limit = op_cost.energy_import_weekly_limit
-        week_export_limit = op_cost.energy_export_weekly_limit
+        week_import_limit = PSY.get_energy_import_weekly_limit(op_cost)
+        week_export_limit = PSY.get_energy_export_weekly_limit(op_cost)
         constraint_import[name] = JuMP.@constraint(
             get_jump_model(container),
             resolution_in_hours * sum(p_out[name, t] for t in time_steps) <=
