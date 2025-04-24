@@ -256,7 +256,7 @@ function _add_two_terminal_elements_map!(
         pf_data,
         sys,
         PSY.TwoTerminalHVDC,
-        PSY.get_to ∘ PSY.get_arc,
+        x -> PSY.get_to(PSY.get_arc(x)),
     )
 
     # here just HVDC components, but could be extended to other two-terminal devices
