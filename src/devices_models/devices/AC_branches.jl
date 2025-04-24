@@ -638,11 +638,6 @@ function _make_flow_expressions!(
     tasks = map(branches) do name
         try
             ptdf_col = ptdf[name, :]
-        catch e
-
-            @error "Failed to generate PTDF column values for Line $name"
-            rethrow(e)
-        end
             Threads.@spawn _make_flow_expressions!(
                 jump_model,
                 name,
@@ -650,12 +645,15 @@ function _make_flow_expressions!(
                 ptdf_col,
                 nodal_balance_expressions.data,
             )
+        for task in tasks
+            name, expressions = fetch(task)
+            branch_flow_expr[name, :] .= expressions
+        end
+        catch e
+            @error "Failed to generate PTDF column values for Line $name"
+            rethrow(e)
+        end
     end
-    for task in tasks
-        name, expressions = fetch(task)
-        branch_flow_expr[name, :] .= expressions
-    end
-
     #= Leaving serial code commented out for debugging purposes in the future
     for name in branches
         ptdf_col = ptdf[name, :]
