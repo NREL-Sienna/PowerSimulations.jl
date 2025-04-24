@@ -509,6 +509,12 @@ p_t \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\
 """
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
+"""
+Struct to create the constraint to limit the import and exports in a determined period.
+For more information check [Device Formulations](@ref formulation_intro).
+"""
+struct EnergyBudgetConstraint <: ConstraintType end
+
 struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end

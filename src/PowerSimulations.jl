@@ -73,6 +73,9 @@ export ThermalCompactDispatch
 export DeviceLimitedRegulation
 export ReserveLimitedRegulation
 
+###### Source Formulations ######
+export ImportExportSourceModel
+
 # feedforward models
 export UpperBoundFeedforward
 export LowerBoundFeedforward
@@ -303,6 +306,7 @@ export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
+export EnergyBudgetConstraint
 
 # Parameters
 # Time Series Parameters
@@ -333,6 +337,7 @@ export ProductionCostExpression
 export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
+export NetActivePower
 
 #################################################################################
 # Imports
@@ -566,6 +571,7 @@ include("devices_models/devices/common/objective_function/linear_curve.jl")
 include("devices_models/devices/common/objective_function/quadratic_curve.jl")
 include("devices_models/devices/common/objective_function/market_bid.jl")
 include("devices_models/devices/common/objective_function/piecewise_linear.jl")
+include("devices_models/devices/common/objective_function/import_export.jl")
 include("devices_models/devices/common/range_constraint.jl")
 include("devices_models/devices/common/add_variable.jl")
 include("devices_models/devices/common/add_auxiliary_variable.jl")
@@ -585,6 +591,7 @@ include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/area_interchange.jl")
 include("devices_models/devices/TwoTerminalDC_branches.jl")
 include("devices_models/devices/HVDCsystems.jl")
+include("devices_models/devices/source.jl")
 #include("devices_models/devices/regulation_device.jl")
 
 # Services Models
@@ -613,6 +620,7 @@ include("devices_models/device_constructors/hvdcsystems_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")
 include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
+include("devices_models/device_constructors/source_constructor.jl")
 #include("devices_models/device_constructors/regulationdevice_constructor.jl")
 
 # Network constructors
