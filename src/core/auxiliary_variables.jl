@@ -29,26 +29,6 @@ Auxiliary Variable for the bus voltage magnitued results from power flow evaluat
 struct PowerFlowVoltageMagnitude <: PowerFlowAuxVariableType end
 
 """
-Auxiliary Variable for the bus active power injection from power flow evaluation
-"""
-struct PowerFlowBusActivePowerInjection <: PowerFlowAuxVariableType end
-
-"""
-Auxiliary Variable for the bus reactive power injection from power flow evaluation
-"""
-struct PowerFlowBusReactivePowerInjection <: PowerFlowAuxVariableType end
-
-"""
-Auxiliary Variable for the bus active power withdrawal from power flow evaluation
-"""
-struct PowerFlowBusActivePowerWithdrawals <: PowerFlowAuxVariableType end
-
-"""
-Auxiliary Variable for the bus reactive power withdrawal from power flow evaluation
-"""
-struct PowerFlowBusReactivePowerWithdrawals <: PowerFlowAuxVariableType end
-
-"""
 Auxiliary Variable for the line reactive flow in the from -> to direction from power flow evaluation
 """
 struct PowerFlowLineReactivePowerFromTo <: PowerFlowAuxVariableType end
@@ -79,8 +59,6 @@ convert_result_to_natural_units(
         <:Union{
             PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom,
             PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom,
-            PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-            PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals,
         },
     },
 ) = true

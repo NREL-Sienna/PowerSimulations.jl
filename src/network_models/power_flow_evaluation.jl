@@ -131,12 +131,37 @@ function _make_pf_input_map!(
         )
         pf_e_data.input_key_map[category] = pf_data_opt_container_map
     end
-    # the function to map HVDC power transfers as bus injections is not applicable in this case:
-    pf_data isa PFS.PSSEExporter && return
     _add_two_terminal_elements_map!(sys, pf_data, available_keys, pf_e_data.input_key_map)
     return
 end
 
+"""
+    _add_category_to_map!(
+        precedence::Vector{DataType},
+        available_keys::Vector{Pair{OptimizationContainerKey, Any}},
+        temp_component_map::Union{
+            Dict{DataType, Dict{String, Int}},
+            Dict{DataType, Dict{Union{Int64, String}, String}},
+        },
+        pf_data_opt_container_map::Union{
+            Dict{OptimizationContainerKey, Dict{String, Int}},
+            Dict{OptimizationContainerKey, Dict{Union{Int64, String}, String}},
+        },
+    )
+
+Helper function that is used in _make_pf_input_map! and _add_two_terminal_elements_map! to configure which variables from the
+optimization results get written to the PowerFlowData. For every results variable from the optimization, it finds the corresponding
+mapping between the optimization variable and the PowerFlowData variable.
+The mappings are added to the `pf_data_opt_container_map` Dict.
+This step is executed during the build stage of the optimization. The results are written to the PowerFlowData in the
+solve stage, before the power flow is solved.
+
+# Arguments
+- `precedence::Vector{DataType}`: A vector of `DataType` objects that defines the order of precedence for the variables that correspond to the category of variables (e.g. `:active_power` - first look for `ActivePowerVariable` for the component type, if not available then `PowerOutput`, and finally `ActivePowerTimeSeriesParameter`).
+- `available_keys::Vector{Pair{OptimizationContainerKey, Any}}`: A vector of key-value pairs where the key is an `OptimizationContainerKey` and the value contains data associated with the key.
+- `temp_component_map::Union{Dict{DataType, Dict{String, Int}}, Dict{DataType, Dict{Union{Int64, String}, String}}}`: A mapping for component types to point the component-level results (e.g. as voltage value for bus "A") to the appropriate variable in PowerFlowData (e.g. row 27 in the bus-related matrices).
+- `pf_data_opt_container_map::Union{Dict{OptimizationContainerKey, Dict{String, Int}}, Dict{OptimizationContainerKey, Dict{Union{Int64, String}, String}}}`: The target Dict that contains mappings for all relevant component types.
+"""
 function _add_category_to_map!(
     precedence::Vector{DataType},
     available_keys::Vector{Pair{OptimizationContainerKey, Any}},
@@ -177,6 +202,39 @@ function _add_category_to_map!(
     end
 end
 
+# the function to map HVDC power transfers as bus injections is not applicable to PSSEExporter:
+_add_two_terminal_elements_map!(
+    ::PSY.System,
+    ::PFS.PSSEExporter,
+    ::Vector{Pair{OptimizationContainerKey, Any}},
+    ::Dict{
+        Symbol,
+        Dict{
+            InfrastructureSystems.Optimization.OptimizationContainerKey,
+            Dict{Union{Int64, String}, String},
+        },
+    },
+) = nothing
+
+"""
+    _add_two_terminal_elements_map!(
+        sys::PSY.System,
+        pf_data::PFS.PowerFlowData,
+        available_keys::Vector{Pair{OptimizationContainerKey, Any}},
+        input_key_map::Dict{Symbol, Dict{OptimizationContainerKey, Dict{String, Int64}}}
+    )
+
+Adds mappings for two-terminal elements (HVDC components) that connect the power flow results (from -> to, to -> from) 
+to be added to the mappings for all component types.
+The rersults for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of 
+these components.
+
+# Arguments
+- `sys::PSY.System`: `System` instance representing the power system model.
+- `pf_data::PFS.PowerFlowData`: The power flow data used internally for power flow calculations.
+- `available_keys::Vector{Pair{OptimizationContainerKey, Any}}`: A vector of available optimization container keys and their associated values.
+- `input_key_map::Dict{Symbol, Dict{OptimizationContainerKey, Dict{String, Int64}}}`: A dictionary mapping categories to optimization container keys and their associated mappings. To be extended in this function by the mappings for the two-terminal elements to the respective buses in the `PowerFlowData` instance.
+"""
 function _add_two_terminal_elements_map!(
     sys::PSY.System,
     pf_data::PFS.PowerFlowData,
@@ -190,7 +248,7 @@ function _add_two_terminal_elements_map!(
         pf_data,
         sys,
         PSY.TwoTerminalHVDC,
-        PSY.get_from ∘ PSY.get_arc,
+        x -> PSY.get_from(PSY.get_arc(x)),
     )
     isempty(map_component_from) && return
 
@@ -236,27 +294,14 @@ branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 bus_aux_vars(data::PFS.ACPowerFlowData) =
     if data.calculate_loss_factors
         [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude,
-            PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-            PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals,
             PowerFlowLossFactors]
     else
-        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude,
-            PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-            PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
+        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
     end
-bus_aux_vars(::PFS.ABAPowerFlowData) = [
-    PowerFlowVoltageAngle,
-    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
-bus_aux_vars(::PFS.PTDFPowerFlowData) = [
-    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
-bus_aux_vars(::PFS.vPTDFPowerFlowData) = [
-    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
-bus_aux_vars(::PFS.PSSEExporter) = [
-    PowerFlowBusActivePowerInjection, PowerFlowBusReactivePowerInjection,
-    PowerFlowBusActivePowerWithdrawals, PowerFlowBusReactivePowerWithdrawals]
+bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
+bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
+bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
+bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 function _get_branch_component_tuples(pfd::PFS.PowerFlowData)
     branch_types = PFS.get_branch_type(pfd)
@@ -514,14 +559,6 @@ _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_angles(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_magnitude(pf_data)
-_get_pf_result(::Type{PowerFlowBusActivePowerInjection}, pf_data::PFS.PowerFlowData) =
-    PFS.get_bus_activepower_injection(pf_data)
-_get_pf_result(::Type{PowerFlowBusReactivePowerInjection}, pf_data::PFS.PowerFlowData) =
-    PFS.get_bus_reactivepower_injection(pf_data)
-_get_pf_result(::Type{PowerFlowBusActivePowerWithdrawals}, pf_data::PFS.PowerFlowData) =
-    PFS.get_bus_activepower_withdrawals(pf_data)
-_get_pf_result(::Type{PowerFlowBusReactivePowerWithdrawals}, pf_data::PFS.PowerFlowData) =
-    PFS.get_bus_reactivepower_withdrawals(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_reactivepower_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =

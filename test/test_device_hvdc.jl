@@ -78,15 +78,18 @@ end
     vd = read_variables(results)
     ad = read_aux_variables(results)
 
+    data = model.internal.container.power_flow_evaluation_data[1].power_flow_data
+    base_power = get_base_power(sys)
+
     # test that the power flow results for the HVDC buses match the HVDC power transfer from the simulation
     @test isapprox(
-        ad["PowerFlowBusActivePowerInjection__ACBus"][:, "$(get_number(from))"],
+        data.bus_activepower_injection[data.bus_lookup[get_number(from)], :] * base_power,
         vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
         atol = 1e-9,
         rtol = 0,
     )
     @test isapprox(
-        ad["PowerFlowBusActivePowerInjection__ACBus"][:, "$(get_number(to))"],
+        data.bus_activepower_injection[data.bus_lookup[get_number(to)], :] * base_power,
         vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
         atol = 1e-9,
         rtol = 0,
