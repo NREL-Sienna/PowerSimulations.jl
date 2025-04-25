@@ -635,39 +635,45 @@ function _make_flow_expressions!(
 
     jump_model = get_jump_model(container)
 
-
-        tasks = map(branches) do name
-            try
-                ptdf_col = ptdf[name, :]
-                Threads.@spawn _make_flow_expressions!(
-                    jump_model,
-                    name,
-                    time_steps,
-                    ptdf_col,
-                    nodal_balance_expressions.data,
-                )
-                for task in tasks
-                    name, expressions = fetch(task)
-                    branch_flow_expr[name, :] .= expressions
-                end
-
+    #=
+    tasks = map(branches) do name
+        try
+            ptdf_col = ptdf[name, :]
         catch e
-            @error "Failed to generate PTDF column values for Branch $name"
+
+            @error "Failed to generate PTDF column values for Line $name"
+            rethrow(e)
+        end
+            Threads.@spawn _make_flow_expressions!(
+                jump_model,
+                name,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions.data,
+            )
+    end
+    for task in tasks
+        name, expressions = fetch(task)
+        branch_flow_expr[name, :] .= expressions
+    end
+    =#
+    #Leaving serial code commented out for debugging purposes in the future
+    for name in branches
+        try
+            ptdf_col = ptdf[name, :]
+            branch_flow_expr[name, :] .= _make_flow_expressions!(
+                jump_model,
+                name,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions.data,
+            )
+        catch e
+            @error "Failed to generate PTDF column values for Line $name"
             rethrow(e)
         end
     end
-    #= Leaving serial code commented out for debugging purposes in the future
-    for name in branches
-        ptdf_col = ptdf[name, :]
-        branch_flow_expr[name, :] .= _make_flow_expressions!(
-            jump_model,
-            name,
-            time_steps,
-            ptdf_col,
-            nodal_balance_expressions.data,
-        )
-    end
-    =#
+    #
 
     return branch_flow_expr
 end
