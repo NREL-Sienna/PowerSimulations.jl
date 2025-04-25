@@ -613,9 +613,9 @@ function _make_flow_expressions!(
             )
         )
     end
-    return name, expressions
+    # return name, expressions
     # change when using the not concurrent version
-    #return expressions
+    return expressions
 end
 
 function _make_flow_expressions!(
