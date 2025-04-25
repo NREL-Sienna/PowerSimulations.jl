@@ -115,7 +115,7 @@ function _add_pwl_variables!(
     ::Type{U},
 ) where {
     T <: PSY.Component,
-    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+    U <: AbstractPiecewiseLinearBlockOffer,
 }
     var_container = lazy_container_addition!(container, U(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
@@ -153,11 +153,8 @@ function _add_pwl_constraint!(
     ::Type{V},
     ::Type{W},
 ) where {T <: PSY.Component, U <: VariableType,
-    V <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
-    W <: Union{
-        PieceWiseLinearBlockOfferConstraint,
-        PieceWiseLinearBlockDecrementalOfferConstraint,
-    }}
+    V <: AbstractPiecewiseLinearBlockOffer,
+    W <: AbstractPiecewiseLinearBlockOfferConstraint}
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
@@ -178,7 +175,7 @@ function _add_pwl_constraint!(
     #=
     const_upperbound_container = lazy_container_addition!(
         container,
-        PieceWiseLinearUpperBoundConstraint(),
+        PiecewiseLinearUpperBoundConstraint(),
         T,
         axes(pwl_vars)...;
     )
@@ -214,14 +211,14 @@ function _add_pwl_constraint!(
     variables = get_variable(container, U(), T, name)
     const_container = lazy_container_addition!(
         container,
-        PieceWiseLinearBlockOfferConstraint(),
+        PiecewiseLinearBlockIncrementalOfferConstraint(),
         T,
         axes(variables)...;
         meta = name,
     )
     len_cost_data = length(break_points) - 1
     jump_model = get_jump_model(container)
-    pwl_vars = get_variable(container, PieceWiseLinearBlockOffer(), T)
+    pwl_vars = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     const_container[name, period] = JuMP.@constraint(
         jump_model,
         variables[name, period] ==
@@ -250,7 +247,7 @@ function _get_pwl_cost_expression(
     ::Type{U},
 ) where {
     T <: PSY.Component,
-    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+    U <: AbstractPiecewiseLinearBlockOffer,
 }
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, U(), T)
@@ -294,7 +291,7 @@ function _get_pwl_cost_expression(
         time_period,
         cost_data_normalized,
         dt,
-        PieceWiseLinearBlockOffer,
+        PiecewiseLinearBlockIncrementalOffer,
     )
 end
 
@@ -326,7 +323,7 @@ function _get_pwl_cost_expression_decremental(
         time_period,
         cost_data_normalized,
         multiplier,
-        PieceWiseLinearBlockDecrementalOffer,
+        PiecewiseLinearBlockDecrementalOffer,
     )
 end
 
@@ -341,7 +338,7 @@ function _get_pwl_cost_expression(
     multiplier::Float64,
 ) where {T <: PSY.ReserveDemandCurve}
     name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, PieceWiseLinearBlockOffer(), T)
+    pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     slopes = PSY.get_y_coords(cost_data)
     ordc_cost = JuMP.AffExpr(0.0)
     for i in 1:length(slopes)
@@ -362,14 +359,14 @@ function _add_pwl_variables!(
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
 ) where {T <: PSY.Component}
-    var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
+    var_container = lazy_container_addition!(container, PiecewiseLinearCostVariable(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
     pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
     for i in 1:(length(cost_data) + 1)
         pwlvars[i] =
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
+                base_name = "PiecewiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
             )
     end
     return pwlvars
@@ -386,7 +383,7 @@ function _get_pwl_cost_expression(
     # TODO: This functions needs to be reimplemented for the new model. The code is repeated
     # because the internals will be different
     name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    pwl_var_container = get_variable(container, PiecewiseLinearCostVariable(), T)
     gen_cost = JuMP.AffExpr(0.0)
     cost_data = PSY.get_y_coords(cost_data)
     for (i, cost) in enumerate(cost_data)
@@ -453,8 +450,8 @@ function _add_pwl_term!(
         _get_pwl_cost_expression,
         U(),
         V(),
-        PieceWiseLinearBlockOffer,
-        PieceWiseLinearBlockOfferConstraint)
+        PiecewiseLinearBlockIncrementalOffer,
+        PiecewiseLinearBlockIncrementalOfferConstraint)
 end
 
 """
@@ -485,8 +482,8 @@ function _add_pwl_term_decremental!(
         _get_pwl_cost_expression_decremental,
         U(),
         V(),
-        PieceWiseLinearBlockDecrementalOffer,
-        PieceWiseLinearBlockDecrementalOfferConstraint)
+        PiecewiseLinearBlockDecrementalOffer,
+        PiecewiseLinearBlockDecrementalOfferConstraint)
 end
 
 function _add_pwl_term_helper!(
@@ -501,11 +498,8 @@ function _add_pwl_term_helper!(
     ::Type{X},
 ) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation,
-    W <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
-    X <: Union{
-        PieceWiseLinearBlockOfferConstraint,
-        PieceWiseLinearBlockDecrementalOfferConstraint,
-    }}
+    W <: AbstractPiecewiseLinearBlockOffer,
+    X <: AbstractPiecewiseLinearBlockOfferConstraint}
     name = PSY.get_name(component)
     break_points = PSY.get_x_coords(data)
     time_steps = get_time_steps(container)
@@ -582,7 +576,7 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         break_points = PSY.get_x_coords(data)
-        _add_pwl_variables!(container, T, name, t, data, PieceWiseLinearBlockOffer)
+        _add_pwl_variables!(container, T, name, t, data, PiecewiseLinearBlockIncrementalOffer)
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost

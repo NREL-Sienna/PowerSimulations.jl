@@ -232,7 +232,7 @@ export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
-export PieceWiseLinearCostVariable
+export PiecewiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 
@@ -284,7 +284,7 @@ export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
-export PieceWiseLinearCostConstraint
+export PiecewiseLinearCostConstraint
 export ParticipationAssignmentConstraint
 export ParticipationFractionConstraint
 export PhaseAngleControlLimit

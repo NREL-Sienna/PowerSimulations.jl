@@ -222,7 +222,7 @@ function _update_pwl_cost_expression(
     time_period::Int,
     cost_data::PSY.PiecewiseLinearData,
 ) where {T <: PSY.Component}
-    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    pwl_var_container = get_variable(container, PiecewiseLinearCostVariable(), T)
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
