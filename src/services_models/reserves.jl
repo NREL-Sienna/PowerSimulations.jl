@@ -547,6 +547,48 @@ function add_constraints!(
     return
 end
 
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{PostContingencyReserveDeploymentBalanceConstraint},
+    service::SR,
+    contributing_devices::U,
+    device_outages::W,
+    ::ServiceModel{SR, V},
+) where {
+    SR <: PSY.AbstractReserve,
+    V <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Device}
+
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    cons = add_constraints_container!(
+        container,
+        T(),
+        SR,
+        [PSY.get_name(d) for d in device_outages],
+        time_steps;
+        meta = service_name,
+    )
+    var_r_deployed =
+        get_variable(container, PostContingencyActivePowerReserveDeployedVariable(), SR, service_name)
+    jump_model = get_jump_model(container)
+
+    for d_c in device_outages, t in time_steps
+        device_outage_name = PSY.get_name(d_c)
+        _, max_active_power = PSY.get_active_power_limits(d_c)
+
+        cons[device_outage_name, t] =
+            JuMP.@constraint(
+                jump_model,
+                sum(var_r_deployed[name, device_outage_name, t] for name in get_name.(setdiff(contributing_devices, device_outages))) == max_active_power
+            )
+    end
+
+    return
+end
+
 function objective_function!(
     container::OptimizationContainer,
     service::PSY.ReserveDemandCurve{T},

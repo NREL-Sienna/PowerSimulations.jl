@@ -240,14 +240,14 @@ function construct_service!(
             model,
         )
 
-        # add_constraints!(
-        #     container,
-        #     PostContingencyReserveDeploymentBalanceConstraint,
-        #     service,
-        #     contributing_generators,
-        #     single_outage_generators_with_reserve,
-        #     model,
-        # )
+        add_constraints!(
+            container,
+            PostContingencyReserveDeploymentBalanceConstraint,
+            service,
+            contributing_generators,
+            single_outage_generators_with_reserve,
+            model,
+        )
     end
 
     objective_function!(container, service, model)
