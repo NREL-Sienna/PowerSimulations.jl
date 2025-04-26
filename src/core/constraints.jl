@@ -291,9 +291,6 @@ struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
 
-#TODO: add docstring
-struct PostContingencyPowerBalanceConstraint <: ConstraintType end
-
 """
 Struct to create the constraint for satisfying active power reserve requirements.
 For more information check [Service Formulations](@ref service_formulations).
@@ -321,6 +318,10 @@ r_{d,t} \\le (1 - u_{d,t}^\\text{th}) \\cdot R^\\text{limit}_d, \\quad \\forall 
 struct ReservePowerConstraint <: ConstraintType end
 struct SACEPIDAreaConstraint <: ConstraintType end
 struct StartTypeConstraint <: ConstraintType end
+
+#TODO: add docstring
+struct PostContingencyReserveDeploymentLimitConstraint <: ConstraintType end
+struct PostContingencyReserveDeploymentBalanceConstraint <: ConstraintType end
 """
 Struct to create the start-up initial condition constraints for ThermalMultiStart.
 

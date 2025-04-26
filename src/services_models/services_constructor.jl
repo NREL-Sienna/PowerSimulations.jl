@@ -123,6 +123,53 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, RangeReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {SR <: PSY.Reserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    contributing_devices = get_contributing_devices(model)
+
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        RangeReserve(),
+    )
+
+    # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
+    single_outage_generators = []
+    valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
+    if !isempty(valid_outages)
+        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, contributing_devices)
+    end
+
+    contributing_generators = [d for d in contributing_devices if isa(d, PSY.Generator)]
+
+    if !isempty(single_outage_generators)
+        add_variables!(
+            container,
+            PostContingencyActivePowerReserveDeployedVariable,
+            service,
+            contributing_generators,
+            single_outage_generators,
+            RangeReserve(),
+        )
+    end
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ModelConstructStage,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
@@ -142,6 +189,67 @@ function construct_service!(
         contributing_devices,
         model,
     )
+    objective_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
+
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, RangeReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+) where {SR <: PSY.Reserve}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+
+    # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
+    single_outage_generators = []
+    valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
+    if !isempty(valid_outages)
+        single_outage_generators_with_reserve = _get_all_single_outage_generators_by_type(sys, valid_outages, contributing_devices)
+    end
+
+    contributing_generators = [d for d in contributing_devices if isa(d, PSY.Generator)]
+
+    if !isempty(single_outage_generators_with_reserve)
+        add_constraints!(
+            container,
+            PostContingencyReserveDeploymentLimitConstraint,
+            service,
+            contributing_generators,
+            single_outage_generators_with_reserve,
+            model,
+        )
+
+        # add_constraints!(
+        #     container,
+        #     PostContingencyReserveDeploymentBalanceConstraint,
+        #     service,
+        #     contributing_generators,
+        #     single_outage_generators_with_reserve,
+        #     model,
+        # )
+    end
+
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)

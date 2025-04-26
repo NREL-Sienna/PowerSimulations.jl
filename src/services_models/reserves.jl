@@ -17,6 +17,13 @@ function get_variable_upper_bound(::ActivePowerReserveVariable, r::PSY.ReserveNo
 end
 get_variable_lower_bound(::ActivePowerReserveVariable, ::PSY.ReserveNonSpinning, ::PSY.Device, _) = 0.0
 
+############################### PostContingencyActivePowerReserveDeployedVariable, Reserve #########################################
+get_variable_binary(::PostContingencyActivePowerReserveDeployedVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
+function get_variable_upper_bound(::PostContingencyActivePowerReserveDeployedVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractReservesFormulation)
+    return PSY.get_max_active_power(d) * PSY.get_max_output_fraction(r)
+end
+get_variable_lower_bound(::PostContingencyActivePowerReserveDeployedVariable, ::PSY.Reserve, ::PSY.Device, _) = 0.0
+
 ############################### ServiceRequirementVariable, ReserveDemandCurve ################################
 
 get_variable_binary(::ServiceRequirementVariable, ::Type{<:PSY.ReserveDemandCurve}, ::AbstractReservesFormulation) = false
@@ -488,6 +495,55 @@ function add_constraints!(
             )
         end
     end
+    return
+end
+
+################################### Post Contingency Reserve Requirement Constraints ##########################
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{PostContingencyReserveDeploymentLimitConstraint},
+    service::SR,
+    contributing_devices::U,
+    device_outages::W,
+    ::ServiceModel{SR, V},
+) where {
+    SR <: PSY.AbstractReserve,
+    V <: AbstractReservesFormulation,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+} where {D <: PSY.Device}
+
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    cons = add_constraints_container!(
+        container,
+        T(),
+        SR,
+        [PSY.get_name(d) for d in setdiff(contributing_devices, device_outages)],
+        [PSY.get_name(d) for d in device_outages],
+        time_steps;
+        meta = service_name,
+    )
+    var_r = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
+    var_r_deployed =
+        get_variable(container, PostContingencyActivePowerReserveDeployedVariable(), SR, service_name)
+    jump_model = get_jump_model(container)
+
+    for d in contributing_devices, d_c in device_outages, t in time_steps
+        name = PSY.get_name(d)
+        device_outage_name = PSY.get_name(d_c)
+        if name == device_outage_name
+            continue
+        end
+
+        cons[name, device_outage_name, t] =
+            JuMP.@constraint(
+                jump_model,
+                var_r_deployed[name, device_outage_name, t] <= var_r[name, t] 
+            )
+    end
+
     return
 end
 

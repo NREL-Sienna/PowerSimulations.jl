@@ -25,6 +25,18 @@ function add_variables!(
     return
 end
 
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    service::U,
+    contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    device_outages::Union{Vector{W}, IS.FlattenIteratorWrapper{W}},
+    formulation::AbstractReservesFormulation,
+) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component, W <: PSY.Component}
+    add_service_variable!(container, T(), service, contributing_devices, device_outages, formulation)
+    return
+end
+
 @doc raw"""
 Adds a variable to the optimization model and to the affine expressions contained
 in the optimization_container model according to the specified sign. Based on the inputs, the variable can
@@ -143,6 +155,59 @@ function add_service_variable!(
 
         init = get_variable_warm_start_value(variable_type, d, formulation)
         init !== nothing && JuMP.set_start_value(variable[name, t], init)
+    end
+
+    return
+end
+
+function add_service_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    service::U,
+    contributing_devices::V,
+    device_outages::W,
+    formulation::AbstractServiceFormulation,
+) where {
+    T <: VariableType,
+    U <: PSY.Service,
+    V <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: Union{Vector{X}, IS.FlattenIteratorWrapper{X}},
+} where {D <: PSY.Component, X <: PSY.Component}
+    @assert !isempty(contributing_devices)
+    time_steps = get_time_steps(container)
+
+    binary = get_variable_binary(variable_type, U, formulation)
+
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        U,
+        PSY.get_name(service),
+        [PSY.get_name(d) for d in setdiff(contributing_devices, device_outages)],
+        [PSY.get_name(d_c) for d_c in device_outages],
+        time_steps,
+    )
+
+    for d in contributing_devices, d_c in device_outages, t in time_steps
+        name = PSY.get_name(d)
+        device_outage_name = PSY.get_name(d_c)
+        if name == device_outage_name
+            continue
+        end
+        variable[name, device_outage_name, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "$(T)_$(U)_$(PSY.get_name(service))_{$(name), $(device_outage_name), $(t)}",
+            binary = binary
+        )
+
+        ub = get_variable_upper_bound(variable_type, service, d, formulation)
+        ub !== nothing && JuMP.set_upper_bound(variable[name, device_outage_name, t], ub)
+
+        lb = get_variable_lower_bound(variable_type, service, d, formulation)
+        lb !== nothing && !binary && JuMP.set_lower_bound(variable[name, device_outage_name, t], lb)
+
+        init = get_variable_warm_start_value(variable_type, d, formulation)
+        init !== nothing && JuMP.set_start_value(variable[name, device_outage_name, t], init)
     end
 
     return

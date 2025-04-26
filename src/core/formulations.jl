@@ -173,10 +173,6 @@ Linear active power approximation using the power transfer distribution factor [
 struct SecurityConstrainedPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix for Generator outages. If exists, the rating b is considered as the branch power limit for post-contingency flows, otherwise the standard reting is considered.
-"""
-struct SecurityConstrainedG1PTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
-"""
 Infinite capacity approximation of network flow to represent entire system with a single node.
 """
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end

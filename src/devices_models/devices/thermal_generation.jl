@@ -19,12 +19,6 @@ get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThe
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::ThermalDispatchNoMin) = 0.0
 
-############## ActivePowerDeviationVariable, ThermalGen ####################
-get_variable_binary(::ActivePowerDeviationVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
-get_variable_warm_start_value(::ActivePowerDeviationVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
-get_variable_lower_bound(::ActivePowerDeviationVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
-get_variable_upper_bound(::ActivePowerDeviationVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
-
 ############## PowerAboveMinimumVariable, ThermalGen ####################
 get_variable_binary(::PowerAboveMinimumVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::PowerAboveMinimumVariable, d::PSY.ThermalGen, ::AbstractCompactUnitCommitment) = max(0.0, PSY.get_active_power(d) - PSY.get_active_power_limits(d).min)
