@@ -73,7 +73,7 @@ handle_variable_cost_parameter(
     ::ShutdownCostParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 handle_variable_cost_parameter(
-    ::CostAtMinParameter,
+    ::AbstractCostAtMinParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
 function handle_variable_cost_parameter(
@@ -141,7 +141,7 @@ function handle_variable_cost_parameter(
 end
 
 function handle_variable_cost_parameter(
-    ::CostAtMinParameter,
+    ::IncrementalCostAtMinParameter,
     op_cost::PSY.MarketBidCost,
     component::PSY.Generator,  # TODO handle decremental case
     name,

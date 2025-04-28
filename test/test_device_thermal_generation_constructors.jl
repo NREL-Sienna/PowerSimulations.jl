@@ -1384,7 +1384,7 @@ end
 function run_mbc_sim(sys::System; is_decremental::Bool = false)
     model_, model, res_uc = run_generic_mbc_sim(sys)
 
-    ii_uc = read_parameter(res_uc, PSI.CostAtMinParameter, ThermalStandard)
+    ii_uc = read_parameter(res_uc, PSI.IncrementalCostAtMinParameter, ThermalStandard)
     for (step_dt, step_df) in pairs(ii_uc)
         for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
             comp = get_component(ThermalStandard, sys, gen_name)

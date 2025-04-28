@@ -275,8 +275,20 @@ _get_time_series_name(::ShutdownCostParameter, device::PSY.Component, ::DeviceMo
     get_name(PSY.get_shut_down(PSY.get_operation_cost(device)))
 
 # TODO handle the decremental case
-_get_time_series_name(::CostAtMinParameter, device::PSY.Generator, ::DeviceModel) =
+_get_time_series_name(
+    ::IncrementalCostAtMinParameter,
+    device::PSY.Generator,
+    ::DeviceModel,
+) =
     get_name(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
+
+# TODO handle the decremental case
+_get_time_series_name(
+    ::IncrementalPiecewiseLinearSlopeParameter,
+    device::PSY.Generator,
+    ::DeviceModel,
+) =
+    get_name(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
 
 # Layer of indirection to figure out what eltype we expect to find in various time series
 # (we could just read the time series and figure it out dynamically if this becomes too brittle)
@@ -289,7 +301,70 @@ _param_to_vars(::StartupCostParameter, ::AbstractThermalFormulation) = (StartVar
 _param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
     MULTI_START_VARIABLES
 _param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
-_param_to_vars(::CostAtMinParameter, ::AbstractDeviceFormulation) = (OnVariable,)
+_param_to_vars(::AbstractCostAtMinParameter, ::AbstractDeviceFormulation) = (OnVariable,)
+_param_to_vars(::IncrementalPiecewiseLinearSlopeParameter, ::AbstractDeviceFormulation) =
+    (PiecewiseLinearBlockIncrementalOffer,)
+_param_to_vars(::DecrementalPiecewiseLinearSlopeParameter, ::AbstractDeviceFormulation) =
+    (PiecewiseLinearBlockDecrementalOffer,)
+
+# Layer of indirection to handle possible additional axes. Most paramters have just the two
+# usual axes (device, timestamp), but some have a third (e.g., piecewise tranche)
+_additional_axes(
+    ::OptimizationContainer,
+    ::T,
+    ::U,
+    ::DeviceModel{D, W},
+) where {
+    T <: ParameterType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component} = ()
+
+# Iterate through all periods of a piecewise time series and return the maximum number of tranches
+function get_max_tranches(piecewise_ts::IS.TimeSeriesKey)
+    return 10  # TODO placeholder
+end
+
+# Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
+# TODO decremental case
+function _additional_axes(
+    container::OptimizationContainer,
+    param::AbstractPiecewiseLinearSlopeParameter,
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    # TODO do I need the filter here or are they already filtered
+    curves =
+        PSY.get_incremental_offer_curves.(
+            PSY.get_operation_cost.(
+                filter(_has_incremental_offer_curves_time_series, devices)
+            )
+        )
+    max_tranches = maximum(get_max_tranches.(curves))
+    return (1:max_tranches,)
+end
+
+# Layer of indirection to handle the fact that some parameters come from time series that
+# represent multiple things (e.g., both slopes and breakpoints come from the same time
+# series of `FunctionData`). This function is called on every element of the time series
+# with an expected output axes tuple.
+_unwrap_for_param(::ParameterType, ts_elem, expected_axs) = ts_elem
+
+function _unwrap_for_param(
+    ::AbstractPiecewiseLinearSlopeParameter,
+    ts_elem::IS.PiecewiseStepData,
+    expected_axs,
+)
+    max_len = length(only(expected_axs))
+    y_coords = IS.get_y_coords(ts_elem)
+    # The container is sized based on the global maximum number of tranches, so we may need to right-pad
+    (length(y_coords) > max_len) && error("Placeholder max tranches is too small!")  # TODO placeholder
+    padded_y_coords = vcat(y_coords, fill(NaN, max_len - length(y_coords)))
+    return padded_y_coords
+end
 
 function _add_parameters!(
     container::OptimizationContainer,
@@ -318,6 +393,8 @@ function _add_parameters!(
     end
     jump_model = get_jump_model(container)
 
+    universal_axes = [device_names, time_steps]
+    additional_axes = _additional_axes(container, param, devices, model)
     param_container = add_param_container!(
         container,
         param,
@@ -326,8 +403,7 @@ function _add_parameters!(
         PSI.SOSStatusVariable.NO_VARIABLE,
         false,
         _get_expected_time_series_eltype(T()),
-        device_names,
-        time_steps,
+        universal_axes..., additional_axes...,
     )
 
     for device in devices
@@ -335,7 +411,9 @@ function _add_parameters!(
         if !PSY.has_time_series(device, ts_type, ts_name)
             continue
         end
-        ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)
+        raw_ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)
+        ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
+        @assert all(size.(ts_vals) .== Ref(length.(additional_axes)))
         name = PSY.get_name(device)
         for step in time_steps
             PSI.set_parameter!(

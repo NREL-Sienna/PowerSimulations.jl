@@ -177,14 +177,18 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-const ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
+# If `ixs` does not index all `ndims_` dimensions, add a `:` for the rest (like Python's `...`)
+# PERF this might not be the most performant thing in the world, could consider using EllipsisNotation.jl
+_expand_ixs(ixs, ndims_) = (ixs..., fill(:, ndims_ - length(ixs))...)
+
+const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
-    value::T,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
 ) where {T <: ValidDataParamEltypes}
-    array[ixs...] = value
+    array[_expand_ixs(ixs, ndims(array))...] .= value
     return
 end
 
@@ -194,7 +198,7 @@ function _set_parameter!(
     value::Float64,
     ixs::Tuple,
 )
-    array[ixs...] = add_jump_parameter(model, value)
+    array[_expand_ixs(ixs, ndims(array))...] .= add_jump_parameter(model, value)
     return
 end
 
@@ -204,19 +208,20 @@ function _set_parameter!(
     value::Float64,
     ixs::Tuple,
 )
-    array[ixs...] = add_jump_parameter(model, value)
+    array[_expand_ixs(ixs, ndims(array))...] .= add_jump_parameter(model, value)
     return
 end
 
 function set_multiplier!(container::ParameterContainer, multiplier::Float64, ixs...)
-    get_multiplier_array(container)[ixs...] = multiplier
+    multiplier_array = get_multiplier_array(container)
+    multiplier_array[_expand_ixs(ixs, ndims(multiplier_array))...] .= multiplier
     return
 end
 
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::ValidDataParamEltypes,
+    parameter::Union{ValidDataParamEltypes, AbstractVector{<:ValidDataParamEltypes}},
     ixs...,
 )
     param_array = get_parameter_array(container)
@@ -297,8 +302,23 @@ struct StartupCostParameter <: ObjectiveFunctionParameter end
 "Parameter to define shutdown cost time series"
 struct ShutdownCostParameter <: ObjectiveFunctionParameter end
 
-"Parameter to define the cost at the minimum available power"
-struct CostAtMinParameter <: ObjectiveFunctionParameter end
+"Parameters to define the cost at the minimum available power"
+abstract type AbstractCostAtMinParameter <: ObjectiveFunctionParameter end
+
+"[`AbstractCostAtMinParameter`](@ref) for the incremental case (power source)"
+struct IncrementalCostAtMinParameter <: AbstractCostAtMinParameter end
+
+"[`AbstractCostAtMinParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalCostAtMinParameter <: AbstractCostAtMinParameter end
+
+"Parameters to define the slopes of a piecewise linear cost function"
+abstract type AbstractPiecewiseLinearSlopeParameter <: ObjectiveFunctionParameter end
+
+"[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the incremental case (power source)"
+struct IncrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
+
+"[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
@@ -309,7 +329,7 @@ should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 # TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are 3-tuples)
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
-should_write_resulting_value(::Type{<:CostAtMinParameter}) = true
+should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

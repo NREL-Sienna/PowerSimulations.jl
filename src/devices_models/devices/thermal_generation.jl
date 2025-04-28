@@ -96,7 +96,7 @@ proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, ::O
     _lookup_maybe_time_variant_param(container, comp, t,
     Val(is_time_variant(PSY.get_incremental_initial_input(cost))),
     PSY.get_initial_input ∘ PSY.get_incremental_offer_curves ∘ PSY.get_operation_cost,
-    CostAtMinParameter())
+    IncrementalCostAtMinParameter())
 # PERF it might be more performant to only mark as time variant if we actually have a time series (that goes for the startup and shutdown too)
 is_time_variant_term(::OptimizationContainer, ::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) = true
 

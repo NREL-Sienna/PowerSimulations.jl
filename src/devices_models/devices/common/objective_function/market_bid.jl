@@ -26,6 +26,13 @@ _consider_initial_input_time_series(
 ) where {T, D} =
     haskey(get_variables(container), VariableKey(OnVariable, T))
 
+# TODO the relevant variables seem to be created in the `ModelConstructStage` for this one,
+# so we can't check for them here? Will that persist?
+_consider_slope_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} = true  # temporary, see above
+
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 _has_startup_time_series(device::PSY.StaticInjection) =
@@ -35,6 +42,9 @@ _has_shutdown_time_series(device::PSY.StaticInjection) =
 _has_incremental_initial_input_time_series(device::PSY.StaticInjection) =
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
+_has_incremental_offer_curves_time_series(device::PSY.StaticInjection) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
 
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
     cost = PSY.get_operation_cost(device)::PSY.MarketBidCost
@@ -65,6 +75,24 @@ function validate_initial_input_time_series(device::PSY.StaticInjection, decreme
     return
 end
 
+function _add_market_bid_parameters_helper(
+    consider_fn,
+    filter_fn,
+    param,
+    container,
+    model,
+    devices,
+)
+    if consider_fn(container, model)
+        my_devices = filter(filter_fn, devices)
+        if length(my_devices) > 0
+            add_parameters!(container, param, my_devices, model)
+            return true
+        end
+    end
+    return false
+end
+
 function add_market_bid_parameters!(
     container::OptimizationContainer,
     devices,
@@ -73,32 +101,48 @@ function add_market_bid_parameters!(
     devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
 
     # Startup cost parameters
-    if _consider_startup_time_series(container, model)
-        startup_devices = filter(_has_startup_time_series, devices)
-        if length(startup_devices) > 0
-            add_parameters!(container, StartupCostParameter, startup_devices, model)
-        end
-    end
+    _add_market_bid_parameters_helper(
+        _consider_startup_time_series,
+        _has_startup_time_series,
+        StartupCostParameter,
+        container,
+        model,
+        devices,
+    )
 
     # Shutdown cost parameters
-    if _consider_shutdown_time_series(container, model)
-        shutdown_devices = filter(_has_shutdown_time_series, devices)
-        if length(shutdown_devices) > 0
-            add_parameters!(container, ShutdownCostParameter, shutdown_devices, model)
-        end
-    end
+    _add_market_bid_parameters_helper(
+        _consider_shutdown_time_series,
+        _has_shutdown_time_series,
+        ShutdownCostParameter,
+        container,
+        model,
+        devices,
+    )
 
     # Min gen cost parameters
     # TODO decremental case
-    if _consider_initial_input_time_series(container, model)
-        validate_initial_input_time_series.(devices, false)
-        initial_input_devices = filter(_has_incremental_initial_input_time_series, devices)
-        if length(initial_input_devices) > 0
-            add_parameters!(container, CostAtMinParameter, initial_input_devices, model)
-        end
-    end
+    _add_market_bid_parameters_helper(
+        _consider_initial_input_time_series,
+        _has_incremental_initial_input_time_series,
+        IncrementalCostAtMinParameter,
+        container,
+        model,
+        devices,
+    )
 
-    # TODO variable cost parameters
+    # Variable cost: slope parameters
+    # TODO decremental case
+    _add_market_bid_parameters_helper(
+        _consider_slope_time_series,
+        _has_incremental_offer_curves_time_series,
+        IncrementalPiecewiseLinearSlopeParameter,
+        container,
+        model,
+        devices,
+    )
+
+    # TODO variable cost: breakpoint parameters
 end
 
 ##################################################
@@ -576,7 +620,14 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         break_points = PSY.get_x_coords(data)
-        _add_pwl_variables!(container, T, name, t, data, PiecewiseLinearBlockIncrementalOffer)
+        _add_pwl_variables!(
+            container,
+            T,
+            name,
+            t,
+            data,
+            PiecewiseLinearBlockIncrementalOffer,
+        )
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
