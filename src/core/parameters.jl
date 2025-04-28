@@ -177,9 +177,21 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-# If `ixs` does not index all `ndims_` dimensions, add a `:` for the rest (like Python's `...`)
-# PERF this might not be the most performant thing in the world, could consider using EllipsisNotation.jl
-_expand_ixs(ixs, ndims_) = (ixs..., fill(:, ndims_ - length(ixs))...)
+# If `ixs` does not index all dimensions of `dest`, add a `:` for the rest (like Python's
+# `...`) before broadcast-assigning. PERF this might not be the most performant thing in the
+# world, could consider using EllipsisNotation.jl
+function assign_expand(dest::AbstractArray, src, ixs::Tuple)
+    ixs_expanded = (ixs..., fill(:, ndims(dest) - length(ixs))...)
+    dest[ixs_expanded...] .= src
+end
+
+# If `src` is an array, broadcast across it to perform the assignment
+assign_maybe_broadcast!(dest::AbstractArray, src::AbstractArray, ixs::Tuple) =
+    assign_expand(dest, src, ixs)
+
+# If `src` is a tuple or scalar, do not broadcast across it (may still broadcast across `dest`)
+assign_maybe_broadcast!(dest::AbstractArray, src, ixs::Tuple) =
+    assign_expand(dest, Ref(src), ixs)
 
 const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}
 function _set_parameter!(
@@ -188,7 +200,7 @@ function _set_parameter!(
     value::Union{T, AbstractVector{T}},
     ixs::Tuple,
 ) where {T <: ValidDataParamEltypes}
-    array[_expand_ixs(ixs, ndims(array))...] .= value
+    assign_maybe_broadcast!(array, value, ixs)
     return
 end
 
@@ -198,7 +210,7 @@ function _set_parameter!(
     value::Float64,
     ixs::Tuple,
 )
-    array[_expand_ixs(ixs, ndims(array))...] .= add_jump_parameter(model, value)
+    assign_maybe_broadcast!(array, add_jump_parameter(model, value), ixs)
     return
 end
 
@@ -208,13 +220,12 @@ function _set_parameter!(
     value::Float64,
     ixs::Tuple,
 )
-    array[_expand_ixs(ixs, ndims(array))...] .= add_jump_parameter(model, value)
+    assign_maybe_broadcast!(array, add_jump_parameter(model, value), ixs)
     return
 end
 
 function set_multiplier!(container::ParameterContainer, multiplier::Float64, ixs...)
-    multiplier_array = get_multiplier_array(container)
-    multiplier_array[_expand_ixs(ixs, ndims(multiplier_array))...] .= multiplier
+    assign_maybe_broadcast!(get_multiplier_array(container), multiplier, ixs)
     return
 end
 

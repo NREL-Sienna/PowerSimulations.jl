@@ -366,6 +366,10 @@ function _unwrap_for_param(
     return padded_y_coords
 end
 
+# Extends `size` to tuples, treating them like scalars
+_size_wrapper(elem) = size(elem)
+_size_wrapper(::Tuple) = ()
+
 function _add_parameters!(
     container::OptimizationContainer,
     param::T,
@@ -413,7 +417,7 @@ function _add_parameters!(
         end
         raw_ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)
         ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
-        @assert all(size.(ts_vals) .== Ref(length.(additional_axes)))
+        @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
         name = PSY.get_name(device)
         for step in time_steps
             PSI.set_parameter!(
