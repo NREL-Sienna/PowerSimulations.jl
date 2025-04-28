@@ -40,6 +40,7 @@ const JumpSupportedLiterals =
 
 const TwoTerminalHVDCTypes =
     Union{PSY.TwoTerminalGenericHVDCLine, PSY.TwoTerminalVSCLine, PSY.TwoTerminalLCCLine}
+const OfferCurveCost = Union{PSY.MarketBidCost, PSY.ImportExportCost}
 # Settings constants
 const UNSET_HORIZON = Dates.Millisecond(0)
 const UNSET_RESOLUTION = Dates.Millisecond(0)
