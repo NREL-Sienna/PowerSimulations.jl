@@ -226,7 +226,7 @@ _add_two_terminal_elements_map!(
 
 Adds mappings for two-terminal elements (HVDC components) that connect the power flow results (from -> to, to -> from) 
 to be added to the mappings for all component types.
-The rersults for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of 
+The results for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of 
 these components.
 
 # Arguments
