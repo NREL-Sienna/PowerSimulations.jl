@@ -233,10 +233,6 @@ PowerOutput
 ```@docs
 PowerFlowVoltageAngle
 PowerFlowVoltageMagnitude
-PowerFlowBusActivePowerInjection
-PowerFlowBusReactivePowerInjection
-PowerFlowBusActivePowerWithdrawals
-PowerFlowBusReactivePowerWithdrawals
 PowerFlowLossFactors
 ```
 

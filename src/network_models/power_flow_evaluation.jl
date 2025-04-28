@@ -165,14 +165,8 @@ solve stage, before the power flow is solved.
 function _add_category_to_map!(
     precedence::Vector{DataType},
     available_keys::Vector{Pair{OptimizationContainerKey, Any}},
-    temp_component_map::Union{
-        Dict{DataType, Dict{String, Int}},
-        Dict{DataType, Dict{Union{Int64, String}, String}},
-    },
-    pf_data_opt_container_map::Union{
-        Dict{OptimizationContainerKey, Dict{String, Int}},
-        Dict{OptimizationContainerKey, Dict{Union{Int64, String}, String}},
-    },
+    temp_component_map::Dict{DataType, Dict},
+    pf_data_opt_container_map::Dict{OptimizationContainerKey, Dict},
 )
     added_injection_types = DataType[]
     for entry_type in precedence
