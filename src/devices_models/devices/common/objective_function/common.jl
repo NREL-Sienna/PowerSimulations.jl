@@ -172,11 +172,18 @@ function add_proportional_cost!(
         op_cost_data = PSY.get_operation_cost(d)
         for t in get_time_steps(container)
             cost_term = proportional_cost(container, op_cost_data, U(), d, V(), t)
+            add_as_time_variant =
+                is_time_variant_term(container, op_cost_data, U(), d, V(), t)
             iszero(cost_term) && continue
+            cost_term *= multiplier
             exp = if PSY.get_must_run(d)
-                cost_term * multiplier  # note we do not add this to the objective function
+                cost_term  # note we do not add this to the objective function
             else
-                _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
+                if add_as_time_variant
+                    _add_proportional_term_variant!(container, U(), d, cost_term, t)
+                else
+                    _add_proportional_term!(container, U(), d, cost_term, t)
+                end
             end
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end

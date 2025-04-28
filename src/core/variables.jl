@@ -371,21 +371,23 @@ Struct to dispatch the creation of piecewise linear cost variables for objective
 
 Docs abbreviation: ``\\delta``
 """
-struct PieceWiseLinearCostVariable <: SparseVariableType end
+struct PiecewiseLinearCostVariable <: SparseVariableType end
+
+abstract type AbstractPiecewiseLinearBlockOffer <: SparseVariableType end
 
 """
-Struct to dispatch the creation of piecewise linear block offer variables for objective function
+Struct to dispatch the creation of piecewise linear block incremental offer variables for objective function
 
 Docs abbreviation: ``\\delta``
 """
-struct PieceWiseLinearBlockOffer <: SparseVariableType end
+struct PiecewiseLinearBlockIncrementalOffer <: AbstractPiecewiseLinearBlockOffer end
 
 """
 Struct to dispatch the creation of piecewise linear block decremental offer variables for objective function
 
 Docs abbreviation: ``\\delta_d``
 """
-struct PieceWiseLinearBlockDecrementalOffer <: SparseVariableType end
+struct PiecewiseLinearBlockDecrementalOffer <: AbstractPiecewiseLinearBlockOffer end
 
 """
 Struct to dispatch the creation of Interface Flow Slack Up variables
@@ -428,9 +430,9 @@ struct RateofChangeConstraintSlackDown <: VariableType end
 
 const MULTI_START_VARIABLES = Tuple(IS.get_all_concrete_subtypes(PSI.MultiStartVariable))
 
-should_write_resulting_value(::Type{PieceWiseLinearCostVariable}) = false
-should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
-should_write_resulting_value(::Type{PieceWiseLinearBlockDecrementalOffer}) = false
+should_write_resulting_value(::Type{PiecewiseLinearCostVariable}) = false
+should_write_resulting_value(::Type{PiecewiseLinearBlockIncrementalOffer}) = false
+should_write_resulting_value(::Type{PiecewiseLinearBlockDecrementalOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true

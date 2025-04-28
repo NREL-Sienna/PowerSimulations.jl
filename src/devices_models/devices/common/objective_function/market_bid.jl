@@ -2,7 +2,7 @@
 ################ PWL Parameters  #################
 ##################################################
 
-# Determines whether we care about startup and shutdown costs, given the formulation
+# Determines whether we care about various types of costs, given the formulation
 # NOTE: currently works based on what has already been added to the container;
 # alternatively we could dispatch on the formulation directly
 _consider_startup_time_series(
@@ -20,34 +20,129 @@ _consider_shutdown_time_series(
 ) where {T, D} =
     haskey(get_variables(container), VariableKey(StopVariable, T))
 
+_consider_initial_input_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    haskey(get_variables(container), VariableKey(OnVariable, T))
+
+# TODO the relevant variables seem to be created in the `ModelConstructStage` for this one,
+# so we can't check for them here? Will that persist?
+_consider_slope_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} = true  # temporary, see above
+
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 _has_startup_time_series(device::PSY.StaticInjection) =
-    PSY.get_start_up(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+    is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 _has_shutdown_time_series(device::PSY.StaticInjection) =
-    PSY.get_shut_down(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+    is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(device)))
+_has_incremental_initial_input_time_series(device::PSY.StaticInjection) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
+_has_incremental_offer_curves_time_series(device::PSY.StaticInjection) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+
+function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
+    cost = PSY.get_operation_cost(device)::PSY.MarketBidCost
+    ts_initial = is_time_variant(
+        if decremental
+            PSY.get_decremental_initial_input(cost)
+        else
+            PSY.get_incremental_initial_input(cost)
+        end,
+    )
+    ts_variable = is_time_variant(
+        if decremental
+            PSY.get_decremental_offer_curves(cost)
+        else
+            PSY.get_incremental_offer_curves(cost)
+        end,
+    )
+    label = decremental ? "decremental" : "incremental"
+
+    (ts_initial && !ts_variable) &&
+        @warn "In `MarketBidCost` for $(get_name(device)), found time series for `$(label)_initial_input` but not `$(label)_offer_curves`; will ignore `initial_input` of `$(label)_offer_curves"
+    (ts_variable && !ts_initial) &&
+        throw(
+            ArgumentError(
+                "In `MarketBidCost` for $(get_name(device)), if providing time series for `$(label)_offer_curves`, must also provide time series for `$(label)_initial_input`",
+            ),
+        )
+    return
+end
+
+function _add_market_bid_parameters_helper(
+    consider_fn,
+    filter_fn,
+    param,
+    container,
+    model,
+    devices,
+)
+    if consider_fn(container, model)
+        my_devices = filter(filter_fn, devices)
+        if length(my_devices) > 0
+            add_parameters!(container, param, my_devices, model)
+            return true
+        end
+    end
+    return false
+end
 
 function add_market_bid_parameters!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel,
 )
-    devices = collect(devices)  # no `filter` for `FlattenIteratorWrapper`
-    if _consider_startup_time_series(container, model)
-        startup_devices =
-            filter(x -> _has_market_bid_cost(x) && _has_startup_time_series(x), devices)
-        if length(startup_devices) > 0
-            add_parameters!(container, StartupCostParameter, startup_devices, model)
-        end
-    end
+    devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
 
-    if _consider_shutdown_time_series(container, model)
-        shutdown_devices =
-            filter(x -> _has_market_bid_cost(x) && _has_shutdown_time_series(x), devices)
-        if length(shutdown_devices) > 0
-            add_parameters!(container, ShutdownCostParameter, shutdown_devices, model)
-        end
-    end
+    # Startup cost parameters
+    _add_market_bid_parameters_helper(
+        _consider_startup_time_series,
+        _has_startup_time_series,
+        StartupCostParameter,
+        container,
+        model,
+        devices,
+    )
+
+    # Shutdown cost parameters
+    _add_market_bid_parameters_helper(
+        _consider_shutdown_time_series,
+        _has_shutdown_time_series,
+        ShutdownCostParameter,
+        container,
+        model,
+        devices,
+    )
+
+    # Min gen cost parameters
+    # TODO decremental case
+    _add_market_bid_parameters_helper(
+        _consider_initial_input_time_series,
+        _has_incremental_initial_input_time_series,
+        IncrementalCostAtMinParameter,
+        container,
+        model,
+        devices,
+    )
+
+    # Variable cost: slope parameters
+    # TODO decremental case
+    _add_market_bid_parameters_helper(
+        _consider_slope_time_series,
+        _has_incremental_offer_curves_time_series,
+        IncrementalPiecewiseLinearSlopeParameter,
+        container,
+        model,
+        devices,
+    )
+
+    # TODO variable cost: breakpoint parameters
 end
 
 ##################################################
@@ -64,7 +159,7 @@ function _add_pwl_variables!(
     ::Type{U},
 ) where {
     T <: PSY.Component,
-    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
+    U <: AbstractPiecewiseLinearBlockOffer,
 }
     var_container = lazy_container_addition!(container, U(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
@@ -102,11 +197,8 @@ function _add_pwl_constraint!(
     ::Type{V},
     ::Type{W},
 ) where {T <: PSY.Component, U <: VariableType,
-    V <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
-    W <: Union{
-        PieceWiseLinearBlockOfferConstraint,
-        PieceWiseLinearBlockDecrementalOfferConstraint,
-    }}
+    V <: AbstractPiecewiseLinearBlockOffer,
+    W <: AbstractPiecewiseLinearBlockOfferConstraint}
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
@@ -123,15 +215,6 @@ function _add_pwl_constraint!(
         variables[name, period] ==
         sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data)
     )
-
-    #=
-    const_upperbound_container = lazy_container_addition!(
-        container,
-        PieceWiseLinearUpperBoundConstraint(),
-        T,
-        axes(pwl_vars)...;
-    )
-    =#
 
     # TODO: Parameter for this
     for ix in 1:len_cost_data
@@ -163,14 +246,14 @@ function _add_pwl_constraint!(
     variables = get_variable(container, U(), T, name)
     const_container = lazy_container_addition!(
         container,
-        PieceWiseLinearBlockOfferConstraint(),
+        PiecewiseLinearBlockIncrementalOfferConstraint(),
         T,
         axes(variables)...;
         meta = name,
     )
     len_cost_data = length(break_points) - 1
     jump_model = get_jump_model(container)
-    pwl_vars = get_variable(container, PieceWiseLinearBlockOffer(), T)
+    pwl_vars = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     const_container[name, period] = JuMP.@constraint(
         jump_model,
         variables[name, period] ==
@@ -190,29 +273,15 @@ end
 ################ PWL Expressions #################
 ##################################################
 
-function _get_pwl_cost_expression(
-    container::OptimizationContainer,
-    component::T,
-    time_period::Int,
-    cost_data::PSY.PiecewiseStepData,
-    multiplier::Float64,
-    ::Type{U},
-) where {
-    T <: PSY.Component,
-    U <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
-}
-    name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, U(), T)
-    gen_cost = JuMP.AffExpr(0.0)
-    y_coords_cost_data = PSY.get_y_coords(cost_data)
-    for (i, cost) in enumerate(y_coords_cost_data)
-        JuMP.add_to_expression!(
-            gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
-        )
-    end
-    return gen_cost
-end
+get_offer_curves_for_var(var, comp::PSY.Component) =
+    get_offer_curves_for_var(var, get_operation_cost(comp))
+get_offer_curves_for_var(::PiecewiseLinearBlockIncrementalOffer, cost::PSY.MarketBidCost) =
+    PSY.get_incremental_offer_curves(cost)
+get_offer_curves_for_var(::PiecewiseLinearBlockDecrementalOffer, cost::PSY.MarketBidCost) =
+    PSY.get_decremental_offer_curves(cost)
+
+get_multiplier_for_var(::PiecewiseLinearBlockIncrementalOffer) = OBJECTIVE_FUNCTION_POSITIVE
+get_multiplier_for_var(::PiecewiseLinearBlockDecrementalOffer) = OBJECTIVE_FUNCTION_NEGATIVE
 
 function _get_pwl_cost_expression(
     container::OptimizationContainer,
@@ -222,10 +291,16 @@ function _get_pwl_cost_expression(
     ::PSY.PiecewiseStepData,
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    incremental_curve = PSY.get_incremental_offer_curves(cost_function)
-    value_curve = PSY.get_value_curve(incremental_curve)
-    power_units = PSY.get_power_units(incremental_curve)
+    ::W,
+) where {
+    T <: PSY.Component,
+    U <: VariableType,
+    V <: AbstractDeviceFormulation,
+    W <: AbstractPiecewiseLinearBlockOffer,
+}
+    offer_curves = get_offer_curves_for_var(W(), cost_function)
+    value_curve = PSY.get_value_curve(offer_curves)
+    power_units = PSY.get_power_units(offer_curves)
     cost_component = PSY.get_function_data(value_curve)
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
@@ -237,46 +312,19 @@ function _get_pwl_cost_expression(
     )
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    return _get_pwl_cost_expression(
-        container,
-        component,
-        time_period,
-        cost_data_normalized,
-        dt,
-        PieceWiseLinearBlockOffer,
-    )
-end
+    multiplier = get_multiplier_for_var(W()) * dt
 
-function _get_pwl_cost_expression_decremental(
-    container::OptimizationContainer,
-    component::T,
-    time_period::Int,
-    cost_function::PSY.MarketBidCost,
-    ::PSY.PiecewiseStepData,
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType,
-    V <: AbstractDeviceFormulation}
-    decremental_curve = PSY.get_decremental_offer_curves(cost_function)
-    value_curve = PSY.get_value_curve(decremental_curve)
-    power_units = PSY.get_power_units(decremental_curve)
-    cost_component = PSY.get_function_data(value_curve)
-    base_power = get_base_power(container)
-    device_base_power = PSY.get_base_power(component)
-    cost_data_normalized = get_piecewise_incrementalcurve_per_system_unit(cost_component,
-        power_units,
-        base_power,
-        device_base_power)
-    resolution = get_resolution(container)
-    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    multiplier = OBJECTIVE_FUNCTION_NEGATIVE * dt
-    return _get_pwl_cost_expression(container,
-        component,
-        time_period,
-        cost_data_normalized,
-        multiplier,
-        PieceWiseLinearBlockDecrementalOffer,
-    )
+    name = PSY.get_name(component)
+    pwl_var_container = get_variable(container, W(), T)
+    gen_cost = JuMP.AffExpr(0.0)
+    y_coords_cost_data = PSY.get_y_coords(cost_data_normalized)
+    for (i, cost) in enumerate(y_coords_cost_data)
+        JuMP.add_to_expression!(
+            gen_cost,
+            cost * multiplier * pwl_var_container[(name, i, time_period)],
+        )
+    end
+    return gen_cost
 end
 
 """
@@ -290,7 +338,7 @@ function _get_pwl_cost_expression(
     multiplier::Float64,
 ) where {T <: PSY.ReserveDemandCurve}
     name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, PieceWiseLinearBlockOffer(), T)
+    pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     slopes = PSY.get_y_coords(cost_data)
     ordc_cost = JuMP.AffExpr(0.0)
     for i in 1:length(slopes)
@@ -302,75 +350,6 @@ function _get_pwl_cost_expression(
     return ordc_cost
 end
 
-#=
-# For Market Bid
-function _add_pwl_variables!(
-    container::OptimizationContainer,
-    ::Type{T},
-    component_name::String,
-    time_period::Int,
-    cost_data::PSY.PiecewiseStepData,
-) where {T <: PSY.Component}
-    var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
-    # length(PiecewiseStepData) gets number of segments, here we want number of points
-    pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
-    for i in 1:(length(cost_data) + 1)
-        pwlvars[i] =
-            var_container[(component_name, i, time_period)] = JuMP.@variable(
-                get_jump_model(container),
-                base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
-            )
-    end
-    return pwlvars
-end
-
-# For Market Bid #
-function _get_pwl_cost_expression(
-    container::OptimizationContainer,
-    component::T,
-    time_period::Int,
-    cost_data::PSY.PiecewiseStepData,
-    multiplier::Float64,
-) where {T <: PSY.Component}
-    # TODO: This functions needs to be reimplemented for the new model. The code is repeated
-    # because the internals will be different
-    name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
-    gen_cost = JuMP.AffExpr(0.0)
-    cost_data = PSY.get_y_coords(cost_data)
-    for (i, cost) in enumerate(cost_data)
-        JuMP.add_to_expression!(
-            gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
-        )
-    end
-    return gen_cost
-end
-
-function _add_pwl_term!(
-    container::OptimizationContainer,
-    component::T,
-    cost_data::AbstractVector{PSY.LinearFunctionData},
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    multiplier = objective_function_multiplier(U(), V())
-    resolution = get_resolution(container)
-    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    base_power = get_base_power(container)
-    # Re-scale breakpoints by Basepower
-    time_steps = get_time_steps(container)
-    cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    for t in time_steps
-        proportional_value =
-            PSY.get_proportional_term(cost_data[t]) * multiplier * base_power * dt
-        cost_expressions[t] =
-            _add_proportional_term!(container, U(), component, proportional_value, t)
-    end
-    return cost_expressions
-end
-=#
-
 ###############################################
 ######## MarketBidCost: Fixed Curves ##########
 ###############################################
@@ -379,7 +358,7 @@ end
 Add PWL cost terms for data coming from the MarketBidCost
 with a fixed incremental offer curve
 """
-function _add_pwl_term!(
+function _add_pwl_term_incremental!(
     container::OptimizationContainer,
     component::T,
     cost_function::PSY.MarketBidCost,
@@ -399,11 +378,10 @@ function _add_pwl_term!(
         component,
         cost_function,
         data,
-        _get_pwl_cost_expression,
         U(),
         V(),
-        PieceWiseLinearBlockOffer,
-        PieceWiseLinearBlockOfferConstraint)
+        PiecewiseLinearBlockIncrementalOffer,
+        PiecewiseLinearBlockIncrementalOfferConstraint)
 end
 
 """
@@ -431,11 +409,10 @@ function _add_pwl_term_decremental!(
         component,
         cost_function,
         data,
-        _get_pwl_cost_expression_decremental,
         U(),
         V(),
-        PieceWiseLinearBlockDecrementalOffer,
-        PieceWiseLinearBlockDecrementalOfferConstraint)
+        PiecewiseLinearBlockDecrementalOffer,
+        PiecewiseLinearBlockDecrementalOfferConstraint)
 end
 
 function _add_pwl_term_helper!(
@@ -443,18 +420,14 @@ function _add_pwl_term_helper!(
     component::T,
     cost_function::PSY.MarketBidCost,
     data::Union{PSY.PiecewiseStepData, PSY.PiecewiseLinearData},
-    get_pwl_cost_expression_function::Function,
     ::U,
     ::V,
     ::Type{W},
     ::Type{X},
 ) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation,
-    W <: Union{PieceWiseLinearBlockOffer, PieceWiseLinearBlockDecrementalOffer},
-    X <: Union{
-        PieceWiseLinearBlockOfferConstraint,
-        PieceWiseLinearBlockDecrementalOfferConstraint,
-    }}
+    W <: AbstractPiecewiseLinearBlockOffer,
+    X <: AbstractPiecewiseLinearBlockOfferConstraint}
     name = PSY.get_name(component)
     break_points = PSY.get_x_coords(data)
     time_steps = get_time_steps(container)
@@ -470,7 +443,7 @@ function _add_pwl_term_helper!(
             W,
             X,
         )
-        pwl_cost = get_pwl_cost_expression_function(
+        pwl_cost = _get_pwl_cost_expression(
             container,
             component,
             t,
@@ -478,6 +451,7 @@ function _add_pwl_term_helper!(
             data,
             U(),
             V(),
+            W(),
         )
         pwl_cost_expressions[t] = pwl_cost
     end
@@ -531,7 +505,14 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
     for t in time_steps
         break_points = PSY.get_x_coords(data)
-        _add_pwl_variables!(container, T, name, t, data, PieceWiseLinearBlockOffer)
+        _add_pwl_variables!(
+            container,
+            T,
+            name,
+            t,
+            data,
+            PiecewiseLinearBlockIncrementalOffer,
+        )
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
         pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
         pwl_cost_expressions[t] = pwl_cost
@@ -539,95 +520,6 @@ function _add_pwl_term!(
     return pwl_cost_expressions
 end
 
-#=
-"""
-Add PWL cost terms for data coming from the MarketBidCost
-with a timeseries incremental offer curve
-"""
-function _add_pwl_term!(
-    container::OptimizationContainer,
-    component::T,
-    cost_function::PSY.MarketBidCost,
-    ::PSY.TimeSeriesKey,
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    name = PSY.get_name(component)
-    value_curve = PSY.get_value_curve(incremental_offer_curve)
-    cost_component = PSY.get_function_data(value_curve)
-    base_power = get_base_power(container)
-    device_base_power = PSY.get_base_power(component)
-    power_units = PSY.get_power_units(cost_function)
-
-    data = get_piecewise_incrementalcurve_per_system_unit(
-        cost_component,
-        power_units,
-        base_power,
-        device_base_power,
-    )
-    time_steps = get_time_steps(container)
-    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    sos_val = _get_sos_value(container, V, component)
-    for t in time_steps
-        # Run checks in every time step because each time step has a PWL cost function
-        data = cost_data[t]
-        compact_status = validate_compact_pwl_data(component, data, base_power)
-        if !uses_compact_power(component, V()) && compact_status == COMPACT_PWL_STATUS.VALID
-            error(
-                "The data provided is not compatible with formulation $V. Use a formulation compatible with Compact Cost Functions",
-            )
-            # data = _convert_to_full_variable_cost(data, component)
-        elseif uses_compact_power(component, V()) &&
-               compact_status != COMPACT_PWL_STATUS.VALID
-            @warn(
-                "The cost data provided is not in compact form. Will attempt to convert. Errors may occur."
-            )
-            data = convert_to_compact_variable_cost(data)
-        else
-            @debug uses_compact_power(component, V()) compact_status name T V
-        end
-        cost_is_convex = PSY.is_convex(data)
-        break_points = PSY.get_x_coords(data) ./ base_power  # TODO should this be get_x_lengths/get_breakpoint_upper_bounds?
-        _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        if !cost_is_convex
-            _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
-        end
-        pwl_cost =
-            _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
-        pwl_cost_expressions[t] = pwl_cost
-    end
-    return pwl_cost_expressions
-end
-
-function _add_pwl_term!(
-    container::OptimizationContainer,
-    component::T,
-    cost_data::AbstractVector{PSY.PiecewiseStepData},
-    ::U,
-    ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
-    multiplier = objective_function_multiplier(U(), V())
-    resolution = get_resolution(container)
-    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
-    base_power = get_base_power(container)
-    # Re-scale breakpoints by Basepower
-    name = PSY.get_name(component)
-    time_steps = get_time_steps(container)
-    pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
-    sos_val = _get_sos_value(container, V, component)
-    for t in time_steps
-        data = cost_data[t]
-        break_points = PSY.get_x_coords(data) ./ base_power
-        _add_pwl_variables!(container, T, name, t, data)
-        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        _add_pwl_sos_constraint!(container, component, U(), break_points, sos_val, t)
-        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
-        pwl_cost_expressions[t] = pwl_cost
-    end
-    return pwl_cost_expressions
-end
-=#
 ############################################################
 ######## MarketBidCost: PiecewiseIncrementalCurve ##########
 ############################################################
@@ -657,13 +549,22 @@ function _add_variable_cost_to_objective!(
     if !isnothing(decremental_cost_curves)
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
+    pwl_cost_expressions =
+        _add_pwl_term_incremental!(
+            container,
+            component,
+            cost_function,
+            incremental_cost_curves,
+            T(),
+            U(),
+        )
     _add_variable_cost_helper!(
         container,
         T(),
         component,
         cost_function,
         incremental_cost_curves,
-        _add_pwl_term!,
+        pwl_cost_expressions,
         U(),
     )
     return
@@ -684,13 +585,22 @@ function _add_variable_cost_to_objective!(
     if !(isnothing(incremental_cost_curves))
         error("Component $(component_name) is not allowed to participate as a supply.")
     end
+    pwl_cost_expressions =
+        _add_pwl_term_decremental!(
+            container,
+            component,
+            cost_function,
+            decremental_cost_curves,
+            T(),
+            U(),
+        )
     _add_variable_cost_helper!(
         container,
         T(),
         component,
         cost_function,
         decremental_cost_curves,
-        _add_pwl_term_decremental!,
+        pwl_cost_expressions,
         U(),
     )
     return
@@ -702,57 +612,13 @@ function _add_variable_cost_helper!(
     component::PSY.Component,
     cost_function::PSY.MarketBidCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
-    add_pwl_term_function::Function,
-    ::U) where {T <: VariableType,
-    U <: AbstractDeviceFormulation}
+    pwl_cost_expressions::AbstractVector{<:JuMP.AbstractJuMPScalar},
+    ::U,
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
-    #=
-    # Could be helpful for TimeSeries
-    variable_cost_forecast = PSY.get_variable_cost(
-        component,
-        op_cost;
-        start_time = initial_time,
-        len = length(time_steps),
-    )
-    variable_cost_forecast_values = TimeSeries.values(variable_cost_forecast)
-    parameter_container = _get_cost_function_parameter_container(
-        container,
-        CostFunctionParameter(),
-        component,
-        T(),
-        U(),
-        eltype(variable_cost_forecast_values),
-    )
-    =#
-    pwl_cost_expressions =
-        add_pwl_term_function(
-            container,
-            component,
-            cost_function,
-            cost_data,
-            T(),
-            U(),
-        )
     jump_model = get_jump_model(container)
     for t in time_steps
-        #=
-        set_multiplier!(
-            parameter_container,
-            # Using 1.0 here since we want to reuse the existing code that adds the mulitpler
-            #  of base power times the time delta.
-            1.0,
-            component_name,
-            t,
-        )
-        set_parameter!(
-            parameter_container,
-            jump_model,
-            variable_cost_forecast_values[t],
-            component_name,
-            t,
-        )
-        =#
         add_to_expression!(
             container,
             ProductionCostExpression,
