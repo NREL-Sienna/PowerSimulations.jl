@@ -36,7 +36,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
-    radial_network_reduction::PNM.RadialNetworkReduction
+    radial_network_reduction::PNM.NetworkReduction
     reduce_radial_branches::Bool
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
@@ -61,7 +61,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             subnetworks,
             Dict{PSY.ACBus, Int}(),
             duals,
-            PNM.RadialNetworkReduction(),
+            PNM.NetworkReduction(),
             reduce_radial_branches,
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
@@ -111,7 +111,7 @@ function instantiate_network_model(
     end
     if model.reduce_radial_branches
         check_radial_branch_reduction_compatibility(T)
-        model.radial_network_reduction = PNM.RadialNetworkReduction(sys)
+        model.radial_network_reduction = PNM.NetworkReduction(sys)
     end
     return
 end

@@ -218,12 +218,12 @@ function _get_pwl_cost_expression(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.PiecewiseStepData,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    incremental_curve = PSY.get_incremental_offer_curves(cost_function)
+    incremental_curve = get_output_offer_curves(cost_function)
     value_curve = PSY.get_value_curve(incremental_curve)
     power_units = PSY.get_power_units(incremental_curve)
     cost_component = PSY.get_function_data(value_curve)
@@ -251,13 +251,13 @@ function _get_pwl_cost_expression_decremental(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.PiecewiseStepData,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
-    decremental_curve = PSY.get_decremental_offer_curves(cost_function)
+    decremental_curve = get_input_offer_curves(cost_function)
     value_curve = PSY.get_value_curve(decremental_curve)
     power_units = PSY.get_power_units(decremental_curve)
     cost_component = PSY.get_function_data(value_curve)
@@ -382,12 +382,12 @@ with a fixed incremental offer curve
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    cost_data = PSY.get_incremental_offer_curves(cost_function)
+    cost_data = get_output_offer_curves(cost_function)
     data = _get_pwl_data(container, component, cost_data)
     cost_is_convex = PSY.is_convex(data)
     name = PSY.get_name(component)
@@ -413,13 +413,13 @@ with a fixed decremental offer curve
 function _add_pwl_term_decremental!(
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
-    cost_data = PSY.get_decremental_offer_curves(cost_function)
+    cost_data = get_input_offer_curves(cost_function)
     data = _get_pwl_data(container, component, cost_data)
     cost_is_concave = PSY.is_concave(data)
     name = PSY.get_name(component)
@@ -441,7 +441,7 @@ end
 function _add_pwl_term_helper!(
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     data::Union{PSY.PiecewiseStepData, PSY.PiecewiseLinearData},
     get_pwl_cost_expression_function::Function,
     ::U,
@@ -700,11 +700,14 @@ function _add_variable_cost_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     add_pwl_term_function::Function,
-    ::U) where {T <: VariableType,
-    U <: AbstractDeviceFormulation}
+    ::U,
+) where {
+    T <: VariableType,
+    U <: AbstractDeviceFormulation,
+}
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
     #=
@@ -848,7 +851,7 @@ function _add_vom_cost_to_objective_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    ::PSY.MarketBidCost,
+    ::OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
 ) where {T <: VariableType,
