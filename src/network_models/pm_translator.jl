@@ -398,8 +398,8 @@ function get_branches_to_pm(
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    radial_branches_names = PNM.get_radial_branches(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    removed_branches_names = PNM.get_removed_branches(network_reduction)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: TwoTerminalHVDCTypes
@@ -408,7 +408,7 @@ function get_branches_to_pm(
         !(comp_type <: T) && continue
         start_idx += length(PM_branches)
         for (i, branch) in enumerate(get_available_components(device_model, sys))
-            if PSY.get_name(branch) ∈ radial_branches_names
+            if PSY.get_name(branch) ∈ removed_branches_names
                 @debug "Skipping branch $(PSY.get_name(branch)) since it is radial"
                 continue
             end
