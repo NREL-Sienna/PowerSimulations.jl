@@ -6,6 +6,10 @@ const PF_INPUT_KEY_PRECEDENCES = Dict(
     :voltage_magnitude_export => [PowerFlowVoltageMagnitude, VoltageMagnitude],
     :voltage_angle_opf => [VoltageAngle],
     :voltage_magnitude_opf => [VoltageMagnitude],
+    :active_power_hvdc_from_to => [FlowActivePowerFromToVariable],
+    :active_power_hvdc_to_from => [FlowActivePowerToFromVariable],
+    :active_power_pst_from_to => [FlowActivePowerVariable],
+    :active_power_pst_to_from => [FlowActivePowerVariable],
 )
 
 const RELEVANT_COMPONENTS_SELECTOR =
@@ -42,6 +46,13 @@ pf_input_keys(::PFS.ACPowerFlowData) =
     [:active_power, :reactive_power, :voltage_angle_opf, :voltage_magnitude_opf]
 pf_input_keys(::PFS.PSSEExporter) =
     [:active_power, :reactive_power, :voltage_angle_export, :voltage_magnitude_export]
+pf_input_keys_hvdc_pst(::PFS.PowerFlowData) = DataType[]
+pf_input_keys_hvdc_pst(::PFS.ACPowerFlowData) = [
+    :active_power_hvdc_from_to,
+    :active_power_hvdc_to_from,
+    :active_power_pst_from_to,
+    :active_power_pst_to_from,
+]
 
 # Generalized function to create component maps by name to the index in the PowerFlowData bus arrays
 function _make_temp_component_map(
@@ -165,16 +176,16 @@ solve stage, before the power flow is solved.
 function _add_category_to_map!(
     precedence::Vector{DataType},
     available_keys::Vector{Pair{OptimizationContainerKey, Any}},
-    temp_component_map::Dict{DataType, Dict},
-    pf_data_opt_container_map::Dict{OptimizationContainerKey, Dict},
+    temp_component_map::Dict{DataType, <:Dict},
+    pf_data_opt_container_map::Dict{OptimizationContainerKey, <:Dict},
 )
     added_injection_types = DataType[]
-    for entry_type in precedence
-        for (key, val) in available_keys
+    for entry_type ∈ precedence
+        for (key, val) ∈ available_keys
             if get_entry_type(key) === entry_type
                 comp_type = get_component_type(key)
                 # Skip types that have already been handled by something of higher precedence
-                if comp_type in added_injection_types
+                if comp_type ∈ added_injection_types || comp_type ∉ keys(temp_component_map)
                     continue
                 end
                 push!(added_injection_types, comp_type)
@@ -201,13 +212,7 @@ _add_two_terminal_elements_map!(
     ::PSY.System,
     ::PFS.PSSEExporter,
     ::Vector{Pair{OptimizationContainerKey, Any}},
-    ::Dict{
-        Symbol,
-        Dict{
-            InfrastructureSystems.Optimization.OptimizationContainerKey,
-            Dict{Union{Int64, String}, String},
-        },
-    },
+    ::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Dict}},
 ) = nothing
 
 """
@@ -233,41 +238,48 @@ function _add_two_terminal_elements_map!(
     sys::PSY.System,
     pf_data::PFS.PowerFlowData,
     available_keys::Vector{Pair{OptimizationContainerKey, Any}},
-    input_key_map::Dict{Symbol, Dict{OptimizationContainerKey, Dict{String, Int64}}},
+    input_key_map::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Dict}},
 )
-    category = :active_power
-    category ∈ pf_input_keys(pf_data) || return
+    for (element_type, category, get_bus_func) ∈ zip(
+        [
+            PSY.TwoTerminalHVDC,
+            PSY.TwoTerminalHVDC,
+            PSY.PhaseShiftingTransformer,
+            PSY.PhaseShiftingTransformer,
+        ],
+        [
+            :active_power_hvdc_from_to,
+            :active_power_hvdc_to_from,
+            :active_power_pst_from_to,
+            :active_power_pst_to_from,
+        ],
+        [
+            x -> PSY.get_from(PSY.get_arc(x)),
+            x -> PSY.get_to(PSY.get_arc(x)),
+            x -> PSY.get_from(PSY.get_arc(x)),
+            x -> PSY.get_to(PSY.get_arc(x)),
+        ])
+        category ∈ pf_input_keys_hvdc_pst(pf_data) || continue
 
-    map_component_from = _make_temp_component_map(
-        pf_data,
-        sys,
-        PSY.TwoTerminalHVDC,
-        x -> PSY.get_from(PSY.get_arc(x)),
-    )
-    isempty(map_component_from) && return
+        temp_component_map = _make_temp_component_map(
+            pf_data,
+            sys,
+            element_type,
+            get_bus_func,
+        )
+        isempty(temp_component_map) && continue
 
-    map_component_to = _make_temp_component_map(
-        pf_data,
-        sys,
-        PSY.TwoTerminalHVDC,
-        x -> PSY.get_to(PSY.get_arc(x)),
-    )
-
-    # here just HVDC components, but could be extended to other two-terminal devices
-
-    entry_types = [FlowActivePowerFromToVariable, FlowActivePowerToFromVariable]
-    temp_component_maps = [map_component_from, map_component_to]
-
-    for (entry_type, temp_component_map) in zip(entry_types, temp_component_maps)
+        precedence = PF_INPUT_KEY_PRECEDENCES[category]
         pf_data_opt_container_map =
             Dict{OptimizationContainerKey, valtype(temp_component_map)}()
         _add_category_to_map!(
-            [entry_type],
+            precedence,
             available_keys,
             temp_component_map,
             pf_data_opt_container_map,
         )
-        merge!(input_key_map[category], pf_data_opt_container_map)
+        category_map = get!(input_key_map, category, Dict{OptimizationContainerKey, valtype(temp_component_map)}())
+        merge!(category_map, pf_data_opt_container_map)
     end
     return
 end
@@ -368,7 +380,7 @@ end
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power},
-    ::Union{Type{<:PSY.StaticInjection}, Type{<:PSY.TwoTerminalHVDC}},
+    ::Type{<:PSY.StaticInjection},
     index,
     t,
     value,
@@ -413,6 +425,38 @@ _update_pf_data_component!(
     t,
     value,
 ) = (pf_data.bus_magnitude[index, t] = value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:active_power_hvdc_from_to},
+    ::Type{<:PSY.TwoTerminalHVDC},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_injection[index, t] += value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:active_power_hvdc_to_from},
+    ::Type{<:PSY.TwoTerminalHVDC},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_injection[index, t] += value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:active_power_pst_from_to},
+    ::Type{<:PSY.PhaseShiftingTransformer},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_injection[index, t] += value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:active_power_pst_to_from},
+    ::Type{<:PSY.PhaseShiftingTransformer},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_injection[index, t] -= value)
 
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
