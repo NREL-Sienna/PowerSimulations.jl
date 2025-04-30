@@ -180,8 +180,8 @@ function _add_category_to_map!(
     pf_data_opt_container_map::Dict{OptimizationContainerKey, <:Dict},
 )
     added_injection_types = DataType[]
-    for entry_type ∈ precedence
-        for (key, val) ∈ available_keys
+    for entry_type in precedence
+        for (key, val) in available_keys
             if get_entry_type(key) === entry_type
                 comp_type = get_component_type(key)
                 # Skip types that have already been handled by something of higher precedence
@@ -240,7 +240,7 @@ function _add_two_terminal_elements_map!(
     available_keys::Vector{Pair{OptimizationContainerKey, Any}},
     input_key_map::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Dict}},
 )
-    for (element_type, category, get_bus_func) ∈ zip(
+    for (element_type, category, get_bus_func) in zip(
         [
             PSY.TwoTerminalHVDC,
             PSY.TwoTerminalHVDC,
@@ -278,7 +278,11 @@ function _add_two_terminal_elements_map!(
             temp_component_map,
             pf_data_opt_container_map,
         )
-        category_map = get!(input_key_map, category, Dict{OptimizationContainerKey, valtype(temp_component_map)}())
+        category_map = get!(
+            input_key_map,
+            category,
+            Dict{OptimizationContainerKey, valtype(temp_component_map)}(),
+        )
         merge!(category_map, pf_data_opt_container_map)
     end
     return
