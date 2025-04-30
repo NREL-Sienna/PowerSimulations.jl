@@ -452,7 +452,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] += value)
+) = (pf_data.bus_activepower_injection[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power_pst_to_from},
@@ -460,7 +460,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] -= value)
+) = (pf_data.bus_activepower_injection[index, t] += value)
 
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
