@@ -313,6 +313,11 @@ struct StartupCostParameter <: ObjectiveFunctionParameter end
 "Parameter to define shutdown cost time series"
 struct ShutdownCostParameter <: ObjectiveFunctionParameter end
 
+# TODO consider whether it might be better to have one CostAtMin struct parameterized by a
+# Bool or Symbol or sentinel type for incremental vs. decremental (and same for slopes,
+# breakpoints) rather than subtypes. Leaning towards this because often I have to
+# Union{IncrementalSlope, IncrementalBreakpoint} and that could be done nicely with a type
+# parameter
 "Parameters to define the cost at the minimum available power"
 abstract type AbstractCostAtMinParameter <: ObjectiveFunctionParameter end
 
@@ -331,16 +336,29 @@ struct IncrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeP
 "[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the decremental case (power sink)"
 struct DecrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
 
+abstract type AbstractPiecewiseLinearBreakpointParameter <: TimeSeriesParameter end
+
+"[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the incremental case (power source)"
+struct IncrementalPiecewiseLinearBreakpointParameter <:
+       AbstractPiecewiseLinearBreakpointParameter end
+
+"[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalPiecewiseLinearBreakpointParameter <:
+       AbstractPiecewiseLinearBreakpointParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 struct EventParameter <: ParameterType end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 
-# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are 3-tuples)
+# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't
+# support 3D outputs (e.g., startup costs are 2D where eltype is 3-tuples, slopes and
+# breakpoints are fully three-dimensional)
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = false  # because 3D is currently unsupported
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

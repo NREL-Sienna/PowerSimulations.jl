@@ -1225,7 +1225,12 @@ function _add_param_container!(
     attributes::CostFunctionAttributes{R},
     axs...;
     sparse = false,
-) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    # TODO see TODO in add_parameters.jl about this Union
+) where {
+    R,
+    T <: Union{ObjectiveFunctionParameter, AbstractPiecewiseLinearBreakpointParameter},
+    U <: PSY.Component,
+}
     if sparse
         param_array = sparse_container_spec(R, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -1277,7 +1282,11 @@ function add_param_container!(
     axs...;
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    # TODO see TODO in add_parameters.jl about this Union
+) where {
+    T <: Union{ObjectiveFunctionParameter, AbstractPiecewiseLinearBreakpointParameter},
+    U <: PSY.Component,
+}
     param_key = ParameterKey(T, U, meta)
     attributes =
         CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)

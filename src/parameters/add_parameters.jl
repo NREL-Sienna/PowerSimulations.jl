@@ -284,7 +284,10 @@ _get_time_series_name(
 
 # TODO handle the decremental case
 _get_time_series_name(
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::Union{
+        IncrementalPiecewiseLinearSlopeParameter,
+        IncrementalPiecewiseLinearBreakpointParameter,
+    },
     device::PSY.Generator,
     ::DeviceModel,
 ) =
@@ -302,9 +305,21 @@ _param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
     MULTI_START_VARIABLES
 _param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
 _param_to_vars(::AbstractCostAtMinParameter, ::AbstractDeviceFormulation) = (OnVariable,)
-_param_to_vars(::IncrementalPiecewiseLinearSlopeParameter, ::AbstractDeviceFormulation) =
+_param_to_vars(
+    ::Union{
+        IncrementalPiecewiseLinearSlopeParameter,
+        IncrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractDeviceFormulation,
+) =
     (PiecewiseLinearBlockIncrementalOffer,)
-_param_to_vars(::DecrementalPiecewiseLinearSlopeParameter, ::AbstractDeviceFormulation) =
+_param_to_vars(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractDeviceFormulation,
+) =
     (PiecewiseLinearBlockDecrementalOffer,)
 
 # Layer of indirection to handle possible additional axes. Most paramters have just the two
@@ -329,7 +344,10 @@ end
 # TODO decremental case
 function _additional_axes(
     container::OptimizationContainer,
-    param::AbstractPiecewiseLinearSlopeParameter,
+    param::Union{
+        AbstractPiecewiseLinearSlopeParameter,
+        AbstractPiecewiseLinearBreakpointParameter,
+    },
     devices::U,
     model::DeviceModel{D, W},
 ) where {
@@ -362,8 +380,23 @@ function _unwrap_for_param(
     y_coords = IS.get_y_coords(ts_elem)
     # The container is sized based on the global maximum number of tranches, so we may need to right-pad
     (length(y_coords) > max_len) && error("Placeholder max tranches is too small!")  # TODO placeholder
+    # TODO handle in a more principled fashion the fact that length(y_coords) == length(x_coords) - 1
     padded_y_coords = vcat(y_coords, fill(NaN, max_len - length(y_coords)))
     return padded_y_coords
+end
+
+function _unwrap_for_param(
+    ::AbstractPiecewiseLinearBreakpointParameter,
+    ts_elem::IS.PiecewiseStepData,
+    expected_axs,
+)
+    # TODO deduplicate? maybe not worth it
+    max_len = length(only(expected_axs))
+    x_coords = IS.get_x_coords(ts_elem)
+    # The container is sized based on the global maximum number of tranches, so we may need to right-pad
+    (length(x_coords) > max_len) && error("Placeholder max tranches is too small!")  # TODO placeholder
+    padded_x_coords = vcat(x_coords, fill(NaN, max_len - length(x_coords)))
+    return padded_x_coords
 end
 
 # Extends `size` to tuples, treating them like scalars
@@ -376,7 +409,10 @@ function _add_parameters!(
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    T <: ObjectiveFunctionParameter,
+    # TODO the Union here is because I want breakpoints to work like slopes but they're
+    # elsewhere in the type hierarchy. I don't think this is the best way to do this, I need
+    # to understand why _add_time_series_parameters! is so different from this method
+    T <: Union{ObjectiveFunctionParameter, AbstractPiecewiseLinearBreakpointParameter},
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}

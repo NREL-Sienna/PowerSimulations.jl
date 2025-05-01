@@ -142,7 +142,16 @@ function add_market_bid_parameters!(
         devices,
     )
 
-    # TODO variable cost: breakpoint parameters
+    # Variable cost: breakpoint parameters
+    # TODO decremental case
+    _add_market_bid_parameters_helper(
+        _consider_slope_time_series,
+        _has_incremental_offer_curves_time_series,
+        IncrementalPiecewiseLinearBreakpointParameter,
+        container,
+        model,
+        devices,
+    )
 end
 
 ##################################################
@@ -298,18 +307,10 @@ function _get_pwl_cost_expression(
     V <: AbstractDeviceFormulation,
     W <: AbstractPiecewiseLinearBlockOffer,
 }
-    offer_curves = get_offer_curves_for_var(W(), cost_function)
-    value_curve = PSY.get_value_curve(offer_curves)
-    power_units = PSY.get_power_units(offer_curves)
-    cost_component = PSY.get_function_data(value_curve)
-    base_power = get_base_power(container)
-    device_base_power = PSY.get_base_power(component)
-    cost_data_normalized = get_piecewise_incrementalcurve_per_system_unit(
-        cost_component,
-        power_units,
-        base_power,
-        device_base_power,
-    )
+    # TODO refactor
+    is_decremental = (W() isa PiecewiseLinearBlockDecrementalOffer)
+    cost_data_normalized = _get_pwl_data(is_decremental, container, component, time_period)
+
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     multiplier = get_multiplier_for_var(W()) * dt
@@ -319,7 +320,7 @@ function _get_pwl_cost_expression(
     gen_cost = JuMP.AffExpr(0.0)
     y_coords_cost_data = PSY.get_y_coords(cost_data_normalized)
     for (i, cost) in enumerate(y_coords_cost_data)
-        JuMP.add_to_expression!(
+        JuMP.add_to_expression!(  # TODO variant?
             gen_cost,
             cost * multiplier * pwl_var_container[(name, i, time_period)],
         )
@@ -354,37 +355,68 @@ end
 ######## MarketBidCost: Fixed Curves ##########
 ###############################################
 
+# Data should be such that there are no NaNs up to some point and then all NaNs
+function _up_to_first_nan(arr::Vector{Float64})
+    last_ix = findfirst(isnan, arr) - 1
+    @assert all(isnan, arr[(last_ix + 1):end])
+    result = arr[1:last_ix]
+    @assert all(!isnan, result)
+    return result
+end
+
 # Serves a similar role as _lookup_maybe_time_variant_param, but needs extra logic
 function _get_pwl_data(
     is_decremental::Bool,
     container::OptimizationContainer,
     component::T,
-    time_period::Int,
+    time::Int,
 ) where {T <: PSY.Component}
+    # TODO refactor?
     cost_data = (
-        is_decremental ?
-            PSY.get_decremental_offer_curves : PSY.get_incremental_offer_curves)(
-                PSY.get_operation_cost(component))
-    
+        if is_decremental
+            PSY.get_decremental_offer_curves
+        else
+            PSY.get_incremental_offer_curves
+        end)(
+        PSY.get_operation_cost(component))
+
     if is_time_variant(cost_data)
         name = PSY.get_name(component)
 
-        SlopeParam = is_decremental ?
-            IncrementalPiecewiseLinearSlopeParameter :
+        # NOTE this is another argument in favor of doing this with a type parameter instead (see TODO in parameters.jl)
+        SlopeParam = if is_decremental
             DecrementalPiecewiseLinearSlopeParameter
-        slope_parameter_array = get_parameter_array(container, SlopeParam(), T)
-        slope_parameter_multiplier =
+        else
+            IncrementalPiecewiseLinearSlopeParameter
+        end
+        slope_param_arr = get_parameter_array(container, SlopeParam(), T)
+        slope_param_mult =
             get_parameter_multiplier_array(container, SlopeParam(), T)
-        slope_cost_component = slope_parameter_array[name, time_period] .* slope_parameter_multiplier[name, time_period]
-    
-        # TODO fetch breakpoint params when they exist. For now, a placeholder:
-        breakpoint_cost_component = 1.0:length(slope_cost_component)+1
-    
+        slope_cost_component =
+            slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
+
+        BreakpointParam = if is_decremental
+            DecrementalPiecewiseLinearBreakpointParameter
+        else
+            IncrementalPiecewiseLinearBreakpointParameter
+        end
+        breakpoint_param_arr = get_parameter_array(container, BreakpointParam(), T)
+        breakpoint_param_mult =
+            get_parameter_multiplier_array(container, BreakpointParam(), T)
+        breakpoint_cost_component =
+            breakpoint_param_arr[name, time, :] .* breakpoint_param_mult[name, time, :]
+
+        # NaNs signify that we had more space in the container than tranches in the
+        # function, so it's valid to discard trailing NaNs
+        slope_cost_component = _up_to_first_nan(collect(slope_cost_component))
+        breakpoint_cost_component = _up_to_first_nan(collect(breakpoint_cost_component))
+        @assert length(slope_cost_component) == length(breakpoint_cost_component) - 1
         cost_component = PSY.PiecewiseStepData(
-            slope_cost_component,
             breakpoint_cost_component,
+            slope_cost_component,
         )
-        unit_system = UnitSystem.NATURAL_UNITS
+        # PSY's cost_function_timeseries.jl says this will always be natural units
+        unit_system = PSY.UnitSystem.NATURAL_UNITS
     else
         cost_component = PSY.get_function_data(PSY.get_value_curve(cost_data))
         unit_system = PSY.get_power_units(cost_data)
@@ -393,7 +425,7 @@ function _get_pwl_data(
     result = get_piecewise_incrementalcurve_per_system_unit(cost_component,
         unit_system,
         get_base_power(container),
-        PSY.get_base_power(component)
+        PSY.get_base_power(component),
     )
 
     if is_decremental
@@ -416,13 +448,21 @@ function add_pwl_term!(
     container::OptimizationContainer,
     component::T,
     cost_function::PSY.MarketBidCost,
-    cost_curves::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     name = PSY.get_name(component)
-    W = is_decremental ? PiecewiseLinearBlockDecrementalOffer : PiecewiseLinearBlockIncrementalOffer
-    X = is_decremental ? PiecewiseLinearBlockDecrementalOfferConstraint : PiecewiseLinearBlockIncrementalOfferConstraint
+    # TODO refactor?
+    W = if is_decremental
+        PiecewiseLinearBlockDecrementalOffer
+    else
+        PiecewiseLinearBlockIncrementalOffer
+    end
+    X = if is_decremental
+        PiecewiseLinearBlockDecrementalOfferConstraint
+    else
+        PiecewiseLinearBlockIncrementalOfferConstraint
+    end
 
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
@@ -532,9 +572,7 @@ function _add_variable_cost_to_objective!(
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
-    decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
-    if !isnothing(decremental_cost_curves)
+    if !isnothing(PSY.get_decremental_offer_curves(cost_function))
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     add_pwl_term!(
@@ -542,7 +580,6 @@ function _add_variable_cost_to_objective!(
         container,
         component,
         cost_function,
-        incremental_cost_curves,
         T(),
         U(),
     )
@@ -559,9 +596,7 @@ function _add_variable_cost_to_objective!(
     U <: AbstractControllablePowerLoadFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    incremental_cost_curves = PSY.get_incremental_offer_curves(cost_function)
-    decremental_cost_curves = PSY.get_decremental_offer_curves(cost_function)
-    if !(isnothing(incremental_cost_curves))
+    if !(isnothing(PSY.get_incremental_offer_curves(cost_function)))
         error("Component $(component_name) is not allowed to participate as a supply.")
     end
     add_pwl_term!(
@@ -569,7 +604,6 @@ function _add_variable_cost_to_objective!(
         container,
         component,
         cost_function,
-        decremental_cost_curves,
         T(),
         U(),
     )
@@ -624,6 +658,11 @@ function _add_vom_cost_to_objective!(
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     incremental_cost_curves = PSY.get_incremental_offer_curves(op_cost)
+    if is_time_variant(incremental_cost_curves)
+        # TODO this might imply a change to the MBC struct?
+        @warn "Incremental curves are time variant, there is no VOM cost source. Skipping VOM cost."
+        return
+    end
     _add_vom_cost_to_objective_helper!(
         container,
         T(),

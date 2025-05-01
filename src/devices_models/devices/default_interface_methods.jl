@@ -15,6 +15,7 @@ get_multiplier_value(::StartupCostParameter, d::PSY.Device, ::AbstractDeviceForm
 get_multiplier_value(::ShutdownCostParameter, d::PSY.Device, ::AbstractDeviceFormulation) = 1.0
 get_multiplier_value(::AbstractCostAtMinParameter, d::PSY.Device, ::AbstractDeviceFormulation) = 1.0
 get_multiplier_value(::AbstractPiecewiseLinearSlopeParameter, d::PSY.Device, ::AbstractDeviceFormulation) = 1.0
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, d::PSY.Device, ::AbstractDeviceFormulation) = 1.0
 #! format: on
 
 get_multiplier_value(x, y::PSY.Component, z) =
