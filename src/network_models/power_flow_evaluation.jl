@@ -50,12 +50,17 @@ pf_input_keys_hvdc_pst(::PFS.PowerFlowData) = DataType[]
 pf_input_keys_hvdc_pst(::PFS.ACPowerFlowData) =
     [:active_power_branch_from_to, :active_power_branch_to_from]
 
+_get_component_bus_for_map(component::PSY.Branch, ::Val{:from}) =
+    PSY.get_from_bus(component)
+_get_component_bus_for_map(component::PSY.Branch, ::Val{:to}) = PSY.get_to_bus(component)
+_get_component_bus_for_map(component::PSY.Component, ::Nothing) = PSY.get_bus(component)
+
 # Generalized function to create component maps by name to the index in the PowerFlowData bus arrays
 function _make_temp_component_map(
     pf_data::PFS.PowerFlowData,
     sys::PSY.System,
     component_type::DataType,
-    get_bus_func::Function,
+    side::Union{Val{:from}, Val{:to}, Nothing},
 )
     temp_component_map = Dict{DataType, Dict{String, Int}}()
     components = PSY.get_available_components(component_type, sys)
@@ -63,7 +68,7 @@ function _make_temp_component_map(
     for comp in components
         comp_type = typeof(comp)
         bus_dict = get!(temp_component_map, comp_type, Dict{String, Int}())
-        bus_number = PSY.get_number(get_bus_func(comp))
+        bus_number = PSY.get_number(_get_component_bus_for_map(comp, side))
         bus_dict[PSY.get_name(comp)] = bus_lookup[bus_number]
     end
     return temp_component_map
@@ -76,7 +81,7 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
         pf_data,
         sys,
         PSY.StaticInjection,
-        PSY.get_bus,
+        nothing,
     )
     # Add ACBus components for voltage magnitude and angle export
     bus_lookup = PFS.get_bus_lookup(pf_data)
@@ -237,9 +242,9 @@ function _add_two_terminal_elements_map!(
     input_key_map::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Dict}},
 )
     for element_type in (PSY.TwoTerminalHVDC, PSY.PhaseShiftingTransformer)
-        for (category, get_bus_func) in zip(
+        for (category, side) in zip(
             [:active_power_branch_from_to, :active_power_branch_to_from],
-            [PSY.get_from_bus, PSY.get_to_bus],
+            [Val(:from), Val(:to)],
         )
             category ∈ pf_input_keys_hvdc_pst(pf_data) || continue
 
@@ -247,7 +252,7 @@ function _add_two_terminal_elements_map!(
                 pf_data,
                 sys,
                 element_type,
-                get_bus_func,
+                side,
             )
             isempty(temp_component_map) && continue
 
