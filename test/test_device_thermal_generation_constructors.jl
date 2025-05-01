@@ -1612,9 +1612,22 @@ function run_mbc_obj_fun_test(sys1, sys2; is_decremental::Bool = false)
 end
 
 @testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
+    # Test that constant time series has the same objective value as no time series
+    sys0 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
+    no_load_to_initial_input!(sys0)
+    cost = get_operation_cost(get_component(ThermalStandard, sys0, "Test Unit1"))
+    set_start_up!(cost, (hot = 1.0, warm = 1.5, cold = 2.0))
+    set_shut_down!(cost, 0.5)
     sys1 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
     no_load_to_initial_input!(sys1)
     add_startup_shutdown_ts_a!(sys1, false)
+    _, _, res_uc0 = run_generic_mbc_sim(sys0; multistart = false)
+    _, _, res_uc1 = run_generic_mbc_sim(sys1; multistart = false)
+    obj_val_0 = PSI.read_optimizer_stats(res_uc0)[!, "objective_value"]
+    obj_val_1 = PSI.read_optimizer_stats(res_uc1)[!, "objective_value"]
+    @test isapprox(obj_val_0, obj_val_1; atol = 0.0001)
+
+    # Test that perturbing the time series perturbs the objective value as expected
     sys2 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
     no_load_to_initial_input!(sys2)
     add_startup_shutdown_ts_a!(sys2, true)

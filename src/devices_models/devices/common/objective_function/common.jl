@@ -80,16 +80,18 @@ function add_shut_down_cost!(
     for d in devices
         PSY.get_must_run(d) && continue
 
+        add_as_time_variant = is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(d)))
         for t in get_time_steps(container)
             my_cost_term = get_shutdown_cost_value(
                 container,
                 d,
                 t,
-                is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(d))),
+                add_as_time_variant,
             )
             iszero(my_cost_term) && continue
-            exp = _add_proportional_term_variant!(
-                container, U(), d, my_cost_term * multiplier, t)
+            exp = _add_proportional_term_maybe_variant!(
+                Val(add_as_time_variant), container, U(), d, my_cost_term * multiplier,
+                t)
             # add_to_expression!(container, ProductionCostExpression, exp, component, t)  # TODO do we want this?
         end
     end
@@ -179,11 +181,8 @@ function add_proportional_cost!(
             exp = if PSY.get_must_run(d)
                 cost_term  # note we do not add this to the objective function
             else
-                if add_as_time_variant
-                    _add_proportional_term_variant!(container, U(), d, cost_term, t)
-                else
-                    _add_proportional_term!(container, U(), d, cost_term, t)
-                end
+                _add_proportional_term_maybe_variant!(
+                    Val(add_as_time_variant), container, U(), d, cost_term, t)
             end
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
@@ -244,6 +243,7 @@ function _add_start_up_cost_to_objective!(
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     multiplier = objective_function_multiplier(T(), U())
     PSY.get_must_run(component) && return
+    add_as_time_variant = is_time_variant(PSY.get_start_up(op_cost))
     for t in get_time_steps(container)
         my_cost_term = get_startup_cost_value(
             container,
@@ -251,11 +251,12 @@ function _add_start_up_cost_to_objective!(
             component,
             U(),
             t,
-            is_time_variant(PSY.get_start_up(op_cost)),
+            add_as_time_variant,
         )
         iszero(my_cost_term) && continue
-        exp = _add_proportional_term_variant!(
-            container, T(), component, my_cost_term * multiplier, t)
+        exp = _add_proportional_term_maybe_variant!(
+            Val(add_as_time_variant), container, T(), component,
+            my_cost_term * multiplier, t)
         # add_to_expression!(container, ProductionCostExpression, exp, component, t)  # TODO do we want this?
     end
     return
@@ -338,6 +339,26 @@ function _add_proportional_term_variant!(
     add_to_objective_variant_expression!(container, lin_cost)
     return lin_cost
 end
+
+# Maybe variant
+_add_proportional_term_maybe_variant!(
+    ::Val{false},
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    linear_term::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component} =
+    _add_proportional_term!(container, T(), component, linear_term, time_period)
+_add_proportional_term_maybe_variant!(
+    ::Val{true},
+    container::OptimizationContainer,
+    ::T,
+    component::U,
+    linear_term::Float64,
+    time_period::Int,
+) where {T <: VariableType, U <: PSY.Component} =
+    _add_proportional_term_variant!(container, T(), component, linear_term, time_period)
 
 function _add_quadratic_term!(
     container::OptimizationContainer,
