@@ -6,10 +6,10 @@ const PF_INPUT_KEY_PRECEDENCES = Dict(
     :voltage_magnitude_export => [PowerFlowVoltageMagnitude, VoltageMagnitude],
     :voltage_angle_opf => [VoltageAngle],
     :voltage_magnitude_opf => [VoltageMagnitude],
-    :active_power_hvdc_from_to => [FlowActivePowerFromToVariable],
-    :active_power_hvdc_to_from => [FlowActivePowerToFromVariable],
-    :active_power_pst_from_to => [FlowActivePowerVariable],
-    :active_power_pst_to_from => [FlowActivePowerVariable],
+    :active_power_branch_from_to =>
+        [FlowActivePowerFromToVariable, FlowActivePowerVariable],
+    :active_power_branch_to_from =>
+        [FlowActivePowerToFromVariable, FlowActivePowerVariable],
 )
 
 const RELEVANT_COMPONENTS_SELECTOR =
@@ -47,12 +47,8 @@ pf_input_keys(::PFS.ACPowerFlowData) =
 pf_input_keys(::PFS.PSSEExporter) =
     [:active_power, :reactive_power, :voltage_angle_export, :voltage_magnitude_export]
 pf_input_keys_hvdc_pst(::PFS.PowerFlowData) = DataType[]
-pf_input_keys_hvdc_pst(::PFS.ACPowerFlowData) = [
-    :active_power_hvdc_from_to,
-    :active_power_hvdc_to_from,
-    :active_power_pst_from_to,
-    :active_power_pst_to_from,
-]
+pf_input_keys_hvdc_pst(::PFS.ACPowerFlowData) =
+    [:active_power_branch_from_to, :active_power_branch_to_from]
 
 # Generalized function to create component maps by name to the index in the PowerFlowData bus arrays
 function _make_temp_component_map(
@@ -240,50 +236,37 @@ function _add_two_terminal_elements_map!(
     available_keys::Vector{Pair{OptimizationContainerKey, Any}},
     input_key_map::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Dict}},
 )
-    for (element_type, category, get_bus_func) in zip(
-        [
-            PSY.TwoTerminalHVDC,
-            PSY.TwoTerminalHVDC,
-            PSY.PhaseShiftingTransformer,
-            PSY.PhaseShiftingTransformer,
-        ],
-        [
-            :active_power_hvdc_from_to,
-            :active_power_hvdc_to_from,
-            :active_power_pst_from_to,
-            :active_power_pst_to_from,
-        ],
-        [
-            x -> PSY.get_from(PSY.get_arc(x)),
-            x -> PSY.get_to(PSY.get_arc(x)),
-            x -> PSY.get_from(PSY.get_arc(x)),
-            x -> PSY.get_to(PSY.get_arc(x)),
-        ])
-        category ∈ pf_input_keys_hvdc_pst(pf_data) || continue
+    for element_type in (PSY.TwoTerminalHVDC, PSY.PhaseShiftingTransformer)
+        for (category, get_bus_func) in zip(
+            [:active_power_branch_from_to, :active_power_branch_to_from],
+            [PSY.get_from_bus, PSY.get_to_bus],
+        )
+            category ∈ pf_input_keys_hvdc_pst(pf_data) || continue
 
-        temp_component_map = _make_temp_component_map(
-            pf_data,
-            sys,
-            element_type,
-            get_bus_func,
-        )
-        isempty(temp_component_map) && continue
+            temp_component_map = _make_temp_component_map(
+                pf_data,
+                sys,
+                element_type,
+                get_bus_func,
+            )
+            isempty(temp_component_map) && continue
 
-        precedence = PF_INPUT_KEY_PRECEDENCES[category]
-        pf_data_opt_container_map =
-            Dict{OptimizationContainerKey, valtype(temp_component_map)}()
-        _add_category_to_map!(
-            precedence,
-            available_keys,
-            temp_component_map,
-            pf_data_opt_container_map,
-        )
-        category_map = get!(
-            input_key_map,
-            category,
-            Dict{OptimizationContainerKey, valtype(temp_component_map)}(),
-        )
-        merge!(category_map, pf_data_opt_container_map)
+            precedence = PF_INPUT_KEY_PRECEDENCES[category]
+            pf_data_opt_container_map =
+                Dict{OptimizationContainerKey, valtype(temp_component_map)}()
+            _add_category_to_map!(
+                precedence,
+                available_keys,
+                temp_component_map,
+                pf_data_opt_container_map,
+            )
+            category_map = get!(
+                input_key_map,
+                category,
+                Dict{OptimizationContainerKey, valtype(temp_component_map)}(),
+            )
+            merge!(category_map, pf_data_opt_container_map)
+        end
     end
     return
 end
@@ -431,7 +414,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_magnitude[index, t] = value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_hvdc_from_to},
+    ::Val{:active_power_branch_from_to},
     ::Type{<:PSY.TwoTerminalHVDC},
     index,
     t,
@@ -439,7 +422,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_activepower_injection[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_hvdc_to_from},
+    ::Val{:active_power_branch_to_from},
     ::Type{<:PSY.TwoTerminalHVDC},
     index,
     t,
@@ -447,7 +430,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_activepower_injection[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_pst_from_to},
+    ::Val{:active_power_branch_from_to},
     ::Type{<:PSY.PhaseShiftingTransformer},
     index,
     t,
@@ -455,7 +438,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_activepower_injection[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_pst_to_from},
+    ::Val{:active_power_branch_to_from},
     ::Type{<:PSY.PhaseShiftingTransformer},
     index,
     t,
