@@ -78,7 +78,9 @@ end
     vd = read_variables(results)
     ad = read_aux_variables(results)
 
-    data = model.internal.container.power_flow_evaluation_data[1].power_flow_data
+    data = PSI.get_power_flow_data(
+        only(PSI.get_power_flow_evaluation_data(PSI.get_optimization_container(model))),
+    )
     base_power = get_base_power(sys)
 
     # test that the power flow results for the HVDC buses match the HVDC power transfer from the simulation

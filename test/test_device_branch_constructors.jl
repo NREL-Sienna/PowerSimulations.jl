@@ -620,7 +620,7 @@ end
         active_power_flow = 0.0,
         reactive_power_flow = 0.0,
         r = get_r(line),
-        x = get_r(line),
+        x = get_x(line),
         primary_shunt = 0.0,
         tap = 1.0,
         α = 0.0,
@@ -647,12 +647,14 @@ end
     results = OptimizationProblemResults(model_m)
     vd = read_variables(results)
 
-    data = model_m.internal.container.power_flow_evaluation_data[1].power_flow_data
+    data = PSI.get_power_flow_data(
+        only(PSI.get_power_flow_evaluation_data(PSI.get_optimization_container(model_m))),
+    )
     base_power = get_base_power(system)
 
     # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
     @test isapprox(
-        -data.bus_activepower_injection[data.bus_lookup[get_number(get_to(arc))], :] *
+        data.bus_activepower_injection[data.bus_lookup[get_number(get_to(arc))], :] *
         base_power,
         vd["FlowActivePowerVariable__PhaseShiftingTransformer"][:, get_name(line)],
         atol = 1e-9,
