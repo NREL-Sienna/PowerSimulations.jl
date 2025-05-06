@@ -7,10 +7,18 @@ pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Quick Start Guide" => "quick_start_guide.md",
     "Tutorials" => Any[
+    ],
+    "How to..." => Any[
+    ],
+    "Explanation" => Any[
+    ],
+    "Reference" => Any[
+    ],
+    "Tutorials (OLD)" => Any[
         "Single-step Problem" => "tutorials/decision_problem.md",
         "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
     ],
-    "Modeler Guide" => Any[
+    "Modeler Guide (OLD)" => Any[
         "modeler_guide/definitions.md",
         "modeler_guide/psi_structure.md",
         "modeler_guide/problem_templates.md",
@@ -22,16 +30,16 @@ pages = OrderedDict(
         "modeler_guide/parallel_simulations.md",
         "modeler_guide/modeling_faq.md",
     ],
-    "Model Developer Guide" => Any[
+    "Model Developer Guide (OLD)" => Any[
         "Operation Problem Structure" => "model_developer_guide/structure_of_operation_problem.md"
         "Troubleshooting" => "model_developer_guide/troubleshooting.md"
     ],
-    "Code Base Developer Guide" => Any[
+    "Code Base Developer Guide (OLD)" => Any[
         "Developer Guide" => "code_base_developer_guide/developer.md",
         "Troubleshooting" => "code_base_developer_guide/troubleshooting.md",
         "Internals" => "code_base_developer_guide/internal.md",
     ],
-    "Formulation Library" => Any[
+    "Formulation Library (OLD)" => Any[
         "Introduction" => "formulation_library/Introduction.md",
         "General" => "formulation_library/General.md",
         "Network" => "formulation_library/Network.md",
@@ -43,7 +51,7 @@ pages = OrderedDict(
         "Feedforwards" => "formulation_library/Feedforward.md",
         "Piecewise Linear Cost" => "formulation_library/Piecewise.md",
     ],
-    "API Reference" => "api/PowerSimulations.md",
+    "API Reference (OLD)" => "api/PowerSimulations.md",
 )
 
 makedocs(;
