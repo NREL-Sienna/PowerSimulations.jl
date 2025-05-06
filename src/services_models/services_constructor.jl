@@ -263,17 +263,16 @@ function construct_service!(
             model,
             network_model,
         )
-#=
         add_constraints!(
             container,
-            PostContingencyRateLimitConstraintB,
+            PostContingencyRateLimitConstraintBWithReserves,
             service,
             branches,
             contributing_generators,
             single_outage_generators,
             model,
+            network_model,
         )
-            =#
     end
 
     objective_function!(container, service, model)
