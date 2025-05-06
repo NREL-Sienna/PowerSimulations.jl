@@ -16,6 +16,7 @@ struct ComponentReserveDownBalanceExpression <: ExpressionType end
 struct InterfaceTotalFlow <: ExpressionType end
 struct PTDFBranchFlow <: ExpressionType end
 struct PTDFPostContingencyBranchFlow <: ExpressionType end
+struct PTDFPostContingencyBranchFlowWithReserves <: ExpressionType end
 
 should_write_resulting_value(::Type{<:CostExpressions}) = true
 should_write_resulting_value(::Type{FuelConsumptionExpression}) = true
@@ -24,6 +25,8 @@ should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true
 should_write_resulting_value(::Type{ReactivePowerBalance}) = true
 should_write_resulting_value(::Type{PTDFPostContingencyBranchFlow}) = true
+should_write_resulting_value(::Type{PTDFPostContingencyBranchFlowWithReserves}) = true
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
 convert_result_to_natural_units(::Type{PTDFPostContingencyBranchFlow}) = true
+convert_result_to_natural_units(::Type{PTDFPostContingencyBranchFlowWithReserves}) = true

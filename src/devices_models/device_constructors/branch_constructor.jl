@@ -375,6 +375,21 @@ function _get_all_scuc_valid_outages(
     )
 end
 
+function _get_reduced_network_branches(
+    sys::PSY.System,
+    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+)
+    lodf = get_LODF_matrix(network_model)
+    removed_branches = PNM.get_removed_branches(lodf.network_reduction)
+    return get_available_components(
+        b ->
+            PSY.get_name(b) ∉ removed_branches &&
+                typeof(b) ∉ Base.uniontypes(TwoTerminalHVDCTypes),
+        PSY.ACBranch,
+        sys,
+    )
+end
+
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,

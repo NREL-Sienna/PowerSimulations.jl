@@ -225,18 +225,20 @@ function construct_service!(
     single_outage_generators = []
     valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
     if !isempty(valid_outages)
-        single_outage_generators_with_reserve = _get_all_single_outage_generators_by_type(sys, valid_outages, contributing_devices)
+        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, contributing_devices)
     end
 
     contributing_generators = [d for d in contributing_devices if isa(d, PSY.Generator)]
 
-    if !isempty(single_outage_generators_with_reserve)
+    branches = _get_reduced_network_branches(sys, network_model)
+
+    if !isempty(single_outage_generators)
         add_constraints!(
             container,
             PostContingencyReserveDeploymentLimitConstraint,
             service,
             contributing_generators,
-            single_outage_generators_with_reserve,
+            single_outage_generators,
             model,
         )
 
@@ -245,9 +247,33 @@ function construct_service!(
             PostContingencyReserveDeploymentBalanceConstraint,
             service,
             contributing_generators,
-            single_outage_generators_with_reserve,
+            single_outage_generators,
             model,
         )
+        # Add the post contingency branch G-1 security constrained branch flow expresssion and constraints
+        # here since they depend on the service models
+        add_to_expression!(
+            container,
+            PTDFPostContingencyBranchFlowWithReserves,
+            FlowActivePowerVariable,
+            service,
+            branches,
+            contributing_generators,
+            single_outage_generators,
+            model,
+            network_model,
+        )
+#=
+        add_constraints!(
+            container,
+            PostContingencyRateLimitConstraintB,
+            service,
+            branches,
+            contributing_generators,
+            single_outage_generators,
+            model,
+        )
+            =#
     end
 
     objective_function!(container, service, model)
