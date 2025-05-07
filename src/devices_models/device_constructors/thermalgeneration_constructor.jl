@@ -522,6 +522,84 @@ function construct_device!(
     return
 end
 
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, ThermalSecurityConstrainedUnitCommitmentWithReserves},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {T <: PSY.ThermalGen}
+
+    devices = get_available_components(model, sys)
+
+    add_variables!(container, ActivePowerVariable, devices, ThermalSecurityConstrainedUnitCommitmentWithReserves())
+    add_variables!(container, OnVariable, devices, ThermalSecurityConstrainedUnitCommitmentWithReserves())
+    add_variables!(container, StartVariable, devices, ThermalSecurityConstrainedUnitCommitmentWithReserves())
+    add_variables!(container, StopVariable, devices, ThermalSecurityConstrainedUnitCommitmentWithReserves())
+
+    initial_conditions!(container, devices, ThermalSecurityConstrainedUnitCommitmentWithReserves())
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), FuelCostParameter)
+        add_parameters!(container, FuelCostParameter, devices, model)
+    end
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+    add_expressions!(container, FuelConsumptionExpression, devices, model)
+
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionLB,
+        ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerRangeExpressionUB,
+        ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        FuelConsumptionExpression,
+        ActivePowerVariable,
+        devices,
+        model,
+    )
+    if get_use_slacks(model)
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackUp,
+            devices,
+            ThermalSecurityConstrainedUnitCommitmentWithReserves(),
+        )
+        add_variables!(
+            container,
+            RateofChangeConstraintSlackDown,
+            devices,
+            ThermalSecurityConstrainedUnitCommitmentWithReserves(),
+        )
+    end
+
+    add_feedforward_arguments!(container, model, devices)
+return
+end
+
 """
 This function creates the constraints for the model for a full thermal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
@@ -568,6 +646,53 @@ function construct_device!(
     objective_function!(container, devices, model, get_network_formulation(network_model))
     add_constraint_dual!(container, sys, model)
     return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, ThermalSecurityConstrainedUnitCommitmentWithReserves},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {T <: PSY.ThermalGen}
+    
+    devices = get_available_components(model, sys)
+
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionLB,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ActivePowerVariableLimitsConstraint,
+        ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_constraints!(container, CommitmentConstraint, devices, model, network_model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
+
+    add_feedforward_constraints!(container, model, devices)
+
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
+    return
+    
 end
 
 """

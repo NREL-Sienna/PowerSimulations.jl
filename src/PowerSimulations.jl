@@ -70,6 +70,7 @@ export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
 export ThermalCompactDispatch
+export ThermalSecurityConstrainedUnitCommitmentWithReserves
 
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
@@ -237,6 +238,7 @@ export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
+export PostContingencyActivePowerReserveDeployedVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -296,6 +298,9 @@ export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
 export PostContingencyRateLimitConstraintB
+export PostContingencyReserveDeploymentLimitConstraint
+export PostContingencyRateLimitConstraintWithReserves
+export PostContingencyReserveDeploymentBalanceConstraint
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
@@ -338,6 +343,7 @@ export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export PTDFPostContingencyBranchFlow
+export PTDFPostContingencyBranchFlowWithReserves
 
 #################################################################################
 # Imports

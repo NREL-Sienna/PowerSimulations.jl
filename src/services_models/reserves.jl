@@ -511,8 +511,8 @@ function add_constraints!(
     SR <: PSY.AbstractReserve,
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.Device}
+    W <: Union{Vector{G}, IS.FlattenIteratorWrapper{G}},
+} where {D <: PSY.Device, G <: PSY.Device}
 
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
@@ -558,8 +558,8 @@ function add_constraints!(
     SR <: PSY.AbstractReserve,
     V <: AbstractReservesFormulation,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-} where {D <: PSY.Device}
+    W <: Union{Vector{G}, IS.FlattenIteratorWrapper{G}},
+} where {D <: PSY.Device, G <: PSY.Device}
 
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)

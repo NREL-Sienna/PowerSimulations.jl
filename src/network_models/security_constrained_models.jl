@@ -3,7 +3,7 @@ Min and max limits for post-contingency branch flows for Abstract Branch Formula
 """
 function get_min_max_limits(
     branch::PSY.ACBranch,
-    ::Union{Type{<:PostContingencyRateLimitConstraintB}, Type{<:PostContingencyRateLimitConstraintBWithReserves}},
+    ::Union{Type{<:PostContingencyRateLimitConstraintB}, Type{<:PostContingencyRateLimitConstraintWithReserves}},
     ::Type{<:AbstractBranchFormulation},
     ::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
@@ -143,17 +143,19 @@ Add branch post-contingency rate limit constraints for ACBranch considering G-1 
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{PostContingencyRateLimitConstraintBWithReserves},
+    cons_type::Type{PostContingencyRateLimitConstraintWithReserves},
     service::SR,
     branches::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    contributing_devices::Vector{U},
-    device_outages::Vector{U},
+    contributing_devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    device_outages::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     service_model::ServiceModel{SR, RangeReserve},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    network_model::NetworkModel{X},
 ) where {
     SR <: PSY.Service,
     T <: PSY.ACBranch,
     U <: PSY.Device,
+    V <: PSY.Device,
+    X <: AbstractPTDFModel,
 }
     service_name = get_service_name(service_model)
     time_steps = get_time_steps(container)
@@ -163,11 +165,10 @@ function add_constraints!(
             container,
             cons_type(),
             T,
-            [service_name],
             get_name.(device_outages),
             branch_names,
             time_steps;
-            meta = "lb",
+            meta = "$(service_name)_lb",
         )
 
     con_ub =
@@ -175,11 +176,10 @@ function add_constraints!(
             container,
             cons_type(),
             T,
-            [service_name],
             get_name.(device_outages),
             branch_names,
             time_steps;
-            meta = "ub",
+            meta = "$(service_name)_ub",
         )
 
     param_keys = get_parameter_keys(container)
@@ -213,7 +213,7 @@ function add_constraints!(
 
             limits = get_min_max_limits(
                 branch,
-                PostContingencyRateLimitConstraintBWithReserves,
+                PostContingencyRateLimitConstraintWithReserves,
                 AbstractBranchFormulation,
                 network_model,
             )
@@ -228,13 +228,11 @@ function add_constraints!(
                     ) #update limits
                 end
 
-                println("Limits for $(branch_name), $(t): $(limits)")
-
-                con_ub[service_name, device_outage_name, branch_name, t] =
+                con_ub[device_outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
                         expressions[device_outage_name, branch_name, t] <=
                         limits.max)
-                con_lb[service_name, device_outage_name, branch_name, t] =
+                con_lb[device_outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
                         expressions[device_outage_name, branch_name, t] >=
                         limits.min)

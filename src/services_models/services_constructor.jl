@@ -12,6 +12,20 @@ function get_incompatible_devices(devices_template::Dict)
     return incompatible_device_types
 end
 
+function _get_scuc_generators(
+    devices_template::Dict{Symbol, DeviceModel}, 
+    sys::PSY.System,
+    ::Type{PSY.ThermalGen},
+    )
+
+    valid_devices = get_available_components(
+        d -> PSY.get_available(d) && get_formulation(devices_template[Symbol(typeof(d))]) <: ThermalSecurityConstrainedUnitCommitmentWithReserves,
+        PSY.ThermalGen,
+        sys,
+    )
+    return valid_devices
+end
+
 function construct_services!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -127,7 +141,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -146,11 +160,12 @@ function construct_service!(
     # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
     single_outage_generators = []
     valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
+    generators = _get_scuc_generators(devices_template, sys, PSY.ThermalGen)
     if !isempty(valid_outages)
-        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, contributing_devices)
+        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, generators)
     end
 
-    contributing_generators = [d for d in contributing_devices if isa(d, PSY.Generator)]
+    contributing_generators = intersect(contributing_devices, generators)
 
     if !isempty(single_outage_generators)
         add_variables!(
@@ -205,7 +220,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -223,12 +238,13 @@ function construct_service!(
 
     # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
     single_outage_generators = []
+    generators = _get_scuc_generators(devices_template, sys, PSY.ThermalGen)
     valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
     if !isempty(valid_outages)
-        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, contributing_devices)
+        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, generators)
     end
 
-    contributing_generators = [d for d in contributing_devices if isa(d, PSY.Generator)]
+    contributing_generators = intersect(contributing_devices, generators)
 
     branches = _get_reduced_network_branches(sys, network_model)
 
@@ -265,7 +281,7 @@ function construct_service!(
         )
         add_constraints!(
             container,
-            PostContingencyRateLimitConstraintBWithReserves,
+            PostContingencyRateLimitConstraintWithReserves,
             service,
             branches,
             contributing_generators,

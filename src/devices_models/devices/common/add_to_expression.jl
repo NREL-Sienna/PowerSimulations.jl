@@ -668,7 +668,7 @@ function add_to_expression!(
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
-    X <: SecurityConstrainedPTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
 
@@ -722,12 +722,13 @@ function add_to_expression!(
     service::SR,
     branches::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    device_outages::Vector{D},
+    device_outages::Union{Vector{G}, IS.FlattenIteratorWrapper{G}},
     model::ServiceModel{SR, W},
     network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
 ) where {
     SR <: PSY.Service,
-    D <: PSY.Component,
+    D <: PSY.Device,
+    G <: PSY.Device,
     T <: PTDFPostContingencyBranchFlowWithReserves,
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
