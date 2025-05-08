@@ -321,19 +321,15 @@ function update_pf_data!(
     return
 end
 
-_update_component!(comp::PSY.StaticLoad, ::Val{:constant_active_power}, value) =
-    (comp.constant_active_power = value)
-_update_component!(comp::PSY.StaticLoad, ::Val{:constant_reactive_power}, value) =
-    (comp.constant_reactive_power = value)
 _update_component!(comp::PSY.Component, ::Val{:active_power}, value) =
     (comp.active_power = value)
 # Sign is flipped for loads (TODO can we rely on some existing function that encodes this information?)
-_update_component!(comp::PSY.ElectricLoad, ::Val{:active_power}, value) =
-    (comp.active_power = -value)
-_update_component!(comp::PSY.Component, ::Val{:reactive_power}, value) =
-    (comp.reactive_power = value)
-_update_component!(comp::PSY.ElectricLoad, ::Val{:reactive_power}, value) =
-    (comp.reactive_power = -value)  
+_update_component!(comp::PSY.ElectricLoad, ::Val{:constant_active_power}, value) =
+    (comp.constant_active_power = -value)
+_update_component!(comp::PSY.Component, ::Val{:constant_reactive_power}, value) =
+    (comp.constant_reactive_power = value)
+_update_component!(comp::PSY.ElectricLoad, ::Val{:constant_reactive_power}, value) =
+    (comp.constant_reactive_power = -value)  
 _update_component!(
     comp::PSY.ACBus,
     ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
