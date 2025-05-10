@@ -724,7 +724,7 @@ function add_to_expression!(
     contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     device_outages::Union{Vector{G}, IS.FlattenIteratorWrapper{G}},
     model::ServiceModel{SR, W},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    network_model::NetworkModel{X},
 ) where {
     SR <: PSY.Service,
     D <: PSY.Device,
@@ -733,6 +733,7 @@ function add_to_expression!(
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
     W <: AbstractReservesFormulation,
+    X <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
     service_name = get_service_name(model)

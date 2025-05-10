@@ -5,8 +5,6 @@ requires_initialization(::AbstractThermalUnitCommitment) = true
 requires_initialization(::ThermalStandardDispatch) = true
 requires_initialization(::ThermalBasicCompactUnitCommitment) = false
 requires_initialization(::ThermalBasicUnitCommitment) = false
-requires_initialization(::AbstractSecurityConstrainedUnitCommitment) = false
-requires_initialization(::ThermalSecurityConstrainedUnitCommitmentWithReserves) = false
 
 get_variable_multiplier(_, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = 1.0
 get_variable_multiplier(::OnVariable, d::PSY.ThermalGen, ::Union{AbstractCompactUnitCommitment, ThermalCompactDispatch}) = PSY.get_active_power_limits(d).min

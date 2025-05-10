@@ -606,6 +606,7 @@ include("services_models/reserve_group.jl")
 include("services_models/transmission_interface.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
+include("services_models/security_constrained_reserves.jl")
 
 # Network models
 include("network_models/copperplate_model.jl")

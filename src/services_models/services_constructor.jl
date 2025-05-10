@@ -12,20 +12,6 @@ function get_incompatible_devices(devices_template::Dict)
     return incompatible_device_types
 end
 
-function _get_scuc_generators(
-    devices_template::Dict{Symbol, DeviceModel}, 
-    sys::PSY.System,
-    ::Type{PSY.ThermalGen},
-    )
-
-    valid_devices = get_available_components(
-        d -> PSY.get_available(d) && get_formulation(devices_template[Symbol(typeof(d))]) <: ThermalSecurityConstrainedUnitCommitmentWithReserves,
-        PSY.ThermalGen,
-        sys,
-    )
-    return valid_devices
-end
-
 function construct_services!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -114,7 +100,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -129,54 +115,17 @@ function construct_service!(
         contributing_devices,
         RangeReserve(),
     )
-    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
-    add_feedforward_arguments!(container, model, service)
-    return
-end
-
-function construct_service!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::ServiceModel{SR, RangeReserve},
-    devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{<:AbstractPTDFModel},
-) where {SR <: PSY.Reserve}
-    name = get_service_name(model)
-    service = PSY.get_component(SR, sys, name)
-    !PSY.get_available(service) && return
-    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    contributing_devices = get_contributing_devices(model)
-
-    add_variables!(
+    add_reserve_security_constraints!(
         container,
-        ActivePowerReserveVariable,
+        sys,
+        ArgumentConstructStage(),
+        model,
         service,
         contributing_devices,
-        RangeReserve(),
+        devices_template,
+        incompatible_device_types,
+        network_model,
     )
-
-    # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
-    single_outage_generators = []
-    valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
-    generators = _get_scuc_generators(devices_template, sys, PSY.ThermalGen)
-    if !isempty(valid_outages)
-        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, generators)
-    end
-
-    contributing_generators = intersect(contributing_devices, generators)
-
-    if !isempty(single_outage_generators)
-        add_variables!(
-            container,
-            PostContingencyActivePowerReserveDeployedVariable,
-            service,
-            contributing_generators,
-            single_outage_generators,
-            RangeReserve(),
-        )
-    end
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     add_feedforward_arguments!(container, model, service)
     return
@@ -189,7 +138,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -204,93 +153,17 @@ function construct_service!(
         contributing_devices,
         model,
     )
-    objective_function!(container, service, model)
-
-    add_feedforward_constraints!(container, model, service)
-
-    add_constraint_dual!(container, sys, model)
-
-    return
-end
-
-function construct_service!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::ServiceModel{SR, RangeReserve},
-    devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{<:AbstractPTDFModel},
-) where {SR <: PSY.Reserve}
-    name = get_service_name(model)
-    service = PSY.get_component(SR, sys, name)
-    !PSY.get_available(service) && return
-    contributing_devices = get_contributing_devices(model)
-
-    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-    add_constraints!(
+    add_reserve_security_constraints!(
         container,
-        ParticipationFractionConstraint,
+        sys,
+        ModelConstructStage(),
+        model,
         service,
         contributing_devices,
-        model,
+        devices_template,
+        incompatible_device_types,
+        network_model,
     )
-
-    # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
-    single_outage_generators = []
-    generators = _get_scuc_generators(devices_template, sys, PSY.ThermalGen)
-    valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator, network_model)
-    if !isempty(valid_outages)
-        single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, generators)
-    end
-
-    contributing_generators = intersect(contributing_devices, generators)
-
-    branches = _get_reduced_network_branches(sys, network_model)
-
-    if !isempty(single_outage_generators)
-        add_constraints!(
-            container,
-            PostContingencyReserveDeploymentLimitConstraint,
-            service,
-            contributing_generators,
-            single_outage_generators,
-            model,
-        )
-
-        add_constraints!(
-            container,
-            PostContingencyReserveDeploymentBalanceConstraint,
-            service,
-            contributing_generators,
-            single_outage_generators,
-            model,
-        )
-        # Add the post contingency branch G-1 security constrained branch flow expresssion and constraints
-        # here since they depend on the service models
-        add_to_expression!(
-            container,
-            PTDFPostContingencyBranchFlowWithReserves,
-            FlowActivePowerVariable,
-            service,
-            branches,
-            contributing_generators,
-            single_outage_generators,
-            model,
-            network_model,
-        )
-        add_constraints!(
-            container,
-            PostContingencyRateLimitConstraintWithReserves,
-            service,
-            branches,
-            contributing_generators,
-            single_outage_generators,
-            model,
-            network_model,
-        )
-    end
-
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)
@@ -406,7 +279,6 @@ function construct_service!(
     return
 end
 
-#=
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -499,7 +371,6 @@ function construct_service!(
     objective_function!(container, services, model)
     return
 end
-=#
 
 """
     Constructs a service for ConstantReserveGroup.
