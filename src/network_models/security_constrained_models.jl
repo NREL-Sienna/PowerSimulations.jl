@@ -5,7 +5,7 @@ function get_min_max_limits(
     branch::PSY.ACBranch,
     ::Union{Type{<:PostContingencyRateLimitConstraintB}, Type{<:PostContingencyRateLimitConstraintWithReserves}},
     ::Type{<:AbstractBranchFormulation},
-    ::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
+    ::NetworkModel{<:AbstractPTDFModel},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     if PSY.get_rating_b(branch) === nothing
         @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
@@ -19,7 +19,7 @@ function _get_device_post_contingency_dynamic_branch_rating_time_series(
     container::OptimizationContainer,
     param_key::IS.Optimization.OptimizationContainerKey,
     branch_name::String,
-    ::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    ::NetworkModel{<:AbstractPTDFModel},
 )
     try
         param_container = get_parameter(container, param_key)

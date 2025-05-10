@@ -361,7 +361,7 @@ end
 function _get_all_scuc_valid_outages(
     sys::PSY.System,
     device_type::Type{T},
-    ::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    ::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.Device}
     return PSY.get_supplemental_attributes(
         sa ->
@@ -377,7 +377,7 @@ end
 
 function _get_reduced_network_branches(
     sys::PSY.System,
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 )
     lodf = get_LODF_matrix(network_model)
     removed_branches = PNM.get_removed_branches(lodf.network_reduction)
