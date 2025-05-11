@@ -25,8 +25,7 @@ should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true
 should_write_resulting_value(::Type{ReactivePowerBalance}) = true
 should_write_resulting_value(::Type{PTDFPostContingencyBranchFlow}) = true
-should_write_resulting_value(::Type{PTDFPostContingencyBranchFlowWithReserves}) = true
+should_write_resulting_value(::Type{PTDFPostContingencyBranchFlowWithReserves}) = false
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
 convert_result_to_natural_units(::Type{PTDFPostContingencyBranchFlow}) = true
-convert_result_to_natural_units(::Type{PTDFPostContingencyBranchFlowWithReserves}) = true

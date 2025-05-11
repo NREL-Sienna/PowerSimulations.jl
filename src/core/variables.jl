@@ -332,6 +332,7 @@ should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockDecrementalOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
+should_write_resulting_value(::Type{PostContingencyActivePowerReserveDeployedVariable}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true
