@@ -553,7 +553,7 @@ function add_constraints!(
     service::SR,
     contributing_devices::U,
     device_outages::W,
-    ::ServiceModel{SR, V},
+    model::ServiceModel{SR, V},
 ) where {
     SR <: PSY.AbstractReserve,
     V <: AbstractReservesFormulation,
@@ -578,6 +578,15 @@ function add_constraints!(
     for d_c in device_outages, t in time_steps
         device_outage_name = PSY.get_name(d_c)
         _, max_active_power = PSY.get_active_power_limits(d_c)
+
+        use_dispatched_power = get_attribute(model, "use_dispatched_power")
+        if !(isnothing(use_dispatched_power)) && use_dispatched_power
+            max_active_power = get_variable(
+                container,
+                ActivePowerVariable(),
+                typeof(d_c)
+            )[device_outage_name, t]
+        end
 
         cons[device_outage_name, t] =
             JuMP.@constraint(

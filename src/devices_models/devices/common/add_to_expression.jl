@@ -766,17 +766,34 @@ function add_to_expression!(
             for device_outage in device_outages
                 device_outage_name = get_name(device_outage)
                 bus_outage = PSY.get_bus(device_outage)
-                max_power = PSY.get_max_active_power(device_outage)
-                _add_to_jump_expression!(
+                max_active_power = PSY.get_max_active_power(device_outage)
+                use_dispatched_power = get_attribute(model, "use_dispatched_power")
+                if !(isnothing(use_dispatched_power)) && use_dispatched_power
+                    max_active_power = get_variable(
+                        container,
+                        ActivePowerVariable(),
+                        typeof(device_outage)
+                    )[device_outage_name, t]
+
+                    _add_to_jump_expression!(
                     expressions[device_outage_name, branch_name, t],
                     variable_branches[branch_name, t],
                     1.0,
-                    max_power * -1 * ptdf[branch_name, bus_outage],
+                    max_active_power, 
+                    -1 * ptdf[branch_name, bus_outage],
                     )
+                else
+                    _add_to_jump_expression!(
+                    expressions[device_outage_name, branch_name, t],
+                    variable_branches[branch_name, t],
+                    1.0,
+                    max_active_power * -1 * ptdf[branch_name, bus_outage],
+                    )
+                end
+
                 for device in setdiff(contributing_devices, device_outages)
                     device_name = get_name(device)
                     bus = PSY.get_bus(device)
-                    max_power = PSY.get_max_active_power(device)
                     _add_to_jump_expression!(
                         expressions[device_outage_name, branch_name, t],
                         reserve_deployed_variable[device_name, device_outage_name, t],

@@ -37,8 +37,7 @@ function add_reserve_security_constraints!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {SR <: PSY.Reserve, R <: AbstractReservesFormulation, U <: PSY.Device}
-    println("Adding reserve security constraints")
+) where {SR <: PSY.Reserve{PSY.ReserveUp}, R <: AbstractReservesFormulation, U <: PSY.Device}
     # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
     single_outage_generators = []
     valid_outages = _get_all_scuc_valid_outages(sys, PSY.ThermalGen, network_model)
@@ -46,8 +45,19 @@ function add_reserve_security_constraints!(
     if !isempty(valid_outages)
         single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, generators)
     end
+    contingencies = get_attribute(model, "contingencies")
+    instances = []
+    if !(isnothing(contingencies)) && !(isempty(contingencies))
+        instances = get_available_components(
+            d -> PSY.get_name(d) ∈ contingencies,
+            PSY.ThermalGen,
+            sys,
+        )
+    end
 
-    contributing_generators = intersect(contributing_devices, generators)
+    single_outage_generators = collect(intersect(single_outage_generators, instances))
+
+    contributing_generators = collect(intersect(contributing_devices, generators))
 
     if !isempty(single_outage_generators)
         add_variables!(
@@ -86,8 +96,7 @@ function add_reserve_security_constraints!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {SR <: PSY.Reserve, R <: AbstractReservesFormulation, U <: PSY.Device}
-    println("Adding reserve security constraints")
+) where {SR <: PSY.Reserve{PSY.ReserveUp}, R <: AbstractReservesFormulation, U <: PSY.Device}
     # Add the PostContingencyActivePowerReserveDeployedVariable for the single outage generators
     single_outage_generators = []
     generators = _get_scuc_generators(devices_template, sys, PSY.ThermalGen)
@@ -96,7 +105,19 @@ function add_reserve_security_constraints!(
         single_outage_generators = _get_all_single_outage_generators_by_type(sys, valid_outages, generators)
     end
 
-    contributing_generators = intersect(contributing_devices, generators)
+    contingencies = get_attribute(model, "contingencies")
+    instances = []
+    if !(isnothing(contingencies)) && !(isempty(contingencies))
+        instances = get_available_components(
+            d -> PSY.get_name(d) ∈ contingencies,
+            PSY.ThermalGen,
+            sys,
+        )
+    end
+
+    single_outage_generators = collect(intersect(single_outage_generators, instances))
+
+    contributing_generators = collect(intersect(contributing_devices, generators))
 
     branches = _get_reduced_network_branches(sys, network_model)
 

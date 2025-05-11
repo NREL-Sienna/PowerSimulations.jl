@@ -403,6 +403,161 @@ end
     @test found_constraints == 2
 end
 
+@testset "Test G-1 Security Constraints with Reserves" begin
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    network_model = NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(c_sys5_uc), LODF_matrix = LODF(c_sys5_uc))
+    template = ProblemTemplate(network_model)
+    # template = ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix=PTDF(c_sys5_uc), LODF_matrix=LODF(c_sys5_uc)))
+    set_device_model!(template, ThermalStandard, ThermalSecurityConstrainedUnitCommitmentWithReserves)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, Line, StaticBranch)
+    # add service model that maps to the generator outages
+    set_service_model!(
+    template, 
+    ServiceModel(
+        VariableReserve{ReserveUp}, RangeReserve, "Reserve1";
+            attributes=Dict(
+                "contingencies" => ["Park City"],
+            ),
+        )
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
+
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    transition_data_gl = GeometricDistributionForcedOutage(;
+    mean_time_to_recovery = 20,
+    outage_transition_probability = 0.9999,
+    )
+
+    # add single generator outage
+    generator = get_component(ThermalStandard, c_sys5_uc, "Park City")
+    add_supplemental_attribute!(c_sys5_uc, generator, transition_data_gl)
+
+    #Set Rating B for all branches
+    for branch in get_components(ACBranch, c_sys5_uc)
+        if typeof(branch) == TwoTerminalGenericHVDCLine
+            continue
+        end
+         set_rating_b!(branch, get_rating(branch) * 1.5)
+    end
+
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+
+    # moi_tests(model, 1080, 0, 1104, 624, 336, true)
+    post_contingency_variables = [
+        :PostContingencyActivePowerReserveDeployedVariable__VariableReserve__ReserveUp__Reserve1,
+        :PostContingencyActivePowerReserveDeployedVariable__VariableReserve__ReserveDown__Reserve2,
+        :PostContingencyActivePowerReserveDeployedVariable__VariableReserve__ReserveUp__Reserve11,
+    ]
+    found_vars = 0
+    for (k, var_array) in PSI.get_optimization_container(model).variables
+        if IS.Optimization.encode_key(k) in post_contingency_variables
+            for var in var_array
+                @test JuMP.has_lower_bound(var)
+                @test JuMP.lower_bound(var) == 0.0
+            end
+            found_vars += 1
+        end
+    end
+    # only add the reserve variables for the reserve mapped to the generator outage
+    @test found_vars == 1
+
+    check_constraint_count(
+        model,
+        PostContingencyRateLimitConstraintWithReserves(),
+        ACBranch;
+        meta = "Reserve1_ub"
+    )
+
+    check_constraint_count(
+        model,
+        PostContingencyRateLimitConstraintWithReserves(),
+        ACBranch;
+        meta = "Reserve1_lb"
+    )
+
+    check_constraint_count(
+        model,
+        PostContingencyReserveDeploymentBalanceConstraint(),
+        VariableReserve{ReserveUp};
+        filter_func = (x -> PSY.get_name(x) == "Reserve1"),
+        meta = "Reserve1"
+    )
+
+    post_contingency_deployment_constraints = [
+        :PostContingencyReserveDeploymentLimitConstraint__VariableReserve__ReserveUp__Reserve1,
+        :PostContingencyReserveDeploymentLimitConstraint__VariableReserve__ReserveDown__Reserve2,
+        :PostContingencyReserveDeploymentLimitConstraint__VariableReserve__ReserveUp__Reserve11,
+    ]
+
+    found_constraints = 0
+    for (k, _) in PSI.get_optimization_container(model).constraints
+        if IS.Optimization.encode_key(k) in post_contingency_deployment_constraints
+            found_constraints += 1
+        end
+    end
+    @test found_constraints == 1
+
+    solve!(model)
+    psi_checksolve_test(model, [MOI.OPTIMAL], 386628.958, 1000.0)
+    # check post contingency reserve deployment balance constraint
+    reserve_deployed = PSI.get_variable(
+        PSI.get_optimization_container(model), 
+        PostContingencyActivePowerReserveDeployedVariable(), 
+        VariableReserve{ReserveUp},
+        "Reserve1"
+    )
+    max_power = PSY.get_max_active_power(generator)
+    var_sum_t = sum(Array(PSI.jump_value.(reserve_deployed[:, "Park City", :])); dims = 1)
+    @test all(p -> isapprox(p, max_power, atol = 1e-1), var_sum_t)
+
+    # use dispatched power in the post contingency reserve deployment balance constraint
+    set_service_model!(
+        template,
+        ServiceModel(
+            VariableReserve{ReserveUp},
+            RangeReserve,
+            "Reserve1";
+            attributes = Dict(
+                "contingencies" => ["Park City"],
+                "use_dispatched_power" => true,
+            ),
+        ),
+    )
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+
+    build!(model; output_dir = mktempdir(; cleanup = true))
+    solve!(model)
+    reserve_deployed = PSI.get_variable(
+        PSI.get_optimization_container(model), 
+        PostContingencyActivePowerReserveDeployedVariable(), 
+        VariableReserve{ReserveUp},
+        "Reserve1"
+    )
+
+    active_power = PSI.get_variable(
+        PSI.get_optimization_container(model), 
+        ActivePowerVariable(),
+        ThermalStandard,
+    )
+    active_power_t = PSI.jump_value.(active_power["Park City", :])
+
+    var_sum_t = sum(Array(PSI.jump_value.(reserve_deployed[:, "Park City", :])); dims = 1)
+    
+    for t in 1:24
+        @test isapprox(var_sum_t[t], active_power_t[t], atol = 1e-1)
+    end
+
+end
+
 @testset "Test Transmission Interface" begin
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     interface = TransmissionInterface(;
