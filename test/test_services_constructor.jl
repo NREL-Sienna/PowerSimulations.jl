@@ -407,7 +407,6 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     network_model = NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(c_sys5_uc), LODF_matrix = LODF(c_sys5_uc))
     template = ProblemTemplate(network_model)
-    # template = ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix=PTDF(c_sys5_uc), LODF_matrix=LODF(c_sys5_uc)))
     set_device_model!(template, ThermalStandard, ThermalSecurityConstrainedUnitCommitmentWithReserves)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, Line, StaticBranch)
