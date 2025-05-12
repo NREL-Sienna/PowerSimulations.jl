@@ -10,8 +10,10 @@ pages = OrderedDict(
     ],
     "How to..." => Any[
         "...install PowerSimulations.jl" => "how_to/install.md",
+        "...register a variable in a custom operation model" => "how_to/register_variable.md",
     ],
     "Explanation" => Any[
+        "explanation/operation_model_structure.md",
     ],
     "Reference" => Any[
         "Public API" => "api/PowerSimulations.md",
@@ -34,10 +36,6 @@ pages = OrderedDict(
         "modeler_guide/debugging_infeasible_models.md",
         "modeler_guide/parallel_simulations.md",
         "modeler_guide/modeling_faq.md",
-    ],
-    "Model Developer Guide (OLD)" => Any[
-        "Operation Problem Structure" => "model_developer_guide/structure_of_operation_problem.md"
-        "Troubleshooting" => "model_developer_guide/troubleshooting.md"
     ],
     "Formulation Library (OLD)" => Any[
         "Introduction" => "formulation_library/Introduction.md",

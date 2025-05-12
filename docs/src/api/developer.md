@@ -5,7 +5,7 @@ In order to contribute to `PowerSimulations.jl` repository please read the follo
 documentation in detail:
 
  1. [Style Guide](https://nrel-Sienna.github.io/InfrastructureSystems.jl/stable/style/)
- 2. [Contributing Guidelines](https://github.com/NREL-Sienna/PowerSystems.jl/blob/main/CONTRIBUTING.md)
+ 2. [Contributing Guidelines](https://github.com/NREL-Sienna/PowerSimulations.jl/blob/main/CONTRIBUTING.md)
 
 Pull requests are always welcome to fix bugs or add additional modeling capabilities.
 
