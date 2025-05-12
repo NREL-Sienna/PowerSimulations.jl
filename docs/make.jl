@@ -14,6 +14,7 @@ pages = OrderedDict(
     "Explanation" => Any[
     ],
     "Reference" => Any[
+        "Public API" => "api/PowerSimulations.md",
     ],
     "Archived Old Docs Content" => "archive_old_docs_content.md",
     "Tutorials (OLD)" => Any[
@@ -53,7 +54,6 @@ pages = OrderedDict(
         "Feedforwards" => "formulation_library/Feedforward.md",
         "Piecewise Linear Cost" => "formulation_library/Piecewise.md",
     ],
-    "API Reference (OLD)" => "api/PowerSimulations.md",
 )
 
 makedocs(;
