@@ -15,6 +15,8 @@ pages = OrderedDict(
     ],
     "Reference" => Any[
         "Public API" => "api/PowerSimulations.md",
+        "Developers" => ["Developer Guidelines" => "api/developer.md",
+            "Internals" => "api/internal.md"],
     ],
     "Archived Old Docs Content" => "archive_old_docs_content.md",
     "Tutorials (OLD)" => Any[
@@ -36,11 +38,6 @@ pages = OrderedDict(
     "Model Developer Guide (OLD)" => Any[
         "Operation Problem Structure" => "model_developer_guide/structure_of_operation_problem.md"
         "Troubleshooting" => "model_developer_guide/troubleshooting.md"
-    ],
-    "Code Base Developer Guide (OLD)" => Any[
-        "Developer Guide" => "code_base_developer_guide/developer.md",
-        "Troubleshooting" => "code_base_developer_guide/troubleshooting.md",
-        "Internals" => "code_base_developer_guide/internal.md",
     ],
     "Formulation Library (OLD)" => Any[
         "Introduction" => "formulation_library/Introduction.md",
