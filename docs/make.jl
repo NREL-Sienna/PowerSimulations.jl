@@ -5,15 +5,17 @@ using DataStructures
 
 pages = OrderedDict(
     "Welcome Page" => "index.md",
-    "Quick Start Guide" => "quick_start_guide.md",
+    "Quick Start Guide (OLD)" => "quick_start_guide.md",
     "Tutorials" => Any[
     ],
     "How to..." => Any[
+        "...install PowerSimulations.jl" => "how_to/install.md",
     ],
     "Explanation" => Any[
     ],
     "Reference" => Any[
     ],
+    "Archived Old Docs Content" => "archive_old_docs_content.md",
     "Tutorials (OLD)" => Any[
         "Single-step Problem" => "tutorials/decision_problem.md",
         "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
