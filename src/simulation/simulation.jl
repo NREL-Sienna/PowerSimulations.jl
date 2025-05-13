@@ -179,7 +179,7 @@ function _get_simulation_initial_times!(sim::Simulation)
         if model_horizon > system_horizon
             throw(
                 IS.ConflictingInputsError(
-                    "$(get_name(model)) model horizon ($model_horizon) and forecast horizon ($system_horizon) are not compatible",
+                    "$(get_name(model)) model horizon: $(Dates.canonicalize(model_horizon)) and forecast horizon: $(Dates.canonicalize(system_horizon)) are not compatible",
                 ),
             )
         end

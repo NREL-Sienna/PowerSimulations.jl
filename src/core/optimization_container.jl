@@ -516,13 +516,6 @@ function _make_system_expressions!(
     ::Type{AreaBalancePowerModel},
     areas::IS.FlattenIteratorWrapper{PSY.Area},
 )
-    if length(subnetworks) > 1
-        throw(
-            IS.ConflictingInputsError(
-                "AreaBalancePowerModel doesn't support systems with multiple asynchronous areas",
-            ),
-        )
-    end
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Area) =>
@@ -588,6 +581,38 @@ function initialize_system_expressions!(
     return
 end
 
+function _verify_area_subnetwork_topology(sys::PSY.System, subnetworks::Dict{Int, Set{Int}})
+    if length(subnetworks) < 1
+        @debug "Only one subnetwork detected in the system. Area - Subnetwork topology check is valid."
+        return
+    end
+
+    @warn "More than one subnetwork detected in AreaBalancePowerModel. Topology consistency checks must be conducted."
+
+    area_map = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
+    for (area, buses) in area_map
+        bus_numbers =
+            [
+                PSY.get_number(b) for
+                b in buses if PSY.get_bustype(b) != PSY.ACBusTypes.ISOLATED
+            ]
+        subnets = Int[]
+        for (subnet, subnet_bus_numbers) in subnetworks
+            if !isdisjoint(bus_numbers, subnet_bus_numbers)
+                push!(subnets, subnet)
+            end
+        end
+        if length(subnets) > 1
+            @error "Area $(PSY.get_name(area)) is connected to multiple subnetworks $(subnets)."
+            throw(
+                IS.ConflictingInputsError(
+                    "AreaBalancePowerModel doesn't support systems with Areas distributed across multiple asynchronous areas",
+                ))
+        end
+    end
+    return
+end
+
 function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{AreaBalancePowerModel},
@@ -603,7 +628,16 @@ function initialize_system_expressions!(
             ),
         )
     end
-    @assert !isempty(areas)
+    area_interchanges = PSY.get_available_components(PSY.AreaInterchange, system)
+    if isempty(area_interchanges) ||
+       PSY.AreaInterchange ∉ network_model.modeled_branch_types
+        @warn "The system does not contain any AreaInterchanges. The model won't have any power flowing between the areas."
+    end
+    if !isempty(area_interchanges) &&
+       PSY.AreaInterchange ∉ network_model.modeled_branch_types
+        @warn "AreaInterchanges are not included in the model template. The model won't have any power flowing between the areas."
+    end
+    _verify_area_subnetwork_topology(system, subnetworks)
     _make_system_expressions!(container, subnetworks, AreaBalancePowerModel, areas)
     return
 end

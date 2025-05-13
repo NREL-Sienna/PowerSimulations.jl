@@ -763,6 +763,36 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
+    devices::IS.FlattenIteratorWrapper{PSY.TwoTerminalHVDCLine},
+    ::DeviceModel{PSY.TwoTerminalHVDCLine, HVDCTwoTerminalDispatch},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerToFromVariable,
+}
+    error("here")
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
+    for d in devices
+        name = PSY.get_name(d)
+        bus_no_ = PSY.get_number(PSY.get_arc(d).to)
+        bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus_no_)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[bus_no, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
