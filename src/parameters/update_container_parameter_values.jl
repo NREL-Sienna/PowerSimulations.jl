@@ -308,9 +308,46 @@ function _update_parameter_values!(
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
+    #TODO - fix hardcode for ThermalStandard
+    if haskey(
+        get_parameters_values(state),
+        InfrastructureSystems.Optimization.ParameterKey{
+            AvailableStatusParameter,
+            PSY.ThermalStandard,
+        }(
+            "",
+        ),
+    )
+        status_values = get_dataset_values(
+            state,
+            InfrastructureSystems.Optimization.ParameterKey{
+                AvailableStatusParameter,
+                PSY.ThermalStandard,
+            }(
+                "",
+            ),
+        )
+        status_data = get_dataset(
+            state,
+            InfrastructureSystems.Optimization.ParameterKey{
+                AvailableStatusParameter,
+                PSY.ThermalStandard,
+            }(
+                "",
+            ),
+        )
+        status_timestamps = status_data.timestamps
+        status_data_index = find_timestamp_index(status_timestamps, current_time)
+    end
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        value = round(state_values[name, state_data_index])
+        if name in status_values.axes[1] && status_values[name, status_data_index] == 0.0 &&
+           round(state_values[name, state_data_index]) == 1.0
+            # Override feed forward based on status parameter
+            value = 0.0
+        else
+            value = round(state_values[name, state_data_index])
+        end
         if !isfinite(value)
             error(
                 "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
@@ -339,6 +376,90 @@ function _update_parameter_values!(
     return
 end
 
+function _update_parameter_values!(
+    parameter_array::AbstractArray{T},
+    attributes::EventParametersAttributes{W, U},
+    ::Type{V},
+    model::DecisionModel,
+    state::DatasetContainer{InMemoryDataset},
+) where {
+    T <: Union{JuMP.VariableRef, Float64},
+    W <: PSY.Contingency,
+    U <: EventParameter,
+    V <: PSY.Component,
+}
+    current_time = get_current_time(model)
+    # state_values = get_dataset_values(state, get_attribute_key(attributes))
+    state_values =
+        get_dataset_values(state, U(), V)
+    component_names, time = axes(parameter_array)
+    model_resolution = get_resolution(model)
+    #@show state_data = get_dataset(state, get_attribute_key(attributes))
+    state_data = get_dataset(state, U(), V)
+    state_timestamps = state_data.timestamps
+    max_state_index = get_num_rows(state_data)
+    if model_resolution < state_data.resolution
+        t_step = 1
+    else
+        t_step = model_resolution ÷ state_data.resolution
+    end
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+
+    sim_timestamps = range(current_time; step = model_resolution, length = time[end])
+    for t in time
+        timestamp_ix = min(max_state_index, state_data_index + t_step)
+        @debug "parameter horizon is over the step" max_state_index > state_data_index + 1
+        if state_timestamps[timestamp_ix] <= sim_timestamps[t]
+            state_data_index = timestamp_ix
+        end
+        for name in component_names
+            # Pass indices in this way since JuMP DenseAxisArray don't support view()
+            value = round(state_values[name, state_data_index])
+            if !isfinite(value)
+                error(
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
+                     This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
+                     Consider reviewing your models' horizon and interval definitions",
+                )
+            end
+            if 0.0 > value
+                error(
+                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is less than 0.0",
+                )
+            end
+            _set_param_value!(parameter_array, value, name, t)
+        end
+    end
+    return
+end
+
+function _update_parameter_values!(
+    parameter_array::AbstractArray{T},
+    ::EventParametersAttributes{W, U},
+    ::Type{V},
+    model::EmulationModel,
+    state::DatasetContainer{InMemoryDataset},
+) where {
+    T <: Union{JuMP.VariableRef, Float64},
+    W <: PSY.Contingency,
+    U <: EventParameter,
+    V <: PSY.Component,
+}
+    current_time = get_current_time(model)
+    #@show state_data = get_dataset(state, get_attribute_key(attributes))
+    state_values = get_dataset_values(state, U(), V)
+    component_names, _ = axes(parameter_array)
+    state_data = get_dataset(state, U(), V)
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, current_time)
+
+    for name in component_names
+        # Pass indices in this way since JuMP DenseAxisArray don't support view()
+        _set_param_value!(parameter_array, state_values[name, state_data_index], name, 1)
+    end
+    return
+end
+
 """
 Update parameter function an OperationModel
 """
@@ -348,6 +469,22 @@ function update_container_parameter_values!(
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
+    # Enable again for detailed debugging
+    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
+    # Note: Do not instantite a new key here because it might not match the param keys in the container
+    # if the keys have strings in the meta fields
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+    return
+end
+
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: EventParameter, U <: PSY.Component}
     # Enable again for detailed debugging
     # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
@@ -450,5 +587,15 @@ function update_container_parameter_values!(
     service = PSY.get_component(U, get_system(model), key.meta)
     @assert service !== nothing
     _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
+    return
+end
+
+# This method is included to avoid ambiguities
+function update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::OperationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: EventParameter, U <: PSY.Service}
     return
 end

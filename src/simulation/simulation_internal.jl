@@ -18,6 +18,7 @@ mutable struct SimulationInternal
     file_level::Base.CoreLogging.LogLevel
     cache_size_mib::Int
     min_cache_flush_size_mib::Int
+    rng::AbstractRNG
 end
 
 function SimulationInternal(
@@ -81,6 +82,7 @@ function SimulationInternal(
         file_level,
         cache_size_mib,
         min_cache_flush_size_mib,
+        Random.Xoshiro(RNG_SEED),
     )
 end
 

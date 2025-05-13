@@ -22,6 +22,7 @@ function get_initial_conditions_template(model::OperationModel)
     network_model.modeled_branch_types =
         get_network_model(model.template).modeled_branch_types
     ic_template = ProblemTemplate(network_model)
+    # Do not copy events here for initialization
     for device_model in values(model.template.devices)
         base_model = get_initial_conditions_device_model(model, device_model)
         base_model.use_slacks = device_model.use_slacks

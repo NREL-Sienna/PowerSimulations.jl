@@ -65,15 +65,15 @@ mutable struct OptimizationContainer <: IS.Optimization.AbstractOptimizationCont
     time_steps::UnitRange{Int}
     settings::Settings
     settings_copy::Settings
-    variables::Dict{VariableKey, AbstractArray}
-    aux_variables::Dict{AuxVarKey, AbstractArray}
-    duals::Dict{ConstraintKey, AbstractArray}
-    constraints::Dict{ConstraintKey, AbstractArray}
+    variables::OrderedDict{VariableKey, AbstractArray}
+    aux_variables::OrderedDict{AuxVarKey, AbstractArray}
+    duals::OrderedDict{ConstraintKey, AbstractArray}
+    constraints::OrderedDict{ConstraintKey, AbstractArray}
     objective_function::ObjectiveFunction
-    expressions::Dict{ExpressionKey, AbstractArray}
-    parameters::Dict{ParameterKey, ParameterContainer}
+    expressions::OrderedDict{ExpressionKey, AbstractArray}
+    parameters::OrderedDict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
-    initial_conditions::Dict{InitialConditionKey, Vector{<:InitialCondition}}
+    initial_conditions::OrderedDict{InitialConditionKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
     infeasibility_conflict::Dict{Symbol, Array}
     pm::Union{Nothing, PM.AbstractPowerModel}
@@ -930,7 +930,7 @@ function deserialize_metadata!(
     return
 end
 
-function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
+function _assign_container!(container::OrderedDict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(IS.Optimization.encode_key(key)) is already stored" sort!(
             IS.Optimization.encode_key.(keys(container)),
@@ -1222,6 +1222,32 @@ end
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
+    attribute::EventParametersAttributes{V, T},
+    param_axs,
+    time_steps;
+    sparse = false,
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
+    else
+        param_type = Float64
+    end
+
+    if sparse
+        error("Sparse parameter container is not supported for $V")
+    else
+        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+        multiplier_array =
+            fill!(DenseAxisArray{Float64}(undef, param_axs, time_steps), NaN)
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
     attributes::CostFunctionAttributes{R},
     axs...;
     sparse = false,
@@ -1281,6 +1307,20 @@ function add_param_container!(
     param_key = ParameterKey(T, U, meta)
     attributes =
         CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
+    return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
+end
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    ::Type{V},
+    axs...;
+    sparse = false,
+    meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
+    param_key = ParameterKey(T, U, meta)
+    attributes = EventParametersAttributes{V, T}(U[])
     return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
 

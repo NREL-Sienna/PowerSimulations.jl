@@ -456,9 +456,9 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     table = Matrix{Any}(undef, length(results.decision_problem_results), length(header))
     for (ix, (key, result)) in enumerate(results.decision_problem_results)
         table[ix, 1] = key
-        table[ix, 2] = first(get_timestamps(result))
-        table[ix, 3] = Dates.canonicalize(get_resolution(result))
-        table[ix, 4] = last(get_timestamps(result))
+        table[ix, 2] = first(result.timestamps)
+        table[ix, 3] = Dates.canonicalize(result.resolution)
+        table[ix, 4] = last(result.timestamps)
     end
     println(io)
     PrettyTables.pretty_table(

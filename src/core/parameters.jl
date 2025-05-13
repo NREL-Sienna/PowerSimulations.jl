@@ -73,6 +73,16 @@ get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
 get_variable_types(attr::CostFunctionAttributes) = attr.variable_types
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
 
+struct EventParametersAttributes{T <: PSY.Outage, U <: ParameterType} <: ParameterAttributes
+    affected_devices::Vector{<:PSY.Component}
+end
+
+function get_param_type(
+    ::EventParametersAttributes{T, U},
+) where {T <: PSY.Outage, U <: ParameterType}
+    return U
+end
+
 struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
     parameter_array::T
@@ -146,6 +156,14 @@ end
 
 function get_parameter_values(
     ::ParameterAttributes,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
+    return jump_value.(param_array) .* multiplier_array
+end
+
+function get_parameter_values(
+    attr::EventParametersAttributes,
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
@@ -272,7 +290,7 @@ Parameter to define variable lower bound
 struct LowerBoundValueParameter <: VariableValueParameter end
 
 """
-Parameter to define unit commitment status
+Parameter to define unit commitment status updated from the system state
 """
 struct OnStatusParameter <: VariableValueParameter end
 
@@ -299,9 +317,20 @@ struct ShutdownCostParameter <: ObjectiveFunctionParameter end
 
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-struct EventParameter <: ParameterType end
+abstract type EventParameter <: ParameterType end
+
+"""
+Parameter to define component availability status updated from the system state
+"""
+struct AvailableStatusParameter <: EventParameter end
+
+"""
+Parameter to record that the component changed in the availability status
+"""
+struct AvailableStatusChangeCountdownParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
+should_write_resulting_value(::Type{<:EventParameter}) = true
 
 # TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are tuples)
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true

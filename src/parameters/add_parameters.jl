@@ -54,6 +54,26 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
+    devices::U,
+    device_model::DeviceModel{D, W},
+    event_model::EventModel{V, X},
+) where {
+    T <: ParameterType,
+    U <: Vector{D},
+    V <: PSY.Contingency,
+    W <: AbstractDeviceFormulation,
+    X <: AbstractEventCondition,
+} where {D <: PSY.Component}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    _add_parameters!(container, T(), devices, device_model, event_model)
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
     ff::LowerBoundFeedforward,
     model::ServiceModel{S, W},
     devices::V,

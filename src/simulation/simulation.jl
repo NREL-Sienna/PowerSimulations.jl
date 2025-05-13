@@ -157,6 +157,7 @@ get_logs_folder(sim::Simulation) = sim.internal.logs_dir
 get_recorder_folder(sim::Simulation) = sim.internal.recorder_dir
 get_console_level(sim::Simulation) = sim.internal.console_level
 get_file_level(sim::Simulation) = sim.internal.file_level
+get_rng(sim::Simulation) = sim.internal.rng
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::SimulationBuildStatus) =
@@ -840,8 +841,25 @@ function _update_simulation_state!(sim::Simulation, model::DecisionModel)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
     model_params = get_decision_model_params(store, model_name)
-    for field in fieldnames(DatasetContainer)
+    #Order matters; update parameters first (AvailableStatusChangeCountdownParameter must be updated first if it exists)
+    for field in [:parameters, :duals, :aux_variables, :variables, :expressions]
+        #TODO - fix hardcode for ThermalStandard
+        if ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}("") ∈
+           list_decision_model_keys(store, model_name, field)
+            key =
+                ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}(
+                    "",
+                )
+            res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
+            update_decision_state!(state, key, res, simulation_time, model_params)
+        end
         for key in list_decision_model_keys(store, model_name, field)
+            if key ==
+               ParameterKey{AvailableStatusChangeCountdownParameter, PSY.ThermalStandard}(
+                "",
+            )
+                continue
+            end
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
             update_decision_state!(state, key, res, simulation_time, model_params)
@@ -1006,6 +1024,9 @@ function _execute!(
                         if model_number == execution_order[end]
                             _update_system_state!(sim, model)
                             _write_state_to_store!(store, sim)
+                            # This function needs to be called last so make sure that the update to the
+                            # state get written AFTER the models run.
+                            apply_simulation_events!(sim)
                         end
                     end
                 end

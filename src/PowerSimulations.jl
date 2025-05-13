@@ -26,6 +26,10 @@ export AreaPTDFPowerModel
 ######## Device Models ########
 export DeviceModel
 export FixedOutput
+
+####### Event Models ########
+export EventModel
+
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
@@ -325,6 +329,10 @@ export UpperBoundValueParameter
 export LowerBoundValueParameter
 export FixValueParameter
 
+# Event Parameters
+export AvailableStatusParameter
+export AvailableStatusChangeCountdownParameter
+
 # Expressions
 export SystemBalanceExpressions
 export RangeConstraintLBExpressions
@@ -426,6 +434,9 @@ import PowerModels
 import TimerOutputs
 import ProgressMeter
 import Distributed
+import Distributions: Bernoulli, Geometric
+import Random
+import Random: AbstractRNG, rand
 
 # Base Imports
 import Base.getindex
@@ -499,9 +510,10 @@ include("core/abstract_feedforward.jl")
 include("core/network_model.jl")
 include("core/parameters.jl")
 include("core/service_model.jl")
+include("core/event_keys.jl")
+include("core/event_model.jl")
 include("core/device_model.jl")
 include("core/variables.jl")
-include("core/event_keys.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/expressions.jl")
@@ -541,6 +553,10 @@ include("feedforward/feedforwards.jl")
 include("feedforward/feedforward_arguments.jl")
 include("feedforward/feedforward_constraints.jl")
 
+include("contingency_model/contingency.jl")
+include("contingency_model/contingency_arguments.jl")
+include("contingency_model/contingency_constraints.jl")
+
 include("parameters/add_parameters.jl")
 
 include("simulation/optimization_output_cache.jl")
@@ -561,6 +577,7 @@ include("simulation/simulation_partition_results.jl")
 include("simulation/simulation_sequence.jl")
 include("simulation/simulation_internal.jl")
 include("simulation/simulation.jl")
+include("simulation/simulation_events.jl")
 include("simulation/simulation_results_export.jl")
 include("simulation/simulation_results.jl")
 include("operation/operation_model_simulation_interface.jl")

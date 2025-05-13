@@ -73,6 +73,9 @@ const PSI_NAME_DELIMITER = "__"
 
 const M_VALUE = 1e6
 
+# TODO: remove and use from IS.
+const RNG_SEED = get(ENV, "SIENNA_RNG_SEED", 2017)
+
 const NO_SERVICE_NAME_PROVIDED = ""
 const UPPER_BOUND = "ub"
 const LOWER_BOUND = "lb"
