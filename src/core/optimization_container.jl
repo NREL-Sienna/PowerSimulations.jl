@@ -930,7 +930,7 @@ function deserialize_metadata!(
     return
 end
 
-function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
+function _assign_container!(container::OrderedDict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(IS.Optimization.encode_key(key)) is already stored" sort!(
             IS.Optimization.encode_key.(keys(container)),

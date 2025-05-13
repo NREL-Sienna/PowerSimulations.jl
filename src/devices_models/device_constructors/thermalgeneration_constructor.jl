@@ -75,7 +75,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -219,7 +219,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -347,7 +347,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -500,7 +500,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -628,7 +628,7 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -761,7 +761,7 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalStandardDispatch())
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -877,7 +877,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -994,7 +994,7 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1117,7 +1117,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1305,7 +1305,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1484,7 +1484,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1638,7 +1638,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1791,7 +1791,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -1942,7 +1942,7 @@ function construct_device!(
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, device_model)
     end
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_to_expression!(
         container,
@@ -2073,7 +2073,7 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, device_model)
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_feedforward_arguments!(container, device_model, devices)
 
@@ -2212,7 +2212,7 @@ function construct_device!(
 
     add_parameters!(container, OnStatusParameter, devices, device_model)
 
-    _handle_common_thermal_parameters!(container, devices, model)
+    _handle_common_thermal_parameters!(container, devices, device_model)
 
     add_feedforward_arguments!(container, device_model, devices)
 
