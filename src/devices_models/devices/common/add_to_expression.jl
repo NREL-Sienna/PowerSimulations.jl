@@ -763,8 +763,8 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    devices::IS.FlattenIteratorWrapper{PSY.TwoTerminalHVDCLine},
-    ::DeviceModel{PSY.TwoTerminalHVDCLine, HVDCTwoTerminalDispatch},
+    devices::IS.FlattenIteratorWrapper{PSY.TwoTerminalGenericHVDCLine},
+    ::DeviceModel{PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {
     T <: ActivePowerBalance,
