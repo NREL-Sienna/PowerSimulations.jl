@@ -32,8 +32,8 @@ end
 
 function _set_intertemporal_data!(sys)
     br = get_component(ThermalStandard, sys, "Alta")
-    set_time_limits!(br, (up = 2.0, down = 4.0)) 
-    set_ramp_limits!(br, (up = 0.003, down = 10.0))    
+    set_time_limits!(br, (up = 2.0, down = 4.0))
+    set_ramp_limits!(br, (up = 0.003, down = 10.0))
 end
 
 function run_events_simulation(;
@@ -224,7 +224,7 @@ end
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
-    @test p_d2[p_recover_ix, "Alta"] == 40.0 
+    @test p_d2[p_recover_ix, "Alta"] == 40.0
 end
 
 #This passes with nomin or basic dispatch 
@@ -249,7 +249,7 @@ end
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
-    @test p_d2[p_recover_ix, "Alta"] == 40.0 
+    @test p_d2[p_recover_ix, "Alta"] == 40.0
 end
 
 # Note: Running a standard UC formulation without a feedforward to the ED is not a feasible modeling setup
@@ -267,7 +267,7 @@ end
         ed_formulation = "basic",  #should also pass with nomin   
         feedforward = true,
         in_memory = true,
-    );
+    )
     test_event_results(;
         res = res,
         outage_time = DateTime("2024-01-01T17:00:00"),
@@ -279,7 +279,7 @@ end
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
-    @test p_d2[p_recover_ix, "Alta"] < 40.0 
+    @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
 
 ### 5 MINUTE DATA (RESOLUTION MISMATCH) ### 
@@ -347,7 +347,7 @@ end
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
-    @test p_d2[p_recover_ix, "Alta"] < 40.0 
+    @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
 
 function _run_fixed_forced_outage_sim_with_timeseries(;
