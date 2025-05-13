@@ -22,7 +22,7 @@ using Dates
 ## Data
 
 !!! note
-    
+
     `PowerSystemCaseBuilder.jl` is a helper library that makes it easier to reproduce examples in the documentation and tutorials. Normally you would pass your local files to create the system data instead of calling the function `build_system`.
     For more details visit [PowerSystemCaseBuilder Documentation](https://nrel-sienna.github.io/PowerSystems.jl/stable/tutorials/powersystembuilder/)
 
@@ -120,13 +120,13 @@ build!(problem; output_dir = mktempdir())
 ```
 
 !!! tip
-    
+
     The principal component of the `DecisionModel` is the JuMP model. But you can serialize to a file using the following command:
-    
+
     ```julia
     serialize_optimization_model(problem, save_path)
     ```
-    
+
     Keep in mind that if the setting "store_variable_names" is set to `False` then the file won't show the model's names.
 
 ### Solve an `DecisionModel`

@@ -65,15 +65,15 @@ mutable struct OptimizationContainer <: IS.Optimization.AbstractOptimizationCont
     time_steps::UnitRange{Int}
     settings::Settings
     settings_copy::Settings
-    variables::Dict{VariableKey, AbstractArray}
-    aux_variables::Dict{AuxVarKey, AbstractArray}
-    duals::Dict{ConstraintKey, AbstractArray}
-    constraints::Dict{ConstraintKey, AbstractArray}
+    variables::OrderedDict{VariableKey, AbstractArray}
+    aux_variables::OrderedDict{AuxVarKey, AbstractArray}
+    duals::OrderedDict{ConstraintKey, AbstractArray}
+    constraints::OrderedDict{ConstraintKey, AbstractArray}
     objective_function::ObjectiveFunction
-    expressions::Dict{ExpressionKey, AbstractArray}
-    parameters::Dict{ParameterKey, ParameterContainer}
+    expressions::OrderedDict{ExpressionKey, AbstractArray}
+    parameters::OrderedDict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
-    initial_conditions::Dict{InitialConditionKey, Vector{<:InitialCondition}}
+    initial_conditions::OrderedDict{InitialConditionKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
     infeasibility_conflict::Dict{Symbol, Array}
     pm::Union{Nothing, PM.AbstractPowerModel}
