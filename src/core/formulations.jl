@@ -91,6 +91,14 @@ Formulation type to add real and reactive injection variables with constant powe
 """
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
+########################### Source Formulations ##############################
+abstract type AbstractSourceFormulation <: AbstractDeviceFormulation end
+
+"""
+Formulation type to add import and export model for `Source`
+"""
+struct ImportExportSourceModel <: AbstractSourceFormulation end
+
 """
 Abstract type for Branch Formulations (a.k.a Models)
 

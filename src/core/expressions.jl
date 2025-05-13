@@ -15,6 +15,7 @@ struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end
 struct InterfaceTotalFlow <: ExpressionType end
 struct PTDFBranchFlow <: ExpressionType end
+struct NetActivePower <: ExpressionType end
 
 should_write_resulting_value(::Type{<:CostExpressions}) = true
 should_write_resulting_value(::Type{FuelConsumptionExpression}) = true

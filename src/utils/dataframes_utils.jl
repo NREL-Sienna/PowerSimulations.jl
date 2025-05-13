@@ -10,14 +10,14 @@ Creates a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
 function to_dataframe(
     array::DenseAxisArray{T, 2},
     key::OptimizationContainerKey,
-) where {T <: Number}
+) where {T <: JumpSupportedLiterals}
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array)[1])
 end
 
 function to_dataframe(
     array::DenseAxisArray{T, 1},
     key::OptimizationContainerKey,
-) where {T <: Number}
+) where {T <: JumpSupportedLiterals}
     return DataFrames.DataFrame(to_matrix(array), get_column_names(key, array)[1])
 end
 

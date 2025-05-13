@@ -161,7 +161,7 @@ function ParameterUpdateEvent(
         parameter_type,
         component_type,
         # TODO: Store as string in the attributes to avoid interpolations
-        string(get_variable_type(attributes)),
+        string(get_variable_types(attributes)),
         simulation_time,
         model_name,
     )

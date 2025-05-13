@@ -650,7 +650,7 @@ function build_impl!(
         get_network_model(template),
         transmission_model.subnetworks,
         sys,
-        transmission_model.radial_network_reduction.bus_reduction_map)
+        transmission_model.network_reduction.bus_reduction_map)
 
     # Order is required
     for device_model in values(template.devices)
@@ -1296,17 +1296,17 @@ function add_param_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
-    variable_type::Type{W},
+    variable_types::Tuple{Vararg{Type}},
     sos_variable::SOSStatusVariable = NO_VARIABLE,
     uses_compact_power::Bool = false,
     data_type::DataType = Float64,
     axs...;
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
-) where {T <: ObjectiveFunctionParameter, U <: PSY.Component, W <: VariableType}
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     param_key = ParameterKey(T, U, meta)
     attributes =
-        CostFunctionAttributes{data_type}(variable_type, sos_variable, uses_compact_power)
+        CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
     return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
 

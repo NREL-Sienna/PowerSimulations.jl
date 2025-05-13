@@ -64,13 +64,13 @@ end
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
 struct CostFunctionAttributes{T} <: ParameterAttributes
-    variable_type::Type
+    variable_types::Tuple{Vararg{Type}}
     sos_status::SOSStatusVariable
     uses_compact_power::Bool
 end
 
 get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
-get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
+get_variable_types(attr::CostFunctionAttributes) = attr.variable_types
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
 
 struct EventParametersAttributes{T <: PSY.Outage, U <: ParameterType} <: ParameterAttributes
@@ -195,22 +195,13 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-function _set_parameter!(
-    array::AbstractArray{Float64},
-    ::JuMP.Model,
-    value::Float64,
-    ixs::Tuple,
-)
-    array[ixs...] = value
-    return
-end
-
+const ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
     value::T,
     ixs::Tuple,
-) where {T <: IS.FunctionData}
+) where {T <: ValidDataParamEltypes}
     array[ixs...] = value
     return
 end
@@ -243,18 +234,7 @@ end
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::Float64,
-    ixs...,
-)
-    param_array = get_parameter_array(container)
-    _set_parameter!(param_array, jump_model, parameter, ixs)
-    return
-end
-
-function set_parameter!(
-    container::ParameterContainer,
-    jump_model::JuMP.Model,
-    parameter::IS.FunctionData,
+    parameter::ValidDataParamEltypes,
     ixs...,
 )
     param_array = get_parameter_array(container)
@@ -329,6 +309,12 @@ Parameter to define fuel cost time series
 """
 struct FuelCostParameter <: ObjectiveFunctionParameter end
 
+"Parameter to define startup cost time series"
+struct StartupCostParameter <: ObjectiveFunctionParameter end
+
+"Parameter to define shutdown cost time series"
+struct ShutdownCostParameter <: ObjectiveFunctionParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 abstract type EventParameter <: ParameterType end
@@ -345,6 +331,10 @@ struct AvailableStatusChangeCountdownParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 should_write_resulting_value(::Type{<:EventParameter}) = true
+
+# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are tuples)
+should_write_resulting_value(::Type{<:FuelCostParameter}) = true
+should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
