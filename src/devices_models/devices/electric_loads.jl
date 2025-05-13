@@ -132,6 +132,35 @@ function add_constraints!(
     return
 end
 
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{OnVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {V <: PSY.ControllableLoad, W <: PowerLoadInterruption, X <: PM.AbstractPowerModel}
+    time_steps = get_time_steps(container)
+    constraint = add_constraints_container!(
+        container,
+        T(),
+        V,
+        [PSY.get_name(d) for d in devices],
+        time_steps;
+        meta = "binary",
+    )
+    on_variable = get_variable(container, U(), V)
+    power = get_variable(container, ActivePowerVariable(), V)
+    jump_model = get_jump_model(container)
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        pmax = PSY.get_max_active_power(d)
+        constraint[name, t] =
+            JuMP.@constraint(jump_model, power[name, t] <= on_variable[name, t] * pmax)
+    end
+    return
+end
+
 ############################## FormulationControllable Load Cost ###########################
 function objective_function!(
     container::OptimizationContainer,

@@ -457,7 +457,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     for (ix, (key, result)) in enumerate(results.decision_problem_results)
         table[ix, 1] = key
         table[ix, 2] = first(result.timestamps)
-        table[ix, 3] = Dates.Minute(first(diff(result.timestamps)))
+        table[ix, 3] = Dates.canonicalize(result.resolution)
         table[ix, 4] = last(result.timestamps)
     end
     println(io)
