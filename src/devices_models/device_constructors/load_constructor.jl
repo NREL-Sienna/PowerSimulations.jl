@@ -38,6 +38,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -72,7 +73,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
-
+    add_event_constraints!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -107,6 +108,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -133,7 +135,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
-
+    add_event_constraints!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -176,6 +178,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -218,7 +221,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
-
+    add_event_constraints!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -251,6 +254,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -285,7 +289,7 @@ function construct_device!(
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
-
+    add_event_constraints!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -321,6 +325,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -346,6 +351,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -392,6 +398,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -416,6 +423,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
