@@ -308,21 +308,21 @@ function _update_parameter_values!(
     state_data = get_dataset(state, get_attribute_key(attributes))
     state_timestamps = state_data.timestamps
     state_data_index = find_timestamp_index(state_timestamps, current_time)
-    #TODO - fix hardcode for ThermalStandard
-    if haskey(
+    has_outage = haskey(
         get_parameters_values(state),
         InfrastructureSystems.Optimization.ParameterKey{
             AvailableStatusParameter,
-            PSY.ThermalStandard,
+            U,
         }(
             "",
         ),
     )
+    if has_outage
         status_values = get_dataset_values(
             state,
             InfrastructureSystems.Optimization.ParameterKey{
                 AvailableStatusParameter,
-                PSY.ThermalStandard,
+                U,
             }(
                 "",
             ),
@@ -331,7 +331,7 @@ function _update_parameter_values!(
             state,
             InfrastructureSystems.Optimization.ParameterKey{
                 AvailableStatusParameter,
-                PSY.ThermalStandard,
+                U,
             }(
                 "",
             ),
@@ -341,7 +341,8 @@ function _update_parameter_values!(
     end
     for name in component_names
         # Pass indices in this way since JuMP DenseAxisArray don't support view()
-        if name in status_values.axes[1] && status_values[name, status_data_index] == 0.0 &&
+        if has_outage && name in status_values.axes[1] &&
+           status_values[name, status_data_index] == 0.0 &&
            round(state_values[name, state_data_index]) == 1.0
             # Override feed forward based on status parameter
             value = 0.0

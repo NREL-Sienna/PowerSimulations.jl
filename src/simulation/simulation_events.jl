@@ -131,13 +131,12 @@ function apply_affect!(
     sim_time = get_current_time(simulation)
     rng = get_rng(simulation)
     for (dtype, device_names) in device_type_maps
-        if dtype != PSY.ThermalStandard
+        if !(dtype <: Union{PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad})     #TODO - extend to Hydro once outages are made in HydroPowerSimulations
             continue
         end
         em_model = get_emulation_model(get_models(simulation))
         em_model_store = get_store_params(em_model)
-        # Order is required here. The AvailableStatusChangeCountdownParameter needs to be updated first
-        # to indicate that there is a change in the othe parameters
+        # Order required: event parameters must be updated first to indicate a change in other parameters/variables.
         update_system_state!(
             sim_state,
             ParameterKey(AvailableStatusChangeCountdownParameter, dtype),
@@ -156,43 +155,35 @@ function apply_affect!(
             sim_time,
             rng,
         )
-        update_system_state!(
-            sim_state,
-            VariableKey(ActivePowerVariable, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            rng,
-        )
-        update_system_state!(
-            sim_state,
-            VariableKey(OnVariable, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            rng,
-        )
+        for k in keys(sim_state.system_states.variables)  #Not an OrderedDict
+            if typeof(k).parameters[2] != dtype
+                continue
+            end
+            update_system_state!(
+                sim_state,
+                k,
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                rng,
+            )
+        end
+        for k in keys(sim_state.system_states.aux_variables)  #Not an OrderedDict
+            if typeof(k).parameters[2] != dtype
+                continue
+            end
+            update_system_state!(
+                sim_state,
+                k,
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                rng,
+            )
+        end
 
-        update_system_state!(
-            sim_state,
-            AuxVarKey(TimeDurationOn, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            rng,
-        )
-        update_system_state!(
-            sim_state,
-            AuxVarKey(TimeDurationOff, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            rng,
-        )
         # Order is required here too AvailableStatusChangeCountdownParameter needs to
         # go first to indicate that there is a change in the other values
         update_decision_state!(
@@ -213,42 +204,35 @@ function apply_affect!(
             sim_time,
             em_model_store,
         )
-        update_decision_state!(
-            sim_state,
-            VariableKey(ActivePowerVariable, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            em_model_store,
-        )
-        update_decision_state!(
-            sim_state,
-            VariableKey(OnVariable, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            em_model_store,
-        )
-        update_decision_state!(
-            sim_state,
-            AuxVarKey(TimeDurationOn, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            em_model_store,
-        )
-        update_decision_state!(
-            sim_state,
-            AuxVarKey(TimeDurationOff, dtype),
-            device_names,
-            event,
-            event_model,
-            sim_time,
-            em_model_store,
-        )
+
+        for k in keys(sim_state.decision_states.variables)  #Not an OrderedDict
+            if typeof(k).parameters[2] != dtype
+                continue
+            end
+            update_decision_state!(
+                sim_state,
+                k,
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                em_model_store,
+            )
+        end
+        for k in keys(sim_state.decision_states.aux_variables)  #Not an OrderedDict
+            if typeof(k).parameters[2] != dtype
+                continue
+            end
+            update_decision_state!(
+                sim_state,
+                k,
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                em_model_store,
+            )
+        end
     end
     # Put a StateUpdateEvent here
 end
