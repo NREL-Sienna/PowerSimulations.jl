@@ -27,6 +27,26 @@ function add_event_arguments!(
     return
 end
 
+#TODO - relax this restriction by implementing outages for StaticPowerLoad
+function add_event_arguments!(
+    ::OptimizationContainer,
+    ::T,
+    device_model::DeviceModel{U, StaticPowerLoad},
+    ::NetworkModel,
+) where {
+    T <: Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+} where {U <: PSY.StaticInjection}
+    if !isempty(get_events(device_model))
+        throw(
+            IS.ConflictingInputsError(
+                "Outage Modeling is not compatible with StaticPowerLoad Formulations used for devices $U",
+            ),
+        )
+        return
+    end
+end
+
+#TODO - relax this restriction by implementing outages for FixedOutput
 function add_event_arguments!(
     ::OptimizationContainer,
     ::T,
@@ -35,12 +55,14 @@ function add_event_arguments!(
 ) where {
     T <: Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
 } where {U <: PSY.StaticInjection}
-    throw(
-        IS.ConflictingInputsError(
-            "Outage Modeling is not compatible with FixedOutput Formulations used for devices $U",
-        ),
-    )
-    return
+    if !isempty(get_events(device_model))
+        throw(
+            IS.ConflictingInputsError(
+                "Outage Modeling is not compatible with FixedOutput Formulations used for devices $U",
+            ),
+        )
+        return
+    end
 end
 
 function _add_parameters!(
