@@ -1,3 +1,28 @@
+function get_lhs_type(
+    container,
+    device_model::DeviceModel{U, T},
+) where {U <: PSY.ThermalGen, T <: AbstractDeviceFormulation}
+    return ActivePowerRangeExpressionUB
+end
+
+function get_lhs_type(
+    container,
+    device_model::DeviceModel{U, T},
+) where {U <: PSY.RenewableGen, T <: AbstractDeviceFormulation}
+    if has_service_model(device_model)
+        return ActivePowerRangeExpressionUB
+    else
+        return ActivePowerVariable
+    end
+end
+
+function get_lhs_type(
+    container,
+    device_model::DeviceModel{U, T},
+) where {U <: PSY.ElectricLoad, T <: AbstractDeviceFormulation}
+    return ActivePowerVariable
+end
+
 function add_event_constraints!(
     container::OptimizationContainer,
     devices::T,
@@ -14,7 +39,7 @@ function add_event_constraints!(
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
         parameter_type = get_parameter_type(event_type, event_model, U)
-        lhs_type = ActivePowerRangeExpressionUB # get_lhs_type(container, device_model)
+        lhs_type = get_lhs_type(container, device_model)
         add_parameterized_upper_bound_range_constraints(
             container,
             OutageConstraint,
