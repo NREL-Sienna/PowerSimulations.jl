@@ -36,6 +36,31 @@ function _set_intertemporal_data!(sys)
     set_ramp_limits!(br, (up = 0.003, down = 10.0))
 end
 
+function _add_interruptible_power_load!(sys)
+    b = get_component(ACBus, sys, "nodeA")
+    show_components(sys, PowerLoad)
+    pl = get_component(PowerLoad, sys, "Bus4")
+    ipl = InterruptiblePowerLoad(;
+        name = "test_ipl",
+        available = true,
+        bus = b,
+        active_power = 0.0,
+        reactive_power = 0.0,
+        max_active_power = 1.0,
+        max_reactive_power = 1.0,
+        base_power = 100.0,
+        operation_cost = LoadCost(CostCurve(LinearCurve(100.0)), 100.0),
+    )
+    add_component!(sys, ipl)
+    pl = collect(get_components(PowerLoad, sys))[2]
+    tsa = get_time_series_array(SingleTimeSeries, pl, "max_active_power")
+    ipl_ts = SingleTimeSeries(;
+        name = "max_active_power",
+        data = tsa,
+    )
+    add_time_series!(sys, ipl, ipl_ts)
+end
+
 function run_events_simulation(;
     sys_emulator,
     outage_time,   #DateTime
@@ -353,17 +378,19 @@ end
 function _run_fixed_forced_outage_sim_with_timeseries(;
     sys_emulator,
     outage_status_timeseries,
+    device_type,
+    device_names,
 )
     sys_em = deepcopy(sys_emulator)
     _add_minimum_active_power!(sys_em)
 
-    sys_d1 = PSB.build_system(PSISystems, "c_sys5_pjm")
+    sys_d1 = deepcopy(sys_emulator)
     _add_minimum_active_power!(sys_d1)
     _add_100_MW_reserves!(sys_d1)
     _set_intertemporal_data!(sys_d1)
     transform_single_time_series!(sys_d1, Day(2), Day(1))
 
-    sys_d2 = PSB.build_system(PSISystems, "c_sys5_pjm")
+    sys_d2 = deepcopy(sys_emulator)
     _add_minimum_active_power!(sys_d2)
     _add_100_MW_reserves!(sys_d2)
     _set_intertemporal_data!(sys_d2)
@@ -382,11 +409,13 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
     set_device_model!(template_em, ThermalStandard, ThermalBasicDispatch)
     set_service_model!(template_d1, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
     set_service_model!(template_d2, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
+    set_device_model!(template_em, InterruptiblePowerLoad, PowerLoadDispatch)
+    set_device_model!(template_d1, InterruptiblePowerLoad, PowerLoadDispatch)
+    set_device_model!(template_d2, InterruptiblePowerLoad, PowerLoadDispatch)
 
     for sys in [sys_d1, sys_d2, sys_em]
-        outage_gens = ["Alta"]
-        for name in outage_gens
-            g = get_component(ThermalStandard, sys, name)
+        for name in device_names
+            g = get_component(device_type, sys, name)
             transition_data = PSY.FixedForcedOutage(;
                 outage_status = 0.0,
             )
@@ -468,10 +497,71 @@ end
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
         outage_status_timeseries = outage_timeseries,
+        device_type = ThermalStandard,
+        device_names = ["Alta"],
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard")
+    apv = read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(status[!, "Alta"][ix])
+        if Int64(status[!, "Alta"][ix]) == 0.0
+            @test apv[!, "Alta"][ix] == 0.0
+        end
+    end
+end
+
+@testset "Renewable outage" begin
+    dates_ts = collect(
+        DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
+    )
+    outage_data = fill!(Vector{Int64}(undef, 168), 0)
+    outage_data[3] = 1
+    outage_data[10:11] .= 1
+    outage_data[23:22] .= 1
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        outage_status_timeseries = outage_timeseries,
+        device_type = RenewableDispatch,
+        device_names = ["WindBus1"],
+    )
+    em = get_emulation_problem_results(res)
+    status = read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch")
+    apv = read_realized_variable(em, "ActivePowerVariable__RenewableDispatch")
+    for (ix, x) in enumerate(outage_data[1:24])
+        @test x != Int64(status[!, "WindBus1"][ix])
+        if Int64(status[!, "WindBus1"][ix]) == 0.0
+            @test apv[!, "WindBus1"][ix] == 0.0
+        end
+    end
+end
+
+@testset "Load outage" begin
+    dates_ts = collect(
+        DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
+    )
+    outage_data = fill!(Vector{Int64}(undef, 168), 0)
+    outage_data[3] = 1
+    outage_data[10:11] .= 1
+    outage_data[23:22] .= 1
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    sys = PSB.build_system(PSISystems, "c_sys5_pjm")
+    _add_interruptible_power_load!(sys)
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = sys,
+        outage_status_timeseries = outage_timeseries,
+        device_type = InterruptiblePowerLoad,
+        device_names = ["test_ipl"],
+    )
+    em = get_emulation_problem_results(res)
+    status = read_realized_variable(em, "AvailableStatusParameter__InterruptiblePowerLoad")
+    apv = read_realized_variable(em, "ActivePowerVariable__InterruptiblePowerLoad")
+
+    for (ix, x) in enumerate(outage_data[1:24])
+        @test x != Int64(status[!, "test_ipl"][ix])
+        if Int64(status[!, "test_ipl"][ix]) == 0.0
+            @test apv[!, "test_ipl"][ix] == 0.0
+        end
     end
 end
