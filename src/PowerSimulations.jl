@@ -311,6 +311,7 @@ export StartupTimeLimitTemperatureConstraint
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export DynamicBranchRatingTimeSeriesParameter
+export FuelCostParameter
 export PostContingencyDynamicBranchRatingTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
