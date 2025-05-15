@@ -418,7 +418,10 @@ end
             @test isapprox(no_loss_objective, ref_objective; atol = 0.1)
 
             for col in names(ref_values)
-                @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol = 0.1))
+                test_result =
+                    all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol = 0.1))
+                @test test_result
+                test_result || break
             end
 
             @test all(
@@ -474,7 +477,9 @@ end
             @test wl_total_gen > no_loss_total_gen
 
             for col in names(dispatch_values_tf)
-                @test all(dispatch_values_tf[!, col] .<= dispatch_values_ft[!, col])
+                test_result = all(dispatch_values_tf[!, col] .<= dispatch_values_ft[!, col])
+                @test test_result
+                test_result || break
             end
         end
     end
@@ -568,6 +573,7 @@ end
         α = 0.0,
         rating = get_rating(line),
         arc = get_arc(line),
+        base_power = get_base_power(system),
     )
 
     add_component!(system, ps)
@@ -626,6 +632,7 @@ end
         α = 0.0,
         rating = get_rating(line),
         arc = arc,
+        base_power = get_base_power(system),
     )
 
     add_component!(system, ps)

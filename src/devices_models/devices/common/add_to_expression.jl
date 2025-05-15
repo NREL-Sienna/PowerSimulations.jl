@@ -770,7 +770,9 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
 }
-    error("here the check for appropriate topology needs to be done based on the network model and the network reduction")
+    error(
+        "here the check for appropriate topology needs to be done based on the network model and the network reduction",
+    )
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
