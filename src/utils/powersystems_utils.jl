@@ -360,6 +360,7 @@ function create_temporary_cost_function_in_system_per_unit(
         PSY.PiecewisePointCurve(new_data),
         PSY.UnitSystem.SYSTEM_BASE,
         PSY.get_fuel_cost(original_cost_function),
+        PSY.LinearCurve(0.0),  # setting fuel offtake cost to default value of 0
         PSY.get_vom_cost(original_cost_function),
     )
 end
