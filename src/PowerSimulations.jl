@@ -72,6 +72,7 @@ export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
 export ThermalCompactDispatch
 export ThermalSecurityConstrainedStandardUnitCommitment
+export ThermalSecurityConstrainedUnitCommitmentWithReserves
 
 ###### Regulation Device Formulation #######
 export DeviceLimitedRegulation
@@ -239,6 +240,7 @@ export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
+export PostContingencyActivePowerReserveDeployedVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -298,6 +300,8 @@ export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
 export PostContingencyRateLimitConstraintB
+export PostContingencyReserveDeploymentLimitConstraint
+export PostContingencyReserveDeploymentBalanceConstraint
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
@@ -603,6 +607,7 @@ include("services_models/reserve_group.jl")
 include("services_models/transmission_interface.jl")
 include("services_models/service_slacks.jl")
 include("services_models/services_constructor.jl")
+include("services_models/security_constrained_reserves.jl")
 
 # Network models
 include("network_models/copperplate_model.jl")

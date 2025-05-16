@@ -64,6 +64,11 @@ Formulation type to enable thermal compact dispatch
 """
 struct ThermalCompactDispatch <: AbstractThermalDispatchFormulation end
 
+"""
+Formulation type to enable security-constrained unit commitment for ThermalGenerator with Reserve delivery constraints
+"""
+struct ThermalSecurityConstrainedUnitCommitmentWithReserves <: AbstractStandardUnitCommitment end
+
 ############################# Electric Load Formulations ###################################
 abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
@@ -188,6 +193,7 @@ struct PTDFPowerModel <: AbstractPTDFModel end
 Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages. If exists, the rating b is considered as the branch power limit for post-contingency flows, otherwise the standard reting is considered.
 """
 struct SecurityConstrainedPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
+
 """
 Infinite capacity approximation of network flow to represent entire system with a single node.
 """

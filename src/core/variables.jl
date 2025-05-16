@@ -85,6 +85,13 @@ Docs abbreviation: ``r``
 struct ActivePowerReserveVariable <: VariableType end
 
 """
+Struct to dispatch the post-contingency Active Power Reserve Deployed Variable
+
+Docs abbreviation: ``\\Delta r``
+"""
+struct PostContingencyActivePowerReserveDeployedVariable <: VariableType end
+
+"""
 Struct to dispatch the creation of Service Requirement Variables
 
 Docs abbreviation: ``\\text{req}``
@@ -325,6 +332,7 @@ should_write_resulting_value(::Type{PieceWiseLinearBlockOffer}) = false
 should_write_resulting_value(::Type{PieceWiseLinearBlockDecrementalOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
+should_write_resulting_value(::Type{PostContingencyActivePowerReserveDeployedVariable}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true

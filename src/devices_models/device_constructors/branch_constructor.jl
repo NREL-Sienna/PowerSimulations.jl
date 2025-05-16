@@ -335,18 +335,57 @@ function _get_all_single_outage_branches_by_type(
     return single_outage_branches
 end
 
+function _get_all_single_outage_generators_by_type(
+    sys::PSY.System,
+    valid_outages::IS.FlattenIteratorWrapper{T},
+    generators::Union{Vector{V}, IS.FlattenIteratorWrapper{V}}
+) where {
+    T <: PSY.Outage,
+    V <: PSY.Generator,
+}
+    single_outage_generators = V[]
+    for outage in valid_outages
+        components = PSY.get_associated_components(sys, outage)
+        if !all(c -> c <: PSY.Generator, typeof.(components)) || length(components) != 1
+            continue
+        end
+        component = first(components)
+        if (component in generators) && !(component in single_outage_generators)
+            push!(single_outage_generators, component)
+        end
+    end
+    return single_outage_generators
+    
+end
+
 function _get_all_scuc_valid_outages(
     sys::PSY.System,
-    ::NetworkModel{SecurityConstrainedPTDFPowerModel},
-)
+    device_type::Type{T},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {T <: PSY.Device}
     return PSY.get_supplemental_attributes(
         sa ->
             typeof(sa) in Base.uniontypes(OutagesSCUC) &&
                 all(
-                    c -> c <: PSY.ACBranch,
+                    c -> c <: device_type,
                     typeof.(PSY.get_associated_components(sys, sa)),
                 ),
         PSY.Outage,
+        sys,
+    )
+end
+
+function _get_reduced_network_branches(
+    sys::PSY.System,
+    network_model::NetworkModel{<:AbstractPTDFModel},
+)
+    lodf = get_LODF_matrix(network_model)
+    removed_branches = PNM.get_removed_branches(lodf.network_reduction)
+    return get_available_components(
+        b ->
+            PSY.get_name(b) ∉ removed_branches &&
+                typeof(b) ∉ Base.uniontypes(TwoTerminalHVDCTypes),
+        PSY.ACBranch,
         sys,
     )
 end
@@ -362,7 +401,7 @@ function construct_device!(
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
 
-    valid_outages = _get_all_scuc_valid_outages(sys, network_model)
+    valid_outages = _get_all_scuc_valid_outages(sys, PSY.ACBranch, network_model)
 
     if isempty(valid_outages)
         throw(

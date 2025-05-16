@@ -668,7 +668,7 @@ function add_to_expression!(
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
-    X <: SecurityConstrainedPTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
 
@@ -711,6 +711,97 @@ function add_to_expression!(
                 )
             end
         end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    service::SR,
+    branches::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    contributing_devices::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    device_outages::Union{Vector{G}, IS.FlattenIteratorWrapper{G}},
+    model::ServiceModel{SR, W},
+    network_model::NetworkModel{X},
+) where {
+    SR <: PSY.Service,
+    D <: PSY.Device,
+    G <: PSY.Device,
+    T <: PTDFPostContingencyBranchFlow,
+    U <: FlowActivePowerVariable,
+    V <: PSY.ACBranch,
+    W <: AbstractReservesFormulation,
+    X <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = get_service_name(model)
+    device_outage_type = first(typeof.(device_outages))
+
+    if !isempty(device_outages)
+        lazy_container_addition!(
+            container,
+            T(),
+            device_outage_type,
+            get_name.(device_outages),
+            get_name.(branches),
+            time_steps;
+            meta = service_name,
+        )
+    end
+
+    expressions = get_expression(
+        container,
+        ExpressionKey(T, device_outage_type, service_name),
+    )
+    ptdf = get_PTDF_matrix(network_model)
+    reserve_deployed_variable = get_variable(container, PostContingencyActivePowerReserveDeployedVariable(), SR, service_name)
+
+    for branch in branches
+        variable_branches = get_variable(container, U(), typeof(branch))
+        branch_name = get_name(branch)
+        for t in time_steps
+            for device_outage in device_outages
+                device_outage_name = get_name(device_outage)
+                bus_outage = PSY.get_bus(device_outage)
+                max_active_power = PSY.get_max_active_power(device_outage)
+                use_dispatched_power = get_attribute(model, "use_dispatched_power")
+                if !(isnothing(use_dispatched_power)) && use_dispatched_power
+                    max_active_power = get_variable(
+                        container,
+                        ActivePowerVariable(),
+                        typeof(device_outage)
+                    )[device_outage_name, t]
+
+                    _add_to_jump_expression!(
+                    expressions[device_outage_name, branch_name, t],
+                    variable_branches[branch_name, t],
+                    1.0,
+                    max_active_power, 
+                    -1 * ptdf[branch_name, bus_outage],
+                    )
+                else
+                    _add_to_jump_expression!(
+                    expressions[device_outage_name, branch_name, t],
+                    variable_branches[branch_name, t],
+                    1.0,
+                    max_active_power * -1 * ptdf[branch_name, bus_outage],
+                    )
+                end
+
+                for device in setdiff(contributing_devices, device_outages)
+                    device_name = get_name(device)
+                    bus = PSY.get_bus(device)
+                    _add_to_jump_expression!(
+                        expressions[device_outage_name, branch_name, t],
+                        reserve_deployed_variable[device_name, device_outage_name, t],
+                        ptdf[branch_name, bus],
+                        )
+                end
+            end
+        end
+                
     end
     return
 end

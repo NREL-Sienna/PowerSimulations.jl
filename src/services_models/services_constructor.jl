@@ -100,7 +100,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -115,6 +115,17 @@ function construct_service!(
         contributing_devices,
         RangeReserve(),
     )
+    add_reserve_security_constraints!(
+        container,
+        sys,
+        ArgumentConstructStage(),
+        model,
+        service,
+        contributing_devices,
+        devices_template,
+        incompatible_device_types,
+        network_model,
+    )
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     add_feedforward_arguments!(container, model, service)
     return
@@ -127,7 +138,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -141,6 +152,17 @@ function construct_service!(
         service,
         contributing_devices,
         model,
+    )
+    add_reserve_security_constraints!(
+        container,
+        sys,
+        ModelConstructStage(),
+        model,
+        service,
+        contributing_devices,
+        devices_template,
+        incompatible_device_types,
+        network_model,
     )
     objective_function!(container, service, model)
 
@@ -257,7 +279,6 @@ function construct_service!(
     return
 end
 
-#=
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -350,7 +371,6 @@ function construct_service!(
     objective_function!(container, services, model)
     return
 end
-=#
 
 """
     Constructs a service for ConstantReserveGroup.
