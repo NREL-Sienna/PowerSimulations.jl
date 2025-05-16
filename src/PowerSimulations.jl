@@ -301,7 +301,6 @@ export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
 export PostContingencyRateLimitConstraintB
 export PostContingencyReserveDeploymentLimitConstraint
-export PostContingencyRateLimitConstraintWithReserves
 export PostContingencyReserveDeploymentBalanceConstraint
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
@@ -346,7 +345,6 @@ export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export PTDFPostContingencyBranchFlow
-export PTDFPostContingencyBranchFlowWithReserves
 
 #################################################################################
 # Imports

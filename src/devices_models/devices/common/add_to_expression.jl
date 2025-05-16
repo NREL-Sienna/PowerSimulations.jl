@@ -729,7 +729,7 @@ function add_to_expression!(
     SR <: PSY.Service,
     D <: PSY.Device,
     G <: PSY.Device,
-    T <: PTDFPostContingencyBranchFlowWithReserves,
+    T <: PTDFPostContingencyBranchFlow,
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
     W <: AbstractReservesFormulation,
@@ -737,14 +737,13 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
     service_name = get_service_name(model)
-    service_key = "$(SR)_$(service_name)"
-    branch_type = first(typeof.(branches))
+    device_outage_type = first(typeof.(device_outages))
 
     if !isempty(device_outages)
         lazy_container_addition!(
             container,
             T(),
-            branch_type,
+            device_outage_type,
             get_name.(device_outages),
             get_name.(branches),
             time_steps;
@@ -754,7 +753,7 @@ function add_to_expression!(
 
     expressions = get_expression(
         container,
-        ExpressionKey(T, branch_type, service_name),
+        ExpressionKey(T, device_outage_type, service_name),
     )
     ptdf = get_PTDF_matrix(network_model)
     reserve_deployed_variable = get_variable(container, PostContingencyActivePowerReserveDeployedVariable(), SR, service_name)

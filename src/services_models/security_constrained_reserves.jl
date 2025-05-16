@@ -142,7 +142,7 @@ function add_reserve_security_constraints!(
         # here since they depend on the service models and the branch models
         add_to_expression!(
             container,
-            PTDFPostContingencyBranchFlowWithReserves,
+            PTDFPostContingencyBranchFlow,
             FlowActivePowerVariable,
             service,
             branches,
@@ -154,7 +154,7 @@ function add_reserve_security_constraints!(
 
         add_constraints!(
             container,
-            PostContingencyRateLimitConstraintWithReserves,
+            PostContingencyRateLimitConstraintB,
             service,
             branches,
             contributing_generators,
