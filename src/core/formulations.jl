@@ -9,6 +9,8 @@ struct MyCustomDeviceFormulation <: PSI.AbstractDeviceFormulation
 """
 abstract type AbstractDeviceFormulation end
 
+abstract type AbstractGeneratorSecurityConstrainedFormulation <: AbstractDeviceFormulation end
+
 ########################### Thermal Generation Formulations ################################
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
@@ -16,6 +18,9 @@ abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
+
+abstract type AbstractThermalSecurityConstrained <: AbstractGeneratorSecurityConstrainedFormulation end
+
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
 """
@@ -24,6 +29,12 @@ struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
 Formulation type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
+
+"""
+Formulation type to enable Security-Constrained (G-1) standard unit commitment with intertemporal constraints and simplified startup profiles
+"""
+struct ThermalSecurityConstrainedStandardUnitCommitment <: AbstractThermalSecurityConstrained end
+
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
 """
@@ -85,11 +96,17 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 ########################### Renewable Generation Formulations ##############################
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
+abstract type AbstractRenewableSecurityConstrained <: AbstractGeneratorSecurityConstrainedFormulation end
 
 """
 Formulation type to add injection variables constrained by a maximum injection time series for `RenewableGen`
 """
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
+
+"""
+Formulation type to enable Renewable Security-Constrained (G-1) and add injection variables constrained by a maximum injection time series for `RenewableGen`
+"""
+struct RenewableSecurityConstrainedFullDispatch <: AbstractRenewableSecurityConstrained end
 
 """
 Formulation type to add real and reactive injection variables with constant power factor with maximum real power injections constrained by a time series for `RenewableGen`

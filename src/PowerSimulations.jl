@@ -59,6 +59,7 @@ export PowerLoadDispatch
 ######## Renewable Formulations ########
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
+export RenewableSecurityConstrainedFullDispatch
 
 ######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
@@ -70,6 +71,7 @@ export ThermalDispatchNoMin
 export ThermalMultiStartUnitCommitment
 export ThermalCompactUnitCommitment
 export ThermalCompactDispatch
+export ThermalSecurityConstrainedStandardUnitCommitment
 export ThermalSecurityConstrainedUnitCommitmentWithReserves
 
 ###### Regulation Device Formulation #######
@@ -316,6 +318,7 @@ export StartupTimeLimitTemperatureConstraint
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export DynamicBranchRatingTimeSeriesParameter
+export FuelCostParameter
 export PostContingencyDynamicBranchRatingTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
