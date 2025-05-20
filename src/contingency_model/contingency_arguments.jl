@@ -50,7 +50,7 @@ end
 function add_event_arguments!(
     ::OptimizationContainer,
     ::T,
-    ::DeviceModel{U, FixedOutput},
+    device_model::DeviceModel{U, FixedOutput},
     ::NetworkModel,
 ) where {
     T <: Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
