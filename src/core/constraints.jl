@@ -518,4 +518,5 @@ struct ImportExportBudgetConstraint <: ConstraintType end
 struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
-struct OutageConstraint <: EventConstraint end
+struct ActivePowerOutageConstraint <: EventConstraint end
+struct ReactivePowerOutageConstraint <: EventConstraint end

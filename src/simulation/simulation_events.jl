@@ -131,7 +131,14 @@ function apply_affect!(
     sim_time = get_current_time(simulation)
     rng = get_rng(simulation)
     for (dtype, device_names) in device_type_maps
-        if !(dtype <: Union{PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad})     #TODO - extend to Hydro once outages are made in HydroPowerSimulations
+        if !(
+            dtype <: Union{
+                PSY.ThermalGen,
+                PSY.RenewableGen,
+                PSY.ElectricLoad,
+                PSY.EnergyReservoirStorage,
+            }
+        )     #TODO - extend to Hydro once outages are made in HydroPowerSimulations
             continue
         end
         em_model = get_emulation_model(get_models(simulation))

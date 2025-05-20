@@ -61,6 +61,31 @@ function _add_interruptible_power_load!(sys)
     add_time_series!(sys, ipl, ipl_ts)
 end
 
+function _add_energy_reservoir_storage!(sys)
+    b = get_component(ACBus, sys, "nodeA")
+    show_components(sys, PowerLoad)
+    pl = get_component(PowerLoad, sys, "Bus4")
+    ers = EnergyReservoirStorage(;
+        name = "test_ers",
+        available = true,
+        bus = b,
+        prime_mover_type = PrimeMovers.BA,
+        storage_technology_type = StorageTech.OTHER_CHEM,
+        storage_capacity = 4.0,
+        storage_level_limits = (min = 0.0, max = 1.0),
+        initial_storage_capacity_level = 0.5,
+        rating = 4.0,
+        active_power = 4.0,
+        input_active_power_limits = (min = 0.0, max = 2.0),
+        output_active_power_limits = (min = 0.0, max = 2.0),
+        efficiency = (in = 0.9, out = 0.9),
+        reactive_power = 0.0,
+        reactive_power_limits = (min = -2.0, max = 2.0),
+        base_power = 100.0,
+    )
+    add_component!(sys, ers)
+end
+
 function run_events_simulation(;
     sys_emulator,
     outage_time,   #DateTime
@@ -412,6 +437,20 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
     set_device_model!(template_em, InterruptiblePowerLoad, PowerLoadDispatch)
     set_device_model!(template_d1, InterruptiblePowerLoad, PowerLoadDispatch)
     set_device_model!(template_d2, InterruptiblePowerLoad, PowerLoadDispatch)
+    storage_device_model = DeviceModel(
+        EnergyReservoirStorage,
+        StorageDispatchWithReserves;
+        attributes = Dict{String, Any}(
+            "reservation" => true,
+            "cycling_limits" => false,
+            "energy_target" => false,
+            "complete_coverage" => false,
+            "regularization" => true,
+        ),
+    )
+    set_device_model!(template_em, storage_device_model)
+    set_device_model!(template_d1, storage_device_model)
+    set_device_model!(template_d2, storage_device_model)
 
     for sys in [sys_d1, sys_d2, sys_em]
         for name in device_names
@@ -565,3 +604,35 @@ end
         end
     end
 end
+
+@testset "Storage outage" begin
+    dates_ts = collect(
+        DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
+    )
+    outage_data = fill!(Vector{Int64}(undef, 168), 0)
+    outage_data[3] = 1
+    outage_data[10:11] .= 1
+    outage_data[23:22] .= 1
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    sys = PSB.build_system(PSISystems, "c_sys5_pjm")
+    _add_energy_reservoir_storage!(sys)
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = sys,
+        outage_status_timeseries = outage_timeseries,
+        device_type = EnergyReservoirStorage,
+        device_names = ["test_ers"],
+    )
+    em = get_emulation_problem_results(res)
+    status = read_realized_variable(em, "AvailableStatusParameter__EnergyReservoirStorage")
+    #TODO - modify storage so it is deployed and can test the outages -> check keywords to incentivize... 
+    apv = read_realized_variable(em, "ActivePowerOutVariable__EnergyReservoirStorage")
+    apv = read_realized_variable(em, "ActivePowerInVariable__EnergyReservoirStorage")
+    for (ix, x) in enumerate(outage_data[1:24])
+        @test x != Int64(status[!, "test_ers"][ix])
+        if Int64(status[!, "test_ers"][ix]) == 0.0
+            @test apv[!, "test_ers"][ix] == 0.0
+        end
+    end
+end
+
+#TODO - add tests for reactive power formulations 
