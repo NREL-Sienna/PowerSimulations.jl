@@ -405,6 +405,7 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
     outage_status_timeseries,
     device_type,
     device_names,
+    renewable_formulation,
 )
     sys_em = deepcopy(sys_emulator)
     _add_minimum_active_power!(sys_em)
@@ -431,6 +432,9 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
     template_d1 = get_template_basic_uc_simulation()
     template_d2 = get_template_basic_uc_simulation()
     template_em = get_template_nomin_ed_simulation()
+    set_device_model!(template_d1, RenewableDispatch, renewable_formulation)
+    set_device_model!(template_d2, RenewableDispatch, renewable_formulation)
+    set_device_model!(template_em, RenewableDispatch, renewable_formulation)
     set_device_model!(template_em, ThermalStandard, ThermalBasicDispatch)
     set_service_model!(template_d1, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
     set_service_model!(template_d2, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
@@ -538,6 +542,7 @@ end
         outage_status_timeseries = outage_timeseries,
         device_type = ThermalStandard,
         device_names = ["Alta"],
+        renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard")
@@ -564,6 +569,7 @@ end
         outage_status_timeseries = outage_timeseries,
         device_type = RenewableDispatch,
         device_names = ["WindBus1"],
+        renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch")
@@ -592,6 +598,7 @@ end
         outage_status_timeseries = outage_timeseries,
         device_type = InterruptiblePowerLoad,
         device_names = ["test_ipl"],
+        renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__InterruptiblePowerLoad")
@@ -621,6 +628,7 @@ end
         outage_status_timeseries = outage_timeseries,
         device_type = EnergyReservoirStorage,
         device_names = ["test_ers"],
+        renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__EnergyReservoirStorage")
@@ -631,6 +639,102 @@ end
         @test x != Int64(status[!, "test_ers"][ix])
         if Int64(status[!, "test_ers"][ix]) == 0.0
             @test apv[!, "test_ers"][ix] == 0.0
+        end
+    end
+end
+
+@testset "StaticPowerLoad outage" begin
+    dates_ts = collect(
+        DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
+    )
+    outage_data = fill!(Vector{Int64}(undef, 168), 0)
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    sys = PSB.build_system(PSISystems, "c_sys5_pjm")
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = sys,
+        outage_status_timeseries = outage_timeseries,
+        device_type = PowerLoad,
+        device_names = ["Bus2"],
+        renewable_formulation = RenewableFullDispatch,
+    )
+    em = get_emulation_problem_results(res)
+    active_power_thermal_no_outage =
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+    outage_data[3] = 1
+    outage_data[10:11] .= 1
+    outage_data[23:22] .= 1
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    sys = PSB.build_system(PSISystems, "c_sys5_pjm")
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = sys,
+        outage_status_timeseries = outage_timeseries,
+        device_type = PowerLoad,
+        device_names = ["Bus2"],
+        renewable_formulation = RenewableFullDispatch,
+    )
+    em = get_emulation_problem_results(res)
+    status = read_realized_variable(em, "AvailableStatusParameter__PowerLoad")
+    active_power_load =
+        read_realized_variable(em, "ActivePowerTimeSeriesParameter__PowerLoad")
+    active_power_thermal_outage =
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+    for (ix, x) in enumerate(outage_data[1:24])
+        @test x != Int64(status[!, "Bus2"][ix])
+        if outage_data[ix] == 1.0
+            change_in_thermal_generation = sum(
+                Vector(active_power_thermal_outage[ix, 2:end]) .-
+                Vector(active_power_thermal_no_outage[ix, 2:end]),
+            )
+            active_power_outaged_load = active_power_load[ix, "Bus2"]
+            @test isapprox(change_in_thermal_generation, active_power_outaged_load)
+        end
+    end
+end
+
+@testset "FixedOutput outage" begin
+    dates_ts = collect(
+        DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
+    )
+    outage_data = fill!(Vector{Int64}(undef, 168), 0)
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    sys = PSB.build_system(PSISystems, "c_sys5_pjm")
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = sys,
+        outage_status_timeseries = outage_timeseries,
+        device_type = PowerLoad,
+        device_names = ["Bus2"],
+        renewable_formulation = RenewableFullDispatch,
+    )
+    em = get_emulation_problem_results(res)
+    active_power_thermal_no_outage =
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+    outage_data[3] = 1
+    outage_data[10:11] .= 1
+    outage_data[23:22] .= 1
+    outage_timeseries = TimeArray(dates_ts, outage_data)
+    res = _run_fixed_forced_outage_sim_with_timeseries(;
+        sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        outage_status_timeseries = outage_timeseries,
+        device_type = RenewableDispatch,
+        device_names = ["WindBus1"],
+        renewable_formulation = FixedOutput,
+    )
+    em = get_emulation_problem_results(res)
+    renewable_status =
+        read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch")
+    active_power_thermal_outage =
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+    active_power_renewable =
+        read_realized_variable(em, "ActivePowerTimeSeriesParameter__RenewableDispatch")
+    for (ix, x) in enumerate(outage_data[1:24])
+        @test x != Int64(renewable_status[!, "WindBus1"][ix])
+        if outage_data[ix] == 1.0
+            change_in_thermal_generation = sum(
+                Vector(active_power_thermal_outage[ix, 2:end]) .-
+                Vector(active_power_thermal_no_outage[ix, 2:end]),
+            )
+            active_power_outaged_renewable = active_power_renewable[ix, "WindBus1"]
+            @test isapprox(change_in_thermal_generation, active_power_outaged_renewable)
         end
     end
 end
