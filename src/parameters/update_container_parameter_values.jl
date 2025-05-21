@@ -415,17 +415,12 @@ function _update_parameter_values!(
         end
         for name in component_names
             # Pass indices in this way since JuMP DenseAxisArray don't support view()
-            value = round(state_values[name, state_data_index])
+            value = state_values[name, state_data_index]
             if !isfinite(value)
                 error(
                     "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))) is not a finite value $(value) \
                      This is commonly caused by referencing a state value at a time when such decision hasn't been made. \
                      Consider reviewing your models' horizon and interval definitions",
-                )
-            end
-            if 0.0 > value
-                error(
-                    "The value for the system state used in $(encode_key_as_string(get_attribute_key(attributes))): $(value) is less than 0.0",
                 )
             end
             _set_param_value!(parameter_array, value, name, t)

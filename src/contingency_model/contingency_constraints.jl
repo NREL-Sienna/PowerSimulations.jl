@@ -16,7 +16,7 @@ function add_event_constraints!(
         parameter_type = get_parameter_type(event_type, event_model, U)
         add_parameterized_upper_bound_range_constraints(
             container,
-            ActivePowerOutageConstraint,   
+            ActivePowerOutageConstraint,
             ActivePowerRangeExpressionUB,
             parameter_type,
             devices_with_attrbts,

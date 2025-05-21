@@ -153,6 +153,34 @@ function apply_affect!(
             sim_time,
             rng,
         )
+        if haskey(
+            sim_state.system_states.parameters,
+            ParameterKey(ActivePowerOffsetParameter, dtype),
+        )
+            update_system_state!(
+                sim_state,
+                ParameterKey(ActivePowerOffsetParameter, dtype),
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                rng,
+            )
+        end
+        if haskey(
+            sim_state.system_states.parameters,
+            ParameterKey(ReactivePowerOffsetParameter, dtype),
+        )
+            update_system_state!(
+                sim_state,
+                ParameterKey(ReactivePowerOffsetParameter, dtype),
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                rng,
+            )
+        end
         update_system_state!(
             sim_state,
             ParameterKey(AvailableStatusParameter, dtype),
@@ -202,6 +230,34 @@ function apply_affect!(
             sim_time,
             em_model_store,
         )
+        if haskey(
+            sim_state.decision_states.parameters,
+            ParameterKey(ActivePowerOffsetParameter, dtype),
+        )
+            update_decision_state!(
+                sim_state,
+                ParameterKey(ActivePowerOffsetParameter, dtype),
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                em_model_store,
+            )
+        end
+        if haskey(
+            sim_state.decision_states.parameters,
+            ParameterKey(ReactivePowerOffsetParameter, dtype),
+        )
+            update_decision_state!(
+                sim_state,
+                ParameterKey(ReactivePowerOffsetParameter, dtype),
+                device_names,
+                event,
+                event_model,
+                sim_time,
+                em_model_store,
+            )
+        end
         update_decision_state!(
             sim_state,
             ParameterKey(AvailableStatusParameter, dtype),

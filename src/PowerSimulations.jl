@@ -332,6 +332,8 @@ export FixValueParameter
 # Event Parameters
 export AvailableStatusParameter
 export AvailableStatusChangeCountdownParameter
+export ActivePowerOffsetParameter
+export ReactivePowerOffsetParameter
 
 # Expressions
 export SystemBalanceExpressions
