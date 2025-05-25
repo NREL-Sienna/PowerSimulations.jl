@@ -6,7 +6,7 @@ function get_min_max_limits(
     ::Type{<:PostContingencyRateLimitConstraintB},
     ::Type{<:AbstractBranchFormulation},
     ::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
-) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+)
     if PSY.get_rating_b(branch) === nothing
         @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
             \n Consider to include post-contingency limits using set_rating_b!()."
@@ -19,8 +19,8 @@ function _get_device_post_contingency_dynamic_branch_rating_time_series(
     container::OptimizationContainer,
     param_key::IS.Optimization.OptimizationContainerKey,
     branch_name::String,
-    ::NetworkModel{SecurityConstrainedPTDFPowerModel},
-)
+    ::NetworkModel{T},
+) where {T <: AbstractSecurityConstrainedPTDFModel}
     try
         param_container = get_parameter(container, param_key)
         mult = get_multiplier_array(param_container)
@@ -42,10 +42,11 @@ function add_constraints!(
     branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
     branches_outages::Vector{T},
     device_model::DeviceModel{T, U},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
+    network_model::NetworkModel{V},
 ) where {
     T <: PSY.ACBranch,
     U <: AbstractBranchFormulation,
+    V <: AbstractSecurityConstrainedPTDFModel,
 }
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in branches]
@@ -73,7 +74,11 @@ function add_constraints!(
 
     expressions = get_expression(
         container,
-        ExpressionKey(PTDFPostContingencyBranchFlow, T, IS.Optimization.CONTAINER_KEY_EMPTY_META),
+        ExpressionKey(
+            PTDFPostContingencyBranchFlow,
+            T,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
     )
 
     param_keys = get_parameter_keys(container)

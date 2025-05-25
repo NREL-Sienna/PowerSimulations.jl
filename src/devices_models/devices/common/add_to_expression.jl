@@ -683,7 +683,11 @@ function add_to_expression!(
 
     expressions = get_expression(
         container,
-        ExpressionKey(PTDFPostContingencyBranchFlow, V, IS.Optimization.CONTAINER_KEY_EMPTY_META),
+        ExpressionKey(
+            PTDFPostContingencyBranchFlow,
+            V,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
     )
     lodf = get_LODF_matrix(network_model)
 

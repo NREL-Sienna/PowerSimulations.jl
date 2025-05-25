@@ -337,13 +337,13 @@ end
 
 function _get_all_scuc_valid_outages(
     sys::PSY.System,
-    ::NetworkModel{SecurityConstrainedPTDFPowerModel},
-)
+    ::NetworkModel{T},
+) where {T <: AbstractSecurityConstrainedPTDFModel}
     return PSY.get_supplemental_attributes(
         sa ->
             typeof(sa) in Base.uniontypes(OutagesSCUC) &&
                 all(
-                    c -> c <: PSY.ACBranch,
+                    c -> c <: PSY.ACTransmission,
                     typeof.(PSY.get_associated_components(sys, sa)),
                 ),
         PSY.Outage,
@@ -356,8 +356,8 @@ function construct_device!(
     sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{V, StaticBranch},
-    network_model::NetworkModel{SecurityConstrainedPTDFPowerModel},
-) where {V <: PSY.ACBranch}
+    network_model::NetworkModel{T},
+) where {V <: PSY.ACBranch, T <: AbstractSecurityConstrainedPTDFModel}
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
@@ -377,7 +377,7 @@ function construct_device!(
     branches = get_available_components(
         b ->
             PSY.get_name(b) ∉ removed_branches &&
-                typeof(b) ∉ Base.uniontypes(TwoTerminalHVDCTypes),
+                typeof(b) <: PSY.ACTransmission,
         PSY.ACBranch,
         sys,
     )
