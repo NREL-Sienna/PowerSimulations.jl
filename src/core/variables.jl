@@ -1,9 +1,18 @@
+abstract type AbstractContingencyVariableType <: VariableType end
+
 """
 Struct to dispatch the creation of Active Power Variables
 
 Docs abbreviation: ``p``
 """
 struct ActivePowerVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of Post-Contingency Active Power Change Variables.
+
+Docs abbreviation: ``\\Delta p_{g,c}``
+"""
+struct PostContingencyActivePowerChangeVariable <: AbstractContingencyVariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
@@ -326,6 +335,7 @@ should_write_resulting_value(::Type{PieceWiseLinearBlockDecrementalOffer}) = fal
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
+convert_result_to_natural_units(::Type{PostContingencyActivePowerChangeVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerInVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerOutVariable}) = true
