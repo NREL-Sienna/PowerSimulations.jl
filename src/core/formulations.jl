@@ -9,17 +9,15 @@ struct MyCustomDeviceFormulation <: PSI.AbstractDeviceFormulation
 """
 abstract type AbstractDeviceFormulation end
 
-abstract type AbstractGeneratorSecurityConstrainedFormulation <: AbstractDeviceFormulation end
-
 ########################### Thermal Generation Formulations ################################
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
+
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
-
-abstract type AbstractThermalSecurityConstrained <: AbstractGeneratorSecurityConstrainedFormulation end
+abstract type AbstractSecurityConstrainedUnitCommitment <: AbstractThermalUnitCommitment end
 
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
@@ -33,7 +31,8 @@ struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
 """
 Formulation type to enable Security-Constrained (G-1) standard unit commitment with intertemporal constraints and simplified startup profiles
 """
-struct ThermalSecurityConstrainedStandardUnitCommitment <: AbstractThermalSecurityConstrained end
+struct ThermalSecurityConstrainedStandardUnitCommitment <:
+       AbstractSecurityConstrainedUnitCommitment end
 
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
@@ -91,7 +90,8 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 ########################### Renewable Generation Formulations ##############################
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
-abstract type AbstractRenewableSecurityConstrained <: AbstractGeneratorSecurityConstrainedFormulation end
+abstract type AbstractSecurityConstrainedRenewableDispatchFormulation <:
+              AbstractRenewableDispatchFormulation end
 
 """
 Formulation type to add injection variables constrained by a maximum injection time series for `RenewableGen`
@@ -101,7 +101,8 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 """
 Formulation type to enable Renewable Security-Constrained (G-1) and add injection variables constrained by a maximum injection time series for `RenewableGen`
 """
-struct RenewableSecurityConstrainedFullDispatch <: AbstractRenewableSecurityConstrained end
+struct RenewableSecurityConstrainedFullDispatch <:
+       AbstractSecurityConstrainedRenewableDispatchFormulation end
 
 """
 Formulation type to add real and reactive injection variables with constant power factor with maximum real power injections constrained by a time series for `RenewableGen`
@@ -177,15 +178,15 @@ struct LossLessLine <: AbstractBranchFormulation end
 
 abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for branches outages.
 """
 abstract type AbstractSecurityConstrainedPTDFModel <: AbstractPTDFModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
 """
 struct PTDFPowerModel <: AbstractPTDFModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages. If exists, the rating b is considered as the branch power limit for post-contingency flows, otherwise the standard reting is considered.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for branches outages. If exists, the rating b is considered as the branch power limit for post-contingency flows, otherwise the standard rating is considered.
 """
 struct SecurityConstrainedPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 """
@@ -201,7 +202,7 @@ Linear active power approximation using the power transfer distribution factor [
 """
 struct AreaPTDFPowerModel <: AbstractPTDFModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for Line outages. Balancing areas as well as synchrounous regions.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for branches outages. Balancing areas as well as synchrounous regions.
 """
 struct SecurityConstrainedAreaPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 
