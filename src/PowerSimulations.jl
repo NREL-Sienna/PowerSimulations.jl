@@ -239,6 +239,7 @@ export InterfaceFlowSlackDown
 export PieceWiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
+export PostContingencyActivePowerChangeVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -307,6 +308,8 @@ export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
+export PostContingencyActivePowerVariableLimitsConstraint
+export PostContingencyActivePowerBalance
 
 # Parameters
 # Time Series Parameters
@@ -341,6 +344,7 @@ export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export PTDFPostContingencyBranchFlow
+export PostContingencyActivePowerGeneration
 
 #################################################################################
 # Imports
