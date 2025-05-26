@@ -49,7 +49,6 @@ function add_variable!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     X <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {D <: PSY.Component}
-    @info("++++ CODE IS BUILDING AbstractContingencyVariableType VARIABLES")
     @assert !isempty(devices)
     time_steps = get_time_steps(container)
     settings = get_settings(container)
@@ -63,8 +62,7 @@ function add_variable!(
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
-    @show variable
-    @show typeof(variable)
+
     for t in time_steps, d in devices, o in generator_outages
         name = PSY.get_name(d)
         name_outage = PSY.get_name(o)
@@ -107,28 +105,6 @@ function construct_device!(
 
     add_variables!(container, TimeDurationOn, devices, D())
     add_variables!(container, TimeDurationOff, devices, D())
-
-    valid_outages = _get_all_scuc_valid_outages(sys, model)
-    @show valid_outages
-    if isempty(valid_outages)
-        throw(
-            ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen) 
-                to add the variables/expressions/constraints for the requested device formulation: $D.",
-            ))
-    end
-
-    #TODO Handle also G-2 cases
-    generator_outages =
-        _get_all_single_outage_by_type(sys, valid_outages, devices, T)
-    @show generator_outages
-    add_variables!(
-        container,
-        PostContingencyActivePowerChangeVariable,
-        devices,
-        generator_outages,
-        D(),
-    )
 
     initial_conditions!(container, devices, D())
 
@@ -190,10 +166,44 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{T, <:AbstractSecurityConstrainedUnitCommitment},
+    model::DeviceModel{T, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ThermalGen}
+) where {T <: PSY.ThermalGen, D <: AbstractSecurityConstrainedUnitCommitment}
     devices = get_available_components(model, sys)
+
+    valid_outages = _get_all_scuc_valid_outages(sys, model)
+    if isempty(valid_outages)
+        throw(
+            ArgumentError(
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen) 
+                to add the variables/expressions/constraints for the requested device formulation: $D.",
+            ))
+    end
+
+    #TODO Handle also G-2 cases
+    generator_outages =
+        _get_all_single_outage_by_type(sys, valid_outages, devices, T)
+
+    if !isempty(generator_outages)
+        add_variables!(
+            container,
+            PostContingencyActivePowerChangeVariable,
+            devices,
+            generator_outages,
+            D(),
+        )
+        add_to_expression!(
+            container,
+            PostContingencyActivePowerGeneration,
+            ActivePowerVariable,
+            PostContingencyActivePowerChangeVariable,
+            devices,
+            generator_outages,
+            model,
+            network_model,
+        )
+    end
+
     add_constraints!(
         container,
         ActivePowerVariableLimitsConstraint,

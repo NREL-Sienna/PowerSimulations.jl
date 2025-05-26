@@ -653,7 +653,77 @@ function add_to_expression!(
 end
 
 """
-Default implementation to add branch variables to SystemBalanceExpressions
+Default implementation to add generators Expressions for Post-Contingency Generation
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::Type{D},
+    generators::IS.FlattenIteratorWrapper{V},
+    generator_outages::Vector{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: PostContingencyActivePowerGeneration,
+    U <: ActivePowerVariable,
+    D <: PostContingencyActivePowerChangeVariable,
+    V <: PSY.Generator,
+    W <: AbstractSecurityConstrainedUnitCommitment,
+    X <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+
+    if !isempty(generator_outages)
+        container.expressions[ExpressionKey(PostContingencyActivePowerGeneration, V)] =
+            _make_container_array(
+                get_name.(generator_outages),
+                get_name.(generators),
+                time_steps,
+            )
+    end
+
+    expressions = get_expression(
+        container,
+        ExpressionKey(
+            PostContingencyActivePowerGeneration,
+            V,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+
+    #variable_generator_outages = get_variable(container, U(), V)
+    variable_generator = get_variable(container, U(), V)
+    variable_generator_change = get_variable(container, D(), V)
+
+    for generator in generators
+        variable_generator = get_variable(container, U(), typeof(generator))
+        generator_name = get_name(generator)
+
+        for generator_outage in generator_outages
+            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
+            if generator_outage == generator
+                continue
+            end
+
+            generator_outage_name = get_name(generator_outage)
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expressions[generator_outage_name, generator_name, t],
+                    variable_generator[generator_name, t],
+                    1.0,
+                    variable_generator_change[generator_outage_name, generator_name, t],
+                    1.0,
+                )
+            end
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add branch Expressions for Post-Contingency Flows
 """
 function add_to_expression!(
     container::OptimizationContainer,
@@ -668,7 +738,7 @@ function add_to_expression!(
     U <: FlowActivePowerVariable,
     V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
-    X <: SecurityConstrainedPTDFPowerModel,
+    X <: AbstractSecurityConstrainedPTDFModel,
 }
     time_steps = get_time_steps(container)
 
