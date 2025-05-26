@@ -381,6 +381,20 @@ P^\\text{min} \\le p_t \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\
 ```
 """
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
+"""
+Struct to create the constraint to limit post-contingency active power expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct PostContingencyActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
 """
 Struct to create the constraint to limit reactive power expressions.
 For more information check [Device Formulations](@ref formulation_intro).

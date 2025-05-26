@@ -202,6 +202,14 @@ function construct_device!(
             model,
             network_model,
         )
+        add_constraints!(
+            container,
+            PostContingencyActivePowerVariableLimitsConstraint,
+            devices,
+            generator_outages,
+            model,
+            network_model,
+        )
     end
 
     add_constraints!(
@@ -240,5 +248,88 @@ function construct_device!(
     objective_function!(container, devices, model, get_network_formulation(network_model))
 
     add_constraint_dual!(container, sys, model)
+    return
+end
+
+"""
+Add post-contingency rate limit constraints for Generators for G-1 formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    cons_type::Type{PostContingencyActivePowerVariableLimitsConstraint},
+    devices::IS.FlattenIteratorWrapper{S},
+    generator_outages::Vector{T},
+    device_model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {
+    S <: PSY.Generator,
+    T <: PSY.Generator,
+    U <: AbstractSecurityConstrainedUnitCommitment,
+    V <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in devices]
+    con_lb =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            get_name.(generator_outages),
+            device_names,
+            time_steps;
+            meta = "lb",
+        )
+
+    con_ub =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            get_name.(generator_outages),
+            device_names,
+            time_steps;
+            meta = "ub",
+        )
+
+    expressions = get_expression(
+        container,
+        ExpressionKey(
+            PostContingencyActivePowerGeneration,
+            T,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+
+    for device in devices
+        device_name = get_name(device)
+
+        for generator_outage in generator_outages
+            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
+            if device == generator_outage
+                continue
+            end
+
+            gen_outage_name = get_name(generator_outage)
+
+            limits = get_min_max_limits(
+                device,
+                ActivePowerVariableLimitsConstraint,
+                U,
+                #network_model,
+            )
+
+            for t in time_steps
+                con_ub[gen_outage_name, device_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[gen_outage_name, device_name, t] <=
+                        limits.max)
+                con_lb[gen_outage_name, device_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[gen_outage_name, device_name, t] >=
+                        limits.min)
+            end
+        end
+    end
+
     return
 end
