@@ -210,6 +210,21 @@ function construct_device!(
             model,
             network_model,
         )
+          
+        add_to_expression!(
+            container,
+            PostContingencyActivePowerBalance,
+            ActivePowerVariable,
+            PostContingencyActivePowerChangeVariable,
+            devices,
+            generator_outages,
+            model,
+            network_model,
+        )
+
+        #ADD EXPRESSION FOR EACH CONTINGENCY: CALCULATE FLOW FOR EACH Branch
+        
+        #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
     end
 
     add_constraints!(
@@ -315,7 +330,6 @@ function add_constraints!(
                 device,
                 ActivePowerVariableLimitsConstraint,
                 U,
-                #network_model,
             )
 
             for t in time_steps
@@ -331,5 +345,78 @@ function add_constraints!(
         end
     end
 
+    return
+end
+
+
+
+"""
+Default implementation to add variables to PostContingencySystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::Type{Y},
+    devices::IS.FlattenIteratorWrapper{V},
+    devices_outages::Vector{X},
+    device_model::DeviceModel{X, W},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyActivePowerBalance,
+    U <: VariableType,
+    Y <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
+    X <: PSY.Generator,
+    W <: AbstractSecurityConstrainedUnitCommitment,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+
+    if !isempty(devices_outages)
+        container.expressions[ExpressionKey(T, X)] =
+            _make_container_array(
+                get_name.(devices_outages),
+                time_steps,
+            )
+    end
+    
+    expression = get_expression(
+        container,
+        ExpressionKey(
+            T,
+            V,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+    variable = get_variable(container, U(), V)
+    variable_outages = get_variable(container, Y(), X)
+
+    for d in devices
+        name = PSY.get_name(d)
+        for d_outage in devices_outages
+            
+            if d == d_outage
+                for t in get_time_steps(container)
+                    _add_to_jump_expression!(
+                        expression[name, t],
+                        variable[ name, t],
+                        -1.0,
+                    )
+                end
+                continue
+            end
+
+            name_outage = PSY.get_name(d_outage)
+
+            for t in get_time_steps(container)
+                _add_to_jump_expression!(
+                    expression[name_outage, t],
+                    variable_outages[name_outage, name, t],
+                    1.0,
+                )
+            end
+        end
+    end
     return
 end

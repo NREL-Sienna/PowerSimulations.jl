@@ -4,7 +4,10 @@ abstract type RangeConstraintUBExpressions <: ExpressionType end
 abstract type CostExpressions <: ExpressionType end
 abstract type PostContingencyExpressions <: ExpressionType end
 
+abstract type PostContingencySystemBalanceExpressions <: SystemBalanceExpressions end
+
 struct ActivePowerBalance <: SystemBalanceExpressions end
+struct PostContingencyActivePowerBalance <: PostContingencySystemBalanceExpressions end
 struct ReactivePowerBalance <: SystemBalanceExpressions end
 struct EmergencyUp <: ExpressionType end
 struct EmergencyDown <: ExpressionType end
