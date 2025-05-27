@@ -47,6 +47,20 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint to balance active power.
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
+
+The specified constraint is generally formulated as:
+
+```math
+\\sum_{g \\in \\mathcal{G}_c} p_{g,t} &= \\sum_{g \\in \\mathcal{G}} \\Delta p_{g, c, t} &\\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1, \\dots, T\\}
+```
+"""
+struct PostContingengyGenerationBalanceConstraint <: ConstraintType end
+
+
 """
 Struct to create the duration constraint for commitment formulations, i.e. min-up and min-down.
 

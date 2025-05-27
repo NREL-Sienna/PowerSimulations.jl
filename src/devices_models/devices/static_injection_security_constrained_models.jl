@@ -221,7 +221,14 @@ function construct_device!(
             model,
             network_model,
         )
-
+        add_constraints!(
+            container,
+            PostContingengyGenerationBalanceConstraint,
+            devices,
+            generator_outages,
+            model,
+            network_model,
+        )
         #ADD EXPRESSION FOR EACH CONTINGENCY: CALCULATE FLOW FOR EACH Branch
         
         #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
@@ -418,5 +425,45 @@ function add_to_expression!(
             end
         end
     end
+    return
+end
+
+
+"""
+Add post-contingency Generation Balance Constraints for Generators for G-1 formulation
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    cons_type::Type{R},
+    devices::IS.FlattenIteratorWrapper{S},
+    generator_outages::Vector{T},
+    device_model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {
+    R <: PostContingengyGenerationBalanceConstraint,
+    S <: PSY.Generator,
+    T <: PSY.Generator,
+    U <: AbstractSecurityConstrainedUnitCommitment,
+    V <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in devices]
+    device_outages_names = [PSY.get_name(d) for d in generator_outages]
+
+    expressions = get_expression(
+        container,
+        ExpressionKey(
+            PostContingencyActivePowerBalance,
+            T,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+    
+    constraint = add_constraints_container!(container, R(), T, device_outages_names, time_steps)
+    for t in time_steps, d_outage in device_outages_names
+        constraint[d_outage, t] =
+            JuMP.@constraint(get_jump_model(container), expressions[d_outage, t] == 0)
+    end
+
     return
 end
