@@ -71,6 +71,13 @@ function add_variable!(
             base_name = "$(T)_$(D)_{$(name), $(t)}",
             binary = binary
         )
+        if name == name_outage
+            JuMP.set_upper_bound(variable[name_outage, name, t], 0.0)
+            JuMP.set_lower_bound(variable[name_outage, name, t], 0.0)
+            JuMP.set_start_value(variable[name_outage, name, t], 0.0)
+            continue
+        end
+
         ub = get_variable_upper_bound(variable_type, d, formulation)
         ub !== nothing && JuMP.set_upper_bound(variable[name_outage, name, t], ub)
 
