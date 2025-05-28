@@ -1524,12 +1524,13 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
     network_model::NetworkModel{AreaBalancePowerModel},
 )
+    devices = get_available_components(model, sys)
     add_feedforward_constraints!(container, model, devices)
     return
 end
