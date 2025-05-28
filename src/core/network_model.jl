@@ -116,6 +116,13 @@ function instantiate_network_model(
 end
 
 function instantiate_network_model(
+    model::NetworkModel{AreaBalancePowerModel},
+    sys::PSY.System,
+)
+    return
+end
+
+function instantiate_network_model(
     model::NetworkModel{CopperPlatePowerModel},
     sys::PSY.System,
 )
