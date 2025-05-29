@@ -10,6 +10,9 @@ test_path = mktempdir()
         mock_construct_device!(model, device_model)
         moi_tests(model, 0, 0, 0, 0, 0, false)
         psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_il)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 0, 0, 0, 0, 0, false)
     end
 end
 
@@ -23,6 +26,9 @@ end
         mock_construct_device!(model, device_model)
         moi_tests(model, 24, 0, 24, 0, 0, false)
         psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_il)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 24, 0, 48, 0, 0, false)
     end
 end
 
@@ -36,6 +42,9 @@ end
         mock_construct_device!(model, device_model)
         moi_tests(model, 48, 0, 24, 0, 24, false)
         psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_il)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 48, 0, 72, 0, 24, false)
     end
 end
 
@@ -109,6 +118,9 @@ end
         mock_construct_device!(model, device_model)
         moi_tests(model, 48, 0, 48, 0, 0, true)
         psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_il)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 48, 0, 72, 0, 0, true)
     end
 end
 
@@ -122,5 +134,8 @@ end
         mock_construct_device!(model, device_model)
         moi_tests(model, 72, 0, 48, 0, 24, true)
         psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_il)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 72, 0, 96, 0, 24, true)
     end
 end
