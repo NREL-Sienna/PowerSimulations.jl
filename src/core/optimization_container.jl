@@ -1197,7 +1197,8 @@ function _add_param_container!(
     attribute::TimeSeriesAttributes{V},
     param_axs,
     multiplier_axs,
-    time_steps;
+    time_steps,
+    additional_axs;
     sparse = false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
@@ -1207,10 +1208,12 @@ function _add_param_container!(
     end
 
     if sparse
-        param_array = sparse_container_spec(param_type, param_axs, time_steps)
+        param_array =
+            sparse_container_spec(param_type, param_axs, time_steps, additional_axs...)
         multiplier_array = sparse_container_spec(Float64, multiplier_axs, time_steps)
     else
-        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+        param_array =
+            DenseAxisArray{param_type}(undef, param_axs, time_steps, additional_axs...)
         multiplier_array =
             fill!(DenseAxisArray{Float64}(undef, multiplier_axs, time_steps), NaN)
     end
@@ -1225,12 +1228,7 @@ function _add_param_container!(
     attributes::CostFunctionAttributes{R},
     axs...;
     sparse = false,
-    # TODO see TODO in add_parameters.jl about this Union
-) where {
-    R,
-    T <: Union{ObjectiveFunctionParameter, AbstractPiecewiseLinearBreakpointParameter},
-    U <: PSY.Component,
-}
+) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
     if sparse
         param_array = sparse_container_spec(R, axs...)
         multiplier_array = sparse_container_spec(Float64, axs...)
@@ -1251,7 +1249,8 @@ function add_param_container!(
     name::String,
     param_axs,
     multiplier_axs,
-    time_steps;
+    time_steps,
+    additional_axs;
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
@@ -1266,7 +1265,8 @@ function add_param_container!(
         attributes,
         param_axs,
         multiplier_axs,
-        time_steps;
+        time_steps,
+        additional_axs;
         sparse = sparse,
     )
 end
@@ -1282,11 +1282,7 @@ function add_param_container!(
     axs...;
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
-    # TODO see TODO in add_parameters.jl about this Union
-) where {
-    T <: Union{ObjectiveFunctionParameter, AbstractPiecewiseLinearBreakpointParameter},
-    U <: PSY.Component,
-}
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     param_key = ParameterKey(T, U, meta)
     attributes =
         CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)

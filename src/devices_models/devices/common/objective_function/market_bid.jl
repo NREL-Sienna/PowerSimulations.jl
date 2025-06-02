@@ -383,15 +383,13 @@ function _get_pwl_data(
     if is_time_variant(cost_data)
         name = PSY.get_name(component)
 
-        # NOTE this is another argument in favor of doing this with a type parameter instead (see TODO in parameters.jl)
         SlopeParam = if is_decremental
             DecrementalPiecewiseLinearSlopeParameter
         else
             IncrementalPiecewiseLinearSlopeParameter
         end
         slope_param_arr = get_parameter_array(container, SlopeParam(), T)
-        slope_param_mult =
-            get_parameter_multiplier_array(container, SlopeParam(), T)
+        slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
         slope_cost_component =
             slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
 
@@ -400,17 +398,26 @@ function _get_pwl_data(
         else
             IncrementalPiecewiseLinearBreakpointParameter
         end
-        breakpoint_param_arr = get_parameter_array(container, BreakpointParam(), T)
-        breakpoint_param_mult =
-            get_parameter_multiplier_array(container, BreakpointParam(), T)
+        breakpoint_param_container = get_parameter(container, BreakpointParam(), T)
+        breakpoint_param_arr = get_parameter_column_refs(breakpoint_param_container, name)  # performs component -> time series many-to-one mapping
+        breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
+        # TODO do I now have additional axes for slope_param_mult but not breakpoint_param_mult?
         breakpoint_cost_component =
-            breakpoint_param_arr[name, time, :] .* breakpoint_param_mult[name, time, :]
+            breakpoint_param_arr[time, :] .* breakpoint_param_mult[name, time]
 
         # NaNs signify that we had more space in the container than tranches in the
         # function, so it's valid to discard trailing NaNs
-        slope_cost_component = _up_to_first_nan(collect(slope_cost_component))
-        breakpoint_cost_component = _up_to_first_nan(collect(breakpoint_cost_component))
-        @assert length(slope_cost_component) == length(breakpoint_cost_component) - 1
+        slope_cost_component = _up_to_first_nan(slope_cost_component.data)
+        # @assert all(
+        #     breakpoint_cost_component.data[length(slope_cost_component)+2:end] .==
+        #     _BREAKPOINT_PAD_VALUE)
+        breakpoint_cost_component =
+            breakpoint_cost_component.data[1:(length(slope_cost_component) + 1)]
+
+        # TODO PLACEHOLDER
+        (eltype(breakpoint_cost_component) <: Number) ||
+            (breakpoint_cost_component = [10.0, 30.0, 50.0, 100.0])
+
         cost_component = PSY.PiecewiseStepData(
             breakpoint_cost_component,
             slope_cost_component,

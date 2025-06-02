@@ -37,23 +37,6 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
-    devices::U,
-    model::DeviceModel{D, W},
-) where {
-    T <: FuelCostParameter,
-    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
-    W <: AbstractDeviceFormulation,
-} where {D <: PSY.Component}
-    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
-        return
-    end
-    _add_parameters!(container, T(), devices, model)
-    return
-end
-
-function add_parameters!(
-    container::OptimizationContainer,
-    ::Type{T},
     ff::LowerBoundFeedforward,
     model::ServiceModel{S, W},
     devices::V,
@@ -194,6 +177,7 @@ function _add_parameters!(
     return
 end
 
+# NOTE direct equivalent of _add_parameters! on ObjectiveFunctionParameter
 function _add_time_series_parameters!(
     container::OptimizationContainer,
     param::T,
@@ -205,20 +189,42 @@ function _add_time_series_parameters!(
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     time_steps = get_time_steps(container)
-    ts_name = get_time_series_names(model)[T]
+
+    ts_names = String[]
+    device_names = String[]
+    active_devices = D[]
+    for device::D in devices
+        ts_name = _get_time_series_name(T(), device, model)
+        if PSY.has_time_series(device, ts_type, ts_name)
+            push!(ts_names, ts_name)
+            push!(device_names, PSY.get_name(device))
+            push!(active_devices, device)
+        else
+            @debug "Skipped time series for $D, $(PSY.get_name(device))"
+        end
+    end
+    if isempty(active_devices)
+        return
+    end
+    # NOTE this is always the case for "normal" time series, but it is currently not enforced in PSY for MBC time series.
+    # TODO decide whether this is an acceptable restriction or whether we need to support multiple time series names
+    unique_ts_names = unique(ts_names)
+    if length(unique_ts_names) > 1
+        throw(
+            ArgumentError(
+                "All time series names must be equal for parameter $T within a given device type. Got $unique_ts_names for device type $D",
+            ),
+        )
+    end
+    ts_name = only(unique_ts_names)
+
     time_series_mult_id = _create_time_series_multiplier_index(model, T)
 
     @debug "adding" T D ts_name ts_type time_series_mult_id _group =
         LOG_GROUP_OPTIMIZATION_CONTAINER
 
-    device_names = String[]
     initial_values = Dict{String, AbstractArray}()
-    for device in devices
-        if !PSY.has_time_series(device, ts_type, ts_name)
-            @debug "skipped time series for $D, $(PSY.get_name(device))"
-            continue
-        end
-        push!(device_names, PSY.get_name(device))
+    for device in active_devices
         ts_uuid = string(IS.get_time_series_uuid(ts_type, device, ts_name))
         if !(ts_uuid in keys(initial_values))
             initial_values[ts_uuid] =
@@ -226,6 +232,9 @@ function _add_time_series_parameters!(
         end
     end
 
+    jump_model = get_jump_model(container)
+
+    additional_axes = _additional_axes(container, param, active_devices, model)
     param_container = add_param_container!(
         container,
         param,
@@ -235,29 +244,27 @@ function _add_time_series_parameters!(
         collect(keys(initial_values)),
         device_names,
         time_steps,
+        additional_axes,
     )
     set_time_series_multiplier_id!(get_attributes(param_container), time_series_mult_id)
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
-    jump_model = get_jump_model(container)
 
-    for (ts_uuid, ts_values) in initial_values
+    for (ts_uuid, raw_ts_vals) in initial_values
+        ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
+        @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
         for step in time_steps
-            set_parameter!(param_container, jump_model, ts_values[step], ts_uuid, step)
+            set_parameter!(param_container, jump_model, ts_vals[step], ts_uuid, step)
         end
     end
 
-    for device in devices
-        if !PSY.has_time_series(device, ts_type, ts_name)
-            continue
-        end
-        name = PSY.get_name(device)
+    for (ts_name, device_name, device) in zip(ts_names, device_names, active_devices)
         multiplier = get_multiplier_value(T(), device, W())
         for step in time_steps
-            set_multiplier!(param_container, multiplier, name, step)
+            set_multiplier!(param_container, multiplier, device_name, step)
         end
         add_component_name!(
             get_attributes(param_container),
-            name,
+            device_name,
             string(IS.get_time_series_uuid(ts_type, device, ts_name)),
         )
     end
@@ -385,17 +392,20 @@ function _unwrap_for_param(
     return padded_y_coords
 end
 
+# JuMP VariableRef cannot be fixed to NaN, so we need to pad with something else. We'll use
+# the slope parameter NaNs to undo the padding, so this doesn't have to be a value we'd
+# never see in data
+_BREAKPOINT_PAD_VALUE = -0.0
 function _unwrap_for_param(
     ::AbstractPiecewiseLinearBreakpointParameter,
     ts_elem::IS.PiecewiseStepData,
     expected_axs,
 )
-    # TODO deduplicate? maybe not worth it
     max_len = length(only(expected_axs))
     x_coords = IS.get_x_coords(ts_elem)
-    # The container is sized based on the global maximum number of tranches, so we may need to right-pad
     (length(x_coords) > max_len) && error("Placeholder max tranches is too small!")  # TODO placeholder
-    padded_x_coords = vcat(x_coords, fill(NaN, max_len - length(x_coords)))
+    padded_x_coords =
+        vcat(x_coords, fill(_BREAKPOINT_PAD_VALUE, max_len - length(x_coords)))
     return padded_x_coords
 end
 
@@ -403,16 +413,14 @@ end
 _size_wrapper(elem) = size(elem)
 _size_wrapper(::Tuple) = ()
 
+# NOTE direct equivalent of _add_time_series_parameters! for TimeSeriesParameter
 function _add_parameters!(
     container::OptimizationContainer,
     param::T,
     devices::U,
     model::DeviceModel{D, W},
 ) where {
-    # TODO the Union here is because I want breakpoints to work like slopes but they're
-    # elsewhere in the type hierarchy. I don't think this is the best way to do this, I need
-    # to understand why _add_time_series_parameters! is so different from this method
-    T <: Union{ObjectiveFunctionParameter, AbstractPiecewiseLinearBreakpointParameter},
+    T <: ObjectiveFunctionParameter,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
@@ -423,50 +431,48 @@ function _add_parameters!(
         )
     end
     time_steps = get_time_steps(container)
-    device_names =
-        [
-            PSY.get_name(x) for x in devices if
-            PSY.has_time_series(x, ts_type, _get_time_series_name(T(), x, model))
-        ]
-    if isempty(device_names)
+
+    ts_names = String[]
+    device_names = String[]
+    active_devices = D[]
+    for device in devices
+        ts_name = _get_time_series_name(T(), device, model)
+        if PSY.has_time_series(device, ts_type, ts_name)
+            push!(ts_names, ts_name)
+            push!(device_names, PSY.get_name(device))
+            push!(active_devices, device)
+        else
+            @debug "Skipped time series for $D, $(PSY.get_name(device))"
+        end
+    end
+    if isempty(active_devices)
         return
     end
     jump_model = get_jump_model(container)
 
     universal_axes = [device_names, time_steps]
-    additional_axes = _additional_axes(container, param, devices, model)
+    additional_axes = _additional_axes(container, param, active_devices, model)
     param_container = add_param_container!(
         container,
         param,
         D,
         _param_to_vars(T(), W()),
-        PSI.SOSStatusVariable.NO_VARIABLE,
+        SOSStatusVariable.NO_VARIABLE,
         false,
         _get_expected_time_series_eltype(T()),
         universal_axes..., additional_axes...,
     )
 
-    for device in devices
-        ts_name = _get_time_series_name(T(), device, model)
-        if !PSY.has_time_series(device, ts_type, ts_name)
-            continue
-        end
+    for (ts_name, device_name, device) in zip(ts_names, device_names, active_devices)
         raw_ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)
         ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
         @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
-        name = PSY.get_name(device)
         for step in time_steps
-            PSI.set_parameter!(
-                param_container,
-                jump_model,
-                ts_vals[step],
-                name,
-                step,
-            )
-            PSI.set_multiplier!(
+            set_parameter!(param_container, jump_model, ts_vals[step], device_name, step)
+            set_multiplier!(
                 param_container,
                 get_multiplier_value(T(), device, W()),
-                name,
+                device_name,
                 step,
             )
         end

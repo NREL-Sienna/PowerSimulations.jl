@@ -207,20 +207,20 @@ end
 function _set_parameter!(
     array::AbstractArray{JuMP.VariableRef},
     model::JuMP.Model,
-    value::Float64,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-)
-    assign_maybe_broadcast!(array, add_jump_parameter(model, value), ixs)
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
 
 function _set_parameter!(
     array::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
     model::JuMP.Model,
-    value::Float64,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-)
-    assign_maybe_broadcast!(array, add_jump_parameter(model, value), ixs)
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
 
@@ -313,11 +313,6 @@ struct StartupCostParameter <: ObjectiveFunctionParameter end
 "Parameter to define shutdown cost time series"
 struct ShutdownCostParameter <: ObjectiveFunctionParameter end
 
-# TODO consider whether it might be better to have one CostAtMin struct parameterized by a
-# Bool or Symbol or sentinel type for incremental vs. decremental (and same for slopes,
-# breakpoints) rather than subtypes. Leaning towards this because often I have to
-# Union{IncrementalSlope, IncrementalBreakpoint} and that could be done nicely with a type
-# parameter
 "Parameters to define the cost at the minimum available power"
 abstract type AbstractCostAtMinParameter <: ObjectiveFunctionParameter end
 
