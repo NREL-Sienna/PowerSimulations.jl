@@ -1,3 +1,18 @@
+# TODO we need to be able to use _unwrap_for_param (see add_parameters.jl) within certain
+# _update_parameter_values! methods, but we don't have access to the parameter type.
+# Luckily, we currently have just enough information to be able to dispatch properly anyway,
+# but this is pretty hacky. Ultimately we should probably pass the parameter type down to
+# this layer.
+_unwrap_for_param(_, ts_elem, expected_axs) = ts_elem
+_unwrap_for_param(::Type{Float64}, ts_elem::IS.PiecewiseStepData, expected_axs) =
+    _unwrap_for_param(IncrementalPiecewiseLinearSlopeParameter(), ts_elem, expected_axs)  # TODO decremental
+_unwrap_for_param(::Type{JuMP.VariableRef}, ts_elem::IS.PiecewiseStepData, expected_axs) =
+    _unwrap_for_param(
+        IncrementalPiecewiseLinearBreakpointParameter(),
+        ts_elem,
+        expected_axs,
+    )
+
 function _update_parameter_values!(
     ::AbstractArray{T},
     ::NoAttributes,
@@ -5,18 +20,23 @@ function _update_parameter_values!(
 ) where {T <: Union{Float64, JuMP.VariableRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::String, t::Int)
-    fix_parameter_value(param[name, t], value)
+function _set_param_value!(
+    param::Union{JuMPVariableMatrix, JuMPVariable3Tensor},
+    value::Union{T, AbstractVector{T}},
+    name::String,
+    t::Int,
+) where {T <: ValidDataParamEltypes}
+    fix_maybe_broadcast!(param, value, (name, t))
     return
 end
 
 function _set_param_value!(
     param::DenseAxisArray{T},
-    value::T,
+    value::Union{T, AbstractVector{T}},
     name::String,
     t::Int,
-) where {T}
-    param[name, t] = value
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(param, value, (name, t))
     return
 end
 
@@ -60,11 +80,13 @@ function _update_parameter_values!(
                 horizon,
             )
             for (t, value) in enumerate(ts_vector)
-                if !isfinite(value)
+                # first two axes of parameter_array are component, time; we care about any additional ones
+                unwrapped_value = _unwrap_for_param(T, value, axes(parameter_array)[3:end])
+                if !all(isfinite.(unwrapped_value))
                     error("The value for the time series $(ts_name) is not finite. \
                           Check that the data in the time series is valid.")
                 end
-                _set_param_value!(parameter_array, value, ts_uuid, t)
+                _set_param_value!(parameter_array, unwrapped_value, ts_uuid, t)
             end
             push!(ts_uuids, ts_uuid)
         end

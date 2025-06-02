@@ -180,18 +180,24 @@ end
 # If `ixs` does not index all dimensions of `dest`, add a `:` for the rest (like Python's
 # `...`) before broadcast-assigning. PERF this might not be the most performant thing in the
 # world, could consider using EllipsisNotation.jl
-function assign_expand(dest::AbstractArray, src, ixs::Tuple)
-    ixs_expanded = (ixs..., fill(:, ndims(dest) - length(ixs))...)
-    dest[ixs_expanded...] .= src
-end
+expand_ixs(ixs, dest) = (ixs..., fill(:, ndims(dest) - length(ixs))...)
 
+assign_expand(dest::AbstractArray, src, ixs::Tuple) =
+    (dest[expand_ixs(ixs, dest)...] .= src)
 # If `src` is an array, broadcast across it to perform the assignment
 assign_maybe_broadcast!(dest::AbstractArray, src::AbstractArray, ixs::Tuple) =
     assign_expand(dest, src, ixs)
-
 # If `src` is a tuple or scalar, do not broadcast across it (may still broadcast across `dest`)
 assign_maybe_broadcast!(dest::AbstractArray, src, ixs::Tuple) =
     assign_expand(dest, Ref(src), ixs)
+
+# Same as assign_expand, assign_maybe_broadcast! but for fixing JuMP VariableRefs
+fix_expand(dest::AbstractArray, src, ixs::Tuple) =
+    fix_parameter_value.(dest[expand_ixs(ixs, dest)...], src)
+fix_maybe_broadcast!(dest::AbstractArray, src::AbstractArray, ixs::Tuple) =
+    fix_expand(dest, src, ixs)
+fix_maybe_broadcast!(dest::AbstractArray, src, ixs::Tuple) =
+    fix_expand(dest, Ref(src), ixs)
 
 const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}
 function _set_parameter!(
