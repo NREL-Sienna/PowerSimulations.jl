@@ -282,14 +282,14 @@ function _get_piecewise_pointcurve_per_system_unit(
 end
 
 """
-Obtain the normalized PiecewiseStep cost data in system base per unit
-depending on the specified power units.
+Obtain the normalized GenericStepData in system base per unit depending on the specified
+power units.
 
-Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h),
-so they also require transformation.
+Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h), so they also
+require transformation.
 """
 function get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    cost_component::GenericStepData,
     unit_system::PSY.UnitSystem,
     system_base_power::Float64,
     device_base_power::Float64,
@@ -303,7 +303,7 @@ function get_piecewise_incrementalcurve_per_system_unit(
 end
 
 function _get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    cost_component::GenericStepData,
     ::Val{PSY.UnitSystem.SYSTEM_BASE},
     system_base_power::Float64,
     device_base_power::Float64,
@@ -312,7 +312,7 @@ function _get_piecewise_incrementalcurve_per_system_unit(
 end
 
 function _get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    cost_component::GenericStepData,
     ::Val{PSY.UnitSystem.DEVICE_BASE},
     system_base_power::Float64,
     device_base_power::Float64,
@@ -322,11 +322,11 @@ function _get_piecewise_incrementalcurve_per_system_unit(
     ratio = device_base_power / system_base_power
     x_coords_normalized = x_coords .* ratio
     y_coords_normalized = y_coords ./ ratio
-    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+    return GenericStepData(x_coords_normalized, y_coords_normalized)
 end
 
 function _get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    cost_component::GenericStepData,
     ::Val{PSY.UnitSystem.NATURAL_UNITS},
     system_base_power::Float64,
     device_base_power::Float64,
@@ -335,7 +335,7 @@ function _get_piecewise_incrementalcurve_per_system_unit(
     y_coords = PSY.get_y_coords(cost_component)
     x_coords_normalized = x_coords ./ system_base_power
     y_coords_normalized = y_coords .* system_base_power
-    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+    return GenericStepData(x_coords_normalized, y_coords_normalized)
 end
 
 is_time_variant(::IS.TimeSeriesKey) = true

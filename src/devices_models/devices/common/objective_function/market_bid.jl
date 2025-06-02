@@ -2,6 +2,25 @@
 ################ PWL Parameters  #################
 ##################################################
 
+# TODO perhaps it would be more elegant to parameterize IS.PiecewiseStepData on the types of its component vectors?
+# TODO if not, this should probably go in a different file
+"""
+Like [`InfrastructureSystems.PiecewiseStepData`](@extref) but `x_coords` are `VariableRef`.
+Functionality is somewhat limited (e.g., no serialization, currently no validation).
+"""
+@kwdef struct VariableRefStepData <: IS.FunctionData
+    x_coords::Vector{JuMP.AbstractJuMPScalar}
+    y_coords::Vector{Float64}
+end
+IS.get_x_coords(data::VariableRefStepData) = data.x_coords
+IS.get_y_coords(data::VariableRefStepData) = data.y_coords
+
+const GenericStepData = Union{IS.PiecewiseStepData, VariableRefStepData}
+GenericStepData(x_coords::Vector{Float64}, y_coords::Vector{Float64}) =
+    IS.PiecewiseStepData(x_coords, y_coords)
+GenericStepData(x_coords::Vector{<:JuMP.AbstractJuMPScalar}, y_coords::Vector{Float64}) =
+    VariableRefStepData(x_coords, y_coords)
+
 # Determines whether we care about various types of costs, given the formulation
 # NOTE: currently works based on what has already been added to the container;
 # alternatively we could dispatch on the formulation directly
@@ -164,7 +183,7 @@ function _add_pwl_variables!(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::PSY.PiecewiseStepData,
+    cost_data::GenericStepData,
     ::Type{U},
 ) where {
     T <: PSY.Component,
@@ -201,7 +220,7 @@ function _add_pwl_constraint!(
     container::OptimizationContainer,
     component::T,
     ::U,
-    break_points::Vector{Float64},
+    break_points::Vector{<:JuMPOrFloat},
     period::Int,
     ::Type{V},
     ::Type{W},
@@ -297,7 +316,7 @@ function _get_pwl_cost_expression(
     component::T,
     time_period::Int,
     cost_function::PSY.MarketBidCost,
-    ::PSY.PiecewiseStepData,
+    ::GenericStepData,  # TODO use this??
     ::U,
     ::V,
     ::W,
@@ -335,7 +354,7 @@ function _get_pwl_cost_expression(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_data::PSY.PiecewiseStepData,
+    cost_data::GenericStepData,
     multiplier::Float64,
 ) where {T <: PSY.ReserveDemandCurve}
     name = PSY.get_name(component)
@@ -414,11 +433,7 @@ function _get_pwl_data(
         breakpoint_cost_component =
             breakpoint_cost_component.data[1:(length(slope_cost_component) + 1)]
 
-        # TODO PLACEHOLDER
-        (eltype(breakpoint_cost_component) <: Number) ||
-            (breakpoint_cost_component = [10.0, 30.0, 50.0, 100.0])
-
-        cost_component = PSY.PiecewiseStepData(
+        cost_component = GenericStepData(
             breakpoint_cost_component,
             slope_cost_component,
         )
@@ -435,13 +450,14 @@ function _get_pwl_data(
         PSY.get_base_power(component),
     )
 
-    if is_decremental
-        PSY.is_concave(result) ||
-            error("Decremental MarketBidCost for component $(name) is non-concave")
-    else
-        PSY.is_convex(result) ||
-            error("Incremental MarketBidCost for component $(name) is non-convex")
-    end
+    # TODO move these checks to before we convert to VariableRef
+    # if is_decremental
+    #     PSY.is_concave(result) ||
+    #         error("Decremental MarketBidCost for component $(name) is non-concave")
+    # else
+    #     PSY.is_convex(result) ||
+    #         error("Incremental MarketBidCost for component $(name) is non-convex")
+    # end
 
     return result
 end

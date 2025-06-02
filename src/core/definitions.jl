@@ -10,6 +10,7 @@ const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP containers
+const JuMPOrFloat = Union{JuMP.AbstractJuMPScalar, Float64}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}

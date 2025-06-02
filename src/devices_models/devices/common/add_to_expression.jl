@@ -1692,7 +1692,7 @@ end
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{S},
-    cost_expression::Union{JuMP.AbstractJuMPScalar, Float64},
+    cost_expression::JuMPOrFloat,
     component::T,
     time_period::Int,
 ) where {S <: Union{CostExpressions, FuelConsumptionExpression}, T <: PSY.Component}

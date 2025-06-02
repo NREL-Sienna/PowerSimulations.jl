@@ -260,16 +260,16 @@ function _update_pwl_cost_expression(
     cost_data::PSY.PiecewiseStepData,
 ) where {T <: PSY.Component}
     # TODO decremental
+    # TODO revert some of this
     pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
     slopes = PSY.get_y_coords(cost_data)
-    upb = PSY.get_x_lengths(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            slopes[i] * upb[i] * dt,
+            slopes[i] * dt,
             pwl_var_container[(component_name, i, time_period)],
         )
     end
