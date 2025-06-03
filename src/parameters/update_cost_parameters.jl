@@ -323,13 +323,19 @@ function update_variable_cost!(
     component_name = PSY.get_name(component)
     # TODO not convinced this should be 3D, if it should then we need more principled than `1`
     mult_ = parameter_multiplier[component_name, time_period, 1]
+    converted_data = get_piecewise_incrementalcurve_per_system_unit(
+        function_data,
+        PSY.UnitSystem.NATURAL_UNITS,  # PSY's cost_function_timeseries.jl says this will always be natural units
+        get_base_power(container),
+        PSY.get_base_power(component),
+    )
     gen_cost =
         _update_pwl_cost_expression(
             container,
             T,
             component_name,
             time_period,
-            function_data,
+            converted_data,
         )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
