@@ -241,7 +241,7 @@ function _add_pwl_constraint!(
     const_container[name, period] = JuMP.@constraint(
         jump_model,
         variables[name, period] ==
-        sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data)
+        sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data) + first(break_points)
     )
 
     # TODO: Parameter for this
