@@ -252,7 +252,8 @@ function _add_pwl_constraint!(
         else
             # In this case, using the first breakpoint would create a quadratic constraint
             @warn "FIXME implicitly assuming first breakpoint is at generator min power for all time periods"
-            component.active_power_limits.min/PSY.get_base_power(component)*get_base_power(container)
+            component.active_power_limits.min / PSY.get_base_power(component) *
+            get_base_power(container)
         end
         sum_pwl_vars += min_power * on_vars[name, period]
     end
