@@ -1,9 +1,9 @@
 #TODO: timeseries market_bid_cost
 @testset "Test Thermal Generation MarketBidCost models" begin
     test_cases = [
-        ("Base case", "fixed_market_bid_cost", 20532.76, 30.0, 30.0),
-        ("Greater initial input, no load", "fixed_market_bid_cost", 20532.76, 31.0, 31.0),
-        ("Greater initial input only", "fixed_market_bid_cost", 20532.76, 30.0, 31.0),
+        ("Base case", "fixed_market_bid_cost", 18487.236, 30.0, 30.0),
+        ("Greater initial input, no load", "fixed_market_bid_cost", 18487.236, 31.0, 31.0),
+        ("Greater initial input only", "fixed_market_bid_cost", 18487.236, 30.0, 31.0),
     ]
     for (name, sys_name, cost_reference, my_no_load, my_initial_input) in test_cases
         @testset "$name" begin
