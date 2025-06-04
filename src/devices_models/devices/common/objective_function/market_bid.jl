@@ -208,6 +208,9 @@ end
 ################# PWL Constraints ################
 ##################################################
 
+_include_min_gen_power_in_constraint(::ActivePowerVariable) = true
+_include_min_gen_power_in_constraint(::PowerAboveMinimumVariable) = false
+
 """
 Implement the constraints for PWL Block Offer variables. That is:
 
@@ -238,13 +241,27 @@ function _add_pwl_constraint!(
     jump_model = get_jump_model(container)
     pwl_vars = get_variable(container, V(), T)
     name = PSY.get_name(component)
+    sum_pwl_vars = sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data)
+
+    # TODO fix https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1318 better, this is a stopgap
+    if _include_min_gen_power_in_constraint(U())
+        on_vars = get_variable(container, OnVariable(), T)
+        min_power = if first(break_points) isa Number
+            # In this case, we can use the first breakpoint without creating a quadratic constraint
+            first(break_points)
+        else
+            # In this case, using the first breakpoint would create a quadratic constraint
+            @warn "FIXME implicitly assuming first breakpoint is at generator min power for all time periods"
+            component.active_power_limits.min/PSY.get_base_power(component)*get_base_power(container)
+        end
+        sum_pwl_vars += min_power * on_vars[name, period]
+    end
+
     const_container[name, period] = JuMP.@constraint(
         jump_model,
-        variables[name, period] ==
-        sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data) + first(break_points)
+        variables[name, period] == sum_pwl_vars
     )
 
-    # TODO: Parameter for this
     for ix in 1:len_cost_data
         JuMP.@constraint(
             jump_model,
