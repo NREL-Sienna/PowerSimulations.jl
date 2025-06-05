@@ -109,7 +109,8 @@ function _make_deterministic_ts(
     incrs_x,
     incrs_y,
     horizon,
-    interval,
+    interval;
+    override_min_x = nothing,
 )
     (tranche_incr_x, res_incr_x, interval_incr_x) = incrs_x
     (tranche_incr_y, res_incr_y, interval_incr_y) = incrs_y
@@ -125,6 +126,16 @@ function _make_deterministic_ts(
     xs2 = [xs2 .+ i * res_incr_x .+ interval_incr_x for i in 1:horizon]
     ys1 = [ys1 .+ i * res_incr_y for i in 0:(horizon - 1)]
     ys2 = [ys2 .+ i * res_incr_y .+ interval_incr_y for i in 1:horizon]
+
+    # TODO this is part of the 1318 stopgap
+    if !isnothing(override_min_x)
+        for sub_x in xs1
+            sub_x[1] = override_min_x
+        end
+        for sub_x in xs2
+            sub_x[1] = override_min_x
+        end
+    end
 
     startup_data = OrderedDict(
         TIME1 => PiecewiseStepData.(xs1, ys1),
@@ -222,16 +233,16 @@ SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
 SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
 
 function build_sys_incr(initial_varies::Bool, breakpoints_vary::Bool, slopes_vary::Bool)
-    @assert !breakpoints_vary
-    @assert !slopes_vary
     sys = load_sys_incr()
     comp = get_component(SEL_INCR, sys)
     op_cost = get_operation_cost(comp)
-    baseline = get_value_curve(
-        get_incremental_offer_curves(op_cost)::CostCurve,
-    )::PiecewiseIncrementalCurve
+    cost_curve = get_incremental_offer_curves(op_cost)::CostCurve
+    baseline = get_value_curve(cost_curve)::PiecewiseIncrementalCurve
     baseline_initial = get_initial_input(baseline)
     baseline_pwl = get_function_data(baseline)
+    min_power = with_units_base(sys, UnitSystem.NATURAL_UNITS) do
+        get_active_power_limits(comp).min
+    end
 
     # primes for easier attribution
     incr_initial = initial_varies ? (0.11, 0.05) : (0.0, 0.0)
@@ -245,11 +256,18 @@ function build_sys_incr(initial_varies::Bool, breakpoints_vary::Bool, slopes_var
         5,
         Hour(1),
     )
-    my_pwl_ts =
-        _make_deterministic_ts("variable_cost", baseline_pwl, incr_x, incr_y, 5, Hour(1))
+    my_pwl_ts = _make_deterministic_ts(
+        "variable_cost",
+        baseline_pwl,
+        incr_x,
+        incr_y,
+        5,
+        Hour(1);
+        override_min_x = min_power,
+    )
 
     set_incremental_initial_input!(sys, comp, my_initial_ts)
-    # set_variable_cost!(sys, comp, my_pwl_ts)  # TODO
+    set_variable_cost!(sys, comp, my_pwl_ts, get_power_units(cost_curve))
     return sys
 end
 
@@ -398,7 +416,8 @@ function run_mbc_sim(sys::System; is_decremental::Bool = false, simulation = tru
     comp = get_component(is_decremental ? SEL_DECR : SEL_INCR, sys)
     gentype, genname = typeof(comp), get_name(comp)
     switches = (
-        _read_one_value(res, PSI.OnVariable, gentype, genname)
+        _read_one_value(res, PSI.OnVariable, gentype, genname),
+        _read_one_value(res, PSI.ActivePowerVariable, gentype, genname),
     )
     return model, res, switches
 end
@@ -498,18 +517,33 @@ function cost_due_to_time_varying_mbc(
     is_decremental && throw(IS.NotImplementedError("TODO implement for decremental"))
     gentype = ThermalStandard
     on_vars = read_variable_dict(res_uc, PSI.OnVariable, gentype)
+    power_vars = read_variable_dict(res_uc, PSI.ActivePowerVariable, gentype)
     result = SortedDict{DateTime, DataFrame}()
+    @assert all(keys(on_vars) .== keys(power_vars))
     for step_dt in keys(on_vars)
         on_df = on_vars[step_dt]
+        power_df = power_vars[step_dt]
+        @assert names(on_df) == names(power_df)
+        @assert on_df[!, :DateTime] == power_df[!, :DateTime]
         result[step_dt] = DataFrame(:DateTime => on_df[!, :DateTime])
         for gen_name in names(DataFrames.select(on_df, Not(:DateTime)))
             comp = get_component(gentype, sys, gen_name)
             cost = PSY.get_operation_cost(comp)
             (cost isa MarketBidCost) || continue
-            PSI.is_time_variant(get_incremental_initial_input(cost)) || continue
-            ii_ts = get_incremental_initial_input(comp, cost; start_time = step_dt)
-            @assert all(on_df[!, :DateTime] .== TimeSeries.timestamp(ii_ts))
-            result[step_dt][!, gen_name] = on_df[!, gen_name] .* TimeSeries.values(ii_ts)
+            result[step_dt][!, gen_name] .= 0.0
+            if PSI.is_time_variant(get_incremental_initial_input(cost))
+                ii_ts = get_incremental_initial_input(comp, cost; start_time = step_dt)
+                @assert all(on_df[!, :DateTime] .== TimeSeries.timestamp(ii_ts))
+                result[step_dt][!, gen_name] .+=
+                    on_df[!, gen_name] .* TimeSeries.values(ii_ts)
+            end
+            # TODO decremental
+            if PSI.is_time_variant(get_incremental_offer_curves(cost))
+                vc_ts = get_incremental_offer_curves(comp, cost; start_time = step_dt)
+                @assert all(power_df[!, :DateTime] .== TimeSeries.timestamp(vc_ts))
+                result[step_dt][!, gen_name] .+=
+                    _calc_pwi_cost.(power_df[!, gen_name], TimeSeries.values(vc_ts))
+            end
         end
     end
     return result
@@ -630,6 +664,19 @@ function tweak_for_startup_shutdown!(sys::System)
     tweak_system!(sys::System, 0.8, 1.0, 1.0)
 end
 
+function _calc_pwi_cost(active_power::Float64, pwi::PiecewiseStepData)
+    isapprox(active_power, 0.0) && return 0.0
+    breakpoints = get_x_coords(pwi)
+    slopes = get_y_coords(pwi)
+    @assert active_power >= first(breakpoints) && active_power <= last(breakpoints)
+    i_leq = findlast(<=(active_power), breakpoints)
+    cost =
+        sum(slopes[1:(i_leq - 1)] .* (breakpoints[2:i_leq] .- breakpoints[1:(i_leq - 1)]))
+    (active_power > breakpoints[i_leq]) &&
+        (cost += slopes[i_leq] * (active_power - breakpoints[i_leq]))
+    return cost
+end
+
 @testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
     # Test that constant time series has the same objective value as no time series
     sys0 = load_and_fix_system(PSITestSystems, "c_fixed_market_bid_cost")
@@ -705,4 +752,40 @@ end
     end
 
     # TODO test validate_initial_input_time_series warnings/errors
+end
+
+@testset "MarketBidCost incremental with time series slopes" begin
+    baseline = build_sys_incr(false, false, false)
+    plus_initial = build_sys_incr(false, false, true)
+
+    for use_simulation in (false, true)
+        switches1, switches2 =
+            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+        @assert all(isapprox.(switches1, switches2))
+        @assert all(>=(1).(switches1))
+    end
+end
+
+@testset "MarketBidCost incremental with time series breakpoints" begin
+    baseline = build_sys_incr(false, false, false)
+    plus_initial = build_sys_incr(false, true, false)
+
+    for use_simulation in (false, true)
+        switches1, switches2 =
+            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+        @assert all(isapprox.(switches1, switches2))
+        @assert all(>=(1).(switches1))
+    end
+end
+
+@testset "MarketBidCost incremental with time series everything" begin
+    baseline = build_sys_incr(false, false, false)
+    plus_initial = build_sys_incr(true, true, true)
+
+    for use_simulation in (false, true)
+        switches1, switches2 =
+            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+        @assert all(isapprox.(switches1, switches2))
+        @assert all(>=(1).(switches1))
+    end
 end
