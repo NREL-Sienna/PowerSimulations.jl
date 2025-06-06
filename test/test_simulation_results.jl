@@ -1022,6 +1022,11 @@ read_result_names(results, key::PSI.OptimizationContainerKey) =
     pf_path = mktempdir(; cleanup = true)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+    for sys in (c_sys5_hy_uc, c_sys5_hy_ed)
+        for gen in get_components(ThermalStandard, sys)
+            set_base_power!(gen, get_base_power(gen) * 1.23)
+        end
+    end
     sim = run_simulation(
         c_sys5_hy_uc,
         c_sys5_hy_ed,
