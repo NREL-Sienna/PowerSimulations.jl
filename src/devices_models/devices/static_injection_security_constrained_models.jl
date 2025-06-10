@@ -261,6 +261,15 @@ function construct_device!(
             network_model,
         )
         #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
+
+        add_constraints!(
+            container,
+            PostContingencyRateLimitConstraintB,
+            PSY.get_components(PSY.ACTransmission, sys),
+            generator_outages,
+            model,
+            network_model,
+        )
     end
 
     add_constraints!(
@@ -660,4 +669,108 @@ function _make_post_contingency_flow_expressions!(
     #return name_thread, expressions
     # change when using the not concurrent version
     return expressions
+end
+
+"""
+Add branch post-contingency rate limit constraints for ACBranch after a G-k outage
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    cons_type::Type{PostContingencyRateLimitConstraintB},
+    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
+    generators_outages::Vector{T},
+    device_model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {
+    T <: PSY.Generator,
+    U <: AbstractSecurityConstrainedUnitCommitment,
+    V <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    device_names = [PSY.get_name(d) for d in branches]
+    con_lb =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            get_name.(generators_outages),
+            device_names,
+            time_steps;
+            meta = "lb",
+        )
+
+    con_ub =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            get_name.(generators_outages),
+            device_names,
+            time_steps;
+            meta = "ub",
+        )
+
+    expressions = get_expression(
+        container,
+        ExpressionKey(
+            PTDFPostContingencyBranchFlow,
+            T,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+
+    param_keys = get_parameter_keys(container)
+
+    for branch in branches
+        branch_name = get_name(branch)
+
+        param_key = ParameterKey(
+            PostContingencyDynamicBranchRatingTimeSeriesParameter,
+            typeof(branch),
+        )
+        has_dlr_ts = (param_key in param_keys) && PSY.has_time_series(branch)
+
+        device_dynamic_branch_rating_ts = []
+        if has_dlr_ts
+            device_dynamic_branch_rating_ts, mult =
+                _get_device_post_contingency_dynamic_branch_rating_time_series(
+                    container,
+                    param_key,
+                    branch_name,
+                    network_model)
+        end
+
+        for generator_outage in generators_outages
+            gen_outage_name = get_name(generator_outage)
+
+            limits = get_min_max_limits(
+                branch,
+                PostContingencyRateLimitConstraintB,
+                AbstractBranchFormulation,
+                network_model,
+            )
+
+            for t in time_steps
+                # device_dynamic_branch_rating_ts is empty if this device doesn't have a time series
+                if !isempty(device_dynamic_branch_rating_ts)
+                    limits = (
+                        min = -1 * device_dynamic_branch_rating_ts[t] *
+                              mult[branch_name, t],
+                        max = device_dynamic_branch_rating_ts[t] * mult[branch_name, t],
+                    ) #update limits
+                end
+
+                con_ub[gen_outage_name, branch_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[gen_outage_name, branch_name, t] <=
+                        limits.max)
+                con_lb[gen_outage_name, branch_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[gen_outage_name, branch_name, t] >=
+                        limits.min)
+            end
+        end
+    end
+
+    return
 end

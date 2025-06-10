@@ -5,7 +5,7 @@ function get_min_max_limits(
     branch::PSY.ACBranch,
     ::Type{<:PostContingencyRateLimitConstraintB},
     ::Type{<:AbstractBranchFormulation},
-    ::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
+    ::NetworkModel{<:AbstractPTDFModel},
 )
     if PSY.get_rating_b(branch) === nothing
         @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
@@ -39,12 +39,12 @@ Add branch post-contingency rate limit constraints for ACBranch considering LODF
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{PostContingencyRateLimitConstraintB},
-    branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
+    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
     branches_outages::Vector{T},
     device_model::DeviceModel{T, U},
     network_model::NetworkModel{V},
 ) where {
-    T <: PSY.ACBranch,
+    T <: PSY.ACTransmission,
     U <: AbstractBranchFormulation,
     V <: AbstractSecurityConstrainedPTDFModel,
 }
