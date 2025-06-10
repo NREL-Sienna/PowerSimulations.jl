@@ -1,6 +1,6 @@
 function _update_parameter_values!(
-    ::T,
     parameter_array::DenseAxisArray,
+    ::T,
     parameter_multiplier::JuMPFloatArray,
     attributes::CostFunctionAttributes,
     ::Type{V},

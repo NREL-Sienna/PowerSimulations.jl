@@ -57,6 +57,7 @@ function update_parameter_values!(
     input = get_decision_states(simulation_state)
     _update_parameter_values!(
         parameter_array,
+        FixValueParameter(),
         parameter_attributes,
         service,
         model,
