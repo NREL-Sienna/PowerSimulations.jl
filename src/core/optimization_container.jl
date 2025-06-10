@@ -432,7 +432,7 @@ function _make_system_expressions!(
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
     )
-
+    
     if !isempty(dc_bus_numbers)
         container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
             _make_container_array(dc_bus_numbers, time_steps)
@@ -652,7 +652,9 @@ end
 
 function initialize_system_expressions!(
     container::OptimizationContainer,
-    network_model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel{
+        Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
+    },
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
@@ -661,7 +663,7 @@ function initialize_system_expressions!(
     if isempty(areas)
         throw(
             IS.ConflictingInputsError(
-                "AreaPTDFPowerModel doesn't support systems with no Areas",
+                "AreaPTDFPowerModel/SecurityConstrainedAreaPTDFPowerModel doesn't support systems with no Areas",
             ),
         )
     end
