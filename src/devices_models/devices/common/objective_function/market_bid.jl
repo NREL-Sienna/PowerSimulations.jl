@@ -394,7 +394,9 @@ end
 
 # Data should be such that there are no NaNs up to some point and then all NaNs
 function _up_to_first_nan(arr::Vector{Float64})
-    last_ix = findfirst(isnan, arr) - 1
+    last_ix = findfirst(isnan, arr)
+    isnothing(last_ix) && (last_ix = length(arr) + 1)
+    last_ix -= 1
     @assert all(isnan, arr[(last_ix + 1):end])
     result = arr[1:last_ix]
     @assert all(!isnan, result)

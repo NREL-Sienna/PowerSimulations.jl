@@ -178,8 +178,7 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
 end
 
 # If `ixs` does not index all dimensions of `dest`, add a `:` for the rest (like Python's
-# `...`) before broadcast-assigning. PERF this might not be the most performant thing in the
-# world, could consider using EllipsisNotation.jl
+# `...`) to prepare for broadcast-assigning.
 expand_ixs(ixs, dest) = (ixs..., fill(:, ndims(dest) - length(ixs))...)
 
 assign_expand(dest::AbstractArray, src, ixs::Tuple) =

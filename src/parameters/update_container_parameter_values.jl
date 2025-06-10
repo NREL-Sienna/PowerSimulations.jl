@@ -21,7 +21,7 @@ function _update_parameter_values!(
 
 ######################## Methods to update Parameters from Time Series #####################
 function _set_param_value!(
-    param::Union{JuMPVariableMatrix, JuMPVariable3Tensor},
+    param::JuMPVariableTensor,
     value::Union{T, AbstractVector{T}},
     name::String,
     t::Int,

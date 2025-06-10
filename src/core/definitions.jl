@@ -24,25 +24,16 @@ const JuMPAffineExpressionDArray = JuMP.Containers.DenseAxisArray{
         JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
     },
 }
-# TODO define an N-dimensional JuMPVariableTensor alias rather than these two special cases
-const JuMPVariableMatrix = DenseAxisArray{
+
+const JuMPVariableTensor{N} = DenseAxisArray{
     JuMP.VariableRef,
-    2,
-    Tuple{Vector{String}, UnitRange{Int64}},
-    Tuple{
+    N,
+    <:Tuple{Vector{String}, Vararg{UnitRange{Int64}}},
+    <:Tuple{
         JuMP.Containers._AxisLookup{Dict{String, Int64}},
-        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
+        Vararg{JuMP.Containers._AxisLookup{Tuple{Int64, Int64}}},
     },
 }
-const JuMPVariable3Tensor = DenseAxisArray{
-    JuMP.VariableRef,
-    3,
-    Tuple{Vector{String}, UnitRange{Int64}, UnitRange{Int64}},
-    Tuple{
-        JuMP.Containers._AxisLookup{Dict{String, Int64}},
-        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
-        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
-    }}
 
 const JuMPFloatMatrix = DenseAxisArray{Float64, 2}
 const JuMPFloatArray = DenseAxisArray{Float64}

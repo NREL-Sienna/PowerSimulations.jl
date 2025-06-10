@@ -97,8 +97,8 @@ proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, ::O
     Val(is_time_variant(PSY.get_incremental_initial_input(cost))),
     PSY.get_initial_input ∘ PSY.get_incremental_offer_curves ∘ PSY.get_operation_cost,
     IncrementalCostAtMinParameter())
-# PERF it might be more performant to only mark as time variant if we actually have a time series (that goes for the startup and shutdown too)
-is_time_variant_term(::OptimizationContainer, ::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) = true
+is_time_variant_term(::OptimizationContainer, cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) =
+    is_time_variant(PSY.get_incremental_initial_input(cost))
 
 proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{RateofChangeConstraintSlackUp, RateofChangeConstraintSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
 

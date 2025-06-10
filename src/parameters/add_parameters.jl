@@ -177,6 +177,10 @@ function _add_parameters!(
     return
 end
 
+# Extends `size` to tuples, treating them like scalars
+_size_wrapper(elem) = size(elem)
+_size_wrapper(::Tuple) = ()
+
 # NOTE direct equivalent of _add_parameters! on ObjectiveFunctionParameter
 function _add_time_series_parameters!(
     container::OptimizationContainer,
@@ -281,21 +285,19 @@ _get_time_series_name(::StartupCostParameter, device::PSY.Component, ::DeviceMod
 _get_time_series_name(::ShutdownCostParameter, device::PSY.Component, ::DeviceModel) =
     get_name(PSY.get_shut_down(PSY.get_operation_cost(device)))
 
-# TODO handle the decremental case
-_get_time_series_name(
+_get_time_series_name(  # TODO decremental
     ::IncrementalCostAtMinParameter,
-    device::PSY.Generator,
+    device::PSY.Device,
     ::DeviceModel,
 ) =
     get_name(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
 
-# TODO handle the decremental case
-_get_time_series_name(
+_get_time_series_name(  # TODO decremental
     ::Union{
         IncrementalPiecewiseLinearSlopeParameter,
         IncrementalPiecewiseLinearBreakpointParameter,
     },
-    device::PSY.Generator,
+    device::PSY.Device,
     ::DeviceModel,
 ) =
     get_name(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
@@ -312,7 +314,7 @@ _param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
     MULTI_START_VARIABLES
 _param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
 _param_to_vars(::AbstractCostAtMinParameter, ::AbstractDeviceFormulation) = (OnVariable,)
-_param_to_vars(
+_param_to_vars(  # TODO decremental
     ::Union{
         IncrementalPiecewiseLinearSlopeParameter,
         IncrementalPiecewiseLinearBreakpointParameter,
@@ -320,14 +322,6 @@ _param_to_vars(
     ::AbstractDeviceFormulation,
 ) =
     (PiecewiseLinearBlockIncrementalOffer,)
-_param_to_vars(
-    ::Union{
-        DecrementalPiecewiseLinearSlopeParameter,
-        DecrementalPiecewiseLinearBreakpointParameter,
-    },
-    ::AbstractDeviceFormulation,
-) =
-    (PiecewiseLinearBlockDecrementalOffer,)
 
 # Layer of indirection to handle possible additional axes. Most paramters have just the two
 # usual axes (device, timestamp), but some have a third (e.g., piecewise tranche)
@@ -342,34 +336,45 @@ _additional_axes(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component} = ()
 
+_get_max_tranches(data::TimeSeries.TimeArray) = _get_max_tranches(values(data))
+_get_max_tranches(data::AbstractDict) = maximum(_get_max_tranches.(values(data)))
+_get_max_tranches(data::Vector{IS.PiecewiseStepData}) = maximum(length.((data)))
+
 # Iterate through all periods of a piecewise time series and return the maximum number of tranches
-function get_max_tranches(piecewise_ts::IS.TimeSeriesKey)
-    return 10  # TODO placeholder
+function get_max_tranches(device::PSY.Device, piecewise_ts::IS.TimeSeriesKey)
+    data = PSY.get_data(PSY.get_time_series(device, piecewise_ts, nothing, nothing))
+    max_tranches = _get_max_tranches(data)
+    return max_tranches
 end
 
 # Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
 # TODO decremental case
 function _additional_axes(
-    container::OptimizationContainer,
-    param::Union{
-        AbstractPiecewiseLinearSlopeParameter,
-        AbstractPiecewiseLinearBreakpointParameter,
-    },
+    ::OptimizationContainer,
+    ::IncrementalPiecewiseLinearSlopeParameter,
     devices::U,
-    model::DeviceModel{D, W},
+    ::DeviceModel{D, W},
 ) where {
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    # TODO do I need the filter here or are they already filtered
-    curves =
-        PSY.get_incremental_offer_curves.(
-            PSY.get_operation_cost.(
-                filter(_has_incremental_offer_curves_time_series, devices)
-            )
-        )
-    max_tranches = maximum(get_max_tranches.(curves))
+    curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
+    max_tranches = maximum(get_max_tranches.(devices, curves))
     return (1:max_tranches,)
+end
+
+function _additional_axes(
+    ::OptimizationContainer,
+    ::IncrementalPiecewiseLinearBreakpointParameter,
+    devices::U,
+    ::DeviceModel{D, W},
+) where {
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
+    max_tranches = maximum(get_max_tranches.(devices, curves))
+    return (1:(max_tranches + 1),)  # one more breakpoint than tranches
 end
 
 # Layer of indirection to handle the fact that some parameters come from time series that
@@ -386,8 +391,7 @@ function _unwrap_for_param(
     max_len = length(only(expected_axs))
     y_coords = IS.get_y_coords(ts_elem)
     # The container is sized based on the global maximum number of tranches, so we may need to right-pad
-    (length(y_coords) > max_len) && error("Placeholder max tranches is too small!")  # TODO placeholder
-    # TODO handle in a more principled fashion the fact that length(y_coords) == length(x_coords) - 1
+    @assert length(y_coords) <= max_len
     padded_y_coords = vcat(y_coords, fill(NaN, max_len - length(y_coords)))
     return padded_y_coords
 end
@@ -395,7 +399,7 @@ end
 # JuMP VariableRef cannot be fixed to NaN, so we need to pad with something else. We'll use
 # the slope parameter NaNs to undo the padding, so this doesn't have to be a value we'd
 # never see in data
-_BREAKPOINT_PAD_VALUE = -0.0
+const _BREAKPOINT_PAD_VALUE = -0.0
 function _unwrap_for_param(
     ::AbstractPiecewiseLinearBreakpointParameter,
     ts_elem::IS.PiecewiseStepData,
@@ -403,15 +407,11 @@ function _unwrap_for_param(
 )
     max_len = length(only(expected_axs))
     x_coords = IS.get_x_coords(ts_elem)
-    (length(x_coords) > max_len) && error("Placeholder max tranches is too small!")  # TODO placeholder
+    @assert length(x_coords) <= max_len
     padded_x_coords =
         vcat(x_coords, fill(_BREAKPOINT_PAD_VALUE, max_len - length(x_coords)))
     return padded_x_coords
 end
-
-# Extends `size` to tuples, treating them like scalars
-_size_wrapper(elem) = size(elem)
-_size_wrapper(::Tuple) = ()
 
 # NOTE direct equivalent of _add_time_series_parameters! for TimeSeriesParameter
 function _add_parameters!(
