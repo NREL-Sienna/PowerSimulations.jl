@@ -432,7 +432,7 @@ function _make_system_expressions!(
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
     )
-    
+
     if !isempty(dc_bus_numbers)
         container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
             _make_container_array(dc_bus_numbers, time_steps)
