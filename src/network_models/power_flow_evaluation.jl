@@ -321,8 +321,13 @@ function update_pf_data!(
     return
 end
 
-_update_component!(comp::PSY.Component, ::Val{:constant_active_power}, value) =
-    (comp.constant_active_power = value * sys_base / PSY.get_base_power(comp))
+
+_update_component!(comp::PSY.StandardLoad, ::Val{:constant_active_power}, value) =
+    (comp.constant_active_power = -value * sys_base / PSY.get_base_power(comp))
+_update_component!(comp::PSY.Component, ::Val{:constant_reactive_power}, value) =
+    (comp.constant_reactive_power = value * sys_base / PSY.get_base_power(comp))
+_update_component!(comp::PSY.StandardLoad, ::Val{:constant_active_power}, value) =
+    (comp.constant_active_power = -value * sys_base / PSY.get_base_power(comp))
 _update_component!(comp::PSY.Component, ::Val{:constant_reactive_power}, value) =
     (comp.constant_reactive_power = value * sys_base / PSY.get_base_power(comp))
 
