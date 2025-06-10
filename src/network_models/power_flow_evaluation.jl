@@ -9,11 +9,11 @@ const PF_INPUT_KEY_PRECEDENCES = Dict(
 )
 
 const RELEVANT_COMPONENTS_SELECTOR =
-    PSY.make_selector(Union{PSY.StaticInjection, PSY.Bus, PSY.Branch})
+    PSY.make_selector(Union{PSY.StaticInjection,PSY.Bus,PSY.Branch})
 
 function _add_aux_variables!(
     container::OptimizationContainer,
-    component_map::Dict{Type{<:AuxVariableType}, <:Set{<:Tuple{DataType, Any}}},
+    component_map::Dict{Type{<:AuxVariableType},<:Set{<:Tuple{DataType,Any}}},
 )
     for (var_type, components) in pairs(component_map)
         component_types = unique(first.(components))
@@ -46,12 +46,12 @@ pf_input_keys(::PFS.PSSEExporter) =
 # Maps the StaticInjection component type by name to the
 # index in the PowerFlow data arrays going from Bus number to bus index
 function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
-    temp_component_map = Dict{DataType, Dict{String, Int}}()
+    temp_component_map = Dict{DataType,Dict{String,Int}}()
     available_injectors = PSY.get_available_components(PSY.StaticInjection, sys)
     bus_lookup = PFS.get_bus_lookup(pf_data)
     for comp in available_injectors
         comp_type = typeof(comp)
-        bus_dict = get!(temp_component_map, comp_type, Dict{String, Int}())
+        bus_dict = get!(temp_component_map, comp_type, Dict{String,Int}())
         bus_number = PSY.get_number(PSY.get_bus(comp))
         bus_dict[get_name(comp)] = bus_lookup[bus_number]
     end
@@ -70,7 +70,7 @@ _get_temp_component_map_lhs(comp::PSY.Bus) = PSY.get_number(comp)
 # Creates dicts of components by type
 function _make_temp_component_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
     temp_component_map =
-        Dict{DataType, Dict{Union{String, Int64}, String}}()
+        Dict{DataType,Dict{Union{String,Int64},String}}()
     relevant_components = PSY.get_available_components(RELEVANT_COMPONENTS_SELECTOR, sys)
     for comp_type in unique(typeof.(relevant_components))
         # NOTE we avoid using bus numbers here because PSY.get_bus(system, number) is O(n)
@@ -91,7 +91,7 @@ function _make_pf_input_map!(
     pf_data = get_power_flow_data(pf_e_data)
     temp_component_map = _make_temp_component_map(pf_data, sys)
     map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{Union{String, Int64}, String} for SystemPowerFlowContainer
-    pf_e_data.input_key_map = Dict{Symbol, Dict{OptimizationContainerKey, map_type}}()
+    pf_e_data.input_key_map = Dict{Symbol,Dict{OptimizationContainerKey,map_type}}()
 
     # available_keys is a vector of Pair{OptimizationContainerKey, data} containing all possibly relevant data sources to iterate over
     available_keys = vcat(
@@ -103,7 +103,7 @@ function _make_pf_input_map!(
     # Separate map for each category
     for category in pf_input_keys(pf_data)
         # Map that persists to store the bus index to which the variable maps in the PowerFlowData, etc.
-        pf_data_opt_container_map = Dict{OptimizationContainerKey, map_type}()
+        pf_data_opt_container_map = Dict{OptimizationContainerKey,map_type}()
         @info "Adding input map to send $category to $(nameof(typeof(pf_data)))"
         precedence = PF_INPUT_KEY_PRECEDENCES[category]
         added_injection_types = DataType[]
@@ -192,12 +192,12 @@ function add_power_flow_data!(
     sizehint!(container.power_flow_evaluation_data, length(evaluators))
     # For each output key, what components are we working with?
     branch_aux_var_components =
-        Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, String}}}()
-    bus_aux_var_components = Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, <:Int}}}()
+        Dict{Type{<:AuxVariableType},Set{Tuple{<:DataType,String}}}()
+    bus_aux_var_components = Dict{Type{<:AuxVariableType},Set{Tuple{<:DataType,<:Int}}}()
     for evaluator in evaluators
         @info "Building PowerFlow evaluator using $(evaluator)"
         pf_data = PFS.make_power_flow_container(evaluator, sys;
-            time_steps = length(get_time_steps(container)))
+            time_steps=length(get_time_steps(container)))
         pf_e_data = PowerFlowEvaluationData(pf_data)
         my_branch_aux_vars = branch_aux_vars(pf_data)
         my_bus_aux_vars = bus_aux_vars(pf_data)
@@ -207,7 +207,7 @@ function add_power_flow_data!(
             to_add_to = get!(
                 branch_aux_var_components,
                 branch_aux_var,
-                Set{Tuple{<:DataType, String}}(),
+                Set{Tuple{<:DataType,String}}(),
             )
             push!.(Ref(to_add_to), my_branch_components)
         end
@@ -215,7 +215,7 @@ function add_power_flow_data!(
         my_bus_components = _get_bus_component_tuples(pf_data)
         for bus_aux_var in my_bus_aux_vars
             to_add_to =
-                get!(bus_aux_var_components, bus_aux_var, Set{Tuple{<:DataType, <:Int}}())
+                get!(bus_aux_var_components, bus_aux_var, Set{Tuple{<:DataType,<:Int}}())
             push!.(Ref(to_add_to), my_bus_components)
         end
         push!(container.power_flow_evaluation_data, pf_e_data)
@@ -266,7 +266,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_reactivepower_withdrawals[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
+    ::Union{Val{:voltage_angle_export},Val{:voltage_angle_opf}},
     ::Type{<:PSY.ACBus},
     index,
     t,
@@ -274,7 +274,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_angles[index, t] = value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Union{Val{:voltage_magnitude_export}, Val{:voltage_magnitude_opf}},
+    ::Union{Val{:voltage_magnitude_export},Val{:voltage_magnitude_opf}},
     ::Type{<:PSY.ACBus},
     index,
     t,
@@ -321,13 +321,9 @@ function update_pf_data!(
     return
 end
 
-_update_component!(comp::PSY.StandardLoad, ::Val{:active_power}, value) =
-    (comp.constant_active_power = -value * sys_base / PSY.get_base_power(comp))
-_update_component!(comp::PSY.Component, ::Val{:active_power}, value, sys_base) =
+_update_component!(comp::PSY.Component, ::Val{:constant_active_power}, value) =
     (comp.constant_active_power = value * sys_base / PSY.get_base_power(comp))
-_update_component!(comp::PSY.StandardLoad, ::Val{:reactive_power}, value) =
-    (comp.constant_reactive_power = -value * sys_base / PSY.get_base_power(comp))
-_update_component!(comp::PSY.Component, ::Val{:reactive_power}, value, sys_base) =
+_update_component!(comp::PSY.Component, ::Val{:constant_reactive_power}, value) =
     (comp.constant_reactive_power = value * sys_base / PSY.get_base_power(comp))
 
 # PERF we use direct dot access here, and implement our own unit conversions, for performance and convenience
@@ -342,13 +338,13 @@ _update_component!(comp::PSY.ElectricLoad, ::Val{:reactive_power}, value, sys_ba
     (comp.reactive_power = -value * sys_base / PSY.get_base_power(comp))
 _update_component!(
     comp::PSY.ACBus,
-    ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
+    ::Union{Val{:voltage_angle_export},Val{:voltage_angle_opf}},
     value, sys_base,
 ) =
     comp.angle = value
 _update_component!(
     comp::PSY.ACBus,
-    ::Union{Val{:voltage_magnitude_export}, Val{:voltage_magnitude_opf}},
+    ::Union{Val{:voltage_magnitude_export},Val{:voltage_magnitude_opf}},
     value, sys_base,
 ) =
     comp.magnitude = value
@@ -356,7 +352,7 @@ _update_component!(
 function update_pf_system!(
     sys::PSY.System,
     container::OptimizationContainer,
-    input_map::Dict{Symbol, <:Dict{OptimizationContainerKey, <:Any}},
+    input_map::Dict{Symbol,<:Dict{OptimizationContainerKey,<:Any}},
     time_step::Int,
 )
     for (category, inputs) in input_map
@@ -423,7 +419,7 @@ end
 
 # Currently nothing to write back to the optimization container from a PSSEExporter
 calculate_aux_variable_value!(::OptimizationContainer,
-    ::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
+    ::AuxVarKey{T,<:Any} where {T<:PowerFlowAuxVariableType},
     ::PSY.System, ::PowerFlowEvaluationData{PFS.PSSEExporter}) = nothing
 
 _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
@@ -446,9 +442,9 @@ _get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_lookup(pf_data)
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{T, U},
+    key::AuxVarKey{T,U},
     system::PSY.System, pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData},
-) where {T <: PowerFlowAuxVariableType, U}
+) where {T<:PowerFlowAuxVariableType,U}
     @debug "Updating $key from PowerFlowData"
     pf_data = get_power_flow_data(pf_e_data)
     src = _get_pf_result(T, pf_data)
@@ -461,7 +457,7 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
 end
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
+    key::AuxVarKey{T,<:Any} where {T<:PowerFlowAuxVariableType},
     system::PSY.System)
     pf_e_data = latest_solved_power_flow_evaluation_data(container)
     pf_data = get_power_flow_data(pf_e_data)
