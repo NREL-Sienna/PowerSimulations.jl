@@ -60,7 +60,6 @@ The specified constraint is generally formulated as:
 """
 struct PostContingengyGenerationBalanceConstraint <: ConstraintType end
 
-
 """
 Struct to create the duration constraint for commitment formulations, i.e. min-up and min-down.
 

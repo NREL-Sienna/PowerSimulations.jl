@@ -12,7 +12,7 @@ function add_variables!(
 end
 
 """
-Add COntingency-related variables to the OptimizationContainer for any component.
+Add Contingency-related variables to the OptimizationContainer for any component.
 """
 function add_variables!(
     container::OptimizationContainer,
