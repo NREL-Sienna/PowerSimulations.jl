@@ -79,7 +79,6 @@ handle_variable_cost_parameter(
     ::AbstractPiecewiseLinearSlopeParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
-# TODO deduplicate the next few methods
 function handle_variable_cost_parameter(
     ::StartupCostParameter,
     op_cost::PSY.MarketBidCost,
@@ -260,7 +259,6 @@ function _update_pwl_cost_expression(
     cost_data::PSY.PiecewiseStepData,
 ) where {T <: PSY.Component}
     # TODO decremental
-    # TODO revert some of this
     pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR

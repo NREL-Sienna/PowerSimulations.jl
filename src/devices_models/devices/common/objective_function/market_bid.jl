@@ -2,25 +2,6 @@
 ################ PWL Parameters  #################
 ##################################################
 
-# TODO perhaps it would be more elegant to parameterize IS.PiecewiseStepData on the types of its component vectors?
-# TODO if not, this should probably go in a different file
-"""
-Like [`InfrastructureSystems.PiecewiseStepData`](@extref) but `x_coords` are `VariableRef`.
-Functionality is somewhat limited (e.g., no serialization, currently no validation).
-"""
-@kwdef struct VariableRefStepData <: IS.FunctionData
-    x_coords::Vector{JuMP.AbstractJuMPScalar}
-    y_coords::Vector{Float64}
-end
-IS.get_x_coords(data::VariableRefStepData) = data.x_coords
-IS.get_y_coords(data::VariableRefStepData) = data.y_coords
-
-const GenericStepData = Union{IS.PiecewiseStepData, VariableRefStepData}
-GenericStepData(x_coords::Vector{Float64}, y_coords::Vector{Float64}) =
-    IS.PiecewiseStepData(x_coords, y_coords)
-GenericStepData(x_coords::Vector{<:JuMP.AbstractJuMPScalar}, y_coords::Vector{Float64}) =
-    VariableRefStepData(x_coords, y_coords)
-
 # Determines whether we care about various types of costs, given the formulation
 # NOTE: currently works based on what has already been added to the container;
 # alternatively we could dispatch on the formulation directly
@@ -183,7 +164,7 @@ function _add_pwl_variables!(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::GenericStepData,
+    n_tranches::Int,
     ::Type{U},
 ) where {
     T <: PSY.Component,
@@ -191,9 +172,8 @@ function _add_pwl_variables!(
 }
     var_container = lazy_container_addition!(container, U(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
-    break_points = PSY.get_x_coords(cost_data)
-    pwlvars = Array{JuMP.VariableRef}(undef, length(break_points))
-    for i in 1:(length(break_points) - 1)
+    pwlvars = Array{JuMP.VariableRef}(undef, n_tranches)
+    for i in 1:n_tranches
         pwlvars[i] =
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
@@ -333,8 +313,7 @@ function _get_pwl_cost_expression(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_function::PSY.MarketBidCost,
-    ::GenericStepData,  # TODO use this??
+    slopes_normalized::Vector{Float64},
     ::U,
     ::V,
     ::W,
@@ -344,10 +323,6 @@ function _get_pwl_cost_expression(
     V <: AbstractDeviceFormulation,
     W <: AbstractPiecewiseLinearBlockOffer,
 }
-    # TODO refactor
-    is_decremental = (W() isa PiecewiseLinearBlockDecrementalOffer)
-    cost_data_normalized = _get_pwl_data(is_decremental, container, component, time_period)
-
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     multiplier = get_multiplier_for_var(W()) * dt
@@ -355,8 +330,7 @@ function _get_pwl_cost_expression(
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, W(), T)
     gen_cost = JuMP.AffExpr(0.0)
-    y_coords_cost_data = PSY.get_y_coords(cost_data_normalized)
-    for (i, cost) in enumerate(y_coords_cost_data)
+    for (i, cost) in enumerate(slopes_normalized)
         JuMP.add_to_expression!(  # TODO variant?
             gen_cost,
             cost * multiplier * pwl_var_container[(name, i, time_period)],
@@ -372,17 +346,16 @@ function _get_pwl_cost_expression(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_data::GenericStepData,
+    slopes_normalized::Vector{Float64},
     multiplier::Float64,
 ) where {T <: PSY.ReserveDemandCurve}
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
-    slopes = PSY.get_y_coords(cost_data)
     ordc_cost = JuMP.AffExpr(0.0)
-    for i in 1:length(slopes)
+    for i in 1:length(slopes_normalized)
         JuMP.add_to_expression!(
             ordc_cost,
-            slopes[i] * multiplier * pwl_var_container[(name, i, time_period)],
+            slopes_normalized[i] * multiplier * pwl_var_container[(name, i, time_period)],
         )
     end
     return ordc_cost
@@ -452,19 +425,18 @@ function _get_pwl_data(
         #     _BREAKPOINT_PAD_VALUE)
         breakpoint_cost_component =
             breakpoint_cost_component.data[1:(length(slope_cost_component) + 1)]
-
-        cost_component = GenericStepData(
-            breakpoint_cost_component,
-            slope_cost_component,
-        )
         # PSY's cost_function_timeseries.jl says this will always be natural units
         unit_system = PSY.UnitSystem.NATURAL_UNITS
     else
         cost_component = PSY.get_function_data(PSY.get_value_curve(cost_data))
+        breakpoint_cost_component = PSY.get_x_coords(cost_component)
+        slope_cost_component = PSY.get_y_coords(cost_component)
         unit_system = PSY.get_power_units(cost_data)
     end
 
-    result = get_piecewise_incrementalcurve_per_system_unit(cost_component,
+    breakpoints, slopes = get_piecewise_incrementalcurve_per_system_unit(
+        breakpoint_cost_component,
+        slope_cost_component,
         unit_system,
         get_base_power(container),
         PSY.get_base_power(component),
@@ -479,7 +451,7 @@ function _get_pwl_data(
     #         error("Incremental MarketBidCost for component $(name) is non-convex")
     # end
 
-    return result
+    return breakpoints, slopes
 end
 
 """
@@ -510,14 +482,13 @@ function add_pwl_term!(
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
     for t in time_steps
-        data = _get_pwl_data(is_decremental, container, component, t)
-        break_points = PSY.get_x_coords(data)
-        _add_pwl_variables!(container, T, name, t, data, W)
+        breakpoints, slopes = _get_pwl_data(is_decremental, container, component, t)
+        _add_pwl_variables!(container, T, name, t, length(slopes), W)
         _add_pwl_constraint!(
             container,
             component,
             U(),
-            break_points,
+            breakpoints,
             t,
             W,
             X,
@@ -526,8 +497,7 @@ function add_pwl_term!(
             container,
             component,
             t,
-            cost_function,
-            data,
+            slopes,
             U(),
             V(),
             W(),
@@ -581,11 +551,17 @@ function _add_pwl_term!(
             T,
             name,
             t,
-            data,
+            length(IS.get_y_coords(data)),
             PiecewiseLinearBlockIncrementalOffer,
         )
         _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
-        pwl_cost = _get_pwl_cost_expression(container, component, t, data, multiplier * dt)
+        pwl_cost = _get_pwl_cost_expression(
+            container,
+            component,
+            t,
+            IS.get_y_coords(data),
+            multiplier * dt,
+        )
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
