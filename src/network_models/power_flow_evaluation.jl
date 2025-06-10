@@ -321,9 +321,9 @@ function update_pf_data!(
     return
 end
 
-_update_component!(comp::PSY.Component, ::Val{:active_power}, value) =
+_update_component!(comp::PSY.StandardLoad, ::Val{:active_power}, value) =
     (comp.constant_active_power = -value * sys_base / PSY.get_base_power(comp))
-_update_component!(comp::PSY.Component, ::Val{:reactive_power}, value) =
+_update_component!(comp::PSY.StandardLoad, ::Val{:reactive_power}, value) =
     (comp.constant_reactive_power = -value * sys_base / PSY.get_base_power(comp))
     
 # PERF we use direct dot access here, and implement our own unit conversions, for performance and convenience
