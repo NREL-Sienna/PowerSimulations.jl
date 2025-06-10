@@ -187,7 +187,7 @@ function construct_device!(
             ))
     end
 
-    #TODO Handle also G-2 cases
+    #TODO Handle also G-k cases
     generator_outages =
         _get_all_single_outage_by_type(sys, valid_outages, devices, T)
 
@@ -217,7 +217,7 @@ function construct_device!(
             model,
             network_model,
         )
-          
+
         add_to_expression!(
             container,
             PostContingencyActivePowerBalance,
@@ -236,8 +236,30 @@ function construct_device!(
             model,
             network_model,
         )
-        #ADD EXPRESSION FOR EACH CONTINGENCY: CALCULATE FLOW FOR EACH Branch
-        
+
+        add_to_expression!(
+            container,
+            PostContingencyNodalActivePowerDeployment,
+            PostContingencyActivePowerChangeVariable,
+            devices,
+            generator_outages,
+            model,
+            network_model,
+        )
+
+        #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch  
+        add_to_expression!(
+            container,
+            sys,
+            PTDFPostContingencyBranchFlow,
+            FlowActivePowerVariable,
+            ActivePowerVariable,
+            PostContingencyActivePowerChangeVariable,
+            devices,
+            generator_outages,
+            model,
+            network_model,
+        )
         #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
     end
 
@@ -362,8 +384,6 @@ function add_constraints!(
     return
 end
 
-
-
 """
 Default implementation to add variables to PostContingencySystemBalanceExpressions
 """
@@ -394,7 +414,7 @@ function add_to_expression!(
                 time_steps,
             )
     end
-    
+
     expression = get_expression(
         container,
         ExpressionKey(
@@ -409,12 +429,11 @@ function add_to_expression!(
     for d in devices
         name = PSY.get_name(d)
         for d_outage in devices_outages
-            
             if d == d_outage
-                for t in get_time_steps(container)
+                for t in time_steps
                     _add_to_jump_expression!(
                         expression[name, t],
-                        variable[ name, t],
+                        variable[name, t],
                         -1.0,
                     )
                 end
@@ -423,7 +442,7 @@ function add_to_expression!(
 
             name_outage = PSY.get_name(d_outage)
 
-            for t in get_time_steps(container)
+            for t in time_steps
                 _add_to_jump_expression!(
                     expression[name_outage, t],
                     variable_outages[name_outage, name, t],
@@ -434,7 +453,6 @@ function add_to_expression!(
     end
     return
 end
-
 
 """
 Add post-contingency Generation Balance Constraints for Generators for G-1 formulation
@@ -465,12 +483,181 @@ function add_constraints!(
             IS.Optimization.CONTAINER_KEY_EMPTY_META,
         ),
     )
-    
-    constraint = add_constraints_container!(container, R(), T, device_outages_names, time_steps)
+
+    constraint =
+        add_constraints_container!(container, R(), T, device_outages_names, time_steps)
     for t in time_steps, d_outage in device_outages_names
         constraint[d_outage, t] =
             JuMP.@constraint(get_jump_model(container), expressions[d_outage, t] == 0)
     end
 
     return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{D},
+    devices_outages::Vector{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: PostContingencyNodalActivePowerDeployment,
+    U <: AbstractContingencyVariableType,
+    D <: PSY.Generator,#ThermalGen
+    V <: PSY.Generator,#ThermalGen
+    W <: AbstractSecurityConstrainedUnitCommitment,
+    X <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    ptdf = get_PTDF_matrix(network_model)
+    bus_numbers = ptdf.axes[1]
+
+    if !isempty(devices_outages)
+        container.expressions[ExpressionKey(T, PSY.ACBus)] =
+            _make_container_array(
+                get_name.(devices_outages),
+                bus_numbers,
+                time_steps,
+            )
+    end
+
+    expression = get_expression(container, T(), PSY.ACBus)
+    ptdf = get_PTDF_matrix(network_model)
+    variable_outages = get_variable(container, U(), V)
+    #parameter = get_parameter_array(container, U(), V)
+
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        name = PSY.get_name(d)
+        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+
+        for d_outage in devices_outages
+            if d == d_outage
+                continue
+            end
+            name_outage = PSY.get_name(d_outage)
+
+            for t in get_time_steps(container)
+                _add_to_jump_expression!(
+                    expression[name_outage, bus_no, t],
+                    variable_outages[name_outage, name, t],
+                    1.0,
+                )
+            end
+        end
+    end
+    return
+end
+
+"""
+Default implementation to add variables to PostContingencySystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{F},
+    ::Type{G},
+    ::Type{C},
+    devices::IS.FlattenIteratorWrapper{V},
+    devices_outages::Vector{X},
+    device_model::DeviceModel{X, W},
+    network_model::NetworkModel{N},
+) where {
+    T <: PTDFPostContingencyBranchFlow,
+    F <: FlowActivePowerVariable,
+    G <: VariableType,
+    C <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
+    X <: PSY.Generator,
+    W <: AbstractSecurityConstrainedUnitCommitment,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    ptdf = get_PTDF_matrix(network_model)
+    names_branches = ptdf.axes[2]   #find other way to obtain this
+
+    if !isempty(devices_outages)
+        container.expressions[ExpressionKey(T, X)] =
+            _make_container_array(
+                get_name.(devices_outages),
+                names_branches,
+                time_steps,
+            )
+    end
+
+    expression = get_expression(
+        container,
+        ExpressionKey(
+            T,
+            X,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+
+    variable = get_variable(container, G(), V)
+    #variable_outages = get_variable(container, C(), X)
+    nodal_power_deployment_expressions =
+        get_expression(container, PostContingencyNodalActivePowerDeployment(), PSY.ACBus)
+    jump_model = get_jump_model(container)
+
+    for name in names_branches
+        flow_variables = get_variable(
+            container,
+            F(),
+            typeof(get_component(PSY.ACTransmission, sys, name)),
+        )
+        ptdf_col = ptdf[name, :]
+        for d_outage in devices_outages
+            name_outage = PSY.get_name(d_outage)
+            bus_number_outage = PSY.get_number(PSY.get_bus(d_outage))
+
+            expression[name_outage, name, :] .= _make_post_contingency_flow_expressions!(
+                jump_model,
+                name * name_outage,
+                time_steps,
+                ptdf_col,
+                nodal_power_deployment_expressions[name_outage, :, :].data,
+            )
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expression[name_outage, name, t],
+                    flow_variables[name, t],
+                    1.0,
+                )
+                #TODO extend to G-k
+                _add_to_jump_expression!(
+                    expression[name_outage, name, t],
+                    variable[name_outage, t],
+                    (-1) * ptdf[name, bus_number_outage],
+                )
+            end
+        end
+    end
+    return
+end
+
+function _make_post_contingency_flow_expressions!(
+    jump_model::JuMP.Model,
+    name_thread::String,
+    time_steps::UnitRange{Int},
+    ptdf_col::AbstractVector{Float64},
+    nodal_power_deployment_expressions::Matrix{JuMP.AffExpr},
+)
+    #@debug Threads.threadid() name_thread
+    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
+    for t in time_steps
+        expressions[t] = JuMP.@expression(
+            jump_model,
+            sum(
+                ptdf_col[i] * nodal_power_deployment_expressions[i, t] for
+                i in 1:length(ptdf_col)
+            )
+        )
+    end
+    #return name_thread, expressions
+    # change when using the not concurrent version
+    return expressions
 end
