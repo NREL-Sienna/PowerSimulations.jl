@@ -280,11 +280,10 @@ _index_into_param(cost_data, ::T) where {T <: Union{StartVariable, MultiStartVar
 _index_into_param(cost_data, ::VariableType) = cost_data
 
 # General case
-# (TODO this seemed rather decrepit before I got here and made big changes, make sure I didn't break anything)
 function update_variable_cost!(
     container::OptimizationContainer,
     parameter_array::DenseAxisArray{T},
-    parameter_multiplier::JuMPFloatArray,  # TODO is the multiplier always `JuMPFloatArray`?
+    parameter_multiplier::JuMPFloatArray,
     attributes::CostFunctionAttributes{T},
     component::U,
     time_period::Int,

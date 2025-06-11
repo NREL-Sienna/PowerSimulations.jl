@@ -2,6 +2,31 @@
 ################ PWL Parameters  #################
 ##################################################
 
+# Helper functions to manage incremental (false) vs. decremental (true) cases
+get_initial_input_maybe_decremental(::Val{true}, device::PSY.StaticInjection) =
+    PSY.get_decremental_initial_input(PSY.get_operation_cost(device))
+get_initial_input_maybe_decremental(::Val{false}, device::PSY.StaticInjection) =
+    PSY.get_incremental_initial_input(PSY.get_operation_cost(device))
+
+get_offer_curves_maybe_decremental(::Val{true}, device::PSY.StaticInjection) =
+    PSY.get_decremental_offer_curves(PSY.get_operation_cost(device))
+get_offer_curves_maybe_decremental(::Val{false}, device::PSY.StaticInjection) =
+    PSY.get_incremental_offer_curves(PSY.get_operation_cost(device))
+
+# Dictionaries to handle more incremental (false) vs. decremental (true) cases
+const SLOPE_PARAMS = Dict(
+    false => IncrementalPiecewiseLinearSlopeParameter,
+    true => DecrementalPiecewiseLinearSlopeParameter)
+const BREAKPOINT_PARAMS = Dict(
+    false => IncrementalPiecewiseLinearBreakpointParameter,
+    true => DecrementalPiecewiseLinearBreakpointParameter)
+const PIECEWISE_BLOCK_VARS = Dict(
+    false => PiecewiseLinearBlockIncrementalOffer,
+    true => PiecewiseLinearBlockDecrementalOffer)
+const PIECEWISE_BLOCK_CONSTRAINTS = Dict(
+    false => PiecewiseLinearBlockIncrementalOfferConstraint,
+    true => PiecewiseLinearBlockDecrementalOfferConstraint)
+
 # Determines whether we care about various types of costs, given the formulation
 # NOTE: currently works based on what has already been added to the container;
 # alternatively we could dispatch on the formulation directly
@@ -26,12 +51,17 @@ _consider_initial_input_time_series(
 ) where {T, D} =
     haskey(get_variables(container), VariableKey(OnVariable, T))
 
-# TODO the relevant variables seem to be created in the `ModelConstructStage` for this one,
-# so we can't check for them here? Will that persist?
+# For slopes and breakpoints, the relevant variables won't have been created yet, so we'll
+# just check all components for the presence of the relevant time series
 _consider_slope_time_series(
-    container::OptimizationContainer,
+    ::OptimizationContainer,
     ::DeviceModel{T, D},
-) where {T, D} = true  # temporary, see above
+) where {T, D} = true
+
+_consider_breakpoint_time_series(
+    ::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} = true
 
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
@@ -49,19 +79,9 @@ _has_incremental_offer_curves_time_series(device::PSY.StaticInjection) =
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
     cost = PSY.get_operation_cost(device)::PSY.MarketBidCost
     ts_initial = is_time_variant(
-        if decremental
-            PSY.get_decremental_initial_input(cost)
-        else
-            PSY.get_incremental_initial_input(cost)
-        end,
-    )
+        get_initial_input_maybe_decremental(Val(decremental), device))
     ts_variable = is_time_variant(
-        if decremental
-            PSY.get_decremental_offer_curves(cost)
-        else
-            PSY.get_incremental_offer_curves(cost)
-        end,
-    )
+        get_offer_curves_maybe_decremental(Val(decremental), device))
     label = decremental ? "decremental" : "incremental"
 
     (ts_initial && !ts_variable) &&
@@ -145,7 +165,7 @@ function add_market_bid_parameters!(
     # Variable cost: breakpoint parameters
     # TODO decremental case
     _add_market_bid_parameters_helper(
-        _consider_slope_time_series,
+        _consider_breakpoint_time_series,
         _has_incremental_offer_curves_time_series,
         IncrementalPiecewiseLinearBreakpointParameter,
         container,
@@ -331,7 +351,7 @@ function _get_pwl_cost_expression(
     pwl_var_container = get_variable(container, W(), T)
     gen_cost = JuMP.AffExpr(0.0)
     for (i, cost) in enumerate(slopes_normalized)
-        JuMP.add_to_expression!(  # TODO variant?
+        JuMP.add_to_expression!(
             gen_cost,
             cost * multiplier * pwl_var_container[(name, i, time_period)],
         )
@@ -383,46 +403,27 @@ function _get_pwl_data(
     component::T,
     time::Int,
 ) where {T <: PSY.Component}
-    # TODO refactor?
-    cost_data = (
-        if is_decremental
-            PSY.get_decremental_offer_curves
-        else
-            PSY.get_incremental_offer_curves
-        end)(
-        PSY.get_operation_cost(component))
+    cost_data = get_offer_curves_maybe_decremental(Val(is_decremental), component)
 
     if is_time_variant(cost_data)
         name = PSY.get_name(component)
 
-        SlopeParam = if is_decremental
-            DecrementalPiecewiseLinearSlopeParameter
-        else
-            IncrementalPiecewiseLinearSlopeParameter
-        end
+        SlopeParam = SLOPE_PARAMS[is_decremental]
         slope_param_arr = get_parameter_array(container, SlopeParam(), T)
         slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
         slope_cost_component =
             slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
 
-        BreakpointParam = if is_decremental
-            DecrementalPiecewiseLinearBreakpointParameter
-        else
-            IncrementalPiecewiseLinearBreakpointParameter
-        end
+        BreakpointParam = BREAKPOINT_PARAMS[is_decremental]
         breakpoint_param_container = get_parameter(container, BreakpointParam(), T)
         breakpoint_param_arr = get_parameter_column_refs(breakpoint_param_container, name)  # performs component -> time series many-to-one mapping
         breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
-        # TODO do I now have additional axes for slope_param_mult but not breakpoint_param_mult?
         breakpoint_cost_component =
             breakpoint_param_arr[time, :] .* breakpoint_param_mult[name, time]
 
         # NaNs signify that we had more space in the container than tranches in the
         # function, so it's valid to discard trailing NaNs
         slope_cost_component = _up_to_first_nan(slope_cost_component.data)
-        # @assert all(
-        #     breakpoint_cost_component.data[length(slope_cost_component)+2:end] .==
-        #     _BREAKPOINT_PAD_VALUE)
         breakpoint_cost_component =
             breakpoint_cost_component.data[1:(length(slope_cost_component) + 1)]
         # PSY's cost_function_timeseries.jl says this will always be natural units
@@ -462,22 +463,13 @@ function add_pwl_term!(
     is_decremental::Bool,
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    ::PSY.MarketBidCost,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     name = PSY.get_name(component)
-    # TODO refactor?
-    W = if is_decremental
-        PiecewiseLinearBlockDecrementalOffer
-    else
-        PiecewiseLinearBlockIncrementalOffer
-    end
-    X = if is_decremental
-        PiecewiseLinearBlockDecrementalOfferConstraint
-    else
-        PiecewiseLinearBlockIncrementalOfferConstraint
-    end
+    W = PIECEWISE_BLOCK_VARS[is_decremental]
+    X = PIECEWISE_BLOCK_CONSTRAINTS[is_decremental]
 
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
