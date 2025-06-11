@@ -309,7 +309,8 @@ export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 export PostContingencyActivePowerVariableLimitsConstraint
-export PostContingencyActivePowerBalance
+export PostContingengyGenerationBalanceConstraint
+export PostContingencyRampConstraint
 
 # Parameters
 # Time Series Parameters
@@ -345,6 +346,7 @@ export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
 export PTDFPostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
+export PostContingencyActivePowerBalance
 
 #################################################################################
 # Imports

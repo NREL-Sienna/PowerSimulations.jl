@@ -260,12 +260,22 @@ function construct_device!(
             model,
             network_model,
         )
-        #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
 
+        #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
         add_constraints!(
             container,
             PostContingencyRateLimitConstraintB,
             PSY.get_components(PSY.ACTransmission, sys),
+            generator_outages,
+            model,
+            network_model,
+        )
+
+        #ADD RAMPING CONSTRAINTS
+        add_constraints!(
+            container,
+            PostContingencyRampConstraint,
+            devices,
             generator_outages,
             model,
             network_model,
@@ -772,5 +782,124 @@ function add_constraints!(
         end
     end
 
+    return
+end
+
+"""
+This function adds the post-contingency ramping limits
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{PostContingencyRampConstraint},
+    devices::IS.FlattenIteratorWrapper{U},
+    generators_outages::Vector{G},
+    model::DeviceModel{G, V},
+    ::NetworkModel{W},
+) where {
+    U <: PSY.Generator,
+    V <: AbstractThermalUnitCommitment,
+    W <: PM.AbstractPowerModel,
+    G <: PSY.Generator,
+}
+    add_linear_ramp_constraints!(
+        container,
+        T,
+        PostContingencyActivePowerChangeVariable,
+        devices,
+        generators_outages,
+        model,
+        W,
+    )
+    return
+end
+
+@doc raw"""
+Constructs allowed rate-of-change constraints for G-1 formulations from change_variables, and rate data.
+
+
+
+``` change_variable[name, t] <= rate_data[1][ix].up ```
+
+``` change_variable[name, t-1] >= rate_data[1][ix].down ```
+
+# LaTeX
+
+`` r^{down} \leq \Delta x_t  \leq r^{up}, \forall t \geq  ``
+
+"""
+function add_linear_ramp_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:AbstractContingencyVariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    generators_outages::Vector{G},
+    model::DeviceModel{G, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {
+    V <: PSY.Generator,
+    W <: AbstractDeviceFormulation,
+    G <: PSY.Generator,
+}
+    #parameters = built_for_recurrent_solves(container)
+    time_steps = get_time_steps(container)
+    variable = get_variable(container, U(), G)
+    ramp_devices = _get_ramp_constraint_devices(container, devices)
+    minutes_per_period = _get_minutes_per_period(container)
+    #IC = _get_initial_condition_type(T, V, W)
+    #initial_conditions_power = get_initial_condition(container, IC(), V)
+
+    set_name = [PSY.get_name(r) for r in ramp_devices]
+    set_outages_name = [PSY.get_name(r) for r in generators_outages]
+    con_up =
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            set_outages_name,
+            set_name,
+            time_steps;
+            meta = "up",
+        )
+    con_down =
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            set_outages_name,
+            set_name,
+            time_steps;
+            meta = "dn",
+        )
+
+    for device in devices
+        name = get_name(device)
+        # This is to filter out devices that dont need a ramping constraint
+        name ∉ set_name && continue
+        ramp_limits = PSY.get_ramp_limits(device)
+
+        @debug "add rate_of_change_constraint" name
+        #@assert (parameters && isa(ic_power, JuMP.VariableRef)) || !parameters
+
+        for device_outage in generators_outages
+            name_outage = get_name(device_outage)
+
+            if name == name_outage
+                continue
+            end
+
+            for t in time_steps
+                con_up[name_outage, name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name_outage, name, t] <=
+                    ramp_limits.up * minutes_per_period
+                )
+                con_down[name_outage, name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name_outage, name, t] >=
+                    -ramp_limits.down * minutes_per_period
+                )
+            end
+        end
+    end
     return
 end
