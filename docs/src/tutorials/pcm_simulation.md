@@ -145,8 +145,8 @@ So, to define a typical day-ahead - real-time sequence:
 
 We can adjust the time series data to reflect this structure in each `System`:
 
-  - `transform_single_time_series!(sys_DA, 48, Hour(1))`
-  - `transform_single_time_series!(sys_RT, 12, Minute(15))`
+  - `transform_single_time_series!(sys_DA, Hour(48), Hour(24))`
+  - `transform_single_time_series!(sys_RT, Minute(60), Minute(15))`
 
 Now we can put it all together to define a `SimulationSequence`
 
