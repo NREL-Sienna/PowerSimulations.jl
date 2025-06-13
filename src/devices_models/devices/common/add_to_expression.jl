@@ -729,14 +729,14 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
+    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
     branches_outages::Vector{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: PTDFPostContingencyBranchFlow,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.ACTransmission,
     W <: AbstractBranchFormulation,
     X <: AbstractSecurityConstrainedPTDFModel,
 }

@@ -315,11 +315,11 @@ end
 function _get_all_single_outage_branches_by_type(
     sys::PSY.System,
     valid_outages::IS.FlattenIteratorWrapper{T},
-    branches::IS.FlattenIteratorWrapper{PSY.ACBranch},
+    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
     ::Type{V},
 ) where {
     T <: PSY.Outage,
-    V <: PSY.ACBranch,
+    V <: PSY.ACTransmission,
 }
     single_outage_branches = V[]
     for outage in valid_outages
@@ -357,7 +357,7 @@ function construct_device!(
     ::ModelConstructStage,
     model::DeviceModel{V, StaticBranch},
     network_model::NetworkModel{T},
-) where {V <: PSY.ACBranch, T <: AbstractSecurityConstrainedPTDFModel}
+) where {V <: PSY.ACTransmission, T <: AbstractSecurityConstrainedPTDFModel}
     devices = get_available_components(model, sys)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
@@ -367,7 +367,7 @@ function construct_device!(
     if isempty(valid_outages)
         throw(
             ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACBranch) 
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACTransmission) 
                 to add the LODF expressions/constraints for the requested network model: $network_model.",
             ))
     end
@@ -378,7 +378,7 @@ function construct_device!(
         b ->
             PSY.get_name(b) ∉ removed_branches &&
                 typeof(b) <: PSY.ACTransmission,
-        PSY.ACBranch,
+        PSY.ACTransmission,
         sys,
     )
 
