@@ -289,13 +289,17 @@ branch_aux_vars(::PFS.vPTDFPowerFlowData) =
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
-bus_aux_vars(data::PFS.ACPowerFlowData) =
+function bus_aux_vars(data::PFS.ACPowerFlowData)
+    vars = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
     if data.calculate_loss_factors
-        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude,
-            PowerFlowLossFactors]
-    else
-        [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
+        push!(vars, PowerFlowLossFactors)
     end
+    if data.calculate_voltage_stability_factors
+        push!(vars, PowerFlowVoltageStabilityFactors)
+    end
+    return vars
+end
+
 bus_aux_vars(::PFS.ABAPowerFlowData) = [PowerFlowVoltageAngle]
 bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
@@ -598,7 +602,9 @@ _get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowDat
 _get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
     PFS.get_branch_activepower_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
-    pf_data.loss_factors
+    PFS.get_loss_factors(pf_data)
+_get_pf_result(::Type{PowerFlowVoltageStabilityFactors}, pf_data::PFS.PowerFlowData) =
+    PFS.get_voltage_stability_factors(pf_data)
 
 _get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
 _get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =
