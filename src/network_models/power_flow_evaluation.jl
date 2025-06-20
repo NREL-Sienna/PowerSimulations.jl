@@ -6,10 +6,10 @@ const PF_INPUT_KEY_PRECEDENCES = Dict(
     :voltage_magnitude_export => [PowerFlowVoltageMagnitude, VoltageMagnitude],
     :voltage_angle_opf => [VoltageAngle],
     :voltage_magnitude_opf => [VoltageMagnitude],
-    :active_power_branch_from_to =>
+    :active_power_hvdc_pst_from_to =>
         [FlowActivePowerFromToVariable, FlowActivePowerVariable],
-    :active_power_branch_to_from =>
-        [FlowActivePowerToFromVariable, FlowActivePowerVariable],
+    :active_power_hvdc_pst_to_from =>
+        [FlowActivePowerFromToVariable, FlowActivePowerVariable],
 )
 
 const RELEVANT_COMPONENTS_SELECTOR =
@@ -48,7 +48,7 @@ pf_input_keys(::PFS.PSSEExporter) =
     [:active_power, :reactive_power, :voltage_angle_export, :voltage_magnitude_export]
 pf_input_keys_hvdc_pst(::PFS.PowerFlowData) = DataType[]
 pf_input_keys_hvdc_pst(::PFS.ACPowerFlowData) =
-    [:active_power_branch_from_to, :active_power_branch_to_from]
+    [:active_power_hvdc_pst_from_to, :active_power_hvdc_pst_to_from]
 
 _get_component_bus_for_map(component::PSY.Branch, ::Val{:from}) =
     PSY.get_from_bus(component)
@@ -243,7 +243,7 @@ function _add_two_terminal_elements_map!(
 )
     for element_type in (PSY.TwoTerminalHVDC, PSY.PhaseShiftingTransformer)
         for (category, side) in zip(
-            [:active_power_branch_from_to, :active_power_branch_to_from],
+            [:active_power_hvdc_pst_from_to, :active_power_hvdc_pst_to_from],
             [Val(:from), Val(:to)],
         )
             category ∈ pf_input_keys_hvdc_pst(pf_data) || continue
@@ -423,7 +423,15 @@ _update_pf_data_component!(
 ) = (pf_data.bus_magnitude[index, t] = value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_branch_from_to},
+    ::Val{:active_power_hvdc_pst_from_to},
+    ::Type{<:PSY.TwoTerminalHVDC},
+    index,
+    t,
+    value,
+) = (pf_data.bus_activepower_injection[index, t] -= value)
+_update_pf_data_component!(
+    pf_data::PFS.PowerFlowData,
+    ::Val{:active_power_hvdc_pst_to_from},
     ::Type{<:PSY.TwoTerminalHVDC},
     index,
     t,
@@ -431,15 +439,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_activepower_injection[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_branch_to_from},
-    ::Type{<:PSY.TwoTerminalHVDC},
-    index,
-    t,
-    value,
-) = (pf_data.bus_activepower_injection[index, t] += value)
-_update_pf_data_component!(
-    pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_branch_from_to},
+    ::Val{:active_power_hvdc_pst_from_to},
     ::Type{<:PSY.PhaseShiftingTransformer},
     index,
     t,
@@ -447,7 +447,7 @@ _update_pf_data_component!(
 ) = (pf_data.bus_activepower_injection[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
-    ::Val{:active_power_branch_to_from},
+    ::Val{:active_power_hvdc_pst_to_from},
     ::Type{<:PSY.PhaseShiftingTransformer},
     index,
     t,
