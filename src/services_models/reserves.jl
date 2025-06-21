@@ -51,7 +51,7 @@ end
 function get_default_time_series_names(
     ::Type{<:PSY.Reserve},
     ::Type{T},
-) where {T <: Union{RangeReserve, RampReserve}}
+) where {T <: Union{RangeReserve, RampReserve, RangeReserveWithDeliverabilityConstraints}}
     return Dict{Type{<:TimeSeriesParameter}, String}(
         RequirementTimeSeriesParameter => "requirement",
     )

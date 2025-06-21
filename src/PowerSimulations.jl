@@ -32,6 +32,7 @@ export FixedOutput
 export ServiceModel
 export RangeReserve
 export RampReserve
+export RangeReserveWithDeliverabilityConstraints
 export StepwiseCostReserve
 export NonSpinningReserve
 export PIDSmoothACE
