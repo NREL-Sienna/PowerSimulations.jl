@@ -252,7 +252,7 @@ function construct_device!(
             model,
             network_model,
         )
-
+        
         add_to_expression!(
             container,
             PostContingencyNodalActivePowerDeployment,
@@ -497,7 +497,7 @@ function add_constraints!(
     cons_type::Type{R},
     devices::Union{IS.FlattenIteratorWrapper{S}, Vector{S}},
     generator_outages::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
-    device_model::Union{DeviceModel{X, U}, ServiceModel{X, U}},
+    ::Union{DeviceModel{X, U}, ServiceModel{X, U}},
     network_model::NetworkModel{V},
 ) where {
     R <: PostContingengyGenerationBalanceConstraint,
@@ -540,23 +540,30 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    devices::IS.FlattenIteratorWrapper{D},
-    devices_outages::Vector{V},
-    ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    devices::Union{IS.FlattenIteratorWrapper{D}, Vector{D}},
+    devices_outages::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    ::Union{DeviceModel{Y, W}, ServiceModel{Y, W}},#DeviceModel{V, W},
+    network_model::NetworkModel{X};
+    service::R = nothing,
 ) where {
     T <: PostContingencyNodalActivePowerDeployment,
     U <: AbstractContingencyVariableType,
-    D <: PSY.Generator,#ThermalGen
-    V <: PSY.Generator,#ThermalGen
-    W <: AbstractSecurityConstrainedUnitCommitment,
+    D <: PSY.Generator,
+    V <: PSY.Generator,
+    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    W <: Union{
+        AbstractSecurityConstrainedUnitCommitment,
+        AbstractSecurityConstrainedReservesFormulation,
+    },
     X <: AbstractPTDFModel,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, Nothing},
 }
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     bus_numbers = ptdf.axes[1]
 
-    if !isempty(devices_outages)
+    if !isempty(devices_outages) &&
+       !haskey(container.expressions, ExpressionKey(T, PSY.ACBus))
         container.expressions[ExpressionKey(T, PSY.ACBus)] =
             _make_container_array(
                 get_name.(devices_outages),
@@ -567,8 +574,23 @@ function add_to_expression!(
 
     expression = get_expression(container, T(), PSY.ACBus)
     ptdf = get_PTDF_matrix(network_model)
-    variable_outages = get_variable(container, U(), V)
-    #parameter = get_parameter_array(container, U(), V)
+
+    if W <: AbstractSecurityConstrainedReservesFormulation
+        variable_outages = get_variable(
+            container,
+            U(),
+            R,
+            PSY.get_name(service),
+        )
+        mult = 1.0
+        if typeof(service) <: PSY.Reserve{PSY.ReserveDown}
+            mult = -1.0
+        end
+
+    else
+        variable_outages = get_variable(container, U(), V)
+        mult = 1.0
+    end
 
     network_reduction = get_network_reduction(network_model)
     for d in devices
@@ -585,7 +607,7 @@ function add_to_expression!(
                 _add_to_jump_expression!(
                     expression[name_outage, bus_no, t],
                     variable_outages[name_outage, name, t],
-                    1.0,
+                    mult,
                 )
             end
         end
@@ -1102,6 +1124,18 @@ function construct_service!(
             model,
             network_model,
         )
+
+        add_to_expression!(
+            container,
+            PostContingencyNodalActivePowerDeployment,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            generator_outages,
+            model,
+            network_model;
+            service = service,
+        )
+
     end
     objective_function!(container, service, model)
 
