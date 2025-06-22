@@ -252,7 +252,7 @@ function construct_device!(
             model,
             network_model,
         )
-        
+
         add_to_expression!(
             container,
             PostContingencyNodalActivePowerDeployment,
@@ -625,10 +625,11 @@ function add_to_expression!(
     ::Type{F},
     ::Type{G},
     ::Type{C},
-    devices::IS.FlattenIteratorWrapper{V},
-    devices_outages::Vector{X},
-    device_model::DeviceModel{X, W},
-    network_model::NetworkModel{N},
+    devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    devices_outages::Union{IS.FlattenIteratorWrapper{X}, Vector{X}},
+    device_model::Union{DeviceModel{Y, W}, ServiceModel{Y, W}},
+    network_model::NetworkModel{N};
+    service::R = nothing,
 ) where {
     T <: PTDFPostContingencyBranchFlow,
     F <: FlowActivePowerVariable,
@@ -636,14 +637,17 @@ function add_to_expression!(
     C <: AbstractContingencyVariableType,
     V <: PSY.Generator,
     X <: PSY.Generator,
-    W <: AbstractSecurityConstrainedUnitCommitment,
+    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    W <: Union{AbstractSecurityConstrainedUnitCommitment,
+        AbstractSecurityConstrainedReservesFormulation},
     N <: AbstractPTDFModel,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, Nothing},
 }
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     names_branches = ptdf.axes[2]   #find other way to obtain this
 
-    if !isempty(devices_outages)
+    if !isempty(devices_outages) && !haskey(container.expressions, ExpressionKey(T, X))
         container.expressions[ExpressionKey(T, X)] =
             _make_container_array(
                 get_name.(devices_outages),
@@ -1136,6 +1140,22 @@ function construct_service!(
             service = service,
         )
 
+        # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch  
+        add_to_expression!(
+            container,
+            sys,
+            PTDFPostContingencyBranchFlow,
+            FlowActivePowerVariable,
+            ActivePowerVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            generator_outages,
+            model,
+            network_model;
+            service = service,
+        )
+
+        
     end
     objective_function!(container, service, model)
 
