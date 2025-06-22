@@ -19,8 +19,8 @@ Struct to dispatch the creation of Post-Contingency Active Power Deployment Vari
 
 Docs abbreviation: ``\\Delta rsv_{r,g,c}``
 """
-struct PostContingencyActivePowerReserveDeploymentVariable <: AbstractContingencyVariableType end
-
+struct PostContingencyActivePowerReserveDeploymentVariable <:
+       AbstractContingencyVariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
@@ -350,7 +350,9 @@ convert_result_to_natural_units(::Type{ActivePowerOutVariable}) = true
 convert_result_to_natural_units(::Type{EnergyVariable}) = true
 convert_result_to_natural_units(::Type{ReactivePowerVariable}) = true
 convert_result_to_natural_units(::Type{ActivePowerReserveVariable}) = true
-convert_result_to_natural_units(::Type{PostContingencyActivePowerReserveDeploymentVariable}) = true
+convert_result_to_natural_units(
+    ::Type{PostContingencyActivePowerReserveDeploymentVariable},
+) = true
 convert_result_to_natural_units(::Type{ServiceRequirementVariable}) = true
 convert_result_to_natural_units(::Type{RateofChangeConstraintSlackUp}) = true
 convert_result_to_natural_units(::Type{RateofChangeConstraintSlackDown}) = true

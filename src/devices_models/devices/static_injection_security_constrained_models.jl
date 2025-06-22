@@ -40,7 +40,7 @@ end
 
 function _get_all_scuc_valid_outages(
     sys::PSY.System,
-    T:: Type{<:PSY.Component},
+    T::Type{<:PSY.Component},
 )
     return PSY.get_supplemental_attributes(
         sa ->
@@ -920,8 +920,6 @@ function add_linear_ramp_constraints!(
     return
 end
 
-
-
 #G-1 WITH RESERVES AND DELIVERABILITY CONSTRAINTS
 
 function add_variables!(
@@ -931,8 +929,20 @@ function add_variables!(
     contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     generator_outages::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     formulation::AbstractReservesFormulation,
-) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component, D <: PSY.Component}
-    add_service_variable!(container, T(), service, contributing_devices, generator_outages, formulation)
+) where {
+    T <: VariableType,
+    U <: PSY.AbstractReserve,
+    V <: PSY.Component,
+    D <: PSY.Component,
+}
+    add_service_variable!(
+        container,
+        T(),
+        service,
+        contributing_devices,
+        generator_outages,
+        formulation,
+    )
     return
 end
 
@@ -947,7 +957,7 @@ function add_service_variable!(
     T <: AbstractContingencyVariableType,
     U <: PSY.Service,
     V <: Union{Vector{C}, IS.FlattenIteratorWrapper{C}},
-    X <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}
+    X <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {C <: PSY.Component, D <: PSY.Component}
     @info "**** Code is in add_service_variable! - for AbstractContingencyVariableType - $service"
     @assert !isempty(contributing_devices)
@@ -984,7 +994,8 @@ function add_service_variable!(
         ub !== nothing && JuMP.set_upper_bound(variable[outage_name, name, t], ub)
 
         lb = get_variable_lower_bound(variable_type, service, d, formulation)
-        lb !== nothing && !binary && JuMP.set_lower_bound(variable[outage_name, name, t], lb)
+        lb !== nothing && !binary &&
+            JuMP.set_lower_bound(variable[outage_name, name, t], lb)
 
         init = get_variable_warm_start_value(variable_type, d, formulation)
         init !== nothing && JuMP.set_start_value(variable[outage_name, name, t], init)
@@ -992,7 +1003,6 @@ function add_service_variable!(
 
     return
 end
-
 
 function construct_service!(
     container::OptimizationContainer,
@@ -1003,7 +1013,6 @@ function construct_service!(
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
-    
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
@@ -1031,7 +1040,6 @@ function construct_service!(
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {SR <: PSY.Reserve}
-    
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
@@ -1058,7 +1066,7 @@ function construct_service!(
         contributing_devices,
         model,
     )
-    
+
     if !isempty(generator_outages)
         @show get_variable_keys(container)
         add_variables!(
@@ -1069,10 +1077,6 @@ function construct_service!(
             generator_outages,
             RangeReserveWithDeliverabilityConstraints(),
         )
-        
-
-        
-        
     end
     objective_function!(container, service, model)
 
@@ -1082,5 +1086,3 @@ function construct_service!(
 
     return
 end
-
-

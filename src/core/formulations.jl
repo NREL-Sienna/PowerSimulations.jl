@@ -264,6 +264,8 @@ abstract type AbstractServiceFormulation end
 
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
+abstract type AbstractSecurityConstrainedReservesFormulation <: AbstractReservesFormulation end
+
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
@@ -281,7 +283,8 @@ struct RangeReserve <: AbstractReservesFormulation end
 """
 Struct for to add reserves to be larger than a specified requirement and map how those should be allocated and deployed considering generators outages
 """
-struct RangeReserveWithDeliverabilityConstraints <: AbstractReservesFormulation end
+struct RangeReserveWithDeliverabilityConstraints <:
+       AbstractSecurityConstrainedReservesFormulation end
 
 """
 Struct for to add reserves to be larger than a variable requirement depending of costs
