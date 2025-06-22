@@ -38,12 +38,28 @@ function _get_all_scuc_valid_outages(
     )
 end
 
+function _get_all_scuc_valid_outages(
+    sys::PSY.System,
+    T:: Type{<:PSY.Component},
+)
+    return PSY.get_supplemental_attributes(
+        sa ->
+            typeof(sa) in Base.uniontypes(OutagesSCUC) && #rewrite based on ForcedOutage
+                all(
+                    c -> c <: T,
+                    typeof.(PSY.get_associated_components(sys, sa)),
+                ),
+        PSY.Outage,
+        sys,
+    )
+end
+
 function add_variable!(
     container::OptimizationContainer,
     variable_type::T,
     devices::U,
     generator_outages::X,
-    formulation,
+    formulation::AbstractSecurityConstrainedUnitCommitment,
 ) where {
     T <: AbstractContingencyVariableType,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
@@ -404,7 +420,7 @@ function add_constraints!(
 end
 
 """
-Default implementation to add variables to PostContingencySystemBalanceExpressions
+Default implementation to add variables to PostContingencySystemBalanceExpressions for G-1 formulation
 """
 function add_to_expression!(
     container::OptimizationContainer,
@@ -438,7 +454,7 @@ function add_to_expression!(
         container,
         ExpressionKey(
             T,
-            V,
+            X,
             IS.Optimization.CONTAINER_KEY_EMPTY_META,
         ),
     )
@@ -903,3 +919,168 @@ function add_linear_ramp_constraints!(
     end
     return
 end
+
+
+
+#G-1 WITH RESERVES AND DELIVERABILITY CONSTRAINTS
+
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    service::U,
+    contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    generator_outages::Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    formulation::AbstractReservesFormulation,
+) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component, D <: PSY.Component}
+    add_service_variable!(container, T(), service, contributing_devices, generator_outages, formulation)
+    return
+end
+
+function add_service_variable!(
+    container::OptimizationContainer,
+    variable_type::T,
+    service::U,
+    contributing_devices::V,
+    generator_outages::X,
+    formulation::AbstractSecurityConstrainedReservesFormulation,
+) where {
+    T <: AbstractContingencyVariableType,
+    U <: PSY.Service,
+    V <: Union{Vector{C}, IS.FlattenIteratorWrapper{C}},
+    X <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}}
+} where {C <: PSY.Component, D <: PSY.Component}
+    @info "**** Code is in add_service_variable! - for AbstractContingencyVariableType - $service"
+    @assert !isempty(contributing_devices)
+    time_steps = get_time_steps(container)
+
+    binary = get_variable_binary(variable_type, U, formulation)
+
+    variable = add_variable_container!(
+        container,
+        variable_type,
+        U,
+        PSY.get_name(service),
+        [PSY.get_name(g_o) for g_o in generator_outages],
+        [PSY.get_name(d) for d in contributing_devices],
+        time_steps,
+    )
+
+    for t in time_steps, d in contributing_devices, o in generator_outages
+        name = PSY.get_name(d)
+        outage_name = PSY.get_name(o)
+        variable[outage_name, name, t] = JuMP.@variable(
+            get_jump_model(container),
+            base_name = "$(T)_$(U)_$(PSY.get_name(service))_{$(outage_name), $(name), $(t)}",
+            binary = binary
+        )
+        if name == outage_name
+            JuMP.set_upper_bound(variable[outage_name, name, t], 0.0)
+            JuMP.set_lower_bound(variable[outage_name, name, t], 0.0)
+            JuMP.set_start_value(variable[outage_name, name, t], 0.0)
+            continue
+        end
+
+        ub = get_variable_upper_bound(variable_type, service, d, formulation)
+        ub !== nothing && JuMP.set_upper_bound(variable[outage_name, name, t], ub)
+
+        lb = get_variable_lower_bound(variable_type, service, d, formulation)
+        lb !== nothing && !binary && JuMP.set_lower_bound(variable[outage_name, name, t], lb)
+
+        init = get_variable_warm_start_value(variable_type, d, formulation)
+        init !== nothing && JuMP.set_start_value(variable[outage_name, name, t], init)
+    end
+
+    return
+end
+
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, RangeReserveWithDeliverabilityConstraints},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {SR <: PSY.Reserve}
+    
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    contributing_devices = get_contributing_devices(model)
+
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        RangeReserve(),
+    )
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, RangeReserveWithDeliverabilityConstraints},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {SR <: PSY.Reserve}
+    
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    contributing_devices = get_contributing_devices(model)
+
+    devices = PSY.get_available_components(PSY.ThermalStandard, sys)    #CORRECT ThermalStandard
+    valid_outages = _get_all_scuc_valid_outages(sys, PSY.Generator)
+    if isempty(valid_outages)
+        throw(
+            ArgumentError(
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen) 
+                to add the variables/expressions/constraints for the requested Service formulation: $model.",
+            ))
+    end
+    #TODO Handle also G-k cases
+    generator_outages =
+        _get_all_single_outage_by_type(sys, valid_outages, devices, PSY.Generator)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+    
+    if !isempty(generator_outages)
+        @show get_variable_keys(container)
+        add_variables!(
+            container,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            service,
+            contributing_devices,
+            generator_outages,
+            RangeReserveWithDeliverabilityConstraints(),
+        )
+        
+
+        
+        
+    end
+    objective_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
+
+    return
+end
+
+
