@@ -959,7 +959,6 @@ function add_service_variable!(
     V <: Union{Vector{C}, IS.FlattenIteratorWrapper{C}},
     X <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
 } where {C <: PSY.Component, D <: PSY.Component}
-    @info "**** Code is in add_service_variable! - for AbstractContingencyVariableType - $service"
     @assert !isempty(contributing_devices)
     time_steps = get_time_steps(container)
 
@@ -1038,7 +1037,7 @@ function construct_service!(
     model::ServiceModel{SR, RangeReserveWithDeliverabilityConstraints},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {SR <: PSY.Reserve}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
@@ -1068,7 +1067,6 @@ function construct_service!(
     )
 
     if !isempty(generator_outages)
-        @show get_variable_keys(container)
         add_variables!(
             container,
             PostContingencyActivePowerReserveDeploymentVariable,
@@ -1077,6 +1075,20 @@ function construct_service!(
             generator_outages,
             RangeReserveWithDeliverabilityConstraints(),
         )
+        
+
+        add_to_expression!(
+            container,
+            PostContingencyActivePowerBalance,
+            ActivePowerVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            generator_outages,
+            service,
+            model,
+            network_model,
+        )
+        
     end
     objective_function!(container, service, model)
 
@@ -1084,5 +1096,87 @@ function construct_service!(
 
     add_constraint_dual!(container, sys, model)
 
+    return
+end
+
+"""
+Default implementation to add variables to PostContingencySystemBalanceExpressions for G-1 formulation with reserves
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    ::Type{Y},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    devices_outages::Vector{X},
+    service::R,
+    reserves_model::ServiceModel{R, W},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyActivePowerBalance,
+    U <: VariableType,
+    Y <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
+    X <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    W <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    if !isempty(devices_outages) && !haskey(container.expressions, ExpressionKey(T, X))
+        container.expressions[ExpressionKey(T, X)] =
+            _make_container_array(
+                get_name.(devices_outages),
+                time_steps,
+            )
+    end
+
+    expression = get_expression(
+        container,
+        ExpressionKey(
+            T,
+            X,
+            IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        ),
+    )
+
+    variable = get_variable(container, U(), V)
+    reserve_deployment_variable = get_variable(
+        container,
+        PostContingencyActivePowerReserveDeploymentVariable(),
+        R,
+        service_name,
+    )
+
+    mult = 1.0
+    if typeof(service) <: PSY.Reserve{PSY.ReserveDown}
+        mult = -1.0
+    end
+
+    for d in contributing_devices
+        name = PSY.get_name(d)
+        for d_outage in devices_outages
+            if d == d_outage
+                for t in time_steps
+                    _add_to_jump_expression!(
+                        expression[name, t],
+                        variable[name, t],
+                        -1.0,
+                    )
+                end
+                continue
+            end
+            name_outage = PSY.get_name(d_outage)
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expression[name_outage, t],
+                    reserve_deployment_variable[name_outage, name, t],
+                    mult,
+                )
+            end
+        end
+    end
     return
 end
