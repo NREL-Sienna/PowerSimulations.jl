@@ -490,20 +490,24 @@ function add_to_expression!(
 end
 
 """
-Add post-contingency Generation Balance Constraints for Generators for G-1 formulation
+Add post-contingency Generation Balance Constraints for Generators for G-1 formulation and G-1 with reserves (SecurityConstrainedReservesFormulation)
 """
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{R},
-    devices::IS.FlattenIteratorWrapper{S},
-    generator_outages::Vector{T},
-    device_model::DeviceModel{T, U},
+    devices::Union{IS.FlattenIteratorWrapper{S}, Vector{S}},
+    generator_outages::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
+    device_model::Union{DeviceModel{X, U}, ServiceModel{X, U}},
     network_model::NetworkModel{V},
 ) where {
     R <: PostContingengyGenerationBalanceConstraint,
     S <: PSY.Generator,
     T <: PSY.Generator,
-    U <: AbstractSecurityConstrainedUnitCommitment,
+    X <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    U <: Union{
+        AbstractSecurityConstrainedUnitCommitment,
+        AbstractSecurityConstrainedReservesFormulation,
+    },
     V <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
@@ -518,9 +522,12 @@ function add_constraints!(
             IS.Optimization.CONTAINER_KEY_EMPTY_META,
         ),
     )
+    if !isempty(generator_outages) && !haskey(container.constraints, ConstraintKey(R, T))
+        constraint =
+            add_constraints_container!(container, R(), T, device_outages_names, time_steps)
+    end
+    constraint = get_constraint(container, ConstraintKey(R, T))
 
-    constraint =
-        add_constraints_container!(container, R(), T, device_outages_names, time_steps)
     for t in time_steps, d_outage in device_outages_names
         constraint[d_outage, t] =
             JuMP.@constraint(get_jump_model(container), expressions[d_outage, t] == 0)
@@ -1075,7 +1082,6 @@ function construct_service!(
             generator_outages,
             RangeReserveWithDeliverabilityConstraints(),
         )
-        
 
         add_to_expression!(
             container,
@@ -1088,7 +1094,14 @@ function construct_service!(
             model,
             network_model,
         )
-        
+        add_constraints!(
+            container,
+            PostContingengyGenerationBalanceConstraint,
+            contributing_devices,
+            generator_outages,
+            model,
+            network_model,
+        )
     end
     objective_function!(container, service, model)
 
