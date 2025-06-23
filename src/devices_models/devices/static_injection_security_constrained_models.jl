@@ -736,39 +736,55 @@ Add branch post-contingency rate limit constraints for ACBranch after a G-k outa
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{PostContingencyRateLimitConstraintB},
-    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
+    branches::Union{
+        IS.FlattenIteratorWrapper{PSY.ACTransmission},
+        Vector{PSY.ACTransmission},
+    },
     generators_outages::Vector{T},
-    device_model::DeviceModel{T, U},
+    device_model::Union{DeviceModel{Y, U}, ServiceModel{Y, U}},
     network_model::NetworkModel{V},
 ) where {
     T <: PSY.Generator,
-    U <: AbstractSecurityConstrainedUnitCommitment,
+    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    U <: Union{AbstractSecurityConstrainedUnitCommitment,
+        AbstractSecurityConstrainedReservesFormulation},
     V <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in branches]
-    con_lb =
-        add_constraints_container!(
-            container,
-            cons_type(),
-            T,
-            get_name.(generators_outages),
-            device_names,
-            time_steps;
-            meta = "lb",
-        )
+    if !haskey(container.constraints, ConstraintKey(cons_type, T, "lb"))
+        con_lb =
+            add_constraints_container!(
+                container,
+                cons_type(),
+                T,
+                get_name.(generators_outages),
+                device_names,
+                time_steps;
+                meta = "lb",
+            )
 
-    con_ub =
-        add_constraints_container!(
-            container,
-            cons_type(),
-            T,
-            get_name.(generators_outages),
-            device_names,
-            time_steps;
-            meta = "ub",
-        )
+        con_ub =
+            add_constraints_container!(
+                container,
+                cons_type(),
+                T,
+                get_name.(generators_outages),
+                device_names,
+                time_steps;
+                meta = "ub",
+            )
+    end
 
+    con_lb = get_constraint(
+        container,
+        ConstraintKey(cons_type, T, "lb"),
+    )
+
+    con_ub = get_constraint(
+        container,
+        ConstraintKey(cons_type, T, "ub"),
+    )
     expressions = get_expression(
         container,
         ExpressionKey(
@@ -1155,6 +1171,15 @@ function construct_service!(
             service = service,
         )
 
+        #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT B
+        add_constraints!(
+            container,
+            PostContingencyRateLimitConstraintB,
+            PSY.get_available_components(PSY.ACTransmission, sys),
+            generator_outages,
+            model,
+            network_model,
+        )
         
     end
     objective_function!(container, service, model)
