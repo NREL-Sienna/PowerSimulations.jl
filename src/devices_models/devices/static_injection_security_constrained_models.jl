@@ -646,7 +646,7 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
-    names_branches = ptdf.axes[2]   #find other way to obtain this
+    names_branches = ptdf.axes[2]
 
     if !isempty(devices_outages) && !haskey(container.expressions, ExpressionKey(T, X))
         container.expressions[ExpressionKey(T, X)] =
@@ -933,7 +933,7 @@ function add_linear_ramp_constraints!(
             add_constraints_container!(
                 container,
                 T(),
-                V,
+                G,
                 set_outages_name,
                 set_name,
                 time_steps;
@@ -946,7 +946,7 @@ function add_linear_ramp_constraints!(
             add_constraints_container!(
                 container,
                 T(),
-                V,
+                G,
                 set_outages_name,
                 set_name,
                 time_steps;
@@ -1229,6 +1229,18 @@ function construct_service!(
             RangeReserveWithDeliverabilityConstraints(),
         )
 
+        add_constraints!(
+            container,
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            ActivePowerReserveVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            generator_outages,
+            service,
+            model,
+            network_model,
+        )
+
         add_to_expression!(
             container,
             PostContingencyActivePowerBalance,
@@ -1381,6 +1393,102 @@ function add_to_expression!(
                     expression[name_outage, t],
                     reserve_deployment_variable[name_outage, name, t],
                     mult,
+                )
+            end
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint},
+    X::Type{<:VariableType},
+    U::Type{<:AbstractContingencyVariableType},
+    devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    generators_outages::Union{IS.FlattenIteratorWrapper{G}, Vector{G}},
+    service::R,
+    model::ServiceModel{R, W},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {
+    V <: PSY.Generator,
+    G <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    W <: AbstractSecurityConstrainedReservesFormulation,
+}
+    time_steps = get_time_steps(container)
+
+    set_name = [PSY.get_name(r) for r in devices]
+    set_outages_name = [PSY.get_name(r) for r in generators_outages]
+
+    if !haskey(container.constraints, ConstraintKey(T, G, "up")) &&
+       (R <: PSY.Reserve{PSY.ReserveUp})
+        con =
+            add_constraints_container!(
+                container,
+                T(),
+                G,
+                set_outages_name,
+                set_name,
+                time_steps;
+                meta = "up",
+            )
+    end
+    if !haskey(container.constraints, ConstraintKey(T, G, "dn")) &&
+       (R <: PSY.Reserve{PSY.ReserveDown})
+        con =
+            add_constraints_container!(
+                container,
+                T(),
+                G,
+                set_outages_name,
+                set_name,
+                time_steps;
+                meta = "dn",
+            )
+    end
+
+    if (R <: PSY.Reserve{PSY.ReserveUp})
+        con = get_constraint(
+            container,
+            ConstraintKey(T, G, "up"),
+        )
+    else
+        con = get_constraint(
+            container,
+            ConstraintKey(T, G, "dn"),
+        )
+    end
+
+    variable = get_variable(
+        container,
+        X(),
+        R,
+        PSY.get_name(service),
+    )
+
+    variable_outage = get_variable(
+        container,
+        U(),
+        R,
+        PSY.get_name(service),
+    )
+
+    for device in devices
+        name = get_name(device)
+        @debug "add post-contingency active_power_Reserve_Deployment_Limit_constraint" name
+
+        for device_outage in generators_outages
+            name_outage = get_name(device_outage)
+            if name == name_outage
+                continue
+            end
+
+            for t in time_steps
+                con[name_outage, name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable_outage[name_outage, name, t] <=
+                    variable[name, t]
                 )
             end
         end
