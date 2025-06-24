@@ -863,7 +863,7 @@ function add_constraints!(
             constraint_loss_aux4[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 losses[name, t] <=
-                l0 + l1 * ft_var[name, t] + M_VALUE * (1 - direction_var[name, t])
+                l0 + l1 * tf_var[name, t] + M_VALUE * (1 - direction_var[name, t])
             )
         end
     end
