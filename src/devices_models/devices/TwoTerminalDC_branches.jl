@@ -42,7 +42,7 @@ get_variable_multiplier(
 ) = -1.0
 
 function get_variable_multiplier(
-    ::HVDCLosses,
+    ::Union{HVDCLosses, HVDCLossesFromTo, HVDCLossesToFrom},
     d::PSY.TwoTerminalGenericHVDCLine,
     ::HVDCTwoTerminalDispatch,
 )
@@ -86,7 +86,7 @@ get_variable_upper_bound(
 ) = nothing
 
 get_variable_lower_bound(
-    ::HVDCLosses,
+    ::Union{HVDCLosses, HVDCLossesFromTo, HVDCLossesToFrom},
     d::PSY.TwoTerminalGenericHVDCLine,
     ::HVDCTwoTerminalDispatch,
 ) = 0.0
@@ -140,7 +140,7 @@ get_variable_lower_bound(
 ) = PSY.get_active_power_limits_to(d).min
 
 function get_variable_upper_bound(
-    ::HVDCLosses,
+    ::Union{HVDCLosses, HVDCLossesFromTo, HVDCLossesToFrom},
     d::PSY.TwoTerminalGenericHVDCLine,
     ::HVDCTwoTerminalDispatch,
 )
@@ -740,7 +740,9 @@ function add_constraints!(
     tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
     ft_var = get_variable(container, FlowActivePowerFromToVariable(), T)
     direction_var = get_variable(container, HVDCFlowDirectionVariable(), T)
-    losses = get_variable(container, HVDCLosses(), T)
+    # losses = get_variable(container, HVDCLosses(), T)
+    losses_ft = get_variable(container, HVDCLossesFromTo(), T)
+    losses_tf = get_variable(container, HVDCLossesToFrom(), T)
 
     constraint_ft_ub = add_constraints_container!(
         container,
@@ -782,21 +784,37 @@ function add_constraints!(
         time_steps;
         meta = "loss",
     )
-    constraint_loss_aux1 = add_constraints_container!(
+    constraint_loss_aux1_ft = add_constraints_container!(
         container,
         HVDCPowerBalance(),
         T,
         names,
         time_steps;
-        meta = "loss_aux1",
+        meta = "loss_aux1_ft",
     )
-    constraint_loss_aux2 = add_constraints_container!(
+    constraint_loss_aux1_tf = add_constraints_container!(
         container,
         HVDCPowerBalance(),
         T,
         names,
         time_steps;
-        meta = "loss_aux2",
+        meta = "loss_aux1_tf",
+    )
+    constraint_loss_aux2_ft = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux2_ft",
+    )
+    constraint_loss_aux2_tf = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux2_tf",
     )
     for d in devices
         name = PSY.get_name(d)
@@ -829,17 +847,28 @@ function add_constraints!(
             )
             constraint_loss[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                tf_var[name, t] + ft_var[name, t] == losses[name, t]
+                tf_var[name, t] + ft_var[name, t] ==
+                losses_ft[name, t] + losses_tf[name, t]
             )
-            constraint_loss_aux1[name, t] = JuMP.@constraint(
+            constraint_loss_aux1_ft[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                losses[name, t] >=
+                losses_ft[name, t] >=
                 l1 * ft_var[name, t] + l0 - M_VALUE * direction_var[name, t]
             )
-            constraint_loss_aux2[name, t] = JuMP.@constraint(
+            constraint_loss_aux1_tf[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                losses[name, t] >=
+                losses_tf[name, t] >=
                 l1 * tf_var[name, t] + l0 - M_VALUE * (1 - direction_var[name, t])
+            )
+            constraint_loss_aux2_ft[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses_ft[name, t] <=
+                M_VALUE * (1 - direction_var[name, t])
+            )
+            constraint_loss_aux2_tf[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses_tf[name, t] <=
+                M_VALUE * direction_var[name, t]
             )
         end
     end

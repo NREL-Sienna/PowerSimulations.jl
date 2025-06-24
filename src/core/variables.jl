@@ -224,6 +224,10 @@ Docs abbreviation: ``\\ell``
 """
 struct HVDCLosses <: VariableType end
 
+struct HVDCLossesFromTo <: VariableType end
+
+struct HVDCLossesToFrom <: VariableType end
+
 """
 Struct to dispatch the creation of HVDC Flow Direction Auxiliary Variables
 
@@ -458,5 +462,7 @@ convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true
+convert_result_to_natural_units(::Type{HVDCLossesFromTo}) = true
+convert_result_to_natural_units(::Type{HVDCLossesToFrom}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackUp}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackDown}) = true

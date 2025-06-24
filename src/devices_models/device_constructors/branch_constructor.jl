@@ -773,7 +773,9 @@ function construct_device!(
         devices,
         HVDCTwoTerminalDispatch(),
     )
-    add_variables!(container, HVDCLosses, devices, HVDCTwoTerminalDispatch())
+    # add_variables!(container, HVDCLosses, devices, HVDCTwoTerminalDispatch())
+    add_variables!(container, HVDCLossesFromTo, devices, HVDCTwoTerminalDispatch())
+    add_variables!(container, HVDCLossesToFrom, devices, HVDCTwoTerminalDispatch())
     add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCTwoTerminalDispatch())
     add_to_expression!(
         container,
@@ -791,10 +793,26 @@ function construct_device!(
         model,
         network_model,
     )
+    # add_to_expression!(
+    #     container,
+    #     ActivePowerBalance,
+    #     HVDCLosses,
+    #     devices,
+    #     model,
+    #     network_model,
+    # )
     add_to_expression!(
         container,
         ActivePowerBalance,
-        HVDCLosses,
+        HVDCLossesFromTo,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCLossesToFrom,
         devices,
         model,
         network_model,
@@ -840,7 +858,9 @@ function construct_device!(
         HVDCTwoTerminalDispatch(),
     )
     add_variables!(container, HVDCFlowDirectionVariable, devices, HVDCTwoTerminalDispatch())
-    add_variables!(container, HVDCLosses, devices, HVDCTwoTerminalDispatch())
+    # add_variables!(container, HVDCLosses, devices, HVDCTwoTerminalDispatch())
+    add_variables!(container, HVDCLossesFromTo, devices, HVDCTwoTerminalDispatch())
+    add_variables!(container, HVDCLossesToFrom, devices, HVDCTwoTerminalDispatch())
     add_to_expression!(
         container,
         ActivePowerBalance,
