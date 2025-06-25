@@ -27,6 +27,7 @@ for main_path in main_paths
                     "index.md",
                     "extending_powersimulations.md",
                     "simulation_recorder.md",
+                    "how_to/install.md",
                 ],
 
                 # always_use_return = true. # Disabled since it throws a lot of false positives

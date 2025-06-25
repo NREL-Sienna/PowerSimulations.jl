@@ -362,72 +362,72 @@ Formulation valid for `ACPPowerModel` Network model
 
 **Variables:**
 
-  - [`HVDCRectifierDelayAngleVariable`](@ref):
+  - [`HVDCRectifierDelayAngleVariable`]:
     
         + Bounds: ``(-\alpha_{r,t}^\text{min},\alpha_{r,t}^\text{max})``
         + Symbol: ``\alpha_{r,t}``
 
-  - [`HVDCInverterExtinctionAngleVariable`](@ref):
+  - [`HVDCInverterExtinctionAngleVariable`]:
     
         + Bounds: ``(-\gamma_{i,t}^\text{min},\gamma_{i,t}^\text{max})``
         + Symbol: ``\gamma_{i,t}``
-  - [`HVDCRectifierPowerFactorAngleVariable`](@ref):
+  - [`HVDCRectifierPowerFactorAngleVariable`]:
     
         + Bounds: ``\{0,1\}``
         + Symbol: ``\phi_{r,t}``
-  - [`HVDCInverterPowerFactorAngleVariable`](@ref):
+  - [`HVDCInverterPowerFactorAngleVariable`]:
     
         + Bounds: ``\{0,1\}``
         + Symbol: ``\phi_{i,t}``
-  - [`HVDCRectifierOverlapAngleVariable`](@ref):
+  - [`HVDCRectifierOverlapAngleVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``\mu_{r,t}``
-  - [`HVDCInverterOverlapAngleVariable`](@ref):
+  - [`HVDCInverterOverlapAngleVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``\mu_{i,t}``
-  - [`HVDCRectifierTapSettingVariable`](@ref):
+  - [`HVDCRectifierTapSettingVariable`]:
     
         + Bounds: ``(t_{r,t}^\text{min},t_{r,t}^\text{max})``
         + Symbol: ``t_{r,t}``
-  - [`HVDCInverterTapSettingVariable`](@ref):
+  - [`HVDCInverterTapSettingVariable`]:
     
         + Bounds: ``(t_{i,t}^\text{min},t_{i,t}^\text{max})``
         + Symbol: ``t_{i,t}``
-  - [`HVDCRectifierDCVoltageVariable`](@ref):
+  - [`HVDCRectifierDCVoltageVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``v_{r,t}^\text{dc}``
-  - [`HVDCInverterDCVoltageVariable`](@ref):
+  - [`HVDCInverterDCVoltageVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``v_{i,t}^\text{dc}``
-  - [`HVDCRectifierACCurrentVariable`](@ref):
+  - [`HVDCRectifierACCurrentVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``I_{r,t}^\text{ac}``
-  - [`HVDCInverterACCurrentVariable`](@ref):
+  - [`HVDCInverterACCurrentVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``I_{i,t}^\text{ac}``
-  - [`DCLineCurrentFlowVariable`](@ref):
+  - [`DCLineCurrentFlowVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``I^\text{dc}``
-  - [`HVDCActivePowerReceivedFromVariable`](@ref):
+  - [`HVDCActivePowerReceivedFromVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``p_{r,t}^\text{ac}``
-  - [`HVDCActivePowerReceivedToVariable`](@ref):
+  - [`HVDCActivePowerReceivedToVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``p_{i,t}^\text{ac}``
-  - [`HVDCReactivePowerReceivedFromVariable`](@ref):
+  - [`HVDCReactivePowerReceivedFromVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``q_{r,t}^\text{ac}``
-  - [`HVDCReactivePowerReceivedToVariable`](@ref):
+  - [`HVDCReactivePowerReceivedToVariable`]:
     
         + Bounds: [0.0, ]
         + Symbol: ``q_{i,t}^\text{ac}``
