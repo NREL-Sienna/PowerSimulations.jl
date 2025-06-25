@@ -798,6 +798,22 @@ function add_constraints!(
         time_steps;
         meta = "loss_aux2",
     )
+    constraint_loss_aux3 = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux3",
+    )
+    constraint_loss_aux4 = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux4",
+    )
     for d in devices
         name = PSY.get_name(d)
         loss = PSY.get_loss(d)
@@ -833,13 +849,21 @@ function add_constraints!(
             )
             constraint_loss_aux1[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                losses[name, t] >=
-                l1 * ft_var[name, t] + l0 - M_VALUE * direction_var[name, t]
+                losses[name, t] >= l0 + l1 * ft_var[name, t]
             )
             constraint_loss_aux2[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                losses[name, t] >=
-                l1 * tf_var[name, t] + l0 - M_VALUE * (1 - direction_var[name, t])
+                losses[name, t] >= l0 + l1 * tf_var[name, t]
+            )
+            constraint_loss_aux3[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses[name, t] <=
+                l0 + l1 * ft_var[name, t] + M_VALUE * direction_var[name, t]
+            )
+            constraint_loss_aux4[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses[name, t] <=
+                l0 + l1 * tf_var[name, t] + M_VALUE * (1 - direction_var[name, t])
             )
         end
     end

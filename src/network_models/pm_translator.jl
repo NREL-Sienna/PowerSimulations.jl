@@ -21,6 +21,8 @@ function get_branch_to_pm(
     ::Type{PhaseAngleControl},
     ::Type{<:PM.AbstractDCPModel},
 )
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rating(branch),
@@ -29,12 +31,12 @@ function get_branch_to_pm(
         "br_x" => PSY.get_x(branch),
         "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => 0.0, # Turn off the branch while keeping the function type stable
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -50,6 +52,8 @@ function get_branch_to_pm(
     ::Type{D},
     ::Type{<:PM.AbstractPowerModel},
 ) where {D <: AbstractBranchFormulation}
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rating(branch),
@@ -58,12 +62,12 @@ function get_branch_to_pm(
         "br_x" => PSY.get_x(branch),
         "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => Float64(PSY.get_available(branch)),
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -79,17 +83,19 @@ function get_branch_to_pm(
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
 )
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => PSY.get_α(branch),
         "br_x" => PSY.get_x(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => Float64(PSY.get_available(branch)),
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -105,6 +111,8 @@ function get_branch_to_pm(
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rating(branch),
@@ -113,12 +121,12 @@ function get_branch_to_pm(
         "br_x" => PSY.get_x(branch),
         "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => Float64(PSY.get_available(branch)),
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -134,17 +142,19 @@ function get_branch_to_pm(
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
 )
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
         "br_x" => PSY.get_x(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => Float64(PSY.get_available(branch)),
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -160,6 +170,8 @@ function get_branch_to_pm(
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rating(branch),
@@ -168,12 +180,12 @@ function get_branch_to_pm(
         "br_x" => PSY.get_x(branch),
         "rate_c" => PSY.get_rating(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => Float64(PSY.get_available(branch)),
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -189,17 +201,19 @@ function get_branch_to_pm(
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
 )
+    # we allocate the transformer shunt values to primary side only
+    yt = PSY.get_primary_shunt(branch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "shift" => 0.0,
         "br_x" => PSY.get_x(branch),
         "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_primary_shunt(branch) / 2,
+        "b_to" => 0.0,
+        "g_fr" => real(yt),
+        "b_fr" => imag(yt),
         "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
         "br_status" => Float64(PSY.get_available(branch)),
         "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_primary_shunt(branch) / 2,
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
