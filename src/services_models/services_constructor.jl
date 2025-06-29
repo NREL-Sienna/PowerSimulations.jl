@@ -553,38 +553,32 @@ function construct_service!(
     return
 end
 
-# Repeated Methods to avoid ambiguity between ConstantMaxInterfaceFlow and VariableMaxInterfaceFlow
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
-    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    ::ArgumentConstructStage,
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{AreaBalancePowerModel},
-) where {T <: PSY.TransmissionInterface}
-    throw(
-        IS.ConflictingInputsError(
-            "AreaBalancePowerModel doesn't model individual line flows and it is not compatible with the addition of TransmissionInterface models",
-        ),
+)
+    interfaces = get_available_components(model, sys)
+    interface = PSY.get_component(T, sys, get_service_name(model))
+    if get_use_slacks(model)
+        # Adding the slacks can be done in a cleaner fashion
+        @assert PSY.get_available(interface)
+        transmission_interface_slacks!(container, interface)
+    end
+    # Lazy container addition for the expressions.
+    lazy_container_addition!(
+        container,
+        InterfaceTotalFlow(),
+        T,
+        PSY.get_name.(interfaces),
+        get_time_steps(container),
     )
-    return
-end
-
-function construct_service!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::ServiceModel{T, VariableMaxInterfaceFlow},
-    devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{AreaBalancePowerModel},
-) where {T <: PSY.TransmissionInterface}
-    throw(
-        IS.ConflictingInputsError(
-            "AreaBalancePowerModel doesn't model individual line flows and it is not compatible with the addition of TransmissionInterface models",
-        ),
-    )
+    @warn "AreaBalancePowerModel doesn't model individual line flows and it ignores the flows on AC Transmission Devices"
+    add_feedforward_arguments!(container, model, interface)
     return
 end
 
