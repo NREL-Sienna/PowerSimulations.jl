@@ -9,9 +9,9 @@ get_initial_input_maybe_decremental(::Val{false}, device::PSY.StaticInjection) =
     PSY.get_incremental_initial_input(PSY.get_operation_cost(device))
 
 get_offer_curves_maybe_decremental(::Val{true}, device::PSY.StaticInjection) =
-    PSY.get_decremental_offer_curves(PSY.get_operation_cost(device))
+    get_input_offer_curves(PSY.get_operation_cost(device))
 get_offer_curves_maybe_decremental(::Val{false}, device::PSY.StaticInjection) =
-    PSY.get_incremental_offer_curves(PSY.get_operation_cost(device))
+    get_output_offer_curves(PSY.get_operation_cost(device))
 
 # Dictionaries to handle more incremental (false) vs. decremental (true) cases
 const SLOPE_PARAMS = Dict(
@@ -322,9 +322,9 @@ end
 get_offer_curves_for_var(var, comp::PSY.Component) =
     get_offer_curves_for_var(var, get_operation_cost(comp))
 get_offer_curves_for_var(::PiecewiseLinearBlockIncrementalOffer, cost::PSY.MarketBidCost) =
-    PSY.get_incremental_offer_curves(cost)
+    get_offer_curves_maybe_decremental(Val(false), cost)
 get_offer_curves_for_var(::PiecewiseLinearBlockDecrementalOffer, cost::PSY.MarketBidCost) =
-    PSY.get_decremental_offer_curves(cost)
+    get_offer_curves_maybe_decremental(Val(true), cost)
 
 get_multiplier_for_var(::PiecewiseLinearBlockIncrementalOffer) = OBJECTIVE_FUNCTION_POSITIVE
 get_multiplier_for_var(::PiecewiseLinearBlockDecrementalOffer) = OBJECTIVE_FUNCTION_NEGATIVE
@@ -353,7 +353,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(slopes_normalized)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            (cost * multiplier),
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -375,7 +376,8 @@ function _get_pwl_cost_expression(
     for i in 1:length(slopes_normalized)
         JuMP.add_to_expression!(
             ordc_cost,
-            slopes_normalized[i] * multiplier * pwl_var_container[(name, i, time_period)],
+            slopes[i] * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return ordc_cost
@@ -463,7 +465,7 @@ function add_pwl_term!(
     is_decremental::Bool,
     container::OptimizationContainer,
     component::T,
-    ::PSY.MarketBidCost,
+    ::OfferCurveCost,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
@@ -578,12 +580,12 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    if !isnothing(PSY.get_decremental_offer_curves(cost_function))
+    if !isnothing(get_input_offer_curves(cost_function))
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     add_pwl_term!(
@@ -601,13 +603,13 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::U,
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
     component_name = PSY.get_name(component)
     @debug "Market Bid" _group = LOG_GROUP_COST_FUNCTIONS component_name
-    if !(isnothing(PSY.get_incremental_offer_curves(cost_function)))
+    if !(isnothing(get_output_offer_curves(cost_function)))
         error("Component $(component_name) is not allowed to participate as a supply.")
     end
     add_pwl_term!(
@@ -665,10 +667,10 @@ function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::PSY.MarketBidCost,
+    op_cost::OfferCurveCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
-    incremental_cost_curves = PSY.get_incremental_offer_curves(op_cost)
+    incremental_cost_curves = get_output_offer_curves(op_cost)
     if is_time_variant(incremental_cost_curves)
         # TODO this might imply a change to the MBC struct?
         @warn "Incremental curves are time variant, there is no VOM cost source. Skipping VOM cost."
@@ -689,11 +691,11 @@ function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::PSY.MarketBidCost,
+    op_cost::OfferCurveCost,
     ::U,
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
-    decremental_cost_curves = PSY.get_decremental_offer_curves(op_cost)
+    decremental_cost_curves = get_input_offer_curves(op_cost)
     _add_vom_cost_to_objective_helper!(
         container,
         T(),
@@ -709,7 +711,7 @@ function _add_vom_cost_to_objective_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    ::PSY.MarketBidCost,
+    ::OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
 ) where {T <: VariableType,

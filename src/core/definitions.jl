@@ -43,6 +43,7 @@ const JumpSupportedLiterals =
 
 const TwoTerminalHVDCTypes =
     Union{PSY.TwoTerminalGenericHVDCLine, PSY.TwoTerminalVSCLine, PSY.TwoTerminalLCCLine}
+const OfferCurveCost = Union{PSY.MarketBidCost, PSY.ImportExportCost}
 # Settings constants
 const UNSET_HORIZON = Dates.Millisecond(0)
 const UNSET_RESOLUTION = Dates.Millisecond(0)
@@ -60,6 +61,7 @@ const SECONDS_IN_MINUTE = 60.0
 const MINUTES_IN_HOUR = 60.0
 const SECONDS_IN_HOUR = 3600.0
 const MILLISECONDS_IN_HOUR = 3600000.0
+const HOURS_IN_WEEK = 168.0
 const MAX_START_STAGES = 3
 const OBJECTIVE_FUNCTION_POSITIVE = 1.0
 const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
@@ -73,6 +75,9 @@ const GiB = MiB * KiB
 const PSI_NAME_DELIMITER = "__"
 
 const M_VALUE = 1e6
+
+# TODO: remove and use from IS.
+const RNG_SEED = get(ENV, "SIENNA_RNG_SEED", 2017)
 
 const NO_SERVICE_NAME_PROVIDED = ""
 const UPPER_BOUND = "ub"

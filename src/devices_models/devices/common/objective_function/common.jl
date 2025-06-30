@@ -2,6 +2,11 @@
 ######## Helper Functions ########
 ##################################
 
+get_output_offer_curves(cost::PSY.ImportExportCost) = PSY.get_import_offer_curves(cost)
+get_output_offer_curves(cost::PSY.MarketBidCost) = PSY.get_incremental_offer_curves(cost)
+get_input_offer_curves(cost::PSY.ImportExportCost) = PSY.get_export_offer_curves(cost)
+get_input_offer_curves(cost::PSY.MarketBidCost) = PSY.get_decremental_offer_curves(cost)
+
 """
 Either looks up a value in the component using `getter_func` or fetches the value from the
 parameter `U()`, depending on whether we are in the time-variant case or not

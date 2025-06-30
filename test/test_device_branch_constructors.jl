@@ -418,7 +418,10 @@ end
             @test isapprox(no_loss_objective, ref_objective; atol = 0.1)
 
             for col in names(ref_values)
-                @test all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol = 0.1))
+                test_result =
+                    all(isapprox.(ref_values[!, col], no_loss_values[!, col]; atol = 0.1))
+                @test test_result
+                test_result || break
             end
 
             @test all(
@@ -474,7 +477,9 @@ end
             @test wl_total_gen > no_loss_total_gen
 
             for col in names(dispatch_values_tf)
-                @test all(dispatch_values_tf[!, col] .<= dispatch_values_ft[!, col])
+                test_result = all(dispatch_values_tf[!, col] .<= dispatch_values_ft[!, col])
+                @test test_result
+                test_result || break
             end
         end
     end
@@ -568,6 +573,7 @@ end
         α = 0.0,
         rating = get_rating(line),
         arc = get_arc(line),
+        base_power = get_base_power(system),
     )
 
     add_component!(system, ps)
@@ -604,6 +610,62 @@ end
         "1",
         -π / 2,
         π / 2,
+    )
+end
+
+@testset "AC Power Flow in the loop for PhaseShiftingTransformer" begin
+    system = build_system(PSITestSystems, "c_sys5_uc")
+
+    line = get_component(Line, system, "1")
+    arc = get_arc(line)
+    remove_component!(system, line)
+
+    ps = PhaseShiftingTransformer(;
+        name = get_name(line),
+        available = true,
+        active_power_flow = 0.0,
+        reactive_power_flow = 0.0,
+        r = get_r(line),
+        x = get_x(line),
+        primary_shunt = 0.0,
+        tap = 1.0,
+        α = 0.0,
+        rating = get_rating(line),
+        arc = arc,
+        base_power = get_base_power(system),
+    )
+
+    add_component!(system, ps)
+
+    template = get_template_dispatch_with_network(
+        NetworkModel(
+            PTDFPowerModel;
+            PTDF_matrix = PTDF(system),
+            power_flow_evaluation = ACPowerFlow(),
+        ),
+    )
+    set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
+    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results = OptimizationProblemResults(model_m)
+    vd = read_variables(results)
+
+    data = PSI.get_power_flow_data(
+        only(PSI.get_power_flow_evaluation_data(PSI.get_optimization_container(model_m))),
+    )
+    base_power = get_base_power(system)
+
+    # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
+    @test isapprox(
+        data.bus_activepower_injection[data.bus_lookup[get_number(get_to(arc))], :] *
+        base_power,
+        vd["FlowActivePowerVariable__PhaseShiftingTransformer"][:, get_name(line)],
+        atol = 1e-9,
+        rtol = 0,
     )
 end
 

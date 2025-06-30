@@ -862,6 +862,8 @@ function initial_conditions!(
     formulation::Union{ThermalBasicUnitCommitment, ThermalBasicCompactUnitCommitment},
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff())
     return
 end
 

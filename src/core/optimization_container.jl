@@ -65,15 +65,15 @@ mutable struct OptimizationContainer <: IS.Optimization.AbstractOptimizationCont
     time_steps::UnitRange{Int}
     settings::Settings
     settings_copy::Settings
-    variables::Dict{VariableKey, AbstractArray}
-    aux_variables::Dict{AuxVarKey, AbstractArray}
-    duals::Dict{ConstraintKey, AbstractArray}
-    constraints::Dict{ConstraintKey, AbstractArray}
+    variables::OrderedDict{VariableKey, AbstractArray}
+    aux_variables::OrderedDict{AuxVarKey, AbstractArray}
+    duals::OrderedDict{ConstraintKey, AbstractArray}
+    constraints::OrderedDict{ConstraintKey, AbstractArray}
     objective_function::ObjectiveFunction
-    expressions::Dict{ExpressionKey, AbstractArray}
-    parameters::Dict{ParameterKey, ParameterContainer}
+    expressions::OrderedDict{ExpressionKey, AbstractArray}
+    parameters::OrderedDict{ParameterKey, ParameterContainer}
     primal_values_cache::PrimalValuesCache
-    initial_conditions::Dict{InitialConditionKey, Vector{<:InitialCondition}}
+    initial_conditions::OrderedDict{InitialConditionKey, Vector{<:InitialCondition}}
     initial_conditions_data::InitialConditionsData
     infeasibility_conflict::Dict{Symbol, Array}
     pm::Union{Nothing, PM.AbstractPowerModel}
@@ -516,13 +516,6 @@ function _make_system_expressions!(
     ::Type{AreaBalancePowerModel},
     areas::IS.FlattenIteratorWrapper{PSY.Area},
 )
-    if length(subnetworks) > 1
-        throw(
-            IS.ConflictingInputsError(
-                "AreaBalancePowerModel doesn't support systems with multiple asynchronous areas",
-            ),
-        )
-    end
     time_steps = get_time_steps(container)
     container.expressions = Dict(
         ExpressionKey(ActivePowerBalance, PSY.Area) =>
@@ -588,6 +581,38 @@ function initialize_system_expressions!(
     return
 end
 
+function _verify_area_subnetwork_topology(sys::PSY.System, subnetworks::Dict{Int, Set{Int}})
+    if length(subnetworks) < 1
+        @debug "Only one subnetwork detected in the system. Area - Subnetwork topology check is valid."
+        return
+    end
+
+    @warn "More than one subnetwork detected in AreaBalancePowerModel. Topology consistency checks must be conducted."
+
+    area_map = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
+    for (area, buses) in area_map
+        bus_numbers =
+            [
+                PSY.get_number(b) for
+                b in buses if PSY.get_bustype(b) != PSY.ACBusTypes.ISOLATED
+            ]
+        subnets = Int[]
+        for (subnet, subnet_bus_numbers) in subnetworks
+            if !isdisjoint(bus_numbers, subnet_bus_numbers)
+                push!(subnets, subnet)
+            end
+        end
+        if length(subnets) > 1
+            @error "Area $(PSY.get_name(area)) is connected to multiple subnetworks $(subnets)."
+            throw(
+                IS.ConflictingInputsError(
+                    "AreaBalancePowerModel doesn't support systems with Areas distributed across multiple asynchronous areas",
+                ))
+        end
+    end
+    return
+end
+
 function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{AreaBalancePowerModel},
@@ -603,7 +628,16 @@ function initialize_system_expressions!(
             ),
         )
     end
-    @assert !isempty(areas)
+    area_interchanges = PSY.get_available_components(PSY.AreaInterchange, system)
+    if isempty(area_interchanges) ||
+       PSY.AreaInterchange ∉ network_model.modeled_branch_types
+        @warn "The system does not contain any AreaInterchanges. The model won't have any power flowing between the areas."
+    end
+    if !isempty(area_interchanges) &&
+       PSY.AreaInterchange ∉ network_model.modeled_branch_types
+        @warn "AreaInterchanges are not included in the model template. The model won't have any power flowing between the areas."
+    end
+    _verify_area_subnetwork_topology(system, subnetworks)
     _make_system_expressions!(container, subnetworks, AreaBalancePowerModel, areas)
     return
 end
@@ -650,7 +684,7 @@ function build_impl!(
         get_network_model(template),
         transmission_model.subnetworks,
         sys,
-        transmission_model.radial_network_reduction.bus_reduction_map)
+        transmission_model.network_reduction.bus_reduction_map)
 
     # Order is required
     for device_model in values(template.devices)
@@ -930,7 +964,7 @@ function deserialize_metadata!(
     return
 end
 
-function _assign_container!(container::Dict, key::OptimizationContainerKey, value)
+function _assign_container!(container::OrderedDict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(IS.Optimization.encode_key(key)) is already stored" sort!(
             IS.Optimization.encode_key.(keys(container)),
@@ -1225,6 +1259,32 @@ end
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
+    attribute::EventParametersAttributes{V, T},
+    param_axs,
+    time_steps;
+    sparse = false,
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
+    else
+        param_type = Float64
+    end
+
+    if sparse
+        error("Sparse parameter container is not supported for $V")
+    else
+        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+        multiplier_array =
+            fill!(DenseAxisArray{Float64}(undef, param_axs, time_steps), NaN)
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
     attributes::CostFunctionAttributes{R},
     axs...;
     sparse = false,
@@ -1286,6 +1346,20 @@ function add_param_container!(
     param_key = ParameterKey(T, U, meta)
     attributes =
         CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
+    return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
+end
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    ::Type{V},
+    axs...;
+    sparse = false,
+    meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
+    param_key = ParameterKey(T, U, meta)
+    attributes = EventParametersAttributes{V, T}(U[])
     return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
 

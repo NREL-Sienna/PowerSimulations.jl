@@ -36,7 +36,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
-    radial_network_reduction::PNM.RadialNetworkReduction
+    network_reduction::PNM.NetworkReduction
     reduce_radial_branches::Bool
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
@@ -61,7 +61,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             subnetworks,
             Dict{PSY.ACBus, Int}(),
             duals,
-            PNM.RadialNetworkReduction(),
+            PNM.NetworkReduction(),
             reduce_radial_branches,
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
@@ -73,7 +73,7 @@ end
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
 get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
-get_radial_network_reduction(m::NetworkModel) = m.radial_network_reduction
+get_network_reduction(m::NetworkModel) = m.network_reduction
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T} = T
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
@@ -93,11 +93,11 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-function check_radial_branch_reduction_compatibility(
+function check_network_reduction_compatibility(
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-    if T ∈ INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
-        error("Network Model $T is not compatible with radial branch reduction")
+    if T ∈ INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS
+        error("Network Model $T is not compatible with network reduction")
     end
     return
 end
@@ -109,9 +109,8 @@ function instantiate_network_model(
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
-    if model.reduce_radial_branches
-        check_radial_branch_reduction_compatibility(T)
-        model.radial_network_reduction = PNM.RadialNetworkReduction(sys)
+    if !isempty(model.network_reduction)
+        check_network_reduction_compatibility(T)
     end
     return
 end
@@ -137,23 +136,40 @@ function instantiate_network_model(
 )
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
+        if model.reduce_radial_branches
+            network_reduction = PNM.get_radial_reduction(sys)
+        else
+            network_reduction = PNM.NetworkReduction()
+        end
         model.PTDF_matrix =
-            PNM.PTDF(sys; reduce_radial_branches = model.reduce_radial_branches)
+            PNM.VirtualPTDF(sys; network_reduction = network_reduction)
     end
 
-    if !model.reduce_radial_branches && !isempty(model.PTDF_matrix.radial_network_reduction)
+    if !model.reduce_radial_branches &&
+       model.PTDF_matrix.network_reduction.reduction_type ==
+       PNM.NetworkReductionTypes.RADIAL
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
-                model specification radial_network_reduction = false. Set the keyword argument \\
-                radial_network_reduction = true in your network model"),
+                model specification reduce_radial_branches = false. Set the keyword argument \\
+                reduce_radial_branches = true in your network model"),
+        )
+    end
+
+    if model.reduce_radial_branches &&
+       model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD
+        throw(
+            IS.ConflictingInputsError(
+                "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
+                reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
+                or provide a modified PTDF Matrix without the Ward reduction."),
         )
     end
 
     if model.reduce_radial_branches
-        @assert !isempty(model.PTDF_matrix.radial_network_reduction)
-        model.radial_network_reduction = model.PTDF_matrix.radial_network_reduction
+        @assert !isempty(model.PTDF_matrix.network_reduction)
     end
+    model.network_reduction = model.PTDF_matrix.network_reduction
 
     get_PTDF_matrix(model).subnetworks
     model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
@@ -170,10 +186,10 @@ function _assign_subnetworks_to_buses(
 ) where {T <: Union{CopperPlatePowerModel, AbstractPTDFModel}}
     subnetworks = model.subnetworks
     temp_bus_map = Dict{Int, Int}()
-    radial_network_reduction = PSI.get_radial_network_reduction(model)
+    network_reduction = PSI.get_network_reduction(model)
     for bus in PSI.get_available_components(model, PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
-        mapped_bus_no = PNM.get_mapped_bus_number(radial_network_reduction, bus)
+        mapped_bus_no = PNM.get_mapped_bus_number(network_reduction, bus)
         if haskey(temp_bus_map, bus_no)
             model.bus_area_map[bus] = temp_bus_map[bus_no]
             continue
@@ -194,12 +210,10 @@ function _assign_subnetworks_to_buses(
     end
     return
 end
-
 _assign_subnetworks_to_buses(
     ::NetworkModel{T},
     ::PSY.System,
 ) where {T <: PM.AbstractPowerModel} = nothing
-
 function get_reference_bus(
     model::NetworkModel{T},
     b::PSY.ACBus,
