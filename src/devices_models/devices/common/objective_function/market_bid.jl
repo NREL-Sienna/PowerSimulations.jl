@@ -30,7 +30,9 @@ const PIECEWISE_BLOCK_CONSTRAINTS = Dict(
 # Determines whether we care about various types of costs, given the formulation
 # NOTE: currently works based on what has already been added to the container;
 # alternatively we could dispatch on the formulation directly
-_consider_startup_time_series(
+
+_consider_parameter(
+    ::StartupCostParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} =
@@ -39,13 +41,16 @@ _consider_startup_time_series(
             [get_variables(container)],
             VariableKey.([StartVariable, MULTI_START_VARIABLES...], [T])),
     )
-_consider_shutdown_time_series(
+
+_consider_parameter(
+    ::ShutdownCostParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} =
     haskey(get_variables(container), VariableKey(StopVariable, T))
 
-_consider_initial_input_time_series(
+_consider_parameter(
+    ::IncrementalCostAtMinParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} =
@@ -53,26 +58,42 @@ _consider_initial_input_time_series(
 
 # For slopes and breakpoints, the relevant variables won't have been created yet, so we'll
 # just check all components for the presence of the relevant time series
-_consider_slope_time_series(
+_consider_parameter(
+    ::IncrementalPiecewiseLinearSlopeParameter,
     ::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = true
 
-_consider_breakpoint_time_series(
+_consider_parameter(
+    ::IncrementalPiecewiseLinearBreakpointParameter,
     ::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = true
 
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
-_has_startup_time_series(device::PSY.StaticInjection) =
+
+_has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
-_has_shutdown_time_series(device::PSY.StaticInjection) =
+
+_has_parameter_time_series(::ShutdownCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(device)))
-_has_incremental_initial_input_time_series(device::PSY.StaticInjection) =
+
+_has_parameter_time_series(::IncrementalCostAtMinParameter, device::PSY.StaticInjection) =
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
-_has_incremental_offer_curves_time_series(device::PSY.StaticInjection) =
+
+_has_parameter_time_series(
+    ::IncrementalPiecewiseLinearSlopeParameter,
+    device::PSY.StaticInjection,
+) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+
+_has_parameter_time_series(
+    ::IncrementalPiecewiseLinearBreakpointParameter,
+    device::PSY.StaticInjection,
+) =
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
 
@@ -96,17 +117,15 @@ function validate_initial_input_time_series(device::PSY.StaticInjection, decreme
 end
 
 function _add_market_bid_parameters_helper(
-    consider_fn,
-    filter_fn,
-    param,
-    container,
+    ::P,
+    container::OptimizationContainer,
     model,
     devices,
-)
-    if consider_fn(container, model)
-        my_devices = filter(filter_fn, devices)
+) where {P <: ParameterType}
+    if _consider_parameter(P(), container, model)
+        my_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         if length(my_devices) > 0
-            add_parameters!(container, param, my_devices, model)
+            add_parameters!(container, P, my_devices, model)
             return true
         end
     end
@@ -122,9 +141,7 @@ function add_market_bid_parameters!(
 
     # Startup cost parameters
     _add_market_bid_parameters_helper(
-        _consider_startup_time_series,
-        _has_startup_time_series,
-        StartupCostParameter,
+        StartupCostParameter(),
         container,
         model,
         devices,
@@ -132,9 +149,7 @@ function add_market_bid_parameters!(
 
     # Shutdown cost parameters
     _add_market_bid_parameters_helper(
-        _consider_shutdown_time_series,
-        _has_shutdown_time_series,
-        ShutdownCostParameter,
+        ShutdownCostParameter(),
         container,
         model,
         devices,
@@ -143,9 +158,7 @@ function add_market_bid_parameters!(
     # Min gen cost parameters
     # TODO decremental case
     _add_market_bid_parameters_helper(
-        _consider_initial_input_time_series,
-        _has_incremental_initial_input_time_series,
-        IncrementalCostAtMinParameter,
+        IncrementalCostAtMinParameter(),
         container,
         model,
         devices,
@@ -154,9 +167,7 @@ function add_market_bid_parameters!(
     # Variable cost: slope parameters
     # TODO decremental case
     _add_market_bid_parameters_helper(
-        _consider_slope_time_series,
-        _has_incremental_offer_curves_time_series,
-        IncrementalPiecewiseLinearSlopeParameter,
+        IncrementalPiecewiseLinearSlopeParameter(),
         container,
         model,
         devices,
@@ -165,9 +176,7 @@ function add_market_bid_parameters!(
     # Variable cost: breakpoint parameters
     # TODO decremental case
     _add_market_bid_parameters_helper(
-        _consider_breakpoint_time_series,
-        _has_incremental_offer_curves_time_series,
-        IncrementalPiecewiseLinearBreakpointParameter,
+        IncrementalPiecewiseLinearBreakpointParameter(),
         container,
         model,
         devices,
