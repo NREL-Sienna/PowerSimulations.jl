@@ -4,8 +4,8 @@
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PieceWiseLinearBlockOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PieceWiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
     sys = build_system(PSITestSystems, "c_sys5_uc")
@@ -59,8 +59,8 @@ end
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PieceWiseLinearBlockOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PieceWiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
     sys = build_system(PSITestSystems, "c_sys5_uc")

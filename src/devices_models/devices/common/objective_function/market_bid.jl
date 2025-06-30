@@ -208,8 +208,10 @@ end
 ################# PWL Constraints ################
 ##################################################
 
-_include_min_gen_power_in_constraint(::ActivePowerVariable) = true
-_include_min_gen_power_in_constraint(::PowerAboveMinimumVariable) = false
+_include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
+_include_min_gen_power_in_constraint(::PSY.InterruptiblePowerLoad, ::ActivePowerVariable) =
+    false
+_include_min_gen_power_in_constraint(::Any, ::PowerAboveMinimumVariable) = false
 
 """
 Implement the constraints for PWL Block Offer variables. That is:
@@ -244,7 +246,7 @@ function _add_pwl_constraint!(
     sum_pwl_vars = sum(pwl_vars[name, ix, period] for ix in 1:len_cost_data)
 
     # TODO fix https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1318 better, this is a stopgap
-    if _include_min_gen_power_in_constraint(U())
+    if _include_min_gen_power_in_constraint(component, U())
         on_vars = get_variable(container, OnVariable(), T)
         min_power = if first(break_points) isa Number
             # In this case, we can use the first breakpoint without creating a quadratic constraint

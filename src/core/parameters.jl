@@ -159,7 +159,7 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
-    return jump_value.(param_array) .* multiplier_array
+    return (.*).(jump_value.(param_array), multiplier_array)
 end
 
 function get_parameter_values(

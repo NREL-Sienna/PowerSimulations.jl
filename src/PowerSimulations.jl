@@ -311,8 +311,8 @@ export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 export ImportExportBudgetConstraint
-export PieceWiseLinearBlockOfferConstraint
-export PieceWiseLinearBlockDecrementalOfferConstraint
+export PiecewiseLinearBlockIncrementalOfferConstraint
+export PiecewiseLinearBlockDecrementalOfferConstraint
 
 # Parameters
 # Time Series Parameters

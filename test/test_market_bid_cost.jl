@@ -677,6 +677,8 @@ function _calc_pwi_cost(active_power::Float64, pwi::PiecewiseStepData)
     return cost
 end
 
+approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
+
 @testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
     # Test that constant time series has the same objective value as no time series
     sys0 = load_and_fix_system(PSITestSystems, "c_fixed_market_bid_cost")
@@ -705,7 +707,7 @@ end
             run_startup_shutdown_obj_fun_test(sys1, sys2; simulation = use_simulation)
         @test all(isapprox.(switches1, switches2))
         # Make sure our tests included sufficent startups and shutdowns
-        @assert all(>=(1).(switches1))
+        @assert all(approx_geq_1.(switches1))
     end
 end
 
@@ -736,7 +738,7 @@ end
         )
         @test all(isapprox.(switches1_2, switches2_2))
         # Make sure our tests included all types of startups and shutdowns
-        @assert all(>=(1).(switches1 .+ switches1_2))
+        @assert all(approx_geq_1.(switches1 .+ switches1_2))
     end
 end
 
@@ -748,7 +750,7 @@ end
         switches1, switches2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
         @test all(isapprox.(switches1, switches2))
-        @assert all(>=(1).(switches1))
+        @assert all(approx_geq_1.(switches1))
     end
 
     # TODO test validate_initial_input_time_series warnings/errors
@@ -762,7 +764,7 @@ end
         switches1, switches2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
         @assert all(isapprox.(switches1, switches2))
-        @assert all(>=(1).(switches1))
+        @assert all(approx_geq_1.(switches1))
     end
 end
 
@@ -774,7 +776,7 @@ end
         switches1, switches2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
         @assert all(isapprox.(switches1, switches2))
-        @assert all(>=(1).(switches1))
+        @assert all(approx_geq_1.(switches1))
     end
 end
 
@@ -786,6 +788,6 @@ end
         switches1, switches2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
         @assert all(isapprox.(switches1, switches2))
-        @assert all(>=(1).(switches1))
+        @assert all(approx_geq_1.(switches1))
     end
 end
