@@ -18,11 +18,9 @@ function provided by PowerSimulations.  This example will log messages of level
 `Logging.Error` to console and `Logging.Info` and higher to the file
 `power-simulations.log` in the current directory.
 
-```@repl tutorial
+```julia
 import Logging
 using PowerSimulations
-
-```@repl tutorial
 logger = configure_logging(;
     console_level = Logging.Error,
     file_level = Logging.Info,
@@ -35,7 +33,9 @@ logger = configure_logging(;
 You can configure the logging level used by the simulation logger when you call
 `build!(simulation)`.  Here is an example that increases logging verbosity:
 
-```@repl tutorial
+```julia
+import Logging
+using PowerSimulations
 simulation = Simulation(...)
 build!(simulation; console_level = Logging.Info, file_level = Logging.Debug)
 ```

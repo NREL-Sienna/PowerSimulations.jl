@@ -1,7 +1,4 @@
-# [Simulation](@id running_a_simulation)
-
-
-## Chronologies
+# [Chronologies](@id chronologies)
 
 In PowerSimulations, chronologies define where information is flowing. There are two types
 of chronologies.
