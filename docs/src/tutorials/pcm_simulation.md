@@ -12,7 +12,7 @@ This example is intended to be an extension of the
 
 ### Load Packages
 
-```@example pcm
+```@repl tutorial
 using PowerSystems
 using PowerSimulations
 using HydroPowerSimulations
@@ -28,7 +28,7 @@ It's most convenient to define an optimizer instance upfront and pass it into th
 `DecisionModel` constructor. For this example, we can use the free HiGHS solver with a
 relatively relaxed MIP gap (`ratioGap`) setting to improve speed.
 
-```@example pcm
+```@repl tutorial
 solver = optimizer_with_attributes(HiGHS.Optimizer, "mip_rel_gap" => 0.5)
 ```
 
@@ -37,7 +37,7 @@ solver = optimizer_with_attributes(HiGHS.Optimizer, "mip_rel_gap" => 0.5)
 First, we'll create a `System` with hourly data to represent day-ahead forecasted wind,
 solar, and load profiles:
 
-```@example pcm
+```@repl tutorial
 sys_DA = build_system(PSISystems, "modified_RTS_GMLC_DA_sys"; skip_serialization = true)
 ```
 
@@ -46,7 +46,7 @@ sys_DA = build_system(PSISystems, "modified_RTS_GMLC_DA_sys"; skip_serialization
 The RTS data also includes 5-minute resolution time series data. So, we can create another
 `System` to represent 15 minute ahead forecasted data for a "real-time" market:
 
-```@example pcm
+```@repl tutorial
 sys_RT = build_system(PSISystems, "modified_RTS_GMLC_RT_sys"; skip_serialization = true)
 ```
 
@@ -65,7 +65,7 @@ First, we can define a unit commitment template for the day ahead problem. We ca
 included UC template, but in this example, we'll replace the `ThermalBasicUnitCommitment`
 with the slightly more complex `ThermalStandardUnitCommitment` for the thermal generators.
 
-```@example pcm
+```@repl tutorial
 template_uc = template_unit_commitment()
 set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
 set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
@@ -76,7 +76,7 @@ set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
 In addition to the manual specification process demonstrated in the OperationsProblem
 example, PSI also provides pre-specified templates for some standard problems:
 
-```@example pcm
+```@repl tutorial
 template_ed = template_economic_dispatch(;
     network = NetworkModel(PTDFPowerModel; use_slacks = true),
 )
@@ -90,7 +90,7 @@ different time periods, but the formulations applied to the components is consta
 a stage. In this case, we want to define two stages with the `ProblemTemplate`s
 and the `System`s that we've already created.
 
-```@example pcm
+```@repl tutorial
 models = SimulationModels(;
     decision_models = [
         DecisionModel(template_uc, sys_DA; optimizer = solver, name = "UC"),
@@ -101,7 +101,7 @@ models = SimulationModels(;
 
 ### `SimulationSequence`
 
-Similar to an `ProblemTemplate`, the `SimulationSequence` provides a template of
+Similar to a `ProblemTemplate`, the `SimulationSequence` provides a template of
 how to execute a sequential set of operations problems.
 
 Let's review some of the `SimulationSequence` arguments.
@@ -122,7 +122,7 @@ to define what to do with information being passed with an inter-stage chronolog
 define a `FeedForward` that affects the semi-continuous range constraints of thermal generators
 in the economic dispatch problems based on the value of the unit-commitment variables.
 
-```@example pcm
+```@repl tutorial
 feedforward = Dict(
     "ED" => [
         SemiContinuousFeedforward(;
@@ -150,7 +150,7 @@ We can adjust the time series data to reflect this structure in each `System`:
 
 Now we can put it all together to define a `SimulationSequence`
 
-```@example pcm
+```@repl tutorial
 DA_RT_sequence = SimulationSequence(;
     models = models,
     ini_cond_chronology = InterProblemChronology(),
@@ -163,7 +163,7 @@ DA_RT_sequence = SimulationSequence(;
 Now, we can build and execute a simulation using the `SimulationSequence` and `Stage`s
 that we've defined.
 
-```@example pcm
+```@repl tutorial
 path = mkdir(joinpath(".", "rts-store")) #hide
 sim = Simulation(;
     name = "rts-test",
@@ -176,7 +176,7 @@ sim = Simulation(;
 
 ### Build simulation
 
-```@example pcm
+```@repl tutorial
 build!(sim)
 ```
 
@@ -185,7 +185,7 @@ build!(sim)
 the following command returns the status of the simulation (0: is proper execution) and
 stores the results in a set of HDF5 files on disk.
 
-```@example pcm
+```@repl tutorial
 execute!(sim; enable_progress_bar = false)
 ```
 
@@ -195,7 +195,7 @@ To access the results, we need to load the simulation result metadata and then m
 requests to the specific data of interest. This allows you to efficiently access the
 results of interest without overloading resources.
 
-```@example pcm
+```@repl tutorial
 results = SimulationResults(sim);
 uc_results = get_decision_problem_results(results, "UC"); # UC stage result metadata
 ed_results = get_decision_problem_results(results, "ED"); # ED stage result metadata
@@ -203,32 +203,32 @@ ed_results = get_decision_problem_results(results, "ED"); # ED stage result meta
 
 We can read all the result variables
 
-```@example pcm
+```@repl tutorial
 read_variables(uc_results)
 ```
 
 or all the parameters
 
-```@example pcm
+```@repl tutorial
 read_parameters(uc_results)
 ```
 
 We can just list the variable names contained in `uc_results`:
 
-```@example pcm
+```@repl tutorial
 list_variable_names(uc_results)
 ```
 
 and a number of parameters (this pattern also works for aux_variables, expressions, and duals)
 
-```@example pcm
+```@repl tutorial
 list_parameter_names(uc_results)
 ```
 
 Now we can read the specific results of interest for a specific problem, time window (optional),
 and set of variables, duals, or parameters (optional)
 
-```@example pcm
+```@repl tutorial
 Dict([
     v => read_variable(uc_results, v) for v in [
         "ActivePowerVariable__RenewableDispatch",
@@ -241,7 +241,7 @@ Dict([
 Or if we want the result of just one variable, parameter, or dual (must be defined in the
 problem definition), we can use:
 
-```@example pcm
+```@repl tutorial
 read_parameter(
     ed_results,
     "ActivePowerTimeSeriesParameter__RenewableNonDispatch";
@@ -256,7 +256,7 @@ read_parameter(
 note that this returns the results of each execution step in a separate dataframe
 If you want the realized results (without lookahead periods), you can call `read_realized_*`:
 
-```@example pcm
+```@repl tutorial
 read_realized_variables(
     uc_results,
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"],

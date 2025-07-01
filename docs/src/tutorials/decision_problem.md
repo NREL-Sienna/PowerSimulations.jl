@@ -4,13 +4,13 @@
 
 ## Introduction
 
-PowerSimulations.jl supports the construction and solution of optimal power system
+`PowerSimulations.jl` supports the construction and solution of optimal power system
 scheduling problems (Operations Problems). Operations problems form the fundamental
-building blocks for sequential simulations. This example shows how to specify and customize a the mathematics that will be applied to the data with an `ProblemTemplate`, build and execute an `DecisionModel`, and access the results.
+building blocks for sequential simulations. This example shows how to specify and customize a the mathematics that will be applied to the data with a [`ProblemTemplate`](@ref), build and execute a [`DecisionModel`](@ref), and access the results.
 
 ## Load Packages
 
-```@example op_problem
+```@repl tutorial
 using PowerSystems
 using PowerSimulations
 using HydroPowerSimulations
@@ -23,18 +23,18 @@ using Dates
 
 !!! note
     
-    `PowerSystemCaseBuilder.jl` is a helper library that makes it easier to reproduce examples in the documentation and tutorials. Normally you would pass your local files to create the system data instead of calling the function `build_system`.
-    For more details visit [PowerSystemCaseBuilder Documentation](https://nrel-sienna.github.io/PowerSystems.jl/stable/tutorials/powersystembuilder/)
+    [PowerSystemCaseBuilder.jl](https://github.com/NREL-Sienna/PowerSystemCaseBuilder.jl) is a helper library that makes it easier to reproduce examples in the documentation and tutorials. Normally you would pass your local files to create the system data instead of calling the function `build_system`.
+    For more details visit [PowerSystemCaseBuilder Documentation](https://nrel-sienna.github.io/PowerSystems.jl/stable/how_to/powersystembuilder/)
 
-```@example op_problem
+```@repl tutorial
 sys = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
 ```
 
-## Define a problem specification with an `ProblemTemplate`
+## Define a problem specification with a `ProblemTemplate`
 
 You can create an empty template with:
 
-```@example op_problem
+```@repl tutorial
 template_uc = ProblemTemplate()
 ```
 
@@ -49,7 +49,7 @@ and constraints. Documentation on the formulation options for various devices ca
 Here is an example of relatively standard branch formulations. Other formulations allow
 for selective enforcement of transmission limits and greater control on transformer settings.
 
-```@example op_problem
+```@repl tutorial
 set_device_model!(template_uc, Line, StaticBranch)
 set_device_model!(template_uc, Transformer2W, StaticBranch)
 set_device_model!(template_uc, TapTransformer, StaticBranch)
@@ -63,7 +63,7 @@ this case, we're defining a basic unit commitment model for thermal generators,
 curtailable renewable generators, and fixed dispatch (net-load reduction) formulations
 for `HydroDispatch` and `RenewableNonDispatch` devices.
 
-```@example op_problem
+```@repl tutorial
 set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
 set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
 set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
@@ -78,7 +78,7 @@ creating `DeviceModel`s, we can create `ServiceModel`s. The primary difference b
 that `DeviceModel` objects define how constraints get created, while `ServiceModel` objects
 define how constraints get modified.
 
-```@example op_problem
+```@repl tutorial
 set_service_model!(template_uc, VariableReserve{ReserveUp}, RangeReserve)
 set_service_model!(template_uc, VariableReserve{ReserveDown}, RangeReserve)
 ```
@@ -87,41 +87,41 @@ set_service_model!(template_uc, VariableReserve{ReserveDown}, RangeReserve)
 
 Finally, we can define the transmission network specification that we'd like to model. For simplicity, we'll
 choose a copper plate formulation. But there are dozens of specifications available through
-an integration with [PowerModels.jl](https://github.com/lanl-ansi/powermodels.jl). *Note that
+an integration with [PowerModels.jl](https://lanl-ansi.github.io/PowerModels.jl/stable/). *Note that
 many formulations will require appropriate data and may be computationally intractable*
 
-```@example op_problem
+```@repl tutorial
 set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel))
 ```
 
 ## `DecisionModel`
 
-Now that we have a `System` and an `ProblemTemplate`, we can put the two together
-to create an `DecisionModel` that we solve.
+Now that we have a `System` and a [`ProblemTemplate`](@ref), we can put the two together
+to create a [`DecisionModel`](@ref) that we solve.
 
 ### Optimizer
 
 It's most convenient to define an optimizer instance upfront and pass it into the
-`DecisionModel` constructor. For this example, we can use the free HiGHS solver with a
+[`DecisionModel`](@ref) constructor. For this example, we can use the free HiGHS solver with a
 relatively relaxed MIP gap (`ratioGap`) setting to improve speed.
 
-```@example op_problem
+```@repl tutorial
 solver = optimizer_with_attributes(HiGHS.Optimizer, "mip_rel_gap" => 0.5)
 ```
 
-### Build an `DecisionModel`
+### Build a `DecisionModel`
 
-The construction of an `DecisionModel` essentially applies an `ProblemTemplate`
+The construction of a [`DecisionModel`](@ref) essentially applies a [`ProblemTemplate`](@ref)
 to `System` data to create a JuMP model.
 
-```@example op_problem
+```@repl tutorial
 problem = DecisionModel(template_uc, sys; optimizer = solver, horizon = Hour(24))
 build!(problem; output_dir = mktempdir())
 ```
 
 !!! tip
     
-    The principal component of the `DecisionModel` is the JuMP model. But you can serialize to a file using the following command:
+    The principal component of the [`DecisionModel`](@ref) is the JuMP model. But you can serialize to a file using the following command:
     
     ```julia
     serialize_optimization_model(problem, save_path)
@@ -129,17 +129,17 @@ build!(problem; output_dir = mktempdir())
     
     Keep in mind that if the setting "store_variable_names" is set to `False` then the file won't show the model's names.
 
-### Solve an `DecisionModel`
+### Solve a `DecisionModel`
 
-```@example op_problem
+```@repl tutorial
 solve!(problem)
 ```
 
 ## Results Inspection
 
-PowerSimulations collects the `DecisionModel` results into a `OptimizationProblemResults` struct:
+PowerSimulations collects the [`DecisionModel`](@ref) results into a `OptimizationProblemResults` struct:
 
-```@example op_problem
+```@repl tutorial
 res = OptimizationProblemResults(problem)
 ```
 
@@ -147,13 +147,13 @@ res = OptimizationProblemResults(problem)
 
 The optimizer summary is included
 
-```@example op_problem
+```@repl tutorial
 get_optimizer_stats(res)
 ```
 
 ### Objective Function Value
 
-```@example op_problem
+```@repl tutorial
 get_objective_value(res)
 ```
 
@@ -162,17 +162,17 @@ get_objective_value(res)
 The solution value data frames for variables, parameters, auxillary variables, duals and
 expressions can be accessed using the `read_` methods:
 
-```@example op_problem
+```@repl tutorial
 read_variables(res)
 ```
 
 Or, you can read a single parameter values for parameters that exist in the results.
 
-```@example op_problem
+```@repl tutorial
 list_parameter_names(res)
 read_parameter(res, "ActivePowerTimeSeriesParameter__RenewableDispatch")
 ```
 
 ## Plotting
 
-Take a look at the plotting capabilities in [PowerGraphics.jl](https://github.com/nrel-siip/powergraphics.jl)
+Take a look at the plotting capabilities in [PowerGraphics.jl](https://nrel-sienna.github.io/PowerGraphics.jl/stable/)

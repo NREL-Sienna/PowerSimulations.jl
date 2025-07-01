@@ -9,7 +9,7 @@ One of the most common infeasibility issues observed is due to not enough genera
 
 The recommended solution for any of these cases is adding slack variables to the network model, for example:
 
-```julia
+```@repl tutorial
 template_uc = ProblemTemplate(
     NetworkModel(
         CopperPlatePowerModel;
@@ -26,7 +26,7 @@ In this case, if the problem is now feasible, the user can check the solution of
 
 In many scenarios, certain units are also required to provide reserve requirements, e.g. thermal units mandated to provide up-regulation. In such scenarios, it is also possible to add slack variables, by specifying the service model (`RangeReserve`) for the specific service type (`VariableReserve{ReserveUp}`) as:
 
-```julia
+```@repl tutorial
 set_service_model!(
     template_uc,
     ServiceModel(

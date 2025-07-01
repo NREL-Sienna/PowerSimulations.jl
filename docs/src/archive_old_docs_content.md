@@ -23,6 +23,19 @@ to construct optimization models. In most cases, you need to add `PowerSystems.j
 
 An appropriate optimization solver is required for running PowerSimulations models. Refer to [`JuMP.jl` solver's page](https://jump.dev/JuMP.jl/stable/installation/#Install-a-solver) to select the most appropriate for the application of interest.
 
+## From: Quick Start Guide
+
+  - **Julia:** If this is your first time using Julia visit our [Introduction to Julia](https://nrel-Sienna.github.io/SIIP-Tutorial/fundamentals/introduction-to-julia/) and the official [Getting started with Julia](https://julialang.org/learning/).
+  - **Package Installation:** If you want to install packages check the [Package Manager](https://pkgdocs.julialang.org/v1/environments/) instructions, or you can refer to the [PowerSimulations installation instructions](@ref Installation).
+  - **PowerSystems:** [PowerSystems.jl](https://github.com/nrel-Sienna/PowerSystems.jl) manages the data and is a fundamental dependency of PowerSimulations.jl. Check the [PowerSystems.jl Basics Tutorial](https://nrel-sienna.github.io/PowerSystems.jl/stable/tutorials/basics/) and [PowerSystems.jl documentation](https://nrel-Sienna.github.io/PowerSystems.jl/stable/) to understand how the inputs to the models are organized.
+  - **Dataset Library:** If you don't have a data set to start using `PowerSimulations.jl` check the test systems provided in [`PowerSystemCaseBuilder.jl`](https://nrel-sienna.github.io/PowerSystems.jl/stable/tutorials/powersystembuilder/)
+
+!!! tip
+    
+    If you need to develop a dataset for a simulation check the [PowerSystems.jl Tutorials](https://nrel-sienna.github.io/PowerSystems.jl/stable/tutorials/basics/) on how to parse data and attach time series
+
+  - **Tutorial:** If you are eager to run your first simulation visit the Solve a Day Ahead Market Scheduling Problem using PowerSimulations.jl tutorial
+
 ## From: Modeler Guide
 
 ### Modeling FAQ
@@ -34,3 +47,89 @@ An appropriate optimization solver is required for running PowerSimulations mode
 !!! question "How do I print the optimizer logs to see the solution process?"
     
     When specifying the `DecisionModel` or `EmulationModel` pass the keyword `print_optimizer_log = true`
+
+### Simulation
+!!! tip "Always try to solve the operations problem first before putting together the simulation"
+    
+    It is not uncommon that when trying to solve a complex simulation the resulting models are infeasible. This situation can be the result of many factors like the input data, the incorrect specification of the initial conditions for models with time dependencies or a poorly specified model. Therefore, it's highly recommended to run and analyze an [Operations Problems](@ref psi_structure) that reflect the problems that will be included in a simulation prior to executing a simulation.
+
+Check out the [Operations Problem Tutorial](@ref op_problem_tutorial)
+
+
+### Simulation/Simulation Setup
+The following code creates the entire simulation pipeline:
+
+```julia
+# We assume that the templates for UC and ED are ready
+# sys_da has the resolution of 1 hour:
+# with the 24 hours interval and horizon of 48 hours.
+# sys_rt has the resolution of 5 minutes:
+# with a 5-minute interval and horizon of 2 hours (24 time steps)
+
+# Create the UC Decision Model
+decision_model_uc = DecisionModel(
+    template_uc,
+    sys_da;
+    name = "UC",
+    optimizer = optimizer_with_attributes(
+        Xpress.Optimizer,
+        "MIPRELSTOP" => 1e-1,
+    ),
+)
+
+# Create the ED Decision Model
+decision_model_ed = DecisionModel(
+    template_ed,
+    sys_rt;
+    name = "ED",
+    optimizer = optimizer_with_attributes(Xpress.Optimizer),
+)
+
+# Specify the SimulationModels using a Vector of decision_models: UC, ED
+sim_models = SimulationModels(;
+    decision_models = [
+        decision_model_uc,
+        decision_model_ed,
+    ],
+)
+
+# Create the FeedForwards:
+semi_ff = SemiContinuousFeedforward(;
+    component_type = ThermalStandard,
+    source = OnVariable,
+    affected_values = [ActivePowerVariable],
+)
+
+# Specify the sequencing:
+sim_sequence = SimulationSequence(;
+    # Specify the vector of decision models: sim_models
+    models = sim_models,
+    # Specify a Dict of feedforwards on which the FF applies
+    # based on the DecisionModel name, in this case "ED"
+    feedforwards = Dict(
+        "ED" => [semi_ff],
+    ),
+    # Specify the chronology, in this case inter-stage
+    ini_cond_chronology = InterProblemChronology(),
+)
+
+# Construct the simulation:
+sim = Simulation(;
+    name = "compact_sim",
+    steps = 10, # 10 days
+    models = sim_models,
+    sequence = sim_sequence,
+    # Specify the start_time as a DateTime: e.g. DateTime("2020-10-01T00:00:00")
+    initial_time = start_time,
+    # Specify a temporary folder to avoid storing logs if not needed
+    simulation_folder = mktempdir(; cleanup = true),
+)
+
+# Build the decision models and simulation setup
+build!(sim)
+
+# Execute the simulation using the Optimizer specified in each DecisionModel
+execute!(sim; enable_progress_bar = true)
+```
+
+Check the [PCM tutorial](@ref pcm_tutorial) for a more detailed tutorial on executing a simulation in a production cost modeling (PCM) environment.

@@ -2,10 +2,19 @@ using Documenter
 using PowerSystems
 using PowerSimulations
 using DataStructures
+using DocumenterInterLinks
+
+links = InterLinks(
+    "Julia" => "https://docs.julialang.org/en/v1/",
+    "InfrastructureSystems" => "https://nrel-sienna.github.io/InfrastructureSystems.jl/stable/",
+    "PowerSystems" => "https://nrel-sienna.github.io/PowerSystems.jl/stable/",
+    "PowerSimulations" => "https://nrel-sienna.github.io/PowerSimulations.jl/stable/",
+    "StorageSystemsSimulations" => "https://nrel-sienna.github.io/StorageSystemsSimulations.jl/stable/",
+    "HydroPowerSimulations" => "https://nrel-sienna.github.io/HydroPowerSimulations.jl/dev/",
+)
 
 pages = OrderedDict(
     "Welcome Page" => "index.md",
-    "Quick Start Guide (OLD)" => "quick_start_guide.md",
     "Tutorials" => Any[
         "Single-step Problem" => "tutorials/decision_problem.md",
         "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
@@ -23,7 +32,9 @@ pages = OrderedDict(
     "Explanation" => Any[
         "explanation/operation_model_structure.md",
         "explanation/psi_structure.md",
-        "explanation/running_a_simulation.md",
+        "explanation/feedforward.md",
+        "explanation/chronologies.md",
+        "explanation/sequencing.md",
     ],
     "Reference" => Any[
         "Glossary and Acronyms" => "api/glossary.md",
