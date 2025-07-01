@@ -180,14 +180,14 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
             PSY.is_concave(x) ||
                 throw(
                     ArgumentError(
-                        "Decremental MarketBidCost for component $(name) is non-concave",
+                        "Decremental MarketBidCost for component $(device_name) is non-concave",
                     ),
                 )
         else
             PSY.is_convex(x) ||
                 throw(
                     ArgumentError(
-                        "Incremental MarketBidCost for component $(name) is non-convex",
+                        "Incremental MarketBidCost for component $(device_name) is non-convex",
                     ),
                 )
         end

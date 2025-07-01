@@ -1,4 +1,3 @@
-#TODO: timeseries market_bid_cost
 @testset "Test Thermal Generation MarketBidCost models" begin
     test_cases = [
         ("Base case", "fixed_market_bid_cost", 18487.236, 30.0, 30.0),
@@ -60,7 +59,6 @@ no_load_to_initial_input!(
     sel = make_selector(x -> get_operation_cost(x) isa MarketBidCost, Generator),
 ) = no_load_to_initial_input!.(get_components(sel, sys))
 
-# TODO this is part of the 1318 stopgap
 "Set all MBC thermal unit min active powers to their min breakpoints"
 function adjust_min_power!(sys)
     for comp in get_components(Union{ThermalStandard, ThermalMultiStart}, sys)
@@ -127,7 +125,6 @@ function _make_deterministic_ts(
     ys1 = [ys1 .+ i * res_incr_y for i in 0:(horizon - 1)]
     ys2 = [ys2 .+ i * res_incr_y .+ interval_incr_y for i in 1:horizon]
 
-    # TODO this is part of the 1318 stopgap
     if !isnothing(override_min_x)
         for sub_x in xs1
             sub_x[1] = override_min_x
@@ -232,7 +229,13 @@ end
 SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
 SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
 
-function build_sys_incr(initial_varies::Bool, breakpoints_vary::Bool, slopes_vary::Bool)
+function build_sys_incr(
+    initial_varies::Bool,
+    breakpoints_vary::Bool,
+    slopes_vary::Bool;
+    modify_baseline_pwl = nothing,
+    do_override_min_x = true,
+)
     sys = load_sys_incr()
     comp = get_component(SEL_INCR, sys)
     op_cost = get_operation_cost(comp)
@@ -240,6 +243,7 @@ function build_sys_incr(initial_varies::Bool, breakpoints_vary::Bool, slopes_var
     baseline = get_value_curve(cost_curve)::PiecewiseIncrementalCurve
     baseline_initial = get_initial_input(baseline)
     baseline_pwl = get_function_data(baseline)
+    !isnothing(modify_baseline_pwl) && (baseline_pwl = modify_baseline_pwl(baseline_pwl))
     min_power = with_units_base(sys, UnitSystem.NATURAL_UNITS) do
         get_active_power_limits(comp).min
     end
@@ -263,7 +267,7 @@ function build_sys_incr(initial_varies::Bool, breakpoints_vary::Bool, slopes_var
         incr_y,
         5,
         Hour(1);
-        override_min_x = min_power,
+        override_min_x = do_override_min_x ? min_power : nothing,
     )
 
     set_incremental_initial_input!(sys, comp, my_initial_ts)
@@ -303,10 +307,12 @@ function build_generic_mbc_model(sys::System; multistart::Bool = false)
     return model
 end
 
-function run_generic_mbc_prob(sys::System; multistart::Bool = false)
+function run_generic_mbc_prob(sys::System; multistart::Bool = false, test_success = true)
     model = build_generic_mbc_model(sys; multistart = multistart)
-    @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
-    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    build_result = build!(model; output_dir = test_path)
+    test_success && @test build_result == PSI.ModelBuildStatus.BUILT
+    solve_result = solve!(model)
+    test_success && @test solve_result == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model)
     return model, res
 end
@@ -752,8 +758,6 @@ end
         @test all(isapprox.(switches1, switches2))
         @assert all(approx_geq_1.(switches1))
     end
-
-    # TODO test validate_initial_input_time_series warnings/errors
 end
 
 @testset "MarketBidCost incremental with time series slopes" begin
@@ -790,4 +794,36 @@ end
         @assert all(isapprox.(switches1, switches2))
         @assert all(approx_geq_1.(switches1))
     end
+end
+
+@testset "Test some MarketBidCost data validations" begin
+    # Test multistart and convexity validation
+    nonconvex = build_sys_incr(
+        false,
+        false,
+        false;
+        modify_baseline_pwl = pwl -> begin
+            y_coords = get_y_coords(pwl)
+            y_coords[3] = y_coords[1]
+            pwl
+        end,
+    )
+    set_start_up!(
+        get_operation_cost(get_component(ThermalStandard, nonconvex, "Test Unit2")),
+        (hot = 1.0, warm = 1.5, cold = 2.0),
+    )
+    model = build_generic_mbc_model(nonconvex; multistart = false)
+    # We'll use build_impl! rather than build! to keep PSI's logging configuration from interfering with @test_logs and polluting the test output
+    mkpath(test_path)
+    PSI.set_output_dir!(model, test_path)
+    @test_logs (:warn, r"Multi-start costs detected for non-multi-start unit Test Unit2.*") (
+        match_mode = :any
+    ) (@test_throws "is non-convex" PSI.build_impl!(model))
+
+    # Test constant P1 validation
+    variable_p1 = build_sys_incr(false, true, false; do_override_min_x = false)
+    model = build_generic_mbc_model(variable_p1; multistart = false)
+    mkpath(test_path)
+    PSI.set_output_dir!(model, test_path)
+    @test_throws "Inconsistent minimum breakpoint values" PSI.build_impl!(model)
 end
