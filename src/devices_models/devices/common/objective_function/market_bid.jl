@@ -97,90 +97,224 @@ _has_parameter_time_series(
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
 
+apply_maybe_across_time_series(fn::Function, ts_data::AbstractVector) =
+    fn.(ts_data)
+
+apply_maybe_across_time_series(fn::Function, ts_data::AbstractDict) =
+    apply_maybe_across_time_series.(Ref(fn), values(ts_data))
+
+apply_maybe_across_time_series(fn::Function, ts_data::IS.TimeSeriesData) =
+    apply_maybe_across_time_series(fn, PSY.get_data(ts_data))
+
+"Helper function to look up a time series if necessary then apply a function (typically a validation routine in a `do` block) to every element in it"
+apply_maybe_across_time_series(
+    fn::Function,
+    component::PSY.Component,
+    ts_key::IS.TimeSeriesKey,
+) =
+    apply_maybe_across_time_series(fn, PSY.get_time_series(component, ts_key))
+
+apply_maybe_across_time_series(fn::Function, ::PSY.Component, elem) = fn(elem)
+
+_validate_eltype(::Type{T}, element::T, _, _) where {T} = nothing
+_validate_eltype(::Type{T}, element::U, location, component_name, msg = "") where {T, U} =
+    throw(ArgumentError("Expected element type $T but got $U$location for $component_name"))
+function _validate_eltype(
+    ::Type{T},
+    component::PSY.Component,
+    ts_key::IS.TimeSeriesKey,
+    _ = "",
+) where {T}
+    ts_name = get_name(ts_key)
+    component_name = get_name(component)
+    apply_maybe_across_time_series(component, ts_key) do x
+        _validate_eltype(T, x, " in time series $ts_name", component_name)
+    end
+end
+function _validate_eltype(::Type{T}, component::PSY.Component, element, msg = "") where {T}
+    component_name = get_name(component)
+    _validate_eltype(T, element, msg, component_name)
+end
+
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
-    cost = PSY.get_operation_cost(device)::PSY.MarketBidCost
-    ts_initial = is_time_variant(
-        get_initial_input_maybe_decremental(Val(decremental), device))
-    ts_variable = is_time_variant(
+    initial_input = get_initial_input_maybe_decremental(Val(decremental), device)
+    initial_is_ts = is_time_variant(initial_input)
+    variable_is_ts = is_time_variant(
         get_offer_curves_maybe_decremental(Val(decremental), device))
     label = decremental ? "decremental" : "incremental"
 
-    (ts_initial && !ts_variable) &&
-        @warn "In `MarketBidCost` for $(get_name(device)), found time series for `$(label)_initial_input` but not `$(label)_offer_curves`; will ignore `initial_input` of `$(label)_offer_curves"
-    (ts_variable && !ts_initial) &&
+    (initial_is_ts && !variable_is_ts) &&
+        @warn "In `MarketBidCost` for $(get_name(device)), found time series for `$(label)_initial_input` but non-time-series `$(label)_offer_curves`; will ignore `initial_input` of `$(label)_offer_curves"
+    (variable_is_ts && !initial_is_ts) &&
         throw(
             ArgumentError(
                 "In `MarketBidCost` for $(get_name(device)), if providing time series for `$(label)_offer_curves`, must also provide time series for `$(label)_initial_input`",
             ),
         )
+
+    if !variable_is_ts && !initial_is_ts
+        _validate_eltype(
+            Union{Float64, Nothing}, device, initial_input, " for initial_input",
+        )
+    else
+        _validate_eltype(
+            Float64, device, initial_input, " for initial_input",
+        )
+    end
+end
+
+function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decremental::Bool)
+    offer_curves = get_offer_curves_maybe_decremental(Val(decremental), device)
+    device_name = get_name(device)
+    is_ts = is_time_variant(offer_curves)
+    location = is_ts ? " in time series $(get_name(offer_curves))" : " in offer curves"
+    expected_type = if is_ts
+        IS.PiecewiseStepData
+    else
+        Union{IS.PiecewiseStepData, PSY.CostCurve{PSY.PiecewiseIncrementalCurve}}
+    end
+    p1 = nothing
+    apply_maybe_across_time_series(device, offer_curves) do x
+        _validate_eltype(expected_type, x, location, device_name)
+        if decremental
+            PSY.is_concave(x) ||
+                throw(
+                    ArgumentError(
+                        "Decremental MarketBidCost for component $(name) is non-concave",
+                    ),
+                )
+        else
+            PSY.is_convex(x) ||
+                throw(
+                    ArgumentError(
+                        "Incremental MarketBidCost for component $(name) is non-convex",
+                    ),
+                )
+        end
+        if is_ts
+            my_p1 = first(PSY.get_x_coords(x))
+            if isnothing(p1)
+                p1 = my_p1
+            elseif !isapprox(p1, my_p1)
+                throw(
+                    ArgumentError(
+                        "Inconsistent minimum breakpoint values$location for component $(device_name). For time-variable MarketBidCost, all first x-coordinates must be equal across the entire time series.",
+                    ),
+                )
+            end
+        end
+    end
+end
+
+# Warn if hot/warm/cold startup costs are given for non-`ThermalMultiStart`
+function validate_mbc_component(
+    ::StartupCostParameter,
+    device::PSY.ThermalMultiStart,
+    model,
+)
+    startup = PSY.get_start_up(PSY.get_operation_cost(device))
+    _validate_eltype(
+        Union{Float64, NTuple{3, Float64}},
+        device,
+        startup,
+        " for startup cost",
+    )
+end
+
+function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection, model)
+    startup = PSY.get_start_up(PSY.get_operation_cost(device))
+    contains_multistart = false
+    location = is_time_variant(startup) ? " in time series $(get_name(startup))" : ""
+    apply_maybe_across_time_series(device, startup) do x
+        if x isa Float64
+            return
+        elseif x isa Union{NTuple{3, Float64}, StartUpStages}
+            contains_multistart = true
+        else
+            throw(
+                ArgumentError(
+                    "Expected Float64 or NTuple{3, Float64} or StartUpStages startup cost but got $(typeof(x))$location for $(get_name(device))",
+                ),
+            )
+        end
+    end
+    contains_multistart &&
+        @warn "Multi-start costs detected$location for non-multi-start unit $(get_name(device)), will take the maximum"
     return
 end
 
-function _add_market_bid_parameters_helper(
+# Validate eltype of shutdown costs
+function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjection, model)
+    shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
+    _validate_eltype(Float64, device, shutdown, " for shutdown cost")
+end
+
+# Validate that initial input always appears if variable appears, warn if it appears without variable
+validate_mbc_component(
+    ::IncrementalCostAtMinParameter,
+    device::PSY.StaticInjection,
+    model,
+) =
+    validate_initial_input_time_series(device, false)
+validate_mbc_component(
+    ::DecrementalCostAtMinParameter,
+    device::PSY.StaticInjection,
+    model,
+) =
+    validate_initial_input_time_series(device, true)
+
+# Validate convexity/concavity of cost curves as appropriate, verify P1 = min gen power
+validate_mbc_component(
+    ::IncrementalPiecewiseLinearBreakpointParameter,
+    device::PSY.StaticInjection,
+    model,
+) =
+    validate_mbc_breakpoints_slopes(device, false)
+validate_mbc_component(
+    ::DecrementalPiecewiseLinearBreakpointParameter,
+    device::PSY.StaticInjection,
+    model,
+) =
+    validate_mbc_breakpoints_slopes(device, true)
+
+# Slope and breakpoint validations are done together, nothing to do here
+validate_mbc_component(
+    ::IncrementalPiecewiseLinearSlopeParameter,
+    device::PSY.StaticInjection,
+    model,
+) = nothing
+
+function _process_market_bid_parameters_helper(
     ::P,
     container::OptimizationContainer,
     model,
     devices,
 ) where {P <: ParameterType}
     if _consider_parameter(P(), container, model)
-        my_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
-        if length(my_devices) > 0
-            add_parameters!(container, P, my_devices, model)
-            return true
-        end
+        validate_mbc_component.(Ref(P()), devices, Ref(model))
+        ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
+        (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
     end
-    return false
 end
 
-function add_market_bid_parameters!(
+"Validate MarketBidCosts and add the appropriate parameters"
+function process_market_bid_parameters!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel,
 )
     devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
 
-    # Startup cost parameters
-    _add_market_bid_parameters_helper(
+    # TODO decremental
+    for param in (
         StartupCostParameter(),
-        container,
-        model,
-        devices,
-    )
-
-    # Shutdown cost parameters
-    _add_market_bid_parameters_helper(
         ShutdownCostParameter(),
-        container,
-        model,
-        devices,
-    )
-
-    # Min gen cost parameters
-    # TODO decremental case
-    _add_market_bid_parameters_helper(
         IncrementalCostAtMinParameter(),
-        container,
-        model,
-        devices,
-    )
-
-    # Variable cost: slope parameters
-    # TODO decremental case
-    _add_market_bid_parameters_helper(
         IncrementalPiecewiseLinearSlopeParameter(),
-        container,
-        model,
-        devices,
-    )
-
-    # Variable cost: breakpoint parameters
-    # TODO decremental case
-    _add_market_bid_parameters_helper(
         IncrementalPiecewiseLinearBreakpointParameter(),
-        container,
-        model,
-        devices,
     )
+        _process_market_bid_parameters_helper(param, container, model, devices)
+    end
 end
 
 ##################################################
@@ -455,15 +589,6 @@ function _get_pwl_data(
         get_base_power(container),
         PSY.get_base_power(component),
     )
-
-    # TODO move these checks to before we convert to VariableRef
-    # if is_decremental
-    #     PSY.is_concave(result) ||
-    #         error("Decremental MarketBidCost for component $(name) is non-concave")
-    # else
-    #     PSY.is_convex(result) ||
-    #         error("Incremental MarketBidCost for component $(name) is non-convex")
-    # end
 
     return breakpoints, slopes
 end
