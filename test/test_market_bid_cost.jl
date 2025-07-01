@@ -196,28 +196,31 @@ _maybe_upgrade_to_dict(in::DataFrame) =
     SortedDict{DateTime, DataFrame}(first(in[!, :DateTime]) => in)
 
 read_variable_dict(
-    res_uc::IS.Results,
+    res::IS.Results,
     var_name::Type{<:PSI.VariableType},
     comp_type::Type{<:PSY.Component},
 ) =
-    _maybe_upgrade_to_dict(read_variable(res_uc, var_name, comp_type))
+    _maybe_upgrade_to_dict(read_variable(res, var_name, comp_type))
 read_parameter_dict(
-    res_uc::IS.Results,
+    res::IS.Results,
     par_name::Type{<:PSI.ParameterType},
     comp_type::Type{<:PSY.Component},
 ) =
-    _maybe_upgrade_to_dict(read_parameter(res_uc, par_name, comp_type))
+    _maybe_upgrade_to_dict(read_parameter(res, par_name, comp_type))
 
 function load_sys_incr()
     # note we are using the fixed one so we can add time series ourselves
     sys = load_and_fix_system(PSITestSystems, "c_fixed_market_bid_cost")
     tweak_system!(sys, 1.05, 1.0, 1.0)
-    # TODO do this better if it's sticking around
-    get_component(
-        ThermalStandard,
-        sys,
-        "Test Unit2",
-    ).operation_cost.incremental_offer_curves.value_curve.function_data.y_coords[1] *= 0.9
+    get_y_coords(
+        get_function_data(
+            get_value_curve(
+                get_incremental_offer_curves(
+                    get_operation_cost(get_component(ThermalStandard, sys, "Test Unit2")),
+                ),
+            ),
+        ),
+    )[1] *= 0.9
     return sys
 end
 
@@ -275,9 +278,9 @@ function build_sys_incr(
     return sys
 end
 
-_read_one_value(res_uc, var_name, gentype, unit_name) =
+_read_one_value(res, var_name, gentype, unit_name) =
     combine(
-        vcat(values(read_variable_dict(res_uc, var_name, gentype))...),
+        vcat(values(read_variable_dict(res, var_name, gentype))...),
         unit_name .=> sum,
     )[
         1,
@@ -344,8 +347,8 @@ function run_generic_mbc_sim(sys::System; multistart::Bool = false)
     execute!(sim; enable_progress_bar = true)
 
     sim_res = SimulationResults(sim)
-    res_uc = get_decision_problem_results(sim_res, "UC")
-    return model, res_uc
+    res = get_decision_problem_results(sim_res, "UC")
+    return model, res
 end
 
 """
@@ -375,7 +378,7 @@ function run_startup_shutdown_test(sys::System; multistart::Bool = false, simula
         end
     end
 
-    switches = if multistart
+    decisions = if multistart
         (
             _read_one_value(res, PSI.HotStartVariable, gentype, genname),
             _read_one_value(res, PSI.WarmStartVariable, gentype, genname),
@@ -388,7 +391,7 @@ function run_startup_shutdown_test(sys::System; multistart::Bool = false, simula
             _read_one_value(res, PSI.StopVariable, gentype, genname),
         )
     end
-    return model, res, switches
+    return model, res, decisions
 end
 
 """
@@ -421,11 +424,11 @@ function run_mbc_sim(sys::System; is_decremental::Bool = false, simulation = tru
     # NOTE this could be rewritten nicely using PowerAnalytics
     comp = get_component(is_decremental ? SEL_DECR : SEL_INCR, sys)
     gentype, genname = typeof(comp), get_name(comp)
-    switches = (
+    decisions = (
         _read_one_value(res, PSI.OnVariable, gentype, genname),
         _read_one_value(res, PSI.ActivePowerVariable, gentype, genname),
     )
-    return model, res, switches
+    return model, res, decisions
 end
 
 "Read the relevant startup variables: no multistart case"
@@ -517,13 +520,13 @@ end
 
 function cost_due_to_time_varying_mbc(
     sys::System,
-    res_uc::IS.Results;
+    res::IS.Results;
     is_decremental = false,
 )
     is_decremental && throw(IS.NotImplementedError("TODO implement for decremental"))
     gentype = ThermalStandard
-    on_vars = read_variable_dict(res_uc, PSI.OnVariable, gentype)
-    power_vars = read_variable_dict(res_uc, PSI.ActivePowerVariable, gentype)
+    on_vars = read_variable_dict(res, PSI.OnVariable, gentype)
+    power_vars = read_variable_dict(res, PSI.ActivePowerVariable, gentype)
     result = SortedDict{DateTime, DataFrame}()
     @assert all(keys(on_vars) .== keys(power_vars))
     for step_dt in keys(on_vars)
@@ -597,7 +600,7 @@ function create_multistart_sys(with_increments::Bool, load_mult, therm_mult)
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
-function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res_uc1, res_uc2)
+function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
     @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
 
     # Sum across components, time periods to get one value per step
@@ -611,8 +614,8 @@ function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res_uc1, res_uc2)
     ]
     ground_truth_diff = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
 
-    obj1 = PSI.read_optimizer_stats(res_uc1)[!, "objective_value"]
-    obj2 = PSI.read_optimizer_stats(res_uc2)[!, "objective_value"]
+    obj1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
+    obj2 = PSI.read_optimizer_stats(res2)[!, "objective_value"]
     obj_diff = obj2 .- obj1
 
     # Make sure there is some real difference between the two scenarios
@@ -636,9 +639,9 @@ function run_startup_shutdown_obj_fun_test(
     multistart::Bool = false,
     simulation = true,
 )
-    _, res1, switches1 =
+    _, res1, decisions1 =
         run_startup_shutdown_test(sys1; multistart = multistart, simulation = simulation)
-    _, res2, switches2 =
+    _, res2, decisions2 =
         run_startup_shutdown_test(sys2; multistart = multistart, simulation = simulation)
 
     ground_truth_1 =
@@ -647,14 +650,14 @@ function run_startup_shutdown_obj_fun_test(
         cost_due_to_time_varying_startup_shutdown(sys2, res2; multistart = multistart)
 
     _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
-    return switches1, switches2
+    return decisions1, decisions2
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
 function run_mbc_obj_fun_test(sys1, sys2; is_decremental::Bool = false, simulation = true)
-    _, res1, switches1 =
+    _, res1, decisions1 =
         run_mbc_sim(sys1; is_decremental = is_decremental, simulation = simulation)
-    _, res2, switches2 =
+    _, res2, decisions2 =
         run_mbc_sim(sys2; is_decremental = is_decremental, simulation = simulation)
 
     ground_truth_1 =
@@ -663,7 +666,7 @@ function run_mbc_obj_fun_test(sys1, sys2; is_decremental::Bool = false, simulati
         cost_due_to_time_varying_mbc(sys2, res2; is_decremental = is_decremental)
 
     _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
-    return switches1, switches2
+    return decisions1, decisions2
 end
 
 function tweak_for_startup_shutdown!(sys::System)
@@ -709,11 +712,11 @@ approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
     add_startup_shutdown_ts_a!(sys2, true)
 
     for use_simulation in (false, true)
-        (switches1, switches2) =
+        (decisions1, decisions2) =
             run_startup_shutdown_obj_fun_test(sys1, sys2; simulation = use_simulation)
-        @test all(isapprox.(switches1, switches2))
+        @test all(isapprox.(decisions1, decisions2))
         # Make sure our tests included sufficent startups and shutdowns
-        @assert all(approx_geq_1.(switches1))
+        @assert all(approx_geq_1.(decisions1))
     end
 end
 
@@ -727,24 +730,24 @@ end
     c_sys5_pglib2b = create_multistart_sys(true, 1.05, 7.5)
 
     for use_simulation in (false, true)
-        (switches1, switches2) = run_startup_shutdown_obj_fun_test(
+        (decisions1, decisions2) = run_startup_shutdown_obj_fun_test(
             c_sys5_pglib1a,
             c_sys5_pglib2a;
             multistart = true,
             simulation = use_simulation,
         )
-        @test all(isapprox.(switches1, switches2))
-        # NOTE not all of the switches here are >= 1, we'll do another scenario such that we get full switch coverage across both of them:
+        @test all(isapprox.(decisions1, decisions2))
+        # NOTE not all of the decisions here are >= 1, we'll do another scenario such that we get full switch coverage across both of them:
 
-        (switches1_2, switches2_2) = run_startup_shutdown_obj_fun_test(
+        (decisions1_2, decisions2_2) = run_startup_shutdown_obj_fun_test(
             c_sys5_pglib1b,
             c_sys5_pglib2b;
             multistart = true,
             simulation = use_simulation,
         )
-        @test all(isapprox.(switches1_2, switches2_2))
+        @test all(isapprox.(decisions1_2, decisions2_2))
         # Make sure our tests included all types of startups and shutdowns
-        @assert all(approx_geq_1.(switches1 .+ switches1_2))
+        @assert all(approx_geq_1.(decisions1 .+ decisions1_2))
     end
 end
 
@@ -753,10 +756,10 @@ end
     plus_initial = build_sys_incr(true, false, false)
 
     for use_simulation in (false, true)
-        switches1, switches2 =
+        decisions1, decisions2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
-        @test all(isapprox.(switches1, switches2))
-        @assert all(approx_geq_1.(switches1))
+        @test all(isapprox.(decisions1, decisions2))
+        @assert all(approx_geq_1.(decisions1))
     end
 end
 
@@ -765,10 +768,10 @@ end
     plus_initial = build_sys_incr(false, false, true)
 
     for use_simulation in (false, true)
-        switches1, switches2 =
+        decisions1, decisions2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
-        @assert all(isapprox.(switches1, switches2))
-        @assert all(approx_geq_1.(switches1))
+        @assert all(isapprox.(decisions1, decisions2))
+        @assert all(approx_geq_1.(decisions1))
     end
 end
 
@@ -777,10 +780,10 @@ end
     plus_initial = build_sys_incr(false, true, false)
 
     for use_simulation in (false, true)
-        switches1, switches2 =
+        decisions1, decisions2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
-        @assert all(isapprox.(switches1, switches2))
-        @assert all(approx_geq_1.(switches1))
+        @assert all(isapprox.(decisions1, decisions2))
+        @assert all(approx_geq_1.(decisions1))
     end
 end
 
@@ -789,10 +792,10 @@ end
     plus_initial = build_sys_incr(true, true, true)
 
     for use_simulation in (false, true)
-        switches1, switches2 =
+        decisions1, decisions2 =
             run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
-        @assert all(isapprox.(switches1, switches2))
-        @assert all(approx_geq_1.(switches1))
+        @assert all(isapprox.(decisions1, decisions2))
+        @assert all(approx_geq_1.(decisions1))
     end
 end
 
