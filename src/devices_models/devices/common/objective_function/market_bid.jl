@@ -214,7 +214,7 @@ function validate_mbc_component(
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     _validate_eltype(
-        Union{Float64, NTuple{3, Float64}},
+        Union{Float64, NTuple{3, Float64}, StartUpStages},
         device,
         startup,
         " for startup cost",
@@ -635,7 +635,14 @@ function add_pwl_term!(
             component,
             t,
         )
-        add_to_objective_variant_expression!(container, pwl_cost)
+
+        if is_time_variant(
+            get_offer_curves_maybe_decremental(Val(is_decremental), component),
+        )
+            add_to_objective_variant_expression!(container, pwl_cost)
+        else
+            add_to_objective_invariant_expression!(container, pwl_cost)
+        end
     end
 end
 

@@ -174,10 +174,12 @@ function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
     res_incr = with_increments ? 0.05 : 0.0
     interval_incr = with_increments ? 0.01 : 0.0
     unit1 = get_component(ThermalMultiStart, sys, "115_STEAM_1")
+    base_startup = Tuple(get_start_up(get_operation_cost(unit1)))
+    base_shutdown = get_shut_down(get_operation_cost(unit1))
     @assert get_operation_cost(unit1) isa MarketBidCost
     startup_ts_1 = _make_deterministic_ts(
         "start_up",
-        (300.0, 450.0, 500.0),
+        base_startup,
         res_incr,
         interval_incr,
         24,
@@ -185,7 +187,14 @@ function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
     )
     set_start_up!(sys, unit1, startup_ts_1)
     shutdown_ts_1 =
-        _make_deterministic_ts("shut_down", 100.0, res_incr, interval_incr, 24, Day(1))
+        _make_deterministic_ts(
+            "shut_down",
+            base_shutdown,
+            res_incr,
+            interval_incr,
+            24,
+            Day(1),
+        )
     set_shut_down!(sys, unit1, shutdown_ts_1)
     return startup_ts_1, shutdown_ts_1
 end
@@ -577,7 +586,8 @@ function tweak_system!(sys::System, load_pow_mult, therm_pow_mult, therm_price_m
     end
 end
 
-function create_multistart_sys(with_increments::Bool, load_mult, therm_mult)
+function create_multistart_sys(with_increments::Bool, load_mult, therm_mult; add_ts = true)
+    @assert add_ts || !with_increments
     c_sys5_pglib = load_and_fix_system(PSITestSystems, "c_sys5_pglib")
     tweak_system!(c_sys5_pglib, load_mult, 1.0, therm_mult)
     sel = make_selector(ThermalMultiStart, "115_STEAM_1")
@@ -595,7 +605,11 @@ function create_multistart_sys(with_increments::Bool, load_mult, therm_mult)
             incremental_offer_curves = CostCurve(new_ic),
         ),
     )
-    add_startup_shutdown_ts_b!(c_sys5_pglib, with_increments)
+
+    unit1 = get_component(ThermalMultiStart, c_sys5_pglib, "115_STEAM_1")
+    set_start_up!(get_operation_cost(unit1), (hot = 300.0, warm = 450.0, cold = 500.0))
+    set_shut_down!(get_operation_cost(unit1), 100.0)
+    add_ts && add_startup_shutdown_ts_b!(c_sys5_pglib, with_increments)
     return c_sys5_pglib
 end
 
@@ -686,6 +700,17 @@ function _calc_pwi_cost(active_power::Float64, pwi::PiecewiseStepData)
     return cost
 end
 
+"Test that the two systems (typically one without time series and one with constant time series) simulate the same"
+function test_generic_mbc_equivalence(sys0, sys1; kwargs...)
+    for runner in (run_generic_mbc_prob, run_generic_mbc_sim)  # test with both a single problem and a full simulation
+        _, res0 = runner(sys0; kwargs...)
+        _, res1 = runner(sys1; kwargs...)
+        obj_val_0 = PSI.read_optimizer_stats(res0)[!, "objective_value"]
+        obj_val_1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
+        @test isapprox(obj_val_0, obj_val_1; atol = 0.0001)
+    end
+end
+
 approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
 
 @testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
@@ -698,13 +723,7 @@ approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
     sys1 = load_and_fix_system(PSITestSystems, "c_fixed_market_bid_cost")
     tweak_for_startup_shutdown!(sys1)
     add_startup_shutdown_ts_a!(sys1, false)
-    for runner in (run_generic_mbc_prob, run_generic_mbc_sim)  # test with both a single problem and a full simulation
-        _, res0 = runner(sys0; multistart = false)
-        _, res1 = runner(sys1; multistart = false)
-        obj_val_0 = PSI.read_optimizer_stats(res0)[!, "objective_value"]
-        obj_val_1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
-        @test isapprox(obj_val_0, obj_val_1; atol = 0.0001)
-    end
+    test_generic_mbc_equivalence(sys0, sys1; multistart = false)
 
     # Test that perturbing the time series perturbs the objective value as expected
     sys2 = load_and_fix_system(PSITestSystems, "c_fixed_market_bid_cost")
@@ -722,12 +741,17 @@ end
 
 @testset "MarketBidCost with time series startup and shutdown, ThermalMultiStart" begin
     # Scenario 1: hot and warm starts
+    c_sys5_pglib0a = create_multistart_sys(false, 1.0, 7.5; add_ts = false)
     c_sys5_pglib1a = create_multistart_sys(false, 1.0, 7.5)
     c_sys5_pglib2a = create_multistart_sys(true, 1.0, 7.5)
 
     # Scenario 2: hot and cold starts
+    c_sys5_pglib0b = create_multistart_sys(false, 1.05, 7.5; add_ts = false)
     c_sys5_pglib1b = create_multistart_sys(false, 1.05, 7.5)
     c_sys5_pglib2b = create_multistart_sys(true, 1.05, 7.5)
+
+    test_generic_mbc_equivalence(c_sys5_pglib0a, c_sys5_pglib1a; multistart = true)
+    test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
 
     for use_simulation in (false, true)
         (decisions1, decisions2) = run_startup_shutdown_obj_fun_test(
@@ -749,6 +773,12 @@ end
         # Make sure our tests included all types of startups and shutdowns
         @assert all(approx_geq_1.(decisions1 .+ decisions1_2))
     end
+end
+
+@testset "MarketBidCost incremental, no time series versus constant time series" begin
+    sys_no_ts = load_sys_incr()
+    sys_constant_ts = build_sys_incr(false, false, false)
+    test_generic_mbc_equivalence(sys_no_ts, sys_constant_ts)
 end
 
 @testset "MarketBidCost incremental with time series min gen cost" begin
