@@ -1,8 +1,5 @@
 test_path = mktempdir()
-
 const TIME1 = DateTime("2024-01-01T00:00:00")
-const TIME2 = TIME1 + Hour(1)
-const TIME3 = TIME1 + Day(1)
 
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [

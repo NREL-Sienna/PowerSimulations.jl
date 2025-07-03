@@ -36,35 +36,6 @@ function _update_parameter_values!(
     return
 end
 
-# TODO storing this old code here for now, it is currently unreachable
-# This is implicated in the MarketBidCost time varying incremental/decremental implementation, which will be addressed later
-function handle_variable_cost_parameter(::Tuple{}, args...)
-    ts_vector = PSY.get_variable_cost(
-        component,
-        PSY.get_operation_cost(component);
-        start_time = initial_forecast_time,
-        len = horizon,
-    )
-    variable_cost_forecast_values = TimeSeries.values(ts_vector)
-    for (t, value) in enumerate(variable_cost_forecast_values)
-        if attributes.uses_compact_power
-            # TODO implement this
-            value, _ = _convert_variable_cost(value)
-        end
-        # TODO removed an apparently unused block of code here?
-        _set_param_value!(parameter_array, value, name, t)
-        update_variable_cost!(
-            container,
-            parameter_array,
-            parameter_multiplier,
-            attributes,
-            component,
-            t,
-        )
-    end
-    return
-end
-
 # We only support certain time series costs for MarketBidCost, nothing to do for all the others
 handle_variable_cost_parameter(
     ::StartupCostParameter,

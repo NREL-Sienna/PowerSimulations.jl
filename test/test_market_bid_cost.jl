@@ -1,3 +1,6 @@
+test_path = mktempdir()
+const TIME1 = DateTime("2024-01-01T00:00:00")
+
 @testset "Test Thermal Generation MarketBidCost models" begin
     test_cases = [
         ("Base case", "fixed_market_bid_cost", 18487.236, 30.0, 30.0),
