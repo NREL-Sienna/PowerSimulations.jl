@@ -97,46 +97,6 @@ _has_parameter_time_series(
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
 
-apply_maybe_across_time_series(fn::Function, ts_data::AbstractVector) =
-    fn.(ts_data)
-
-apply_maybe_across_time_series(fn::Function, ts_data::AbstractDict) =
-    apply_maybe_across_time_series.(Ref(fn), values(ts_data))
-
-apply_maybe_across_time_series(fn::Function, ts_data::IS.TimeSeriesData) =
-    apply_maybe_across_time_series(fn, PSY.get_data(ts_data))
-
-"Helper function to look up a time series if necessary then apply a function (typically a validation routine in a `do` block) to every element in it"
-apply_maybe_across_time_series(
-    fn::Function,
-    component::PSY.Component,
-    ts_key::IS.TimeSeriesKey,
-) =
-    apply_maybe_across_time_series(fn, PSY.get_time_series(component, ts_key))
-
-# case where the element isn't a time series
-apply_maybe_across_time_series(fn::Function, ::PSY.Component, elem) = fn(elem)
-
-_validate_eltype(::Type{T}, element::T, _, _) where {T} = nothing
-_validate_eltype(::Type{T}, element::U, location, component_name, msg = "") where {T, U} =
-    throw(ArgumentError("Expected element type $T but got $U$location for $component_name"))
-function _validate_eltype(
-    ::Type{T},
-    component::PSY.Component,
-    ts_key::IS.TimeSeriesKey,
-    _ = "",
-) where {T}
-    ts_name = get_name(ts_key)
-    component_name = get_name(component)
-    apply_maybe_across_time_series(component, ts_key) do x
-        _validate_eltype(T, x, " in time series $ts_name", component_name)
-    end
-end
-function _validate_eltype(::Type{T}, component::PSY.Component, element, msg = "") where {T}
-    component_name = get_name(component)
-    _validate_eltype(T, element, msg, component_name)
-end
-
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
     initial_input = get_initial_input_maybe_decremental(Val(decremental), device)
     initial_is_ts = is_time_variant(initial_input)
@@ -172,7 +132,7 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
     expected_type = if is_ts
         IS.PiecewiseStepData
     else
-        Union{IS.PiecewiseStepData, PSY.CostCurve{PSY.PiecewiseIncrementalCurve}}
+        PSY.CostCurve{PSY.PiecewiseIncrementalCurve}
     end
     p1 = nothing
     apply_maybe_across_time_series(device, offer_curves) do x
@@ -250,7 +210,7 @@ function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjec
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
 
-# Validate that initial input always appears if variable appears, warn if it appears without variable
+# Validate that initial input ts always appears if variable ts appears, warn if initial input ts appears without variable ts
 validate_mbc_component(
     ::IncrementalCostAtMinParameter,
     device::PSY.StaticInjection,
@@ -280,7 +240,7 @@ validate_mbc_component(
 
 # Slope and breakpoint validations are done together, nothing to do here
 validate_mbc_component(
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::AbstractPiecewiseLinearSlopeParameter,
     device::PSY.StaticInjection,
     model,
 ) = nothing
@@ -395,7 +355,7 @@ function _add_pwl_constraint!(
     # updating.
     if _include_min_gen_power_in_constraint(component, U())
         on_vars = get_variable(container, OnVariable(), T)
-        p1 = jump_fixed_value(first(break_points))
+        p1::Float64 = jump_fixed_value(first(break_points))
         sum_pwl_vars += p1 * on_vars[name, period]
     end
 

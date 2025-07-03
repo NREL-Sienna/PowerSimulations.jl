@@ -1,5 +1,8 @@
 test_path = mktempdir()
 const TIME1 = DateTime("2024-01-01T00:00:00")
+const SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
+const SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
+const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
 
 @testset "Test Thermal Generation MarketBidCost models" begin
     test_cases = [
@@ -218,9 +221,9 @@ function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
 end
 
 # Layer of indirection to upgrade problem results to look like simulation results
-_maybe_upgrade_to_dict(in::AbstractDict) = in
-_maybe_upgrade_to_dict(in::DataFrame) =
-    SortedDict{DateTime, DataFrame}(first(in[!, :DateTime]) => in)
+_maybe_upgrade_to_dict(input::AbstractDict) = input
+_maybe_upgrade_to_dict(input::DataFrame) =
+    SortedDict{DateTime, DataFrame}(first(input[!, :DateTime]) => input)
 
 read_variable_dict(
     res::IS.Results,
@@ -236,7 +239,9 @@ read_parameter_dict(
     _maybe_upgrade_to_dict(read_parameter(res, par_name, comp_type))
 
 function load_sys_incr()
-    # note we are using the fixed one so we can add time series ourselves
+    # NOTE we are using the fixed one so we can add time series ourselves
+    # NOTE we need time_series_in_memory because while PSI can handle "ragged" time series
+    # of PiecewiseStepData with varying number of tranches, IS HDF serialization cannot
     sys = load_and_fix_system(
         PSITestSystems,
         "c_fixed_market_bid_cost";
@@ -260,9 +265,6 @@ function load_sys_decr()
     sys = load_and_fix_system(PSITestSystems, "c_sys5_il")
     return sys
 end
-
-SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
-SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
 
 """
 Create a system with initial input and variable cost time series. Lots of options:
@@ -631,9 +633,11 @@ function tweak_system!(sys::System, load_pow_mult, therm_pow_mult, therm_price_m
     for therm in get_components(ThermalStandard, sys)
         op_cost = get_operation_cost(therm)
         op_cost isa MarketBidCost && continue
-        old_limits = therm.active_power_limits
-        therm.active_power_limits =
-            (min = old_limits.min, max = old_limits.max * therm_pow_mult)
+        with_units_base(sys, UnitSystem.DEVICE_BASE) do
+            old_limits = get_active_power_limits(therm)
+            new_limits = (min = old_limits.min, max = old_limits.max * therm_pow_mult)
+            set_active_power_limits!(therm, new_limits)
+        end
         prop = get_proportional_term(get_value_curve(get_variable(op_cost)))
         set_variable!(op_cost, CostCurve(LinearCurve(prop * therm_price_mult)))
     end
@@ -643,8 +647,7 @@ function create_multistart_sys(with_increments::Bool, load_mult, therm_mult; add
     @assert add_ts || !with_increments
     c_sys5_pglib = load_and_fix_system(PSITestSystems, "c_sys5_pglib")
     tweak_system!(c_sys5_pglib, load_mult, 1.0, therm_mult)
-    sel = make_selector(ThermalMultiStart, "115_STEAM_1")
-    ms_comp = get_component(sel, c_sys5_pglib)
+    ms_comp = get_component(SEL_MULTISTART, c_sys5_pglib)
     old_op = get_operation_cost(ms_comp)
     old_ic = IncrementalCurve(get_value_curve(get_variable(old_op)))
     new_ii = get_initial_input(old_ic) + get_fixed(old_op)
@@ -653,15 +656,12 @@ function create_multistart_sys(with_increments::Bool, load_mult, therm_mult; add
         ms_comp,
         MarketBidCost(;
             no_load_cost = nothing,
-            start_up = get_start_up(old_op),
-            shut_down = get_shut_down(old_op),
+            start_up = (hot = 300.0, warm = 450.0, cold = 500.0),
+            shut_down = 100.0,
             incremental_offer_curves = CostCurve(new_ic),
         ),
     )
 
-    unit1 = get_component(ThermalMultiStart, c_sys5_pglib, "115_STEAM_1")
-    set_start_up!(get_operation_cost(unit1), (hot = 300.0, warm = 450.0, cold = 500.0))
-    set_shut_down!(get_operation_cost(unit1), 100.0)
     add_ts && add_startup_shutdown_ts_b!(c_sys5_pglib, with_increments)
     return c_sys5_pglib
 end
