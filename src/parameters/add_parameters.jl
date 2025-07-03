@@ -356,9 +356,9 @@ _additional_axes(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component} = ()
 
+_get_max_tranches(data::Vector{IS.PiecewiseStepData}) = maximum(length.(data))
 _get_max_tranches(data::TimeSeries.TimeArray) = _get_max_tranches(values(data))
 _get_max_tranches(data::AbstractDict) = maximum(_get_max_tranches.(values(data)))
-_get_max_tranches(data::Vector{IS.PiecewiseStepData}) = maximum(length.((data)))
 
 # Iterate through all periods of a piecewise time series and return the maximum number of tranches
 function get_max_tranches(device::PSY.Device, piecewise_ts::IS.TimeSeriesKey)
@@ -479,10 +479,10 @@ function _add_parameters!(
         param,
         D,
         _param_to_vars(T(), W()),
+        universal_axes, additional_axes,
         SOSStatusVariable.NO_VARIABLE,
         false,
         _get_expected_time_series_eltype(T()),
-        universal_axes..., additional_axes...,
     )
 
     for (ts_name, device_name, device) in zip(ts_names, device_names, active_devices)

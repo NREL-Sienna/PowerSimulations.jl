@@ -114,6 +114,7 @@ apply_maybe_across_time_series(
 ) =
     apply_maybe_across_time_series(fn, PSY.get_time_series(component, ts_key))
 
+# case where the element isn't a time series
 apply_maybe_across_time_series(fn::Function, ::PSY.Component, elem) = fn(elem)
 
 _validate_eltype(::Type{T}, element::T, _, _) where {T} = nothing
@@ -543,7 +544,7 @@ function _get_pwl_data(
         slope_param_arr = get_parameter_array(container, SlopeParam(), T)
         slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
         slope_cost_component =
-            slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
+            slope_param_arr[name, time, :] .* slope_param_mult[name, time]
         slope_cost_component = slope_cost_component.data
 
         BreakpointParam = BREAKPOINT_PARAMS[is_decremental]
