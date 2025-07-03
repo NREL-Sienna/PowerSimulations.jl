@@ -279,6 +279,12 @@ Create a system with initial input and variable cost time series. Lots of option
     time steps
   - `create_extra_tranches`: whether to create extra tranches in some time steps by
     splitting one tranche into two
+  - `active_components`: a `ComponentSelector` specifying which components should get time
+    series
+  - `initial_input_names_vary`: whether the initial input time series names should vary over
+    components
+  - `variable_cost_names_vary`: whether the variable cost time series names should vary over
+    components
 """
 function build_sys_incr(
     initial_varies::Bool,
@@ -287,44 +293,50 @@ function build_sys_incr(
     modify_baseline_pwl = nothing,
     do_override_min_x = true,
     create_extra_tranches = false,
+    active_components = SEL_INCR,
+    initial_input_names_vary = false,
+    variable_cost_names_vary = false,
 )
     sys = load_sys_incr()
-    comp = get_component(SEL_INCR, sys)
-    op_cost = get_operation_cost(comp)
-    cost_curve = get_incremental_offer_curves(op_cost)::CostCurve
-    baseline = get_value_curve(cost_curve)::PiecewiseIncrementalCurve
-    baseline_initial = get_initial_input(baseline)
-    baseline_pwl = get_function_data(baseline)
-    !isnothing(modify_baseline_pwl) && (baseline_pwl = modify_baseline_pwl(baseline_pwl))
-    min_power = with_units_base(sys, UnitSystem.NATURAL_UNITS) do
-        get_active_power_limits(comp).min
+    for comp in get_components(active_components, sys)
+        op_cost = get_operation_cost(comp)
+        cost_curve = get_incremental_offer_curves(op_cost)::CostCurve
+        baseline = get_value_curve(cost_curve)::PiecewiseIncrementalCurve
+        baseline_initial = get_initial_input(baseline)
+        baseline_pwl = get_function_data(baseline)
+        !isnothing(modify_baseline_pwl) &&
+            (baseline_pwl = modify_baseline_pwl(baseline_pwl))
+        min_power = with_units_base(sys, UnitSystem.NATURAL_UNITS) do
+            get_active_power_limits(comp).min
+        end
+
+        # primes for easier attribution
+        incr_initial = initial_varies ? (0.11, 0.05) : (0.0, 0.0)
+        incr_x = breakpoints_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
+        incr_y = slopes_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
+
+        name_modifier = "_$(replace(get_name(comp), " " => "_"))_"
+        my_initial_ts = _make_deterministic_ts(
+            "initial_input" * (initial_input_names_vary ? name_modifier : ""),
+            baseline_initial,
+            incr_initial...,
+            5,
+            Hour(1),
+        )
+        my_pwl_ts = _make_deterministic_ts(
+            "variable_cost" * (variable_cost_names_vary ? name_modifier : ""),
+            baseline_pwl,
+            incr_x,
+            incr_y,
+            5,
+            Hour(1);
+            override_min_x = do_override_min_x ? min_power : nothing,
+            create_extra_tranches = create_extra_tranches,
+        )
+
+        set_incremental_initial_input!(sys, comp, my_initial_ts)
+        set_variable_cost!(sys, comp, my_pwl_ts, get_power_units(cost_curve))
     end
-
-    # primes for easier attribution
-    incr_initial = initial_varies ? (0.11, 0.05) : (0.0, 0.0)
-    incr_x = breakpoints_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
-    incr_y = slopes_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
-
-    my_initial_ts = _make_deterministic_ts(
-        "initial_input",
-        baseline_initial,
-        incr_initial...,
-        5,
-        Hour(1),
-    )
-    my_pwl_ts = _make_deterministic_ts(
-        "variable_cost",
-        baseline_pwl,
-        incr_x,
-        incr_y,
-        5,
-        Hour(1);
-        override_min_x = do_override_min_x ? min_power : nothing,
-        create_extra_tranches = create_extra_tranches,
-    )
-
-    set_incremental_initial_input!(sys, comp, my_initial_ts)
-    set_variable_cost!(sys, comp, my_pwl_ts, get_power_units(cost_curve))
     return sys
 end
 
@@ -874,6 +886,35 @@ end
     baseline = build_sys_incr(true, true, true)
     variable_tranches = build_sys_incr(true, true, true; create_extra_tranches = true)
     test_generic_mbc_equivalence(baseline, variable_tranches)
+end
+
+@testset "MarketBidCost incremental with heterogeneous time series names" begin
+    sel = make_selector(x -> get_operation_cost(x) isa MarketBidCost, ThermalStandard)
+    baseline = build_sys_incr(true, true, true; active_components = sel)
+    @assert length(get_components(sel, baseline)) == 2
+
+    # Should succeed for varying initial input time series names:
+    variable_ii_names = build_sys_incr(
+        true,
+        true,
+        true;
+        active_components = sel,
+        initial_input_names_vary = true,
+    )
+    test_generic_mbc_equivalence(baseline, variable_ii_names)
+
+    # Should give an informative error for varying variable cost time series names:
+    variable_vc_names = build_sys_incr(
+        true,
+        true,
+        true;
+        active_components = sel,
+        variable_cost_names_vary = true,
+    )
+    model = build_generic_mbc_model(variable_vc_names; multistart = false)
+    mkpath(test_path)
+    PSI.set_output_dir!(model, test_path)
+    @test_throws "All time series names must be equal" PSI.build_impl!(model)  # see below re: build_impl!
 end
 
 @testset "Test some MarketBidCost data validations" begin
