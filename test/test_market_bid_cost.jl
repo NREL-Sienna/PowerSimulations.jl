@@ -73,9 +73,9 @@ function adjust_min_power!(sys)
     end
 end
 
-function load_and_fix_system(args...)
+function load_and_fix_system(args...; kwargs...)
     sys = Logging.with_logger(Logging.NullLogger()) do
-        build_system(args...)
+        build_system(args...; kwargs...)
     end
     no_load_to_initial_input!(sys)
     adjust_min_power!(sys)
@@ -109,6 +109,7 @@ function _make_deterministic_ts(
     horizon,
     interval;
     override_min_x = nothing,
+    create_extra_tranches = false,
 )
     (tranche_incr_x, res_incr_x, interval_incr_x) = incrs_x
     (tranche_incr_y, res_incr_y, interval_incr_y) = incrs_y
@@ -132,6 +133,20 @@ function _make_deterministic_ts(
         for sub_x in xs2
             sub_x[1] = override_min_x
         end
+    end
+
+    if create_extra_tranches
+        # Split the first tranche of the first timestep (xs1, ys1) into two; split the last tranche of the last timestep of (xs2, ys2) into three
+        xs1[1] = [xs1[1][1], (xs1[1][1] + xs1[1][2]) / 2, xs1[1][2:end]...]
+        ys1[1] = [ys1[1][1], ys1[1][1], ys1[1][2:end]...]
+
+        xs2[end] = [
+            xs2[end][1:(end - 1)]...,
+            (2 * xs2[end][end - 1] + xs2[end][end]) / 3,
+            (xs2[end][end - 1] + 2 * xs2[end][end]) / 3,
+            xs2[end][end],
+        ]
+        ys2[end] = [ys2[end][1:(end - 1)]..., ys2[end][end], ys2[end][end], ys2[end][end]]
     end
 
     startup_data = OrderedDict(
@@ -219,7 +234,12 @@ read_parameter_dict(
 
 function load_sys_incr()
     # note we are using the fixed one so we can add time series ourselves
-    sys = load_and_fix_system(PSITestSystems, "c_fixed_market_bid_cost")
+    sys = load_and_fix_system(
+        PSITestSystems,
+        "c_fixed_market_bid_cost";
+        time_series_in_memory = true,
+    )
+    @assert PSY.stores_time_series_in_memory(sys)  # bug in PSB if this fails
     tweak_system!(sys, 1.05, 1.0, 1.0)
     get_y_coords(
         get_function_data(
@@ -241,12 +261,29 @@ end
 SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
 SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
 
+"""
+Create a system with initial input and variable cost time series. Lots of options:
+
+# Arguments:
+  - `initial_varies`: whether the initial input time series should have values that vary
+    over time (as opposed to a time series with constant values over time)
+  - `breakpoints_vary`: whether the breakpoints in the variable cost time series should vary
+    over time
+  - `slopes_vary`: whether the slopes of the variable cost time series should vary over time
+  - `modify_baseline_pwl`: optional, a function to modify the baseline piecewise linear cost
+    `FunctionData` from which the variable cost time series is calculated
+  - `do_override_min_x`: whether to override the P1 to be equal to the minimum power in all
+    time steps
+  - `create_extra_tranches`: whether to create extra tranches in some time steps by
+    splitting one tranche into two
+"""
 function build_sys_incr(
     initial_varies::Bool,
     breakpoints_vary::Bool,
     slopes_vary::Bool;
     modify_baseline_pwl = nothing,
     do_override_min_x = true,
+    create_extra_tranches = false,
 )
     sys = load_sys_incr()
     comp = get_component(SEL_INCR, sys)
@@ -280,6 +317,7 @@ function build_sys_incr(
         5,
         Hour(1);
         override_min_x = do_override_min_x ? min_power : nothing,
+        create_extra_tranches = create_extra_tranches,
     )
 
     set_incremental_initial_input!(sys, comp, my_initial_ts)
@@ -761,7 +799,7 @@ end
             simulation = use_simulation,
         )
         @test all(isapprox.(decisions1, decisions2))
-        # NOTE not all of the decisions here are >= 1, we'll do another scenario such that we get full switch coverage across both of them:
+        # NOTE not all of the decision types here have >= 1, we'll do another scenario such that we get full decision coverage across both of them:
 
         (decisions1_2, decisions2_2) = run_startup_shutdown_obj_fun_test(
             c_sys5_pglib1b,
@@ -781,52 +819,58 @@ end
     test_generic_mbc_equivalence(sys_no_ts, sys_constant_ts)
 end
 
-@testset "MarketBidCost incremental with time series min gen cost" begin
+@testset "MarketBidCost incremental with time varying min gen cost" begin
     baseline = build_sys_incr(false, false, false)
-    plus_initial = build_sys_incr(true, false, false)
+    varying = build_sys_incr(true, false, false)
 
     for use_simulation in (false, true)
         decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
         @test all(isapprox.(decisions1, decisions2))
         @assert all(approx_geq_1.(decisions1))
     end
 end
 
-@testset "MarketBidCost incremental with time series slopes" begin
+@testset "MarketBidCost incremental with time varying slopes" begin
     baseline = build_sys_incr(false, false, false)
-    plus_initial = build_sys_incr(false, false, true)
+    varying = build_sys_incr(false, false, true)
 
     for use_simulation in (false, true)
         decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
         @assert all(isapprox.(decisions1, decisions2))
         @assert all(approx_geq_1.(decisions1))
     end
 end
 
-@testset "MarketBidCost incremental with time series breakpoints" begin
+@testset "MarketBidCost incremental with time varying breakpoints" begin
     baseline = build_sys_incr(false, false, false)
-    plus_initial = build_sys_incr(false, true, false)
+    varying = build_sys_incr(false, true, false)
 
     for use_simulation in (false, true)
         decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
         @assert all(isapprox.(decisions1, decisions2))
         @assert all(approx_geq_1.(decisions1))
     end
 end
 
-@testset "MarketBidCost incremental with time series everything" begin
+@testset "MarketBidCost incremental with time varying everything" begin
     baseline = build_sys_incr(false, false, false)
-    plus_initial = build_sys_incr(true, true, true)
+    varying = build_sys_incr(true, true, true)
 
     for use_simulation in (false, true)
         decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, plus_initial; simulation = use_simulation)
+            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
         @assert all(isapprox.(decisions1, decisions2))
         @assert all(approx_geq_1.(decisions1))
     end
+end
+
+@testset "MarketBidCost incremental with variable number of tranches" begin
+    baseline = build_sys_incr(true, true, true)
+    variable_tranches = build_sys_incr(true, true, true; create_extra_tranches = true)
+    test_generic_mbc_equivalence(baseline, variable_tranches)
 end
 
 @testset "Test some MarketBidCost data validations" begin
