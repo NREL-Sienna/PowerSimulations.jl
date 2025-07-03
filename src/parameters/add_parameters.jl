@@ -403,6 +403,12 @@ end
 # with an expected output axes tuple.
 _unwrap_for_param(::ParameterType, ts_elem, expected_axs) = ts_elem
 
+# For piecewise MarketBidCost-like data, the number of tranches can vary over time, so the
+# parameter container is sized for the maximum number of tranches and in smaller cases we
+# have to pad. We do this by creating additional "degenerate" tranches at the top end of the
+# curve with dx = 0 such that their dispatch variables are constrained to 0. In theory, the
+# slope shouldn't matter for these degenerate segments. In practice, we'll use slope = 0 so
+# the term can be more trivially dropped from the objective function.
 function _unwrap_for_param(
     ::AbstractPiecewiseLinearSlopeParameter,
     ts_elem::IS.PiecewiseStepData,
@@ -410,16 +416,12 @@ function _unwrap_for_param(
 )
     max_len = length(only(expected_axs))
     y_coords = IS.get_y_coords(ts_elem)
-    # The container is sized based on the global maximum number of tranches, so we may need to right-pad
     @assert length(y_coords) <= max_len
-    padded_y_coords = vcat(y_coords, fill(NaN, max_len - length(y_coords)))
+    fill_value = 0.0  # pad with slope = 0 if necessary (see above)
+    padded_y_coords = vcat(y_coords, fill(fill_value, max_len - length(y_coords)))
     return padded_y_coords
 end
 
-# JuMP VariableRef cannot be fixed to NaN, so we need to pad with something else. We'll use
-# the slope parameter NaNs to undo the padding, so this doesn't have to be a value we'd
-# never see in data
-const _BREAKPOINT_PAD_VALUE = -0.0
 function _unwrap_for_param(
     ::AbstractPiecewiseLinearBreakpointParameter,
     ts_elem::IS.PiecewiseStepData,
@@ -428,8 +430,8 @@ function _unwrap_for_param(
     max_len = length(only(expected_axs))
     x_coords = IS.get_x_coords(ts_elem)
     @assert length(x_coords) <= max_len
-    padded_x_coords =
-        vcat(x_coords, fill(_BREAKPOINT_PAD_VALUE, max_len - length(x_coords)))
+    fill_value = x_coords[end]  # if padding is necessary, repeat the last breakpoint so dx = 0 (see above)
+    padded_x_coords = vcat(x_coords, fill(fill_value, max_len - length(x_coords)))
     return padded_x_coords
 end
 

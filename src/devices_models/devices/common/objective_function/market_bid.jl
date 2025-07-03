@@ -527,17 +527,6 @@ end
 ######## MarketBidCost: Fixed Curves ##########
 ###############################################
 
-# Data should be such that there are no NaNs up to some point and then all NaNs
-function _up_to_first_nan(arr::Vector{Float64})
-    last_ix = findfirst(isnan, arr)
-    isnothing(last_ix) && (last_ix = length(arr) + 1)
-    last_ix -= 1
-    @assert all(isnan, arr[(last_ix + 1):end])
-    result = arr[1:last_ix]
-    @assert all(!isnan, result)
-    return result
-end
-
 # Serves a similar role as _lookup_maybe_time_variant_param, but needs extra logic
 function _get_pwl_data(
     is_decremental::Bool,
@@ -555,6 +544,7 @@ function _get_pwl_data(
         slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
         slope_cost_component =
             slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
+        slope_cost_component = slope_cost_component.data
 
         BreakpointParam = BREAKPOINT_PARAMS[is_decremental]
         breakpoint_param_container = get_parameter(container, BreakpointParam(), T)
@@ -562,12 +552,9 @@ function _get_pwl_data(
         breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
         breakpoint_cost_component =
             breakpoint_param_arr[time, :] .* breakpoint_param_mult[name, time]
+        breakpoint_cost_component = breakpoint_cost_component.data
 
-        # NaNs signify that we had more space in the container than tranches in the
-        # function, so it's valid to discard trailing NaNs
-        slope_cost_component = _up_to_first_nan(slope_cost_component.data)
-        breakpoint_cost_component =
-            breakpoint_cost_component.data[1:(length(slope_cost_component) + 1)]
+        @assert length(slope_cost_component) == length(breakpoint_cost_component) - 1
         # PSY's cost_function_timeseries.jl says this will always be natural units
         unit_system = PSY.UnitSystem.NATURAL_UNITS
     else
