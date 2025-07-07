@@ -291,7 +291,7 @@ branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 # Same for bus aux vars
 function bus_aux_vars(data::PFS.ACPowerFlowData)
     vars = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
-    if data.calculate_loss_factors
+    if get_calculate_loss_factors(data)
         push!(vars, PowerFlowLossFactors)
     end
     if data.calculate_voltage_stability_factors
