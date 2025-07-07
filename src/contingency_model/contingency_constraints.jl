@@ -13,12 +13,11 @@ function add_event_constraints!(
         devices_with_attrbts =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
-        parameter_type = get_parameter_type(event_type, event_model, U)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerRangeExpressionUB,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -42,12 +41,11 @@ function add_event_constraints!(
         devices_with_attrbts =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
-        parameter_type = get_parameter_type(event_type, event_model, U)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerRangeExpressionUB,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -56,7 +54,7 @@ function add_event_constraints!(
             container,
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -80,7 +78,6 @@ function add_event_constraints!(
         devices_with_attrbts =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
-        parameter_type = get_parameter_type(event_type, event_model, U)
         if has_service_model(device_model)
             lhs_type = ActivePowerRangeExpressionUB
         else
@@ -90,7 +87,7 @@ function add_event_constraints!(
             container,
             ActivePowerOutageConstraint,
             lhs_type,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -114,7 +111,6 @@ function add_event_constraints!(
         devices_with_attrbts =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
-        parameter_type = get_parameter_type(event_type, event_model, U)
         if has_service_model(device_model)
             lhs_type = ActivePowerRangeExpressionUB
         else
@@ -133,7 +129,7 @@ function add_event_constraints!(
             container,
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -157,12 +153,11 @@ function add_event_constraints!(
         devices_with_attrbts =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
-        parameter_type = get_parameter_type(event_type, event_model, U)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerVariable,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -186,12 +181,11 @@ function add_event_constraints!(
         devices_with_attrbts =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
         @assert !isempty(devices_with_attrbts)
-        parameter_type = get_parameter_type(event_type, event_model, U)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerVariable,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
@@ -200,7 +194,7 @@ function add_event_constraints!(
             container,
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attrbts,
             device_model,
             W,
