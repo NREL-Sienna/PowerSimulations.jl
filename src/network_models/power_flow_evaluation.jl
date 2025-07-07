@@ -294,7 +294,7 @@ function bus_aux_vars(data::PFS.ACPowerFlowData)
     if get_calculate_loss_factors(data)
         push!(vars, PowerFlowLossFactors)
     end
-    if data.calculate_voltage_stability_factors
+    if get_calculate_voltage_stability_factors(data)
         push!(vars, PowerFlowVoltageStabilityFactors)
     end
     return vars
