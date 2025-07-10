@@ -9,14 +9,14 @@ function add_event_arguments!(
 } where {U <: PSY.StaticInjection}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
                 p_type,
-                devices_with_attrbts,
+                devices_with_attributes,
                 device_model,
                 event_model,
             )
@@ -37,14 +37,14 @@ function add_event_arguments!(
 } where {U <: PSY.PowerLoad}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
                 p_type,
-                devices_with_attrbts,
+                devices_with_attributes,
                 device_model,
                 event_model,
             )
@@ -52,7 +52,7 @@ function add_event_arguments!(
         add_parameters!(
             container,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             event_model,
         )
@@ -60,7 +60,7 @@ function add_event_arguments!(
             container,
             ActivePowerBalance,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             network_model,
         )
@@ -80,14 +80,14 @@ function add_event_arguments!(
 } where {U <: PSY.PowerLoad}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
                 p_type,
-                devices_with_attrbts,
+                devices_with_attributes,
                 device_model,
                 event_model,
             )
@@ -95,7 +95,7 @@ function add_event_arguments!(
         add_parameters!(
             container,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             event_model,
         )
@@ -103,14 +103,14 @@ function add_event_arguments!(
             container,
             ActivePowerBalance,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             network_model,
         )
         add_parameters!(
             container,
             ReactivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             event_model,
         )
@@ -118,7 +118,7 @@ function add_event_arguments!(
             container,
             ReactivePowerBalance,
             ReactivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             network_model,
         )
@@ -137,14 +137,14 @@ function add_event_arguments!(
 } where {U <: PSY.StaticInjection}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
                 p_type,
-                devices_with_attrbts,
+                devices_with_attributes,
                 device_model,
                 event_model,
             )
@@ -152,7 +152,7 @@ function add_event_arguments!(
         add_parameters!(
             container,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             event_model,
         )
@@ -160,7 +160,7 @@ function add_event_arguments!(
             container,
             ActivePowerBalance,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             network_model,
         )
@@ -178,14 +178,14 @@ function add_event_arguments!(
 } where {U <: PSY.StaticInjection}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
                 p_type,
-                devices_with_attrbts,
+                devices_with_attributes,
                 device_model,
                 event_model,
             )
@@ -193,7 +193,7 @@ function add_event_arguments!(
         add_parameters!(
             container,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             event_model,
         )
@@ -201,14 +201,14 @@ function add_event_arguments!(
             container,
             ActivePowerBalance,
             ActivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             network_model,
         )
         add_parameters!(
             container,
             ReactivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             event_model,
         )
@@ -216,7 +216,7 @@ function add_event_arguments!(
             container,
             ReactivePowerBalance,
             ReactivePowerOffsetParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             network_model,
         )

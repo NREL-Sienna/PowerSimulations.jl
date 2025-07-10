@@ -10,15 +10,15 @@ function add_event_constraints!(
 } where {U <: PSY.ThermalGen}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerRangeExpressionUB,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -38,15 +38,15 @@ function add_event_constraints!(
 } where {U <: PSY.ThermalGen}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerRangeExpressionUB,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -55,7 +55,7 @@ function add_event_constraints!(
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -75,9 +75,9 @@ function add_event_constraints!(
 } where {U <: PSY.RenewableGen}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         if has_service_model(device_model)
             lhs_type = ActivePowerRangeExpressionUB
         else
@@ -88,7 +88,7 @@ function add_event_constraints!(
             ActivePowerOutageConstraint,
             lhs_type,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -108,9 +108,9 @@ function add_event_constraints!(
 } where {U <: PSY.RenewableGen}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         if has_service_model(device_model)
             lhs_type = ActivePowerRangeExpressionUB
         else
@@ -121,7 +121,7 @@ function add_event_constraints!(
             ActivePowerOutageConstraint,
             lhs_type,
             parameter_type,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -130,7 +130,7 @@ function add_event_constraints!(
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -150,15 +150,15 @@ function add_event_constraints!(
 } where {U <: PSY.ElectricLoad}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerVariable,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -178,15 +178,15 @@ function add_event_constraints!(
 } where {U <: PSY.ElectricLoad}
     for (key, event_model) in get_events(device_model)
         event_type = get_entry_type(key)
-        devices_with_attrbts =
+        devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attrbts)
+        @assert !isempty(devices_with_attributes)
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
             ActivePowerVariable,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
@@ -195,7 +195,7 @@ function add_event_constraints!(
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
             AvailableStatusParameter,
-            devices_with_attrbts,
+            devices_with_attributes,
             device_model,
             W,
         )
