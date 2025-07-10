@@ -335,15 +335,16 @@ function update_decision_state!(
     for name in column_names
         if event_occurrence_data.values[name, state_data_index] == 1.0
             outage_index = state_data_index + 1     #outage occurs at the following timestep
-            while true
+            subsequent_outage_occurence_data =
+                Vector(event_occurrence_data.values[name, outage_index:end])
+            n_remaining_indices = findfirst(x -> x == 1.0, subsequent_outage_occurence_data)
+            if n_remaining_indices === nothing
+                n_remaining_indices = length(subsequent_outage_occurence_data)
+            end
+            for ix in outage_index:(state_data_index + n_remaining_indices)
                 # Set the offset parameter to equal the negative of the timeseries parameter 
-                state_data.values[name, outage_index] =
-                    -1.0 * activepower_data.values[name, outage_index]
-                if (event_occurrence_data.values[name, outage_index] == 1.0) ||
-                   outage_index == length(state_data.values[name, :])  #If another change is detected or you have reached the end of the state
-                    break
-                end
-                outage_index += 1
+                state_data.values[name, ix] =
+                    -1.0 * activepower_data.values[name, ix]
             end
         end
     end
@@ -508,13 +509,14 @@ function update_decision_state!(
     for name in column_names
         if event_occurrence_data.values[name, state_data_index] == 1.0
             outage_index = state_data_index + 1     #outage occurs at the following timestep
-            while true
-                state_data.values[name, outage_index] = 0.0
-                if (event_occurrence_data.values[name, outage_index] == 1.0) ||
-                   outage_index == length(state_data.values[name, :])  #If another change is detected or you have reached the end of the state
-                    break
-                end
-                outage_index += 1
+            subsequent_outage_occurence_data =
+                Vector(event_occurrence_data.values[name, outage_index:end])
+            n_remaining_indices = findfirst(x -> x == 1.0, subsequent_outage_occurence_data)
+            if n_remaining_indices === nothing
+                n_remaining_indices = length(subsequent_outage_occurence_data)
+            end
+            for ix in outage_index:(state_data_index + n_remaining_indices)
+                state_data.values[name, ix] = 0.0
             end
         end
     end
