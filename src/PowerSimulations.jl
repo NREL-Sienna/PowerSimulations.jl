@@ -241,6 +241,7 @@ export PieceWiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 export PostContingencyActivePowerChangeVariable
+export PostContingencyActivePowerReserveDeploymentVariable
 
 # Auxiliary variables
 export TimeDurationOn
