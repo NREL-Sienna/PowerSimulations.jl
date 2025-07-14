@@ -11,7 +11,8 @@ function add_event_arguments!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
@@ -39,7 +40,8 @@ function add_event_arguments!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
@@ -82,7 +84,8 @@ function add_event_arguments!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
@@ -139,7 +142,8 @@ function add_event_arguments!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,
@@ -180,7 +184,8 @@ function add_event_arguments!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         for p_type in [AvailableStatusChangeCountdownParameter, AvailableStatusParameter]
             add_parameters!(
                 container,

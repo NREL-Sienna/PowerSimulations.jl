@@ -12,7 +12,8 @@ function add_event_constraints!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
@@ -40,7 +41,8 @@ function add_event_constraints!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
@@ -77,7 +79,8 @@ function add_event_constraints!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         if has_service_model(device_model)
             lhs_type = ActivePowerRangeExpressionUB
         else
@@ -110,7 +113,8 @@ function add_event_constraints!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         if has_service_model(device_model)
             lhs_type = ActivePowerRangeExpressionUB
         else
@@ -152,7 +156,8 @@ function add_event_constraints!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
@@ -180,7 +185,8 @@ function add_event_constraints!(
         event_type = get_entry_type(key)
         devices_with_attributes =
             [d for d in devices if PSY.has_supplemental_attributes(d, event_type)]
-        @assert !isempty(devices_with_attributes)
+        isempty(devices_with_attributes) &&
+            error("no devices found with a supplemental attribute for event $event_type")
         add_parameterized_upper_bound_range_constraints(
             container,
             ActivePowerOutageConstraint,
