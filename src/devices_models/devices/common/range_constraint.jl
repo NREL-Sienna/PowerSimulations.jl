@@ -792,7 +792,7 @@ function add_parameterized_upper_bound_range_constraints(
     ::Type{T},
     ::Type{U},
     ::Type{P},
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {

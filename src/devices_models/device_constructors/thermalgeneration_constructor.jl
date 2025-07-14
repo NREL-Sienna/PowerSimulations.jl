@@ -41,7 +41,6 @@ function construct_device!(
 )
     # FixedOutput doesn't add any constraints to the model. This function covers
     # AbstractPowerModel and AbtractActivePowerModel
-    add_event_constraints!(container, devices, device_model, network_model)
     return
 end
 
@@ -1605,6 +1604,7 @@ function construct_device!(
         device_model,
         get_network_formulation(network_model),
     )
+    add_event_constraints!(container, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
     return
 end
@@ -1910,6 +1910,7 @@ function construct_device!(
         device_model,
         get_network_formulation(network_model),
     )
+    add_event_constraints!(container, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
     return
 end
