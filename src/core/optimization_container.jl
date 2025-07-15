@@ -1664,6 +1664,10 @@ function write_initial_conditions_data!(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
+            #@show key
+            @show vkey = typeof(key).parameters[1]
+                if should_write_resulting_value(vkey) == false
+                    continue end
                 ic_data_dict[key] = to_dataframe(jump_value.(field_container), key)
             end
         end
