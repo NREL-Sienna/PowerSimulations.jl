@@ -1,5 +1,14 @@
 # Register a variable in a custom operation model
 
+In most cases, operation problem models are optimization models. Although in `PowerSimulations.jl` it is
+possible to define arbitrary problems that can reflect heuristic decision rules, this is not the common case.
+
+The first aspect to consider when thinking about developing a model compatible with `PowerSimulations.jl` is that although we support all of `JuMP.jl` objects, you need to employ [anonymous constraints and variables](https://jump.dev/JuMP.jl/stable/manual/variables/#anonymous_variables) in `JuMP.jl` and register the constraints, variables and other optimization objects into `PowerSimulations.jl`'s optimization container. Otherwise the features to use your problem in the simulation like the coordination with other problems and post processing won't work.
+
+!!! info
+    
+    The requirements for the simulation of Power Systems operations are more strict than solving an optimization problem once with just `JuMP.jl`. The requirements imposed by `PowerSimulations.jl` to integrate your models in a simulation are designed to help with other complex operations that go beyond `JuMP.jl` scope.
+
 To register a variable in the model, the developer must first allocate the container into the
 optimization container and then populate it. For example, it require start the build function as follows:
 
@@ -7,12 +16,12 @@ optimization container and then populate it. For example, it require start the b
     
     All the code in this page is considered "pseudo-code". Copy-paste will likely not work out of the box. You need to develop the internals of the functions correctly for the examples below to work.
 
-!!! info
-    
-    We recommend calling `import PowerSimulations` and defining the constant `CONST PSI = PowerSimulations` to
-    make it easier to read the code and determine which package is responsible for defining the functions.
-
 ```julia
+using PowerSystems
+using PowerSimulations
+const PSY = PowerSystems;
+const PSI = PowerSimulations;
+
 function PSI.build_model!(model::PSI.DecisionModel{MyCustomModel})
     container = PSI.get_optimization_container(model)
     PSI.set_time_steps!(container, 1:24)

@@ -524,7 +524,7 @@ Which can be approximated as:
 
 ## Valid configurations
 
-Valid `DeviceModel`s for subtypes of `Branch` include the following:
+Valid [`DeviceModel`](@ref)s for subtypes of `Branch` include the following:
 
 ```@eval
 using PowerSimulations

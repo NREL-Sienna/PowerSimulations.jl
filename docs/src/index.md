@@ -4,7 +4,7 @@
 CurrentModule = PowerSimulations
 ```
 
-## About
+## Overview
 
 `PowerSimulations.jl` is part of the National Renewable Energy Laboratory's
 [Sienna ecosystem](https://www.nrel.gov/analysis/sienna.html), an open source framework for
@@ -32,6 +32,33 @@ of operations models and simulation models.
 
 The most common Simulation Model is the solution of a Unit Commitment and Economic Dispatch sequence of problems. This model is used in commercial Production Cost Modeling tools, but it has a limited scope of analysis.
 
+`PowerSimulations.jl` is an active project under development, and we welcome your feedback, suggestions, and bug reports.
+
+## About Sienna
+
+`PowerSystemCaseBuilder.jl` is part of the National Renewable Energy Laboratory's
+[Sienna ecosystem](https://nrel-sienna.github.io/Sienna/), an open source framework for
+power system modeling, simulation, and optimization. The Sienna ecosystem can be
+[found on Github](https://github.com/NREL-Sienna/Sienna). It contains three applications:
+
+  - [Sienna\Data](https://nrel-sienna.github.io/Sienna/pages/applications/sienna_data.html) enables
+    efficient data input, analysis, and transformation
+  - [Sienna\Ops](https://nrel-sienna.github.io/Sienna/pages/applications/sienna_ops.html) enables
+    enables system scheduling simulations by formulating and solving optimization problems
+  - [Sienna\Dyn](https://nrel-sienna.github.io/Sienna/pages/applications/sienna_dyn.html) enables
+    system transient analysis including small signal stability and full system dynamic
+    simulations
+
+Each application uses multiple packages in the [`Julia`](http://www.julialang.org)
+programming language.
+
+## Installation and Quick Links
+
+  - [Sienna installation page](https://nrel-sienna.github.io/Sienna/SiennaDocs/docs/build/how-to/install/):
+    Instructions to install `PowerSystemCaseBuilder.jl` and other Sienna\Data packages
+  - [Sienna Documentation Hub](https://nrel-sienna.github.io/Sienna/SiennaDocs/docs/build/index.html):
+    Links to other Sienna packages' documentation
+
 ## How To Use This Documentation
 
 There are five main sections containing different information:
@@ -47,8 +74,3 @@ There are five main sections containing different information:
 `PowerSimulations.jl` strives to follow the [Diataxis](https://diataxis.fr/) documentation
 framework.
 
-## Getting Started
-
-If you are new to `PowerSimulations.jl`, here's how we suggest getting started:
-
- 1. [Install](@ref install)

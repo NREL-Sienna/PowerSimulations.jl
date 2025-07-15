@@ -3,6 +3,14 @@ using PowerSystems
 using PowerSimulations
 using DataStructures
 using DocumenterInterLinks
+using Literate
+
+Literate.markdown(
+    "docs/src/tutorials/decision_problem.jl",  
+    "docs/src/tutorials";             
+    name = "decision_problem",       
+    flavor = Literate.DocumenterFlavor()
+)
 
 links = InterLinks(
     "Julia" => "https://docs.julialang.org/en/v1/",
@@ -20,7 +28,6 @@ pages = OrderedDict(
         "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
     ],
     "How to..." => Any[
-        "...install PowerSimulations.jl" => "how_to/install.md",
         "...register a variable in a custom operation model" => "how_to/register_variable.md",
         "...create a problem template" => "how_to/problem_templates.md",
         "...read the simulation results" => "how_to/read_results.md",
@@ -30,7 +37,6 @@ pages = OrderedDict(
         "...run a parallel simulation" => "how_to/parallel_simulations.md",
     ],
     "Explanation" => Any[
-        "explanation/operation_model_structure.md",
         "explanation/psi_structure.md",
         "explanation/feedforward.md",
         "explanation/chronologies.md",

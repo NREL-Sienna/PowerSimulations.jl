@@ -43,7 +43,7 @@ Again, if the problem is now feasible, check the solution of `ReserveRequirement
 
 Some solvers allows to identify which constraints and variables are producing the infeasibility, by finding the irreducible infeasible set (IIS), that is the subset of constraints and variable bounds that will become feasible if any single constraint or variable bound is removed.
 
-To enable this feature in `PowerSimulations` the keyword argument `calculate_conflict` must be set to `true`, when creating the `DecisionModel`. Note that not all solvers allow the computation of the IIS, but most commercial solvers have this capability. It is also recommended to enable the keyword argument `store_variable_names=true` to help understanding which variables are with infeasibility issues.
+To enable this feature in `PowerSimulations` the keyword argument `calculate_conflict` must be set to `true`, when creating the [`DecisionModel`](@ref). Note that not all solvers allow the computation of the IIS, but most commercial solvers have this capability. It is also recommended to enable the keyword argument `store_variable_names=true` to help understanding which variables are with infeasibility issues.
 
 The following code creates a decision model with the `Xpress` optimizer, and enabling the `calculate_conflict=true` keyword argument.
 

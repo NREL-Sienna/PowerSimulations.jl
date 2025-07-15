@@ -25,7 +25,7 @@ using HiGHS #solver
 ### Optimizer
 
 It's most convenient to define an optimizer instance upfront and pass it into the
-`DecisionModel` constructor. For this example, we can use the free HiGHS solver with a
+[`DecisionModel`](@ref) constructor. For this example, we can use the free HiGHS solver with a
 relatively relaxed MIP gap (`ratioGap`) setting to improve speed.
 
 ```@repl tutorial
@@ -84,11 +84,7 @@ template_ed = template_economic_dispatch(;
 
 ### Define the `SimulationModels`
 
-`DecisionModel`s define the problems that are executed in the simulation.
-The actual problem will change as the stage gets updated to represent
-different time periods, but the formulations applied to the components is constant within
-a stage. In this case, we want to define two stages with the `ProblemTemplate`s
-and the `System`s that we've already created.
+[`DecisionModel`](@ref)`s define the problems that are executed in the simulation. The actual problem will change as the stage gets updated to represent different time periods, but the formulations applied to the components is constant within a stage. In this case, we want to define two stages with the `ProblemTemplate`s and the `System`s that we've already created.
 
 ```@repl tutorial
 models = SimulationModels(;
