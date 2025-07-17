@@ -629,6 +629,7 @@ end
         ACBus(
             10,
             "node_none",
+            true,
             "ISOLATED",
             0,
             1.0,
