@@ -36,7 +36,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
-    network_reduction::PNM.NetworkReduction
+    network_reduction::PNM.NetworkReductionData
     reduce_radial_branches::Bool
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
@@ -61,7 +61,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             subnetworks,
             Dict{PSY.ACBus, Int}(),
             duals,
-            PNM.NetworkReduction(),
+            PNM.NetworkReductionData(),
             reduce_radial_branches,
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
@@ -146,7 +146,7 @@ function instantiate_network_model(
         if model.reduce_radial_branches
             network_reduction = PNM.get_radial_reduction(sys)
         else
-            network_reduction = PNM.NetworkReduction()
+            network_reduction = PNM.NetworkReductionData()
         end
         model.PTDF_matrix =
             PNM.VirtualPTDF(sys; network_reduction = network_reduction)
@@ -154,7 +154,7 @@ function instantiate_network_model(
 
     if !model.reduce_radial_branches &&
        model.PTDF_matrix.network_reduction.reduction_type ==
-       PNM.NetworkReductionTypes.RADIAL
+       PNM.PNM.NetworkReductionDataTypes.RADIAL
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
@@ -164,7 +164,8 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
-       model.PTDF_matrix.network_reduction.reduction_type == PNM.NetworkReductionTypes.WARD
+       model.PTDF_matrix.network_reduction.reduction_type ==
+       PNM.PNM.NetworkReductionDataTypes.WARD
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
