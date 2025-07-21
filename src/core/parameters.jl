@@ -325,6 +325,16 @@ Parameter to define component availability status updated from the system state
 struct AvailableStatusParameter <: EventParameter end
 
 """
+Parameter to define active power offset during an event. 
+"""
+struct ActivePowerOffsetParameter <: EventParameter end
+
+"""
+Parameter to define reactive power offset during an event. 
+"""
+struct ReactivePowerOffsetParameter <: EventParameter end
+
+"""
 Parameter to record that the component changed in the availability status
 """
 struct AvailableStatusChangeCountdownParameter <: EventParameter end

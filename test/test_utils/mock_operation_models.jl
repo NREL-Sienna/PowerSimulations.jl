@@ -115,7 +115,20 @@ function mock_construct_device!(
     problem::PSI.DecisionModel{MockOperationProblem},
     model;
     built_for_recurrent_solves = false,
+    add_event_model = false,
 )
+    if add_event_model
+        device_type = typeof(model).parameters[1]
+        event_device = collect(get_components(device_type, PSI.get_system(problem)))[1]
+        transition_data = PSY.FixedForcedOutage(; outage_status = 0.0)
+        add_supplemental_attribute!(PSI.get_system(problem), event_device, transition_data)
+        mock_event_key = PowerSimulations.EventKey{FixedForcedOutage, device_type}("")
+        mock_event_model = EventModel(
+            FixedForcedOutage,
+            PSI.ContinuousCondition(),
+        )
+        model.events = Dict(mock_event_key => mock_event_model)
+    end
     set_device_model!(problem.template, model)
     template = PSI.get_template(problem)
     PSI.finalize_template!(template, PSI.get_system(problem))
