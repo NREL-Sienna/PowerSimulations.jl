@@ -235,7 +235,7 @@ function _add_time_series_parameters!(
     initial_values = Dict{String, AbstractArray}()
     for device in devices
         if !PSY.has_time_series(device, ts_type, ts_name)
-            @debug "skipped time series for $D, $(PSY.get_name(device))"
+            @info "Time series $(ts_type):$(ts_name) for $D, $(PSY.get_name(device)) not found skipping parameter addition."
             continue
         end
         push!(device_names, PSY.get_name(device))
@@ -244,6 +244,12 @@ function _add_time_series_parameters!(
             initial_values[ts_uuid] =
                 get_time_series_initial_values!(container, ts_type, device, ts_name)
         end
+    end
+
+    if isempty(device_names)
+        error(
+            "No devices with time series $ts_name found for $D devices. Check DeviceModel time_series_names field.",
+        )
     end
 
     param_container = add_param_container!(
