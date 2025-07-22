@@ -692,7 +692,7 @@ end
     add_service!(
         sys_rts_da,
         interface,
-        [interchange1, interchange2, interchange3],
+        [interchange1, interchange2],
     )
     template = ProblemTemplate(NetworkModel(AreaBalancePowerModel; use_slacks = true))
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
