@@ -654,4 +654,61 @@ end
 
 @testset "Test Interfaces on Interchanges" begin
     sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
+    interchange1 = AreaInterchange(;
+        name = "interchange1_2 ",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1000.0, to_from = 100.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    interchange2 = AreaInterchange(;
+        name = "interchange1_3 ",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1000.0, to_from = 100.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "3"),
+    )
+    interchange3 = AreaInterchange(;
+        name = "interchange3_2 ",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1000.0, to_from = 1000.0),
+        from_area = get_component(Area, sys_rts_da, "3"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    add_components!(
+        sys_rts_da,
+        [interchange1, interchange2, interchange3],
+    )
+    interface = TransmissionInterface(;
+        name = "interface1_2_3",
+        available = true,
+        active_power_flow_limits = (min = -10000.0, max = 10000.0),
+        violation_penalty = 1000.0,
+    )
+    add_service!(
+        sys_rts_da,
+        interface,
+        [interchange1, interchange2, interchange3],
+    )
+    template = get_template_nomin_ed_simulation(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+    )
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+        )
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
