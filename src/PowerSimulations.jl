@@ -319,6 +319,8 @@ export PieceWiseLinearBlockDecrementalOfferConstraint
 export ActivePowerTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
+export FromToFlowLimitParameter
+export ToFromFlowLimitParameter
 
 # Cost Parameters
 export CostFunctionParameter
