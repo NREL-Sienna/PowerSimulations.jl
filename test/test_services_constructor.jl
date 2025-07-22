@@ -694,11 +694,15 @@ end
         interface,
         [interchange1, interchange2, interchange3],
     )
-    template = get_template_nomin_ed_simulation(NetworkModel(AreaBalancePowerModel))
-    set_device_model!(template, AreaInterchange, StaticBranch)
+    template = ProblemTemplate(NetworkModel(AreaBalancePowerModel; use_slacks = true))
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableNonDispatch, FixedOutput)
+    set_device_model!(template, AreaInterchange, StaticBranchUnbounded)
     set_service_model!(
         template,
-        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
     )
     ps_model =
         DecisionModel(
