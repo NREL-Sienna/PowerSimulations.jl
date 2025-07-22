@@ -67,6 +67,7 @@ function add_variables!(
     @warn(
         "CopperPlatePowerModel ignores AreaInterchanges. Instead use AreaBalancePowerModel."
     )
+    return
 end
 
 """
