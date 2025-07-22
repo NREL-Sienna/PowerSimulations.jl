@@ -153,8 +153,8 @@ function instantiate_network_model(
     end
 
     if !model.reduce_radial_branches &&
-       model.PTDF_matrix.network_reduction.reduction_type ==
-       PNM.PNM.NetworkReductionDataTypes.RADIAL
+       PNM.NetworkReductionDataTypes.RADIAL ∈
+       model.PTDF_matrix.network_reduction_data.reductions
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
@@ -164,8 +164,8 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
-       model.PTDF_matrix.network_reduction.reduction_type ==
-       PNM.PNM.NetworkReductionDataTypes.WARD
+       PNM.NetworkReductionDataTypes.WARD ∈
+       model.PTDF_matrix.network_reduction_data.reductions
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
