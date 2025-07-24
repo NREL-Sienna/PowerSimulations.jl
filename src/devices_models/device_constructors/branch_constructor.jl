@@ -275,7 +275,6 @@ function construct_device!(
         devices,
         StaticBranch(),
     )
-
     if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
@@ -373,7 +372,7 @@ function construct_device!(
     end
 
     lodf = get_LODF_matrix(network_model)
-    removed_branches = PNM.get_removed_branches(lodf.network_reduction)
+    removed_branches = PNM.get_removed_branches(lodf.network_reduction_data)
     branches = get_available_components(
         b ->
             PSY.get_name(b) ∉ removed_branches &&

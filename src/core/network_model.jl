@@ -152,6 +152,7 @@ function instantiate_network_model(
     end
 
     if !model.reduce_radial_branches &&
+       !isempty(model.PTDF_matrix.network_reduction_data.reductions) &&
        typeof(model.PTDF_matrix.network_reduction_data.reductions[1]) == PNM.RadialReduction
         throw(
             IS.ConflictingInputsError(
@@ -162,6 +163,7 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
+       !isempty(model.PTDF_matrix.network_reduction_data.reductions) &&
        typeof(model.PTDF_matrix.network_reduction_data.reductions[1]) == PNM.WardReduction
         throw(
             IS.ConflictingInputsError(
@@ -172,9 +174,9 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches
-        @assert !isempty(model.PTDF_matrix.network_reduction)
+        @assert !isempty(model.PTDF_matrix.network_reduction_data)
     end
-    model.network_reduction = model.PTDF_matrix.network_reduction
+    model.network_reduction = model.PTDF_matrix.network_reduction_data
 
     get_PTDF_matrix(model).subnetworks
     model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
@@ -199,7 +201,8 @@ function instantiate_network_model(
     end
 
     if !model.reduce_radial_branches &&
-       model.LODF_matrix.network_reduction.reduction_type ==
+       !isempty(model.LODF_matrix.network_reduction_data.reductions) &&
+       model.LODF_matrix.network_reduction_data.reduction_type ==
        PNM.NetworkReductionTypes.RADIAL
         throw(
             IS.ConflictingInputsError(
@@ -210,7 +213,8 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
-       model.LODF_matrix.network_reduction.reduction_type ==
+       !isempty(model.LODF_matrix.network_reduction_data.reductions) &&
+       model.LODF_matrix.network_reduction_data.reduction_type ==
        PNM.NetworkReductionTypes.WARD
         throw(
             IS.ConflictingInputsError(

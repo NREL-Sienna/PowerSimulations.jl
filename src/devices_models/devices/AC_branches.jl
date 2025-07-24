@@ -77,9 +77,13 @@ function add_variables!(
     },
     U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
-    ptdf = get_PTDF_matrix(network_model)
+
+    network_reduction = get_network_reduction(network_model)
+    branch_names = PNM.get_retained_branches_names(network_reduction)
+
     branches_in_ptdf =
-        [b for b in devices if PSY.get_name(b) ∈ Set(PNM.get_branch_ax(ptdf))]
+        [b for b in devices if PSY.get_name(b) in branch_names]
+
     variable = add_variable_container!(
         container,
         T(),
@@ -372,7 +376,7 @@ function add_constraints!(
 }
     time_steps = get_time_steps(container)
     network_reduction = get_network_reduction(network_model)
-    if isempty(network_reduction)
+    if isempty(network_reduction.reductions)
         device_names = [PSY.get_name(d) for d in devices]
     else
         device_names = PNM.get_retained_branches(network_reduction)  #Don't need added branches here?
@@ -419,7 +423,7 @@ function add_constraints!(
 
     for device in devices
         ci_name = PSY.get_name(device)
-        if ci_name ∈ PNM.get_removed_branches(network_reduction)
+        if !(ci_name ∈ PNM.get_retained_branches_names(network_reduction))
             continue
         end
 
@@ -629,15 +633,14 @@ end
 
 const ValidPTDFS = Union{
     PNM.PTDF{
-        Tuple{Vector{Int}, Vector{String}},
-        Tuple{Dict{Int64, Int64}, Dict{String, Int64}},
+        Tuple{Vector{Int}, Vector{Tuple{Int64, Int64}}},
+        Tuple{Dict{Int64, Int64}, Dict{Tuple{Int64, Int64}, Int64}},
         Matrix{Float64},
     },
     PNM.VirtualPTDF{
-        Tuple{Vector{String}, Vector{Int64}},
-        Tuple{Dict{String, Int64}, Dict{Int64, Int64}},
-    },
-}
+        Tuple{Vector{Tuple{Int64, Int64}}, Vector{Int64}},
+        Tuple{Dict{Tuple{Int64, Int64}, Int64}, Dict{Int64, Int64}},
+    },}
 
 function _make_flow_expressions!(
     jump_model::JuMP.Model,
@@ -723,6 +726,8 @@ function add_constraints!(
     # This is a workaround to not call the same list comprehension to find
     # The subset of branches of type B in the PTDF
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    @show flow_variables
+    @show typeof(flow_variables)
     branches = flow_variables.axes[1]
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(

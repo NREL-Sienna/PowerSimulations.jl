@@ -646,7 +646,8 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
-    names_branches = ptdf.axes[2]
+    network_reduction = get_network_reduction(network_model)
+    names_branches = PNM.get_retained_branches_names(network_reduction)
 
     if !isempty(devices_outages) && !haskey(container.expressions, ExpressionKey(T, X))
         container.expressions[ExpressionKey(T, X)] =
