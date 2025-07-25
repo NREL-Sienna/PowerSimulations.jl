@@ -640,7 +640,7 @@ const ValidPTDFS = Union{
     PNM.VirtualPTDF{
         Tuple{Vector{Tuple{Int64, Int64}}, Vector{Int64}},
         Tuple{Dict{Tuple{Int64, Int64}, Int64}, Dict{Int64, Int64}},
-    }}
+    },}
 
 function _make_flow_expressions!(
     jump_model::JuMP.Model,
@@ -681,7 +681,6 @@ function _make_flow_expressions!(
     )
 
     jump_model = get_jump_model(container)
-    @show ptdf
     tasks = map(branches) do name
         ptdf_col = ptdf[name, :]
         Threads.@spawn _make_flow_expressions!(
