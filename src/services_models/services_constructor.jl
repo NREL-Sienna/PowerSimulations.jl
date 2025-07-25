@@ -671,7 +671,7 @@ function construct_service!(
             add_parameters!(container, MaxInterfaceFlowLimitParameter, device, model)
         end
     end
-    interface = PSY.get_component(T, sys, get_service_name(model))
+    interface = PSY.get_component(PSY.TransmissionInterface, sys, get_service_name(model))
     add_feedforward_arguments!(container, model, interface)
     return
 end
