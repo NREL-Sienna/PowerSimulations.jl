@@ -640,7 +640,7 @@ const ValidPTDFS = Union{
     PNM.VirtualPTDF{
         Tuple{Vector{Tuple{Int64, Int64}}, Vector{Int64}},
         Tuple{Dict{Tuple{Int64, Int64}, Int64}, Dict{Int64, Int64}},
-    },}
+    }}
 
 function _make_flow_expressions!(
     jump_model::JuMP.Model,
@@ -681,7 +681,7 @@ function _make_flow_expressions!(
     )
 
     jump_model = get_jump_model(container)
-
+    @show ptdf
     tasks = map(branches) do name
         ptdf_col = ptdf[name, :]
         Threads.@spawn _make_flow_expressions!(
@@ -726,8 +726,7 @@ function add_constraints!(
     # This is a workaround to not call the same list comprehension to find
     # The subset of branches of type B in the PTDF
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
-    @show flow_variables
-    @show typeof(flow_variables)
+
     branches = flow_variables.axes[1]
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(
