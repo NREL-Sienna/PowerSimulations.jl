@@ -14,16 +14,20 @@ get_offer_curves_maybe_decremental(::Val{false}, device::PSY.StaticInjection) =
     get_output_offer_curves(PSY.get_operation_cost(device))
 
 # Dictionaries to handle more incremental (false) vs. decremental (true) cases
-const SLOPE_PARAMS = Dict(
+const _SLOPE_PARAMS::Dict{Bool, Type{<:AbstractPiecewiseLinearSlopeParameter}} = Dict(
     false => IncrementalPiecewiseLinearSlopeParameter,
     true => DecrementalPiecewiseLinearSlopeParameter)
-const BREAKPOINT_PARAMS = Dict(
-    false => IncrementalPiecewiseLinearBreakpointParameter,
-    true => DecrementalPiecewiseLinearBreakpointParameter)
-const PIECEWISE_BLOCK_VARS = Dict(
+const _BREAKPOINT_PARAMS::Dict{Bool, Type{<:AbstractPiecewiseLinearBreakpointParameter}} =
+    Dict(
+        false => IncrementalPiecewiseLinearBreakpointParameter,
+        true => DecrementalPiecewiseLinearBreakpointParameter)
+const _PIECEWISE_BLOCK_VARS::Dict{Bool, Type{<:AbstractPiecewiseLinearBlockOffer}} = Dict(
     false => PiecewiseLinearBlockIncrementalOffer,
     true => PiecewiseLinearBlockDecrementalOffer)
-const PIECEWISE_BLOCK_CONSTRAINTS = Dict(
+const _PIECEWISE_BLOCK_CONSTRAINTS::Dict{
+    Bool,
+    Type{<:AbstractPiecewiseLinearBlockOfferConstraint},
+} = Dict(
     false => PiecewiseLinearBlockIncrementalOfferConstraint,
     true => PiecewiseLinearBlockDecrementalOfferConstraint)
 
@@ -36,25 +40,19 @@ _consider_parameter(
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} =
-    any(
-        haskey.(
-            [get_variables(container)],
-            VariableKey.([StartVariable, MULTI_START_VARIABLES...], [T])),
-    )
+    any(has_container_key.([container], [StartVariable, MULTI_START_VARIABLES...], [T]))
 
 _consider_parameter(
     ::ShutdownCostParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
-) where {T, D} =
-    haskey(get_variables(container), VariableKey(StopVariable, T))
+) where {T, D} = has_container_key(container, StopVariable, T)
 
 _consider_parameter(
     ::IncrementalCostAtMinParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
-) where {T, D} =
-    haskey(get_variables(container), VariableKey(OnVariable, T))
+) where {T, D} = has_container_key(container, OnVariable, T)
 
 # For slopes and breakpoints, the relevant variables won't have been created yet, so we'll
 # just check all components for the presence of the relevant time series
@@ -115,11 +113,11 @@ function validate_initial_input_time_series(device::PSY.StaticInjection, decreme
 
     if !variable_is_ts && !initial_is_ts
         _validate_eltype(
-            Union{Float64, Nothing}, device, initial_input, " for initial_input",
+            Union{Float64, Nothing}, device, initial_input, " initial_input",
         )
     else
         _validate_eltype(
-            Float64, device, initial_input, " for initial_input",
+            Float64, device, initial_input, " initial_input",
         )
     end
 end
@@ -128,7 +126,6 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
     offer_curves = get_offer_curves_maybe_decremental(Val(decremental), device)
     device_name = get_name(device)
     is_ts = is_time_variant(offer_curves)
-    location = is_ts ? " in time series $(get_name(offer_curves))" : " in offer curves"
     expected_type = if is_ts
         IS.PiecewiseStepData
     else
@@ -136,7 +133,7 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
     end
     p1 = nothing
     apply_maybe_across_time_series(device, offer_curves) do x
-        _validate_eltype(expected_type, x, location, device_name)
+        _validate_eltype(expected_type, device, x, " offer curves")
         if decremental
             PSY.is_concave(x) ||
                 throw(
@@ -159,7 +156,7 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
             elseif !isapprox(p1, my_p1)
                 throw(
                     ArgumentError(
-                        "Inconsistent minimum breakpoint values$location for component $(device_name). For time-variable MarketBidCost, all first x-coordinates must be equal across the entire time series.",
+                        "Inconsistent minimum breakpoint values in time series $(get_name(offer_curves)) for $(device_name) offer curves. For time-variable MarketBidCost, all first x-coordinates must be equal across the entire time series.",
                     ),
                 )
             end
@@ -178,20 +175,21 @@ function validate_mbc_component(
         Union{Float64, NTuple{3, Float64}, StartUpStages},
         device,
         startup,
-        " for startup cost",
+        " startup cost",
     )
 end
 
 function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection, model)
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     contains_multistart = false
-    location = is_time_variant(startup) ? " in time series $(get_name(startup))" : ""
     apply_maybe_across_time_series(device, startup) do x
         if x isa Float64
             return
         elseif x isa Union{NTuple{3, Float64}, StartUpStages}
             contains_multistart = true
         else
+            location =
+                is_time_variant(startup) ? " in time series $(get_name(startup))" : ""
             throw(
                 ArgumentError(
                     "Expected Float64 or NTuple{3, Float64} or StartUpStages startup cost but got $(typeof(x))$location for $(get_name(device))",
@@ -199,8 +197,10 @@ function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInject
             )
         end
     end
-    contains_multistart &&
+    if contains_multistart
+        location = is_time_variant(startup) ? " in time series $(get_name(startup))" : ""
         @warn "Multi-start costs detected$location for non-multi-start unit $(get_name(device)), will take the maximum"
+    end
     return
 end
 
@@ -500,14 +500,14 @@ function _get_pwl_data(
     if is_time_variant(cost_data)
         name = PSY.get_name(component)
 
-        SlopeParam = SLOPE_PARAMS[is_decremental]
+        SlopeParam = _SLOPE_PARAMS[is_decremental]
         slope_param_arr = get_parameter_array(container, SlopeParam(), T)
         slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
         slope_cost_component =
             slope_param_arr[name, time, :] .* slope_param_mult[name, time]
         slope_cost_component = slope_cost_component.data
 
-        BreakpointParam = BREAKPOINT_PARAMS[is_decremental]
+        BreakpointParam = _BREAKPOINT_PARAMS[is_decremental]
         breakpoint_param_container = get_parameter(container, BreakpointParam(), T)
         breakpoint_param_arr = get_parameter_column_refs(breakpoint_param_container, name)  # performs component -> time series many-to-one mapping
         breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
@@ -549,8 +549,8 @@ function add_pwl_term!(
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
     name = PSY.get_name(component)
-    W = PIECEWISE_BLOCK_VARS[is_decremental]
-    X = PIECEWISE_BLOCK_CONSTRAINTS[is_decremental]
+    W = _PIECEWISE_BLOCK_VARS[is_decremental]
+    X = _PIECEWISE_BLOCK_CONSTRAINTS[is_decremental]
 
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)

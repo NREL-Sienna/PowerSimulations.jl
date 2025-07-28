@@ -21,26 +21,39 @@ apply_maybe_across_time_series(
 # case where the element isn't a time series
 apply_maybe_across_time_series(fn::Function, ::PSY.Component, elem) = fn(elem)
 
-_validate_eltype(::Type{T}, element::T, _, _) where {T} = nothing
-_validate_eltype(::Type{T}, element::U, location, component_name, msg = "") where {T, U} =
-    throw(ArgumentError("Expected element type $T but got $U$location for $component_name"))
+# success case
+_validate_eltype_helper(::Type{T}, element::T) where {T} = true
+
+# failure case
+_validate_eltype_helper(_, _) = false
+
 """
 Validate that the eltype of the time series, or the field itself if it's not a time series,
 is of the type given
 """
-function _validate_eltype(
+_validate_eltype(
     ::Type{T},
     component::PSY.Component,
     ts_key::IS.TimeSeriesKey,
-    _ = "",
-) where {T}
-    ts_name = get_name(ts_key)
-    component_name = get_name(component)
+    msg = "",
+) where {T} =
     apply_maybe_across_time_series(component, ts_key) do x
-        _validate_eltype(T, x, " in time series $ts_name", component_name)
+        result = _validate_eltype_helper(T, x)
+        result || throw(
+            ArgumentError(
+                "Expected element type $T but got $(typeof(x)) in time series $(get_name(ts_key)) for $(get_name(component))" *
+                msg,
+            ),
+        )
     end
-end
+
 function _validate_eltype(::Type{T}, component::PSY.Component, element, msg = "") where {T}
     component_name = get_name(component)
-    _validate_eltype(T, element, msg, component_name)
+    result = _validate_eltype_helper(T, element)
+    result || throw(
+        ArgumentError(
+            "Expected element type $T but got $(typeof(x)) for $(get_name(component))" *
+            msg,
+        ),
+    )
 end
