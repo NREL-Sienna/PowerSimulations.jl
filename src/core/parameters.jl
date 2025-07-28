@@ -137,7 +137,7 @@ function get_parameter_column_refs(
     param_array::DenseAxisArray,
     column,
 ) where {T <: PSY.TimeSeriesData}
-    return param_array[_get_ts_uuid(attributes, column), axes(param_array)[2:end]...]
+    return param_array[expand_ixs((_get_ts_uuid(attributes, column),), param_array)...]
 end
 
 function get_parameter_column_values(container::ParameterContainer, column::AbstractString)
@@ -197,7 +197,12 @@ end
 
 # If `ixs` does not index all dimensions of `dest`, add a `:` for the rest (like Python's
 # `...`) to prepare for broadcast-assigning.
-expand_ixs(ixs, dest) = (ixs..., fill(:, ndims(dest) - length(ixs))...)
+expand_ixs(ixs, dest) =
+    if length(ixs) <= ndims(dest)
+        (ixs..., fill(:, ndims(dest) - length(ixs))...)
+    else
+        throw(ArgumentError("`ixs` must not index more dimensions than `dest` has"))
+    end
 
 assign_expand(dest::AbstractArray, src, ixs::Tuple) =
     (dest[expand_ixs(ixs, dest)...] .= src)

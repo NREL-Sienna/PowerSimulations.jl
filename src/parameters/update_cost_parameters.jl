@@ -289,7 +289,8 @@ function update_variable_cost!(
     time_period::Int,
 ) where {T <: PSY.Component}
     component_name = PSY.get_name(component)
-    mult_ = parameter_multiplier[component_name, time_period]
+    # TODO handle per-tranche multiplier if necessary
+    mult_ = 1.0 # parameter_multiplier[component_name, time_period, 1]
     converted_data = get_piecewise_incrementalcurve_per_system_unit(
         function_data,
         PSY.UnitSystem.NATURAL_UNITS,  # PSY's cost_function_timeseries.jl says this will always be natural units

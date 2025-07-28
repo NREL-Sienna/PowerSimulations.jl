@@ -503,16 +503,18 @@ function _get_pwl_data(
         SlopeParam = _SLOPE_PARAMS[is_decremental]
         slope_param_arr = get_parameter_array(container, SlopeParam(), T)
         slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
+        @assert size(slope_param_arr) == size(slope_param_mult)  # multiplier arrays should be 3D too
         slope_cost_component =
-            slope_param_arr[name, time, :] .* slope_param_mult[name, time]
+            slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
         slope_cost_component = slope_cost_component.data
 
         BreakpointParam = _BREAKPOINT_PARAMS[is_decremental]
         breakpoint_param_container = get_parameter(container, BreakpointParam(), T)
         breakpoint_param_arr = get_parameter_column_refs(breakpoint_param_container, name)  # performs component -> time series many-to-one mapping
         breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
+        @assert size(breakpoint_param_arr) == size(breakpoint_param_mult[name, :, :])
         breakpoint_cost_component =
-            breakpoint_param_arr[time, :] .* breakpoint_param_mult[name, time]
+            breakpoint_param_arr[time, :] .* breakpoint_param_mult[name, time, :]
         breakpoint_cost_component = breakpoint_cost_component.data
 
         @assert length(slope_cost_component) == length(breakpoint_cost_component) - 1

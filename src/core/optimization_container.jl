@@ -1244,12 +1244,21 @@ function _add_param_container!(
     if sparse
         param_array =
             sparse_container_spec(param_type, param_axs, time_steps, additional_axs...)
-        multiplier_array = sparse_container_spec(Float64, multiplier_axs, time_steps)
+        multiplier_array =
+            sparse_container_spec(Float64, multiplier_axs, time_steps, additional_axs...)
     else
         param_array =
             DenseAxisArray{param_type}(undef, param_axs, time_steps, additional_axs...)
         multiplier_array =
-            fill!(DenseAxisArray{Float64}(undef, multiplier_axs, time_steps), NaN)
+            fill!(
+                DenseAxisArray{Float64}(
+                    undef,
+                    multiplier_axs,
+                    time_steps,
+                    additional_axs...,
+                ),
+                NaN,
+            )
     end
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
@@ -1286,16 +1295,15 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attributes::CostFunctionAttributes{R},
-    universal_axes, additional_axes;
+    axs...;
     sparse = false,
 ) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
     if sparse
-        param_array = sparse_container_spec(R, universal_axes..., additional_axes...)
-        # multipliers shouldn't have additional axes
-        multiplier_array = sparse_container_spec(Float64, universal_axes...)
+        param_array = sparse_container_spec(R, axs...)
+        multiplier_array = sparse_container_spec(Float64, axs...)
     else
-        param_array = DenseAxisArray{R}(undef, universal_axes..., additional_axes...)
-        multiplier_array = fill!(DenseAxisArray{Float64}(undef, universal_axes...), NaN)
+        param_array = DenseAxisArray{R}(undef, axs...)
+        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
     end
     param_container = ParameterContainer(attributes, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
@@ -1337,24 +1345,17 @@ function add_param_container!(
     ::T,
     ::Type{U},
     variable_types::Tuple{Vararg{Type}},
-    universal_axes, additional_axes,
     sos_variable::SOSStatusVariable = NO_VARIABLE,
     uses_compact_power::Bool = false,
-    data_type::DataType = Float64;
+    data_type::DataType = Float64,
+    axs...;
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     param_key = ParameterKey(T, U, meta)
     attributes =
         CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
-    return _add_param_container!(
-        container,
-        param_key,
-        attributes,
-        universal_axes,
-        additional_axes;
-        sparse = sparse,
-    )
+    return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
 end
 
 function add_param_container!(
