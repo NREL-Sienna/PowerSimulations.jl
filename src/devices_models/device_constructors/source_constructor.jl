@@ -18,6 +18,13 @@ function construct_device!(
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_expressions!(container, NetActivePower, devices, model)
 
+    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+        add_parameters!(container, ActivePowerOutTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+        add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
+    end
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -107,6 +114,27 @@ function construct_device!(
     )
     add_constraints!(container, ImportExportBudgetConstraint, devices, model, network_model)
 
+    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerOutVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
+    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerInVariableTimeSeriesLimitsConstraint,
+            ActivePowerInVariable,
+            devices,
+            model,
+            network_model,
+        )
+    end
+
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
@@ -132,6 +160,13 @@ function construct_device!(
     add_variables!(container, ActivePowerInVariable, devices, D())
     add_variables!(container, ActivePowerOutVariable, devices, D())
     add_expressions!(container, NetActivePower, devices, model)
+
+    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+        add_parameters!(container, ActivePowerOutTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+        add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -221,6 +256,27 @@ function construct_device!(
     )
 
     add_constraints!(container, ImportExportBudgetConstraint, devices, model, network_model)
+
+    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerOutVariableTimeSeriesLimitsConstraint,
+            ActivePowerRangeExpressionUB,
+            devices,
+            model,
+            network_model,
+        )
+    end
+    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+        add_constraints!(
+            container,
+            ActivePowerInVariableTimeSeriesLimitsConstraint,
+            ActivePowerInVariable,
+            devices,
+            model,
+            network_model,
+        )
+    end
 
     add_feedforward_constraints!(container, model, devices)
 

@@ -257,7 +257,8 @@ export PowerFlowLossFactors
 export AbsoluteValueConstraint
 export LineFlowBoundConstraint
 export ActivePowerVariableLimitsConstraint
-export ActivePowerVariableTimeSeriesLimitsConstraint
+export ActivePowerInVariableTimeSeriesLimitsConstraint
+export ActivePowerOutVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint
 export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
@@ -317,6 +318,8 @@ export PieceWiseLinearBlockDecrementalOfferConstraint
 # Parameters
 # Time Series Parameters
 export ActivePowerTimeSeriesParameter
+export ActivePowerOutTimeSeriesParameter
+export ActivePowerInTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
 
