@@ -6,10 +6,10 @@ using DocumenterInterLinks
 using Literate
 
 Literate.markdown(
-    "docs/src/tutorials/decision_problem.jl",  
-    "docs/src/tutorials";             
-    name = "decision_problem",       
-    flavor = Literate.DocumenterFlavor()
+    "docs/src/tutorials/decision_problem.jl",
+    "docs/src/tutorials";
+    name = "decision_problem",
+    flavor = Literate.DocumenterFlavor(),
 )
 
 links = InterLinks(

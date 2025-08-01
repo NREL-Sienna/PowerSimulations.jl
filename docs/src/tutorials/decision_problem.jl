@@ -17,7 +17,6 @@ using PowerSystemCaseBuilder
 using HiGHS # solver
 using Dates
 
-
 # ## Data
 #
 # !!! note
@@ -110,7 +109,6 @@ solver = optimizer_with_attributes(HiGHS.Optimizer, "mip_rel_gap" => 0.5)
 problem = DecisionModel(template_uc, sys; optimizer = solver, horizon = Hour(24))
 build!(problem; output_dir = mktempdir())
 
-
 # !!! tip
 #
 #     The principal component of the [`DecisionModel`](@ref) is the JuMP model.
@@ -139,7 +137,6 @@ res = OptimizationProblemResults(problem)
 # The optimizer summary is included
 
 get_optimizer_stats(res)
-
 
 # ### Objective Function Value
 
