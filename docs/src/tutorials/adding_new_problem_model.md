@@ -27,7 +27,7 @@ the same objective when it comes to implementing the model. This guide shows a g
 
 ### Step 1: Define a Custom Decision Problem
 
-Define a decision problem struct as a subtype of `PowerSimulations.DecisionProblem`. This requirement will enable a lot of the underlying functionality that relies on multiple dispatch. DecisionProblems are used to parameterize the behavior of `DecisionModel` objects which are just containers
+Define a decision problem struct as a subtype of `PowerSimulations.DecisionProblem`. This requirement will enable a lot of the underlying functionality that relies on multiple dispatch. DecisionProblems are used to parameterize the behavior of [`DecisionModel`](@ref) objects which are just containers
 for the parameters, references and the optimization problem.
 
 It is possible to define a Custom Decision Problem that gives the user full control over the build, solve and execution process since it imposes less requirements on the developer. However, with less requirements there are also less checks and validations performed inside of PowerSimulations which might lead to unexpected errors

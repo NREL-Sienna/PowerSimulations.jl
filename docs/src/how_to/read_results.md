@@ -1,10 +1,10 @@
 # [Read results](@id read_results)
 
-Once a `DecisionModel` is solved via `solve!(model)` or a Simulation is executed (and solved) via `execute!(simulation)`, the results are stored and can be accessed directly in the REPL for result exploration and plotting.
+Once a [`DecisionModel`](@ref) is solved via `solve!(model)` or a Simulation is executed (and solved) via `execute!(simulation)`, the results are stored and can be accessed directly in the REPL for result exploration and plotting.
 
 ## Read results of a Decision Problem
 
-Once a `DecisionModel` is solved, results are accessed using `OptimizationProblemResults(model)` as follows:
+Once a [`DecisionModel`](@ref) is solved, results are accessed using `OptimizationProblemResults(model)` as follows:
 
 ```julia
 # The DecisionModel is already constructed
@@ -134,7 +134,7 @@ Emulator Results
 └─────────────────┴───────────┘
 ```
 
-With this, it is possible to obtain results of each `DecisionModel` and `EmulationModel` as follows:
+With this, it is possible to obtain results of each [`DecisionModel`](@ref) and `EmulationModel` as follows:
 
 ```julia
 # Use the Problem Name for Decision Problems

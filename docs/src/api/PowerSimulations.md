@@ -101,8 +101,6 @@ ServiceModel
 
 ## Simulation Models
 
-Refer to the [Simulations Page](@ref running_a_simulation) to explanations on how to setup a Simulation, with Sequencing and Feedforwards.
-
 ```@docs
 InitialCondition
 SimulationModels
