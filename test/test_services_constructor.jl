@@ -659,7 +659,7 @@ end
         name = "interchange1_2 ",
         available = true,
         active_power_flow = 100.0,
-        flow_limits = (from_to = 1000.0, to_from = 100.0),
+        flow_limits = (from_to = 1.0, to_from = 1.0),
         from_area = get_component(Area, sys_rts_da, "1"),
         to_area = get_component(Area, sys_rts_da, "2"),
     )
@@ -667,7 +667,7 @@ end
         name = "interchange1_3 ",
         available = true,
         active_power_flow = 100.0,
-        flow_limits = (from_to = 1000.0, to_from = 100.0),
+        flow_limits = (from_to = 1.0, to_from = 1.0),
         from_area = get_component(Area, sys_rts_da, "1"),
         to_area = get_component(Area, sys_rts_da, "3"),
     )
@@ -675,7 +675,7 @@ end
         name = "interchange3_2 ",
         available = true,
         active_power_flow = 100.0,
-        flow_limits = (from_to = 1000.0, to_from = 1000.0),
+        flow_limits = (from_to = 1.0, to_from = 1.0),
         from_area = get_component(Area, sys_rts_da, "3"),
         to_area = get_component(Area, sys_rts_da, "2"),
     )
@@ -683,23 +683,28 @@ end
         sys_rts_da,
         [interchange1, interchange2, interchange3],
     )
+    # This interface is limiting all the flows into 1
     interface = TransmissionInterface(;
         name = "interface1_2_3",
         available = true,
-        active_power_flow_limits = (min = -10000.0, max = 10000.0),
+        active_power_flow_limits = (min = 0.0, max = 1.0),
         violation_penalty = 1000.0,
+        direction_mapping = Dict("interchange1_2" => 1,
+            "interchange1_3" => -1,
+        ),
     )
     add_service!(
         sys_rts_da,
         interface,
         [interchange1, interchange2],
     )
-    template = ProblemTemplate(NetworkModel(AreaBalancePowerModel; use_slacks = true))
+    template = ProblemTemplate(NetworkModel(AreaBalancePowerModel))
     set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, RenewableNonDispatch, FixedOutput)
-    set_device_model!(template, AreaInterchange, StaticBranchUnbounded)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, AreaInterchange, StaticBranch)
     set_service_model!(
         template,
         ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
@@ -710,9 +715,33 @@ end
             sys_rts_da;
             resolution = Hour(1),
             optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
         )
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    # moi_tests(ps_model, 264, 0, 264, 264, 48, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (3, 24)
+
+    interchange_constraints_ub =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "ub")
+    interchange_constraints_lb =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "lb")
+    @test size(interchange_constraints_ub) == (1, 24)
+    @test size(interchange_constraints_lb) == (1, 24)
+
+    interchange_constraints_ub["interface1_2_3", 1]
+    # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interchange_results = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interface_results =
+        read_expression(results, "InterfaceTotalFlow__TransmissionInterface")
 end
