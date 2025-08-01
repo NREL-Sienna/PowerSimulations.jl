@@ -287,6 +287,7 @@ export HVDCPowerBalance
 export HVDCLosses
 export HVDCFlowDirectionVariable
 export InputActivePowerVariableLimitsConstraint
+export InterfaceFlowLimit
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
