@@ -656,7 +656,7 @@ end
     sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
     interchange1 = AreaInterchange(;
-        name = "interchange1_2 ",
+        name = "interchange1_2",
         available = true,
         active_power_flow = 100.0,
         flow_limits = (from_to = 1.0, to_from = 1.0),
@@ -664,7 +664,7 @@ end
         to_area = get_component(Area, sys_rts_da, "2"),
     )
     interchange2 = AreaInterchange(;
-        name = "interchange1_3 ",
+        name = "interchange1_3",
         available = true,
         active_power_flow = 100.0,
         flow_limits = (from_to = 1.0, to_from = 1.0),
@@ -672,7 +672,7 @@ end
         to_area = get_component(Area, sys_rts_da, "3"),
     )
     interchange3 = AreaInterchange(;
-        name = "interchange3_2 ",
+        name = "interchange3_2",
         available = true,
         active_power_flow = 100.0,
         flow_limits = (from_to = 1.0, to_from = 1.0),
@@ -699,7 +699,7 @@ end
         [interchange1, interchange2],
     )
     template = ProblemTemplate(NetworkModel(AreaBalancePowerModel))
-    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, RenewableNonDispatch, FixedOutput)
@@ -723,7 +723,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    # moi_tests(ps_model, 264, 0, 264, 264, 48, false)
+    moi_tests(ps_model, 8568, 0, 2136, 1416, 2664, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -741,7 +741,9 @@ end
     # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interchange_results = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
     interface_results =
         read_expression(results, "InterfaceTotalFlow__TransmissionInterface")
+    for i in 1:24
+        @test interface_results[!, "interface1_2_3"][i] <= 100.0
+    end
 end
