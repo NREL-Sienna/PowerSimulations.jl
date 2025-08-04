@@ -232,6 +232,7 @@ PowerOutput
 PowerFlowVoltageAngle
 PowerFlowVoltageMagnitude
 PowerFlowLossFactors
+PowerFlowVoltageStabilityFactors
 ```
 
 ### Branch Auxiliary Variables
