@@ -289,6 +289,7 @@ export HVDCPowerBalance
 export HVDCLosses
 export HVDCFlowDirectionVariable
 export InputActivePowerVariableLimitsConstraint
+export InterfaceFlowLimit
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
@@ -323,6 +324,8 @@ export ActivePowerOutTimeSeriesParameter
 export ActivePowerInTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
+export FromToFlowLimitParameter
+export ToFromFlowLimitParameter
 
 # Cost Parameters
 export CostFunctionParameter
