@@ -171,6 +171,84 @@ get_variable_lower_bound(
     ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
 ) = 0.0
 
+#################################### LCC ##################################################
+
+get_variable_binary(
+    ::Union{
+        HVDCActivePowerReceivedFromVariable,
+        HVDCActivePowerReceivedToVariable,
+        HVDCReactivePowerReceivedFromVariable,
+        HVDCReactivePowerReceivedToVariable,
+        HVDCRectifierDelayAngleVariable,
+        HVDCInverterExtinctionAngleVariable,
+        HVDCRectifierPowerFactorAngleVariable,
+        HVDCInverterPowerFactorAngleVariable,
+        HVDCRectifierOverlapAngleVariable,
+        HVDCInverterOverlapAngleVariable,
+        HVDCRectifierDCVoltageVariable,
+        HVDCInverterDCVoltageVariable,
+        HVDCRectifierACCurrentVariable,
+        HVDCInverterACCurrentVariable,
+        DCLineCurrentFlowVariable,
+        HVDCRectifierTapSettingVariable,
+        HVDCInverterTapSettingVariable,
+    },
+    ::Type{<:PSY.TwoTerminalLCCLine},
+    ::Union{
+        HVDCTwoTerminalLCC,
+    },
+) = false
+
+get_variable_upper_bound(
+    ::HVDCRectifierDelayAngleVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_rectifier_delay_angle_limits(d).max
+
+get_variable_lower_bound(
+    ::HVDCRectifierDelayAngleVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_rectifier_delay_angle_limits(d).min
+
+get_variable_upper_bound(
+    ::HVDCInverterExtinctionAngleVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_inverter_extinction_angle_limits(d).max
+
+get_variable_lower_bound(
+    ::HVDCInverterExtinctionAngleVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_inverter_extinction_angle_limits(d).min
+
+get_variable_upper_bound(
+    ::HVDCRectifierTapSettingVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_rectifier_tap_limits(d).max
+
+get_variable_lower_bound(
+    ::HVDCRectifierTapSettingVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_rectifier_tap_limits(d).min
+
+get_variable_upper_bound(
+    ::HVDCInverterTapSettingVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_inverter_tap_limits(d).max
+
+get_variable_lower_bound(
+    ::HVDCInverterTapSettingVariable,
+    d::PSY.TwoTerminalLCCLine,
+    ::HVDCTwoTerminalLCC,
+) = PSY.get_inverter_tap_limits(d).min
+
+##########################################################
+
 function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
@@ -720,6 +798,22 @@ function add_constraints!(
         time_steps;
         meta = "loss_aux2",
     )
+    constraint_loss_aux3 = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux3",
+    )
+    constraint_loss_aux4 = add_constraints_container!(
+        container,
+        HVDCPowerBalance(),
+        T,
+        names,
+        time_steps;
+        meta = "loss_aux4",
+    )
     for d in devices
         name = PSY.get_name(d)
         loss = PSY.get_loss(d)
@@ -755,13 +849,599 @@ function add_constraints!(
             )
             constraint_loss_aux1[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                losses[name, t] >=
-                l1 * ft_var[name, t] + l0 - M_VALUE * direction_var[name, t]
+                losses[name, t] >= l0 + l1 * ft_var[name, t]
             )
             constraint_loss_aux2[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                losses[name, t] >=
-                l1 * tf_var[name, t] + l0 - M_VALUE * (1 - direction_var[name, t])
+                losses[name, t] >= l0 + l1 * tf_var[name, t]
+            )
+            constraint_loss_aux3[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses[name, t] <=
+                l0 + l1 * ft_var[name, t] + M_VALUE * direction_var[name, t]
+            )
+            constraint_loss_aux4[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                losses[name, t] <=
+                l0 + l1 * tf_var[name, t] + M_VALUE * (1 - direction_var[name, t])
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCRectifierDCLineVoltageConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    rect_dc_voltage_var = get_variable(container, HVDCRectifierDCVoltageVariable(), T)
+    rect_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
+    rect_delay_angle_var = get_variable(container, HVDCRectifierDelayAngleVariable(), T)
+    rect_tap_setting_var = get_variable(container, HVDCRectifierTapSettingVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_rect_dc_volt = add_constraints_container!(
+        container,
+        HVDCRectifierDCLineVoltageConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        rect_bridges = PSY.get_rectifier_bridges(d)
+        dc_rect_com_reactance = PSY.get_rectifier_xc(d)
+        rect_tap_ratio = PSY.get_rectifier_transformer_ratio(d)
+        bus_from = PSY.get_arc(d).from
+        bus_from_name = PSY.get_name(bus_from)
+
+        for t in get_time_steps(container)
+            constraint_rect_dc_volt[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                rect_dc_voltage_var[name, t] ==
+                (3 * rect_bridges / pi) * (
+                    sqrt(2) * (
+                        rect_tap_ratio *
+                        rect_ac_voltage_bus_var[bus_from_name, t] *
+                        cos(rect_delay_angle_var[name, t])
+                    ) / rect_tap_setting_var[name, t] -
+                    dc_rect_com_reactance * dc_line_current_var[name, t]
+                )
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCInverterDCLineVoltageConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    inv_dc_voltage_var = get_variable(container, HVDCInverterDCVoltageVariable(), T)
+    inv_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
+    inv_extinction_angle_var =
+        get_variable(container, HVDCInverterExtinctionAngleVariable(), T)
+    inv_tap_setting_var = get_variable(container, HVDCInverterTapSettingVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_inv_dc_volt = add_constraints_container!(
+        container,
+        HVDCInverterDCLineVoltageConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        inv_bridges = PSY.get_inverter_bridges(d)
+        dc_inv_com_reactance = PSY.get_inverter_xc(d)
+        inv_tap_ratio = PSY.get_inverter_transformer_ratio(d)
+        bus_to = PSY.get_arc(d).to
+        bus_to_name = PSY.get_name(bus_to)
+
+        for t in get_time_steps(container)
+            constraint_inv_dc_volt[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                inv_dc_voltage_var[name, t] ==
+                (3 * inv_bridges / pi) * (
+                    sqrt(2) * (
+                        inv_tap_ratio *
+                        inv_ac_voltage_bus_var[bus_to_name, t] *
+                        cos(inv_extinction_angle_var[name, t])
+                    ) / inv_tap_setting_var[name, t] -
+                    dc_inv_com_reactance * dc_line_current_var[name, t]
+                )
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCRectifierOverlapAngleConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    rect_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
+    rect_delay_angle_var = get_variable(container, HVDCRectifierDelayAngleVariable(), T)
+    rect_overlap_angle_var = get_variable(container, HVDCRectifierOverlapAngleVariable(), T)
+    rect_tap_setting_var = get_variable(container, HVDCRectifierTapSettingVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_rect_over_ang = add_constraints_container!(
+        container,
+        HVDCRectifierOverlapAngleConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        dc_rect_com_reactance = PSY.get_rectifier_xc(d)
+        rect_tap_ratio = PSY.get_rectifier_transformer_ratio(d)
+        bus_from = PSY.get_arc(d).from
+        bus_from_name = PSY.get_name(bus_from)
+
+        for t in get_time_steps(container)
+            constraint_rect_over_ang[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                rect_overlap_angle_var[name, t] == (
+                    acos(
+                        cos(rect_delay_angle_var[name, t])
+                        -
+                        (
+                            (
+                                sqrt(2) * dc_rect_com_reactance *
+                                dc_line_current_var[name, t] *
+                                rect_tap_setting_var[name, t]
+                            )
+                            /
+                            (
+                                rect_tap_ratio *
+                                rect_ac_voltage_bus_var[bus_from_name, t]
+                            )
+                        ),
+                    )
+                    -
+                    rect_delay_angle_var[name, t]
+                )
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCInverterOverlapAngleConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    inv_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
+    inv_extinction_angle_var =
+        get_variable(container, HVDCInverterExtinctionAngleVariable(), T)
+    inv_overlap_angle_var = get_variable(container, HVDCInverterOverlapAngleVariable(), T)
+    inv_tap_setting_var = get_variable(container, HVDCInverterTapSettingVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_inv_over_ang = add_constraints_container!(
+        container,
+        HVDCInverterOverlapAngleConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        dc_inv_com_reactance = PSY.get_inverter_xc(d)
+        inv_tap_ratio = PSY.get_inverter_transformer_ratio(d)
+        bus_to = PSY.get_arc(d).to
+        bus_to_name = PSY.get_name(bus_to)
+
+        for t in get_time_steps(container)
+            constraint_inv_over_ang[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                inv_overlap_angle_var[name, t] == (
+                    acos(
+                        cos(inv_extinction_angle_var[name, t])
+                        -
+                        (
+                            (
+                                sqrt(2) * dc_inv_com_reactance *
+                                dc_line_current_var[name, t] *
+                                inv_tap_setting_var[name, t]
+                            )
+                            /
+                            (
+                                inv_tap_ratio *
+                                inv_ac_voltage_bus_var[bus_to_name, t]
+                            )
+                        ),
+                    )
+                    -
+                    inv_extinction_angle_var[name, t]
+                )
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCRectifierPowerFactorAngleConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    rect_delay_angle_var = get_variable(container, HVDCRectifierDelayAngleVariable(), T)
+    rect_overlap_angle_var = get_variable(container, HVDCRectifierOverlapAngleVariable(), T)
+    rect_power_factor_var =
+        get_variable(container, HVDCRectifierPowerFactorAngleVariable(), T)
+
+    constraint_rect_power_factor_ang = add_constraints_container!(
+        container,
+        HVDCRectifierPowerFactorAngleConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+
+        for t in get_time_steps(container)
+            constraint_rect_power_factor_ang[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                # Full equation not working with Ipopt
+                # rect_power_factor_var[name, t] * 
+                #     (
+                #         cos(2 * rect_delay_angle_var[name, t]) - cos(
+                #             2(
+                #                 rect_overlap_angle_var[name, t] +
+                #                 rect_delay_angle_var[name, t]
+                #             ),
+                #         )
+                #     ) == atan(
+                #     (
+                #         - 2 * rect_overlap_angle_var[name, t] +
+                #         - sin(2 * rect_delay_angle_var[name, t]) + sin(
+                #             2 * (
+                #                 rect_overlap_angle_var[name, t] +
+                #                 rect_delay_angle_var[name, t]
+                #             ),
+                #         )
+                #     )
+                # )
+
+                # Approximation of rectifier power factor calculation
+                rect_power_factor_var[name, t] == acos(
+                    0.5 * cos(rect_delay_angle_var[name, t]) +
+                    0.5 * cos(
+                        rect_delay_angle_var[name, t] + rect_overlap_angle_var[name, t],
+                    ),
+                )
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCInverterPowerFactorAngleConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    inv_extinction_angle_var =
+        get_variable(container, HVDCInverterExtinctionAngleVariable(), T)
+    inv_overlap_angle_var = get_variable(container, HVDCInverterOverlapAngleVariable(), T)
+    inv_power_factor_var =
+        get_variable(container, HVDCInverterPowerFactorAngleVariable(), T)
+
+    constraint_inv_power_factor_ang = add_constraints_container!(
+        container,
+        HVDCInverterPowerFactorAngleConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+
+        for t in get_time_steps(container)
+            constraint_inv_power_factor_ang[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                # Full equation not working with Ipopt
+                # inv_power_factor_var[name, t] * 
+                #     (
+                #         cos(2 * inv_extinction_angle_var[name, t]) - cos(
+                #             2(
+                #                 inv_overlap_angle_var[name, t] +
+                #                 inv_extinction_angle_var[name, t]
+                #             ),
+                #         )
+                #     ) == atan(
+                #     (
+                #         - 2 * inv_overlap_angle_var[name, t] +
+                #         - sin(2 * inv_extinction_angle_var[name, t]) + sin(
+                #             2 * (
+                #                 inv_overlap_angle_var[name, t] +
+                #                 inv_extinction_angle_var[name, t]
+                #             ),
+                #         )
+                #     )
+                # )
+
+                # Approximation of inverter power factor calculation
+                inv_power_factor_var[name, t] == acos(
+                    0.5 * cos(inv_extinction_angle_var[name, t]) +
+                    0.5 * cos(
+                        inv_extinction_angle_var[name, t] + inv_overlap_angle_var[name, t],
+                    ),
+                )
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCRectifierACCurrentFlowConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    rect_ac_current_var = get_variable(container, HVDCRectifierACCurrentVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_rect_ac_current = add_constraints_container!(
+        container,
+        HVDCRectifierACCurrentFlowConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        rect_bridges = PSY.get_rectifier_bridges(d)
+
+        for t in get_time_steps(container)
+            constraint_rect_ac_current[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                rect_ac_current_var[name, t] ==
+                sqrt(6) * rect_bridges * dc_line_current_var[name, t] / pi
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCInverterACCurrentFlowConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    inv_ac_current_var = get_variable(container, HVDCInverterACCurrentVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_inv_ac_current = add_constraints_container!(
+        container,
+        HVDCInverterACCurrentFlowConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        inv_bridges = PSY.get_inverter_bridges(d)
+
+        for t in get_time_steps(container)
+            constraint_inv_ac_current[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                inv_ac_current_var[name, t] ==
+                sqrt(6) * inv_bridges * dc_line_current_var[name, t] / pi
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCRectifierPowerCalculationConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    rect_ac_ppower_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), T)
+    rect_ac_qpower_var = get_variable(container, HVDCReactivePowerReceivedFromVariable(), T)
+    rect_ac_current_var = get_variable(container, HVDCRectifierACCurrentVariable(), T)
+    rect_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
+    rect_power_factor_var =
+        get_variable(container, HVDCRectifierPowerFactorAngleVariable(), T)
+    rect_tap_setting_var = get_variable(container, HVDCRectifierTapSettingVariable(), T)
+
+    constraint_ft_p = add_constraints_container!(
+        container,
+        HVDCRectifierPowerCalculationConstraint(),
+        T,
+        names,
+        time_steps;
+        meta = "active",
+    )
+    constraint_ft_q = add_constraints_container!(
+        container,
+        HVDCRectifierPowerCalculationConstraint(),
+        T,
+        names,
+        time_steps;
+        meta = "reactive",
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        rect_tap_ratio = PSY.get_rectifier_transformer_ratio(d)
+        bus_from = PSY.get_arc(d).from
+        bus_from_name = PSY.get_name(bus_from)
+
+        for t in get_time_steps(container)
+            constraint_ft_p[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                rect_ac_ppower_var[name, t] ==
+                (
+                    rect_tap_ratio * sqrt(3) * rect_ac_current_var[name, t]
+                    * rect_ac_voltage_bus_var[bus_from_name, t] *
+                    cos(rect_power_factor_var[name, t])
+                ) / rect_tap_setting_var[name, t],
+            )
+            constraint_ft_q[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                rect_ac_qpower_var[name, t] ==
+                (
+                    rect_tap_ratio * sqrt(3) * rect_ac_current_var[name, t]
+                    * rect_ac_voltage_bus_var[bus_from_name, t] *
+                    sin(rect_power_factor_var[name, t])
+                ) / rect_tap_setting_var[name, t],
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCInverterPowerCalculationConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    inv_ac_ppower_var = get_variable(container, HVDCActivePowerReceivedToVariable(), T)
+    inv_ac_qpower_var = get_variable(container, HVDCReactivePowerReceivedToVariable(), T)
+    inv_ac_current_var = get_variable(container, HVDCInverterACCurrentVariable(), T)
+    inv_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
+    inv_power_factor_var =
+        get_variable(container, HVDCInverterPowerFactorAngleVariable(), T)
+    inv_tap_setting_var = get_variable(container, HVDCInverterTapSettingVariable(), T)
+
+    constraint_ft_p = add_constraints_container!(
+        container,
+        HVDCInverterPowerCalculationConstraint(),
+        T,
+        names,
+        time_steps;
+        meta = "active",
+    )
+    constraint_ft_q = add_constraints_container!(
+        container,
+        HVDCInverterPowerCalculationConstraint(),
+        T,
+        names,
+        time_steps;
+        meta = "reactive",
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        inv_tap_ratio = PSY.get_inverter_transformer_ratio(d)
+        bus_to = PSY.get_arc(d).to
+        bus_to_name = PSY.get_name(bus_to)
+
+        for t in get_time_steps(container)
+            constraint_ft_p[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                inv_ac_ppower_var[name, t] ==
+                (
+                    inv_tap_ratio * sqrt(3) * inv_ac_current_var[name, t]
+                    * inv_ac_voltage_bus_var[bus_to_name, t] *
+                    cos(inv_power_factor_var[name, t])
+                ) / inv_tap_setting_var[name, t],
+            )
+            constraint_ft_q[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                inv_ac_qpower_var[name, t] ==
+                (
+                    inv_tap_ratio * sqrt(3) * inv_ac_current_var[name, t]
+                    * inv_ac_voltage_bus_var[bus_to_name, t] *
+                    sin(inv_power_factor_var[name, t])
+                ) / inv_tap_setting_var[name, t],
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{HVDCTransmissionDCLineConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:HVDCTwoTerminalLCC},
+    ::NetworkModel{PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    rect_dc_voltage_var = get_variable(container, HVDCRectifierDCVoltageVariable(), T)
+    inv_dc_voltage_var = get_variable(container, HVDCInverterDCVoltageVariable(), T)
+    dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
+
+    constraint_tl_c = add_constraints_container!(
+        container,
+        HVDCTransmissionDCLineConstraint(),
+        T,
+        names,
+        time_steps;
+    )
+
+    for d in devices
+        name = PSY.get_name(d)
+        dc_line_resistance = PSY.get_r(d)
+
+        for t in get_time_steps(container)
+            constraint_tl_c[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                inv_dc_voltage_var[name, t] ==
+                rect_dc_voltage_var[name, t] -
+                dc_line_resistance * dc_line_current_var[name, t]
             )
         end
     end

@@ -202,6 +202,11 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
     union!(modeled_devices, Set(get_component_type(m) for m in values(branch_models)))
     incompatible_device_types = get_incompatible_devices(device_models)
     services_mapping = PSY.get_contributing_device_mapping(sys)
+    if isempty(services_mapping)
+        error(
+            "No contributing devices mapping found in the system, consider adding contributing devices to the services",
+        )
+    end
     for (service_key, service_model) in service_models
         @debug "Populating service $(service_key)"
         empty!(get_contributing_devices_map(service_model))

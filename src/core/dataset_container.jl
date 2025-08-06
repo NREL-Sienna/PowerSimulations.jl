@@ -165,6 +165,14 @@ function get_dataset_values(
     container::DatasetContainer,
     ::T,
     ::Type{U},
+) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
+    return get_dataset_values(container, ParameterKey(T, U))
+end
+
+function get_dataset_values(
+    container::DatasetContainer,
+    ::T,
+    ::Type{U},
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     return get_dataset_values(container, ExpressionKey(T, U))
 end

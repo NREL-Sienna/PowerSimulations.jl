@@ -264,7 +264,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(y_coords_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            (cost * multiplier),
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -537,13 +538,13 @@ function _add_variable_cost_to_objective!(
     pwl_fuel_consumption_expressions =
         _add_pwl_term!(container, component, cost_function, T(), U())
 
-    is_time_variant_ = is_time_variant(cost_function)
+    is_time_variant_ = is_time_variant(PSY.get_fuel_cost(cost_function))
     for t in get_time_steps(container)
         fuel_cost_value = get_fuel_cost_value(
             container,
             component,
             t,
-            Val{is_time_variant_}(),
+            is_time_variant_,
         )
         pwl_cost_expression = pwl_fuel_consumption_expressions[t] * fuel_cost_value
         add_to_expression!(

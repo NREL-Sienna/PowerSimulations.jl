@@ -11,11 +11,27 @@
         PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.ThermalStandard, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-        PSI.ConstraintKey(RequirementConstraint, PSY.VariableReserve{ReserveUp}, "Reserve1"),
-        PSI.ConstraintKey(RequirementConstraint, PSY.VariableReserve{ReserveDown}, "Reserve2"),
+        PSI.ConstraintKey(
+            RequirementConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1",
+        ),
+        PSI.ConstraintKey(
+            RequirementConstraint,
+            PSY.VariableReserve{ReserveDown},
+            "Reserve2",
+        ),
         PSI.ConstraintKey(PostContingengyGenerationBalanceConstraint, PSY.ThermalStandard),
-        PSI.ConstraintKey(PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint, PSY.ThermalStandard, "up"),
-        PSI.ConstraintKey(PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint, PSY.ThermalStandard, "dn"),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            PSY.ThermalStandard,
+            "up",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            PSY.ThermalStandard,
+            "dn",
+        ),
         PSI.ConstraintKey(PostContingencyRampConstraint, PSY.ThermalStandard, "up"),
     ]
     PTDF_ref = IdDict{System, PTDF}(
@@ -28,7 +44,6 @@
         c_sys5 => 340000.0,
     )
     for (ix, sys) in enumerate(systems)
-        
         components_outages_names = ["Alta"]
         for component_name in components_outages_names
             # --- Create Outage Data ---
@@ -57,7 +72,6 @@
                 RangeReserveWithDeliverabilityConstraints,
                 "Reserve2",
             ))
-
 
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
@@ -89,4 +103,3 @@
         output_dir = mktempdir(; cleanup = true),
     ) == PSI.ModelBuildStatus.FAILED
 end
-

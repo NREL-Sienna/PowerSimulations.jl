@@ -1,4 +1,56 @@
 ##################################################
+################ PWL Parameters  #################
+##################################################
+
+# Determines whether we care about startup and shutdown costs, given the formulation
+# NOTE: currently works based on what has already been added to the container;
+# alternatively we could dispatch on the formulation directly
+_consider_startup_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    any(
+        haskey.(
+            [get_variables(container)],
+            VariableKey.([StartVariable, MULTI_START_VARIABLES...], [T])),
+    )
+_consider_shutdown_time_series(
+    container::OptimizationContainer,
+    ::DeviceModel{T, D},
+) where {T, D} =
+    haskey(get_variables(container), VariableKey(StopVariable, T))
+
+_has_market_bid_cost(device::PSY.StaticInjection) =
+    PSY.get_operation_cost(device) isa PSY.MarketBidCost
+_has_startup_time_series(device::PSY.StaticInjection) =
+    PSY.get_start_up(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+_has_shutdown_time_series(device::PSY.StaticInjection) =
+    PSY.get_shut_down(PSY.get_operation_cost(device)) isa PSY.TimeSeriesKey
+
+function add_market_bid_parameters!(
+    container::OptimizationContainer,
+    devices,
+    model::DeviceModel,
+)
+    devices = collect(devices)  # no `filter` for `FlattenIteratorWrapper`
+    if _consider_startup_time_series(container, model)
+        startup_devices =
+            filter(x -> _has_market_bid_cost(x) && _has_startup_time_series(x), devices)
+        if length(startup_devices) > 0
+            add_parameters!(container, StartupCostParameter, startup_devices, model)
+        end
+    end
+
+    if _consider_shutdown_time_series(container, model)
+        shutdown_devices =
+            filter(x -> _has_market_bid_cost(x) && _has_shutdown_time_series(x), devices)
+        if length(shutdown_devices) > 0
+            add_parameters!(container, ShutdownCostParameter, shutdown_devices, model)
+        end
+    end
+end
+
+##################################################
 ################# PWL Variables ##################
 ##################################################
 
@@ -156,7 +208,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(y_coords_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            (cost * multiplier),
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -166,12 +219,12 @@ function _get_pwl_cost_expression(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.PiecewiseStepData,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    incremental_curve = PSY.get_incremental_offer_curves(cost_function)
+    incremental_curve = get_output_offer_curves(cost_function)
     value_curve = PSY.get_value_curve(incremental_curve)
     power_units = PSY.get_power_units(incremental_curve)
     cost_component = PSY.get_function_data(value_curve)
@@ -199,13 +252,13 @@ function _get_pwl_cost_expression_decremental(
     container::OptimizationContainer,
     component::T,
     time_period::Int,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.PiecewiseStepData,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
-    decremental_curve = PSY.get_decremental_offer_curves(cost_function)
+    decremental_curve = get_input_offer_curves(cost_function)
     value_curve = PSY.get_value_curve(decremental_curve)
     power_units = PSY.get_power_units(decremental_curve)
     cost_component = PSY.get_function_data(value_curve)
@@ -244,7 +297,8 @@ function _get_pwl_cost_expression(
     for i in 1:length(slopes)
         JuMP.add_to_expression!(
             ordc_cost,
-            slopes[i] * multiplier * pwl_var_container[(name, i, time_period)],
+            slopes[i] * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return ordc_cost
@@ -289,7 +343,8 @@ function _get_pwl_cost_expression(
     for (i, cost) in enumerate(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            cost * multiplier,
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -330,12 +385,12 @@ with a fixed incremental offer curve
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
-    cost_data = PSY.get_incremental_offer_curves(cost_function)
+    cost_data = get_output_offer_curves(cost_function)
     data = _get_pwl_data(container, component, cost_data)
     cost_is_convex = PSY.is_convex(data)
     name = PSY.get_name(component)
@@ -361,13 +416,13 @@ with a fixed decremental offer curve
 function _add_pwl_term_decremental!(
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     ::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType,
     V <: AbstractDeviceFormulation}
-    cost_data = PSY.get_decremental_offer_curves(cost_function)
+    cost_data = get_input_offer_curves(cost_function)
     data = _get_pwl_data(container, component, cost_data)
     cost_is_concave = PSY.is_concave(data)
     name = PSY.get_name(component)
@@ -389,7 +444,7 @@ end
 function _add_pwl_term_helper!(
     container::OptimizationContainer,
     component::T,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     data::Union{PSY.PiecewiseStepData, PSY.PiecewiseLinearData},
     get_pwl_cost_expression_function::Function,
     ::U,
@@ -648,11 +703,14 @@ function _add_variable_cost_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::PSY.MarketBidCost,
+    cost_function::OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     add_pwl_term_function::Function,
-    ::U) where {T <: VariableType,
-    U <: AbstractDeviceFormulation}
+    ::U,
+) where {
+    T <: VariableType,
+    U <: AbstractDeviceFormulation,
+}
     time_steps = get_time_steps(container)
     initial_time = get_initial_time(container)
     #=
@@ -796,7 +854,7 @@ function _add_vom_cost_to_objective_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    ::PSY.MarketBidCost,
+    ::OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
 ) where {T <: VariableType,

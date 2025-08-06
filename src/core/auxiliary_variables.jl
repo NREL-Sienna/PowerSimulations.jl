@@ -48,6 +48,16 @@ Auxiliary Variable for the line active flow in the to -> from direction from pow
 """
 struct PowerFlowLineActivePowerToFrom <: PowerFlowAuxVariableType end
 
+"""
+Auxiliary Variable for the loss factors from AC power flow evaluation that are calculated using the Jacobian matrix
+"""
+struct PowerFlowLossFactors <: PowerFlowAuxVariableType end
+
+"""
+Auxiliary Variable for the voltage stability factors from AC power flow evaluation that are calculated using the Jacobian matrix
+"""
+struct PowerFlowVoltageStabilityFactors <: PowerFlowAuxVariableType end
+
 convert_result_to_natural_units(::Type{PowerOutput}) = true
 convert_result_to_natural_units(
     ::Type{

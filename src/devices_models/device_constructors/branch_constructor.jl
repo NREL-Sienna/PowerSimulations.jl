@@ -695,7 +695,75 @@ function construct_device!(
 )
     devices = get_available_components(device_model, sys)
     add_constraint_dual!(container, sys, device_model)
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, device_model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalDispatch},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalDispatch},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
+    return
+end
+
+# Repeated method to avoid ambiguity between HVDCTwoTerminalUnbounded, HVDCTwoTerminalLossless and HVDCTwoTerminalDispatch
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalUnbounded},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
+    return
+end
+
+# Repeated method to avoid ambiguity between HVDCTwoTerminalUnbounded, HVDCTwoTerminalLossless and HVDCTwoTerminalDispatch
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalLossless},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Arguments not built"
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    device_model::DeviceModel{T, HVDCTwoTerminalLossless},
+    ::NetworkModel{AreaBalancePowerModel},
+) where {T <: TwoTerminalHVDCTypes}
+    @warn "AreaBalancePowerModel doesn't model individual line flows for $T. Model not built"
     return
 end
 
@@ -1071,6 +1139,247 @@ function construct_device!(
     return
 end
 
+############################# NEW LCC HVDC NON-LINEAR MODEL #############################
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{T, HVDCTwoTerminalLCC},
+    network_model::NetworkModel{<:PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    devices = get_available_components(model, sys)
+
+    # Variables
+    add_variables!(
+        container,
+        HVDCActivePowerReceivedFromVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCActivePowerReceivedToVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCReactivePowerReceivedFromVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCReactivePowerReceivedToVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCRectifierDelayAngleVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCInverterExtinctionAngleVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCRectifierPowerFactorAngleVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCInverterPowerFactorAngleVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCRectifierOverlapAngleVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCInverterOverlapAngleVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCRectifierDCVoltageVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCInverterDCVoltageVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCRectifierACCurrentVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCInverterACCurrentVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        DCLineCurrentFlowVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCRectifierTapSettingVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+    add_variables!(
+        container,
+        HVDCInverterTapSettingVariable,
+        devices,
+        HVDCTwoTerminalLCC(),
+    )
+
+    # Expressions
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActivePowerReceivedFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActivePowerReceivedToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        HVDCReactivePowerReceivedFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        HVDCReactivePowerReceivedToVariable,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, HVDCTwoTerminalLCC},
+    network_model::NetworkModel{<:PM.ACPPowerModel},
+) where {T <: PSY.TwoTerminalLCCLine}
+    devices = get_available_components(model, sys)
+    add_constraints!(
+        container,
+        HVDCRectifierDCLineVoltageConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterDCLineVoltageConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierOverlapAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterOverlapAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierPowerFactorAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterPowerFactorAngleConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierACCurrentFlowConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterACCurrentFlowConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCRectifierPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCInverterPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        HVDCTransmissionDCLineConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    return
+end
+
 ############################# Phase Shifter Transformer Models #############################
 
 function construct_device!(
@@ -1330,12 +1639,13 @@ function construct_device!(
 end
 
 function construct_device!(
-    ::OptimizationContainer,
-    ::PSY.System,
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{PSY.AreaInterchange, StaticBranchUnbounded},
     network_model::NetworkModel{AreaBalancePowerModel},
 )
+    devices = get_available_components(model, sys)
     add_feedforward_constraints!(container, model, devices)
     return
 end

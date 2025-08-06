@@ -99,6 +99,9 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
+# TODO - check for incompatibilities between PowerModels and Network reductions
+const INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS = []
+
 function check_network_reduction_compatibility(
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
@@ -112,12 +115,20 @@ function instantiate_network_model(
     model::NetworkModel{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    model.network_reduction = PNM.get_default_reduction(sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if !isempty(model.network_reduction)
-        check_netwwork_reduction_compatibility(T)
+        check_network_reduction_compatibility(T)
     end
+    return
+end
+
+function instantiate_network_model(
+    model::NetworkModel{AreaBalancePowerModel},
+    sys::PSY.System,
+)
     return
 end
 
@@ -143,17 +154,21 @@ function instantiate_network_model(
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         if model.reduce_radial_branches
-            network_reduction = PNM.get_radial_reduction(sys)
+            network_reduction =
+                PNM.Ybus(
+                    sys;
+                    network_reductions = PNM.NetworkReduction[PNM.RadialReduction()],
+                ).network_reduction_data
         else
-            network_reduction = PNM.NetworkReductionData()
+            network_reduction = PNM.get_default_reduction(sys)
         end
         model.PTDF_matrix =
             PNM.VirtualPTDF(sys; network_reduction = network_reduction)
     end
 
-    if !model.reduce_radial_branches &&
-       !isempty(model.PTDF_matrix.network_reduction_data.reductions) &&
-       typeof(model.PTDF_matrix.network_reduction_data.reductions[1]) == PNM.RadialReduction
+    if !model.reduce_radial_branches && PNM.has_radial_reduction(
+        PNM.get_reductions(model.PTDF_matrix.network_reduction_data),
+    )
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
@@ -163,8 +178,7 @@ function instantiate_network_model(
     end
 
     if model.reduce_radial_branches &&
-       !isempty(model.PTDF_matrix.network_reduction_data.reductions) &&
-       typeof(model.PTDF_matrix.network_reduction_data.reductions[1]) == PNM.WardReduction
+       PNM.has_ward_reduction(PNM.get_reductions(model.PTDF_matrix.network_reduction_data))
         throw(
             IS.ConflictingInputsError(
                 "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
@@ -177,9 +191,7 @@ function instantiate_network_model(
         @assert !isempty(model.PTDF_matrix.network_reduction_data)
     end
     model.network_reduction = model.PTDF_matrix.network_reduction_data
-
-    get_PTDF_matrix(model).subnetworks
-    model.subnetworks = deepcopy(get_PTDF_matrix(model).subnetworks)
+    model.subnetworks = _make_subnetworks_from_subnetwork_axes(model.PTDF_matrix)
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
@@ -227,6 +239,22 @@ function instantiate_network_model(
     return
 end
 
+function _make_subnetworks_from_subnetwork_axes(ptdf::PNM.PTDF)
+    subnetworks = Dict{Int, Set{Int}}()
+    for (ref_bus, ptdf_axes) in ptdf.subnetwork_axes
+        subnetworks[ref_bus] = Set(ptdf_axes[1])
+    end
+    return subnetworks
+end
+
+function _make_subnetworks_from_subnetwork_axes(ptdf::PNM.VirtualPTDF)
+    subnetworks = Dict{Int, Set{Int}}()
+    for (ref_bus, ptdf_axes) in ptdf.subnetwork_axes
+        subnetworks[ref_bus] = Set(ptdf_axes[2])
+    end
+    return subnetworks
+end
+
 function _assign_subnetworks_to_buses(
     model::NetworkModel{T},
     sys::PSY.System,
@@ -257,12 +285,10 @@ function _assign_subnetworks_to_buses(
     end
     return
 end
-
 _assign_subnetworks_to_buses(
     ::NetworkModel{T},
     ::PSY.System,
 ) where {T <: PM.AbstractPowerModel} = nothing
-
 function get_reference_bus(
     model::NetworkModel{T},
     b::PSY.ACBus,

@@ -11,10 +11,10 @@ function write_data(base_power::Float64, save_path::String)
 end
 
 function jump_value(input::JuMP.VariableRef)::Float64
-    if JuMP.has_values(input.model)
-        return JuMP.value(input)
-    elseif JuMP.is_fixed(input)
+    if JuMP.is_fixed(input)
         return JuMP.fix_value(input)
+    elseif JuMP.has_values(input.model)
+        return JuMP.value(input)
     else
         return NaN
     end
@@ -28,11 +28,7 @@ function jump_value(input::JuMP.ConstraintRef)::Float64
     return JuMP.dual(input)
 end
 
-function jump_value(input::Float64)
-    return input
-end
-
-function jump_value(input::Vector{Tuple{Float64, Float64}})::Vector{Tuple{Float64, Float64}}
+function jump_value(input::JumpSupportedLiterals)
     return input
 end
 

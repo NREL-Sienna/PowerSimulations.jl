@@ -109,6 +109,14 @@ Formulation type to add real and reactive injection variables with constant powe
 """
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
+########################### Source Formulations ##############################
+abstract type AbstractSourceFormulation <: AbstractDeviceFormulation end
+
+"""
+Formulation type to add import and export model for `Source`
+"""
+struct ImportExportSourceModel <: AbstractSourceFormulation end
+
 """
 Abstract type for Branch Formulations (a.k.a Models)
 
@@ -156,6 +164,11 @@ struct HVDCTwoTerminalDispatch <: AbstractTwoTerminalDCLineFormulation end
 Branch type to represent piecewise lossy power flow on two terminal DC lines
 """
 struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
+
+"""
+Branch type to represent non-linear LCC (line commutated converter) model on two-terminal DC lines
+"""
+struct HVDCTwoTerminalLCC <: AbstractTwoTerminalDCLineFormulation end
 
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end

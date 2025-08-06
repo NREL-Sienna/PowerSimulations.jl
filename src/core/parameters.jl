@@ -48,7 +48,14 @@ function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::Str
 end
 
 get_component_names(attr::TimeSeriesAttributes) = keys(attr.component_name_to_ts_uuid)
-function _get_ts_uuid(attr::TimeSeriesAttributes, name)
+function _get_ts_uuid(attr::TimeSeriesAttributes, name::String)
+    if !haskey(attr.component_name_to_ts_uuid, name)
+        throw(
+            ArgumentError(
+                "No time series UUID found for in attributes for component $name: available names are $(keys(attr.component_name_to_ts_uuid))",
+            ),
+        )
+    end
     return attr.component_name_to_ts_uuid[name]
 end
 
@@ -64,14 +71,24 @@ end
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
 struct CostFunctionAttributes{T} <: ParameterAttributes
-    variable_type::Type
+    variable_types::Tuple{Vararg{Type}}
     sos_status::SOSStatusVariable
     uses_compact_power::Bool
 end
 
 get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
-get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
+get_variable_types(attr::CostFunctionAttributes) = attr.variable_types
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
+
+struct EventParametersAttributes{T <: PSY.Outage, U <: ParameterType} <: ParameterAttributes
+    affected_devices::Vector{<:PSY.Component}
+end
+
+function get_param_type(
+    ::EventParametersAttributes{T, U},
+) where {T <: PSY.Outage, U <: ParameterType}
+    return U
+end
 
 struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
@@ -149,6 +166,14 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
+    return jump_value.(param_array) .* multiplier_array
+end
+
+function get_parameter_values(
+    attr::EventParametersAttributes,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
     return jump_value.(param_array)
 end
 
@@ -177,22 +202,13 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-function _set_parameter!(
-    array::AbstractArray{Float64},
-    ::JuMP.Model,
-    value::Float64,
-    ixs::Tuple,
-)
-    array[ixs...] = value
-    return
-end
-
+const ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
     value::T,
     ixs::Tuple,
-) where {T <: IS.FunctionData}
+) where {T <: ValidDataParamEltypes}
     array[ixs...] = value
     return
 end
@@ -225,18 +241,7 @@ end
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::Float64,
-    ixs...,
-)
-    param_array = get_parameter_array(container)
-    _set_parameter!(param_array, jump_model, parameter, ixs)
-    return
-end
-
-function set_parameter!(
-    container::ParameterContainer,
-    jump_model::JuMP.Model,
-    parameter::IS.FunctionData,
+    parameter::ValidDataParamEltypes,
     ixs...,
 )
     param_array = get_parameter_array(container)
@@ -253,6 +258,16 @@ struct ActivePowerTimeSeriesParameter <: TimeSeriesParameter end
 Parameter to define reactive power time series
 """
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define active power out time series
+"""
+struct ActivePowerOutTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define active power in time series
+"""
+struct ActivePowerInTimeSeriesParameter <: TimeSeriesParameter end
 
 """
 Parameter to define requirement time series
@@ -309,7 +324,7 @@ Parameter to define variable lower bound
 struct LowerBoundValueParameter <: VariableValueParameter end
 
 """
-Parameter to define unit commitment status
+Parameter to define unit commitment status updated from the system state
 """
 struct OnStatusParameter <: VariableValueParameter end
 
@@ -328,11 +343,42 @@ Parameter to define fuel cost time series
 """
 struct FuelCostParameter <: ObjectiveFunctionParameter end
 
+"Parameter to define startup cost time series"
+struct StartupCostParameter <: ObjectiveFunctionParameter end
+
+"Parameter to define shutdown cost time series"
+struct ShutdownCostParameter <: ObjectiveFunctionParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-struct EventParameter <: ParameterType end
+abstract type EventParameter <: ParameterType end
+
+"""
+Parameter to define component availability status updated from the system state
+"""
+struct AvailableStatusParameter <: EventParameter end
+
+"""
+Parameter to define active power offset during an event.
+"""
+struct ActivePowerOffsetParameter <: EventParameter end
+
+"""
+Parameter to define reactive power offset during an event.
+"""
+struct ReactivePowerOffsetParameter <: EventParameter end
+
+"""
+Parameter to record that the component changed in the availability status
+"""
+struct AvailableStatusChangeCountdownParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
+should_write_resulting_value(::Type{<:EventParameter}) = true
+
+# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are tuples)
+should_write_resulting_value(::Type{<:FuelCostParameter}) = true
+should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 
 convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
 convert_result_to_natural_units(

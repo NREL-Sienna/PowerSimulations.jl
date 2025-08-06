@@ -1015,53 +1015,92 @@ end
 read_result_names(results, key::PSI.OptimizationContainerKey) =
     Set(names(only(values(PSI.read_results_with_keys(results, [key])))[!, Not(:DateTime)]))
 
-@testset "Test AC power flow in the loop: small system UCED, PSS/E export" begin
-    file_path = mktempdir(; cleanup = true)
-    export_path = mktempdir(; cleanup = true)
-    pf_path = mktempdir(; cleanup = true)
-    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-    sim = run_simulation(
-        c_sys5_hy_uc,
-        c_sys5_hy_ed,
-        file_path,
-        export_path;
-        ed_network_model = NetworkModel(
-            CopperPlatePowerModel;
-            duals = [CopperPlateBalanceConstraint],
-            use_slacks = true,
-            power_flow_evaluation =
-            ACPowerFlow(;
-                exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
+@testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
+                                                                               (true, false)
+    for calculate_voltage_stability_factors in (true, false)
+        file_path = mktempdir(; cleanup = true)
+        export_path = mktempdir(; cleanup = true)
+        pf_path = mktempdir(; cleanup = true)
+        c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
+        c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
+        sim = run_simulation(
+            c_sys5_hy_uc,
+            c_sys5_hy_ed,
+            file_path,
+            export_path;
+            ed_network_model = NetworkModel(
+                CopperPlatePowerModel;
+                duals = [CopperPlateBalanceConstraint],
+                use_slacks = true,
+                power_flow_evaluation =
+                ACPowerFlow(;
+                    exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
+                    calculate_loss_factors = calculate_loss_factors,
+                    calculate_voltage_stability_factors = calculate_voltage_stability_factors,
+                ),
             ),
-        ),
-    )
-    results = SimulationResults(sim)
-    results_ed = get_decision_problem_results(results, "ED")
-    thermal_results = first(
-        values(
-            PSI.read_results_with_keys(results_ed,
-                [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]),
-        ),
-    )
-    first_result = first(thermal_results)
-    last_result = last(thermal_results)
+        )
+        results = SimulationResults(sim)
+        results_ed = get_decision_problem_results(results, "ED")
+        thermal_results = first(
+            values(
+                PSI.read_results_with_keys(results_ed,
+                    [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]),
+            ),
+        )
+        first_result = first(thermal_results)
+        last_result = last(thermal_results)
 
-    @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
-    first_export = load_pf_export(pf_path, "export_1_1")
-    last_export = load_pf_export(pf_path, "export_48_12")
+        available_aux_variables = list_aux_variable_keys(results_ed)
+        loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
+        voltage_stability_aux_var_key =
+            PSI.AuxVarKey(PowerFlowVoltageStabilityFactors, ACBus)
 
-    # Test that the active powers written to the first and last exports line up with the real simulation results
-    for gen_name in get_name.(get_components(ThermalStandard, c_sys5_hy_ed))
-        this_first_result = first_result[gen_name]
-        this_first_exported =
-            get_active_power(get_component(ThermalStandard, first_export, gen_name))
-        @test isapprox(this_first_result, this_first_exported)
+        # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
+        if calculate_loss_factors
+            @test loss_factors_aux_var_key ∈ available_aux_variables
+            loss_factors = first(
+                values(
+                    PSI.read_results_with_keys(results_ed,
+                        [loss_factors_aux_var_key]),
+                ),
+            )
+            @test !isnothing(loss_factors)
+            @test nrow(loss_factors) == 48 * 12
+        else
+            @test loss_factors_aux_var_key ∉ available_aux_variables
+        end
 
-        this_last_result = last_result[gen_name]
-        this_last_exported =
-            get_active_power(get_component(ThermalStandard, last_export, gen_name))
-        @test isapprox(this_last_result, this_last_exported)
+        if calculate_voltage_stability_factors
+            @test voltage_stability_aux_var_key ∈ available_aux_variables
+            voltage_stability = first(
+                values(
+                    PSI.read_results_with_keys(results_ed,
+                        [voltage_stability_aux_var_key]),
+                ),
+            )
+            @test !isnothing(voltage_stability)
+            @test nrow(voltage_stability) == 48 * 12
+        else
+            @test voltage_stability_aux_var_key ∉ available_aux_variables
+        end
+
+        @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
+        first_export = load_pf_export(pf_path, "export_1_1")
+        last_export = load_pf_export(pf_path, "export_48_12")
+
+        # Test that the active powers written to the first and last exports line up with the real simulation results
+        for gen_name in get_name.(get_components(ThermalStandard, c_sys5_hy_ed))
+            this_first_result = first_result[gen_name]
+            this_first_exported =
+                get_active_power(get_component(ThermalStandard, first_export, gen_name))
+            @test isapprox(this_first_result, this_first_exported)
+
+            this_last_result = last_result[gen_name]
+            this_last_exported =
+                get_active_power(get_component(ThermalStandard, last_export, gen_name))
+            @test isapprox(this_last_result, this_last_exported)
+        end
     end
 end
 

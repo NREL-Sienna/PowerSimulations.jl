@@ -1,12 +1,12 @@
 # [Formulations Introduction](@id formulation_intro)
 
-PowerSimulations.jl enables modularity in its formulations by assigning a `DeviceModel` to each `PowerSystems.jl` component type existing in a defined system.
+PowerSimulations.jl enables modularity in its formulations by assigning a [`DeviceModel`](@ref) to each `PowerSystems.jl` component type existing in a defined system.
 
 `PowerSimulations.jl` has a multiple `AbstractDeviceFormulation` subtypes that can be applied to different `PowerSystems.jl` device types, each dispatching to different methods for populating the optimization problem **variables**, **objective function**, **expressions** and **constraints**.
 
 ## Example Formulation
 
-For example a typical optimization problem in a `DecisionModel` in `PowerSimulations.jl` with three `DeviceModel` has the abstract form of:
+For example a typical optimization problem in a [`DecisionModel`](@ref) in `PowerSimulations.jl` with three [`DeviceModel`](@ref) has the abstract form of:
 
 ```math
 \begin{align*}
@@ -30,7 +30,7 @@ Suppose this is a system with the following characteristics:
   - One `PowerLoad` (device C) at bus 3
   - Three `Line` that connects all the buses
 
-Now, we assign the following `DeviceModel` to each `PowerSystems.jl` with:
+Now, we assign the following [`DeviceModel`](@ref) to each `PowerSystems.jl` with:
 
 | Type                | Formulation             |
 |:------------------- |:----------------------- |
@@ -39,9 +39,9 @@ Now, we assign the following `DeviceModel` to each `PowerSystems.jl` with:
 | `RenewableDispatch` | `RenewableFullDispatch` |
 | `PowerLoad`         | `StaticPowerLoad`       |
 
-Note that we did not assign any `DeviceModel` to `Line` since the `CopperPlatePowerModel` used for the network assumes that everything is lumped in the same node (like a copper plate with infinite capacity), and hence there are no flows between buses that branches can limit.
+Note that we did not assign any [`DeviceModel`](@ref) to `Line` since the `CopperPlatePowerModel` used for the network assumes that everything is lumped in the same node (like a copper plate with infinite capacity), and hence there are no flows between buses that branches can limit.
 
-Each `DeviceModel` formulation is described in specific in their respective page, but the overall optimization problem will end-up as:
+Each [`DeviceModel`](@ref) formulation is described in specific in their respective page, but the overall optimization problem will end-up as:
 
 ```math
 \begin{align*}

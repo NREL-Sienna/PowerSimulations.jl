@@ -478,6 +478,130 @@ function add_to_expression!(
 end
 
 """
+HVDC LCC implementation to add ActivePowerBalance expression for HVDCActivePowerReceivedFromVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,                        # expression
+    U <: HVDCActivePowerReceivedFromVariable,       # variable
+    V <: TwoTerminalHVDCTypes,                      # power system type
+    W <: HVDCTwoTerminalLCC,                        # formulation
+    X <: ACPPowerModel,                             # network model
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus_no_from =
+            PNM.get_mapped_bus_number(network_reduction, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ActivePowerBalance expression for HVDCActivePowerReceivedToVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: HVDCActivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus_no_to =
+            PNM.get_mapped_bus_number(network_reduction, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, 1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ReactivePowerBalance expression for HVDCReactivePowerReceivedFromVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,                        # expression
+    U <: HVDCReactivePowerReceivedFromVariable,     # variable
+    V <: TwoTerminalHVDCTypes,                      # power system type
+    W <: HVDCTwoTerminalLCC,                        # formulation
+    X <: ACPPowerModel,                             # network model
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus_no_from =
+            PNM.get_mapped_bus_number(network_reduction, PSY.get_arc(d).from)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_from, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
+HVDC LCC implementation to add ReactivePowerBalance expression for HVDCReactivePowerReceivedToVariable variable
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,
+    U <: HVDCReactivePowerReceivedToVariable,
+    V <: TwoTerminalHVDCTypes,
+    W <: HVDCTwoTerminalLCC,
+    X <: ACPPowerModel,
+}
+    var = get_variable(container, U(), V)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus_no_to =
+            PNM.get_mapped_bus_number(network_reduction, PSY.get_arc(d).to)
+        for t in get_time_steps(container)
+            flow_variable = var[PSY.get_name(d), t]
+            _add_to_jump_expression!(nodal_expr[bus_no_to, t], flow_variable, -1.0)
+        end
+    end
+    return
+end
+
+"""
 PWL implementation to add FromTo branch variables to SystemBalanceExpressions
 """
 function add_to_expression!(
@@ -637,6 +761,38 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     network_reduction = get_network_reduction(network_model)
+    for d in devices
+        name = PSY.get_name(d)
+        bus_no_ = PSY.get_number(PSY.get_arc(d).to)
+        bus_no = PNM.get_mapped_bus_number(network_reduction, bus_no_)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression[bus_no, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{PSY.TwoTerminalGenericHVDCLine},
+    ::DeviceModel{PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: FlowActivePowerToFromVariable,
+}
+    error(
+        "here the check for appropriate topology needs to be done based on the network model and the network reduction",
+    )
+    variable = get_variable(container, U(), V)
+    expression = get_expression(container, T(), PSY.ACBus)
+    radial_network_reduction = get_radial_network_reduction(network_model)
     for d in devices
         name = PSY.get_name(d)
         bus_no_ = PSY.get_number(PSY.get_arc(d).to)
@@ -1458,11 +1614,20 @@ function add_to_expression!(
 ) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     service_name = get_service_name(model)
+    direction_map = PSY.get_direction_mapping(service)
+    specified_direction_mapping = isempty(direction_map)
     for (device_type, devices) in get_contributing_devices_map(model)
         variable = get_variable(container, FlowActivePowerVariable(), device_type)
         for d in devices
             name = PSY.get_name(d)
-            direction = get(PSY.get_direction_mapping(service), name, 1.0)
+            direction = 1.0
+            if specified_direction_mapping
+                if !haskey(direction_map, name)
+                    @warn "Direction not found for $(summary(d)). Will use the default from -> to direction"
+                else
+                    direction = direction_map[name]
+                end
+            end
             for t in get_time_steps(container)
                 _add_to_jump_expression!(
                     expression[service_name, t],
@@ -1912,3 +2077,88 @@ function add_to_expression!(
         end
     end
 end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::U,
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+) where {
+    T <: NetActivePower,
+    U <: Union{ActivePowerInVariable, ActivePowerOutVariable},
+    V <: PSY.Source,
+    W <: AbstractSourceFormulation,
+}
+    expression = get_expression(container, T(), V)
+    variable = get_variable(container, U(), V)
+    mult = get_variable_multiplier(U(), V, W())
+    for d in devices
+        name = PSY.get_name(d)
+        for t in get_time_steps(container)
+            JuMP.add_to_expression!(
+                expression[name, t],
+                variable[name, t] * mult,
+            )
+        end
+    end
+    return
+end
+
+#=
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    areas::IS.FlattenIteratorWrapper{V},
+    model::ServiceModel{PSY.AGC, W},
+) where {
+    T <: Union{EmergencyUp, EmergencyDown},
+    U <:
+    Union{AdditionalDeltaActivePowerUpVariable, AdditionalDeltaActivePowerDownVariable},
+    V <: PSY.Area,
+    W <: AbstractServiceFormulation,
+}
+    names = PSY.get_name.(areas)
+    time_steps = get_time_steps(container)
+    if !has_container_key(container, T, V)
+        expression = add_expression_container!(container, T(), V, names, time_steps)
+    end
+    expression = get_expression(container, T(), V)
+    variable = get_variable(container, U(), V)
+    for n in names, t in time_steps
+        _add_to_jump_expression!(expression[n, t], variable[n, t], 1.0)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    services::IS.FlattenIteratorWrapper{V},
+    model::ServiceModel{V, W},
+) where {
+    T <: RawACE,
+    U <: SteadyStateFrequencyDeviation,
+    V <: PSY.AGC,
+    W <: AbstractServiceFormulation,
+}
+    names = PSY.get_name.(services)
+    time_steps = get_time_steps(container)
+    if !has_container_key(container, T, V)
+        expression = add_expression_container!(container, T(), PSY.AGC, names, time_steps)
+    end
+    expression = get_expression(container, T(), PSY.AGC)
+    variable = get_variable(container, U(), PSY.AGC)
+    for s in services, t in time_steps
+        name = PSY.get_name(s)
+        _add_to_jump_expression!(
+            expression[name, t],
+            variable[t],
+            get_variable_multiplier(U(), s, W()),
+        )
+    end
+    return
+end
+=#
