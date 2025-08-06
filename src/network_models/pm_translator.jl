@@ -413,7 +413,7 @@ function get_branches_to_pm(
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
     network_reduction = get_network_reduction(network_model)
-    removed_branches_names = PNM.get_removed_branches(network_reduction)
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: TwoTerminalHVDCTypes
@@ -422,17 +422,15 @@ function get_branches_to_pm(
         !(comp_type <: T) && continue
         start_idx += length(PM_branches)
         for (i, branch) in enumerate(get_available_components(device_model, sys))
-            if PSY.get_name(branch) ∈ removed_branches_names
-                @debug "Skipping branch $(PSY.get_name(branch)) since it is radial"
-                continue
-            end
-            ix = i + start_idx
-            PM_branches["$(ix)"] =
-                get_branch_to_pm(ix, branch, get_formulation(device_model), S)
-            if PM_branches["$(ix)"]["br_status"] == true
-                f = PM_branches["$(ix)"]["f_bus"]
-                t = PM_branches["$(ix)"]["t_bus"]
-                PMmap_br[(from_to = (ix, f, t), to_from = (ix, t, f))] = branch
+            if PSY.get_name(branch) ∈ retained_branches_names
+                ix = i + start_idx
+                PM_branches["$(ix)"] =
+                    get_branch_to_pm(ix, branch, get_formulation(device_model), S)
+                if PM_branches["$(ix)"]["br_status"] == true
+                    f = PM_branches["$(ix)"]["f_bus"]
+                    t = PM_branches["$(ix)"]["t_bus"]
+                    PMmap_br[(from_to = (ix, f, t), to_from = (ix, t, f))] = branch
+                end
             end
         end
     end
