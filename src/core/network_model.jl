@@ -99,9 +99,6 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-# TODO - check for incompatibilities between PowerModels and Network reductions
-const INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS = []
-
 function check_network_reduction_compatibility(
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}

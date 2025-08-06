@@ -1200,7 +1200,7 @@ end
 @testset "StandardPTDF with Ward reduction Test" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     net_model = PTDFPowerModel
-    wr = PNM.get_ward_reduction(new_sys, [1, 2, 3, 4, 5]) #This is currently equivalent to the radial reduciton 
+    wr = PNM.get_ward_reduction(new_sys, [1, 2, 3, 4, 5]) #This is currently equivalent to the radial reduciton
     template_uc = template_unit_commitment(;
         network = NetworkModel(net_model;
             PTDF_matrix = PTDF(new_sys; network_reduction = wr),
