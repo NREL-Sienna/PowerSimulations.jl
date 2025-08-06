@@ -19,6 +19,7 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Source}, ::AbstractSou
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_reactive_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_reactive_power_limits(d).max
 
+get_multiplier_value(::TimeSeriesParameter, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).max
 
 #! format: on
 function get_default_time_series_names(
@@ -119,6 +120,54 @@ function add_constraints!(
             week_export_limit * (hours_in_horizon / HOURS_IN_WEEK)
         )
     end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerOutVariableTimeSeriesLimitsConstraint},
+    U::Type{<:Union{ActivePowerOutVariable, ActivePowerRangeExpressionUB}},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {
+    V <: PSY.Source,
+    W <: AbstractSourceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerOutVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerOutTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerInVariableTimeSeriesLimitsConstraint},
+    U::Type{<:Union{ActivePowerInVariable, ActivePowerRangeExpressionUB}},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {
+    V <: PSY.Source,
+    W <: AbstractSourceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    add_parameterized_upper_bound_range_constraints(
+        container,
+        ActivePowerInVariableTimeSeriesLimitsConstraint,
+        U,
+        ActivePowerInTimeSeriesParameter,
+        devices,
+        model,
+        X,
+    )
     return
 end
 

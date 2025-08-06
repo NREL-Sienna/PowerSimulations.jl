@@ -260,6 +260,16 @@ Parameter to define reactive power time series
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
 """
+Parameter to define active power out time series
+"""
+struct ActivePowerOutTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define active power in time series
+"""
+struct ActivePowerInTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
 Parameter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
