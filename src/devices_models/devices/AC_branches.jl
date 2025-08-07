@@ -453,21 +453,6 @@ function add_constraints!(
                 JuMP.@constraint(get_jump_model(container),
                     array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
                     limits.min)
-            retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-            ci_name = PSY.get_name(device)
-            if ci_name ∈ retained_branches_names
-                limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
-                for t in time_steps
-                    con_ub[ci_name, t] =
-                        JuMP.@constraint(get_jump_model(container),
-                            array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
-                            limits.max)
-                    con_lb[ci_name, t] =
-                        JuMP.@constraint(get_jump_model(container),
-                            array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
-                            limits.min)
-                end
-            end
         end
     end
     return
