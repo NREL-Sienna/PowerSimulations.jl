@@ -83,8 +83,7 @@ function add_variables!(
 
     branches_in_ptdf =
         [
-            b for b in devices if PSY.get_name(b) ∈
-            PNM.get_retained_branches_names(PNM.get_network_reduction_data(ptdf))
+            b for b in devices if PSY.get_name(b) ∈ branch_names
         ]
     variable = add_variable_container!(
         container,
