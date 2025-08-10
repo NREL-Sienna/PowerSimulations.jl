@@ -52,6 +52,7 @@ function construct_device!(
             network_model,
         )
     end
+    add_event_arguments!(container, devices, model, network_model)
 end
 
 function construct_device!(
@@ -103,6 +104,7 @@ function construct_device!(
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
 
+    add_event_constraints!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -152,6 +154,7 @@ function construct_device!(
             network_model,
         )
     end
+    add_event_arguments!(container, devices, model, network_model)
 end
 
 function construct_device!(
@@ -194,6 +197,7 @@ function construct_device!(
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
 
+    add_event_constraints!(container, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
 
     return
@@ -227,6 +231,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 
@@ -248,6 +253,7 @@ function construct_device!(
         model,
         network_model,
     )
+    add_event_arguments!(container, devices, model, network_model)
     return
 end
 

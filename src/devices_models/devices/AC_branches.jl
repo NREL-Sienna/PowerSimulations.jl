@@ -78,7 +78,10 @@ function add_variables!(
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
     branches_in_ptdf =
-        [b for b in devices if PSY.get_name(b) ∈ Set(PNM.get_branch_ax(ptdf))]
+        [
+            b for b in devices if PSY.get_name(b) ∈
+            PNM.get_retained_branches_names(PNM.get_network_reduction_data(ptdf))
+        ]
     variable = add_variable_container!(
         container,
         T(),
@@ -139,16 +142,15 @@ function branch_rate_bounds!(
     var = get_variable(container, FlowActivePowerVariable(), B)
 
     network_reduction = get_network_reduction(network_model)
-    removed_branches_names = PNM.get_removed_branches(network_reduction)
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
-        if name ∈ removed_branches_names
-            continue
-        end
-        for t in get_time_steps(container)
-            JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
-            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+        if name ∈ retained_branches_names
+            for t in get_time_steps(container)
+                JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
+                JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+            end
         end
     end
     return
@@ -167,16 +169,15 @@ function branch_rate_bounds!(
 
     time_steps = get_time_steps(container)
     network_reduction = get_network_reduction(network_model)
-    removed_branches_names = PNM.get_removed_branches(network_reduction)
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
 
     for d in devices
         name = PSY.get_name(d)
-        if name ∈ removed_branches_names
-            continue
-        end
-        for t in time_steps, var in vars
-            JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
-            JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+        if name ∈ retained_branches_names
+            for t in time_steps, var in vars
+                JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
+                JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+            end
         end
     end
     return
@@ -361,7 +362,7 @@ function add_constraints!(
     if isempty(network_reduction)
         device_names = [PSY.get_name(d) for d in devices]
     else
-        device_names = PNM.get_retained_branches(network_reduction)  #TODO need added branches here for ward?
+        device_names = PNM.get_retained_branches_names(network_reduction)  #TODO need added branches here for ward?
     end
 
     con_lb =
@@ -390,22 +391,21 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
-
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
     for device in devices
         ci_name = PSY.get_name(device)
-        if ci_name ∈ PNM.get_removed_branches(network_reduction)
-            continue
-        end
-        limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
-        for t in time_steps
-            con_ub[ci_name, t] =
-                JuMP.@constraint(get_jump_model(container),
-                    array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
-                    limits.max)
-            con_lb[ci_name, t] =
-                JuMP.@constraint(get_jump_model(container),
-                    array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
-                    limits.min)
+        if ci_name ∈ retained_branches_names
+            limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
+            for t in time_steps
+                con_ub[ci_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
+                        limits.max)
+                con_lb[ci_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
+                        limits.min)
+            end
         end
     end
     return
@@ -444,19 +444,18 @@ function _constraint_without_slacks!(
     constraint::JuMPConstraintArray,
     rating_data::Vector{Tuple{String, Float64}},
     time_steps::UnitRange{Int64},
-    removed_branches_names::Set{String},
+    retained_branches_names::Set{String},
     var1::JuMPVariableArray,
     var2::JuMPVariableArray,
 )
     for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ removed_branches_names
-            continue
-        end
-        for t in time_steps
-            constraint[branch_name, t] = JuMP.@constraint(
-                get_jump_model(container),
-                var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
-            )
+        if branch_name ∈ retained_branches_names
+            for t in time_steps
+                constraint[branch_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
+                )
+            end
         end
     end
     return
@@ -467,21 +466,20 @@ function _constraint_with_slacks!(
     constraint::JuMPConstraintArray,
     rating_data::Vector{Tuple{String, Float64}},
     time_steps::UnitRange{Int64},
-    removed_branches_names::Set{String},
+    retained_branches_names::Set{String},
     var1::JuMPVariableArray,
     var2::JuMPVariableArray,
     slack_ub::JuMPVariableArray,
 )
     for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ removed_branches_names
-            continue
-        end
-        for t in time_steps
-            constraint[branch_name, t] = JuMP.@constraint(
-                get_jump_model(container),
-                var1[branch_name, t]^2 + var2[branch_name, t]^2 -
-                slack_ub[branch_name, t] <= branch_rate^2
-            )
+        if branch_name ∈ retained_branches_names
+            for t in time_steps
+                constraint[branch_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    var1[branch_name, t]^2 + var2[branch_name, t]^2 -
+                    slack_ub[branch_name, t] <= branch_rate^2
+                )
+            end
         end
     end
     return
@@ -512,8 +510,7 @@ function add_constraints!(
     constraint = get_constraint(container, cons_type(), B)
 
     network_reduction = get_network_reduction(network_model)
-    removed_branches_names = PNM.get_removed_branches(network_reduction)
-
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
     use_slacks = get_use_slacks(device_model)
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
@@ -522,7 +519,7 @@ function add_constraints!(
             constraint,
             rating_data,
             time_steps,
-            removed_branches_names,
+            Set(retained_branches_names),
             var1,
             var2,
             slack_ub,
@@ -534,7 +531,7 @@ function add_constraints!(
         constraint,
         rating_data,
         time_steps,
-        removed_branches_names,
+        Set(retained_branches_names),
         var1,
         var2,
     )
@@ -567,17 +564,16 @@ function add_constraints!(
     constraint = get_constraint(container, cons_type(), B)
 
     network_reduction = get_network_reduction(network_model)
-    removed_branches_names = PNM.get_removed_branches(network_reduction)
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
 
     for r in rating_data
-        if r[1] ∈ removed_branches_names
-            continue
-        end
-        for t in time_steps
-            constraint[r[1], t] = JuMP.@constraint(
-                get_jump_model(container),
-                var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
-            )
+        if r[1] ∈ retained_branches_names
+            for t in time_steps
+                constraint[r[1], t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
+                )
+            end
         end
     end
     return
@@ -585,13 +581,13 @@ end
 
 const ValidPTDFS = Union{
     PNM.PTDF{
-        Tuple{Vector{Int}, Vector{String}},
-        Tuple{Dict{Int64, Int64}, Dict{String, Int64}},
+        Tuple{Vector{Int}, Vector{Tuple{Int, Int}}},
+        Tuple{Dict{Int64, Int64}, Dict{Tuple{Int, Int}, Int64}},
         Matrix{Float64},
     },
     PNM.VirtualPTDF{
-        Tuple{Vector{String}, Vector{Int64}},
-        Tuple{Dict{String, Int64}, Dict{Int64, Int64}},
+        Tuple{Vector{Tuple{Int, Int}}, Vector{Int64}},
+        Tuple{Dict{Tuple{Int, Int}, Int64}, Dict{Int64, Int64}},
     },
 }
 

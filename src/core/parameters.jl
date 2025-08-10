@@ -48,7 +48,14 @@ function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::Str
 end
 
 get_component_names(attr::TimeSeriesAttributes) = keys(attr.component_name_to_ts_uuid)
-function _get_ts_uuid(attr::TimeSeriesAttributes, name)
+function _get_ts_uuid(attr::TimeSeriesAttributes, name::String)
+    if !haskey(attr.component_name_to_ts_uuid, name)
+        throw(
+            ArgumentError(
+                "No time series UUID found for in attributes for component $name: available names are $(keys(attr.component_name_to_ts_uuid))",
+            ),
+        )
+    end
     return attr.component_name_to_ts_uuid[name]
 end
 
@@ -279,6 +286,16 @@ Parameter to define reactive power time series
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
 """
+Parameter to define active power out time series
+"""
+struct ActivePowerOutTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define active power in time series
+"""
+struct ActivePowerInTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
 Parameter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
@@ -377,6 +394,16 @@ abstract type EventParameter <: ParameterType end
 Parameter to define component availability status updated from the system state
 """
 struct AvailableStatusParameter <: EventParameter end
+
+"""
+Parameter to define active power offset during an event.
+"""
+struct ActivePowerOffsetParameter <: EventParameter end
+
+"""
+Parameter to define reactive power offset during an event.
+"""
+struct ReactivePowerOffsetParameter <: EventParameter end
 
 """
 Parameter to record that the component changed in the availability status

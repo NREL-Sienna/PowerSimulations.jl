@@ -252,12 +252,14 @@ export PowerFlowVoltageMagnitude
 export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom
 export PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom
 export PowerFlowLossFactors
+export PowerFlowVoltageStabilityFactors
 
 # Constraints
 export AbsoluteValueConstraint
 export LineFlowBoundConstraint
 export ActivePowerVariableLimitsConstraint
-export ActivePowerVariableTimeSeriesLimitsConstraint
+export ActivePowerInVariableTimeSeriesLimitsConstraint
+export ActivePowerOutVariableTimeSeriesLimitsConstraint
 export ActiveRangeICConstraint
 export AreaParticipationAssignmentConstraint
 export BalanceAuxConstraint
@@ -287,6 +289,7 @@ export HVDCPowerBalance
 export HVDCLosses
 export HVDCFlowDirectionVariable
 export InputActivePowerVariableLimitsConstraint
+export InterfaceFlowLimit
 export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
@@ -317,8 +320,12 @@ export PiecewiseLinearBlockDecrementalOfferConstraint
 # Parameters
 # Time Series Parameters
 export ActivePowerTimeSeriesParameter
+export ActivePowerOutTimeSeriesParameter
+export ActivePowerInTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export RequirementTimeSeriesParameter
+export FromToFlowLimitParameter
+export ToFromFlowLimitParameter
 
 # Cost Parameters
 export CostFunctionParameter
@@ -332,6 +339,8 @@ export FixValueParameter
 # Event Parameters
 export AvailableStatusParameter
 export AvailableStatusChangeCountdownParameter
+export ActivePowerOffsetParameter
+export ReactivePowerOffsetParameter
 
 # Expressions
 export SystemBalanceExpressions

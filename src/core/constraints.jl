@@ -514,6 +514,32 @@ p_t \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\
 struct ActivePowerVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
 
 """
+Struct to create the constraint to limit active power expressions by a time series parameter.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+p_t^{out} \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct ActivePowerOutVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
+
+"""
+Struct to create the constraint to limit active power expressions by a time series parameter.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+p_t^{in} \\le \\text{ActivePowerTimeSeriesParameter}_t, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct ActivePowerInVariableTimeSeriesLimitsConstraint <: PowerVariableLimitsConstraint end
+
+"""
 Struct to create the constraint to limit the import and exports in a determined period.
 For more information check [Device Formulations](@ref formulation_intro).
 """
@@ -522,4 +548,5 @@ struct ImportExportBudgetConstraint <: ConstraintType end
 struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
-struct OutageConstraint <: EventConstraint end
+struct ActivePowerOutageConstraint <: EventConstraint end
+struct ReactivePowerOutageConstraint <: EventConstraint end

@@ -1454,11 +1454,20 @@ function add_to_expression!(
 ) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     service_name = get_service_name(model)
+    direction_map = PSY.get_direction_mapping(service)
+    specified_direction_mapping = isempty(direction_map)
     for (device_type, devices) in get_contributing_devices_map(model)
         variable = get_variable(container, FlowActivePowerVariable(), device_type)
         for d in devices
             name = PSY.get_name(d)
-            direction = get(PSY.get_direction_mapping(service), name, 1.0)
+            direction = 1.0
+            if specified_direction_mapping
+                if !haskey(direction_map, name)
+                    @warn "Direction not found for $(summary(d)). Will use the default from -> to direction"
+                else
+                    direction = direction_map[name]
+                end
+            end
             for t in get_time_steps(container)
                 _add_to_jump_expression!(
                     expression[service_name, t],

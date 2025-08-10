@@ -144,7 +144,7 @@ Adds ``p^\text{re}`` and ``q^\text{re}`` terms to the respective active and reac
 
 ## Valid configurations
 
-Valid `DeviceModel`s for subtypes of `RenewableGen` include the following:
+Valid [`DeviceModel`](@ref)s for subtypes of `RenewableGen` include the following:
 
 ```@eval
 using PowerSimulations

@@ -78,7 +78,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
             for key in keys(field_containers)
                 !should_write_resulting_value(key) && continue
                 if !haskey(params, key)
-                    @error "New parameter $key found in emulator"
+                    @warn "New parameter $key found in emulator"
                 else
                     params[key] = (
                         horizon = params[key].horizon,
@@ -314,6 +314,45 @@ end
 
 function update_decision_state!(
     state::SimulationState,
+    key::ParameterKey{ActivePowerOffsetParameter, T},
+    column_names::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+) where {T <: PSY.Component}
+    event_occurrence_data =
+        get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    activepower_data =
+        get_decision_state_data(state, ActivePowerTimeSeriesParameter(), T)
+    state_data = get_decision_state_data(state, key)
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    @assert_op resolution_ratio >= 1
+    state_timestamps = state_data.timestamps
+    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    for name in column_names
+        if event_occurrence_data.values[name, state_data_index] == 1.0
+            outage_index = state_data_index + 1     #outage occurs at the following timestep
+            subsequent_outage_occurence_data =
+                Vector(event_occurrence_data.values[name, outage_index:end])
+            n_remaining_indices = findfirst(x -> x == 1.0, subsequent_outage_occurence_data)
+            if n_remaining_indices === nothing
+                n_remaining_indices = length(subsequent_outage_occurence_data)
+            end
+            for ix in outage_index:(state_data_index + n_remaining_indices)
+                # Set the offset parameter to equal the negative of the timeseries parameter 
+                state_data.values[name, ix] =
+                    -1.0 * activepower_data.values[name, ix]
+            end
+        end
+    end
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
     key::OptimizationContainerKey,
     store_data::DenseAxisArray{Float64, 2},
     simulation_time::Dates.DateTime,
@@ -396,6 +435,18 @@ end
 
 function update_decision_state!(
     state::SimulationState,
+    key::OptimizationContainerKey,
+    column_names::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+)
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
     key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
     column_names::Set{String},
     event::PSY.Outage,
@@ -458,13 +509,14 @@ function update_decision_state!(
     for name in column_names
         if event_occurrence_data.values[name, state_data_index] == 1.0
             outage_index = state_data_index + 1     #outage occurs at the following timestep
-            while true
-                state_data.values[name, outage_index] = 0.0
-                if (event_occurrence_data.values[name, outage_index] == 1.0) ||
-                   outage_index == length(state_data.values[name, :])  #If another change is detected or you have reached the end of the state
-                    break
-                end
-                outage_index += 1
+            subsequent_outage_occurence_data =
+                Vector(event_occurrence_data.values[name, outage_index:end])
+            n_remaining_indices = findfirst(x -> x == 1.0, subsequent_outage_occurence_data)
+            if n_remaining_indices === nothing
+                n_remaining_indices = length(subsequent_outage_occurence_data)
+            end
+            for ix in outage_index:(state_data_index + n_remaining_indices)
+                state_data.values[name, ix] = 0.0
             end
         end
     end
@@ -533,7 +585,7 @@ function update_decision_state!(
     event_model::EventModel,
     simulation_time::Dates.DateTime,
     model_params::ModelStoreParams,
-) where {T <: VariableType, U <: PSY.Component}
+) where {T <: Union{ActivePowerVariable, OnVariable}, U <: PSY.Component}
     event_occurrence_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), U)
     state_data = get_decision_state_data(state, key)
@@ -689,12 +741,24 @@ end
 
 function update_system_state!(
     state::SimulationState,
+    key::OptimizationContainerKey,
+    column_names_::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    rng::AbstractRNG,
+)
+    return
+end
+
+function update_system_state!(
+    state::SimulationState,
     key::ParameterKey{AvailableStatusParameter, T},
     column_names_::Set{String},
     event::PSY.Outage,
     event_model::EventModel,
     simulation_time::Dates.DateTime,
-    rng,
+    rng::AbstractRNG,
 ) where {T <: PSY.Device}
     available_status_parameter = get_system_state_data(state, key)
     available_status_parameter_values = get_last_recorded_value(available_status_parameter)
@@ -717,7 +781,7 @@ end
 function _get_outage_occurrence(
     event::PSY.GeometricDistributionForcedOutage,
     event_model::EventModel,
-    rng,
+    rng::AbstractRNG,
     current_time,
 )
     timeseries_mapping = event_model.timeseries_mapping
@@ -740,7 +804,7 @@ end
 function _get_outage_occurrence(
     event::PSY.FixedForcedOutage,
     event_model::EventModel,
-    rng,
+    rng::AbstractRNG,
     current_time,
 )
     timeseries_mapping = event_model.timeseries_mapping
@@ -764,7 +828,7 @@ function update_system_state!(
     event::PSY.Outage,
     event_model::EventModel,
     simulation_time::Dates.DateTime,
-    rng,
+    rng::AbstractRNG,
 ) where {T <: PSY.Component}
     outage_occurrence = _get_outage_occurrence(event, event_model, rng, simulation_time)
     sym_state = get_system_states(state)
@@ -791,12 +855,49 @@ end
 
 function update_system_state!(
     state::SimulationState,
+    key::ParameterKey{ActivePowerOffsetParameter, T},
+    column_names_::Set{String},
+    event::PSY.Outage,
+    event_model::EventModel,
+    simulation_time::Dates.DateTime,
+    rng::AbstractRNG,
+) where {T <: PSY.Component}
+    available_status_parameter = get_system_state_data(state, AvailableStatusParameter(), T)
+    available_status_parameter_values = get_last_recorded_value(available_status_parameter)
+
+    available_status_change_parameter =
+        get_system_state_data(state, AvailableStatusChangeCountdownParameter(), T)
+    available_status_change_parameter_values =
+        get_last_recorded_value(available_status_change_parameter)
+
+    active_power_offset_parameter = get_system_state_data(state, key)
+    active_power_offset_parameter_values =
+        get_last_recorded_value(active_power_offset_parameter)
+
+    active_power_timeseries_parameter =
+        get_system_state_data(state, ActivePowerTimeSeriesParameter(), T)
+    active_power_timeseries_parameter_values =
+        get_last_recorded_value(active_power_timeseries_parameter)
+
+    for name in column_names_
+        current_status = available_status_parameter_values[name]
+        current_status_change = available_status_change_parameter_values[name]
+        if current_status == 1.0 && current_status_change == 1.0
+            active_power_offset_parameter.values[name, 1] =
+                -1.0 * active_power_timeseries_parameter_values[name]
+        end
+    end
+    return
+end
+
+function update_system_state!(
+    state::SimulationState,
     key::AuxVarKey{TimeDurationOff, T},
     column_names::Set{String},
     event::PSY.Outage,
     event_model::EventModel,
     simulation_time::Dates.DateTime,
-    rng,
+    rng::AbstractRNG,
 ) where {T <: PSY.Component}
     sym_state = get_system_states(state)
     event_occurrence_data =
@@ -822,7 +923,7 @@ function update_system_state!(
     event::PSY.Outage,
     event_model::EventModel,
     simulation_time::Dates.DateTime,
-    rng,
+    rng::AbstractRNG,
 ) where {T <: PSY.Component}
     sym_state = get_system_states(state)
     event_occurrence_data =
@@ -848,8 +949,8 @@ function update_system_state!(
     ::PSY.Outage,
     event_model::EventModel,
     simulation_time::Dates.DateTime,
-    rng,
-) where {T <: VariableType, U <: PSY.Component}
+    rng::AbstractRNG,
+) where {T <: Union{ActivePowerVariable, OnVariable}, U <: PSY.Component}
     sym_state = get_system_states(state)
     event_occurrence_data =
         get_system_state_data(state, AvailableStatusChangeCountdownParameter(), U)

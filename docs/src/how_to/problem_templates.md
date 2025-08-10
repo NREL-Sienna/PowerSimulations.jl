@@ -1,13 +1,11 @@
 # [Operations `ProblemTemplate`s](@id op_problem_template)
 
 Templates are used to specify the modeling properties of the devices and network that are going to he used to specify a problem.
-A `ProblemTemplate` is just a collection of `DeviceModel`s that allows the user to specify the formulations
-of each set of devices (by device type) independently so that the modeler can adjust the level of detail according to the question of interest and the available data.
-For more information about valid `DeviceModel`s and their mathematical representations, check out the [Formulation Library](@ref formulation_intro).
+A `ProblemTemplate` is just a collection of [`DeviceModel`](@ref)`s that allows the user to specify the formulations of each set of devices (by device type) independently so that the modeler can adjust the level of detail according to the question of interest and the available data. For more information about valid [`DeviceModel`](@ref)s and their mathematical representations, check out the [Formulation Library](@ref formulation_intro).
 
 ## Building a `ProblemTemplate`
 
-You can build a `ProblemTemplate` by adding a `NetworkModel`, `DeviceModel`s, and `ServiceModels`.
+You can build a `ProblemTemplate` by adding a [`NetworkModel`](@ref), [`DeviceModel`](@ref)s, and [`ServiceModel`](@ref)s.
 
 ```julia
 template = ProblemTemplate()
