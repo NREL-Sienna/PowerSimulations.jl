@@ -77,36 +77,132 @@ function add_variables!(
     U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
-    branches_in_ptdf =
-        [
-            b for b in devices if PSY.get_name(b) ∈
-            PNM.get_retained_branches_names(PNM.get_network_reduction_data(ptdf))
-        ]
+    network_reduction_data = ptdf.network_reduction_data
+    branch_names = get_branch_name_axis(network_reduction_data, U)
     variable = add_variable_container!(
         container,
         T(),
         U,
-        PSY.get_name.(branches_in_ptdf),
+        branch_names,
         time_steps,
     )
+    for t in timesteps
+        for map in [:direct_branch_map, :series_branch_map, :parallel_branch_map]
+            network_reduction_map = getproperty(network_reduction_data, map)
+            for (arc_tuple, reduction_entry) in network_reduction_map[U]
+                variable_base_name = get_variable_base_name(arc_tuple, reduction_entry)
+                eqivalent_branch_variable = JuMP.@variable(
+                    get_jump_model(container),
+                    base_name = variable_base_name,
+                )
+                ub = get_variable_upper_bound(T(), d, formulation)
+                ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
 
-    for d in branches_in_ptdf
-        name = PSY.get_name(d)
-        # Don't check if names are present when the PTDF has less branches than system
-        for t in time_steps
-            variable[name, t] = JuMP.@variable(
-                get_jump_model(container),
-                base_name = "$(T)_$(U)_{$(name), $(t)}",
-            )
-            ub = get_variable_upper_bound(T(), d, formulation)
-            ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
+                lb = get_variable_lower_bound(T(), d, formulation)
+                lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
 
-            lb = get_variable_lower_bound(T(), d, formulation)
-            lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
+                _add_variable_to_container!(
+                    variable,
+                    eqivalent_branch_variable,
+                    reduction_entry,
+                    U,
+                    t,
+                )
+            end
         end
     end
-    return
 end
+
+function get_branch_name_axis(network_reduction_data, ::T) where {T <: PSY.ACBranch}
+    n_entries =
+        length(network_reduction_data.reverse_direct_branch_map) +
+        length(network_reduction_data.reverse_direct_branch_map) +
+        length(network_reduction_data.reverse_parallel_branch_map)
+    name_axis = Vector{String}(undef, n_entries)
+    ix = 1
+    for map in [:direct_branch_map, :series_branch_map, :parallel_branch_map]
+        network_reduction_map = getproperty(network_reduction_data, map)
+        for entry in values(network_reduction_map)
+            ix = _add_names_to_axis!(name_axis, entry, T, ix)
+        end
+    end
+    @assert ix == (n_entries + 1)
+end
+
+function _add_names_to_axis!(name_axis, entry::T, Type{T}, ix) where {T <: PSY.ACBranch}
+    name_axis[ix] = PSY.get_name(T)
+    ix += 1
+    return ix
+end
+
+function _add_names_to_axis!(
+    name_axis,
+    entry::Set{T},
+    Type{T},
+    ix,
+) where {T <: PSY.ACBranch}
+    for branch in entry
+        name = PSY.get_name(branch) * "_double_circuit"
+        name_axis[ix] = name
+        ix += 1
+    end
+    return ix
+end
+
+function _add_names_to_axis!(
+    name_axis,
+    entry::Vector{Any},
+    Type{T},
+    ix,
+) where {T <: PSY.ACBranch}
+    for segment in entry
+        # Need to check type because a series chain could have elements of different types:
+        if _get_segment_type(segment) == T
+            ix = _add_names_to_axis!(name_axis, segment, Type{T}, ix)
+        end
+    end
+    return ix
+end
+
+function _add_variable_to_container!(
+    variable_container,
+    variable,
+    entry::T,
+    Type{T},
+    t,
+) where {T <: PSY.ACBranch}
+    name = PSY.get_name(entry)
+    variable_container[name, t] = variable
+end
+
+function _add_variable_to_container!(
+    variable_container,
+    variable,
+    double_circuit::Set{T},
+    Type{T},
+    t,
+) where {T <: PSY.ACBranch}
+    for circuit in double_circuit
+        name = PSY.get_name(circuit) * "_double_circuit"
+        variable_container[name, t] = variable
+    end
+end
+function _add_variable_to_container!(
+    variable_container,
+    variable,
+    series_chain::Vector{Any},
+    Type{T},
+    t,
+) where {T <: PSY.ACBranch}
+    for segment in series_chain
+        # Need to check type because a series chain could have elements of different types:
+        if _get_segment_type(segment) == T
+            _add_variable_to_container!(variable_container, variable, segment, T, t)
+        end
+    end
+end
+_get_segment_type(::T) where {T <: PSY.ACBranch} = T
+_get_segment_type(::Set{T}) where {T <: PSY.ACBranch} = T
 
 function add_variables!(
     container::OptimizationContainer,
