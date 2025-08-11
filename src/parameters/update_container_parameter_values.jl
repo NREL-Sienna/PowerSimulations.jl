@@ -42,7 +42,6 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
-    multiplier_id = get_time_series_multiplier_id(attributes)
     subsystem = get_subsystem(attributes)
     template = get_template(model)
     if isempty(subsystem)
@@ -63,7 +62,6 @@ function _update_parameter_values!(
                 model,
                 component,
                 ts_name,
-                multiplier_id,
                 initial_forecast_time,
                 horizon,
             )
@@ -103,7 +101,6 @@ function _update_parameter_values!(
         model,
         service,
         get_time_series_name(attributes),
-        get_time_series_multiplier_id(attributes),
         initial_forecast_time,
         horizon,
     )
@@ -139,7 +136,6 @@ function _update_parameter_values!(
                 model,
                 component,
                 get_time_series_name(attributes),
-                get_time_series_multiplier_id(attributes),
                 initial_forecast_time,
             )[1]
             if !isfinite(value)

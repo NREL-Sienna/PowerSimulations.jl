@@ -26,10 +26,6 @@ end
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_time_series_name(attr::TimeSeriesAttributes) = attr.name
 get_time_series_multiplier_id(attr::TimeSeriesAttributes) = attr.multiplier_id[]
-function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
-    attr.multiplier_id[] = val
-    return
-end
 
 get_subsystem(attr::TimeSeriesAttributes) = attr.subsystem[]
 function set_subsystem!(attr::TimeSeriesAttributes, val::String)

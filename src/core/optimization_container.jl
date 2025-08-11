@@ -1240,7 +1240,6 @@ function _add_param_container!(
     else
         param_type = Float64
     end
-
     if sparse
         param_array =
             sparse_container_spec(param_type, param_axs, time_steps, additional_axs...)
@@ -1255,8 +1254,7 @@ function _add_param_container!(
                     undef,
                     multiplier_axs,
                     time_steps,
-                    additional_axs...,
-                ),
+                    additional_axs...),
                 NaN,
             )
     end

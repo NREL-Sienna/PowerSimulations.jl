@@ -1,22 +1,3 @@
-"""
-Function to create a unique index of time series names for each device model. For example,
-if two parameters each reference the same time series name, this function will return a
-different value for each parameter entry
-"""
-function _create_time_series_multiplier_index(
-    model,
-    ::Type{T},
-) where {T <: TimeSeriesParameter}
-    ts_names = get_time_series_names(model)
-    if length(ts_names) > 1
-        ts_name = ts_names[T]
-        ts_id = findfirst(x -> x == T, [k for (k, v) in ts_names if v == ts_name])
-    else
-        ts_id = 1
-    end
-    return ts_id
-end
-
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -212,26 +193,38 @@ function _add_time_series_parameters!(
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
-    time_steps = get_time_steps(container)
 
-    ts_names = String[]
+    time_steps = get_time_steps(container)
+    # TODO: Temporary workaround to get the name where we assume all the names are the same accross devices.
+    ts_name = _get_time_series_name(T(), first(devices), model)
+
     device_names = String[]
-    active_devices = D[]
+    devices_with_time_series = D[]
+    initial_values = Dict{String, AbstractArray}()
+
+    @debug "adding" T D ts_name ts_type _group = LOG_GROUP_OPTIMIZATION_CONTAINER
+
     for device::D in devices
-        ts_name = _get_time_series_name(T(), device, model)
-        if PSY.has_time_series(device, ts_type, ts_name)
-            push!(ts_names, ts_name)
-            push!(device_names, PSY.get_name(device))
-            push!(active_devices, device)
-        else
-            @debug "Skipped time series for $D, $(PSY.get_name(device))"
+        if !PSY.has_time_series(device, ts_type, ts_name)
+            @info "Time series $(ts_type):$(ts_name) for $D, $(PSY.get_name(device)) not found skipping parameter addition."
+            continue
+        end
+        push!(device_names, PSY.get_name(device))
+        push!(devices_with_time_series, device)
+        ts_uuid = string(IS.get_time_series_uuid(ts_type, device, ts_name))
+        if !(ts_uuid in keys(initial_values))
+            initial_values[ts_uuid] =
+                get_time_series_initial_values!(container, ts_type, device, ts_name)
         end
     end
+
+    #=
+    # NOTE this is always the case for "normal" time series, but it is currently not enforced in PSY for MBC time series.
+    # TODO decide whether this is an acceptable restriction or whether we need to support multiple time series names
+    # JD: Yes, the restriction are that the names for this has to be unique as they are specified from the model attributes
     if isempty(active_devices)
         return
     end
-    # NOTE this is always the case for "normal" time series, but it is currently not enforced in PSY for MBC time series.
-    # TODO decide whether this is an acceptable restriction or whether we need to support multiple time series names
     unique_ts_names = unique(ts_names)
     if length(unique_ts_names) > 1
         throw(
@@ -241,35 +234,15 @@ function _add_time_series_parameters!(
         )
     end
     ts_name = only(unique_ts_names)
+    =#
 
-    time_series_mult_id = _create_time_series_multiplier_index(model, T)
-
-    @debug "adding" T D ts_name ts_type time_series_mult_id _group =
-        LOG_GROUP_OPTIMIZATION_CONTAINER
-
-    initial_values = Dict{String, AbstractArray}()
-    for device in active_devices
-        if !PSY.has_time_series(device, ts_type, ts_name)
-            @info "Time series $(ts_type):$(ts_name) for $D, $(PSY.get_name(device)) not found skipping parameter addition."
-            continue
-        end
-        push!(device_names, PSY.get_name(device))
-        ts_uuid = string(IS.get_time_series_uuid(ts_type, device, ts_name))
-        if !(ts_uuid in keys(initial_values))
-            initial_values[ts_uuid] =
-                get_time_series_initial_values!(container, ts_type, device, ts_name)
-        end
-    end
-
-    jump_model = get_jump_model(container)
-
-    additional_axes = _additional_axes(container, param, active_devices, model)
     if isempty(device_names)
         error(
             "No devices with time series $ts_name found for $D devices. Check DeviceModel time_series_names field.",
         )
     end
 
+    additional_axes = _additional_axes(container, param, devices_with_time_series, model)
     param_container = add_param_container!(
         container,
         param,
@@ -281,9 +254,10 @@ function _add_time_series_parameters!(
         time_steps,
         additional_axes,
     )
-    set_time_series_multiplier_id!(get_attributes(param_container), time_series_mult_id)
+
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
 
+    jump_model = get_jump_model(container)
     for (ts_uuid, raw_ts_vals) in initial_values
         ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
         @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
@@ -292,8 +266,9 @@ function _add_time_series_parameters!(
         end
     end
 
-    for (ts_name, device_name, device) in zip(ts_names, device_names, active_devices)
+    for device in devices_with_time_series
         multiplier = get_multiplier_value(T(), device, W())
+        device_name = PSY.get_name(device)
         for step in time_steps
             set_multiplier!(param_container, multiplier, device_name, step)
         end
@@ -524,7 +499,6 @@ function _add_parameters!(
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
     ts_name = get_time_series_names(model)[T]
-    time_series_mult_id = _create_time_series_multiplier_index(model, T)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     ts_uuid = string(IS.get_time_series_uuid(ts_type, service, ts_name))
@@ -541,7 +515,6 @@ function _add_parameters!(
         meta = name,
     )
 
-    set_time_series_multiplier_id!(get_attributes(parameter_container), time_series_mult_id)
     set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
     jump_model = get_jump_model(container)
     ts_vector = get_time_series(container, service, T(), name)
