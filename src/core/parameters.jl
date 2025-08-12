@@ -140,9 +140,7 @@ function get_parameter_column_refs(
     param_array::DenseAxisArray,
     column,
 ) where {T <: PSY.TimeSeriesData}
-    @show column
-    @show param_array
-    @show expand_ixs((_get_ts_uuid(attributes, column),), param_array)
+    expand_ixs((_get_ts_uuid(attributes, column),), param_array)
     return param_array[expand_ixs((_get_ts_uuid(attributes, column),), param_array)...]
 end
 
@@ -228,7 +226,6 @@ function _set_parameter!(
     value::Union{T, AbstractVector{T}},
     ixs::Tuple,
 ) where {T <: ValidDataParamEltypes}
-    @show ixs
     assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
@@ -393,7 +390,8 @@ should_write_resulting_value(::Type{<:EventParameter}) = true
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
-should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = true  # because 3D is currently unsupported
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = false  # because 3D is currently unsupported
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearSlopeParameter}) = false  # because 3D is currently unsupported
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

@@ -68,7 +68,7 @@ function _update_parameter_values!(
             for (t, value) in enumerate(ts_vector)
                 # first two axes of parameter_array are component, time; we care about any additional ones
                 unwrapped_value =
-                    _unwrap_for_param(W(), value, axes(parameter_array)[3:end])
+                    _unwrap_for_param(W(), value, (axes(parameter_array)[2],))
                 if !all(isfinite.(unwrapped_value))
                     error("The value for the time series $(ts_name) is not finite. \
                           Check that the data in the time series is valid.")
@@ -78,6 +78,7 @@ function _update_parameter_values!(
             push!(ts_uuids, ts_uuid)
         end
     end
+    return
 end
 
 function _update_parameter_values!(
@@ -410,7 +411,6 @@ function _update_parameter_values!(
         get_dataset_values(state, U(), V)
     component_names, time = axes(parameter_array)
     model_resolution = get_resolution(model)
-    #@show state_data = get_dataset(state, get_attribute_key(attributes))
     state_data = get_dataset(state, U(), V)
     state_timestamps = state_data.timestamps
     max_state_index = get_num_rows(state_data)

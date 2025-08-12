@@ -517,8 +517,6 @@ function _get_pwl_data(
             breakpoint_param_arr[:, time] .* breakpoint_param_mult[name, :, time]
         breakpoint_cost_component = breakpoint_cost_component.data
 
-        @show length(slope_cost_component)
-        @show length(breakpoint_cost_component) - 1
         @assert_op length(slope_cost_component) == length(breakpoint_cost_component) - 1
         # PSY's cost_function_timeseries.jl says this will always be natural units
         unit_system = PSY.UnitSystem.NATURAL_UNITS

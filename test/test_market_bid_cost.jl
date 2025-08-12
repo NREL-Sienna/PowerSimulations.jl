@@ -551,7 +551,7 @@ function cost_due_to_time_varying_startup_shutdown(
     start_vars = _read_start_vars(Val(multistart), res)
     stop_vars = read_variable_dict(res, PSI.StopVariable, gentype)
     result = SortedDict{DateTime, DataFrame}()
-    @assert all(keys(start_vars) .== keys(stop_vars))
+    IS.@assert_op all(keys(start_vars) .== keys(stop_vars))
     for step_dt in keys(start_vars)
         start_df = start_vars[step_dt]
         stop_df = stop_vars[step_dt]

@@ -107,6 +107,7 @@ function _initialize_model_states!(
         for (key, value) in field_containers
             !should_write_resulting_value(key) && continue
             value_counts = params[key].horizon ÷ params[key].resolution
+            column_names = get_column_names(key, value)
             if !haskey(field_states, key) || get_num_rows(field_states[key]) < value_counts
                 field_states[key] = InMemoryDataset(
                     NaN,

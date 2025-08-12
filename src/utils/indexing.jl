@@ -25,8 +25,6 @@ function expand_ixs(ixs::Tuple, dest::AbstractArray)
 end
 
 function assign_expand(dest::AbstractArray, src, ixs::Tuple)
-    @show expand_ixs(ixs, dest)
-    @show src
     dest[expand_ixs(ixs, dest)...] .= src
     return
 end
