@@ -10,6 +10,7 @@ const RUN_OPERATION_MODEL_TIMER = TimerOutputs.TimerOutput()
 const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 # Type Alias for JuMP containers
+const JuMPOrFloat = Union{JuMP.AbstractJuMPScalar, Float64}
 const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
@@ -23,15 +24,17 @@ const JuMPAffineExpressionDArray = JuMP.Containers.DenseAxisArray{
         JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
     },
 }
-const JuMPVariableMatrix = DenseAxisArray{
+
+const JuMPVariableTensor{N} = DenseAxisArray{
     JuMP.VariableRef,
-    2,
-    Tuple{Vector{String}, UnitRange{Int64}},
-    Tuple{
+    N,
+    <:Tuple{Vector{String}, Vararg{UnitRange{Int64}}},
+    <:Tuple{
         JuMP.Containers._AxisLookup{Dict{String, Int64}},
-        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
+        Vararg{JuMP.Containers._AxisLookup{Tuple{Int64, Int64}}},
     },
 }
+
 const JuMPFloatMatrix = DenseAxisArray{Float64, 2}
 const JuMPFloatArray = DenseAxisArray{Float64}
 const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}

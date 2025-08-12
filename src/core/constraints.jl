@@ -239,32 +239,36 @@ r_{d,t} \\le \\text{RequirementTimeSeriesParameter}_{t} \\cdot \\text{PF}\\quad 
 """
 struct ParticipationFractionConstraint <: ConstraintType end
 """
-Struct to create the PieceWiseLinearCostConstraint associated with a specified variable.
+Struct to create the PiecewiseLinearCostConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
-struct PieceWiseLinearCostConstraint <: ConstraintType end
+struct PiecewiseLinearCostConstraint <: ConstraintType end
+
+abstract type AbstractPiecewiseLinearBlockOfferConstraint <: ConstraintType end
 
 """
-Struct to create the PieceWiseLinearBlockOfferConstraint associated with a specified variable.
-
-See [Piecewise linear cost functions](@ref pwl_cost) for more information.
-"""
-struct PieceWiseLinearBlockOfferConstraint <: ConstraintType end
-
-"""
-Struct to create the PieceWiseLinearBlockDecrementalOfferConstraint associated with a specified variable.
+Struct to create the PiecewiseLinearBlockIncrementalOfferConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
-struct PieceWiseLinearBlockDecrementalOfferConstraint <: ConstraintType end
+struct PiecewiseLinearBlockIncrementalOfferConstraint <:
+       AbstractPiecewiseLinearBlockOfferConstraint end
 
 """
-Struct to create the PieceWiseLinearUpperBoundConstraint associated with a specified variable.
+Struct to create the PiecewiseLinearBlockDecrementalOfferConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
-struct PieceWiseLinearUpperBoundConstraint <: ConstraintType end
+struct PiecewiseLinearBlockDecrementalOfferConstraint <:
+       AbstractPiecewiseLinearBlockOfferConstraint end
+
+"""
+Struct to create the PiecewiseLinearUpperBoundConstraint associated with a specified variable.
+
+See [Piecewise linear cost functions](@ref pwl_cost) for more information.
+"""
+struct PiecewiseLinearUpperBoundConstraint <: ConstraintType end
 
 """
 Struct to create the RampConstraint associated with a specified thermal device or reserve service.

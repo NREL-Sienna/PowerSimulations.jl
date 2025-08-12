@@ -32,6 +32,13 @@ function jump_value(input::JumpSupportedLiterals)
     return input
 end
 
+# Like jump_value but for certain special cases before optimize! is called
+jump_fixed_value(input::Number) = input
+jump_fixed_value(input::JuMP.VariableRef) = JuMP.fix_value(input)
+jump_fixed_value(input::JuMP.AffExpr) =
+    sum([coeff * jump_fixed_value(param) for (coeff, param) in JuMP.linear_terms(input)]) +
+    JuMP.constant(input)
+
 function fix_parameter_value(input::JuMP.VariableRef, value::Float64)
     JuMP.fix(input, value; force = true)
     return

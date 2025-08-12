@@ -1274,7 +1274,8 @@ function _add_param_container!(
     attribute::TimeSeriesAttributes{V},
     param_axs,
     multiplier_axs,
-    time_steps;
+    additional_axs,
+    time_steps::UnitRange{Int};
     sparse = false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
@@ -1282,14 +1283,24 @@ function _add_param_container!(
     else
         param_type = Float64
     end
-
     if sparse
-        param_array = sparse_container_spec(param_type, param_axs, time_steps)
-        multiplier_array = sparse_container_spec(Float64, multiplier_axs, time_steps)
-    else
-        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+        param_array =
+            sparse_container_spec(param_type, param_axs, additional_axs..., time_steps)
         multiplier_array =
-            fill!(DenseAxisArray{Float64}(undef, multiplier_axs, time_steps), NaN)
+            sparse_container_spec(Float64, multiplier_axs, additional_axs..., time_steps)
+    else
+        param_array =
+            DenseAxisArray{param_type}(undef, param_axs, additional_axs..., time_steps)
+        multiplier_array =
+            fill!(
+                DenseAxisArray{Float64}(
+                    undef,
+                    multiplier_axs,
+                    additional_axs...,
+                    time_steps,
+                ),
+                NaN,
+            )
     end
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
@@ -1349,7 +1360,8 @@ function add_param_container!(
     name::String,
     param_axs,
     multiplier_axs,
-    time_steps;
+    additional_axs,
+    time_steps::UnitRange{Int};
     sparse = false,
     meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
@@ -1364,6 +1376,7 @@ function add_param_container!(
         attributes,
         param_axs,
         multiplier_axs,
+        additional_axs,
         time_steps;
         sparse = sparse,
     )

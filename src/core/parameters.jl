@@ -26,10 +26,6 @@ end
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_time_series_name(attr::TimeSeriesAttributes) = attr.name
 get_time_series_multiplier_id(attr::TimeSeriesAttributes) = attr.multiplier_id[]
-function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
-    attr.multiplier_id[] = val
-    return
-end
 
 get_subsystem(attr::TimeSeriesAttributes) = attr.subsystem[]
 function set_subsystem!(attr::TimeSeriesAttributes, val::String)
@@ -144,7 +140,8 @@ function get_parameter_column_refs(
     param_array::DenseAxisArray,
     column,
 ) where {T <: PSY.TimeSeriesData}
-    return param_array[_get_ts_uuid(attributes, column), axes(param_array)[2:end]...]
+    expand_ixs((_get_ts_uuid(attributes, column),), param_array)
+    return param_array[expand_ixs((_get_ts_uuid(attributes, column),), param_array)...]
 end
 
 function get_parameter_column_values(container::ParameterContainer, column::AbstractString)
@@ -166,7 +163,7 @@ function get_parameter_values(
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
-    return jump_value.(param_array) .* multiplier_array
+    return (.*).(jump_value.(param_array), multiplier_array)
 end
 
 function get_parameter_values(
@@ -202,46 +199,46 @@ function get_column_names(key::ParameterKey, c::ParameterContainer)
     return get_column_names(key, get_multiplier_array(c))
 end
 
-const ValidDataParamEltypes = Union{Float64, IS.FunctionData, Tuple{Vararg{Float64}}}
+const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
-    value::T,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
 ) where {T <: ValidDataParamEltypes}
-    array[ixs...] = value
+    assign_maybe_broadcast!(array, value, ixs)
     return
 end
 
 function _set_parameter!(
     array::AbstractArray{JuMP.VariableRef},
     model::JuMP.Model,
-    value::Float64,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-)
-    array[ixs...] = add_jump_parameter(model, value)
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
 
 function _set_parameter!(
     array::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
     model::JuMP.Model,
-    value::Float64,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-)
-    array[ixs...] = add_jump_parameter(model, value)
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
 
 function set_multiplier!(container::ParameterContainer, multiplier::Float64, ixs...)
-    get_multiplier_array(container)[ixs...] = multiplier
+    assign_maybe_broadcast!(get_multiplier_array(container), multiplier, ixs)
     return
 end
 
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::ValidDataParamEltypes,
+    parameter::Union{ValidDataParamEltypes, AbstractVector{<:ValidDataParamEltypes}},
     ixs...,
 )
     param_array = get_parameter_array(container)
@@ -349,6 +346,34 @@ struct StartupCostParameter <: ObjectiveFunctionParameter end
 "Parameter to define shutdown cost time series"
 struct ShutdownCostParameter <: ObjectiveFunctionParameter end
 
+"Parameters to define the cost at the minimum available power"
+abstract type AbstractCostAtMinParameter <: ObjectiveFunctionParameter end
+
+"[`AbstractCostAtMinParameter`](@ref) for the incremental case (power source)"
+struct IncrementalCostAtMinParameter <: AbstractCostAtMinParameter end
+
+"[`AbstractCostAtMinParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalCostAtMinParameter <: AbstractCostAtMinParameter end
+
+"Parameters to define the slopes of a piecewise linear cost function"
+abstract type AbstractPiecewiseLinearSlopeParameter <: ObjectiveFunctionParameter end
+
+"[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the incremental case (power source)"
+struct IncrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
+
+"[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
+
+abstract type AbstractPiecewiseLinearBreakpointParameter <: TimeSeriesParameter end
+
+"[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the incremental case (power source)"
+struct IncrementalPiecewiseLinearBreakpointParameter <:
+       AbstractPiecewiseLinearBreakpointParameter end
+
+"[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalPiecewiseLinearBreakpointParameter <:
+       AbstractPiecewiseLinearBreakpointParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
 abstract type EventParameter <: ParameterType end
@@ -376,9 +401,14 @@ struct AvailableStatusChangeCountdownParameter <: EventParameter end
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 should_write_resulting_value(::Type{<:EventParameter}) = true
 
-# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't support 3D outputs (e.g., startup costs are tuples)
+# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't
+# support 3D outputs (e.g., startup costs are 2D where eltype is 3-tuples, slopes and
+# breakpoints are fully three-dimensional)
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
+should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = false  # because 3D is currently unsupported
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearSlopeParameter}) = false  # because 3D is currently unsupported
 
 convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
 convert_result_to_natural_units(

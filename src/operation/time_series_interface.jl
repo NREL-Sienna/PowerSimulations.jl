@@ -3,7 +3,6 @@ function get_time_series_values!(
     model::DecisionModel,
     component,
     name::String,
-    multiplier_id::Int,
     initial_time::Dates.DateTime,
     horizon::Int;
     ignore_scaling_factors = true,
@@ -43,9 +42,8 @@ function get_time_series_values!(
     ::Type{T},
     model::EmulationModel,
     component::U,
-    name,
-    multiplier_id::Int,
-    initial_time,
+    name::String,
+    initial_time::Dates.DateTime,
     len::Int = 1;
     ignore_scaling_factors = true,
 ) where {T <: PSY.StaticTimeSeries, U <: PSY.Component}

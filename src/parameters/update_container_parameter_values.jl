@@ -1,27 +1,34 @@
 function _update_parameter_values!(
     ::AbstractArray{T},
+    ::ParameterType,
     ::NoAttributes,
     args...,
 ) where {T <: Union{Float64, JuMP.VariableRef}} end
 
 ######################## Methods to update Parameters from Time Series #####################
-function _set_param_value!(param::JuMPVariableMatrix, value::Float64, name::String, t::Int)
-    fix_parameter_value(param[name, t], value)
+function _set_param_value!(
+    param::JuMPVariableTensor,
+    value::Union{T, AbstractVector{T}},
+    name::String,
+    t::Int,
+) where {T <: ValidDataParamEltypes}
+    fix_maybe_broadcast!(param, value, (name, t))
     return
 end
 
 function _set_param_value!(
     param::DenseAxisArray{T},
-    value::T,
+    value::Union{T, AbstractVector{T}},
     name::String,
     t::Int,
-) where {T}
-    param[name, t] = value
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(param, value, (name, t))
     return
 end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::W,
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::DecisionModel,
@@ -30,11 +37,11 @@ function _update_parameter_values!(
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.Component,
+    W <: ParameterType,
 }
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
     ts_name = get_time_series_name(attributes)
-    multiplier_id = get_time_series_multiplier_id(attributes)
     subsystem = get_subsystem(attributes)
     template = get_template(model)
     if isempty(subsystem)
@@ -55,24 +62,28 @@ function _update_parameter_values!(
                 model,
                 component,
                 ts_name,
-                multiplier_id,
                 initial_forecast_time,
                 horizon,
             )
             for (t, value) in enumerate(ts_vector)
-                if !isfinite(value)
+                # first two axes of parameter_array are component, time; we care about any additional ones
+                unwrapped_value =
+                    _unwrap_for_param(W(), value, (axes(parameter_array)[2],))
+                if !all(isfinite.(unwrapped_value))
                     error("The value for the time series $(ts_name) is not finite. \
                           Check that the data in the time series is valid.")
                 end
-                _set_param_value!(parameter_array, value, ts_uuid, t)
+                _set_param_value!(parameter_array, unwrapped_value, ts_uuid, t)
             end
             push!(ts_uuids, ts_uuid)
         end
     end
+    return
 end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
@@ -91,7 +102,6 @@ function _update_parameter_values!(
         model,
         service,
         get_time_series_name(attributes),
-        get_time_series_multiplier_id(attributes),
         initial_forecast_time,
         horizon,
     )
@@ -106,6 +116,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::TimeSeriesAttributes{U},
     ::Type{V},
     model::EmulationModel,
@@ -126,7 +137,6 @@ function _update_parameter_values!(
                 model,
                 component,
                 get_time_series_name(attributes),
-                get_time_series_multiplier_id(attributes),
                 initial_forecast_time,
             )[1]
             if !isfinite(value)
@@ -142,6 +152,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Device},
     model::DecisionModel,
@@ -185,6 +196,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::VariableValueAttributes,
     ::PSY.Reserve,
     model::DecisionModel,
@@ -228,6 +240,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{U},
     model::DecisionModel,
@@ -277,6 +290,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Component},
     model::EmulationModel,
@@ -297,6 +311,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::VariableValueAttributes{VariableKey{OnVariable, U}},
     ::Type{<:PSY.Component},
     model::EmulationModel,
@@ -368,6 +383,7 @@ end
 
 function _update_parameter_values!(
     ::AbstractArray{T},
+    ::ParameterType,
     ::VariableValueAttributes,
     ::Type{<:PSY.Component},
     ::EmulationModel,
@@ -395,7 +411,6 @@ function _update_parameter_values!(
         get_dataset_values(state, U(), V)
     component_names, time = axes(parameter_array)
     model_resolution = get_resolution(model)
-    #@show state_data = get_dataset(state, get_attribute_key(attributes))
     state_data = get_dataset(state, U(), V)
     state_timestamps = state_data.timestamps
     max_state_index = get_num_rows(state_data)
@@ -471,7 +486,7 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+    _update_parameter_values!(parameter_array, T(), parameter_attributes, U, model, input)
     return
 end
 
@@ -504,8 +519,8 @@ function update_container_parameter_values!(
     parameter_multiplier = get_parameter_multiplier_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(
-        T(),
         parameter_array,
+        T(),
         parameter_multiplier,
         parameter_attributes,
         U,
@@ -529,6 +544,7 @@ function update_container_parameter_values!(
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     _update_parameter_values!(
         parameter_array,
+        T(),
         parameter_multiplier,
         parameter_attributes,
         U,
@@ -548,7 +564,14 @@ function update_container_parameter_values!(
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+    _update_parameter_values!(
+        parameter_array,
+        FixValueParameter(),
+        parameter_attributes,
+        U,
+        model,
+        input,
+    )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end
@@ -565,7 +588,14 @@ function update_container_parameter_values!(
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     service = PSY.get_component(U, get_system(model), key.meta)
     @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, U, model, input)
+    _update_parameter_values!(
+        parameter_array,
+        FixValueParameter(),
+        parameter_attributes,
+        U,
+        model,
+        input,
+    )
     _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
     return
 end
@@ -582,7 +612,14 @@ function update_container_parameter_values!(
     parameter_attributes = get_parameter_attributes(optimization_container, key)
     service = PSY.get_component(U, get_system(model), key.meta)
     @assert service !== nothing
-    _update_parameter_values!(parameter_array, parameter_attributes, service, model, input)
+    _update_parameter_values!(
+        parameter_array,
+        T(),
+        parameter_attributes,
+        service,
+        model,
+        input,
+    )
     return
 end
 

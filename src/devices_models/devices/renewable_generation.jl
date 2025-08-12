@@ -16,6 +16,10 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.RenewableGen}, ::Abstr
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::FixedOutput) = PSY.get_max_active_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.RenewableGen, ::AbstractRenewableFormulation) = PSY.get_max_active_power(d)
 
+# To avoid ambiguity with default_interface_methods.jl:
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.RenewableGen, ::FixedOutput) = 1.0
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.RenewableGen, ::AbstractRenewableFormulation) = 1.0
+
 ########################Objective Function##################################################
 objective_function_multiplier(::ActivePowerVariable, ::AbstractRenewableDispatchFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
 

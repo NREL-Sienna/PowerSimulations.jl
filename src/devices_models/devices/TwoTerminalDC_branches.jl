@@ -378,8 +378,6 @@ function add_constraints!(
         name = PSY.get_name(d)
         loss = PSY.get_loss(d)
         from_to_params, to_from_params = _get_pwl_loss_params(d, loss)
-        #@show from_to_params
-        #@show to_from_params
         range_segments = 1:(length(from_to_params) - 1) # 1:(2S+1)
         for t in time_steps
             ## Add Equality Constraints ##
@@ -1117,7 +1115,7 @@ function add_constraints!(
             constraint_rect_power_factor_ang[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 # Full equation not working with Ipopt
-                # rect_power_factor_var[name, t] * 
+                # rect_power_factor_var[name, t] *
                 #     (
                 #         cos(2 * rect_delay_angle_var[name, t]) - cos(
                 #             2(
@@ -1180,7 +1178,7 @@ function add_constraints!(
             constraint_inv_power_factor_ang[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 # Full equation not working with Ipopt
-                # inv_power_factor_var[name, t] * 
+                # inv_power_factor_var[name, t] *
                 #     (
                 #         cos(2 * inv_extinction_angle_var[name, t]) - cos(
                 #             2(
