@@ -147,7 +147,7 @@ For a list of variables for each device refer to its Formulations page.
 ```@docs
 ActivePowerVariable
 ReactivePowerVariable
-PieceWiseLinearCostVariable
+PiecewiseLinearCostVariable
 RateofChangeConstraintSlackUp
 RateofChangeConstraintSlackDown
 ```
@@ -256,7 +256,7 @@ PowerFlowLineActivePowerToFrom
 ### Common Constraints
 
 ```@docs
-PieceWiseLinearCostConstraint
+PiecewiseLinearCostConstraint
 
 ```
 

@@ -342,7 +342,7 @@ function update_decision_state!(
                 n_remaining_indices = length(subsequent_outage_occurence_data)
             end
             for ix in outage_index:(state_data_index + n_remaining_indices)
-                # Set the offset parameter to equal the negative of the timeseries parameter 
+                # Set the offset parameter to equal the negative of the timeseries parameter
                 state_data.values[name, ix] =
                     -1.0 * activepower_data.values[name, ix]
             end
@@ -471,7 +471,7 @@ function update_decision_state!(
             mttr_hr = _get_time_to_recover(event, event_model, simulation_time)
             mttr_state_resolution = mttr_hr * resolution_ratio
             if !isinteger(mttr_state_resolution)
-                @warn "MTTR is not an integer after conversion from hours to $state_resolution resolution 
+                @warn "MTTR is not an integer after conversion from hours to $state_resolution resolution
                     MTTR will be rounded up to $(Int(ceil(mttr_state_resolution))) steps of $state_resolution"
                 mttr_state_resolution = ceil(mttr_state_resolution)
             end

@@ -1,6 +1,6 @@
 function _update_parameter_values!(
-    ::T,
     parameter_array::DenseAxisArray,
+    ::T,
     parameter_multiplier::JuMPFloatArray,
     attributes::CostFunctionAttributes,
     ::Type{V},
@@ -36,41 +36,18 @@ function _update_parameter_values!(
     return
 end
 
-# TODO storing this old code here for now, it is currently unreachable
-# This is implicated in the MarketBidCost time varying incremental/decremental implementation, which will be addressed later
-function handle_variable_cost_parameter(::Tuple{}, args...)
-    ts_vector = PSY.get_variable_cost(
-        component,
-        PSY.get_operation_cost(component);
-        start_time = initial_forecast_time,
-        len = horizon,
-    )
-    variable_cost_forecast_values = TimeSeries.values(ts_vector)
-    for (t, value) in enumerate(variable_cost_forecast_values)
-        if attributes.uses_compact_power
-            # TODO implement this
-            value, _ = _convert_variable_cost(value)
-        end
-        # TODO removed an apparently unused block of code here?
-        _set_param_value!(parameter_array, value, name, t)
-        update_variable_cost!(
-            container,
-            parameter_array,
-            parameter_multiplier,
-            attributes,
-            component,
-            t,
-        )
-    end
-    return
-end
-
-# We only support time series startup and shutdown costs for MarketBidCost, nothing to do for all the others
+# We only support certain time series costs for MarketBidCost, nothing to do for all the others
 handle_variable_cost_parameter(
     ::StartupCostParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 handle_variable_cost_parameter(
     ::ShutdownCostParameter,
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
+handle_variable_cost_parameter(
+    ::AbstractCostAtMinParameter,
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
+handle_variable_cost_parameter(
+    ::AbstractPiecewiseLinearSlopeParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
 function handle_variable_cost_parameter(
@@ -138,6 +115,71 @@ function handle_variable_cost_parameter(
 end
 
 function handle_variable_cost_parameter(
+    ::IncrementalCostAtMinParameter,
+    op_cost::PSY.MarketBidCost,
+    component::PSY.Generator,  # TODO handle decremental case
+    name,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    container,
+    initial_forecast_time,
+    horizon,
+)
+    is_time_variant(PSY.get_incremental_initial_input(op_cost)) || return
+    ts_vector = PSY.get_incremental_initial_input(
+        component, op_cost;
+        start_time = initial_forecast_time,
+        len = horizon,
+    )
+    for (t, value) in enumerate(TimeSeries.values(ts_vector))
+        _set_param_value!(parameter_array, value, name, t)
+        update_variable_cost!(
+            container,
+            parameter_array,
+            parameter_multiplier,
+            attributes,
+            component,
+            t,
+        )
+    end
+    return
+end
+
+function handle_variable_cost_parameter(
+    ::T,
+    op_cost::PSY.MarketBidCost,
+    component::PSY.Generator,  # TODO handle decremental case
+    name,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    container,
+    initial_forecast_time,
+    horizon,
+) where {T <: IncrementalPiecewiseLinearSlopeParameter}
+    is_time_variant(PSY.get_incremental_offer_curves(op_cost)) || return
+    ts_vector = PSY.get_incremental_offer_curves(
+        component, op_cost;
+        start_time = initial_forecast_time,
+        len = horizon,
+    )
+    for (t, value::PSY.PiecewiseStepData) in enumerate(TimeSeries.values(ts_vector))
+        unwrapped_value = _unwrap_for_param(T(), value, (axes(parameter_array)[2],))
+        _set_param_value!(parameter_array, unwrapped_value, name, t)
+        update_variable_cost!(
+            container,
+            value,  # intentionally passing the PiecewiseStepData here, not the unwrapped
+            parameter_multiplier,
+            attributes,
+            component,
+            t,
+        )
+    end
+    return
+end
+
+function handle_variable_cost_parameter(
     ::FuelCostParameter,
     op_cost::PSY.ThermalGenerationCost,
     component,
@@ -185,18 +227,18 @@ function _update_pwl_cost_expression(
     ::Type{T},
     component_name::String,
     time_period::Int,
-    cost_data::PSY.PiecewiseLinearData,
+    cost_data::PSY.PiecewiseStepData,
 ) where {T <: PSY.Component}
-    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    # TODO decremental
+    pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
-    slopes = PSY.get_slopes(cost_data)
-    upb = get_breakpoint_upper_bounds(cost_data)
+    slopes = PSY.get_y_coords(cost_data)
     for i in 1:length(cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            slopes[i] * upb[i] * dt,
+            slopes[i] * dt,
             pwl_var_container[(component_name, i, time_period)],
         )
     end
@@ -209,11 +251,10 @@ _index_into_param(cost_data, ::T) where {T <: Union{StartVariable, MultiStartVar
 _index_into_param(cost_data, ::VariableType) = cost_data
 
 # General case
-# (TODO this seemed rather decrepit before I got here and made big changes, make sure I didn't break anything)
 function update_variable_cost!(
     container::OptimizationContainer,
     parameter_array::DenseAxisArray{T},
-    parameter_multiplier::JuMPFloatArray,  # TODO is the multiplier always `JuMPFloatArray`?
+    parameter_multiplier::JuMPFloatArray,
     attributes::CostFunctionAttributes{T},
     component::U,
     time_period::Int,
@@ -238,28 +279,31 @@ function update_variable_cost!(
     return
 end
 
-# Special case for PiecewiseLinearData
+# Special case for PiecewiseStepData
 function update_variable_cost!(
     container::OptimizationContainer,
-    parameter_array::DenseAxisArray{Vector{NTuple{2, Float64}}},
+    function_data::PSY.PiecewiseStepData,
     parameter_multiplier::JuMPFloatArray,
-    ::CostFunctionAttributes{Vector{NTuple{2, Float64}}},
+    ::CostFunctionAttributes,
     component::T,
     time_period::Int,
 ) where {T <: PSY.Component}
     component_name = PSY.get_name(component)
-    cost_data = parameter_array[component_name, time_period]
-    if all(iszero.(last.(cost_data)))
-        return
-    end
-    mult_ = parameter_multiplier[component_name, time_period]
+    # TODO handle per-tranche multiplier if necessary
+    mult_ = 1.0 # parameter_multiplier[component_name, time_period, 1]
+    converted_data = get_piecewise_incrementalcurve_per_system_unit(
+        function_data,
+        PSY.UnitSystem.NATURAL_UNITS,  # PSY's cost_function_timeseries.jl says this will always be natural units
+        get_base_power(container),
+        PSY.get_base_power(component),
+    )
     gen_cost =
         _update_pwl_cost_expression(
             container,
             T,
             component_name,
             time_period,
-            PSY.PiecewiseLinearData(cost_data),
+            converted_data,
         )
     add_to_objective_variant_expression!(container, mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)

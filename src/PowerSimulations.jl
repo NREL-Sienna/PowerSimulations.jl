@@ -239,7 +239,7 @@ export UpperBoundFeedForwardSlack
 export LowerBoundFeedForwardSlack
 export InterfaceFlowSlackUp
 export InterfaceFlowSlackDown
-export PieceWiseLinearCostVariable
+export PiecewiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 
@@ -294,7 +294,7 @@ export NetworkFlowConstraint
 export NodalBalanceActiveConstraint
 export NodalBalanceReactiveConstraint
 export OutputActivePowerVariableLimitsConstraint
-export PieceWiseLinearCostConstraint
+export PiecewiseLinearCostConstraint
 export ParticipationAssignmentConstraint
 export ParticipationFractionConstraint
 export PhaseAngleControlLimit
@@ -314,8 +314,8 @@ export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
 export ImportExportBudgetConstraint
-export PieceWiseLinearBlockOfferConstraint
-export PieceWiseLinearBlockDecrementalOfferConstraint
+export PiecewiseLinearBlockIncrementalOfferConstraint
+export PiecewiseLinearBlockDecrementalOfferConstraint
 
 # Parameters
 # Time Series Parameters
@@ -658,12 +658,14 @@ include("network_models/network_constructor.jl")
 include("operation/operation_problem_templates.jl")
 
 # Utils
+include("utils/indexing.jl")
 include("utils/printing.jl")
 include("utils/file_utils.jl")
 include("utils/logging.jl")
 include("utils/dataframes_utils.jl")
 include("utils/jump_utils.jl")
 include("utils/powersystems_utils.jl")
+include("utils/time_series_utils.jl")
 include("utils/recorder_events.jl")
 include("utils/datetime_utils.jl")
 include("utils/generate_valid_formulations.jl")

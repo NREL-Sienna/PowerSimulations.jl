@@ -8,7 +8,7 @@ function _handle_common_thermal_parameters!(
         add_parameters!(container, FuelCostParameter, devices, model)
     end
 
-    add_market_bid_parameters!(container, devices, model)
+    process_market_bid_parameters!(container, devices, model)
 end
 
 function construct_device!(
