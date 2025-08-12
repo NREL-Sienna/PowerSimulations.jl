@@ -11,11 +11,14 @@ abstract type AbstractDeviceFormulation end
 
 ########################### Thermal Generation Formulations ################################
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
+
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
+abstract type AbstractSecurityConstrainedUnitCommitment <: AbstractThermalUnitCommitment end
+
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
 """
@@ -24,6 +27,13 @@ struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
 Formulation type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
+
+"""
+Formulation type to enable Security-Constrained (G-1) standard unit commitment with intertemporal constraints and simplified startup profiles
+"""
+struct ThermalSecurityConstrainedStandardUnitCommitment <:
+       AbstractSecurityConstrainedUnitCommitment end
+
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
 """
@@ -80,11 +90,19 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 ########################### Renewable Generation Formulations ##############################
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
+abstract type AbstractSecurityConstrainedRenewableDispatchFormulation <:
+              AbstractRenewableDispatchFormulation end
 
 """
 Formulation type to add injection variables constrained by a maximum injection time series for `RenewableGen`
 """
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
+
+"""
+Formulation type to enable Renewable Security-Constrained (G-1) and add injection variables constrained by a maximum injection time series for `RenewableGen`
+"""
+struct RenewableSecurityConstrainedFullDispatch <:
+       AbstractSecurityConstrainedRenewableDispatchFormulation end
 
 """
 Formulation type to add real and reactive injection variables with constant power factor with maximum real power injections constrained by a time series for `RenewableGen`
@@ -173,9 +191,17 @@ struct LossLessLine <: AbstractBranchFormulation end
 
 abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
 """
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for branches outages.
+"""
+abstract type AbstractSecurityConstrainedPTDFModel <: AbstractPTDFModel end
+"""
 Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
 """
 struct PTDFPowerModel <: AbstractPTDFModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and line outage distribution factors [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for branches outages. If exists, the rating b is considered as the branch power limit for post-contingency flows, otherwise the standard rating is considered.
+"""
+struct SecurityConstrainedPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 """
 Infinite capacity approximation of network flow to represent entire system with a single node.
 """
@@ -185,9 +211,13 @@ Approximation to represent inter-area flow with each area represented as a singl
 """
 struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balancing areas independently.
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balancing areas as well as synchrounous regions.
 """
 struct AreaPTDFPowerModel <: AbstractPTDFModel end
+"""
+Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix and [LODF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_LODF_matrix/) for branches outages. Balancing areas as well as synchrounous regions.
+"""
+struct SecurityConstrainedAreaPTDFPowerModel <: AbstractSecurityConstrainedPTDFModel end
 
 #================================================
     # exact non-convex models
@@ -247,6 +277,8 @@ abstract type AbstractServiceFormulation end
 
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
+abstract type AbstractSecurityConstrainedReservesFormulation <: AbstractReservesFormulation end
+
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
@@ -260,6 +292,13 @@ struct GroupReserve <: AbstractReservesFormulation end
 Struct for to add reserves to be larger than a specified requirement
 """
 struct RangeReserve <: AbstractReservesFormulation end
+
+"""
+Struct for to add reserves to be larger than a specified requirement and map how those should be allocated and deployed considering generators outages
+"""
+struct RangeReserveWithDeliverabilityConstraints <:
+       AbstractSecurityConstrainedReservesFormulation end
+
 """
 Struct for to add reserves to be larger than a variable requirement depending of costs
 """

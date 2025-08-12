@@ -178,6 +178,32 @@ function _add_parameters!(
     return
 end
 
+function _check_dynamic_branch_rating_ts(
+    ts::AbstractArray,
+    ::T,
+    device::PSY.Device,
+    model::DeviceModel{D, W},
+) where {D <: PSY.Component, T <: TimeSeriesParameter, W <: AbstractDeviceFormulation}
+    if !(T <: AbstractDynamicBranchRatingTimeSeriesParameter)
+        return
+    end
+
+    rating = PSY.get_rating(device)
+    if (T <: PostContingencyDynamicBranchRatingTimeSeriesParameter)
+        if !(PSY.get_rating_b(device) === nothing)
+            rating = PSY.get_rating_b(device)
+        else
+            @warn "Device $(typeof(device)) '$(PSY.get_name(device))' has Parameter $T but it has no static 'rating_b' defined."
+        end
+    end
+
+    multiplier = get_multiplier_value(T(), device, W())
+    if !all(x -> x >= rating, multiplier * ts)
+        @warn "There are values of Parameter $T associated with $(typeof(device)) '$(PSY.get_name(device))' lower than the device static rating $(rating)."
+    end
+    return
+end
+
 # Extends `size` to tuples, treating them like scalars
 _size_wrapper(elem) = size(elem)
 _size_wrapper(::Tuple) = ()
@@ -215,6 +241,7 @@ function _add_time_series_parameters!(
         if !(ts_uuid in keys(initial_values))
             initial_values[ts_uuid] =
                 get_time_series_initial_values!(container, ts_type, device, ts_name)
+            _check_dynamic_branch_rating_ts(initial_values[ts_uuid], param, device, model)
         end
     end
 

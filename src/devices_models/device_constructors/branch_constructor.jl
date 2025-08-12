@@ -275,6 +275,22 @@ function construct_device!(
         devices,
         StaticBranch(),
     )
+    if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
+        add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
+    end
+
+    if haskey(
+        get_time_series_names(model),
+        PostContingencyDynamicBranchRatingTimeSeriesParameter,
+    )
+        add_parameters!(
+            container,
+            PostContingencyDynamicBranchRatingTimeSeriesParameter,
+            devices,
+            model,
+        )
+    end
+
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -291,6 +307,105 @@ function construct_device!(
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function _get_all_single_outage_branches_by_type(
+    sys::PSY.System,
+    valid_outages::IS.FlattenIteratorWrapper{T},
+    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
+    ::Type{V},
+) where {
+    T <: PSY.Outage,
+    V <: PSY.ACTransmission,
+}
+    single_outage_branches = V[]
+    for outage in valid_outages
+        components = PSY.get_associated_components(sys, outage)
+        if !all(c -> c <: V, typeof.(components)) || length(components) != 1
+            continue
+        end
+        component = first(components)
+        if (component in branches) && !(component in single_outage_branches)
+            push!(single_outage_branches, component)
+        end
+    end
+    return single_outage_branches
+end
+
+function _get_all_scuc_valid_outages(
+    sys::PSY.System,
+    ::NetworkModel{T},
+) where {T <: AbstractSecurityConstrainedPTDFModel}
+    return PSY.get_supplemental_attributes(
+        sa ->
+            typeof(sa) in Base.uniontypes(OutagesSCUC) &&
+                all(
+                    c -> c <: PSY.ACTransmission,
+                    typeof.(PSY.get_associated_components(sys, sa)),
+                ),
+        PSY.Outage,
+        sys,
+    )
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{V, StaticBranch},
+    network_model::NetworkModel{T},
+) where {V <: PSY.ACTransmission, T <: AbstractSecurityConstrainedPTDFModel}
+    devices = get_available_components(model, sys)
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+    add_constraints!(container, RateLimitConstraint, devices, model, network_model)
+
+    valid_outages = _get_all_scuc_valid_outages(sys, network_model)
+
+    if isempty(valid_outages)
+        throw(
+            ArgumentError(
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACTransmission) 
+                to add the LODF expressions/constraints for the requested network model: $network_model.",
+            ))
+    end
+
+    lodf = get_LODF_matrix(network_model)
+    removed_branches = PNM.get_removed_branches(lodf.network_reduction_data)
+    branches = get_available_components(
+        b ->
+            PSY.get_name(b) ∉ removed_branches &&
+                typeof(b) <: PSY.ACTransmission,
+        PSY.ACTransmission,
+        sys,
+    )
+
+    #TODO Handle also N-2 cases
+    branches_outages =
+        _get_all_single_outage_branches_by_type(sys, valid_outages, branches, V)
+    if !isempty(branches_outages)
+        add_to_expression!(
+            container,
+            PTDFPostContingencyBranchFlow,
+            FlowActivePowerVariable,
+            branches,
+            branches_outages,
+            model,
+            network_model,
+        )
+
+        add_constraints!(
+            container,
+            PostContingencyRateLimitConstraintB,
+            branches,
+            branches_outages,
+            model,
+            network_model,
+        )
+    end
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, SecurityConstrainedPTDFPowerModel)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -1535,6 +1650,7 @@ function construct_device!(
     return
 end
 
+#TODO Check if for SCUC AreaPTDF needs something else
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,

@@ -27,6 +27,7 @@ get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACBranch, ::AbstractB
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACBranch, ::StaticBranch) = 1.0/PSY.get_base_power(d)
 
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation} = DeviceModel(T, U)
@@ -76,11 +77,13 @@ function add_variables!(
     },
     U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
-    ptdf = get_PTDF_matrix(network_model)
+
+    network_reduction = get_network_reduction(network_model)
+    branch_names = PNM.get_retained_branches_names(network_reduction)
+
     branches_in_ptdf =
         [
-            b for b in devices if PSY.get_name(b) ∈
-            PNM.get_retained_branches_names(PNM.get_network_reduction_data(ptdf))
+            b for b in devices if PSY.get_name(b) ∈ branch_names
         ]
     variable = add_variable_container!(
         container,
@@ -343,6 +346,19 @@ function get_min_max_limits(
     return (min = -π / 2, max = π / 2)
 end
 
+function _get_device_dynamic_branch_rating_time_series(
+    param_container::ParameterContainer,
+    device::PSY.ACBranch,
+    ts_name::String,
+    ts_type::DataType,
+)
+    device_dlr_params = []
+    if PSY.has_time_series(device, ts_type, ts_name)
+        device_dlr_params = get_parameter_column_refs(param_container, get_name(device))
+    end
+    return device_dlr_params
+end
+
 """
 Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 """
@@ -391,21 +407,52 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
+
+    has_dlr_ts =
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+
+    if has_dlr_ts
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = get_default_time_series_type(container)
+        param_container =
+            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+        mult = get_multiplier_array(param_container)
+    end
+
     for device in devices
         ci_name = PSY.get_name(device)
-        if ci_name ∈ retained_branches_names
-            limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
-            for t in time_steps
-                con_ub[ci_name, t] =
-                    JuMP.@constraint(get_jump_model(container),
-                        array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
-                        limits.max)
-                con_lb[ci_name, t] =
-                    JuMP.@constraint(get_jump_model(container),
-                        array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
-                        limits.min)
+        if !(ci_name ∈ PNM.get_retained_branches_names(network_reduction))
+            continue
+        end
+
+        if has_dlr_ts
+            device_dynamic_branch_rating_ts =
+                _get_device_dynamic_branch_rating_time_series(
+                    param_container,
+                    device,
+                    ts_name,
+                    ts_type)
+        end
+
+        limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
+
+        for t in time_steps
+            if has_dlr_ts && !isempty(device_dynamic_branch_rating_ts)
+                limits = (
+                    min = -1 * device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
+                    max = device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
+                ) #update limits
             end
+
+            con_ub[ci_name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
+                    limits.max)
+            con_lb[ci_name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
+                    limits.min)
         end
     end
     return
@@ -630,7 +677,6 @@ function _make_flow_expressions!(
     )
 
     jump_model = get_jump_model(container)
-
     tasks = map(branches) do name
         ptdf_col = ptdf[name, :]
         Threads.@spawn _make_flow_expressions!(
@@ -675,6 +721,7 @@ function add_constraints!(
     # This is a workaround to not call the same list comprehension to find
     # The subset of branches of type B in the PTDF
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+
     branches = flow_variables.axes[1]
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(

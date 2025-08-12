@@ -1,5 +1,6 @@
 struct AbsoluteValueConstraint <: ConstraintType end
 """
+
 Struct to create the constraint for starting up ThermalMultiStart units.
 For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
 
@@ -46,6 +47,19 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint to balance active power.
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
+
+The specified constraint is generally formulated as:
+
+```math
+\\sum_{g \\in \\mathcal{G}_c} p_{g,t} &= \\sum_{g \\in \\mathcal{G}} \\Delta p_{g, c, t} &\\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1, \\dots, T\\}
+```
+"""
+struct PostContingengyGenerationBalanceConstraint <: ConstraintType end
+
 """
 Struct to create the duration constraint for commitment formulations, i.e. min-up and min-down.
 
@@ -272,6 +286,7 @@ r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D
 ```
 """
 struct RampConstraint <: ConstraintType end
+struct PostContingencyRampConstraint <: ConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 """
@@ -289,6 +304,7 @@ The specified constraint is formulated as:
 ```
 """
 struct RateLimitConstraint <: ConstraintType end
+struct PostContingencyRateLimitConstraintB <: ConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
@@ -488,6 +504,34 @@ P^\\text{min} \\le p_t \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\
 ```
 """
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
+"""
+Struct to create the constraint to limit post-contingency active power expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct PostContingencyActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
+"""
+Struct to create the constraint to limit post-contingency active power reserve deploymentexpressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+\\Delta rsv_{r, c, t}  \\le rsv_{r, c, t}, \\quad \\forall r \\in \\mathcal{R} \\ \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint <:
+       PowerVariableLimitsConstraint end
+
 """
 Struct to create the constraint to limit reactive power expressions.
 For more information check [Device Formulations](@ref formulation_intro).

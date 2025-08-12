@@ -185,6 +185,507 @@ end
     end
 end
 
+@testset "Network DC-PF with VirtualPTDF Model and implementing Dynamic Branch Ratings" begin
+    line_device_model = DeviceModel(
+        Line,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+        ))
+    TapTransf_device_model = DeviceModel(
+        TapTransformer,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+        ))
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+    ]
+    PTDF_ref = IdDict{System, VirtualPTDF}(
+        c_sys5 => VirtualPTDF(c_sys5),
+        c_sys14 => VirtualPTDF(c_sys14),
+        c_sys14_dc => VirtualPTDF(c_sys14_dc),
+    )
+    branches_dlr = IdDict{System, Vector{String}}(
+        c_sys5 => ["1", "2", "6"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
+    )
+    dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 1]]...)
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 264, 264, 168],
+        c_sys14 => [600, 0, 600, 600, 504],
+        c_sys14_dc => [600, 0, 648, 552, 456],
+    )
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 324244.401,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                PTDFPowerModel;
+                PTDF_matrix = PTDF_ref[sys],
+            ),
+        )
+
+        set_device_model!(template, line_device_model)
+        set_device_model!(template, TapTransf_device_model)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        for branch_name in branches_dlr[sys]
+            branch = get_component(ACBranch, sys, branch_name)
+
+            dlr_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
+            data_ts = collect(
+                DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+                    "1/1/2024  23:00:00",
+                    "d/m/y  H:M:S",
+                ),
+            )
+
+            if sys == c_sys5
+                n_steps = 2
+            else
+                n_steps = 1
+            end
+
+            for t in 1:n_steps
+                ini_time = data_ts[1] + Day(t - 1)
+                dlr_data[ini_time] =
+                    TimeArray(
+                        data_ts + Day(t - 1),
+                        get_rating(branch) * get_base_power(sys) * dlr_factors,
+                    )
+            end
+
+            PSY.add_time_series!(
+                sys,
+                branch,
+                PSY.Deterministic(
+                    "dynamic_line_ratings",
+                    dlr_data;
+                    scaling_factor_multiplier = get_rating,
+                ),
+            )
+        end
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_keys)
+
+        moi_tests(
+            ps_model,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+    end
+end
+
+@testset "Security Constrained Network DC-PF with PTDF/LODF Model" begin
+    template = get_thermal_dispatch_template_network(SecurityConstrainedPTDFPowerModel)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.Line, "lb"),
+        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.Line, "ub"),
+    ]
+    PTDF_ref = IdDict{System, PTDF}(
+        c_sys5 => PTDF(c_sys5),
+        c_sys14 => PTDF(c_sys14),
+        c_sys14_dc => PTDF(c_sys14_dc),
+    )
+    LODF_ref = IdDict{System, LODF}(
+        c_sys5 => LODF(c_sys5),
+        c_sys14 => LODF(c_sys14),
+        c_sys14_dc => LODF(c_sys14_dc),
+    )
+    lines_outages = IdDict{System, Vector{String}}(
+        c_sys5 => ["1", "2", "3"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
+    )
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 624, 624, 168],
+        c_sys14 => [600, 0, 3336, 3336, 504],
+        c_sys14_dc => [600, 0, 2688, 2592, 456],
+    )
+
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 445689.358,
+        c_sys14 => 141964.156,
+        c_sys14_dc => 141964.156,
+    )
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                SecurityConstrainedPTDFPowerModel;
+                PTDF_matrix = PTDF_ref[sys],
+                LODF_matrix = LODF_ref[sys],
+            ),
+        )
+
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        #Add Outage to a generator and a line which should be neglected for SCUC formulation and test again
+        transition_data_gl = GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 20,
+            outage_transition_probability = 0.9999,
+        )
+        generator = first(get_components(ThermalStandard, sys))
+        lin = first(get_components(Line, sys))
+
+        add_supplemental_attribute!(sys, generator, transition_data_gl)
+        add_supplemental_attribute!(sys, lin, transition_data_gl)
+        #Test Expected error since no SCUC valid attributes were added
+        @test build!(
+            ps_model;
+            console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+            output_dir = mktempdir(; cleanup = true),
+        ) == PSI.ModelBuildStatus.FAILED
+
+        for line_name in lines_outages[sys]
+            transition_data = GeometricDistributionForcedOutage(;
+                mean_time_to_recovery = 10,
+                outage_transition_probability = 0.9999,
+            )
+            component = get_component(ACBranch, sys, line_name)
+            add_supplemental_attribute!(sys, component, transition_data)
+        end
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_keys)
+
+        moi_tests(
+            ps_model,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+    end
+    # SecurityConstrainedPTDF input Error testing
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+end
+
+@testset "Security Constrained Network DC-PF with Virtual PTDF/LODF Model" begin
+    template = get_thermal_dispatch_template_network(SecurityConstrainedPTDFPowerModel)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.Line, "lb"),
+        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.Line, "ub"),
+    ]
+    PTDF_ref = IdDict{System, VirtualPTDF}(
+        c_sys5 => VirtualPTDF(c_sys5),
+        c_sys14 => VirtualPTDF(c_sys14),
+        c_sys14_dc => VirtualPTDF(c_sys14_dc),
+    )
+    LODF_ref = IdDict{System, VirtualLODF}(
+        c_sys5 => VirtualLODF(c_sys5),
+        c_sys14 => VirtualLODF(c_sys14),
+        c_sys14_dc => VirtualLODF(c_sys14_dc),
+    )
+    lines_outages = IdDict{System, Vector{String}}(
+        c_sys5 => ["1", "2", "3"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
+    )
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 624, 624, 168],
+        c_sys14 => [600, 0, 3336, 3336, 504],
+        c_sys14_dc => [600, 0, 2688, 2592, 456],
+    )
+
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 445689.358,
+        c_sys14 => 141964.156,
+        c_sys14_dc => 141964.156,
+    )
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                SecurityConstrainedPTDFPowerModel;
+                PTDF_matrix = PTDF_ref[sys],
+                LODF_matrix = LODF_ref[sys],
+            ),
+        )
+
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        #Add Outage to a generator and a line which should be neglected for SCUC formulation and test again
+        transition_data_gl = GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 20,
+            outage_transition_probability = 0.9999,
+        )
+        generator = first(get_components(ThermalStandard, sys))
+        lin = first(get_components(Line, sys))
+
+        add_supplemental_attribute!(sys, generator, transition_data_gl)
+        add_supplemental_attribute!(sys, lin, transition_data_gl)
+        #Test Expected error since no SCUC valid attributes were added
+        @test build!(
+            ps_model;
+            console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+            output_dir = mktempdir(; cleanup = true),
+        ) == PSI.ModelBuildStatus.FAILED
+
+        for branch_name in lines_outages[sys]
+            transition_data = GeometricDistributionForcedOutage(;
+                mean_time_to_recovery = 10,
+                outage_transition_probability = 0.9999,
+            )
+            component = get_component(ACBranch, sys, branch_name)
+            add_supplemental_attribute!(sys, component, transition_data)
+        end
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_keys)
+
+        moi_tests(
+            ps_model,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+    end
+end
+
+@testset "Security Constrained Network DC-PF with PTDF/LODF Model using Rating B for Post-Contingency Flows, dynamic line ratings and outages that should be neglected" begin
+    normal_op_dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 1.0]]...)
+    postcontingency_dlr_factors = vcat([fill(x, 6) for x in [1.25, 1.15, 1.2, 1.1]]...)
+    dlr_dict = Dict(
+        "dynamic_line_ratings" => normal_op_dlr_factors,
+        "Post_contingency_dynamic_line_ratings" => postcontingency_dlr_factors,
+    )
+    line_device_model = DeviceModel(
+        Line,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => collect(keys(dlr_dict))[1],
+            PostContingencyDynamicBranchRatingTimeSeriesParameter =>
+                collect(keys(dlr_dict))[2],
+        ))
+    TapTransf_device_model = DeviceModel(
+        TapTransformer,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => collect(keys(dlr_dict))[1],
+            PostContingencyDynamicBranchRatingTimeSeriesParameter =>
+                collect(keys(dlr_dict))[2],
+        ))
+    template = get_thermal_dispatch_template_network(SecurityConstrainedPTDFPowerModel)
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.Line, "lb"),
+        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.Line, "ub"),
+    ]
+    PTDF_ref = IdDict{System, PTDF}(
+        c_sys5 => PTDF(c_sys5),
+        c_sys14 => PTDF(c_sys14),
+        c_sys14_dc => PTDF(c_sys14_dc),
+    )
+    LODF_ref = IdDict{System, LODF}(
+        c_sys5 => LODF(c_sys5),
+        c_sys14 => LODF(c_sys14),
+        c_sys14_dc => LODF(c_sys14_dc),
+    )
+    branches_dlr = IdDict{System, Vector{String}}(
+        c_sys5 => ["1", "2", "3"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
+    )
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 624, 624, 168],
+        c_sys14 => [600, 0, 3336, 3336, 504],
+        c_sys14_dc => [600, 0, 2688, 2592, 456],
+    )
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 425822.532,
+        c_sys14 => 141964.156,
+        c_sys14_dc => 141964.156,
+    )
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                SecurityConstrainedPTDFPowerModel;
+                PTDF_matrix = PTDF_ref[sys],
+                LODF_matrix = LODF_ref[sys],
+            ),
+        )
+
+        set_device_model!(template, line_device_model)
+        set_device_model!(template, TapTransf_device_model)
+
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        #Add Outage to a generator and a line which should be neglected for SCUC formulation and test again
+        transition_data_gl = GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 20,
+            outage_transition_probability = 0.9999,
+        )
+        generator = first(get_components(ThermalStandard, sys))
+        lin = first(get_components(Line, sys))
+
+        add_supplemental_attribute!(sys, generator, transition_data_gl)
+        add_supplemental_attribute!(sys, lin, transition_data_gl)
+        #Test Expected error since no SCUC valid attributes were added
+        @test build!(
+            ps_model;
+            console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+            output_dir = mktempdir(; cleanup = true),
+        ) == PSI.ModelBuildStatus.FAILED
+
+        #Add Outage attribute
+        for branch_name in branches_dlr[sys]
+            transition_data = GeometricDistributionForcedOutage(;
+                mean_time_to_recovery = 10,
+                outage_transition_probability = 0.9999,
+            )
+            branch = get_component(ACBranch, sys, branch_name)
+            add_supplemental_attribute!(sys, branch, transition_data)
+        end
+
+        #Set Rating B for all branches
+        for branch in get_components(ACBranch, sys)
+            if typeof(branch) == TwoTerminalGenericHVDCLine
+                continue
+            end
+            set_rating_b!(branch, get_rating(branch) * 1.1)
+        end
+
+        #Add normal operation and post-contingency DLR time-series
+        for (dlr_key, dlr_factors) in dlr_dict
+            for branch_name in branches_dlr[sys]
+                branch = get_component(ACBranch, sys, branch_name)
+
+                dlr_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
+                data_ts = collect(
+                    DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+                        "1/1/2024  23:00:00",
+                        "d/m/y  H:M:S",
+                    ),
+                )
+
+                if sys == c_sys5
+                    n_steps = 2
+                else
+                    n_steps = 1
+                end
+
+                for t in 1:n_steps
+                    ini_time = data_ts[1] + Day(t - 1)
+                    dlr_data[ini_time] =
+                        TimeArray(
+                            data_ts + Day(t - 1),
+                            get_rating(branch) * get_base_power(sys) * dlr_factors,
+                        )
+                end
+
+                PSY.add_time_series!(
+                    sys,
+                    branch,
+                    PSY.Deterministic(
+                        dlr_key,
+                        dlr_data;
+                        scaling_factor_multiplier = get_rating,
+                    ),
+                )
+            end
+        end
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+
+        psi_constraint_test(ps_model, constraint_keys)
+
+        moi_tests(
+            ps_model,
+            test_results[sys][1],
+            test_results[sys][2],
+            test_results[sys][3],
+            test_results[sys][4],
+            test_results[sys][5],
+            false,
+        )
+
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+    end
+end
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -696,10 +1197,74 @@ end
     end
 end
 
+@testset "StandardPTDF with Ward reduction Test" begin
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
+    net_model = PTDFPowerModel
+    wr = PNM.get_ward_reduction(new_sys, [1, 2, 3, 4, 5]) #This is currently equivalent to the radial reduciton
+    template_uc = template_unit_commitment(;
+        network = NetworkModel(net_model;
+            PTDF_matrix = PTDF(new_sys; network_reduction = wr),
+            use_slacks = false,
+        ),
+    )
+    template_uc.network_model.PTDF_matrix.network_reduction.reduction_type
+    template_uc.network_model.network_reduction
+    thermal_model = ThermalStandardUnitCommitment
+    set_device_model!(template_uc, ThermalStandard, thermal_model)
+
+    ##### Solve Reduced Model ####
+    solver = HiGHS_optimizer
+    uc_model_red = DecisionModel(
+        template_uc,
+        new_sys;
+        optimizer = solver,
+        name = "UC_RED",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_red)
+
+    res_red = OptimizationProblemResults(uc_model_red)
+
+    flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+    line_names = DataFrames.names(flow_lines)[2:end]
+
+    ##### Solve Original Model ####
+    template_uc_orig = template_unit_commitment(;
+        network = NetworkModel(net_model;
+            reduce_radial_branches = false,
+            use_slacks = false,
+        ),
+    )
+    set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
+
+    uc_model_orig = DecisionModel(
+        template_uc_orig,
+        new_sys;
+        optimizer = solver,
+        name = "UC_ORIG",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_orig)
+
+    res_orig = OptimizationProblemResults(uc_model_orig)
+
+    flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
+
+    for line in line_names
+        @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
+    end
+end
+
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
-        if network ∈ PSI.INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
+        if network ∈ PSI.INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS
             continue
         end
         template = get_thermal_dispatch_template_network(

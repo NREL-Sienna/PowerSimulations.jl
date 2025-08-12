@@ -22,17 +22,20 @@ Establishes the model for the network specified by type.
 # Accepted Key Words
 
   - `use_slacks::Bool`: Adds slacks to the network modeling
-  - `PTDF::PTDF`: PTDF Array calculated using PowerNetworkMatrices
+  - `PTDF_matrix::Union{PTDF, VirtualPTDF}`: PTDF Array calculated using PowerNetworkMatrices
+  - `LODF_matrix::Union{LODF, VirtualLODF}`: LODF Array calculated using PowerNetworkMatrices
   - `duals::Vector{DataType}`: Constraint types to calculate the duals
   - `reduce_radial_branches::Bool`: Skips modeling radial branches in the system to reduce problem size
 # Example
 
 ptdf_array = PTDF(system)
-nw = NetworkModel(PTDFPowerModel, ptdf = ptdf_array),
+nw = NetworkModel(PTDFPowerModel, ptdf = ptdf_array)
+nw = NetworkModel(PTDFPowerModel, lodf = lodf_array)
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
     PTDF_matrix::Union{Nothing, PNM.PowerNetworkMatrix}
+    LODF_matrix::Union{Nothing, PNM.PowerNetworkMatrix}
     subnetworks::Dict{Int, Set{Int}}
     bus_area_map::Dict{PSY.ACBus, Int}
     duals::Vector{DataType}
@@ -46,6 +49,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         ::Type{T};
         use_slacks = false,
         PTDF_matrix = nothing,
+        LODF_matrix = nothing,
         reduce_radial_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
@@ -58,6 +62,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         new{T}(
             use_slacks,
             PTDF_matrix,
+            LODF_matrix,
             subnetworks,
             Dict{PSY.ACBus, Int}(),
             duals,
@@ -72,6 +77,7 @@ end
 
 get_use_slacks(m::NetworkModel) = m.use_slacks
 get_PTDF_matrix(m::NetworkModel) = m.PTDF_matrix
+get_LODF_matrix(m::NetworkModel) = m.LODF_matrix
 get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
 get_network_reduction(m::NetworkModel) = m.network_reduction
 get_duals(m::NetworkModel) = m.duals
@@ -92,9 +98,6 @@ function add_dual!(model::NetworkModel, dual)
     @debug "Added dual" dual _group = LOG_GROUP_NETWORK_CONSTRUCTION
     return
 end
-
-# TODO - check for incompatibilities between PowerModels and Network reductions
-const INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS = []
 
 function check_network_reduction_compatibility(
     ::Type{T},
@@ -190,6 +193,46 @@ function instantiate_network_model(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
+
+    if !(get_network_formulation(model) <: AbstractSecurityConstrainedPTDFModel)
+        return
+    end
+
+    if get_LODF_matrix(model) === nothing
+        @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
+        if model.reduce_radial_branches
+            network_reduction = PNM.get_radial_reduction(sys)
+        else
+            network_reduction = PNM.NetworkReduction()
+        end
+        model.LODF_matrix =
+            PNM.VirtualLODF(sys; network_reduction = network_reduction)
+    end
+
+    if !model.reduce_radial_branches &&
+       !isempty(model.LODF_matrix.network_reduction_data.reductions) &&
+       model.LODF_matrix.network_reduction_data.reduction_type ==
+       PNM.NetworkReductionTypes.RADIAL
+        throw(
+            IS.ConflictingInputsError(
+                "The provided LODF Matrix has reduced radial branches and mismatches the network \\
+                model specification reduce_radial_branches = false. Set the keyword argument \\
+                reduce_radial_branches = true in your network model"),
+        )
+    end
+
+    if model.reduce_radial_branches &&
+       !isempty(model.LODF_matrix.network_reduction_data.reductions) &&
+       model.LODF_matrix.network_reduction_data.reduction_type ==
+       PNM.NetworkReductionTypes.WARD
+        throw(
+            IS.ConflictingInputsError(
+                "The provided LODF Matrix has  a ward reduction specified and the keyword argument \\
+                reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
+                or provide a modified LODF Matrix without the Ward reduction."),
+        )
+    end
+
     return
 end
 

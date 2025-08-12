@@ -3,6 +3,14 @@
 
 get_variable_multiplier(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
 ############################### ActivePowerReserveVariable, Reserve #########################################
+get_variable_binary(::PostContingencyActivePowerReserveDeploymentVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
+function get_variable_upper_bound(::PostContingencyActivePowerReserveDeploymentVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractReservesFormulation)
+    return  PSY.get_max_active_power(d)
+end
+get_variable_lower_bound(::PostContingencyActivePowerReserveDeploymentVariable, ::PSY.Reserve, ::PSY.Device, _) = 0.0
+get_variable_warm_start_value(::PostContingencyActivePowerReserveDeploymentVariable, d::PSY.Reserve, ::AbstractReservesFormulation) = 0.0
+
+############################### ActivePowerReserveVariable, Reserve #########################################
 get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
 function get_variable_upper_bound(::ActivePowerReserveVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractReservesFormulation)
     return PSY.get_max_output_fraction(r) * PSY.get_max_active_power(d)
@@ -51,7 +59,7 @@ end
 function get_default_time_series_names(
     ::Type{<:PSY.Reserve},
     ::Type{T},
-) where {T <: Union{RangeReserve, RampReserve}}
+) where {T <: Union{RangeReserve, RampReserve, RangeReserveWithDeliverabilityConstraints}}
     return Dict{Type{<:TimeSeriesParameter}, String}(
         RequirementTimeSeriesParameter => "requirement",
     )
