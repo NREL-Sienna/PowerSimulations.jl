@@ -200,15 +200,18 @@ end
 
 # If `ixs` does not index all dimensions of `dest`, add a `:` for the rest (like Python's
 # `...`) to prepare for broadcast-assigning.
-expand_ixs(ixs, dest) =
+function expand_ixs(ixs::Tuple, dest::AbstractArray)
     if length(ixs) <= ndims(dest)
-        (ixs..., fill(:, ndims(dest) - length(ixs))...)
+        return (ixs[1:(end - 1)]..., fill(:, ndims(dest) - length(ixs))..., ixs[end])
     else
         throw(ArgumentError("`ixs` must not index more dimensions than `dest` has"))
     end
+end
 
-assign_expand(dest::AbstractArray, src, ixs::Tuple) =
-    (dest[expand_ixs(ixs, dest)...] .= src)
+function assign_expand(dest::AbstractArray, src, ixs::Tuple)
+    dest[expand_ixs(ixs, dest)...] .= src
+    return
+end
 # If `src` is an array, broadcast across it to perform the assignment
 assign_maybe_broadcast!(dest::AbstractArray, src::AbstractArray, ixs::Tuple) =
     assign_expand(dest, src, ixs)
@@ -251,6 +254,7 @@ function _set_parameter!(
     value::Union{T, AbstractVector{T}},
     ixs::Tuple,
 ) where {T <: ValidDataParamEltypes}
+    @show ixs
     assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
@@ -415,7 +419,7 @@ should_write_resulting_value(::Type{<:EventParameter}) = true
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
-should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = false  # because 3D is currently unsupported
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = true  # because 3D is currently unsupported
 
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true

@@ -251,16 +251,16 @@ function _add_time_series_parameters!(
         ts_name,
         collect(keys(initial_values)),
         device_names,
+        additional_axes...,
         time_steps,
-        additional_axes,
     )
-
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
 
     jump_model = get_jump_model(container)
     for (ts_uuid, raw_ts_vals) in initial_values
         ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
         @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
+
         for step in time_steps
             set_parameter!(param_container, jump_model, ts_vals[step], ts_uuid, step)
         end
@@ -458,7 +458,6 @@ function _add_parameters!(
     end
     jump_model = get_jump_model(container)
 
-    universal_axes = [device_names, time_steps]
     additional_axes = _additional_axes(container, param, active_devices, model)
     param_container = add_param_container!(
         container,
@@ -468,7 +467,9 @@ function _add_parameters!(
         SOSStatusVariable.NO_VARIABLE,
         false,
         _get_expected_time_series_eltype(T()),
-        universal_axes..., additional_axes...,
+        device_names,
+        additional_axes...,
+        time_steps,
     )
 
     for (ts_name, device_name, device) in zip(ts_names, device_names, active_devices)
