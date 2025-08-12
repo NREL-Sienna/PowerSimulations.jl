@@ -505,7 +505,7 @@ function _get_pwl_data(
         slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T)
         @assert size(slope_param_arr) == size(slope_param_mult)  # multiplier arrays should be 3D too
         slope_cost_component =
-            slope_param_arr[name, time, :] .* slope_param_mult[name, time, :]
+            slope_param_arr[name, :, time] .* slope_param_mult[name, :, time]
         slope_cost_component = slope_cost_component.data
 
         BreakpointParam = _BREAKPOINT_PARAMS[is_decremental]
@@ -514,10 +514,12 @@ function _get_pwl_data(
         breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
         @assert size(breakpoint_param_arr) == size(breakpoint_param_mult[name, :, :])
         breakpoint_cost_component =
-            breakpoint_param_arr[time, :] .* breakpoint_param_mult[name, time, :]
+            breakpoint_param_arr[:, time] .* breakpoint_param_mult[name, :, time]
         breakpoint_cost_component = breakpoint_cost_component.data
 
-        @assert length(slope_cost_component) == length(breakpoint_cost_component) - 1
+        @show length(slope_cost_component)
+        @show length(breakpoint_cost_component) - 1
+        @assert_op length(slope_cost_component) == length(breakpoint_cost_component) - 1
         # PSY's cost_function_timeseries.jl says this will always be natural units
         unit_system = PSY.UnitSystem.NATURAL_UNITS
     else
