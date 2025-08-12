@@ -658,6 +658,7 @@ include("network_models/network_constructor.jl")
 include("operation/operation_problem_templates.jl")
 
 # Utils
+include("utils/indexing.jl")
 include("utils/printing.jl")
 include("utils/file_utils.jl")
 include("utils/logging.jl")

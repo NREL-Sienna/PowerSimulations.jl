@@ -251,7 +251,7 @@ function _add_time_series_parameters!(
         ts_name,
         collect(keys(initial_values)),
         device_names,
-        additional_axes...,
+        additional_axes,
         time_steps,
     )
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
