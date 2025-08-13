@@ -15,24 +15,6 @@ function get_min_max_limits(
     return (min = -1 * PSY.get_rating_b(branch), max = PSY.get_rating_b(branch))
 end
 
-function _get_device_post_contingency_dynamic_branch_rating_time_series(
-    container::OptimizationContainer,
-    param_key::IS.Optimization.OptimizationContainerKey,
-    branch_name::String,
-    ::NetworkModel{T},
-) where {T <: AbstractSecurityConstrainedPTDFModel}
-    try
-        param_container = get_parameter(container, param_key)
-        mult = get_multiplier_array(param_container)
-        device_dynamic_branch_rating_ts =
-            get_parameter_column_refs(param_container, branch_name)
-        return device_dynamic_branch_rating_ts, mult
-    catch e
-        @warn "Branch $branch_name has time series but it has no $param_key. Static rating_b parameter wil be used for Post-contingency flow limit"
-        return [], []
-    end
-end
-
 """
 Add branch post-contingency rate limit constraints for ACBranch considering LODF and Security Constraints
 """
@@ -50,36 +32,28 @@ function add_constraints!(
 }
     time_steps = get_time_steps(container)
     device_names = [PSY.get_name(d) for d in branches]
-    con_lb =
-        add_constraints_container!(
-            container,
-            cons_type(),
-            T,
-            get_name.(branches_outages),
-            device_names,
-            time_steps;
-            meta = "lb",
-        )
 
-    con_ub =
-        add_constraints_container!(
-            container,
-            cons_type(),
-            T,
-            get_name.(branches_outages),
-            device_names,
-            time_steps;
-            meta = "ub",
-        )
-
-    expressions = get_expression(
+    con_lb = add_constraints_container!(
         container,
-        ExpressionKey(
-            PostContingencyBranchFlow,
-            T,
-            IS.Optimization.CONTAINER_KEY_EMPTY_META,
-        ),
+        cons_type(),
+        T,
+        get_name.(branches_outages),
+        device_names,
+        time_steps;
+        meta = "lb",
     )
+
+    con_ub = add_constraints_container!(
+        container,
+        cons_type(),
+        T,
+        get_name.(branches_outages),
+        device_names,
+        time_steps;
+        meta = "ub",
+    )
+
+    expressions = get_expression(container, PostContingencyBranchFlow(), T)
 
     param_keys = get_parameter_keys(container)
 

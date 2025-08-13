@@ -49,7 +49,8 @@ function get_initial_conditions_service_model(
     return ServiceModel(T, D)
 end
 
-function add_constraints!(container::OptimizationContainer,
+function add_constraints!(
+    container::OptimizationContainer,
     ::Type{InterfaceFlowLimit},
     interface::T,
     model::ServiceModel{T, ConstantMaxInterfaceFlow},
@@ -83,7 +84,8 @@ function add_constraints!(container::OptimizationContainer,
     return
 end
 
-function add_constraints!(container::OptimizationContainer,
+function add_constraints!(
+    container::OptimizationContainer,
     ::Type{InterfaceFlowLimit},
     interface::T,
     model::ServiceModel{T, VariableMaxInterfaceFlow},

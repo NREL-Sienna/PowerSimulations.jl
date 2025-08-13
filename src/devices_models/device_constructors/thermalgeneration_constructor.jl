@@ -1,4 +1,13 @@
 # TODO call this for non-thermal generators too?
+
+function has_security_arguments(device_model::DeviceModel)::Bool
+    return true
+end
+
+function has_security_model(device_model::DeviceModel)::Bool
+    return true
+end
+
 function _handle_common_thermal_parameters!(
     container::OptimizationContainer,
     devices,
@@ -135,9 +144,12 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    device_model::DeviceModel{T, <:AbstractStandardUnitCommitment},
+    device_model::DeviceModel{T, U},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: PSY.ThermalGen}
+) where {
+    T <: PSY.ThermalGen,
+    U <: Union{AbstractStandardUnitCommitment, AbstractSecurityConstrainedUnitCommitment},
+}
     devices = get_available_components(device_model, sys)
 
     add_constraints!(
@@ -188,6 +200,17 @@ function construct_device!(
         device_model,
         get_network_formulation(network_model),
     )
+
+    if has_security_arguments(device_model)
+        add_constraints!(
+            container,
+            SecurityConstraint,
+            devices,
+            device_model,
+            network_model,
+        )
+    end
+
     add_constraint_dual!(container, sys, device_model)
     return
 end
