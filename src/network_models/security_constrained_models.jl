@@ -75,7 +75,7 @@ function add_constraints!(
     expressions = get_expression(
         container,
         ExpressionKey(
-            PTDFPostContingencyBranchFlow,
+            PostContingencyBranchFlow,
             T,
             IS.Optimization.CONTAINER_KEY_EMPTY_META,
         ),

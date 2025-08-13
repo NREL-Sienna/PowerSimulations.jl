@@ -198,7 +198,7 @@ function construct_device!(
     if isempty(valid_outages)
         throw(
             ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen) 
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen)
                 to add the variables/expressions/constraints for the requested device formulation: $D.",
             ))
     end
@@ -263,11 +263,11 @@ function construct_device!(
             network_model,
         )
 
-        #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch  
+        #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
         add_to_expression!(
             container,
             sys,
-            PTDFPostContingencyBranchFlow,
+            PostContingencyBranchFlow,
             FlowActivePowerVariable,
             ActivePowerVariable,
             PostContingencyActivePowerChangeVariable,
@@ -632,7 +632,7 @@ function add_to_expression!(
     network_model::NetworkModel{N};
     service::R = nothing,
 ) where {
-    T <: PTDFPostContingencyBranchFlow,
+    T <: PostContingencyBranchFlow,
     F <: FlowActivePowerVariable,
     G <: VariableType,
     C <: AbstractContingencyVariableType,
@@ -790,7 +790,7 @@ function add_constraints!(
     expressions = get_expression(
         container,
         ExpressionKey(
-            PTDFPostContingencyBranchFlow,
+            PostContingencyBranchFlow,
             T,
             IS.Optimization.CONTAINER_KEY_EMPTY_META,
         ),
@@ -1203,7 +1203,7 @@ function construct_service!(
     if isempty(valid_outages)
         throw(
             ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen) 
+                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ThermalGen)
                 to add the variables/expressions/constraints for the requested Service formulation: $model.",
             ))
     end
@@ -1273,11 +1273,11 @@ function construct_service!(
             service = service,
         )
 
-        # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch  
+        # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
         add_to_expression!(
             container,
             sys,
-            PTDFPostContingencyBranchFlow,
+            PostContingencyBranchFlow,
             FlowActivePowerVariable,
             ActivePowerVariable,
             PostContingencyActivePowerReserveDeploymentVariable,

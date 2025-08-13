@@ -371,7 +371,7 @@ export ProductionCostExpression
 export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
-export PTDFPostContingencyBranchFlow
+export PostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
 export PostContingencyActivePowerBalance
 export NetActivePower
