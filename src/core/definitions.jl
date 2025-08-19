@@ -28,10 +28,11 @@ const JuMPAffineExpressionDArray = JuMP.Containers.DenseAxisArray{
 const JuMPVariableTensor{N} = DenseAxisArray{
     JuMP.VariableRef,
     N,
-    <:Tuple{Vector{String}, Vararg{UnitRange{Int64}}},
+    <:Tuple{Vector{String}, Vararg{Any}},  # last element is always UnitRange{Int64} but we cannot specify anything after the Vararg
     <:Tuple{
         JuMP.Containers._AxisLookup{Dict{String, Int64}},
-        Vararg{JuMP.Containers._AxisLookup{Tuple{Int64, Int64}}},
+        Vararg{JuMP.Containers._AxisLookup{<:Any}},
+        # last element is always JuMP.Containers._AxisLookup{Tuple{Int64, Int64}} but we cannot specify anything after the Vararg
     },
 }
 
