@@ -2,13 +2,16 @@
 ############################### Reserve Variables #########################################
 
 get_variable_multiplier(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
-############################### ActivePowerReserveVariable, Reserve #########################################
-get_variable_binary(::PostContingencyActivePowerReserveDeploymentVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
-function get_variable_upper_bound(::PostContingencyActivePowerReserveDeploymentVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractReservesFormulation)
+############################### PostContingencyActivePowerReserveDeploymentVariable, Reserve #########################################
+get_variable_binary(::PostContingencyActivePowerReserveDeploymentVariable, ::Type{<:PSY.Reserve}, ::AbstractSecurityConstrainedReservesFormulation) = false
+function get_variable_upper_bound(::PostContingencyActivePowerReserveDeploymentVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractSecurityConstrainedReservesFormulation)
     return  PSY.get_max_active_power(d)
 end
 get_variable_lower_bound(::PostContingencyActivePowerReserveDeploymentVariable, ::PSY.Reserve, ::PSY.Device, _) = 0.0
-get_variable_warm_start_value(::PostContingencyActivePowerReserveDeploymentVariable, d::PSY.Reserve, ::AbstractReservesFormulation) = 0.0
+get_variable_warm_start_value(::PostContingencyActivePowerReserveDeploymentVariable, d::PSY.Reserve, ::AbstractSecurityConstrainedReservesFormulation) = 0.0
+get_variable_multiplier(::AbstractContingencyVariableType, ::Type{<:PSY.Reserve{PSY.ReserveDown}}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0
+get_variable_multiplier(::AbstractContingencyVariableType, ::Type{<:PSY.Reserve{PSY.ReserveUp}}, ::AbstractSecurityConstrainedReservesFormulation) = 1.0
+get_variable_multiplier(::VariableType, ::Type{<:PSY.Generator}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0 #TODO review here
 
 ############################### ActivePowerReserveVariable, Reserve #########################################
 get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false

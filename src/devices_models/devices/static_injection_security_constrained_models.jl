@@ -1,6 +1,6 @@
 function add_variable!(
     container::OptimizationContainer,
-    var_type::Type{PostContingencyActivePowerDeploymentVariable},
+    var_type::Type{PostContingencyActivePowerChangeVariable},
     devices::T,
     outages::Vector{U},
 ) where {
@@ -1005,74 +1005,84 @@ end
 
 function add_variables!(
     container::OptimizationContainer,
-    ::Type{T},
-    service::U,
+    sys::PSY.System,
+    variable_type::Type{T},
+    service::R,
     contributing_devices::Vector{V},
     formulation::AbstractReservesFormulation,
 ) where {
-    T <: VariableType,
-    U <: PSY.AbstractReserve,
+    T <: AbstractContingencyVariableType,
+    R <: PSY.AbstractReserve,
     V <: PSY.StaticInjection,
 }
     @assert !isempty(contributing_devices)
-    time_steps = get_time_steps(container)
+    time_steps = get_time_steps(container) 
+    binary = get_variable_binary(variable_type(), R, formulation)
 
-    binary = get_variable_binary(variable_type, U, formulation)
+    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
 
-    variable = add_variable_container!(
+    variable = lazy_container_addition!(
         container,
-        variable_type,
-        U,
-        PSY.get_name(service),
-        [PSY.get_name(g_o) for g_o in generator_outages],
+        variable_type(),
+        R,
+        [IS.get_uuid(outage) for outage in associated_outages],
         [PSY.get_name(d) for d in contributing_devices],
-        time_steps,
+        time_steps;
+        meta = get_name(service)
     )
+    
+    for outage in associated_outages
+        outage_name = IS.get_uuid(outage)
+        associated_devices = PSY.get_name.( PSY.get_associated_components( sys, outage; component_type = PSY.Generator ) )
+        
+        for d in contributing_devices
+            name = PSY.get_name(d)
+            device_is_in_reserve_devices = name in associated_devices
 
-    for t in time_steps, d in contributing_devices, o in generator_outages
-        name = PSY.get_name(d)
-        outage_name = PSY.get_name(o)
-        variable[outage_name, name, t] = JuMP.@variable(
-            get_jump_model(container),
-            base_name = "$(T)_$(U)_$(PSY.get_name(service))_{$(outage_name), $(name), $(t)}",
-            binary = binary
-        )
-        if name == outage_name
-            JuMP.set_upper_bound(variable[outage_name, name, t], 0.0)
-            JuMP.set_lower_bound(variable[outage_name, name, t], 0.0)
-            JuMP.set_start_value(variable[outage_name, name, t], 0.0)
-            continue
+            for t in time_steps
+                variable[outage_name, name, t] = JuMP.@variable(
+                    get_jump_model(container),
+                    base_name = "$(T)_$(R)_$(PSY.get_name(service))_{$(outage_name), $(name), $(t)}",
+                    binary = binary
+                )
+                if device_is_in_reserve_devices
+                    JuMP.set_upper_bound(variable[outage_name, name, t], 0.0)
+                    JuMP.set_lower_bound(variable[outage_name, name, t], 0.0)
+                    JuMP.set_start_value(variable[outage_name, name, t], 0.0)
+                    continue
+                end
+
+                ub = get_variable_upper_bound(variable_type(), service, d, formulation)
+                ub !== nothing && JuMP.set_upper_bound(variable[outage_name, name, t], ub)
+
+                lb = get_variable_lower_bound(variable_type(), service, d, formulation)
+                lb !== nothing && !binary &&
+                    JuMP.set_lower_bound(variable[outage_name, name, t], lb)
+
+                init = get_variable_warm_start_value(variable_type(), d, formulation)
+                init !== nothing && JuMP.set_start_value(variable[outage_name, name, t], init)
+            end
         end
-
-        ub = get_variable_upper_bound(variable_type, service, d, formulation)
-        ub !== nothing && JuMP.set_upper_bound(variable[outage_name, name, t], ub)
-
-        lb = get_variable_lower_bound(variable_type, service, d, formulation)
-        lb !== nothing && !binary &&
-            JuMP.set_lower_bound(variable[outage_name, name, t], lb)
-
-        init = get_variable_warm_start_value(variable_type, d, formulation)
-        init !== nothing && JuMP.set_start_value(variable[outage_name, name, t], init)
     end
-
     return
 end
+
 
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::ServiceModel{SR, RangeReserveWithDeliverabilityConstraints},
+    model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.Reserve}
+) where {SR <: PSY.Reserve, F <: RangeReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
     add_parameters!(container, RequirementTimeSeriesParameter, service, model)
     contributing_devices = get_contributing_devices(model)
-
+    
     add_variables!(
         container,
         ActivePowerReserveVariable,
@@ -1081,15 +1091,24 @@ function construct_service!(
         RangeReserve(),
     )
 
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+
+    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
+    if isempty(associated_outages)
+        @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for that service."
+        return
+    end
+
     add_variables!(
         container,
+        sys,
         PostContingencyActivePowerReserveDeploymentVariable,
         service,
         contributing_devices,
+        F(),
     )
-
-    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
-    add_feedforward_arguments!(container, model, service)
+    
     return
 end
 
@@ -1116,9 +1135,16 @@ function construct_service!(
         model,
     )
 
+    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
+    if isempty(associated_outages)
+        @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for that service."
+        return
+    end
+    
     # Consider if the expressions are needed or just create the constraint
     add_to_expression!(
         container,
+        sys,
         PostContingencyActivePowerBalance,
         PostContingencyActivePowerReserveDeploymentVariable,
         contributing_devices,
@@ -1126,7 +1152,7 @@ function construct_service!(
         model,
         network_model,
     )
-
+ 
     add_to_expression!(
         container,
         PostContingencyActivePowerBalance,
@@ -1217,56 +1243,49 @@ Default implementation to add variables to PostContingencySystemBalanceExpressio
 """
 function add_to_expression!(
     container::OptimizationContainer,
+    sys::PSY.System,
     ::Type{T},
     ::Type{U},
-    ::Type{Y},
     contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
-    devices_outages::Vector{X},
     service::R,
-    reserves_model::ServiceModel{R, W},
+    reserves_model::ServiceModel{R, F},
     network_model::NetworkModel{N},
 ) where {
     T <: PostContingencyActivePowerBalance,
     U <: VariableType,
-    Y <: AbstractContingencyVariableType,
     V <: PSY.Generator,
-    X <: PSY.Generator,
     R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
-    W <: AbstractSecurityConstrainedReservesFormulation,
+    F <: AbstractSecurityConstrainedReservesFormulation,
     N <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
 
-    expression =
-        lazy_container_addition!(container, T(), X, get_name.(devices_outages), time_steps)
-    variable = get_variable(container, U(), V)
-    reserve_deployment_variable = get_variable(
-        container,
-        PostContingencyActivePowerReserveDeploymentVariable(),
-        R,
-        service_name,
-    )
+    expression = lazy_container_addition!(
+            container, 
+            T(), 
+            R, 
+            IS.get_uuid.(associated_outages), 
+            time_steps;
+            meta = service_name
+            )
+    
+    
+    reserve_deployment_variable = get_variable(container, U(), R, service_name)
+    mult = get_variable_multiplier( U(), R, F() )    
 
-    mult = 1.0
-    if typeof(service) <: PSY.Reserve{PSY.ReserveDown}
-        mult = -1.0
-    end
+    for outage in associated_outages
+        associated_devices = PSY.get_name.( PSY.get_associated_components( sys, outage; component_type = PSY.Generator ) )
+        name_outage = IS.get_uuid(outage)
 
-    for d in contributing_devices
-        name = PSY.get_name(d)
-        for d_outage in devices_outages
-            if d == d_outage
-                for t in time_steps
-                    _add_to_jump_expression!(
-                        expression[name, t],
-                        variable[name, t],
-                        -1.0,
-                    )
-                end
+        for d in contributing_devices
+            name = PSY.get_name(d)
+            device_is_in_reserve_devices = name in associated_devices
+            
+            if device_is_in_reserve_devices
                 continue
             end
-            name_outage = PSY.get_name(d_outage)
 
             for t in time_steps
                 _add_to_jump_expression!(
@@ -1277,6 +1296,7 @@ function add_to_expression!(
             end
         end
     end
+
     return
 end
 
