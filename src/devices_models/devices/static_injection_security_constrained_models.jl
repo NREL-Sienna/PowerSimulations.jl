@@ -1135,7 +1135,7 @@ function construct_service!(
         model,
     )
 
-    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.Outage, service )
     if isempty(associated_outages)
         @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for that service."
         return
@@ -1152,9 +1152,16 @@ function construct_service!(
         model,
         network_model,
     )
- 
+    
+    attribute_device_map = PSY.get_component_supplemental_attribute_pairs(
+                                PSY.Generator,
+                                PSY.Outage,
+                                sys
+                            )
+
     add_to_expression!(
         container,
+        sys,
         PostContingencyActivePowerBalance,
         ActivePowerVariable,
         attribute_device_map,
@@ -1162,7 +1169,7 @@ function construct_service!(
         model,
         network_model,
     )
-
+    
     add_to_expression!(
         container,
         PostContingencyNodalActivePowerDeployment,
@@ -1239,14 +1246,14 @@ function construct_service!(
 end
 
 """
-Default implementation to add variables to PostContingencySystemBalanceExpressions for G-1 formulation with reserves
+Default implementation to add active power variables variables to PostContingencySystemBalanceExpressions for G-1 formulation with reserves
 """
 function add_to_expression!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::Type{T},
     ::Type{U},
-    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    attribute_device_map::Vector{NamedTuple{(:component, :supplemental_attribute), Tuple{V, PSY.Outage}}},
     service::R,
     reserves_model::ServiceModel{R, F},
     network_model::NetworkModel{N},
@@ -1260,7 +1267,61 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
-    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.Outage, service )
+    
+    expression = lazy_container_addition!(
+            container, 
+            T(), 
+            R, 
+            IS.get_uuid.(associated_outages), 
+            time_steps;
+            meta = service_name
+            )
+
+    for (d, outage) in attribute_device_map
+        if !(outage in associated_outages)
+            continue
+        end
+        name_outage = IS.get_uuid(outage)
+        name = PSY.get_name(d)
+        variable = get_variable(container, U(), typeof(d))
+        mult = get_variable_multiplier( U(), typeof(d), F() )
+
+        for t in time_steps
+            _add_to_jump_expression!(
+                expression[name_outage, t],
+                variable[name, t],
+                mult,
+            )
+        end
+    end
+    return
+end
+
+
+"""
+Default implementation to add Reserve deployment variables to PostContingencySystemBalanceExpressions for G-1 formulation with reserves
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyActivePowerBalance,
+    U <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes( PSY.Outage, service )
 
     expression = lazy_container_addition!(
             container, 
@@ -1296,9 +1357,11 @@ function add_to_expression!(
             end
         end
     end
-
+    
     return
 end
+
+
 
 function add_constraints!(
     container::OptimizationContainer,

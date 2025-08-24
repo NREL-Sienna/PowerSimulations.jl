@@ -11,7 +11,7 @@ get_variable_lower_bound(::PostContingencyActivePowerReserveDeploymentVariable, 
 get_variable_warm_start_value(::PostContingencyActivePowerReserveDeploymentVariable, d::PSY.Reserve, ::AbstractSecurityConstrainedReservesFormulation) = 0.0
 get_variable_multiplier(::AbstractContingencyVariableType, ::Type{<:PSY.Reserve{PSY.ReserveDown}}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0
 get_variable_multiplier(::AbstractContingencyVariableType, ::Type{<:PSY.Reserve{PSY.ReserveUp}}, ::AbstractSecurityConstrainedReservesFormulation) = 1.0
-get_variable_multiplier(::VariableType, ::Type{<:PSY.Generator}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0 #TODO review here
+get_variable_multiplier(::VariableType, ::Type{<:PSY.Generator}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0
 
 ############################### ActivePowerReserveVariable, Reserve #########################################
 get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
