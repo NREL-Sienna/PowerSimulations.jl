@@ -1019,7 +1019,7 @@ function add_variables!(
     time_steps = get_time_steps(container) 
     binary = get_variable_binary(variable_type(), R, formulation)
 
-    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.UnplannedOutage, service )
 
     variable = lazy_container_addition!(
         container,
@@ -1094,7 +1094,7 @@ function construct_service!(
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     add_feedforward_arguments!(container, model, service)
 
-    associated_outages = PSY.get_supplemental_attributes( PSY.GeometricDistributionForcedOutage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.UnplannedOutage, service )
     if isempty(associated_outages)
         @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for that service."
         return
@@ -1135,7 +1135,7 @@ function construct_service!(
         model,
     )
 
-    associated_outages = PSY.get_supplemental_attributes( PSY.Outage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.UnplannedOutage, service )
     if isempty(associated_outages)
         @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for that service."
         return
@@ -1155,13 +1155,12 @@ function construct_service!(
     
     attribute_device_map = PSY.get_component_supplemental_attribute_pairs(
                                 PSY.Generator,
-                                PSY.Outage,
+                                PSY.UnplannedOutage,
                                 sys
                             )
 
     add_to_expression!(
         container,
-        sys,
         PostContingencyActivePowerBalance,
         ActivePowerVariable,
         attribute_device_map,
@@ -1169,7 +1168,7 @@ function construct_service!(
         model,
         network_model,
     )
-    
+    #THIS SHOULD BE DONE SIMILAR TO THE LAST ONE... SPLIT IN 2 ONE TO AD CONTINGENCY RESPONSE VARIABLES AND THE OTHER THE ACTIVE POWER VARIABLES
     add_to_expression!(
         container,
         PostContingencyNodalActivePowerDeployment,
@@ -1250,10 +1249,9 @@ Default implementation to add active power variables variables to PostContingenc
 """
 function add_to_expression!(
     container::OptimizationContainer,
-    sys::PSY.System,
     ::Type{T},
     ::Type{U},
-    attribute_device_map::Vector{NamedTuple{(:component, :supplemental_attribute), Tuple{V, PSY.Outage}}},
+    attribute_device_map::Vector{NamedTuple{(:component, :supplemental_attribute), Tuple{V, PSY.UnplannedOutage}}},
     service::R,
     reserves_model::ServiceModel{R, F},
     network_model::NetworkModel{N},
@@ -1267,7 +1265,7 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
-    associated_outages = PSY.get_supplemental_attributes( PSY.Outage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.UnplannedOutage, service )
     
     expression = lazy_container_addition!(
             container, 
@@ -1321,7 +1319,7 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
-    associated_outages = PSY.get_supplemental_attributes( PSY.Outage, service )
+    associated_outages = PSY.get_supplemental_attributes( PSY.UnplannedOutage, service )
 
     expression = lazy_container_addition!(
             container, 
