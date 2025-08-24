@@ -1627,7 +1627,7 @@ function get_expression(container::OptimizationContainer, key::ExpressionKey)
     if var === nothing
         throw(
             IS.InvalidValue(
-                "constraint $key is not stored. $(collect(keys(container.expressions)))",
+                "expression $key is not stored. $(collect(keys(container.expressions)))",
             ),
         )
     end
@@ -2053,11 +2053,12 @@ function lazy_container_addition!(
     axs...;
     kwargs...,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    if !has_container_key(container, T, U)
+    meta = get(kwargs, :meta, IS.Optimization.CONTAINER_KEY_EMPTY_META)
+    if !has_container_key(container, T, U, meta)
         expr_container =
             add_expression_container!(container, expression, U, axs...; kwargs...)
     else
-        expr_container = get_expression(container, expression, U)
+        expr_container = get_expression(container, expression, U, meta)
     end
     return expr_container
 end
