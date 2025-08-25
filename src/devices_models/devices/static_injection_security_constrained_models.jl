@@ -517,7 +517,6 @@ function add_to_expression!(
     end
 
     expression = get_expression(container, T(), PSY.ACBus)
-    ptdf = get_PTDF_matrix(network_model)
 
     if W <: AbstractSecurityConstrainedReservesFormulation
         variable_outages = get_variable(
@@ -1168,15 +1167,17 @@ function construct_service!(
         model,
         network_model,
     )
-    #THIS SHOULD BE DONE SIMILAR TO THE LAST ONE... SPLIT IN 2 ONE TO AD CONTINGENCY RESPONSE VARIABLES AND THE OTHER THE ACTIVE POWER VARIABLES
+    
+    
     add_to_expression!(
         container,
+        sys,
         PostContingencyNodalActivePowerDeployment,
         PostContingencyActivePowerReserveDeploymentVariable,
         contributing_devices,
+        service,
         model,
-        network_model;
-        service = service,
+        network_model,
     )
 
     # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
@@ -1340,9 +1341,8 @@ function add_to_expression!(
 
         for d in contributing_devices
             name = PSY.get_name(d)
-            device_is_in_reserve_devices = name in associated_devices
             
-            if device_is_in_reserve_devices
+            if name in associated_devices
                 continue
             end
 
@@ -1359,6 +1359,72 @@ function add_to_expression!(
     return
 end
 
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyNodalActivePowerDeployment,
+    U <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes( PSY.UnplannedOutage, service )
+
+    ptdf = get_PTDF_matrix(network_model)
+    bus_numbers = PNM.get_bus_axis(ptdf)
+
+    expression = lazy_container_addition!(
+            container, 
+            T(), 
+            R, 
+            IS.get_uuid.(associated_outages), 
+            bus_numbers,
+            time_steps;
+            meta = service_name
+            )
+
+    
+    reserve_deployment_variable = get_variable(container, U(), R, service_name)
+    mult = get_variable_multiplier( U(), R, F() ) 
+    
+    network_reduction = get_network_reduction(network_model)
+
+    for outage in associated_outages
+        associated_devices = PSY.get_name.( PSY.get_associated_components( sys, outage; component_type = PSY.Generator ) )
+        name_outage = IS.get_uuid(outage)
+
+        for d in contributing_devices
+            name = PSY.get_name(d)
+            
+            if name in associated_devices
+                continue
+            end
+
+            bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expression[name_outage, bus_no, t],
+                    reserve_deployment_variable[name_outage, name, t],
+                    mult,
+                )
+            end
+        end
+    end
+    
+    return
+end
 
 
 function add_constraints!(
