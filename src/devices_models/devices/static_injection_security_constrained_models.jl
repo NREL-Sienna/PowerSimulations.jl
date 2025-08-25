@@ -1193,6 +1193,18 @@ function construct_service!(
     )
 
     # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
+
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyBranchFlow,
+        FlowActivePowerVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
     add_to_expression!(
         container,
         sys,
@@ -1494,6 +1506,63 @@ function add_to_expression!(
                 variable[name, t],
                 mult,
             )
+        end
+    end
+
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyBranchFlow,
+    U <: FlowActivePowerVariable,
+    V <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+    network_reduction = get_network_reduction(network_model)
+    branches_names = PNM.get_retained_branches_names(network_reduction)
+
+    expression = lazy_container_addition!(
+        container,
+        T(),
+        R,
+        IS.get_uuid.(associated_outages),
+        branches_names,
+        time_steps;
+        meta = service_name,
+    )
+
+    for outage in associated_outages
+        name_outage = IS.get_uuid(outage)
+        for branch in branches_names
+            flow_variables = get_variable(
+                container,
+                U(),
+                typeof(get_component(PSY.ACTransmission, sys, branch)),
+            )
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expression[name_outage, branch, t],
+                    flow_variables[branch, t],
+                    1.0,
+                )
+            end
         end
     end
 
