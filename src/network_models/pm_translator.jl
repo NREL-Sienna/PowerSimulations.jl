@@ -11,12 +11,13 @@ const PM_BUSTYPES = Dict{PSY.ACBusTypes, Int}(
 
 struct PMmap
     bus::Dict{Int, PSY.ACBus}
-    arcs::Dict{PM_MAP_TUPLE, <:PSY.ACBranch}
+    arcs::Dict{Tuple{Int, Int}, PM_MAP_TUPLE}
     arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalGenericHVDCLine}
 end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.PhaseShiftingTransformer,
     ::Type{PhaseAngleControl},
     ::Type{<:PM.AbstractDCPModel},
@@ -48,6 +49,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.PhaseShiftingTransformer,
     ::Type{D},
     ::Type{<:PM.AbstractPowerModel},
@@ -79,6 +81,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.PhaseShiftingTransformer,
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
@@ -107,6 +110,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.Transformer2W,
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -138,6 +142,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.Transformer2W,
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
@@ -166,6 +171,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.TapTransformer,
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -197,6 +203,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.TapTransformer,
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
@@ -225,6 +232,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.ACBranch,
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -254,6 +262,7 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    ::Tuple{Int, Int},
     branch::PSY.ACBranch,
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
@@ -275,6 +284,40 @@ function get_branch_to_pm(
         "transformer" => false,
         "tap" => 1.0,
     )
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
+    double_circuit::Set{PSY.ACTransmission},
+    T::Type{<:AbstractBranchFormulation},
+    U::Type{<:PM.AbstractDCPModel},
+)
+    branch_pm_dicts =
+        [get_branch_to_pm(ix, arc_tuple, branch, T, U) for branch in double_circuit]
+    PM_branch = branch_pm_dicts[1]
+    PM_branch["rate_a"] = minimum([x["rate_a"] for x in branch_pm_dicts])
+    PM_branch["rate_b"] = minimum([x["rate_b"] for x in branch_pm_dicts])
+    PM_branch["rate_c"] = minimum([x["rate_c"] for x in branch_pm_dicts])
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
+    series_chain::Vector{Any},
+    T::Type{<:AbstractBranchFormulation},
+    U::Type{<:PM.AbstractDCPModel},
+)
+    branch_pm_dicts =
+        [get_branch_to_pm(ix, arc_tuple, segment, T, U) for segment in series_chain]
+    PM_branch = branch_pm_dicts[1]
+    PM_branch["rate_a"] = minimum([x["rate_a"] for x in branch_pm_dicts])
+    PM_branch["rate_b"] = minimum([x["rate_b"] for x in branch_pm_dicts])
+    PM_branch["rate_c"] = minimum([x["rate_c"] for x in branch_pm_dicts])
+    PM_branch["f_bus"] = arc_tuple[1]
+    PM_branch["t_bus"] = arc_tuple[2]
     return PM_branch
 end
 
@@ -410,27 +453,34 @@ function get_branches_to_pm(
     start_idx = 0,
 ) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
-    PMmap_br = Dict{PM_MAP_TUPLE, T}()
+    PMmap_br = Dict{Tuple{Int, Int}, PM_MAP_TUPLE}()
 
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    ix = 1
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
-        if comp_type <: TwoTerminalHVDCTypes
+        if comp_type <: PSY.TwoTerminalHVDC
             continue
         end
         !(comp_type <: T) && continue
-        start_idx += length(PM_branches)
-        for (i, branch) in enumerate(get_available_components(device_model, sys))
-            if PSY.get_name(branch) ∈ retained_branches_names
-                ix = i + start_idx
-                PM_branches["$(ix)"] =
-                    get_branch_to_pm(ix, branch, get_formulation(device_model), S)
+        for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
+            network_reduction_map = all_branch_maps_by_type[map]
+            !haskey(network_reduction_map, comp_type) && continue
+            for (arc_tuple, reduction_entry) in network_reduction_map[comp_type]
+                PM_branches["$(ix)"] = get_branch_to_pm(
+                    ix,
+                    arc_tuple,
+                    reduction_entry,
+                    get_formulation(device_model),
+                    S,
+                )
                 if PM_branches["$(ix)"]["br_status"] == true
                     f = PM_branches["$(ix)"]["f_bus"]
                     t = PM_branches["$(ix)"]["t_bus"]
-                    PMmap_br[(from_to = (ix, f, t), to_from = (ix, t, f))] = branch
+                    PMmap_br[arc_tuple] = (from_to = (ix, f, t), to_from = (ix, t, f))
                 end
+                ix += 1
             end
         end
     end
@@ -443,7 +493,7 @@ function get_branches_to_pm(
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
-) where {T <: TwoTerminalHVDCTypes, S <: PM.AbstractPowerModel}
+) where {T <: PSY.TwoTerminalHVDC, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{PM_MAP_TUPLE, T}()
 
@@ -509,7 +559,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
     two_terminal_dc_lines, PMmap_dc = get_branches_to_pm(
         sys,
         get_network_model(template),
-        TwoTerminalHVDCTypes,
+        PSY.TwoTerminalHVDC,
         template.branches,
         length(ac_lines),
     )

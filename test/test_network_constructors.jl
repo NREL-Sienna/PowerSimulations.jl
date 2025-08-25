@@ -1010,3 +1010,144 @@ end
     @test interarea_flow[5, "1_2"] == 0.0
     @test interarea_flow[6, "1_2"] == 0.0
 end
+
+function add_dummy_time_series_data!(sys)
+    # Attach dummy data so the problem builds:
+    dummy_data = Dict(
+        DateTime("2020-01-01T08:00:00") => [5.0, 6, 7, 7, 7],
+        DateTime("2020-01-01T08:30:00") => [9.0, 9, 9, 9, 8],
+        DateTime("2020-01-01T09:00:00") => [6.0, 6, 5, 5, 4],
+    )
+    resolution = Dates.Minute(5)
+    dummy_forecast = Deterministic("max_active_power", dummy_data, resolution)
+    load = collect(get_components(StandardLoad, sys))[1]
+    add_time_series!(sys, load, dummy_forecast)
+    return sys
+end
+
+function get_n_constraints_in_container(ps_model)
+    return sum([
+        size(v)[1] * size(v)[2] for v in values(ps_model.internal.container.constraints)
+    ])
+end
+
+function get_n_variables_in_container(ps_model)
+    return sum([
+        size(v)[1] * size(v)[2] for v in values(ps_model.internal.container.variables)
+    ])
+end
+
+@testset "Network reductions - PTDF" begin
+    # Base Case : Only reductions for double circuits:
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    # (3 double circuits) x (5 timesteps) = 15 additional variables in container compared to JuMP model: 
+    moi_tests(ps_model, 60, 0, 60, 60, 65, false)
+    @test get_n_variables_in_container(ps_model) == 75
+    @test get_n_constraints_in_container(ps_model) == 185
+
+    # Radial Reduction : 
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 55, 0, 55, 55, 60, false)
+    @test get_n_variables_in_container(ps_model) == 70
+    @test get_n_constraints_in_container(ps_model) == 170
+
+    # Degree Two Reduction : 
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 35, 0, 35, 35, 40, false)
+    @test get_n_variables_in_container(ps_model) == 75
+    @test get_n_constraints_in_container(ps_model) == 110
+    vars = ps_model.internal.container.variables
+    line_flow =
+        vars[InfrastructureSystems.Optimization.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )]
+    tfw_flow = vars[InfrastructureSystems.Optimization.VariableKey{
+        FlowActivePowerVariable,
+        Transformer2W,
+    }(
+        "",
+    )]
+    # Parallel branch within chain to d2: 
+    @test line_flow["2-10-i_2_double_circuit", :] ==
+          line_flow["2-10-i_1_double_circuit", :] ==
+          line_flow["10-3-i_1", :]
+    # D2 chain with different component types:
+    @test line_flow["1-9-i_1", :] == tfw_flow["9-5-i_1", :]
+    # Parallel branch within chain to d2 with mixed types (parallel comes from tracker): 
+    @test line_flow["3-11-i_1", :] == tfw_flow["11-4-i_1_double_circuit", :] ==
+          tfw_flow["11-4-i_2_double_circuit", :]
+
+    # Radial + Degree Two Reduction : 
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 30, 0, 30, 30, 35, false)
+    @test get_n_variables_in_container(ps_model) == 70
+    @test get_n_constraints_in_container(ps_model) == 95
+end

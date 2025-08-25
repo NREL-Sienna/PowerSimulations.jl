@@ -1,3 +1,16 @@
+const REDUCED_BRANCH_VARIABLE_DICT = Dict{
+    Type{<:PSY.ACTransmission},
+    Dict{
+        Type{<:InfrastructureSystems.Optimization.VariableType},
+        Dict{String, Dict{Int, JuMP.VariableRef}},
+    },
+}
+const REDUCED_BRANCH_CONSTRAINT_DICT =
+    Dict{
+        Type{<:PSY.ACTransmission},
+        Dict{Type{<:IS.Optimization.ConstraintType}, Vector{String}},
+    }
+
 function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
     if !isconcretetype(T)
         throw(
@@ -42,6 +55,8 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
     modeled_branch_types::Vector{DataType}
+    reduced_branch_variable_tracker::REDUCED_BRANCH_VARIABLE_DICT
+    reduced_branch_constraint_tracker::REDUCED_BRANCH_CONSTRAINT_DICT
 
     function NetworkModel(
         ::Type{T};
@@ -69,6 +84,8 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
             Vector{DataType}(),
+            REDUCED_BRANCH_VARIABLE_DICT(),
+            REDUCED_BRANCH_CONSTRAINT_DICT(),
         )
     end
 end
@@ -141,6 +158,7 @@ function instantiate_network_model(
     if !isempty(model.network_reduction)
         check_network_reduction_compatibility(T)
     end
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
@@ -158,7 +176,6 @@ function instantiate_network_model(
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
-
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
@@ -235,12 +252,12 @@ function instantiate_network_model(
     if model.reduce_radial_branches
         @assert !isempty(model.PTDF_matrix.network_reduction_data)
     end
-    model.network_reduction = model.PTDF_matrix.network_reduction_data
     model.subnetworks = _make_subnetworks_from_subnetwork_axes(model.PTDF_matrix)
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 

@@ -14,7 +14,16 @@ const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = DenseAxisArray{JuMP.ConstraintRef}
-const JuMPAffineExpressionDArray = JuMP.Containers.DenseAxisArray{
+const JuMPAffineExpressionDArrayStringInt = JuMP.Containers.DenseAxisArray{
+    JuMP.AffExpr,
+    2,
+    Tuple{Vector{String}, UnitRange{Int64}},
+    Tuple{
+        JuMP.Containers._AxisLookup{Dict{String, Int64}},
+        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
+    },
+}
+const JuMPAffineExpressionDArrayIntInt = JuMP.Containers.DenseAxisArray{
     JuMP.AffExpr,
     2,
     Tuple{Vector{Int64}, UnitRange{Int64}},
@@ -38,8 +47,6 @@ const JuMPVariableArray = DenseAxisArray{JuMP.VariableRef}
 const JumpSupportedLiterals =
     Union{Number, Vector{<:Tuple{Number, Number}}, Tuple{Vararg{Number}}}
 
-const TwoTerminalHVDCTypes =
-    Union{PSY.TwoTerminalGenericHVDCLine, PSY.TwoTerminalVSCLine, PSY.TwoTerminalLCCLine}
 const OfferCurveCost = Union{PSY.MarketBidCost, PSY.ImportExportCost}
 # Settings constants
 const UNSET_HORIZON = Dates.Millisecond(0)
