@@ -1135,6 +1135,7 @@ function construct_service!(
 
     add_constraints!(
         container,
+        sys,
         PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
         ActivePowerReserveVariable,
         PostContingencyActivePowerReserveDeploymentVariable,
@@ -1544,90 +1545,67 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
+    sys::PSY.System,
     T::Type{<:PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint},
     X::Type{<:VariableType},
     U::Type{<:AbstractContingencyVariableType},
-    devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
-    generators_outages::Union{IS.FlattenIteratorWrapper{G}, Vector{G}},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
     service::R,
     model::ServiceModel{R, W},
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     V <: PSY.Generator,
-    G <: PSY.Generator,
     R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
     W <: AbstractSecurityConstrainedReservesFormulation,
 }
     time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-    set_name = [PSY.get_name(r) for r in devices]
-    set_outages_name = [PSY.get_name(r) for r in generators_outages]
+    outage = IS.get_uuid(first(associated_outages))
 
-    if !haskey(container.constraints, ConstraintKey(T, G, "up")) &&
-       (R <: PSY.Reserve{PSY.ReserveUp})
-        con =
-            add_constraints_container!(
-                container,
-                T(),
-                G,
-                set_outages_name,
-                set_name,
-                time_steps;
-                meta = "up",
-            )
-    end
-    if !haskey(container.constraints, ConstraintKey(T, G, "dn")) &&
-       (R <: PSY.Reserve{PSY.ReserveDown})
-        con =
-            add_constraints_container!(
-                container,
-                T(),
-                G,
-                set_outages_name,
-                set_name,
-                time_steps;
-                meta = "dn",
-            )
-    end
-
-    if (R <: PSY.Reserve{PSY.ReserveUp})
-        con = get_constraint(
+    constraint =
+        add_constraints_container!(
             container,
-            ConstraintKey(T, G, "up"),
+            T(),
+            R,
+            [IS.get_uuid(r) for r in associated_outages],
+            [PSY.get_name(r) for r in contributing_devices],
+            time_steps;
+            meta = service_name,
         )
-    else
-        con = get_constraint(
-            container,
-            ConstraintKey(T, G, "dn"),
-        )
-    end
 
     variable = get_variable(
         container,
         X(),
         R,
-        PSY.get_name(service),
+        service_name,
     )
 
     variable_outage = get_variable(
         container,
         U(),
         R,
-        PSY.get_name(service),
+        service_name,
     )
 
-    for device in devices
-        name = get_name(device)
-        @debug "add post-contingency active_power_Reserve_Deployment_Limit_constraint" name
+    for outage in associated_outages
+        associated_devices =
+            PSY.get_name.(
+                PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
+            )
+        name_outage = IS.get_uuid(outage)
 
-        for device_outage in generators_outages
-            name_outage = get_name(device_outage)
-            if name == name_outage
+        for device in contributing_devices
+            name = get_name(device)
+            @debug "adding PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint for device $name and outage $name_outage"
+
+            if name in associated_devices
                 continue
             end
 
             for t in time_steps
-                con[name_outage, name, t] = JuMP.@constraint(
+                constraint[name_outage, name, t] = JuMP.@constraint(
                     get_jump_model(container),
                     variable_outage[name_outage, name, t] <=
                     variable[name, t]
@@ -1635,5 +1613,6 @@ function add_constraints!(
             end
         end
     end
+
     return
 end
