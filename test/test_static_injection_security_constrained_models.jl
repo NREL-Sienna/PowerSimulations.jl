@@ -21,7 +21,7 @@
             PSY.VariableReserve{ReserveDown},
             "Reserve2",
         ),
-        PSI.ConstraintKey(PostContingengyGenerationBalanceConstraint, PSY.ThermalStandard),
+        PSI.ConstraintKey(PostContingencyGenerationBalanceConstraint, PSY.ThermalStandard),
         PSI.ConstraintKey(
             PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
             PSY.ThermalStandard,

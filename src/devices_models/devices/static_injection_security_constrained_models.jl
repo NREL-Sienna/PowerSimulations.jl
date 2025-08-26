@@ -191,7 +191,7 @@ function construct_device!(
         )
         add_constraints!(
             container,
-            PostContingengyGenerationBalanceConstraint,
+            PostContingencyGenerationBalanceConstraint,
             devices,
             generator_outages,
             model,
@@ -424,7 +424,7 @@ function add_constraints!(
     ::DeviceModel{X, U},
     network_model::NetworkModel{V},
 ) where {
-    R <: PostContingengyGenerationBalanceConstraint,
+    R <: PostContingencyGenerationBalanceConstraint,
     S <: PSY.Generator,
     T <: PSY.Generator,
     X <: PSY.Generator,
@@ -457,7 +457,7 @@ function add_constraints!(
     ::Union{DeviceModel{X, U}, ServiceModel{X, U}},
     network_model::NetworkModel{V},
 ) where {
-    R <: PostContingengyGenerationBalanceConstraint,
+    R <: PostContingencyGenerationBalanceConstraint,
     S <: PSY.Generator,
     T <: PSY.Generator,
     X <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
@@ -1144,7 +1144,7 @@ function construct_service!(
         model,
         network_model,
     )
-
+#############################
     add_constraints!(
         container,
         PostContingencyGenerationBalanceConstraint,
@@ -1152,7 +1152,7 @@ function construct_service!(
         model,
         network_model,
     )
-
+##########################################
     #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT B
     add_constraints!(
         container,
