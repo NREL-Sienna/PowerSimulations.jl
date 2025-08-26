@@ -451,32 +451,41 @@ Add post-contingency Generation Balance Constraints for Generators for G-1 formu
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{R},
-    devices::Union{IS.FlattenIteratorWrapper{S}, Vector{S}},
-    generator_outages::Union{IS.FlattenIteratorWrapper{T}, Vector{T}},
-    ::Union{DeviceModel{X, U}, ServiceModel{X, U}},
-    network_model::NetworkModel{V},
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    model::ServiceModel{R, F},
+    ::NetworkModel{<:AbstractPTDFModel},
 ) where {
-    R <: PostContingencyGenerationBalanceConstraint,
-    S <: PSY.Generator,
-    T <: PSY.Generator,
-    X <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
-    U <: AbstractSecurityConstrainedReservesFormulation,
-    V <: AbstractPTDFModel,
+    T <: PostContingencyGenerationBalanceConstraint,
+    U <: PostContingencyActivePowerBalance,
+    V <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: AbstractSecurityConstrainedReservesFormulation,
 }
     time_steps = get_time_steps(container)
-    device_outages_names = [PSY.get_name(d) for d in generator_outages]
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-    expressions = get_expression(container, PostContingencyActivePowerBalance(), T)
-    constraint =
-        add_constraints_container!(container, R(), T, device_outages_names, time_steps)
+    expressions = get_expression(container, U(), R, service_name)
+
+    constraint = add_constraints_container!(
+        container, 
+        T(), 
+        R, 
+        [IS.get_uuid(d) for d in associated_outages], 
+        time_steps; 
+        meta = service_name
+        )
+
     j_model = get_jump_model(container)
 
-    for t in time_steps, d_outage in device_outages_names
-        constraint[d_outage, t] =
-            JuMP.@constraint(j_model, expressions[d_outage, t] == 0)
+    for t in time_steps, outage in associated_outages
+        name_outage = IS.get_uuid(outage)
+        constraint[name_outage, t] =
+            JuMP.@constraint(j_model, expressions[name_outage, t] == 0)
     end
-
     return
 end
 
@@ -1144,15 +1153,17 @@ function construct_service!(
         model,
         network_model,
     )
-#############################
+
     add_constraints!(
         container,
         PostContingencyGenerationBalanceConstraint,
+        PostContingencyActivePowerBalance,
         contributing_devices,
+        service,
         model,
         network_model,
     )
-##########################################
+
     #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT B
     add_constraints!(
         container,
@@ -1561,8 +1572,6 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
-
-    outage = IS.get_uuid(first(associated_outages))
 
     constraint =
         add_constraints_container!(
