@@ -558,89 +558,6 @@ function add_to_expression!(
     return
 end
 
-"""
-Default implementation to add variables to PostContingencySystemBalanceExpressions
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::Type{T},
-    ::Type{F},
-    ::Type{G},
-    ::Type{C},
-    devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
-    devices_outages::Union{IS.FlattenIteratorWrapper{X}, Vector{X}},
-    device_model::Union{DeviceModel{Y, W}, ServiceModel{Y, W}},
-    network_model::NetworkModel{N};
-    service::R = nothing,
-) where {
-    T <: PostContingencyBranchFlow,
-    F <: FlowActivePowerVariable,
-    G <: VariableType,
-    C <: AbstractContingencyVariableType,
-    V <: PSY.Generator,
-    X <: PSY.Generator,
-    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
-    W <: Union{AbstractSecurityConstrainedUnitCommitment,
-        AbstractSecurityConstrainedReservesFormulation},
-    N <: AbstractPTDFModel,
-    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, Nothing},
-}
-    time_steps = get_time_steps(container)
-    ptdf = get_PTDF_matrix(network_model)
-    network_reduction = get_network_reduction(network_model)
-    names_branches = PNM.get_retained_branches_names(network_reduction)
-
-    expression = lazy_container_addition!(
-        container,
-        T(),
-        X,
-        get_name.(devices_outages),
-        names_branches,
-        time_steps,
-    )
-    variable = get_variable(container, G(), V)
-    #variable_outages = get_variable(container, C(), X)
-    nodal_power_deployment_expressions =
-        get_expression(container, PostContingencyNodalActivePowerDeployment(), PSY.ACBus)
-    jump_model = get_jump_model(container)
-
-    for name in names_branches
-        flow_variables = get_variable(
-            container,
-            F(),
-            typeof(get_component(PSY.ACTransmission, sys, name)),
-        )
-        ptdf_col = ptdf[name, :]
-        for d_outage in devices_outages
-            name_outage = PSY.get_name(d_outage)
-            bus_number_outage = PSY.get_number(PSY.get_bus(d_outage))
-
-            expression[name_outage, name, :] .= _make_post_contingency_flow_expressions!(
-                jump_model,
-                name * name_outage,
-                time_steps,
-                ptdf_col,
-                nodal_power_deployment_expressions[name_outage, :, :].data,
-            )
-            for t in time_steps
-                _add_to_jump_expression!(
-                    expression[name_outage, name, t],
-                    flow_variables[name, t],
-                    1.0,
-                )
-                #TODO extend to G-k
-                _add_to_jump_expression!(
-                    expression[name_outage, name, t],
-                    variable[name_outage, t],
-                    (-1) * ptdf[name, bus_number_outage],
-                )
-            end
-        end
-    end
-    return
-end
-
 function _make_post_contingency_flow_expressions!(
     jump_model::JuMP.Model,
     name_thread::String,
@@ -1209,14 +1126,11 @@ function construct_service!(
         container,
         sys,
         PostContingencyBranchFlow,
-        FlowActivePowerVariable,
-        ActivePowerVariable,
-        PostContingencyActivePowerReserveDeploymentVariable,
+        PostContingencyNodalActivePowerDeployment,
         contributing_devices,
-        generator_outages,
+        service,
         model,
-        network_model;
-        service = service,
+        network_model,
     )
 
     add_constraints!(
@@ -1523,6 +1437,65 @@ function add_to_expression!(
     network_model::NetworkModel{N},
 ) where {
     T <: PostContingencyBranchFlow,
+    U <: PostContingencyNodalActivePowerDeployment,
+    V <: PSY.Generator,
+    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+    network_reduction = get_network_reduction(network_model)
+    branches_names = PNM.get_retained_branches_names(network_reduction)
+
+    expression = lazy_container_addition!(
+        container,
+        T(),
+        R,
+        IS.get_uuid.(associated_outages),
+        branches_names,
+        time_steps;
+        meta = service_name,
+    )
+
+    nodal_power_deployment_expressions = get_expression(container, U(), R, service_name)
+
+    jump_model = get_jump_model(container)
+    ptdf = get_PTDF_matrix(network_model)
+
+    for branch in branches_names
+        ptdf_col = ptdf[branch, :]
+
+        for outage in associated_outages
+            name_outage = IS.get_uuid(outage)
+
+            expression[name_outage, branch, :] .= _make_post_contingency_flow_expressions!(
+                jump_model,
+                branch * string(name_outage),
+                time_steps,
+                ptdf_col,
+                nodal_power_deployment_expressions[name_outage, :, :].data,
+            )
+        end
+    end
+
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyBranchFlow,
     U <: FlowActivePowerVariable,
     V <: PSY.Generator,
     R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
@@ -1547,14 +1520,14 @@ function add_to_expression!(
         meta = service_name,
     )
 
-    for outage in associated_outages
-        name_outage = IS.get_uuid(outage)
-        for branch in branches_names
-            flow_variables = get_variable(
-                container,
-                U(),
-                typeof(get_component(PSY.ACTransmission, sys, branch)),
-            )
+    for branch in branches_names
+        flow_variables = get_variable(
+            container,
+            U(),
+            typeof(get_component(PSY.ACTransmission, sys, branch)),
+        )
+        for outage in associated_outages
+            name_outage = IS.get_uuid(outage)
 
             for t in time_steps
                 _add_to_jump_expression!(
