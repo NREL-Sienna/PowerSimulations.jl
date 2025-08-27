@@ -303,6 +303,8 @@ end
 @testset "HVDCDispatch Model Tests" begin
     # Test to compare lossless models with lossless formulation
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
+    # Revert to previous rating before data change to prevent different optimal solutions for the lossless model and lossless formulation:
+    PSY.set_rating!(PSY.get_component(PSY.Line, sys_5, "6"), 2.0)
 
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
@@ -740,7 +742,8 @@ end
 
 @testset "Test Line and Monitored Line models with slacks" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rating!(PSY.get_component(Line, system, "2"), 0.0)
+    # This rating (0.247479) was previously inferred in PSY.check_component after setting the rating to 0.0 in the tests
+    set_rating!(PSY.get_component(Line, system, "2"), 0.247479)
     for (model, optimizer) in NETWORKS_FOR_TESTING
         if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel, SOCWRConicPowerModel]
             # Skip because the data is too in the feasibility margins for these models

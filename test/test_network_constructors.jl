@@ -90,7 +90,7 @@ end
         c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -152,7 +152,7 @@ end
         c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -202,9 +202,9 @@ end
         c_sys14_dc => [984, 432, 648, 552, 840],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 342000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 135000.0,
+        c_sys5 => 242000.0,
+        c_sys14 => 143000.0,
+        c_sys14_dc => 143000.0,
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(DCPPowerModel)
@@ -250,7 +250,7 @@ end
         c_sys14_dc => [2832, 432, 336, 240, 744],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -292,7 +292,7 @@ end
         c_sys14_dc => [648, 0, 648, 552, 384],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 300000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -375,7 +375,7 @@ end
     # TODO: add model specific constraints to this list. Bi-directional flows etc
     constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -550,7 +550,7 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482587, 100)
 
     results = OptimizationProblemResults(ps_model)
     hvdc_flow =
@@ -891,7 +891,7 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 666147, 1)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 497551, 1)
 
     results = OptimizationProblemResults(ps_model)
     interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
@@ -1001,7 +1001,7 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 671937, 1)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 489842, 1)
 
     results = OptimizationProblemResults(ps_model)
     interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
