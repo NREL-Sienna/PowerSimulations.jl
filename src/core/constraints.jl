@@ -1,3 +1,5 @@
+abstract type PostContingencyConstraintType <: ConstraintType end
+
 struct AbsoluteValueConstraint <: ConstraintType end
 """
 
@@ -58,7 +60,7 @@ The specified constraint is generally formulated as:
 \\sum_{g \\in \\mathcal{G}_c} p_{g,t} &= \\sum_{g \\in \\mathcal{G}} \\Delta p_{g, c, t} &\\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1, \\dots, T\\}
 ```
 """
-struct PostContingencyGenerationBalanceConstraint <: ConstraintType end
+struct PostContingencyGenerationBalanceConstraint <: PostContingencyConstraintType end
 
 """
 Struct to create the duration constraint for commitment formulations, i.e. min-up and min-down.
@@ -286,7 +288,7 @@ r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D
 ```
 """
 struct RampConstraint <: ConstraintType end
-struct PostContingencyRampConstraint <: ConstraintType end
+struct PostContingencyRampConstraint <: PostContingencyConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 """
@@ -304,7 +306,7 @@ The specified constraint is formulated as:
 ```
 """
 struct RateLimitConstraint <: ConstraintType end
-struct PostContingencyRateLimitConstraintB <: ConstraintType end
+struct PostContingencyRateLimitConstraintB <: PostContingencyConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
@@ -479,6 +481,9 @@ in its most basic formulation is of the form:
 P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
 ```
 """
+
+abstract type PostContingencyVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 """
 Struct to create the constraint to limit active power output expressions.
@@ -516,7 +521,8 @@ in its most basic formulation is of the form:
 P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
 ```
 """
-struct PostContingencyActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+struct PostContingencyActivePowerVariableLimitsConstraint <:
+       PostContingencyVariableLimitsConstraint end
 
 """
 Struct to create the constraint to limit post-contingency active power reserve deploymentexpressions.
@@ -530,7 +536,7 @@ in its most basic formulation is of the form:
 ```
 """
 struct PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint <:
-       PowerVariableLimitsConstraint end
+       PostContingencyVariableLimitsConstraint end
 
 """
 Struct to create the constraint to limit reactive power expressions.
