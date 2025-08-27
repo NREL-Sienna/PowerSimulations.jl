@@ -530,7 +530,6 @@ function add_variables!(
     return
 end
 
-#TODO - rewrite loops for this method to use network reduction maps and not get_retained_branches_names
 function branch_rate_bounds!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
@@ -538,22 +537,23 @@ function branch_rate_bounds!(
     network_model::NetworkModel{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
-
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-    for d in devices
-        name = PSY.get_name(d)
-        if name ∈ retained_branches_names
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            name = first(_get_branch_names(reduction_entry))
+            rating = get_rating(reduction_entry)
             for t in get_time_steps(container)
-                JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
-                JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+                JuMP.set_upper_bound(var[name, t], rating)
+                JuMP.set_lower_bound(var[name, t], -1.0 * rating)
             end
         end
     end
     return
 end
 
-#TODO - rewrite loops for this method to use network reduction maps and not get_retained_branches_names
 function branch_rate_bounds!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{B},
@@ -566,15 +566,17 @@ function branch_rate_bounds!(
     ]
 
     time_steps = get_time_steps(container)
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-
-    for d in devices
-        name = PSY.get_name(d)
-        if name ∈ retained_branches_names
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            name = first(_get_branch_names(reduction_entry))
+            rating = get_rating(reduction_entry)
             for t in time_steps, var in vars
-                JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
-                JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+                JuMP.set_upper_bound(var[name, t], rating)
+                JuMP.set_lower_bound(var[name, t], -1.0 * rating)
             end
         end
     end
@@ -719,6 +721,15 @@ end
 
 ################################## Rate Limits constraint_infos ############################
 
+function get_rating(double_circuit::Set{PSY.ACTransmission})
+    return minimum([PSY.get_rating(circuit) for circuit in double_circuit])
+end
+function get_rating(series_chain::Vector{Any})
+    return minimum([PSY.get_rating(segment) for segment in series_chain])
+end
+function get_rating(device::T) where {T <: PSY.ACTransmission}
+    return PSY.get_rating(device)
+end
 """
 Min and max limits for Abstract Branch Formulation
 """
@@ -811,7 +822,7 @@ Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, U},
     network_model::NetworkModel{V},
 ) where {
@@ -913,64 +924,27 @@ function add_constraints!(
     return
 end
 
-function _constraint_without_slacks!(
-    container::OptimizationContainer,
-    constraint::JuMPConstraintArray,
-    rating_data::Vector{Tuple{String, Float64}},
-    time_steps::UnitRange{Int64},
-    retained_branches_names::Set{String},
-    var1::JuMPVariableArray,
-    var2::JuMPVariableArray,
-)
-    for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ retained_branches_names
-            for t in time_steps
-                constraint[branch_name, t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
-                )
-            end
-        end
-    end
-    return
-end
-
-function _constraint_with_slacks!(
-    container::OptimizationContainer,
-    constraint::JuMPConstraintArray,
-    rating_data::Vector{Tuple{String, Float64}},
-    time_steps::UnitRange{Int64},
-    retained_branches_names::Set{String},
-    var1::JuMPVariableArray,
-    var2::JuMPVariableArray,
-    slack_ub::JuMPVariableArray,
-)
-    for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ retained_branches_names
-            for t in time_steps
-                constraint[branch_name, t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[branch_name, t]^2 + var2[branch_name, t]^2 -
-                    slack_ub[branch_name, t] <= branch_rate^2
-                )
-            end
-        end
-    end
-    return
-end
-
-#TODO - rewrite loops for this method to use network reduction maps and not get_retained_branches_names
 """
 Add rate limit from to constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintFromTo},
-    devices::IS.FlattenIteratorWrapper{B},
+    ::IS.FlattenIteratorWrapper{B},
     device_model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
-    rating_data = [(PSY.get_name(h), PSY.get_rating(h)) for h in devices]
+    reduced_branch_contraint_tracker = network_model.reduced_branch_constraint_tracker
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    device_names = get_branch_name_constraint_axis(
+        all_branch_maps_by_type,
+        B,
+        RateLimitConstraintFromTo,
+        reduced_branch_contraint_tracker,
+    )
+    # Possible that all constraints are handled by other types:
+    isempty(device_names) && return
 
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerFromToVariable(), B)
@@ -979,53 +953,58 @@ function add_constraints!(
         container,
         cons_type(),
         B,
-        [r[1] for r in rating_data],
+        device_names,
         time_steps,
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
     use_slacks = get_use_slacks(device_model)
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
-        _constraint_with_slacks!(
-            container,
-            constraint,
-            rating_data,
-            time_steps,
-            Set(retained_branches_names),
-            var1,
-            var2,
-            slack_ub,
-        )
     end
-
-    _constraint_without_slacks!(
-        container,
-        constraint,
-        rating_data,
-        time_steps,
-        Set(retained_branches_names),
-        var1,
-        var2,
-    )
-
+    for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            branch_rate = get_rating(reduction_entry)
+            names = _get_branch_names(reduction_entry)
+            for ci_name in names
+                if ci_name in device_names
+                    for t in time_steps
+                        constraint[ci_name, t] = JuMP.@constraint(
+                            get_jump_model(container),
+                            var1[ci_name, t]^2 + var2[ci_name, t]^2 -
+                            (use_slacks ? slack_ub[ci_name, t] : 0.0) <= branch_rate^2
+                        )
+                    end
+                end
+            end
+        end
+    end
     return
 end
 
-#TODO - rewrite loops for this method to use network reduction maps and not get_retained_branches_names
 """
 Add rate limit to from constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintToFrom},
-    devices::IS.FlattenIteratorWrapper{B},
+    ::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
-    rating_data = [(PSY.get_name(h), PSY.get_rating(h)) for h in devices]
+    reduced_branch_contraint_tracker = network_model.reduced_branch_constraint_tracker
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    device_names = get_branch_name_constraint_axis(
+        all_branch_maps_by_type,
+        B,
+        RateLimitConstraintToFrom,
+        reduced_branch_contraint_tracker,
+    )
+    # Possible that all constraints are handled by other types:
+    isempty(device_names) && return
 
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerToFromVariable(), B)
@@ -1034,21 +1013,26 @@ function add_constraints!(
         container,
         cons_type(),
         B,
-        [r[1] for r in rating_data],
+        device_names,
         time_steps,
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-
-    for r in rating_data
-        if r[1] ∈ retained_branches_names
-            for t in time_steps
-                constraint[r[1], t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
-                )
+    for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            branch_rate = get_rating(reduction_entry)
+            names = _get_branch_names(reduction_entry)
+            for ci_name in names
+                if ci_name in device_names
+                    for t in time_steps
+                        constraint[ci_name, t] = JuMP.@constraint(
+                            get_jump_model(container),
+                            var1[ci_name, t]^2 + var2[ci_name, t]^2 <= branch_rate^2
+                        )
+                    end
+                end
             end
         end
     end
