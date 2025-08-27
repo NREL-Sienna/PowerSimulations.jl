@@ -292,7 +292,7 @@ function get_branch_to_pm(
     arc_tuple::Tuple{Int, Int},
     double_circuit::Set{PSY.ACTransmission},
     T::Type{<:AbstractBranchFormulation},
-    U::Type{<:PM.AbstractDCPModel},
+    U::Type{<:PM.AbstractPowerModel},
 )
     branch_pm_dicts =
         [get_branch_to_pm(ix, arc_tuple, branch, T, U) for branch in double_circuit]
@@ -308,7 +308,7 @@ function get_branch_to_pm(
     arc_tuple::Tuple{Int, Int},
     series_chain::Vector{Any},
     T::Type{<:AbstractBranchFormulation},
-    U::Type{<:PM.AbstractDCPModel},
+    U::Type{<:PM.AbstractPowerModel},
 )
     branch_pm_dicts =
         [get_branch_to_pm(ix, arc_tuple, segment, T, U) for segment in series_chain]

@@ -539,15 +539,18 @@ function branch_rate_bounds!(
     var = get_variable(container, FlowActivePowerVariable(), B)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, B)
     for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, B) && continue
         for reduction_entry in values(network_reduction_map[B])
             name = first(_get_branch_names(reduction_entry))
             rating = get_rating(reduction_entry)
-            for t in get_time_steps(container)
-                JuMP.set_upper_bound(var[name, t], rating)
-                JuMP.set_lower_bound(var[name, t], -1.0 * rating)
+            if name in branch_names
+                for t in get_time_steps(container)
+                    JuMP.set_upper_bound(var[name, t], rating)
+                    JuMP.set_lower_bound(var[name, t], -1.0 * rating)
+                end
             end
         end
     end
@@ -568,15 +571,18 @@ function branch_rate_bounds!(
     time_steps = get_time_steps(container)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, B)
     for map in ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, B) && continue
         for reduction_entry in values(network_reduction_map[B])
             name = first(_get_branch_names(reduction_entry))
             rating = get_rating(reduction_entry)
-            for t in time_steps, var in vars
-                JuMP.set_upper_bound(var[name, t], rating)
-                JuMP.set_lower_bound(var[name, t], -1.0 * rating)
+            if name in branch_names
+                for t in time_steps, var in vars
+                    JuMP.set_upper_bound(var[name, t], rating)
+                    JuMP.set_lower_bound(var[name, t], -1.0 * rating)
+                end
             end
         end
     end
@@ -725,7 +731,7 @@ function get_rating(double_circuit::Set{PSY.ACTransmission})
     return minimum([PSY.get_rating(circuit) for circuit in double_circuit])
 end
 function get_rating(series_chain::Vector{Any})
-    return minimum([PSY.get_rating(segment) for segment in series_chain])
+    return minimum([get_rating(segment) for segment in series_chain])
 end
 function get_rating(device::T) where {T <: PSY.ACTransmission}
     return PSY.get_rating(device)
