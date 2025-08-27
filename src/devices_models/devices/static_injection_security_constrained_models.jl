@@ -471,13 +471,13 @@ function add_constraints!(
     expressions = get_expression(container, U(), R, service_name)
 
     constraint = add_constraints_container!(
-        container, 
-        T(), 
-        R, 
-        [IS.get_uuid(d) for d in associated_outages], 
-        time_steps; 
-        meta = service_name
-        )
+        container,
+        T(),
+        R,
+        [IS.get_uuid(d) for d in associated_outages],
+        time_steps;
+        meta = service_name,
+    )
 
     j_model = get_jump_model(container)
 
@@ -595,107 +595,103 @@ Add branch post-contingency rate limit constraints for ACBranch after a G-k outa
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{PostContingencyRateLimitConstraintB},
-    branches::Union{
-        IS.FlattenIteratorWrapper{PSY.ACTransmission},
-        Vector{PSY.ACTransmission},
-    },
-    generators_outages::Vector{T},
-    device_model::Union{DeviceModel{Y, U}, ServiceModel{Y, U}},
-    network_model::NetworkModel{V},
+    cons_type::Type{T},
+    ::Type{U},
+    branches::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    device_model::Union{DeviceModel{R, F}, ServiceModel{R, F}},
+    network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {
-    T <: PSY.Generator,
-    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
-    U <: Union{AbstractSecurityConstrainedUnitCommitment,
+    T <: PostContingencyRateLimitConstraintB,
+    U <: PostContingencyBranchFlow,
+    V <: PSY.ACTransmission,
+    R <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: Union{AbstractSecurityConstrainedUnitCommitment,
         AbstractSecurityConstrainedReservesFormulation},
-    V <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in branches]
-    if !haskey(container.constraints, ConstraintKey(cons_type, T, "lb"))
-        con_lb =
-            add_constraints_container!(
-                container,
-                cons_type(),
-                T,
-                get_name.(generators_outages),
-                device_names,
-                time_steps;
-                meta = "lb",
-            )
 
-        con_ub =
-            add_constraints_container!(
-                container,
-                cons_type(),
-                T,
-                get_name.(generators_outages),
-                device_names,
-                time_steps;
-                meta = "ub",
-            )
-    end
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-    con_lb = get_constraint(
-        container,
-        ConstraintKey(cons_type, T, "lb"),
-    )
+    network_reduction = get_network_reduction(network_model)
+    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
 
-    con_ub = get_constraint(
-        container,
-        ConstraintKey(cons_type, T, "ub"),
-    )
+    con_lb =
+        add_constraints_container!(
+            container,
+            T(),
+            R,
+            IS.get_uuid.(associated_outages),
+            retained_branches_names,
+            time_steps;
+            meta = "$service_name -lb",
+        )
 
-    expressions = get_expression(container, PostContingencyBranchFlow(), T)
+    con_ub =
+        add_constraints_container!(
+            container,
+            T(),
+            R,
+            IS.get_uuid.(associated_outages),
+            retained_branches_names,
+            time_steps;
+            meta = "$service_name -ub",
+        )
 
-    param_keys = get_parameter_keys(container)
+    expressions = get_expression(container, U(), R, service_name)
+
+    #param_keys = get_parameter_keys(container)
 
     for branch in branches
-        branch_name = get_name(branch)
-
-        param_key = ParameterKey(
-            PostContingencyDynamicBranchRatingTimeSeriesParameter,
-            typeof(branch),
-        )
-        has_dlr_ts = (param_key in param_keys) && PSY.has_time_series(branch)
-
-        device_dynamic_branch_rating_ts = []
-        if has_dlr_ts
-            device_dynamic_branch_rating_ts, mult =
-                _get_device_post_contingency_dynamic_branch_rating_time_series(
-                    container,
-                    param_key,
-                    branch_name,
-                    network_model)
+        branch_name = PSY.get_name(branch)
+        if !(branch_name in retained_branches_names)
+            @debug "Branch $branch_name not in the reduced network, skipping post-contingency rate limit constraints."
+            continue
         end
 
-        for generator_outage in generators_outages
-            gen_outage_name = get_name(generator_outage)
+        # param_key = ParameterKey(
+        #     PostContingencyDynamicBranchRatingTimeSeriesParameter,
+        #     typeof(branch),
+        # )
+        # has_dlr_ts = (param_key in param_keys) && PSY.has_time_series(branch)
 
-            limits = get_min_max_limits(
-                branch,
-                PostContingencyRateLimitConstraintB,
-                AbstractBranchFormulation,
-                network_model,
-            )
+        #device_dynamic_branch_rating_ts = []
+        # if has_dlr_ts
+        #     device_dynamic_branch_rating_ts, mult =
+        #         _get_device_post_contingency_dynamic_branch_rating_time_series(
+        #             container,
+        #             param_key,
+        #             branch_name,
+        #             network_model)
+        # end
+        limits = get_min_max_limits(
+            branch,
+            PostContingencyRateLimitConstraintB,
+            AbstractBranchFormulation,
+            network_model,
+        )
+
+        for outage in associated_outages
+            outage_name = IS.get_uuid(outage)
 
             for t in time_steps
                 # device_dynamic_branch_rating_ts is empty if this device doesn't have a time series
-                if !isempty(device_dynamic_branch_rating_ts)
-                    limits = (
-                        min = -1 * device_dynamic_branch_rating_ts[t] *
-                              mult[branch_name, t],
-                        max = device_dynamic_branch_rating_ts[t] * mult[branch_name, t],
-                    ) #update limits
-                end
+                # if !isempty(device_dynamic_branch_rating_ts)
+                #     limits = (
+                #         min = -1 * device_dynamic_branch_rating_ts[t] *
+                #               mult[branch_name, t],
+                #         max = device_dynamic_branch_rating_ts[t] * mult[branch_name, t],
+                #     ) #update limits
+                # end
 
-                con_ub[gen_outage_name, branch_name, t] =
+                con_ub[outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
-                        expressions[gen_outage_name, branch_name, t] <=
+                        expressions[outage_name, branch_name, t] <=
                         limits.max)
-                con_lb[gen_outage_name, branch_name, t] =
+                con_lb[outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
-                        expressions[gen_outage_name, branch_name, t] >=
+                        expressions[outage_name, branch_name, t] >=
                         limits.min)
             end
         end
@@ -1164,12 +1160,12 @@ function construct_service!(
         network_model,
     )
 
-    #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT B
     add_constraints!(
         container,
         PostContingencyRateLimitConstraintB,
+        PostContingencyBranchFlow,
         PSY.get_available_components(PSY.ACTransmission, sys),
-        generator_outages,
+        service,
         model,
         network_model,
     )
@@ -1562,12 +1558,12 @@ function add_constraints!(
     U::Type{<:AbstractContingencyVariableType},
     contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
     service::R,
-    model::ServiceModel{R, W},
+    model::ServiceModel{R, F},
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     V <: PSY.Generator,
     R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
-    W <: AbstractSecurityConstrainedReservesFormulation,
+    F <: AbstractSecurityConstrainedReservesFormulation,
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
