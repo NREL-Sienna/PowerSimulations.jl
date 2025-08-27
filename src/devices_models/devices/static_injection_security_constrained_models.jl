@@ -705,31 +705,30 @@ This function adds the post-contingency ramping limits
 """
 function add_constraints!(
     container::OptimizationContainer,
-    T::Type{PostContingencyRampConstraint},
-    ::Type{X},
-    devices::Union{IS.FlattenIteratorWrapper{U}, Vector{U}},
-    generators_outages::Union{IS.FlattenIteratorWrapper{G}, Vector{G}},
-    model::Union{DeviceModel{Y, V}, ServiceModel{Y, V}},
-    ::NetworkModel{W};
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    model::Union{DeviceModel{R, F}, ServiceModel{R, F}},
+    ::NetworkModel{N};
     service::R = nothing,
 ) where {
-    X <: AbstractContingencyVariableType,
-    U <: PSY.Generator,
-    G <: PSY.Generator,
-    V <: Union{AbstractSecurityConstrainedUnitCommitment,
-        AbstractSecurityConstrainedReservesFormulation},
-    W <: AbstractPTDFModel,
-    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    T <: PostContingencyRampConstraint,
+    U <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
     R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, Nothing},
+    F <: Union{AbstractSecurityConstrainedUnitCommitment,
+        AbstractSecurityConstrainedReservesFormulation},
+    N <: AbstractPTDFModel,
 }
     add_linear_ramp_constraints!(
         container,
+        sys,
         T,
-        X,
+        U,
         devices,
-        generators_outages,
         model,
-        W;
+        N;
         service = service,
     )
     return
@@ -751,108 +750,83 @@ Constructs allowed rate-of-change constraints for G-1 formulations from change_v
 """
 function add_linear_ramp_constraints!(
     container::OptimizationContainer,
-    T::Type{<:ConstraintType},
-    U::Type{<:AbstractContingencyVariableType},
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
     devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
-    generators_outages::Union{IS.FlattenIteratorWrapper{G}, Vector{G}},
-    model::Union{DeviceModel{Y, W}, ServiceModel{Y, W}},
+    model::Union{DeviceModel{R, F}, ServiceModel{R, F}},
     ::Type{<:AbstractPTDFModel};
     service::R = nothing,
 ) where {
+    T <: PostContingencyConstraintType,
+    U <: AbstractContingencyVariableType,
     V <: PSY.Generator,
-    G <: PSY.Generator,
-    Y <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
-    W <: Union{AbstractSecurityConstrainedUnitCommitment,
+    R <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
+    F <: Union{AbstractSecurityConstrainedUnitCommitment,
         AbstractSecurityConstrainedReservesFormulation},
-    R <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, Nothing},
 }
     time_steps = get_time_steps(container)
+
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
     ramp_devices = _get_ramp_constraint_devices(container, devices)
     minutes_per_period = _get_minutes_per_period(container)
 
     set_name = [PSY.get_name(r) for r in ramp_devices]
-    set_outages_name = [PSY.get_name(r) for r in generators_outages]
+    set_outages_name = [IS.get_uuid(r) for r in associated_outages]
     if set_name == []
         @debug "No Contributing devices to service $service with ramping constraints found in the system."
         return
     end
-    if !haskey(container.constraints, ConstraintKey(T, G, "up")) &&
-       !(R <: PSY.Reserve{PSY.ReserveDown})
-        con_up =
-            add_constraints_container!(
-                container,
-                T(),
-                G,
-                set_outages_name,
-                set_name,
-                time_steps;
-                meta = "up",
-            )
-    end
-    if !haskey(container.constraints, ConstraintKey(T, G, "dn")) &&
-       !(R <: PSY.Reserve{PSY.ReserveUp})
-        con_down =
-            add_constraints_container!(
-                container,
-                T(),
-                G,
-                set_outages_name,
-                set_name,
-                time_steps;
-                meta = "dn",
-            )
-    end
 
-    if !(R <: PSY.Reserve{PSY.ReserveDown})
-        con_up = get_constraint(
+    constraint =
+        add_constraints_container!(
             container,
-            ConstraintKey(T, G, "up"),
-        )
-    else
-        con_up = nothing
-    end
-    if !(R <: PSY.Reserve{PSY.ReserveUp})
-        con_down = get_constraint(
-            container,
-            ConstraintKey(T, G, "dn"),
-        )
-    else
-        con_down = nothing
-    end
-
-    if W <: AbstractSecurityConstrainedReservesFormulation
-        variable = get_variable(
-            container,
-            U(),
+            T(),
             R,
-            PSY.get_name(service),
+            set_outages_name,
+            set_name,
+            time_steps;
+            meta = "$service_name",
         )
-    else
-        variable = get_variable(container, U(), G)
-    end
+
+    variable = get_variable(
+        container,
+        U(),
+        R,
+        PSY.get_name(service),
+    )
 
     for device in devices
-        name = get_name(device)
+        name = PSY.get_name(device)
         # This is to filter out devices that dont need a ramping constraint
         name ∉ set_name && continue
         ramp_limits = PSY.get_ramp_limits(device)
 
-        @debug "add post-contingency rate_of_change_constraint" name
+        @debug "add post-contingency ramping constraint for device $name"
 
-        for device_outage in generators_outages
-            name_outage = get_name(device_outage)
+        for outage in associated_outages
+            name_outage = IS.get_uuid(outage)
+            associated_devices =
+                PSY.get_name.(
+                    PSY.get_associated_components(
+                        sys,
+                        outage;
+                        component_type = PSY.Generator,
+                    )
+                )
 
-            if name == name_outage
+            if name in associated_devices
                 continue
             end
 
             for t in time_steps
-                _add_post_contingency_ramp_dn_constraints!(
+                _add_post_contingency_ramp_constraints!(
                     container,
-                    variable,
                     U,
-                    con_up,
-                    con_down,
+                    variable,
+                    constraint,
                     name_outage,
                     name,
                     t,
@@ -863,16 +837,16 @@ function add_linear_ramp_constraints!(
             end
         end
     end
+
     return
 end
 
-function _add_post_contingency_ramp_dn_constraints!(
+function _add_post_contingency_ramp_constraints!(
     container::OptimizationContainer,
-    variable,
     ::Type{PostContingencyActivePowerChangeVariable},
-    con_up,
-    con_down,
-    name_outage::String,
+    variable,
+    constraint,
+    name_outage::Base.UUID,
     name::String,
     t::Int64,
     ramp_limits,
@@ -892,33 +866,44 @@ function _add_post_contingency_ramp_dn_constraints!(
     return
 end
 
-function _add_post_contingency_ramp_dn_constraints!(
+function _add_post_contingency_ramp_constraints!(
     container::OptimizationContainer,
-    variable,
     ::Type{PostContingencyActivePowerReserveDeploymentVariable},
+    variable,
     con_up,
-    con_down,
-    name_outage::String,
+    name_outage::Base.UUID,
     name::String,
     t::Int64,
     ramp_limits,
     minutes_per_period::Int64,
-    R::Type{<:Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}}},
+    R::Type{<:PSY.Reserve{PSY.ReserveUp}},
 )
-    if (R <: PSY.Reserve{PSY.ReserveUp})
-        con_up[name_outage, name, t] = JuMP.@constraint(
-            get_jump_model(container),
-            variable[name_outage, name, t] <=
-            ramp_limits.up * minutes_per_period
-        )
-    end
-    if (R <: PSY.Reserve{PSY.ReserveDown})
-        con_down[name_outage, name, t] = JuMP.@constraint(
-            get_jump_model(container),
-            variable[name_outage, name, t] <=
-            ramp_limits.down * minutes_per_period
-        )
-    end
+    con_up[name_outage, name, t] = JuMP.@constraint(
+        get_jump_model(container),
+        variable[name_outage, name, t] <=
+        ramp_limits.up * minutes_per_period
+    )
+
+    return
+end
+
+function _add_post_contingency_ramp_constraints!(
+    container::OptimizationContainer,
+    ::Type{PostContingencyActivePowerReserveDeploymentVariable},
+    variable,
+    con_down,
+    name_outage::Base.UUID,
+    name::String,
+    t::Int64,
+    ramp_limits,
+    minutes_per_period::Int64,
+    R::Type{<:PSY.Reserve{PSY.ReserveDown}},
+)
+    con_down[name_outage, name, t] = JuMP.@constraint(
+        get_jump_model(container),
+        variable[name_outage, name, t] <=
+        ramp_limits.down * minutes_per_period
+    )
     return
 end
 
@@ -1173,10 +1158,10 @@ function construct_service!(
     #ADD RAMPING CONSTRAINTS
     add_constraints!(
         container,
+        sys,
         PostContingencyRampConstraint,
         PostContingencyActivePowerReserveDeploymentVariable,
         contributing_devices,
-        generator_outages,
         model,
         network_model;
         service = service,
