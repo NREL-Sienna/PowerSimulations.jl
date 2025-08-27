@@ -1151,3 +1151,59 @@ end
     @test get_n_variables_in_container(ps_model) == 70
     @test get_n_constraints_in_container(ps_model) == 95
 end
+
+@testset "Network reductions - PowerModels" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    for (network_model, optimizer) in NETWORKS_FOR_TESTING
+        if network_model ∈ [PM.SparseSDPWRMPowerModel]
+            continue
+        end
+        # Only default reductions: 
+        template = ProblemTemplate(
+            NetworkModel(network_model;
+                reduce_radial_branches = false,
+                reduce_degree_two_branches = false,
+                use_slacks = false),
+        )
+        set_device_model!(template, Line, StaticBranch)
+        set_device_model!(template, Transformer2W, StaticBranch)
+        ps_model = DecisionModel(template, sys; optimizer = optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        JuMPmodel = PSI.get_jump_model(ps_model)
+        n_vars = JuMP.num_variables(JuMPmodel)
+
+        # Radial reductions: 
+        template = ProblemTemplate(
+            NetworkModel(network_model;
+                reduce_radial_branches = true,
+                reduce_degree_two_branches = false,
+                use_slacks = false),
+        )
+        set_device_model!(template, Line, StaticBranch)
+        set_device_model!(template, Transformer2W, StaticBranch)
+        ps_model = DecisionModel(template, sys; optimizer = optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        JuMPmodel = PSI.get_jump_model(ps_model)
+        n_vars_radial = JuMP.num_variables(JuMPmodel)
+
+        # Radial + degree two reductions: 
+        template = ProblemTemplate(
+            NetworkModel(network_model;
+                reduce_radial_branches = true,
+                reduce_degree_two_branches = true,
+                use_slacks = false),
+        )
+        set_device_model!(template, Line, StaticBranch)
+        set_device_model!(template, Transformer2W, StaticBranch)
+        ps_model = DecisionModel(template, sys; optimizer = optimizer)
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        JuMPmodel = PSI.get_jump_model(ps_model)
+        n_vars_radial_d2 = JuMP.num_variables(JuMPmodel)
+
+        @test n_vars_radial_d2 < n_vars_radial < n_vars
+    end
+end
