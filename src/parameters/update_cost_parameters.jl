@@ -165,7 +165,8 @@ function handle_variable_cost_parameter(
         len = horizon,
     )
     for (t, value::PSY.PiecewiseStepData) in enumerate(TimeSeries.values(ts_vector))
-        unwrapped_value = _unwrap_for_param(T(), value, (axes(parameter_array)[2],))
+        unwrapped_value =
+            _unwrap_for_param(T(), value, lookup_additional_axes(parameter_array))
         _set_param_value!(parameter_array, unwrapped_value, name, t)
         update_variable_cost!(
             container,

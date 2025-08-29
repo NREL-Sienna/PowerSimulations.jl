@@ -388,6 +388,12 @@ function calc_additional_axes(
     return (make_tranche_axis(max_tranches + 1),)  # one more breakpoint than tranches
 end
 
+"""
+Given a parameter array, get any additional axes, i.e., those that aren't the first
+(component) or the last (time)
+"""
+lookup_additional_axes(parameter_array) = axes(parameter_array)[2:(end - 1)]
+
 # Layer of indirection to handle the fact that some parameters come from time series that
 # represent multiple things (e.g., both slopes and breakpoints come from the same time
 # series of `FunctionData`). This function is called on every element of the time series
