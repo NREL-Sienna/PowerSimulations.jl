@@ -84,6 +84,7 @@ const M_VALUE = 1e6
 const RNG_SEED = get(ENV, "SIENNA_RNG_SEED", 2017)
 
 const NO_SERVICE_NAME_PROVIDED = ""
+const EMPTY_BRANCH_NAME_MATCH = ""
 const UPPER_BOUND = "ub"
 const LOWER_BOUND = "lb"
 const MAX_OPTIMIZE_TRIES = 2
@@ -115,7 +116,7 @@ const IGNORABLE_FILES = [
 const RESULTS_DIR = "results"
 
 # Enums
-ModelBuildStatus = IS.Optimization.ModelBuildStatus
+ModelBuildStatus = ISOPT.ModelBuildStatus
 SimulationBuildStatus = IS.Simulation.SimulationBuildStatus
 
 RunStatus = IS.Simulation.RunStatus

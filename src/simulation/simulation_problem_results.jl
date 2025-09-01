@@ -188,14 +188,14 @@ locate_system_file(results::SimulationProblemResults) = joinpath(
 )
 
 locate_system_file(results::OptimizationProblemResults) = joinpath(
-    IS.Optimization.get_results_dir(results),
-    make_system_filename(IS.Optimization.get_source_data_uuid(results)),
+    ISOPT.get_results_dir(results),
+    make_system_filename(ISOPT.get_source_data_uuid(results)),
 )
 
-get_system(results::OptimizationProblemResults) = IS.Optimization.get_source_data(results)
+get_system(results::OptimizationProblemResults) = ISOPT.get_source_data(results)
 
 set_system!(results::OptimizationProblemResults, system) =
-    IS.Optimization.set_source_data!(results, system)
+    ISOPT.set_source_data!(results, system)
 
 function _deserialize_system(results::SimulationProblemResults, ::Nothing)
     open_store(
@@ -263,7 +263,7 @@ function _deserialize_key(
     results::SimulationProblemResults,
     args...,
 ) where {T <: OptimizationContainerKey}
-    return IS.Optimization.make_key(T, args...)
+    return ISOPT.make_key(T, args...)
 end
 
 get_container_fields(x::SimulationProblemResults) =

@@ -115,7 +115,7 @@ end
     var_index = get_all_variable_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
-        @test index_tuple[1] == IS.Optimization.encode_key(key)
+        @test index_tuple[1] == ISOPT.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
         val1 = get_variable_index(model, moi_index)
@@ -225,7 +225,7 @@ end
     @test isa(get_objective_value(res), Float64)
     @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
     @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
-    @test isa(IS.Optimization.get_total_cost(res), Float64)
+    @test isa(ISOPT.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
     @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
@@ -234,7 +234,7 @@ end
     @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(PSI.get_forecast_horizon(res), Int64)
     @test isa(get_realized_timestamps(res), StepRange{DateTime})
-    @test isa(IS.Optimization.get_source_data(res), PSY.System)
+    @test isa(ISOPT.get_source_data(res), PSY.System)
     @test length(get_timestamps(res)) == 24
 
     PSY.set_available!(first(get_components(ThermalStandard, get_system(res))), false)
@@ -342,7 +342,7 @@ end
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
+    @test isfile(joinpath(results_path, ISOPT._PROBLEM_RESULTS_FILENAME))
     results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
@@ -356,7 +356,7 @@ end
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
     @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
 
-    @test length(readdir(IS.Optimization.export_realized_results(results1))) === 7
+    @test length(readdir(ISOPT.export_realized_results(results1))) === 7
 end
 
 @testset "Test Numerical Stability of Constraints" begin
@@ -385,7 +385,7 @@ end
     for (constraint_key, constraint_bounds) in model_bounds
         _check_constraint_bounds(
             constraint_bounds,
-            valid_model_bounds[IS.Optimization.encode_key(constraint_key)],
+            valid_model_bounds[ISOPT.encode_key(constraint_key)],
         )
     end
 end
@@ -411,7 +411,7 @@ end
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(
             variable_bounds,
-            valid_model_bounds[IS.Optimization.encode_key(variable_key)],
+            valid_model_bounds[ISOPT.encode_key(variable_key)],
         )
     end
 end

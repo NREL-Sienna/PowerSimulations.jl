@@ -137,6 +137,7 @@ function add_variables!(
             end
         end
     end
+    return
 end
 
 function _search_for_reduced_branch_variable(
@@ -152,7 +153,7 @@ function _search_for_reduced_branch_variable(
         FlowActivePowerSlackLowerBound,
     },
     U <: PSY.ACBranch}
-    return (false, "nothing")
+    return (false, EMPTY_BRANCH_NAME_MATCH)
 end
 
 function _search_for_reduced_branch_variable(
@@ -168,7 +169,7 @@ function _search_for_reduced_branch_variable(
         FlowActivePowerSlackLowerBound,
     },
     U <: PSY.ACBranch}
-    return (false, "nothing")
+    return (false, EMPTY_BRANCH_NAME_MATCH)
 end
 
 function _search_for_reduced_branch_variable(
@@ -176,7 +177,7 @@ function _search_for_reduced_branch_variable(
     series_chain::Vector{Any},
     ::Type{T},
     ::Type{U},
-    t,
+    t::Int,
 ) where {
     T <: Union{
         FlowActivePowerVariable,
@@ -196,7 +197,7 @@ function _search_for_reduced_branch_variable(
             end
         end
     end
-    return (false, "nothing")
+    return (false, EMPTY_BRANCH_NAME_MATCH)
 end
 
 function _add_variable_to_tracker!(
@@ -278,7 +279,7 @@ function _add_to_variable_tracker!(
         reduced_branch_variable_tracker,
         segment_type,
         Dict{
-            Type{<:InfrastructureSystems.Optimization.VariableType},
+            Type{<:ISOPT.VariableType},
             Dict{String, Dict{Int, JuMP.VariableRef}},
         }(),
     )
@@ -297,7 +298,7 @@ function get_branch_name_constraint_axis(
     ::Type{T},
     ::Type{U},
     reduced_branch_constraint_tracker::REDUCED_BRANCH_CONSTRAINT_DICT,
-) where {T <: PSY.ACBranch, U <: IS.Optimization.ConstraintType}
+) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
     name_axis = Vector{String}()
     for map_name in ["direct_branch_map", "parallel_branch_map", "series_branch_map"]
         map = all_branch_maps_by_type[map_name]
@@ -368,11 +369,11 @@ function has_existing_constraint(
     ::Type{T},
     ::Type{U},
     reduced_branch_constraint_tracker::REDUCED_BRANCH_CONSTRAINT_DICT,
-) where {T <: PSY.ACBranch, U <: IS.Optimization.ConstraintType}
+) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
     rb1 = get!(
         reduced_branch_constraint_tracker,
         T,
-        Dict{Type{<:IS.Optimization.ConstraintType}, Vector{String}}(),
+        Dict{Type{<:ISOPT.ConstraintType}, Vector{String}}(),
     )
     names = get!(rb1, U, Vector{String}())
     return name in names
@@ -385,19 +386,19 @@ function _add_names_to_axis!(
     ::Type{T},
     ::Type{U},
     ::REDUCED_BRANCH_CONSTRAINT_DICT,
-) where {T <: PSY.ACBranch, U <: IS.Optimization.ConstraintType}
+) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
     push!(name_axis, PSY.get_name(entry))
     return
 end
 
-# If you are in the parallel branch map, cannot already have a constraint. 
+# If you are in the parallel branch map, cannot already have a constraint.
 function _add_names_to_axis!(
     name_axis::Vector{String},
     entry::Set,
     ::Type{T},
     ::Type{U},
     ::REDUCED_BRANCH_CONSTRAINT_DICT,
-) where {T <: PSY.ACBranch, U <: IS.Optimization.ConstraintType}
+) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
     modeled_circuit = first(entry)
     name = PSY.get_name(modeled_circuit) * "_double_circuit"
     _add_names_to_axis!(name_axis, name)
@@ -410,7 +411,7 @@ function _add_names_to_axis!(
     x::Type{T},
     y::Type{U},
     reduced_branch_constraint_tracker::REDUCED_BRANCH_CONSTRAINT_DICT,
-) where {T <: PSY.ACBranch, U <: IS.Optimization.ConstraintType}
+) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
     constraint_added = false
     branch_names_in_d2_chain = _get_branch_names(entry)
     for name in branch_names_in_d2_chain
@@ -436,7 +437,7 @@ function _add_names_to_axis!(
             rb1 = get!(
                 reduced_branch_constraint_tracker,
                 _get_segment_type(segment),
-                Dict{Type{<:IS.Optimization.ConstraintType}, Vector{String}}(),
+                Dict{Type{<:ISOPT.ConstraintType}, Vector{String}}(),
             )
             rb2 = get!(rb1, y, Vector{String}())
             [push!(rb2, name) for name in segment_names]
@@ -750,7 +751,7 @@ function get_min_max_limits(
     ]
     min_by_circuit = [x.min for x in min_max_by_circuit]
     max_by_circuit = [x.max for x in min_max_by_circuit]
-    # Limit by most restictive circuit: 
+    # Limit by most restictive circuit:
     return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
 end
 
@@ -796,7 +797,7 @@ function get_min_max_limits(
     ]
     min_by_segment = [x.min for x in min_max_by_segment]
     max_by_segment = [x.max for x in min_max_by_segment]
-    # Limit by most restictive segment: 
+    # Limit by most restictive segment:
     return (min = maximum(min_by_segment), max = minimum(max_by_segment))
 end
 

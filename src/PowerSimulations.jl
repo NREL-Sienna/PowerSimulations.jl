@@ -486,6 +486,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const IS = InfrastructureSystems
+const ISOPT = InfrastructureSystems.Optimization
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const MOPFM = MOI.FileFormats.Model

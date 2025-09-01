@@ -1057,12 +1057,12 @@ end
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    # (3 double circuits) x (5 timesteps) = 15 additional variables in container compared to JuMP model: 
+    # (3 double circuits) x (5 timesteps) = 15 additional variables in container compared to JuMP model:
     moi_tests(ps_model, 60, 0, 60, 60, 65, false)
     @test get_n_variables_in_container(ps_model) == 75
     @test get_n_constraints_in_container(ps_model) == 185
 
-    # Radial Reduction : 
+    # Radial Reduction :
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     nr = NetworkReduction[RadialReduction()]
@@ -1085,7 +1085,7 @@ end
     @test get_n_variables_in_container(ps_model) == 70
     @test get_n_constraints_in_container(ps_model) == 170
 
-    # Degree Two Reduction : 
+    # Degree Two Reduction :
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     nr = NetworkReduction[DegreeTwoReduction()]
@@ -1109,26 +1109,26 @@ end
     @test get_n_constraints_in_container(ps_model) == 110
     vars = ps_model.internal.container.variables
     line_flow =
-        vars[InfrastructureSystems.Optimization.VariableKey{FlowActivePowerVariable, Line}(
+        vars[ISOPT.VariableKey{FlowActivePowerVariable, Line}(
             "",
         )]
-    tfw_flow = vars[InfrastructureSystems.Optimization.VariableKey{
+    tfw_flow = vars[ISOPT.VariableKey{
         FlowActivePowerVariable,
         Transformer2W,
     }(
         "",
     )]
-    # Parallel branch within chain to d2: 
+    # Parallel branch within chain to d2:
     @test line_flow["2-10-i_2_double_circuit", :] ==
           line_flow["2-10-i_1_double_circuit", :] ==
           line_flow["10-3-i_1", :]
     # D2 chain with different component types:
     @test line_flow["1-9-i_1", :] == tfw_flow["9-5-i_1", :]
-    # Parallel branch within chain to d2 with mixed types (parallel comes from tracker): 
+    # Parallel branch within chain to d2 with mixed types (parallel comes from tracker):
     @test line_flow["3-11-i_1", :] == tfw_flow["11-4-i_1_double_circuit", :] ==
           tfw_flow["11-4-i_2_double_circuit", :]
 
-    # Radial + Degree Two Reduction : 
+    # Radial + Degree Two Reduction :
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
@@ -1159,7 +1159,7 @@ end
         if network_model ∈ [PM.SparseSDPWRMPowerModel]
             continue
         end
-        # Only default reductions: 
+        # Only default reductions:
         template = ProblemTemplate(
             NetworkModel(network_model;
                 reduce_radial_branches = false,
@@ -1174,7 +1174,7 @@ end
         JuMPmodel = PSI.get_jump_model(ps_model)
         n_vars = JuMP.num_variables(JuMPmodel)
 
-        # Radial reductions: 
+        # Radial reductions:
         template = ProblemTemplate(
             NetworkModel(network_model;
                 reduce_radial_branches = true,
@@ -1189,7 +1189,7 @@ end
         JuMPmodel = PSI.get_jump_model(ps_model)
         n_vars_radial = JuMP.num_variables(JuMPmodel)
 
-        # Radial + degree two reductions: 
+        # Radial + degree two reductions:
         template = ProblemTemplate(
             NetworkModel(network_model;
                 reduce_radial_branches = true,

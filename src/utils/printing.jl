@@ -509,12 +509,12 @@ function _show_method(
         println(io, "<p> End: $(last(timestamps))</p>")
         println(
             io,
-            "<p> Resolution: $(Dates.Minute(IS.Optimization.get_resolution(results)))</p>",
+            "<p> Resolution: $(Dates.Minute(ISOPT.get_resolution(results)))</p>",
         )
     else
         println(io, "Start: $(first(timestamps))")
         println(io, "End: $(last(timestamps))")
-        println(io, "Resolution: $(Dates.Minute(IS.Optimization.get_resolution(results)))")
+        println(io, "Resolution: $(Dates.Minute(ISOPT.get_resolution(results)))")
     end
 
     values = Dict{String, Vector{String}}(

@@ -1,14 +1,14 @@
 const REDUCED_BRANCH_VARIABLE_DICT = Dict{
     Type{<:PSY.ACTransmission},
     Dict{
-        Type{<:InfrastructureSystems.Optimization.VariableType},
+        Type{<:ISOPT.VariableType},
         Dict{String, Dict{Int, JuMP.VariableRef}},
     },
 }
 const REDUCED_BRANCH_CONSTRAINT_DICT =
     Dict{
         Type{<:PSY.ACTransmission},
-        Dict{Type{<:IS.Optimization.ConstraintType}, Vector{String}},
+        Dict{Type{<:ISOPT.ConstraintType}, Vector{String}},
     }
 
 function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
