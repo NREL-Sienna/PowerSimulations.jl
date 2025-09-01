@@ -457,7 +457,6 @@ function _update_parameter_values!(
     V <: PSY.Component,
 }
     current_time = get_current_time(model)
-    #@show state_data = get_dataset(state, get_attribute_key(attributes))
     state_values = get_dataset_values(state, U(), V)
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, U(), V)

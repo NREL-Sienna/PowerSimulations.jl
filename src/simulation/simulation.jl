@@ -885,21 +885,17 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         if store_update_time < state_update_time
             _update_timestamp = max(store_update_time + state_resolution, sim_ini_time)
             while _update_timestamp <= state_update_time
-                try
-                    state_values =
-                        get_decision_state_value(sim_state, key, _update_timestamp)
-                    ix = get_last_recorded_row(em_store, key) + 1
-                    write_result!(
-                        store,
-                        model_name,
-                        key,
-                        ix,
-                        _update_timestamp,
-                        state_values,
-                    )
-                catch
-                    @error "could not write result for $(PSI.encode_key_as_string(key))"
-                end
+                state_values =
+                    get_decision_state_value(sim_state, key, _update_timestamp)
+                ix = get_last_recorded_row(em_store, key) + 1
+                write_result!(
+                    store,
+                    model_name,
+                    key,
+                    ix,
+                    _update_timestamp,
+                    state_values,
+                )
                 _update_timestamp += state_resolution
             end
         end

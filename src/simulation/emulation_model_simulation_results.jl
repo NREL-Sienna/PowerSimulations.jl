@@ -115,10 +115,18 @@ function _get_store_value(
     ::Nothing;
     start_time = nothing,
     len = nothing,
+    table_format = TableFormat.LONG,
 )
     simulation_store_path = joinpath(get_execution_path(res), "data_store")
     return open_store(HdfSimulationStore, simulation_store_path, "r") do store
-        _get_store_value(res, container_keys, store; start_time = start_time, len = len)
+        _get_store_value(
+            res,
+            container_keys,
+            store;
+            start_time = start_time,
+            len = len,
+            table_format = table_format,
+        )
     end
 end
 
@@ -128,6 +136,7 @@ function _get_store_value(
     store::SimulationStore;
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Nothing, Int} = nothing,
+    table_format = TableFormat.LONG,
 )
     base_power = res.base_power
     results = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
@@ -141,10 +150,8 @@ function _get_store_value(
         # PERF: this is a double-permutedims with HDF
         # We could make an optimized version of this that reads Arrays
         # like decision_model_simulation_results
-        df = DataFrames.DataFrame(permutedims(array.data), axes(array)[1])
-        time_col = range(start_time; length = _len, step = res.resolution)
-        DataFrames.insertcols!(df, 1, :DateTime => time_col)
-        results[key] = df
+        timestamps = range(start_time; length = _len, step = res.resolution)
+        results[key] = to_results_dataframe(array, timestamps, Val(table_format))
     end
 
     return results
@@ -195,6 +202,7 @@ function _read_results(
     store;
     start_time = nothing,
     len = nothing,
+    table_format = TableFormat.LONG,
 )
     isempty(result_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     _store = try_resolve_store(store, res.store)
@@ -216,6 +224,7 @@ function _read_results(
                 _store;
                 start_time = start_time,
                 len = len,
+                table_format = table_format,
             )
     end
     return vals
@@ -226,8 +235,16 @@ function read_results_with_keys(
     result_keys::Vector{<:OptimizationContainerKey};
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Nothing, Int} = nothing,
+    table_format = TableFormat.LONG,
 )
-    return _read_results(res, result_keys, nothing; start_time = start_time, len = len)
+    return _read_results(
+        res,
+        result_keys,
+        nothing;
+        start_time = start_time,
+        len = len,
+        table_format = table_format,
+    )
 end
 
 """

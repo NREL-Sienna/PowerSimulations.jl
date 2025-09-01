@@ -15,6 +15,7 @@ export SimulationSequence
 export SimulationResults
 export SimulationPartitions
 export SimulationPartitionResults
+export TableFormat
 
 # Network Relevant Exports
 export NetworkModel
@@ -399,7 +400,7 @@ export PTDF
 export VirtualPTDF
 export LODF
 export VirtualLODF
-import InfrastructureSystems: @assert_op, list_recorder_events, get_name
+import InfrastructureSystems: @assert_op, TableFormat, list_recorder_events, get_name
 
 # IS.Optimization imports: functions that have PSY methods that IS needs to access (therefore necessary)
 import InfrastructureSystems.Optimization: get_data_field
@@ -480,6 +481,8 @@ import TimeSeries
 
 # I/O Imports
 import DataFrames
+import DataFrames: DataFrame, innerjoin
+import DataFramesMeta: @chain, @select
 import CSV
 import HDF5
 import PrettyTables

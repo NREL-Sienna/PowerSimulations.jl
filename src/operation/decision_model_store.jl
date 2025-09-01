@@ -3,30 +3,21 @@ Stores results data for one DecisionModel
 """
 mutable struct DecisionModelStore <: IS.Optimization.AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
-    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    parameters::Dict{
-        ParameterKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    }
-    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    aux_variables::Dict{
-        AuxVarKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    }
-    expressions::Dict{
-        ExpressionKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    }
+    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    expressions::Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
     optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
 end
 
 function DecisionModelStore()
     return DecisionModelStore(
-        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
         OrderedDict{Dates.DateTime, OptimizerStats}(),
     )
 end
@@ -51,7 +42,10 @@ function initialize_storage!(
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
             column_names = get_column_names(key, field_container)
-            data = OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}()
+            data = OrderedDict{
+                Dates.DateTime,
+                DenseAxisArray{Float64, length(column_names) + 1},
+            }()
             for timestamp in
                 range(initial_time; step = model_interval, length = num_of_executions)
                 data[timestamp] = fill!(
@@ -91,13 +85,24 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 1},
 )
-    columns = axes(array)[1]
-    if eltype(columns) !== String
-        # TODO: This happens because buses are stored by indexes instead of name.
-        columns = string.(columns)
-    end
+    columns = _get_columns_from_axis(axes(array)[1])
     container = getfield(store, get_store_container_type(key))
     container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns)
+    return
+end
+
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{<:Any, 3},
+)
+    columns = _get_columns_from_axis(axes(array)[2])
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] =
+        DenseAxisArray(array.data, axes(array)[1], columns, 1:size(array)[3])
     return
 end
 
@@ -140,3 +145,9 @@ function get_column_names(store::DecisionModelStore, key::OptimizationContainerK
     container = getfield(store, get_store_container_type(key))
     return get_column_names(key, first(values(container[key])))
 end
+
+_get_columns_from_axis(axis::Vector{String}) = axis
+# In some cases, such as buses, the axis has indexes instead of names.
+# TODO: Is this permanently OK?
+_get_columns_from_axis(axis::Vector{Int}) = string.(axis)
+_get_columns_from_axis(axis::UnitRange) = string.(axis)

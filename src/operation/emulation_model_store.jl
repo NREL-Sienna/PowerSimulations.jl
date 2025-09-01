@@ -99,8 +99,21 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 2},
 )
-    @assert_op size(array)[2] == 1
-    write_result!(store, name, key, index, update_timestamp, array[:, 1])
+    #=@error "todo dt write_result" name key update_timestamp array=#
+    # TODO DT: I don't understand why we slice this data.
+    #=@assert_op size(array)[2] == 1=#
+    if size(array)[2] == 1
+        write_result!(store, name, key, index, update_timestamp, array[:, 1])
+    else
+        container = get_data_field(store, get_store_container_type(key))
+        set_value!(
+            container[key],
+            array,
+            index,
+        )
+        set_last_recorded_row!(container[key], index)
+        set_update_timestamp!(container[key], update_timestamp)
+    end
     return
 end
 

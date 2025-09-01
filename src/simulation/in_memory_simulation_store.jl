@@ -22,7 +22,7 @@ function get_number_of_dimensions(
     i::Type{EmulationModelIndexType},
     key::OptimizationContainerKey,
 )
-    return length(get_column_names(store, i, model_name, key))
+    return length(get_column_names(store, i, key))
 end
 
 function get_number_of_dimensions(

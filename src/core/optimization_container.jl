@@ -1540,6 +1540,7 @@ function read_parameters(container::OptimizationContainer)
         # TODO: all functions similar to calculate_parameter_values should be in one
         # place and be consistent in behavior.
         #params_dict[k] = to_dataframe(calculate_parameter_values(v))
+        #=@error "todo dt" k v=#
         param_array = to_dataframe(get_parameter_values(v), k)
         multiplier_array = to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)

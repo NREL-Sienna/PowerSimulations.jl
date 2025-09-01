@@ -390,27 +390,19 @@ read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, 
 read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
 read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
 
-function _read_col_name(axes)
-    if length(axes) == 1
-        error("Axes of size 1 are not supported")
-    end
+function _read_col_names(axes::Tuple{Vector{String}, UnitRange{Int64}})
+    return axes[1]
+end
+function _read_col_names(axes::Tuple{UnitRange{Int64}, Vector{String}})
     # Currently, variables that don't have timestamps have a dummy axes to keep
-    # two axes in the Store (HDF or Memory). This if-else is used to decide if a
-    # dummy axes is being used or not.
-    if typeof(axes[2]) <: UnitRange{Int}
-        return axes[1]
-    elseif typeof(axes[2]) <: Vector{String}
-        IS.@assert_op length(axes[1]) == 1
-        return axes[2]
-    else
-        error("Second axes in store is not allowed to be $(typeof(axes[2]))")
-    end
+    # two axes in the Store (HDF or Memory). This is the dummy axis.
+    IS.@assert_op length(axes[1]) == 1
+    return axes[2]
 end
 
 function _read_results(model::OperationModel, key::OptimizationContainerKey)
-    res = read_results(get_store(model), key)
-    col_name = _read_col_name(axes(res))
-    return DataFrames.DataFrame(permutedims(res.data), col_name)
+    array = read_results(get_store(model), key)
+    return to_results_dataframe(array, nothing, Val(TableFormat.LONG))
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

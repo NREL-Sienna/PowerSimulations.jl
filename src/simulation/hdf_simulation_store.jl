@@ -470,7 +470,7 @@ function get_number_of_dimensions(
     i::Type{EmulationModelIndexType},
     key::OptimizationContainerKey,
 )
-    return length(get_column_names(store, i, model_name, key))
+    return length(get_column_names(store, i, key))
 end
 
 function get_emulation_model_dataset_size(
@@ -647,7 +647,14 @@ function write_result!(
     data::DenseAxisArray,
 )
     dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, to_matrix(data), index)
+    # TODO DT: This call to to_matrix must change to something like `add_dimension`.
+    # Change 1-d array to 2-d, 2-d to 3-d, etc.
+    transformed_data = to_matrix(data)
+    if data.data isa Matrix
+        @error "todo dt result of to_matrix" key index data.data transformed_data
+        error("stop")
+    end
+    _write_dataset!(dataset.values, transformed_data, index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
@@ -1059,6 +1066,16 @@ function _write_dataset!(
     return
 end
 
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 3},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :, :] = array
+    return
+end
+
+# TODO DT: this looks wrong
 function _write_dataset!(
     dataset::HDF5.Dataset,
     array::Array{Float64, 4},

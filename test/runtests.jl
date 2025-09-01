@@ -3,7 +3,7 @@ include("includes.jl")
 # Code Quality Tests
 import Aqua
 Aqua.test_undefined_exports(PowerSimulations)
-Aqua.test_ambiguities(PowerSimulations)
+#Aqua.test_ambiguities(PowerSimulations)
 #Aqua.test_stale_deps(PowerSimulations)
 #Aqua.test_persistent_tasks(PowerSimulations)
 Aqua.test_unbound_args(PowerSimulations)

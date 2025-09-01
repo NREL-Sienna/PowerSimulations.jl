@@ -84,7 +84,9 @@ function write_model_parameter_results!(
     parameters = get_parameters(container)
     for (key, container) in parameters
         !should_write_resulting_value(key) && continue
+        #=@error "todo dt got parameter container for key: $key" container=#
         data = calculate_parameter_values(container)
+        #=@error "todo dt calculated: $key" data=#
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
