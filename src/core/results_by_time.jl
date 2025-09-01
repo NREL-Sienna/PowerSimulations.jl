@@ -94,12 +94,13 @@ end
 
 function make_dataframe(
     results::ResultsByTime{DenseAxisArray{Float64, 3}},
-    timestamp::Dates.DateTime,
+    timestamp::Dates.DateTime;
+    table_format::TableFormat = TableFormat.LONG,
 )
     array = results.data[timestamp]
     num_timestamps = get_num_rows(results, array)
     timestamps = _get_timestamps(results, timestamp, num_timestamps)
-    return to_results_dataframe(array, timestamps, Val(TableFormat.LONG))
+    return to_results_dataframe(array, timestamps, Val(table_format))
 end
 
 function make_dataframe(

@@ -481,7 +481,7 @@ import TimeSeries
 
 # I/O Imports
 import DataFrames
-import DataFrames: DataFrame, innerjoin
+import DataFrames: DataFrame, DataFrameRow, innerjoin
 import DataFramesMeta: @chain, @select
 import CSV
 import HDF5

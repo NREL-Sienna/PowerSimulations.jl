@@ -41,7 +41,7 @@ function initialize_storage!(
             !should_write_resulting_value(key) && continue
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
-            column_names = get_column_names(key, field_container)
+            column_names = get_column_names(container, type, field_container, key)
             data = OrderedDict{
                 Dates.DateTime,
                 DenseAxisArray{Float64, length(column_names) + 1},
@@ -65,9 +65,24 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 2},
-)
-    columns = axes(array)[1]
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange}},
+) where {T}
+    columns = get_column_names_from_axis_array(array)
+    IS.@assert_op length(columns) == 1
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] = DenseAxisArray(array.data, columns[1], 1:size(array)[2])
+    return
+end
+
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{Int}, UnitRange}},
+) where {T}
+    columns = axes(array, 1)
     if eltype(columns) !== String
         # TODO: This happens because buses are stored by indexes instead of name.
         columns = string.(columns)
@@ -85,9 +100,10 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 1},
 )
-    columns = _get_columns_from_axis(axes(array)[1])
+    columns = get_column_names_from_axis_array(array)
+    IS.@assert_op length(columns) == 1
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns)
+    container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns[1])
     return
 end
 
@@ -99,10 +115,11 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{<:Any, 3},
 )
-    columns = _get_columns_from_axis(axes(array)[2])
+    columns = get_column_names_from_axis_array(array)
+    IS.@assert_op length(columns) == 2
     container = getfield(store, get_store_container_type(key))
     container[key][index] =
-        DenseAxisArray(array.data, axes(array)[1], columns, 1:size(array)[3])
+        DenseAxisArray(array.data, columns[1], columns[2], 1:size(array, 3))
     return
 end
 
@@ -143,11 +160,5 @@ end
 
 function get_column_names(store::DecisionModelStore, key::OptimizationContainerKey)
     container = getfield(store, get_store_container_type(key))
-    return get_column_names(key, first(values(container[key])))
+    return get_column_names_from_axis_array(key, first(values(container[key])))
 end
-
-_get_columns_from_axis(axis::Vector{String}) = axis
-# In some cases, such as buses, the axis has indexes instead of names.
-# TODO: Is this permanently OK?
-_get_columns_from_axis(axis::Vector{Int}) = string.(axis)
-_get_columns_from_axis(axis::UnitRange) = string.(axis)

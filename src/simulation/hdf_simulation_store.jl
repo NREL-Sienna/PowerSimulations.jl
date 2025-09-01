@@ -322,6 +322,8 @@ function initialize_problem_storage!(
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
                 # First dim is Horizon, Last number of steps
+                #   TODO DT: not correct. reqs["dims"] has (num_steps, length(columns)...) and no horizon
+                #   Why are we taking the max? Shouldn't it be deterministic?
                 n_dims = max(1, length(reqs["dims"]) - 2)
                 datasets[key] = HDF5Dataset{n_dims}(
                     dataset,
@@ -644,17 +646,25 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    data::DenseAxisArray,
+    array::DenseAxisArray{Float64, 1},
 )
     dataset = _get_em_dataset(store, key)
-    # TODO DT: This call to to_matrix must change to something like `add_dimension`.
-    # Change 1-d array to 2-d, 2-d to 3-d, etc.
-    transformed_data = to_matrix(data)
-    if data.data isa Matrix
-        @error "todo dt result of to_matrix" key index data.data transformed_data
-        error("stop")
-    end
-    _write_dataset!(dataset.values, transformed_data, index)
+    _write_dataset!(dataset.values, array.data, index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    array::DenseAxisArray{Float64, 2},
+)
+    dataset = _get_em_dataset(store, key)
+    _write_dataset!(dataset.values, array.data, index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
@@ -1058,7 +1068,7 @@ end
 # Specific data set writing function that writes emulation model data. It dispatches on the index type of the dataset
 function _write_dataset!(
     dataset::HDF5.Dataset,
-    array::Array{Float64, 2},
+    array::Vector{Float64},
     index::EmulationModelIndexType,
 )
     dataset[index, :] = array
@@ -1068,20 +1078,20 @@ end
 
 function _write_dataset!(
     dataset::HDF5.Dataset,
-    array::Array{Float64, 3},
+    array::Matrix{Float64},
     index::EmulationModelIndexType,
 )
     dataset[index, :, :] = array
     return
 end
 
-# TODO DT: this looks wrong
+# TODO DT: this looked wrong. Was it tested?
 function _write_dataset!(
     dataset::HDF5.Dataset,
     array::Array{Float64, 4},
     index::EmulationModelIndexType,
 )
-    dataset[index, :, :] = array
+    dataset[index, :, :, :] = array
     @debug "wrote em dataset" dataset index
     return
 end

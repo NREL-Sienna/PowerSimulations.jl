@@ -1,17 +1,5 @@
 """
 Construct OptimizationProblemResults from a solved DecisionModel.
-
-# Arguments:
-- `model::DecisionModel`: The solved DecisionModel.
-- `table_format::TableFormat = TableFormat.LONG`: The format of all tables to be returned
-   when reading results with `read_aux_variable`, `read_dual`, `read_parameter`,
-   and `read_variable`, and all variations of those.
-   With TableFormat.LONG, the results are returned in DataFrames with columns `DateTime`,
-   `component`, and `value`. 
-   With TableFormat.WIDE, the DataFrames are first created in TableFormat.LONG format and
-   then the component names are pivoted as columns. The returned DataFrames have column
-   names of `DateTime` plus each component name.
-   Note: this format does not support results with three or more dimensions.
 """
 function OptimizationProblemResults(model::DecisionModel)
     status = get_run_status(model)

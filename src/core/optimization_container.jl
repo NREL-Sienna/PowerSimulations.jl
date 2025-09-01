@@ -980,8 +980,8 @@ function serialize_metadata!(container::OptimizationContainer, output_dir::Strin
         encoded_key = encode_key_as_string(key)
         if IS.Optimization.has_container_key(container.metadata, encoded_key)
             # Constraints and Duals can store the same key.
-            IS.@assert_op key ==
-                          IS.Optimization.get_container_key(container.metadata, encoded_key)
+            @assert_op key ==
+                       IS.Optimization.get_container_key(container.metadata, encoded_key)
         end
         IS.Optimization.add_container_key!(container.metadata, encoded_key, key)
     end
@@ -1540,7 +1540,6 @@ function read_parameters(container::OptimizationContainer)
         # TODO: all functions similar to calculate_parameter_values should be in one
         # place and be consistent in behavior.
         #params_dict[k] = to_dataframe(calculate_parameter_values(v))
-        #=@error "todo dt" k v=#
         param_array = to_dataframe(get_parameter_values(v), k)
         multiplier_array = to_dataframe(get_multiplier_array(v), k)
         params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)
@@ -2086,6 +2085,32 @@ function get_time_series_initial_values!(
         ignore_scaling_factors = true,
     )
     return ts_values
+end
+
+"""
+Get the column names for the specified container in the OptimizationContainer.
+
+# Arguments
+- `container::OptimizationContainer`: The optimization container.
+- `field::Symbol`: The field for which to retrieve the column names.
+- `key::OptimizationContainerKey`: The key for which to retrieve the column names.
+
+# Returns
+- `Tuple`: Tuple of Vector{String}.
+"""
+function get_column_names(
+    ::OptimizationContainer,
+    field::Symbol,
+    subcontainer,
+    key::OptimizationContainerKey,
+)
+    return if field == :parameters
+        # Parameters are stored in ParameterContainer.
+        get_column_names(key, subcontainer)
+    else
+        # The others are in DenseAxisArrays.
+        get_column_names_from_axis_array(key, subcontainer)
+    end
 end
 
 lookup_value(container::OptimizationContainer, key::VariableKey) =

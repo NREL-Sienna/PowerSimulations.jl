@@ -1,4 +1,48 @@
-@testset "to_dataframe with DenseAxisArray 1D" begin
+@testset "Test get_column_names_from_key" begin
+    key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
+    @test PSI.get_column_names_from_key(key) == (["ActivePowerVariable__ThermalStandard"],)
+end
+
+@testset "Test get_column_names_from_axis_array with DenseAxisArray 1D" begin
+    @test PSI.get_column_names_from_axis_array(DenseAxisArray(rand(3), 1:3)) ==
+          (["1", "2", "3"],)
+    @test PSI.get_column_names_from_axis_array(DenseAxisArray(rand(3), collect(1:3))) ==
+          (["1", "2", "3"],)
+
+    key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
+    @test PSI.get_column_names_from_axis_array(key, DenseAxisArray(rand(3), 1:3)) ==
+          (["ActivePowerVariable__ThermalStandard"],)
+end
+
+@testset "Test get_column_names_from_axis_array with DenseAxisArray 2D" begin
+    key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
+    components = ["component1", "component2"]
+    array = DenseAxisArray(rand(2, 3), components, 1:3)
+    @test PSI.get_column_names_from_axis_array(key, array) == (components,)
+    @test PSI.get_column_names_from_axis_array(array) == (components,)
+
+    @test PSI.get_column_names_from_axis_array(DenseAxisArray(rand(2, 3), [1, 2], 1:3)) ==
+          (["1", "2"],)
+    @test PSI.get_column_names_from_axis_array(DenseAxisArray(rand(2, 3), 1:2, 1:3)) ==
+          (["1", "2"],)
+    @test PSI.get_column_names_from_axis_array(
+        DenseAxisArray(rand(2, 3), ["1", "2"], components),
+    ) == (components,)
+end
+
+@testset "Test get_column_names_from_axis_array with DenseAxisArray 3D" begin
+    key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
+    components = ["component1", "component2"]
+    extra = ["1", "2", "3", "4"]
+    array = DenseAxisArray(rand(2, 4, 3), components, extra, 1:3)
+    @test PSI.get_column_names_from_axis_array(key, array) == (components, extra)
+    @test PSI.get_column_names_from_axis_array(array) == (components, extra)
+    @test PSI.get_column_names_from_axis_array(
+        DenseAxisArray(rand(2, 4, 3), components, 1:4, 1:3),
+    ) == (components, extra)
+end
+
+@testset "Test to_dataframe with DenseAxisArray 1D" begin
     data = rand(3)
     array = DenseAxisArray(data, 1:3)
     key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
@@ -9,7 +53,7 @@
     @test df[!, "ActivePowerVariable__ThermalStandard"] == data
 end
 
-@testset "to_dataframe with DenseAxisArray 2D" begin
+@testset "Test to_dataframe with DenseAxisArray 2D" begin
     data = rand(2, 3)
     components = ["component1", "component2"]
     array = DenseAxisArray(data, components, 1:3)
@@ -22,7 +66,7 @@ end
     @test df[!, "component2"] == permutedims(data)[:, 2]
 end
 
-@testset "to_results_dataframe with 2D DenseAxisArray - LONG format with timestamps" begin
+@testset "Test to_results_dataframe with 2D DenseAxisArray - LONG format with timestamps" begin
     data = rand(2, 3)
     components = ["component1", "component2"]
     array = DenseAxisArray(data, components, 1:3)
@@ -46,7 +90,7 @@ end
     )
 end
 
-@testset "to_results_dataframe with 2D DenseAxisArray - LONG format without timestamps" begin
+@testset "Test to_results_dataframe with 2D DenseAxisArray - LONG format without timestamps" begin
     data = rand(2, 3)
     components = ["component1", "component2"]
     array = DenseAxisArray(data, components, 1:3)
@@ -59,7 +103,7 @@ end
     @test df.value == reshape(permutedims(data), 6)
 end
 
-@testset "to_results_dataframe with 2D DenseAxisArray - WIDE format with timestamps" begin
+@testset "Test to_results_dataframe with 2D DenseAxisArray - WIDE format with timestamps" begin
     data = rand(2, 3)
     components = ["component1", "component2"]
     array = DenseAxisArray(data, components, 1:3)
@@ -78,7 +122,7 @@ end
     @test df.component2 == exp_data[:, 2]
 end
 
-@testset "to_results_dataframe with 2D DenseAxisArray - WIDE format without timestamps" begin
+@testset "Test to_results_dataframe with 2D DenseAxisArray - WIDE format without timestamps" begin
     data = rand(2, 3)
     components = ["component1", "component2"]
     array = DenseAxisArray(data, components, 1:3)
@@ -127,7 +171,7 @@ function _check_3d_data(df)
           [16.0, 17.0, 18.0]
 end
 
-@testset "to_results_dataframe with 3D DenseAxisArray - LONG format with timestamps" begin
+@testset "Test to_results_dataframe with 3D DenseAxisArray - LONG format with timestamps" begin
     array = _fill_3d_data()
     timestamps = [
         DateTime(2024, 1, 1, 0),
@@ -144,10 +188,18 @@ end
     )
 end
 
-@testset "to_results_dataframe with 3D DenseAxisArray - LONG format without timestamps" begin
+@testset "Test to_results_dataframe with 3D DenseAxisArray - LONG format without timestamps" begin
     array = _fill_3d_data()
     df = PSI.to_results_dataframe(array, nothing, Val(IS.TableFormat.LONG))
     @test names(df) == ["time_index", "component", "component_x", "value"]
     _check_3d_data(df)
     @test df.time_index == repeat([1, 2, 3], 8)
+end
+
+@testset "Test to_matrix" begin
+    @test PSI.to_matrix([1, 2, 3]) == [1; 2; 3;;]
+    @test PSI.to_matrix([1 2 3]) == [1 2 3]
+
+    data = rand(2, 3)
+    @test PSI.to_matrix(DenseAxisArray(data, ["a", "b"], 1:3)) == permutedims(data)
 end

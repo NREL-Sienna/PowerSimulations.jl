@@ -84,7 +84,6 @@ function InMemoryDataset(
     end_of_step_index::Int,
     row_count::Int,
     column_names::NTuple{N, <:Any}) where {N}
-    #=@error "todo dt: create InMemoryDataset from fill_val:" row_count column_names N=#
     return InMemoryDataset(
         fill!(
             DenseAxisArray{Float64}(undef, column_names..., 1:row_count),
@@ -120,7 +119,6 @@ function get_dataset_value(
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
     end
-    #=@error "todo dt: get_dataset_value" T s.values[:, s_index]=#
     return s.values[:, s_index]
 end
 
@@ -129,12 +127,11 @@ function get_dataset_value(s::InMemoryDataset{3}, date::Dates.DateTime)
     if isnothing(s_index)
         error("Request time stamp $date not in the state")
     end
-    #=@error "todo dt: get_dataset_value 3d" date s_index s.values=#
     return s.values[:, :, s_index]
 end
 
 function get_column_names(k::OptimizationContainerKey, s::InMemoryDataset)
-    return get_column_names(k, s.values)
+    return get_column_names_from_axis_array(k, s.values)
 end
 
 function get_last_recorded_value(s::InMemoryDataset{2})

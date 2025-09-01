@@ -177,7 +177,6 @@ end
 function get_parameter_values(
     attributes::TimeSeriesAttributes{T},
     param_array::DenseAxisArray,
-    #param_array::DenseAxisArray{Union{JuMP.VariableRef, Float64}, 2, <:Tuple},
     multiplier_array::DenseAxisArray,
 ) where {T <: PSY.TimeSeriesData}
     exploded_param_array = DenseAxisArray{Float64}(undef, axes(multiplier_array)...)
@@ -190,28 +189,6 @@ function get_parameter_values(
     return exploded_param_array
 end
 
-#=function get_parameter_values(=#
-#=    attributes::TimeSeriesAttributes{T},=#
-#=    param_array::DenseAxisArray{Union{JuMP.VariableRef, Float64}, 3, <:Tuple},=#
-#=    multiplier_array::DenseAxisArray,=#
-#=) where {T <: PSY.TimeSeriesData}=#
-#=    exploded_param_array = DenseAxisArray{Float64}(undef, axes(multiplier_array)...)=#
-#=    @error "todo dt" typeof(param_array) typeof(multiplier_array) axes(multiplier_array) typeof(=#
-#=        exploded_param_array,=#
-#=    )=#
-#=    for name in axes(multiplier_array)[1]=#
-#=        @error "todo dt" name _get_ts_uuid(attributes, name) length(axes(param_array)) axes(=#
-#=            param_array,=#
-#=        ) param_array multiplier_array=#
-#=        param_col = param_array[_get_ts_uuid(attributes, name), axes(param_array)[2:end]...]=#
-#=        device_axes = axes(multiplier_array)[2:end]=#
-#=        @error "todo dt" name device_axes param_col=#
-#=        exploded_param_array[name, device_axes...] = jump_value.(param_col)=#
-#=    end=#
-#==#
-#=    return exploded_param_array=#
-#=end=#
-
 get_parameter_array(c::ParameterContainer) = c.parameter_array
 get_multiplier_array(c::ParameterContainer) = c.multiplier_array
 get_attributes(c::ParameterContainer) = c.attributes
@@ -219,7 +196,7 @@ Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
 function get_column_names(key::ParameterKey, c::ParameterContainer)
-    return get_column_names(key, get_multiplier_array(c))
+    return get_column_names_from_axis_array(key, get_multiplier_array(c))
 end
 
 const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}

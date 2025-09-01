@@ -177,7 +177,6 @@ function build_initial_conditions!(model::OperationModel)
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
-
         if requires_init
             @debug "initial_conditions required for $device_type" _group =
                 LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -390,19 +389,9 @@ read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, 
 read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
 read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
 
-function _read_col_names(axes::Tuple{Vector{String}, UnitRange{Int64}})
-    return axes[1]
-end
-function _read_col_names(axes::Tuple{UnitRange{Int64}, Vector{String}})
-    # Currently, variables that don't have timestamps have a dummy axes to keep
-    # two axes in the Store (HDF or Memory). This is the dummy axis.
-    IS.@assert_op length(axes[1]) == 1
-    return axes[2]
-end
-
 function _read_results(model::OperationModel, key::OptimizationContainerKey)
     array = read_results(get_store(model), key)
-    return to_results_dataframe(array, nothing, Val(TableFormat.LONG))
+    return return to_results_dataframe(array, nothing, Val(TableFormat.LONG))
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

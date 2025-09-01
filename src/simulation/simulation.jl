@@ -460,6 +460,7 @@ function _get_emulation_store_requirements(sim::Simulation)
 
     for (key, state_values) in get_parameters_values(system_state)
         !should_write_resulting_value(key) && continue
+        # TODO DT: dims is really number_simulation_steps?
         dims = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
