@@ -269,7 +269,8 @@ function _add_time_series_parameters!(
         )
     end
 
-    additional_axes = _additional_axes(container, param, devices_with_time_series, model)
+    additional_axes =
+        calc_additional_axes(container, param, devices_with_time_series, model)
     param_container = add_param_container!(
         container,
         param,
@@ -356,9 +357,9 @@ _param_to_vars(  # TODO decremental
 ) =
     (PiecewiseLinearBlockIncrementalOffer,)
 
-# Layer of indirection to handle possible additional axes. Most paramters have just the two
+# Layer of indirection to handle possible additional axes. Most parameters have just the two
 # usual axes (device, timestamp), but some have a third (e.g., piecewise tranche)
-_additional_axes(
+calc_additional_axes(
     ::OptimizationContainer,
     ::T,
     ::U,
@@ -380,9 +381,13 @@ function get_max_tranches(device::PSY.Device, piecewise_ts::IS.TimeSeriesKey)
     return max_tranches
 end
 
+# It's nice for debugging purposes to have meaningful labels on the tranche axis. These
+# labels are never relied upon in the current implementation
+make_tranche_axis(n_tranches) = "tranche_" .* string.(1:n_tranches)
+
 # Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
 # TODO decremental case
-function _additional_axes(
+function calc_additional_axes(
     ::OptimizationContainer,
     ::IncrementalPiecewiseLinearSlopeParameter,
     devices::U,
@@ -393,10 +398,10 @@ function _additional_axes(
 } where {D <: PSY.Component}
     curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
-    return (1:max_tranches,)
+    return (make_tranche_axis(max_tranches),)
 end
 
-function _additional_axes(
+function calc_additional_axes(
     ::OptimizationContainer,
     ::IncrementalPiecewiseLinearBreakpointParameter,
     devices::U,
@@ -407,8 +412,14 @@ function _additional_axes(
 } where {D <: PSY.Component}
     curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
-    return (1:(max_tranches + 1),)  # one more breakpoint than tranches
+    return (make_tranche_axis(max_tranches + 1),)  # one more breakpoint than tranches
 end
+
+"""
+Given a parameter array, get any additional axes, i.e., those that aren't the first
+(component) or the last (time)
+"""
+lookup_additional_axes(parameter_array) = axes(parameter_array)[2:(end - 1)]
 
 # Layer of indirection to handle the fact that some parameters come from time series that
 # represent multiple things (e.g., both slopes and breakpoints come from the same time
@@ -485,7 +496,7 @@ function _add_parameters!(
     end
     jump_model = get_jump_model(container)
 
-    additional_axes = _additional_axes(container, param, active_devices, model)
+    additional_axes = calc_additional_axes(container, param, active_devices, model)
     param_container = add_param_container!(
         container,
         param,

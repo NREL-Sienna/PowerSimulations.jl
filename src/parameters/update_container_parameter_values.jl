@@ -68,7 +68,7 @@ function _update_parameter_values!(
             for (t, value) in enumerate(ts_vector)
                 # first two axes of parameter_array are component, time; we care about any additional ones
                 unwrapped_value =
-                    _unwrap_for_param(W(), value, (axes(parameter_array)[2],))
+                    _unwrap_for_param(W(), value, lookup_additional_axes(parameter_array))
                 if !all(isfinite.(unwrapped_value))
                     error("The value for the time series $(ts_name) is not finite. \
                           Check that the data in the time series is valid.")
@@ -325,7 +325,7 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     has_outage = haskey(
         get_parameters_values(state),
-        InfrastructureSystems.Optimization.ParameterKey{
+        ISOPT.ParameterKey{
             AvailableStatusParameter,
             U,
         }(
@@ -335,7 +335,7 @@ function _update_parameter_values!(
     if has_outage
         status_values = get_dataset_values(
             state,
-            InfrastructureSystems.Optimization.ParameterKey{
+            ISOPT.ParameterKey{
                 AvailableStatusParameter,
                 U,
             }(
@@ -344,7 +344,7 @@ function _update_parameter_values!(
         )
         status_data = get_dataset(
             state,
-            InfrastructureSystems.Optimization.ParameterKey{
+            ISOPT.ParameterKey{
                 AvailableStatusParameter,
                 U,
             }(

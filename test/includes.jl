@@ -34,6 +34,7 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PSB = PowerSystemCaseBuilder
 const PNM = PowerNetworkMatrices
+const ISOPT = InfrastructureSystems.Optimization
 
 const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))

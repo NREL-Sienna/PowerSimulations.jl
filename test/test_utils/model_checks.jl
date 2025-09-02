@@ -421,10 +421,10 @@ function check_initialization_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
+    meta = PSI.ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     container =
-        IS.Optimization.get_initial_conditions_model_container(PSI.get_internal(model))
+        ISOPT.get_initial_conditions_model_container(PSI.get_internal(model))
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
     constraint = PSI.get_constraint(container, S(), T, meta)
@@ -436,7 +436,7 @@ function check_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
+    meta = PSI.ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]

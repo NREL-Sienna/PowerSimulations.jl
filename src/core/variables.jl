@@ -161,20 +161,6 @@ Docs abbreviation: ``r^\\text{sl}``
 struct ReserveRequirementSlack <: VariableType end
 
 """
-Struct to dispatch the creation of active power flow upper bound slack variables. Used when there is not enough flow through the branch in the forward direction.
-
-Docs abbreviation: ``f^\\text{sl,up}``
-"""
-struct FlowActivePowerSlackUpperBound <: VariableType end
-
-"""
-Struct to dispatch the creation of active power flow lower bound slack variables. Used when there is not enough flow through the branch in the reverse direction.
-
-Docs abbreviation: ``f^\\text{sl,lo}``
-"""
-struct FlowActivePowerSlackLowerBound <: VariableType end
-
-"""
 Struct to dispatch the creation of Voltage Magnitude Variables for AC formulations
 
 Docs abbreviation: ``v``
@@ -188,12 +174,16 @@ Docs abbreviation: ``\\theta``
 """
 struct VoltageAngle <: VariableType end
 
+abstract type AbstractACActivePowerFlow <: VariableType end
+
+abstract type AbstractACReactivePowerFlow <: VariableType end
+
 """
 Struct to dispatch the creation of bidirectional Active Power Flow Variables
 
 Docs abbreviation: ``f``
 """
-struct FlowActivePowerVariable <: VariableType end
+struct FlowActivePowerVariable <: AbstractACActivePowerFlow end
 
 # This Variable Type doesn't make sense since there are no lossless NetworkModels with ReactivePower.
 # struct FlowReactivePowerVariable <: VariableType end
@@ -203,28 +193,42 @@ Struct to dispatch the creation of unidirectional Active Power Flow Variables
 
 Docs abbreviation: ``f^\\text{from-to}``
 """
-struct FlowActivePowerFromToVariable <: VariableType end
+struct FlowActivePowerFromToVariable <: AbstractACActivePowerFlow end
 
 """
 Struct to dispatch the creation of unidirectional Active Power Flow Variables
 
 Docs abbreviation: ``f^\\text{to-from}``
 """
-struct FlowActivePowerToFromVariable <: VariableType end
+struct FlowActivePowerToFromVariable <: AbstractACActivePowerFlow end
 
 """
 Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
 
 Docs abbreviation: ``f^\\text{q,from-to}``
 """
-struct FlowReactivePowerFromToVariable <: VariableType end
+struct FlowReactivePowerFromToVariable <: AbstractACReactivePowerFlow end
 
 """
 Struct to dispatch the creation of unidirectional Reactive Power Flow Variables
 
 Docs abbreviation: ``f^\\text{q,to-from}``
 """
-struct FlowReactivePowerToFromVariable <: VariableType end
+struct FlowReactivePowerToFromVariable <: AbstractACReactivePowerFlow end
+
+"""
+Struct to dispatch the creation of active power flow upper bound slack variables. Used when there is not enough flow through the branch in the forward direction.
+
+Docs abbreviation: ``f^\\text{sl,up}``
+"""
+struct FlowActivePowerSlackUpperBound <: AbstractACActivePowerFlow end
+
+"""
+Struct to dispatch the creation of active power flow lower bound slack variables. Used when there is not enough flow through the branch in the reverse direction.
+
+Docs abbreviation: ``f^\\text{sl,lo}``
+"""
+struct FlowActivePowerSlackLowerBound <: AbstractACActivePowerFlow end
 
 """
 Struct to dispatch the creation of Phase Shifters Variables

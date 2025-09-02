@@ -41,9 +41,11 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     duals::Vector{DataType}
     network_reduction::PNM.NetworkReductionData
     reduce_radial_branches::Bool
+    reduce_degree_two_branches::Bool
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
     modeled_branch_types::Vector{DataType}
+    reduced_branch_tracker::BranchReductionOptimizationTracker
 
     function NetworkModel(
         ::Type{T};
@@ -51,6 +53,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         PTDF_matrix = nothing,
         LODF_matrix = nothing,
         reduce_radial_branches = false,
+        reduce_degree_two_branches = false,
         subnetworks = Dict{Int, Set{Int}}(),
         duals = Vector{DataType}(),
         power_flow_evaluation::Union{
@@ -68,9 +71,11 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             duals,
             PNM.NetworkReductionData(),
             reduce_radial_branches,
+            reduce_degree_two_branches,
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
             Vector{DataType}(),
+            BranchReductionOptimizationTracker(),
         )
     end
 end
@@ -82,6 +87,7 @@ get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
 get_network_reduction(m::NetworkModel) = m.network_reduction
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T} = T
+get_reduced_branch_tracker(m::NetworkModel) = m.reduced_branch_tracker
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
     collect(keys(m.subnetworks))
 get_subnetworks(m::NetworkModel) = m.subnetworks
@@ -112,13 +118,36 @@ function instantiate_network_model(
     model::NetworkModel{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    model.network_reduction = PNM.get_default_reduction(sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
+    if model.reduce_radial_branches && model.reduce_degree_two_branches
+        @info "Applying both radial and degree two reductions"
+        ybus = PNM.Ybus(
+            sys;
+            network_reductions = PNM.NetworkReduction[
+                PNM.RadialReduction(),
+                PNM.DegreeTwoReduction(),
+            ],
+        )
+    elseif model.reduce_radial_branches
+        @info "Applying radial reduction"
+        ybus =
+            PNM.Ybus(sys; network_reductions = PNM.NetworkReduction[PNM.RadialReduction()])
+    elseif model.reduce_degree_two_branches
+        @info "Applying degree two reduction"
+        ybus = PNM.Ybus(
+            sys;
+            network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction()],
+        )
+    else
+        ybus = PNM.Ybus(sys)
+    end
+    model.network_reduction = ybus.network_reduction_data
     if !isempty(model.network_reduction)
         check_network_reduction_compatibility(T)
     end
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
@@ -136,7 +165,6 @@ function instantiate_network_model(
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
-
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
@@ -150,17 +178,34 @@ function instantiate_network_model(
 )
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
-        if model.reduce_radial_branches
-            network_reduction =
-                PNM.Ybus(
-                    sys;
-                    network_reductions = PNM.NetworkReduction[PNM.RadialReduction()],
-                ).network_reduction_data
+        if model.reduce_radial_branches && model.reduce_degree_two_branches
+            @info "Applying both radial and degree two reductions"
+            ptdf = PNM.VirtualPTDF(
+                sys;
+                network_reductions = PNM.NetworkReduction[
+                    PNM.RadialReduction(),
+                    PNM.DegreeTwoReduction(),
+                ],
+            )
+        elseif model.reduce_radial_branches
+            @info "Applying radial reduction"
+            ptdf = PNM.VirtualPTDF(
+                sys;
+                network_reductions = PNM.NetworkReduction[PNM.RadialReduction()],
+            )
+        elseif model.reduce_degree_two_branches
+            @info "Applying degree two reduction"
+            ptdf = PNM.VirtualPTDF(
+                sys;
+                network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction()],
+            )
         else
-            network_reduction = PNM.get_default_reduction(sys)
+            ptdf = PNM.VirtualPTDF(sys)
         end
-        model.PTDF_matrix =
-            PNM.VirtualPTDF(sys; network_reduction = network_reduction)
+        model.PTDF_matrix = ptdf
+        model.network_reduction = ptdf.network_reduction_data
+    else
+        model.network_reduction = model.PTDF_matrix.network_reduction_data
     end
 
     if !model.reduce_radial_branches && PNM.has_radial_reduction(
@@ -173,7 +218,16 @@ function instantiate_network_model(
                 reduce_radial_branches = true in your network model"),
         )
     end
-
+    if !model.reduce_degree_two_branches && PNM.has_degree_two_reduction(
+        PNM.get_reductions(model.PTDF_matrix.network_reduction_data),
+    )
+        throw(
+            IS.ConflictingInputsError(
+                "The provided PTDF Matrix has reduced degree two branches and mismatches the network \\
+                model specification reduce_degree_two_branches = false. Set the keyword argument \\
+                reduce_degree_two_branches = true in your network model"),
+        )
+    end
     if model.reduce_radial_branches &&
        PNM.has_ward_reduction(PNM.get_reductions(model.PTDF_matrix.network_reduction_data))
         throw(
@@ -187,7 +241,6 @@ function instantiate_network_model(
     if model.reduce_radial_branches
         @assert !isempty(model.PTDF_matrix.network_reduction_data)
     end
-    model.network_reduction = model.PTDF_matrix.network_reduction_data
     model.subnetworks = _make_subnetworks_from_subnetwork_axes(model.PTDF_matrix)
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
@@ -233,6 +286,7 @@ function instantiate_network_model(
         )
     end
 
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
