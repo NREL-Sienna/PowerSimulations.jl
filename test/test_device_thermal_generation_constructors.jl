@@ -851,7 +851,13 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     systems = [c_sys5, c_sys5_dc]
-    networks = [DCPPowerModel, NFAPowerModel, PTDFPowerModel, CopperPlatePowerModel]
+    networks = [
+        PTDFPowerModel,
+        DCPPowerModel,
+        NFAPowerModel,
+        PTDFPowerModel,
+        CopperPlatePowerModel,
+    ]
     commitment_models = [ThermalStandardUnitCommitment, ThermalCompactUnitCommitment]
 
     for net in networks, sys in systems, model in commitment_models

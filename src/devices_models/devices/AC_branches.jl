@@ -96,7 +96,6 @@ function add_variables!(
 
     for t in time_steps
         for map in NETWORK_REDUCTION_MAPS
-            @error all_branch_maps_by_type
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, U) && continue
             for (arc_tuple, reduction_entry) in network_reduction_map[U]

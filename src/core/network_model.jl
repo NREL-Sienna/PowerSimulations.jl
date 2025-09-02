@@ -246,11 +246,84 @@ function instantiate_network_model(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
+    return
+end
 
-    if !(get_network_formulation(model) <: AbstractSecurityConstrainedPTDFModel)
-        return
+function instantiate_network_model(
+    model::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
+    sys::PSY.System,
+)
+    if get_PTDF_matrix(model) === nothing
+        @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
+        if model.reduce_radial_branches && model.reduce_degree_two_branches
+            @info "Applying both radial and degree two reductions"
+            ptdf = PNM.VirtualPTDF(
+                sys;
+                network_reductions = PNM.NetworkReduction[
+                    PNM.RadialReduction(),
+                    PNM.DegreeTwoReduction(),
+                ],
+            )
+        elseif model.reduce_radial_branches
+            @info "Applying radial reduction"
+            ptdf = PNM.VirtualPTDF(
+                sys;
+                network_reductions = PNM.NetworkReduction[PNM.RadialReduction()],
+            )
+        elseif model.reduce_degree_two_branches
+            @info "Applying degree two reduction"
+            ptdf = PNM.VirtualPTDF(
+                sys;
+                network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction()],
+            )
+        else
+            ptdf = PNM.VirtualPTDF(sys)
+        end
+        model.PTDF_matrix = ptdf
+        model.network_reduction = ptdf.network_reduction_data
+    else
+        model.network_reduction = model.PTDF_matrix.network_reduction_data
     end
 
+    if !model.reduce_radial_branches && PNM.has_radial_reduction(
+        PNM.get_reductions(model.PTDF_matrix.network_reduction_data),
+    )
+        throw(
+            IS.ConflictingInputsError(
+                "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
+                model specification reduce_radial_branches = false. Set the keyword argument \\
+                reduce_radial_branches = true in your network model"),
+        )
+    end
+    if !model.reduce_degree_two_branches && PNM.has_degree_two_reduction(
+        PNM.get_reductions(model.PTDF_matrix.network_reduction_data),
+    )
+        throw(
+            IS.ConflictingInputsError(
+                "The provided PTDF Matrix has reduced degree two branches and mismatches the network \\
+                model specification reduce_degree_two_branches = false. Set the keyword argument \\
+                reduce_degree_two_branches = true in your network model"),
+        )
+    end
+    if model.reduce_radial_branches &&
+       PNM.has_ward_reduction(PNM.get_reductions(model.PTDF_matrix.network_reduction_data))
+        throw(
+            IS.ConflictingInputsError(
+                "The provided PTDF Matrix has  a ward reduction specified and the keyword argument \\
+                reduce_radial_branches = true. Set the keyword argument reduce_radial_branches = false \\
+                or provide a modified PTDF Matrix without the Ward reduction."),
+        )
+    end
+
+    if model.reduce_radial_branches
+        @assert !isempty(model.PTDF_matrix.network_reduction_data)
+    end
+    model.subnetworks = _make_subnetworks_from_subnetwork_axes(model.PTDF_matrix)
+    if length(model.subnetworks) > 1
+        @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
+        _assign_subnetworks_to_buses(model, sys)
+    end
     if get_LODF_matrix(model) === nothing
         @info "LODF Matrix not provided. Calculating using PowerNetworkMatrices.LODF"
         if model.reduce_radial_branches
