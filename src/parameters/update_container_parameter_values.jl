@@ -325,7 +325,7 @@ function _update_parameter_values!(
     state_data_index = find_timestamp_index(state_timestamps, current_time)
     has_outage = haskey(
         get_parameters_values(state),
-        InfrastructureSystems.Optimization.ParameterKey{
+        ISOPT.ParameterKey{
             AvailableStatusParameter,
             U,
         }(
@@ -335,7 +335,7 @@ function _update_parameter_values!(
     if has_outage
         status_values = get_dataset_values(
             state,
-            InfrastructureSystems.Optimization.ParameterKey{
+            ISOPT.ParameterKey{
                 AvailableStatusParameter,
                 U,
             }(
@@ -344,7 +344,7 @@ function _update_parameter_values!(
         )
         status_data = get_dataset(
             state,
-            InfrastructureSystems.Optimization.ParameterKey{
+            ISOPT.ParameterKey{
                 AvailableStatusParameter,
                 U,
             }(

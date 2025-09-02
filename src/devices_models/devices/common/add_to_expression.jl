@@ -310,7 +310,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCLosses,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: HVDCTwoTerminalDispatch,
     X <: Union{PTDFPowerModel, CopperPlatePowerModel, SecurityConstrainedPTDFPowerModel},
 }
@@ -346,7 +346,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCLosses,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: HVDCTwoTerminalDispatch,
     X <:
     Union{AreaPTDFPowerModel, AreaBalancePowerModel, SecurityConstrainedAreaPTDFPowerModel},
@@ -381,7 +381,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: AbstractTwoTerminalDCLineFormulation,
 }
     var = get_variable(container, U(), V)
@@ -416,7 +416,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerFromToVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: AbstractTwoTerminalDCLineFormulation,
     X <: AbstractPTDFModel,
 }
@@ -453,7 +453,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCActivePowerReceivedFromVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: HVDCTwoTerminalPiecewiseLoss,
     X <: AbstractPTDFModel,
 }
@@ -490,7 +490,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,                        # expression
     U <: HVDCActivePowerReceivedFromVariable,       # variable
-    V <: TwoTerminalHVDCTypes,                      # power system type
+    V <: PSY.TwoTerminalHVDC,                      # power system type
     W <: HVDCTwoTerminalLCC,                        # formulation
     X <: ACPPowerModel,                             # network model
 }
@@ -521,7 +521,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCActivePowerReceivedToVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: HVDCTwoTerminalLCC,
     X <: ACPPowerModel,
 }
@@ -552,7 +552,7 @@ function add_to_expression!(
 ) where {
     T <: ReactivePowerBalance,                        # expression
     U <: HVDCReactivePowerReceivedFromVariable,     # variable
-    V <: TwoTerminalHVDCTypes,                      # power system type
+    V <: PSY.TwoTerminalHVDC,                      # power system type
     W <: HVDCTwoTerminalLCC,                        # formulation
     X <: ACPPowerModel,                             # network model
 }
@@ -583,7 +583,7 @@ function add_to_expression!(
 ) where {
     T <: ReactivePowerBalance,
     U <: HVDCReactivePowerReceivedToVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: HVDCTwoTerminalLCC,
     X <: ACPPowerModel,
 }
@@ -614,7 +614,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: HVDCActivePowerReceivedToVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: HVDCTwoTerminalPiecewiseLoss,
     X <: AbstractPTDFModel,
 }
@@ -651,7 +651,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: AbstractTwoTerminalDCLineFormulation,
     X <: CopperPlatePowerModel,
 }
@@ -685,7 +685,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerFromToVariable,
-    V <: TwoTerminalHVDCTypes,
+    V <: PSY.TwoTerminalHVDC,
     W <: AbstractTwoTerminalDCLineFormulation,
     X <: CopperPlatePowerModel,
 }

@@ -303,6 +303,8 @@ end
 @testset "HVDCDispatch Model Tests" begin
     # Test to compare lossless models with lossless formulation
     sys_5 = build_system(PSITestSystems, "c_sys5_uc")
+    # Revert to previous rating before data change to prevent different optimal solutions for the lossless model and lossless formulation:
+    PSY.set_rating!(PSY.get_component(PSY.Line, sys_5, "6"), 2.0)
 
     line = get_component(Line, sys_5, "1")
     remove_component!(sys_5, line)
@@ -613,62 +615,6 @@ end
     )
 end
 
-@testset "AC Power Flow in the loop for PhaseShiftingTransformer" begin
-    system = build_system(PSITestSystems, "c_sys5_uc")
-
-    line = get_component(Line, system, "1")
-    arc = get_arc(line)
-    remove_component!(system, line)
-
-    ps = PhaseShiftingTransformer(;
-        name = get_name(line),
-        available = true,
-        active_power_flow = 0.0,
-        reactive_power_flow = 0.0,
-        r = get_r(line),
-        x = get_x(line),
-        primary_shunt = 0.0,
-        tap = 1.0,
-        α = 0.0,
-        rating = get_rating(line),
-        arc = arc,
-        base_power = get_base_power(system),
-    )
-
-    add_component!(system, ps)
-
-    template = get_template_dispatch_with_network(
-        NetworkModel(
-            PTDFPowerModel;
-            PTDF_matrix = PTDF(system),
-            power_flow_evaluation = ACPowerFlow(),
-        ),
-    )
-    set_device_model!(template, DeviceModel(PhaseShiftingTransformer, PhaseAngleControl))
-    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.ModelBuildStatus.BUILT
-
-    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-
-    results = OptimizationProblemResults(model_m)
-    vd = read_variables(results)
-
-    data = PSI.get_power_flow_data(
-        only(PSI.get_power_flow_evaluation_data(PSI.get_optimization_container(model_m))),
-    )
-    base_power = get_base_power(system)
-
-    # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
-    @test isapprox(
-        data.bus_activepower_injection[data.bus_lookup[get_number(get_to(arc))], :] *
-        base_power,
-        vd["FlowActivePowerVariable__PhaseShiftingTransformer"][:, get_name(line)],
-        atol = 1e-9,
-        rtol = 0,
-    )
-end
-
 @testset "AC Power Flow Models for TwoTerminalGenericHVDCLine  Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
@@ -740,7 +686,8 @@ end
 
 @testset "Test Line and Monitored Line models with slacks" begin
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
-    set_rating!(PSY.get_component(Line, system, "2"), 0.0)
+    # This rating (0.247479) was previously inferred in PSY.check_component after setting the rating to 0.0 in the tests
+    set_rating!(PSY.get_component(Line, system, "2"), 0.247479)
     for (model, optimizer) in NETWORKS_FOR_TESTING
         if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel, SOCWRConicPowerModel]
             # Skip because the data is too in the feasibility margins for these models

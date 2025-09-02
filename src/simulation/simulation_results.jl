@@ -339,7 +339,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    IS.Optimization.export_result(
+                    ISOPT.export_result(
                         file_type,
                         export_path,
                         name,
@@ -359,7 +359,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    IS.Optimization.export_result(
+                    ISOPT.export_result(
                         file_type,
                         export_path,
                         name,
@@ -379,7 +379,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    IS.Optimization.export_result(
+                    ISOPT.export_result(
                         file_type,
                         export_path,
                         name,
@@ -399,7 +399,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                         count = 1,
                         store = store,
                     )
-                    IS.Optimization.export_result(
+                    ISOPT.export_result(
                         file_type,
                         export_path,
                         name,
@@ -420,7 +420,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
                     count = 1,
                     store = store,
                 )
-                IS.Optimization.export_result(
+                ISOPT.export_result(
                     file_type,
                     export_path,
                     name,
@@ -433,7 +433,7 @@ function export_results(results::SimulationResults, exports, store::SimulationSt
         if problem_exports.optimizer_stats
             export_path = joinpath(path, problem_results.problem, "optimizer_stats.csv")
             df = read_optimizer_stats(problem_results; store = store)
-            IS.Optimization.export_result(file_type, export_path, df)
+            ISOPT.export_result(file_type, export_path, df)
         end
     end
     return

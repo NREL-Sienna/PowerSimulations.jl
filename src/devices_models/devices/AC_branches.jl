@@ -46,7 +46,14 @@ get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::Abs
 get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
 get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
 get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
-
+get_variable_upper_bound(_, ::Vector{Any}, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(_, ::Vector{Any}, ::AbstractBranchFormulation) = nothing
+get_variable_upper_bound(_, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(_, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::Vector{Any}, ::AbstractBranchFormulation) = 0.0
+get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::Vector{Any}, ::AbstractBranchFormulation) = 0.0
+get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = 0.0
+get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = 0.0
 #! format: on
 function get_default_time_series_names(
     ::Type{U},
@@ -63,6 +70,7 @@ function get_default_attributes(
 end
 #################################### Flow Variable Bounds ##################################################
 # Additional Method to be able to filter the branches that are not in the PTDF matrix
+
 function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
@@ -77,38 +85,102 @@ function add_variables!(
     },
     U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
-
-    network_reduction = get_network_reduction(network_model)
-    branch_names = PNM.get_retained_branches_names(network_reduction)
-
-    branches_in_ptdf =
-        [
-            b for b in devices if PSY.get_name(b) ∈ branch_names
-        ]
+    network_reduction_data = network_model.network_reduction
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, U)
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    reduced_branch_variable_tracker = get_variable_dict(reduced_branch_tracker)
     variable = add_variable_container!(
         container,
         T(),
         U,
-        PSY.get_name.(branches_in_ptdf),
+        branch_names,
         time_steps,
     )
 
-    for d in branches_in_ptdf
-        name = PSY.get_name(d)
-        # Don't check if names are present when the PTDF has less branches than system
-        for t in time_steps
-            variable[name, t] = JuMP.@variable(
-                get_jump_model(container),
-                base_name = "$(T)_$(U)_{$(name), $(t)}",
-            )
-            ub = get_variable_upper_bound(T(), d, formulation)
-            ub !== nothing && JuMP.set_upper_bound(variable[name, t], ub)
+    for t in time_steps
+        for map in NETWORK_REDUCTION_MAPS
+            network_reduction_map = all_branch_maps_by_type[map]
+            !haskey(network_reduction_map, U) && continue
+            for (arc_tuple, reduction_entry) in network_reduction_map[U]
+                has_entry, entry_name = _search_for_reduced_branch_variable(
+                    reduced_branch_tracker,
+                    reduction_entry,
+                    T,
+                    U,
+                    t,
+                )
+                if has_entry
+                    equivalent_branch_variable =
+                        reduced_branch_variable_tracker[U][T][entry_name][t]
+                else
+                    equivalent_branch_variable = JuMP.@variable(
+                        get_jump_model(container),
+                    )
+                    _add_variable_to_tracker!(
+                        reduced_branch_tracker,
+                        equivalent_branch_variable,
+                        reduction_entry,
+                        T,
+                        t,
+                    )
+                end
+                ub = get_variable_upper_bound(T(), reduction_entry, formulation)
+                ub !== nothing && JuMP.set_upper_bound(equivalent_branch_variable, ub)
+                lb = get_variable_lower_bound(T(), reduction_entry, formulation)
+                lb !== nothing && JuMP.set_lower_bound(equivalent_branch_variable, lb)
 
-            lb = get_variable_lower_bound(T(), d, formulation)
-            lb !== nothing && JuMP.set_lower_bound(variable[name, t], lb)
+                _add_variable_to_container!(
+                    variable,
+                    equivalent_branch_variable,
+                    reduction_entry,
+                    U,
+                    t,
+                )
+            end
         end
     end
     return
+end
+
+function _add_variable_to_container!(
+    variable_container::JuMPVariableArray,
+    variable::JuMP.VariableRef,
+    entry::T,
+    ::Type{U},
+    t,
+) where {T <: PSY.ACBranch, U <: PSY.ACBranch}
+    if isa(entry, U)
+        name = PSY.get_name(entry)
+        variable_container[name, t] = variable
+    end
+end
+
+function _add_variable_to_container!(
+    variable_container::JuMPVariableArray,
+    variable::JuMP.VariableRef,
+    double_circuit::Set{PSY.ACTransmission},
+    ::Type{T},
+    t,
+) where {T <: PSY.ACBranch}
+    for circuit in double_circuit
+        if isa(circuit, T)
+            name = PSY.get_name(circuit) * "_double_circuit"
+            variable_container[name, t] = variable
+        end
+    end
+end
+
+function _add_variable_to_container!(
+    variable_container::JuMPVariableArray,
+    variable::JuMP.VariableRef,
+    series_chain::Vector{Any},
+    type::Type{T},
+    t,
+) where {T <: PSY.ACBranch}
+    for segment in series_chain
+        _add_variable_to_container!(variable_container, variable, segment, type, t)
+    end
 end
 
 function add_variables!(
@@ -143,16 +215,20 @@ function branch_rate_bounds!(
     network_model::NetworkModel{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     var = get_variable(container, FlowActivePowerVariable(), B)
-
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-
-    for d in devices
-        name = PSY.get_name(d)
-        if name ∈ retained_branches_names
-            for t in get_time_steps(container)
-                JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
-                JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, B)
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            name = first(_get_branch_names(reduction_entry))
+            rating = get_rating(reduction_entry)
+            if name in branch_names
+                for t in get_time_steps(container)
+                    JuMP.set_upper_bound(var[name, t], rating)
+                    JuMP.set_lower_bound(var[name, t], -1.0 * rating)
+                end
             end
         end
     end
@@ -171,15 +247,20 @@ function branch_rate_bounds!(
     ]
 
     time_steps = get_time_steps(container)
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-
-    for d in devices
-        name = PSY.get_name(d)
-        if name ∈ retained_branches_names
-            for t in time_steps, var in vars
-                JuMP.set_upper_bound(var[name, t], PSY.get_rating(d))
-                JuMP.set_lower_bound(var[name, t], -1.0 * PSY.get_rating(d))
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, B)
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            name = first(_get_branch_names(reduction_entry))
+            rating = get_rating(reduction_entry)
+            if name in branch_names
+                for t in time_steps, var in vars
+                    JuMP.set_upper_bound(var[name, t], rating)
+                    JuMP.set_lower_bound(var[name, t], -1.0 * rating)
+                end
             end
         end
     end
@@ -208,13 +289,14 @@ function _check_pwl_loss_model(devices)
             end
         end
     end
+    return
 end
 
 function _add_dense_pwl_loss_variables!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel{D, HVDCTwoTerminalPiecewiseLoss},
-) where {D <: TwoTerminalHVDCTypes}
+) where {D <: PSY.TwoTerminalHVDC}
     # Check if type and length of PWL loss model are the same for all devices
     _check_pwl_loss_model(devices)
 
@@ -269,7 +351,7 @@ function _add_sparse_pwl_loss_variables!(
     container::OptimizationContainer,
     devices,
     ::DeviceModel{D, HVDCTwoTerminalPiecewiseLoss},
-) where {D <: TwoTerminalHVDCTypes}
+) where {D <: PSY.TwoTerminalHVDC}
     # Check if type and length of PWL loss model are the same for all devices
     #_check_pwl_loss_model(devices)
 
@@ -324,6 +406,79 @@ end
 
 ################################## Rate Limits constraint_infos ############################
 
+function get_rating(double_circuit::Set{PSY.ACTransmission})
+    return minimum([PSY.get_rating(circuit) for circuit in double_circuit])
+end
+function get_rating(series_chain::Vector{Any})
+    return minimum([get_rating(segment) for segment in series_chain])
+end
+function get_rating(device::T) where {T <: PSY.ACTransmission}
+    return PSY.get_rating(device)
+end
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_min_max_limits(
+    double_circuit::Set{PSY.ACTransmission},
+    constraint_type::Type{<:ConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_circuit = [
+        get_min_max_limits(device, constraint_type, branch_formulation) for
+        device in double_circuit
+    ]
+    min_by_circuit = [x.min for x in min_max_by_circuit]
+    max_by_circuit = [x.max for x in min_max_by_circuit]
+    # Limit by most restictive circuit:
+    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_min_max_limits(
+    transformer_entry::Tuple{PSY.ThreeWindingTransformer, Int},
+    constraint_type::Type{<:ConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    transformer, winding_number = transformer_entry
+    if winding_number == 1
+        limits = (
+            min = -1 * PSY.get_rating_primary(transformer),
+            max = PSY.get_rating_primary(transformer),
+        )
+    elseif winding_number == 2
+        limits = (
+            min = -1 * PSY.get_rating_secondary(transformer),
+            max = PSY.get_rating_secondary(transformer),
+        )
+    elseif winding_number == 3
+        limits = (
+            min = -1 * PSY.get_rating_tertiary(transformer),
+            max = PSY.get_rating_tertiary(transformer),
+        )
+    end
+    return limits
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_min_max_limits(
+    series_chain::Vector{Any},
+    constraint_type::Type{<:ConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_segment = [
+        get_min_max_limits(segment, constraint_type, branch_formulation) for
+        segment in series_chain
+    ]
+    min_by_segment = [x.min for x in min_max_by_segment]
+    max_by_segment = [x.max for x in min_max_by_segment]
+    # Limit by most restictive segment:
+    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+end
+
 """
 Min and max limits for Abstract Branch Formulation
 """
@@ -365,7 +520,7 @@ Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraint},
-    devices::IS.FlattenIteratorWrapper{T},
+    ::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, U},
     network_model::NetworkModel{V},
 ) where {
@@ -373,14 +528,19 @@ function add_constraints!(
     U <: AbstractBranchFormulation,
     V <: PM.AbstractActivePowerModel,
 }
-    time_steps = get_time_steps(container)
-    network_reduction = get_network_reduction(network_model)
-    if isempty(network_reduction)
-        device_names = [PSY.get_name(d) for d in devices]
-    else
-        device_names = PNM.get_retained_branches_names(network_reduction)  #TODO need added branches here for ward?
-    end
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    device_names = get_branch_name_constraint_axis(
+        all_branch_maps_by_type,
+        T,
+        RateLimitConstraint,
+        reduced_branch_tracker,
+    )
+    # Possible that all constraints are handled by other types:
+    isempty(device_names) && return
 
+    time_steps = get_time_steps(container)
     con_lb =
         add_constraints_container!(
             container,
@@ -407,42 +567,27 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
-
-    has_dlr_ts =
-        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
-
-    if has_dlr_ts
-        ts_name =
-            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
-        ts_type = get_default_time_series_type(container)
-        param_container =
-            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
-        mult = get_multiplier_array(param_container)
-    end
-
-    for device in devices
-        ci_name = PSY.get_name(device)
-        if !(ci_name ∈ PNM.get_retained_branches_names(network_reduction))
-            continue
-        end
-
-        if has_dlr_ts
-            device_dynamic_branch_rating_ts =
-                _get_device_dynamic_branch_rating_time_series(
-                    param_container,
-                    device,
-                    ts_name,
-                    ts_type)
-        end
-
-        limits = get_min_max_limits(device, RateLimitConstraint, U) # depends on constraint type and formulation type
-
-        for t in time_steps
-            if has_dlr_ts && !isempty(device_dynamic_branch_rating_ts)
-                limits = (
-                    min = -1 * device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
-                    max = device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
-                ) #update limits
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, T) && continue
+        for (arc_tuple, reduction_entry) in network_reduction_map[T]
+            limits = get_min_max_limits(reduction_entry, RateLimitConstraint, U)
+            names = _get_branch_names(reduction_entry)
+            for ci_name in names
+                if ci_name in device_names
+                    for t in time_steps
+                        con_ub[ci_name, t] =
+                            JuMP.@constraint(get_jump_model(container),
+                                array[ci_name, t] -
+                                (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
+                                limits.max)
+                        con_lb[ci_name, t] =
+                            JuMP.@constraint(get_jump_model(container),
+                                array[ci_name, t] +
+                                (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
+                                limits.min)
+                    end
+                end
             end
 
             con_ub[ci_name, t] =
@@ -486,63 +631,27 @@ function add_constraints!(
     return
 end
 
-function _constraint_without_slacks!(
-    container::OptimizationContainer,
-    constraint::JuMPConstraintArray,
-    rating_data::Vector{Tuple{String, Float64}},
-    time_steps::UnitRange{Int64},
-    retained_branches_names::Set{String},
-    var1::JuMPVariableArray,
-    var2::JuMPVariableArray,
-)
-    for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ retained_branches_names
-            for t in time_steps
-                constraint[branch_name, t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[branch_name, t]^2 + var2[branch_name, t]^2 <= branch_rate^2
-                )
-            end
-        end
-    end
-    return
-end
-
-function _constraint_with_slacks!(
-    container::OptimizationContainer,
-    constraint::JuMPConstraintArray,
-    rating_data::Vector{Tuple{String, Float64}},
-    time_steps::UnitRange{Int64},
-    retained_branches_names::Set{String},
-    var1::JuMPVariableArray,
-    var2::JuMPVariableArray,
-    slack_ub::JuMPVariableArray,
-)
-    for (branch_name, branch_rate) in rating_data
-        if branch_name ∈ retained_branches_names
-            for t in time_steps
-                constraint[branch_name, t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[branch_name, t]^2 + var2[branch_name, t]^2 -
-                    slack_ub[branch_name, t] <= branch_rate^2
-                )
-            end
-        end
-    end
-    return
-end
-
 """
 Add rate limit from to constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintFromTo},
-    devices::IS.FlattenIteratorWrapper{B},
+    ::IS.FlattenIteratorWrapper{B},
     device_model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
-    rating_data = [(PSY.get_name(h), PSY.get_rating(h)) for h in devices]
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    device_names = get_branch_name_constraint_axis(
+        all_branch_maps_by_type,
+        B,
+        RateLimitConstraintFromTo,
+        reduced_branch_tracker,
+    )
+    # Possible that all constraints are handled by other types:
+    isempty(device_names) && return
 
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerFromToVariable(), B)
@@ -551,38 +660,34 @@ function add_constraints!(
         container,
         cons_type(),
         B,
-        [r[1] for r in rating_data],
+        device_names,
         time_steps,
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
     use_slacks = get_use_slacks(device_model)
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
-        _constraint_with_slacks!(
-            container,
-            constraint,
-            rating_data,
-            time_steps,
-            Set(retained_branches_names),
-            var1,
-            var2,
-            slack_ub,
-        )
     end
-
-    _constraint_without_slacks!(
-        container,
-        constraint,
-        rating_data,
-        time_steps,
-        Set(retained_branches_names),
-        var1,
-        var2,
-    )
-
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            branch_rate = get_rating(reduction_entry)
+            names = _get_branch_names(reduction_entry)
+            for ci_name in names
+                if ci_name in device_names
+                    for t in time_steps
+                        constraint[ci_name, t] = JuMP.@constraint(
+                            get_jump_model(container),
+                            var1[ci_name, t]^2 + var2[ci_name, t]^2 -
+                            (use_slacks ? slack_ub[ci_name, t] : 0.0) <= branch_rate^2
+                        )
+                    end
+                end
+            end
+        end
+    end
     return
 end
 
@@ -592,11 +697,21 @@ Add rate limit to from constraints for ACBranch with AbstractPowerModel
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{RateLimitConstraintToFrom},
-    devices::IS.FlattenIteratorWrapper{B},
+    ::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
-    rating_data = [(PSY.get_name(h), PSY.get_rating(h)) for h in devices]
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    device_names = get_branch_name_constraint_axis(
+        all_branch_maps_by_type,
+        B,
+        RateLimitConstraintToFrom,
+        reduced_branch_tracker,
+    )
+    # Possible that all constraints are handled by other types:
+    isempty(device_names) && return
 
     time_steps = get_time_steps(container)
     var1 = get_variable(container, FlowActivePowerToFromVariable(), B)
@@ -605,21 +720,26 @@ function add_constraints!(
         container,
         cons_type(),
         B,
-        [r[1] for r in rating_data],
+        device_names,
         time_steps,
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
-
-    for r in rating_data
-        if r[1] ∈ retained_branches_names
-            for t in time_steps
-                constraint[r[1], t] = JuMP.@constraint(
-                    get_jump_model(container),
-                    var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
-                )
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, B) && continue
+        for reduction_entry in values(network_reduction_map[B])
+            branch_rate = get_rating(reduction_entry)
+            names = _get_branch_names(reduction_entry)
+            for ci_name in names
+                if ci_name in device_names
+                    for t in time_steps
+                        constraint[ci_name, t] = JuMP.@constraint(
+                            get_jump_model(container),
+                            var1[ci_name, t]^2 + var2[ci_name, t]^2 <= branch_rate^2
+                        )
+                    end
+                end
             end
         end
     end
@@ -656,9 +776,9 @@ function _make_flow_expressions!(
             )
         )
     end
-    return name, expressions
+    #return name, expressions
     # change when using the not concurrent version
-    #return expressions
+    return expressions
 end
 
 function _make_flow_expressions!(
@@ -666,8 +786,9 @@ function _make_flow_expressions!(
     branches::Vector{String},
     time_steps::UnitRange{Int},
     ptdf::ValidPTDFS,
-    nodal_balance_expressions::JuMPAffineExpressionDArray,
+    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
     branch_Type::DataType,
+    all_branch_maps_by_type::Dict,
 )
     branch_flow_expr = add_expression_container!(container,
         PTDFBranchFlow(),
@@ -675,26 +796,54 @@ function _make_flow_expressions!(
         branches,
         time_steps,
     )
-
     jump_model = get_jump_model(container)
-    tasks = map(branches) do name
-        ptdf_col = ptdf[name, :]
-        Threads.@spawn _make_flow_expressions!(
-            jump_model,
-            name,
-            time_steps,
-            ptdf_col,
-            nodal_balance_expressions.data,
-        )
+    # TODO - translate new loop to parallel construction of expressions
+    #=     tasks = map(branches) do name
+            ptdf_col = ptdf[name, :]
+            Threads.@spawn _make_flow_expressions!(
+                jump_model,
+                name,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions.data,
+            )
+        end
+        for task in tasks
+            name, expressions = fetch(task)
+            branch_flow_expr[name, :] .= expressions
+        end
+     =#
+    # Leaving serial code commented out for debugging purposes in the future
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, branch_Type) && continue
+        for (arc_tuple, reduction_entry) in network_reduction_map[branch_Type]
+            ptdf_col = ptdf[arc_tuple, :]
+            _add_expression_to_container!(
+                branch_flow_expr,
+                jump_model,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions,
+                reduction_entry,
+                branches,
+            )
+        end
     end
-    for task in tasks
-        name, expressions = fetch(task)
-        branch_flow_expr[name, :] .= expressions
-    end
+    return branch_flow_expr
+end
 
-    #= Leaving serial code commented out for debugging purposes in the future
-    for name in branches
-        ptdf_col = ptdf[name, :]
+function _add_expression_to_container!(
+    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
+    jump_model::JuMP.Model,
+    time_steps::UnitRange{Int},
+    ptdf_col::Vector{Float64},
+    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
+    reduction_entry::T,
+    branches::Vector{String},
+) where {T <: PSY.ACTransmission}
+    name = PSY.get_name(reduction_entry)
+    if name in branches
         branch_flow_expr[name, :] .= _make_flow_expressions!(
             jump_model,
             name,
@@ -703,10 +852,59 @@ function _make_flow_expressions!(
             nodal_balance_expressions.data,
         )
     end
-    =#
-
-    return branch_flow_expr
+    return
 end
+
+function _add_expression_to_container!(
+    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
+    jump_model::JuMP.Model,
+    time_steps::UnitRange{Int},
+    ptdf_col::Vector{Float64},
+    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
+    reduction_entry::Vector{Any},
+    branches::Vector{String},
+)
+    names = _get_branch_names(reduction_entry)
+    for name in names
+        if name in branches
+            branch_flow_expr[name, :] .= _make_flow_expressions!(
+                jump_model,
+                name,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions.data,
+            )
+            #Only one constraint added per arc; once it is found can return
+            return
+        end
+    end
+end
+
+function _add_expression_to_container!(
+    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
+    jump_model::JuMP.Model,
+    time_steps::UnitRange{Int},
+    ptdf_col::Vector{Float64},
+    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
+    reduction_entry::Set{PSY.ACTransmission},
+    branches::Vector{String},
+)
+    names = _get_branch_names(reduction_entry)
+    for name in names
+        if name in branches
+            branch_flow_expr[name, :] .= _make_flow_expressions!(
+                jump_model,
+                name,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions.data,
+            )
+            #Only one constraint added per arc; once it is found can return
+            return
+        end
+    end
+end
+
 """
 Add network flow constraints for ACBranch and NetworkModel with <: AbstractPTDFModel
 """
@@ -718,11 +916,19 @@ function add_constraints!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACBranch}
     ptdf = get_PTDF_matrix(network_model)
-    # This is a workaround to not call the same list comprehension to find
-    # The subset of branches of type B in the PTDF
-    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    network_reduction_data = network_model.network_reduction
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    branches = get_branch_name_constraint_axis(
+        all_branch_maps_by_type,
+        B,
+        NetworkFlowConstraint,
+        reduced_branch_tracker,
+    )
 
-    branches = flow_variables.axes[1]
+    # Possible that all constraints are handled by other types:
+    isempty(branches) && return
+
     time_steps = get_time_steps(container)
     branch_flow = add_constraints_container!(
         container,
@@ -741,6 +947,7 @@ function add_constraints!(
         ptdf,
         nodal_balance_expressions,
         B,
+        all_branch_maps_by_type,
     )
     jump_model = get_jump_model(container)
     for name in branches

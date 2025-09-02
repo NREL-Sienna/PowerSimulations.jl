@@ -124,7 +124,7 @@ function add_event_constraints!(
             container,
             ActivePowerOutageConstraint,
             lhs_type,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attributes,
             device_model,
             W,

@@ -107,7 +107,7 @@ function construct_network!(
     powermodels_network!(container, T, sys, template, instantiate_nip_expr_model)
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
-    add_pm_variable_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
 
     add_constraint_dual!(container, sys, model)
@@ -161,7 +161,7 @@ function construct_network!(
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_nip_expr_model)
-    add_pm_variable_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
 
     add_constraint_dual!(container, sys, model)
@@ -221,7 +221,7 @@ function construct_network!(
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_bfp_expr_model)
-    add_pm_variable_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
     add_constraint_dual!(container, sys, model)
     return
@@ -312,7 +312,7 @@ function construct_network!(
     #Constraints in case the model has DC Buses
     add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_vip_expr_model)
-    add_pm_variable_refs!(container, T, sys)
+    add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
     add_constraint_dual!(container, sys, model)
     return
