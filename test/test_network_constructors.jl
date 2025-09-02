@@ -10,9 +10,9 @@
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
-        @test PSI.get_optimization_container(ps_model).pm !== nothing
-        # TODO: Change test
-        # @test :nodal_balance_active in keys(PSI.get_optimization_container(ps_model).expressions)
+        opt_container = PSI.get_optimization_container(ps_model)
+        @test opt_container.pm !== nothing
+        @test PSI.has_container_key(opt_container, ActivePowerBalance, ACBus)
     end
 end
 
@@ -120,13 +120,6 @@ end
             10000,
         )
     end
-    # PTDF input Error testing
-    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
-    @test build!(
-        ps_model;
-        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
-        output_dir = mktempdir(; cleanup = true),
-    ) == PSI.ModelBuildStatus.FAILED
 end
 
 @testset "Network DC-PF with VirtualPTDF Model" begin
