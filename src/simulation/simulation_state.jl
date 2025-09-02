@@ -396,60 +396,6 @@ function update_decision_state!(
     return
 end
 
-# TODO DT: We need a better way of abstracting dimensionality. We can't repeat all this logic
-# every time the dimensionality changes.
-# function update_decision_state!(
-#     state::SimulationState,
-#     key::OptimizationContainerKey,
-#     store_data::DenseAxisArray{Float64, 3},
-#     simulation_time::Dates.DateTime,
-#     model_params::ModelStoreParams,
-# )
-#     state_data = get_decision_state_data(state, key)
-#     tmp = get_column_names(key, state_data)
-#     column_names = tmp[1]
-#     model_resolution = get_resolution(model_params)
-#     state_resolution = get_data_resolution(state_data)
-#     resolution_ratio = model_resolution ÷ state_resolution
-#     state_timestamps = state_data.timestamps
-#     @assert_op resolution_ratio >= 1
-
-#     if simulation_time > get_end_of_step_timestamp(state_data)
-#         state_data_index = 1
-#         state_data.timestamps[:] .=
-#             range(
-#                 simulation_time;
-#                 step = state_resolution,
-#                 length = get_num_rows(state_data),
-#             )
-#     else
-#         state_data_index = find_timestamp_index(state_timestamps, simulation_time)
-#     end
-
-#     offset = resolution_ratio - 1
-#     # TODO DT: what do I do here?
-#     result_time_index = axes(store_data)[2]
-#     set_update_timestamp!(state_data, simulation_time)
-#     for t in result_time_index
-#         state_range = state_data_index:(state_data_index + offset)
-#         for name in column_names, i in state_range
-#             # TODO: We could also interpolate here
-#             state_data.values[name, i, :] = store_data[name, t, :] # TODO DT: wrong
-#         end
-#         set_last_recorded_row!(state_data, state_range[end])
-#         state_data_index += resolution_ratio
-#     end
-#     return
-# end
-
-# function _get_result_time_index(store_data::DenseAxisArray{Float64, 2})
-#     axes(store_data)[2]
-# end
-
-# function _get_result_time_index(store_data::DenseAxisArray{Float64, 3})
-#     axes(store_data)[3]
-# end
-
 function _get_time_to_recover(
     event::PSY.GeometricDistributionForcedOutage,
     event_model::EventModel,
