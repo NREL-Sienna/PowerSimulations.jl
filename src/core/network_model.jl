@@ -1,16 +1,3 @@
-const REDUCED_BRANCH_VARIABLE_DICT = Dict{
-    Type{<:PSY.ACTransmission},
-    Dict{
-        Type{<:ISOPT.VariableType},
-        Dict{String, Dict{Int, JuMP.VariableRef}},
-    },
-}
-const REDUCED_BRANCH_CONSTRAINT_DICT =
-    Dict{
-        Type{<:PSY.ACTransmission},
-        Dict{Type{<:ISOPT.ConstraintType}, Vector{String}},
-    }
-
 function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
     if !isconcretetype(T)
         throw(
@@ -55,8 +42,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
     modeled_branch_types::Vector{DataType}
-    reduced_branch_variable_tracker::REDUCED_BRANCH_VARIABLE_DICT
-    reduced_branch_constraint_tracker::REDUCED_BRANCH_CONSTRAINT_DICT
+    reduced_branch_tracker::BranchReductionOptimizationTracker
 
     function NetworkModel(
         ::Type{T};
@@ -84,8 +70,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
             Vector{DataType}(),
-            REDUCED_BRANCH_VARIABLE_DICT(),
-            REDUCED_BRANCH_CONSTRAINT_DICT(),
+            BranchReductionOptimizationTracker(),
         )
     end
 end
@@ -96,6 +81,7 @@ get_reduce_radial_branches(m::NetworkModel) = m.reduce_radial_branches
 get_network_reduction(m::NetworkModel) = m.network_reduction
 get_duals(m::NetworkModel) = m.duals
 get_network_formulation(::NetworkModel{T}) where {T} = T
+get_reduced_branch_tracker(m::NetworkModel) = m.reduced_branch_tracker
 get_reference_buses(m::NetworkModel{T}) where {T <: PM.AbstractPowerModel} =
     collect(keys(m.subnetworks))
 get_subnetworks(m::NetworkModel) = m.subnetworks
