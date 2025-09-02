@@ -78,11 +78,7 @@ function add_variables!(
     devices::IS.FlattenIteratorWrapper{U},
     formulation::AbstractBranchFormulation,
 ) where {
-    T <: Union{
-        FlowActivePowerVariable,
-        FlowActivePowerSlackUpperBound,
-        FlowActivePowerSlackLowerBound,
-    },
+    T <: AbstractACActivePowerFlow,
     U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     network_reduction_data = network_model.network_reduction
@@ -100,6 +96,7 @@ function add_variables!(
 
     for t in time_steps
         for map in NETWORK_REDUCTION_MAPS
+            @error all_branch_maps_by_type
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, U) && continue
             for (arc_tuple, reduction_entry) in network_reduction_map[U]
@@ -589,15 +586,6 @@ function add_constraints!(
                     end
                 end
             end
-
-            con_ub[ci_name, t] =
-                JuMP.@constraint(get_jump_model(container),
-                    array[ci_name, t] - (use_slacks ? slack_ub[ci_name, t] : 0.0) <=
-                    limits.max)
-            con_lb[ci_name, t] =
-                JuMP.@constraint(get_jump_model(container),
-                    array[ci_name, t] + (use_slacks ? slack_lb[ci_name, t] : 0.0) >=
-                    limits.min)
         end
     end
     return
