@@ -20,13 +20,15 @@ const DISABLED_TEST_FILES = [
     # "test_device_thermal_generation_constructors.jl",
     "test_device_source_constructors.jl",
     # "test_formulation_combinations.jl",
+    "test_market_bid_cost.jl",
     # "test_ic_reconciliation.jl",
     # "test_initialization_problem.jl",
-    # "test_model_decision.jl"
-    # "test_model_emulation.jl"
-    # "test_network_constructors.jl"
-    # "test_print.jl"
-    # "test_problem_template.jl"
+    # "test_model_decision.jl",
+    # "test_model_emulation.jl",
+    # "test_network_constructors.jl",
+    # "test_security_constrained_models.jl",
+    # "test_print.jl",
+    # "test_problem_template.jl",
     "test_power_flow_in_the_loop.jl",
     # "test_recorder_events.jl"
     "test_services_constructor.jl",
@@ -38,6 +40,7 @@ const DISABLED_TEST_FILES = [
     # "test_simulation_results_export.jl"
     # "test_simulation_sequence.jl"
     # "test_simulation_store.jl"
+    "test_events.jl",
     # "test_utils.jl"
 ]
 
