@@ -321,12 +321,19 @@ Return the values for the requested variable. It keeps requests when performing 
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 
 # Examples
 
 ```julia
 read_variable(results, ActivePowerVariable, ThermalStandard)
 read_variable(results, "ActivePowerVariable__ThermalStandard")
+read_variable(results, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
 ```
 """
 function read_variable(
@@ -355,6 +362,12 @@ Return the values for the requested dual. It keeps requests when performing mult
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 """
 function read_dual(
     res::SimulationProblemResults{DecisionModelSimulationResults},
@@ -381,6 +394,12 @@ Return the values for the requested parameter. It keeps requests when performing
     splatted into a ParameterKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 """
 function read_parameter(
     res::SimulationProblemResults{DecisionModelSimulationResults},

@@ -294,7 +294,7 @@ function to_results_dataframe(
 
     return DataFrame(
         :DateTime => time_col,
-        :component => component_col,
+        :name => component_col,
         :value => reshape(permutedims(array.data), num_rows),
     )
 end
@@ -322,7 +322,7 @@ function to_results_dataframe(
 
     return DataFrame(
         :time_index => time_col,
-        :component => component_col,
+        :name => component_col,
         :value => reshape(permutedims(array.data), num_rows),
     )
 end
@@ -386,8 +386,8 @@ function to_results_dataframe(
 
     return DataFrame(
         :DateTime => time_col,
-        :component => component_col,
-        :component_x => component_x_col,
+        :name => component_col,
+        :name2 => component_x_col,
         :value => vals,
     )
 end
@@ -422,8 +422,8 @@ function to_results_dataframe(
 
     return DataFrame(
         :time_index => time_col,
-        :component => component_col,
-        :component_x => component_x_col,
+        :name => component_col,
+        :name2 => component_x_col,
         :value => vals,
     )
 end

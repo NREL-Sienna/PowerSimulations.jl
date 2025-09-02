@@ -67,7 +67,7 @@ function _make_dataframe(
     return DataFrames.stack(
         df,
         measure_vars;
-        variable_name = :component,
+        variable_name = :name,
         value_name = :value,
     )
 end

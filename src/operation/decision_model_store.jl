@@ -68,9 +68,9 @@ function write_result!(
     array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange}},
 ) where {T}
     columns = get_column_names_from_axis_array(array)
-    IS.@assert_op length(columns) == 1
+    @assert_op length(columns) == 1
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(array.data, columns[1], 1:size(array)[2])
+    container[key][index] = DenseAxisArray(array.data, columns[1], 1:size(array, 2))
     return
 end
 
@@ -82,13 +82,9 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{T, 2, <:Tuple{Vector{Int}, UnitRange}},
 ) where {T}
-    columns = axes(array, 1)
-    if eltype(columns) !== String
-        # TODO: This happens because buses are stored by indexes instead of name.
-        columns = string.(columns)
-    end
+    columns = get_column_names_from_axis_array(array)
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(array.data, columns, 1:size(array)[2])
+    container[key][index] = DenseAxisArray(array.data, columns..., 1:size(array, 2))
     return
 end
 
@@ -101,7 +97,7 @@ function write_result!(
     array::DenseAxisArray{<:Any, 1},
 )
     columns = get_column_names_from_axis_array(array)
-    IS.@assert_op length(columns) == 1
+    @assert_op length(columns) == 1
     container = getfield(store, get_store_container_type(key))
     container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns[1])
     return
@@ -116,7 +112,7 @@ function write_result!(
     array::DenseAxisArray{<:Any, 3},
 )
     columns = get_column_names_from_axis_array(array)
-    IS.@assert_op length(columns) == 2
+    @assert_op length(columns) == 2
     container = getfield(store, get_store_container_type(key))
     container[key][index] =
         DenseAxisArray(array.data, columns[1], columns[2], 1:size(array, 3))
@@ -131,7 +127,7 @@ function read_results(
     container = getfield(store, get_store_container_type(key))
     data = container[key]
     if isnothing(index)
-        @assert length(data) == 1
+        @assert_op length(data) == 1
         index = first(keys(data))
     end
 

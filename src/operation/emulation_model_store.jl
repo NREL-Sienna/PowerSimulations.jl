@@ -99,7 +99,7 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{Float64, 2},
 )
-    if size(array)[2] == 1
+    if size(array, 2) == 1
         write_result!(store, name, key, index, update_timestamp, array[:, 1])
     else
         container = get_data_field(store, get_store_container_type(key))

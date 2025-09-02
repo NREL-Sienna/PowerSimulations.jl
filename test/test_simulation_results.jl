@@ -347,7 +347,7 @@ function test_decision_problem_results_values(
     @test length(keys(p_thermal_standard_ed)) == 48
     for v in values(p_thermal_standard_ed)
         @test length(unique(v.DateTime)) == 12
-        @test length(unique(v.component)) == 5
+        @test length(unique(v.name)) == 5
     end
     p_thermal_standard_ed_wide = read_variable(
         results_ed,
@@ -365,21 +365,21 @@ function test_decision_problem_results_values(
     @test length(keys(ren_dispatch_params)) == 48
     for v in values(ren_dispatch_params)
         @test length(unique(v.DateTime)) == 12
-        @test length(unique(v.component)) == 3
+        @test length(unique(v.name)) == 3
     end
 
     network_duals = read_dual(results_ed, CopperPlateBalanceConstraint, PSY.System)
     @test length(keys(network_duals)) == 48
     for v in values(network_duals)
         @test length(unique(v.DateTime)) == 12
-        @test length(unique(v.component)) == 1
+        @test length(unique(v.name)) == 1
     end
 
     expression = read_expression(results_ed, PSI.ProductionCostExpression, ThermalStandard)
     @test length(keys(expression)) == 48
     for v in values(expression)
         @test length(unique(v.DateTime)) == 12
-        @test length(unique(v.component)) == 5
+        @test length(unique(v.name)) == 5
     end
 
     for var_key in
@@ -473,7 +473,7 @@ function test_decision_problem_results_values(
     @test length(keys(realized_expressions)) == 1
     for exp in values(realized_expressions)
         @test length(unique(exp.DateTime)) == 48
-        @test length(unique(exp.component)) == 3
+        @test length(unique(exp.name)) == 3
     end
 
     #request non sync data

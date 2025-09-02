@@ -116,7 +116,7 @@ function make_dataframe(
         DataFrames.stack(
             df_wide,
             measure_vars;
-            variable_name = :component,
+            variable_name = :name,
             value_name = :value,
         )
     elseif table_format == TableFormat.WIDE

@@ -321,10 +321,10 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
-                # First dim is Horizon, Last number of steps
-                #   TODO DT: not correct. reqs["dims"] has (num_steps, length(columns)...) and no horizon
+                #   (sim_time ÷ get_data_resolution, length(columns)...) and no horizon
                 #   Why are we taking the max? Shouldn't it be deterministic?
                 n_dims = max(1, length(reqs["dims"]) - 2)
+                # n_dims = length(reqs["dims"]) - 1
                 datasets[key] = HDF5Dataset{n_dims}(
                     dataset,
                     column_dataset,
@@ -646,22 +646,7 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    array::DenseAxisArray{Float64, 1},
-)
-    dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, array.data, index)
-    set_last_recorded_row!(dataset, index)
-    set_update_timestamp!(dataset, simulation_time)
-    return
-end
-
-function write_result!(
-    store::HdfSimulationStore,
-    ::Symbol,
-    key::OptimizationContainerKey,
-    index::EmulationModelIndexType,
-    simulation_time::Dates.DateTime,
-    array::DenseAxisArray{Float64, 2},
+    array::DenseAxisArray{Float64},
 )
     dataset = _get_em_dataset(store, key)
     _write_dataset!(dataset.values, array.data, index)

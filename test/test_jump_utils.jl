@@ -78,9 +78,9 @@ end
     df = PSI.to_results_dataframe(array, timestamps, Val(IS.TableFormat.LONG))
 
     @test size(df) == (6, 3)  # 2 components × 3 timestamps = 6 rows, 3 columns
-    @test names(df) == ["DateTime", "component", "value"]
+    @test names(df) == ["DateTime", "name", "value"]
     @test df.DateTime == repeat(timestamps, 2)
-    @test df.component == repeat(components; inner = 3)
+    @test df.name == repeat(components; inner = 3)
     @test df.value == reshape(permutedims(data), 6)
 
     # Test error with mismatched timestamps.
@@ -97,9 +97,9 @@ end
     df = PSI.to_results_dataframe(array, nothing, Val(IS.TableFormat.LONG))
 
     @test size(df) == (6, 3)  # 2 components × 3 timestamps = 6 rows, 3 columns
-    @test names(df) == ["time_index", "component", "value"]
+    @test names(df) == ["time_index", "name", "value"]
     @test df.time_index == repeat([1, 2, 3], 2)
-    @test df.component == repeat(components; inner = 3)
+    @test df.name == repeat(components; inner = 3)
     @test df.value == reshape(permutedims(data), 6)
 end
 
@@ -153,21 +153,21 @@ end
 
 function _check_3d_data(df)
     @test size(df) == (24, 4)  # 2 components x 4 extra × 3 timestamps = 24 rows, 4 columns
-    @test @rsubset(df, :component == "component1" && :component_x == "1")[!, :value] ==
+    @test @rsubset(df, :name == "component1" && :name2 == "1")[!, :value] ==
           [1.0, 2.0, 3.0]
-    @test @rsubset(df, :component == "component1" && :component_x == "2")[!, :value] ==
+    @test @rsubset(df, :name == "component1" && :name2 == "2")[!, :value] ==
           [2.0, 3.0, 4.0]
-    @test @rsubset(df, :component == "component1" && :component_x == "3")[!, :value] ==
+    @test @rsubset(df, :name == "component1" && :name2 == "3")[!, :value] ==
           [3.0, 4.0, 5.0]
-    @test @rsubset(df, :component == "component1" && :component_x == "4")[!, :value] ==
+    @test @rsubset(df, :name == "component1" && :name2 == "4")[!, :value] ==
           [6.0, 7.0, 8.0]
-    @test @rsubset(df, :component == "component2" && :component_x == "1")[!, :value] ==
+    @test @rsubset(df, :name == "component2" && :name2 == "1")[!, :value] ==
           [11.0, 12.0, 13.0]
-    @test @rsubset(df, :component == "component2" && :component_x == "2")[!, :value] ==
+    @test @rsubset(df, :name == "component2" && :name2 == "2")[!, :value] ==
           [12.0, 13.0, 14.0]
-    @test @rsubset(df, :component == "component2" && :component_x == "3")[!, :value] ==
+    @test @rsubset(df, :name == "component2" && :name2 == "3")[!, :value] ==
           [13.0, 14.0, 15.0]
-    @test @rsubset(df, :component == "component2" && :component_x == "4")[!, :value] ==
+    @test @rsubset(df, :name == "component2" && :name2 == "4")[!, :value] ==
           [16.0, 17.0, 18.0]
 end
 
@@ -191,7 +191,7 @@ end
 @testset "Test to_results_dataframe with 3D DenseAxisArray - LONG format without timestamps" begin
     array = _fill_3d_data()
     df = PSI.to_results_dataframe(array, nothing, Val(IS.TableFormat.LONG))
-    @test names(df) == ["time_index", "component", "component_x", "value"]
+    @test names(df) == ["time_index", "name", "name2", "value"]
     _check_3d_data(df)
     @test df.time_index == repeat([1, 2, 3], 8)
 end

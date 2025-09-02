@@ -35,7 +35,7 @@ const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             results = OptimizationProblemResults(model)
             expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
-            component_df = @rsubset(expr, :component == "Test Unit1")
+            component_df = @rsubset(expr, :name == "Test Unit1")
             var_unit_cost =
                 only(@combine(component_df, :var_unit_cost = sum(:value)).var_unit_cost)
             unit_cost_due_to_initial =
@@ -347,7 +347,7 @@ end
 function _read_one_value(res, var_name, gentype, unit_name)
     df = @chain begin
         vcat(values(read_variable_dict(res, var_name, gentype))...)
-        @rsubset(:component == unit_name)
+        @rsubset(:name == unit_name)
         @combine(:value = sum(:value))
     end
     return df[1, 1]
@@ -444,14 +444,14 @@ function run_startup_shutdown_test(
     genname = multistart ? "115_STEAM_1" : "Test Unit1"
     sh_param = read_parameter_dict(res, PSI.ShutdownCostParameter, gentype)
     for (step_dt, step_df) in pairs(sh_param)
-        for gen_name in unique(step_df.component)
+        for gen_name in unique(step_df.name)
             comp = get_component(gentype, sys, gen_name)
             fc_comp =
                 get_shut_down(comp, PSY.get_operation_cost(comp); start_time = step_dt)
             @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
             @test all(
                 isapprox.(
-                    @rsubset(step_df, :component == gen_name).value,
+                    @rsubset(step_df, :name == gen_name).value,
                     TimeSeries.values(fc_comp),
                 ),
             )
@@ -494,7 +494,7 @@ function run_mbc_sim(
     # TODO test slopes, breakpoints too once we are able to write those
     ii_param = read_parameter_dict(res, PSI.IncrementalCostAtMinParameter, ThermalStandard)
     for (step_dt, step_df) in pairs(ii_param)
-        for gen_name in unique(step_df.component)
+        for gen_name in unique(step_df.name)
             comp = get_component(ThermalStandard, sys, gen_name)
             ii_comp = get_incremental_initial_input(
                 comp,
@@ -504,7 +504,7 @@ function run_mbc_sim(
             @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(ii_comp))
             @test all(
                 isapprox.(
-                    @rsubset(step_df, :component == gen_name).value,
+                    @rsubset(step_df, :name == gen_name).value,
                     TimeSeries.values(ii_comp),
                 ),
             )
@@ -550,13 +550,13 @@ function _read_start_vars(::Val{true}, res::IS.Results)
         warm = warm_vars[timestamp]
         cold = cold_vars[timestamp]
         combined_vars[timestamp] = @chain DataFrames.rename(hot, :value => :hot) begin
-            innerjoin(DataFrames.rename(warm, :value => :warm); on = [:DateTime, :component])
+            innerjoin(DataFrames.rename(warm, :value => :warm); on = [:DateTime, :name])
             innerjoin(
                 DataFrames.rename(cold, :value => :cold);
-                on = [:DateTime, :component],
+                on = [:DateTime, :name],
             )
             @transform(@byrow(:value = (:hot, :warm, :cold)))
-            @select(:DateTime, :component, :value)
+            @select(:DateTime, :name, :value)
         end
     end
     return combined_vars
@@ -581,10 +581,10 @@ function cost_due_to_time_varying_startup_shutdown(
     for step_dt in keys(start_vars)
         start_df = start_vars[step_dt]
         stop_df = stop_vars[step_dt]
-        @assert unique(start_df.component) == unique(stop_df.component)
+        @assert unique(start_df.name) == unique(stop_df.name)
         @assert start_df[!, :DateTime] == stop_df[!, :DateTime]
         timestamps = unique(start_df.DateTime)
-        component_names = unique(start_df.component)
+        component_names = unique(start_df.name)
         dfs = Vector{DataFrame}()
         for gen_name in component_names
             comp = get_component(gentype, sys, gen_name)
@@ -606,13 +606,13 @@ function cost_due_to_time_varying_startup_shutdown(
                 dfs,
                 DataFrame(
                     :DateTime => timestamps,
-                    :component => repeat([gen_name], length(timestamps)),
+                    :name => repeat([gen_name], length(timestamps)),
                     :value =>
                         LinearAlgebra.dot.(
-                            @rsubset(start_df, :component == gen_name).value,
+                            @rsubset(start_df, :name == gen_name).value,
                             startup_values,
                         ) .+
-                        @rsubset(stop_df, :component == gen_name).value .*
+                        @rsubset(stop_df, :name == gen_name).value .*
                         TimeSeries.values(shutdown_ts),
                 ),
             )
@@ -641,7 +641,7 @@ function cost_due_to_time_varying_mbc(
         @assert names(on_df) == names(power_df)
         @assert on_df[!, :DateTime] == power_df[!, :DateTime]
         step_df = DataFrame(:DateTime => unique(on_df.DateTime))
-        gen_names = unique(on_df.component)
+        gen_names = unique(on_df.name)
         for gen_name in gen_names
             comp = get_component(gentype, sys, gen_name)
             cost = PSY.get_operation_cost(comp)
@@ -651,7 +651,7 @@ function cost_due_to_time_varying_mbc(
                 ii_ts = get_incremental_initial_input(comp, cost; start_time = step_dt)
                 @assert all(unique(on_df.DateTime) .== TimeSeries.timestamp(ii_ts))
                 step_df[!, gen_name] .+=
-                    @rsubset(on_df, :component == gen_name).value .*
+                    @rsubset(on_df, :name == gen_name).value .*
                     TimeSeries.values(ii_ts)
             end
             # TODO decremental
@@ -660,7 +660,7 @@ function cost_due_to_time_varying_mbc(
                 @assert all(unique(power_df.DateTime) .== TimeSeries.timestamp(vc_ts))
                 step_df[!, gen_name] .+=
                     _calc_pwi_cost.(
-                        @rsubset(power_df, :component == gen_name).value,
+                        @rsubset(power_df, :name == gen_name).value,
                         TimeSeries.values(vc_ts),
                     )
             end
@@ -670,7 +670,7 @@ function cost_due_to_time_varying_mbc(
             DataFrames.stack(
                 step_df,
                 measure_vars;
-                variable_name = :component,
+                variable_name = :name,
                 value_name = :value,
             )
     end
@@ -1081,7 +1081,7 @@ end
             values(
             parameters["IncrementalPiecewiseLinearBreakpointParameter__ThermalStandard"],
         )
-            @test names(df) == ["DateTime", "component", "component_x", "value"]
+            @test names(df) == ["DateTime", "name", "name2", "value"]
         end
     end
 end
