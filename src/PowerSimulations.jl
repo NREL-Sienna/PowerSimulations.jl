@@ -256,6 +256,7 @@ export PowerFlowVoltageStabilityFactors
 
 # Constraints
 export AbsoluteValueConstraint
+export ActivePowerVariableTimeSeriesLimitsConstraint
 export LineFlowBoundConstraint
 export ActivePowerVariableLimitsConstraint
 export ActivePowerInVariableTimeSeriesLimitsConstraint
