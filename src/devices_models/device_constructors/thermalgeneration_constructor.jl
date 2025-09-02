@@ -202,13 +202,14 @@ function construct_device!(
     )
 
     if has_security_arguments(device_model)
-        add_constraints!(
-            container,
-            SecurityConstraint,
-            devices,
-            device_model,
-            network_model,
-        )
+        # TODO: SecurityConstrainedModels Implemenation of G-1
+        #add_constraints!(
+        #    container,
+        #    SecurityConstraint,
+        #    devices,
+        #    device_model,
+        #    network_model,
+        #)
     end
 
     add_constraint_dual!(container, sys, device_model)
