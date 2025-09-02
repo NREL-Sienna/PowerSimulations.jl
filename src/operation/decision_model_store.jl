@@ -141,7 +141,7 @@ function write_optimizer_stats!(
     index::DecisionModelIndexType,
 )
     if index in keys(store.optimizer_stats)
-        @warn "Overwriting optimizer stats"
+        error("Bug: Overwriting optimizer stats for index = $index")
     end
     store.optimizer_stats[index] = stats
     return

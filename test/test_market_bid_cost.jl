@@ -738,13 +738,7 @@ function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
     # Make sure there is some real difference between the two scenarios
     @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))
     # Make sure the difference is reflected correctly in the objective value
-    if !(
-        res1 isa PSI.SimulationProblemResults && res1.store isa PSI.InMemorySimulationStore
-    )
-        # TODO DT: something is broken with the objective_value in simulation decision model results
-        # when an in_memory store is used.
-        @test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
-    end
+    @test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
 end
 
 """

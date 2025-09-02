@@ -83,25 +83,6 @@ function list_emulation_model_keys(store::InMemorySimulationStore, container_typ
     return IS.Optimization.list_fields(store.em_data, container_type)
 end
 
-function write_optimizer_stats!(
-    store::InMemorySimulationStore,
-    model_name,
-    stats::OptimizerStats,
-    index::DecisionModelIndexType,
-)
-    write_optimizer_stats!(get_dm_data(store)[model_name], stats, index)
-    return
-end
-
-function write_optimizer_stats!(
-    store::InMemorySimulationStore,
-    stats::OptimizerStats,
-    index::EmulationModelIndexType,
-)
-    write_optimizer_stats!(get_em_data(store), stats, index)
-    return
-end
-
 function write_result!(
     store::InMemorySimulationStore,
     model_name::Symbol,
@@ -261,6 +242,7 @@ function write_optimizer_stats!(
     stats = get_optimizer_stats(model)
     dm_data = get_dm_data(store)
     write_optimizer_stats!(dm_data[get_name(model)], stats, index)
+    read_optimizer_stats(dm_data[get_name(model)])
     return
 end
 

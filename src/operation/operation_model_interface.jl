@@ -42,8 +42,12 @@ end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
 get_settings(model::OperationModel) = get_optimization_container(model).settings
+
 get_optimizer_stats(model::OperationModel) =
-    get_optimizer_stats(get_optimization_container(model))
+# This deepcopy is important because the optimization container is overwritten
+# at each solve in a simulation.
+    deepcopy(get_optimizer_stats(get_optimization_container(model)))
+
 get_simulation_info(model::OperationModel) = model.simulation_info
 get_simulation_number(model::OperationModel) = get_number(get_simulation_info(model))
 set_simulation_number!(model::OperationModel, val) =
