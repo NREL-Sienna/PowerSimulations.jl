@@ -686,13 +686,11 @@ end
 
 function initialize_system_expressions!(
     container::OptimizationContainer,
-    network_model::NetworkModel{
-        Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
-    },
+    network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
-)
+) where {T <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel}}
     areas = get_available_components(network_model, PSY.Area, system)
     if isempty(areas)
         throw(
