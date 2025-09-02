@@ -413,7 +413,7 @@ function add_pm_variable_refs!(
     ACbranch_dict = container.pm.ext[:PMmap].arcs
     ACbranch_types = PNM.get_ac_transmission_types(model.network_reduction)
     DCbranch_dict = container.pm.ext[:PMmap].arcs_dc
-    DCbranch_types = typeof.(values(DCbranch_dict))
+    DCbranch_types = Set(typeof.(values(DCbranch_dict)))
 
     pm_variable_types = keys(PM.var(container.pm, 1))
 
@@ -457,7 +457,7 @@ function add_pm_variable_refs!(
     container::OptimizationContainer,
     model::NetworkModel,
     d_class::Type{PSY.ACBranch},
-    device_types::Vector,
+    device_types::Set,
     pm_map::Dict,
     pm_variable_map::Dict,
     pm_variable_types::Base.KeySet,
@@ -513,7 +513,7 @@ function add_pm_variable_refs!(
     container::OptimizationContainer,
     ::NetworkModel,
     d_class::Type{PSY.TwoTerminalHVDC},
-    device_types::Vector,
+    device_types::Set,
     pm_map::Dict,
     pm_variable_map::Dict,
     pm_variable_types::Base.KeySet,
