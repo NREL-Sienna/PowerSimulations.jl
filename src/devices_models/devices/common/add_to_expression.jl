@@ -830,23 +830,11 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
 
-    if !isempty(generator_outages)
-        container.expressions[ExpressionKey(PostContingencyActivePowerGeneration, V)] =
-            _make_container_array(
-                get_name.(generator_outages),
-                get_name.(generators),
-                time_steps,
-            )
-    end
-
-    expressions = get_expression(
-        container,
-        ExpressionKey(
-            PostContingencyActivePowerGeneration,
-            V,
-            IS.Optimization.CONTAINER_KEY_EMPTY_META,
-        ),
-    )
+    expressions =
+        lazy_container_addition!(container, PostContingencyActivePowerGeneration, V,
+            get_name.(generator_outages),
+            get_name.(generators),
+            time_steps)
 
     #variable_generator_outages = get_variable(container, U(), V)
     variable_generator = get_variable(container, U(), V)
@@ -890,7 +878,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: PTDFPostContingencyBranchFlow,
+    T <: PostContingencyBranchFlow,
     U <: FlowActivePowerVariable,
     V <: PSY.ACTransmission,
     W <: AbstractBranchFormulation,
@@ -898,23 +886,8 @@ function add_to_expression!(
 }
     time_steps = get_time_steps(container)
 
-    if !isempty(branches_outages)
-        container.expressions[ExpressionKey(PTDFPostContingencyBranchFlow, V)] =
-            _make_container_array(
-                get_name.(branches_outages),
-                get_name.(branches),
-                time_steps,
-            )
-    end
+    expressions = lazy_container_addition!(container, PostContingencyBranchFlow, V)
 
-    expressions = get_expression(
-        container,
-        ExpressionKey(
-            PTDFPostContingencyBranchFlow,
-            V,
-            IS.Optimization.CONTAINER_KEY_EMPTY_META,
-        ),
-    )
     lodf = get_LODF_matrix(network_model)
 
     variable_branches_outages = get_variable(container, U(), V)

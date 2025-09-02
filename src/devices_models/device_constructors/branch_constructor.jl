@@ -348,7 +348,7 @@ function construct_device!(
     if !isempty(branches_outages)
         add_to_expression!(
             container,
-            PTDFPostContingencyBranchFlow,
+            PostContingencyBranchFlow,
             FlowActivePowerVariable,
             branches,
             branches_outages,

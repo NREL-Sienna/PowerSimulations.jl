@@ -20,7 +20,7 @@ struct ComponentReserveUpBalanceExpression <: ExpressionType end
 struct ComponentReserveDownBalanceExpression <: ExpressionType end
 struct InterfaceTotalFlow <: ExpressionType end
 struct PTDFBranchFlow <: ExpressionType end
-struct PTDFPostContingencyBranchFlow <: PostContingencyExpressions end
+struct PostContingencyBranchFlow <: PostContingencyExpressions end
 struct PostContingencyActivePowerGeneration <: PostContingencyExpressions end
 struct PostContingencyNodalActivePowerDeployment <: PostContingencyExpressions end
 struct NetActivePower <: ExpressionType end
@@ -31,9 +31,9 @@ should_write_resulting_value(::Type{InterfaceTotalFlow}) = true
 should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true
 should_write_resulting_value(::Type{ReactivePowerBalance}) = true
-#should_write_resulting_value(::Type{PTDFPostContingencyBranchFlow}) = true
+#should_write_resulting_value(::Type{PostContingencyBranchFlow}) = true
 #should_write_resulting_value(::Type{PostContingencyActivePowerGeneration}) = true
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
-#convert_result_to_natural_units(::Type{PTDFPostContingencyBranchFlow}) = true
-#convert_result_to_natural_units(::Type{PostContingencyActivePowerGeneration}) = true
+convert_result_to_natural_units(::Type{PostContingencyBranchFlow}) = true
+convert_result_to_natural_units(::Type{PostContingencyActivePowerGeneration}) = true
