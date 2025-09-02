@@ -909,7 +909,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     df = read_realized_variable(results_em, var_name)
     export_active_power_file = joinpath(export_path, "$(var_name).csv")
     export_df = PSI.read_dataframe(export_active_power_file)
-    # TODO: A bug in the code produces NaN after index 48.
+    # TODO: results A bug in the code produces NaN after index 48.
     @test isapprox(df[48, :], export_df[48, :])
 end
 

@@ -204,7 +204,7 @@ function handle_variable_cost_parameter(
     )
     fuel_cost_forecast_values = TimeSeries.values(ts_vector)
     for (t, value) in enumerate(fuel_cost_forecast_values)
-        # TODO: Is this compact power attribute being used?
+        # TODO: MBC Is this compact power attribute being used?
         if attributes.uses_compact_power
             # TODO implement this
             value, _ = _convert_variable_cost(value)
