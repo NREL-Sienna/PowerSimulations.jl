@@ -1332,9 +1332,6 @@ end
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     for (network_model, optimizer) in NETWORKS_FOR_TESTING
-        if network_model ∈ [PM.SparseSDPWRMPowerModel]
-            continue
-        end
         # Only default reductions:
         template = ProblemTemplate(
             NetworkModel(network_model;

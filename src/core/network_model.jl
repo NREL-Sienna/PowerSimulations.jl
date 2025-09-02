@@ -105,6 +105,7 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
+#= Not needed for now
 function check_network_reduction_compatibility(
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
@@ -113,6 +114,7 @@ function check_network_reduction_compatibility(
     end
     return
 end
+=#
 
 function instantiate_network_model(
     model::NetworkModel{T},
@@ -145,7 +147,8 @@ function instantiate_network_model(
     end
     model.network_reduction = ybus.network_reduction_data
     if !isempty(model.network_reduction)
-        check_network_reduction_compatibility(T)
+        # TODO: Network reimplement this
+        # check_network_reduction_compatibility(T)
     end
     PNM.populate_branch_maps_by_type!(model.network_reduction)
     return

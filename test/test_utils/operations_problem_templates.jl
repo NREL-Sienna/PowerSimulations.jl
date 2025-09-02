@@ -16,7 +16,6 @@ const NETWORKS_FOR_TESTING = [
     (PM.BFAPowerModel, fast_ipopt_optimizer),
     #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
     (PM.SDPWRMPowerModel, scs_solver),
-    (PM.SparseSDPWRMPowerModel, scs_solver),
 ]
 
 function get_thermal_standard_uc_template()

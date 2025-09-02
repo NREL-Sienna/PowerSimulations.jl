@@ -7,11 +7,12 @@
 # Model Definitions
 
 const UNSUPPORTED_POWERMODELS =
-    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
-
-const INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS = [
-    PM.SparseSDPWRMPowerModel,
-]
+    [
+        PM.SOCBFPowerModel,
+        PM.SOCBFConicPowerModel,
+        PM.IVRPowerModel,
+        PM.SparseSDPWRMPowerModel,
+    ]
 
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)

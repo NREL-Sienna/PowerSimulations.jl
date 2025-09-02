@@ -689,7 +689,7 @@ end
     # This rating (0.247479) was previously inferred in PSY.check_component after setting the rating to 0.0 in the tests
     set_rating!(PSY.get_component(Line, system, "2"), 0.247479)
     for (model, optimizer) in NETWORKS_FOR_TESTING
-        if model ∈ [PM.SDPWRMPowerModel, PM.SparseSDPWRMPowerModel, SOCWRConicPowerModel]
+        if model ∈ [PM.SDPWRMPowerModel, SOCWRConicPowerModel]
             # Skip because the data is too in the feasibility margins for these models
             continue
         end
