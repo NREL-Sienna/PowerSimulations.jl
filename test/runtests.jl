@@ -18,6 +18,7 @@ const DISABLED_TEST_FILES = [
     # "test_device_load_constructors.jl"
     # "test_device_renewable_generation_constructors.jl"
     # "test_device_thermal_generation_constructors.jl"
+    "test_device_source_constructors.jl",
     # "test_formulation_combinations.jl"
     # "test_ic_reconciliation.jl"
     # "test_initialization_problem.jl"
