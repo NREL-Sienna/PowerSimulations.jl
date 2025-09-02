@@ -929,7 +929,7 @@ function add_to_expression!(
     T <: SystemBalanceExpressions,
     U <: OnVariable,
     V <: PSY.ThermalGen,
-    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+    W <: AbstractCompactUnitCommitment,
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
@@ -1101,7 +1101,7 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: OnVariable,
     V <: PSY.ThermalGen,
-    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
+    W <: AbstractCompactUnitCommitment,
 }
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -1272,7 +1272,9 @@ function add_to_expression!(
     return
 end
 
-#TODO Check if for SecurityConstrainedAreaPTDFPowerModel need something else
+# The on variables are included in the system balance expressions becuase they
+# are multiplied by the Pmin and the active power is not the total active power
+# but the power above minimum.
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -1284,8 +1286,8 @@ function add_to_expression!(
     T <: ActivePowerBalance,
     U <: OnVariable,
     V <: PSY.ThermalGen,
-    W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
-    X <: Union{PTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
+    W <: AbstractCompactUnitCommitment,
+    X <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), _system_expression_type(PTDFPowerModel))
