@@ -269,12 +269,11 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                # First dim is Horizon, Last number of steps
-                n_dims = max(1, length(reqs["dims"]) - 2)
-                datasets[key] = HDF5Dataset{n_dims}(
+                column_lengths = reqs["dims"][2:(end - 1)]
+                datasets[key] = HDF5Dataset{length(column_lengths)}(
                     dataset,
                     column_dataset,
-                    reqs["dims"],
+                    column_lengths,
                     get_resolution(problem_params),
                     initial_time,
                 )
@@ -321,14 +320,11 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
-                #   (sim_time ÷ get_data_resolution, length(columns)...) and no horizon
-                #   Why are we taking the max? Shouldn't it be deterministic?
-                n_dims = max(1, length(reqs["dims"]) - 2)
-                # n_dims = length(reqs["dims"]) - 1
-                datasets[key] = HDF5Dataset{n_dims}(
+                column_lengths = reqs["dims"][2:end]
+                datasets[key] = HDF5Dataset{length(column_lengths)}(
                     dataset,
                     column_dataset,
-                    reqs["dims"],
+                    column_lengths,
                     get_resolution(emulation_params),
                     initial_time,
                 )
@@ -767,12 +763,11 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                     column_dataset = group[_make_column_name(name)]
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
-                    dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
-                    n_dims = max(1, ndims(dataset) - 2)
-                    item = HDF5Dataset{n_dims}(
+                    column_lengths = size(dataset)[2:(end - 1)]
+                    item = HDF5Dataset{length(column_lengths)}(
                         dataset,
                         column_dataset,
-                        dims,
+                        column_lengths,
                         resolution,
                         initial_time,
                     )
@@ -816,12 +811,11 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             if !endswith(name, "columns")
                 dataset = group[name]
                 column_dataset = group[_make_column_name(name)]
-                dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
-                n_dims = max(1, ndims(dataset) - 1)
-                item = HDF5Dataset{n_dims}(
+                column_lengths = size(dataset)[2:end]
+                item = HDF5Dataset{length(column_lengths)}(
                     dataset,
                     column_dataset,
-                    dims,
+                    column_lengths,
                     resolution,
                     initial_time,
                 )
