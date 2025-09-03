@@ -454,10 +454,10 @@ function get_branches_to_pm(
 ) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{Tuple{Int, Int}, PM_MAP_TUPLE}()
-
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     ix = 1
+    @assert !isempty(branch_template)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: PSY.TwoTerminalHVDC
