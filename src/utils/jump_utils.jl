@@ -5,7 +5,6 @@ function add_jump_parameter(jump_model::JuMP.Model, val::Number)
     return param
 end
 
-using Base: get_bool_env_falsy
 function write_data(base_power::Float64, save_path::String)
     JSON3.write(joinpath(save_path, "base_power.json"), JSON3.json(base_power))
     return
@@ -253,14 +252,11 @@ Convert a DenseAxisArray containing components to a results DataFrame consumable
   Otherwise, it will have the column "time_index", representing the index of the time
   dimension.
 - `::Val{TableFormat}`: Format of the table to create.
-  If it is TableFormat.LONG, the DataFrame will have the column "component", and, if
-  the data has three dimensions, "component_x."
+  If it is TableFormat.LONG, the DataFrame will have the column "name", and, if
+  the data has three dimensions, "name2."
   If it is TableFormat.WIDE, the DataFrame will have columns for each component. Wide
   format does not support arrays with more than two dimensions.
 """
-# TODO: Are "component" and "component_x" the right names?
-# What if the value is for a system?
-# Should they be set at runtime based on an optimization key?
 function to_results_dataframe(array::DenseAxisArray, timestamps)
     return to_results_dataframe(array, timestamps, Val(TableFormat.LONG))()
 end
@@ -281,20 +277,20 @@ function to_results_dataframe(
     num_rows = length(array.data)
     timestamps_arr = _collect_timestamps(timestamps)
     time_col = Vector{Dates.DateTime}(undef, num_rows)
-    component_col = Vector{String}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
 
     row_index = 1
-    for component in axes(array, 1)
+    for name in axes(array, 1)
         for time_index in axes(array, 2)
             time_col[row_index] = timestamps_arr[time_index]
-            component_col[row_index] = component
+            name_col[row_index] = name
             row_index += 1
         end
     end
 
     return DataFrame(
         :DateTime => time_col,
-        :name => component_col,
+        :name => name_col,
         :value => reshape(permutedims(array.data), num_rows),
     )
 end
@@ -309,20 +305,20 @@ function to_results_dataframe(
 )
     num_rows = length(array.data)
     time_col = Vector{Int}(undef, num_rows)
-    component_col = Vector{String}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
 
     row_index = 1
-    for component in axes(array, 1)
+    for name in axes(array, 1)
         for time_index in axes(array, 2)
             time_col[row_index] = time_index
-            component_col[row_index] = component
+            name_col[row_index] = name
             row_index += 1
         end
     end
 
     return DataFrame(
         :time_index => time_col,
-        :name => component_col,
+        :name => name_col,
         :value => reshape(permutedims(array.data), num_rows),
     )
 end
@@ -367,18 +363,18 @@ function to_results_dataframe(
     num_rows = length(array.data)
     timestamps_arr = _collect_timestamps(timestamps)
     time_col = Vector{Dates.DateTime}(undef, num_rows)
-    component_col = Vector{String}(undef, num_rows)
-    component_x_col = Vector{String}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+    name2_col = Vector{String}(undef, num_rows)
     vals = Vector{Float64}(undef, num_rows)
 
     row_index = 1
-    for component in axes(array, 1)
-        for component_x in axes(array, 2)
+    for name in axes(array, 1)
+        for name2 in axes(array, 2)
             for time_index in axes(array, 3)
                 time_col[row_index] = timestamps_arr[time_index]
-                component_col[row_index] = component
-                component_x_col[row_index] = component_x
-                vals[row_index] = array[component, component_x, time_index]
+                name_col[row_index] = name
+                name2_col[row_index] = name2
+                vals[row_index] = array[name, name2, time_index]
                 row_index += 1
             end
         end
@@ -386,8 +382,8 @@ function to_results_dataframe(
 
     return DataFrame(
         :DateTime => time_col,
-        :name => component_col,
-        :name2 => component_x_col,
+        :name => name_col,
+        :name2 => name2_col,
         :value => vals,
     )
 end
@@ -403,18 +399,18 @@ function to_results_dataframe(
 )
     num_rows = length(array.data)
     time_col = Vector{Int}(undef, num_rows)
-    component_col = Vector{String}(undef, num_rows)
-    component_x_col = Vector{String}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+    name2_col = Vector{String}(undef, num_rows)
     vals = Vector{Float64}(undef, num_rows)
 
     row_index = 1
-    for component in axes(array, 1)
-        for component_x in axes(array, 2)
+    for name in axes(array, 1)
+        for name2 in axes(array, 2)
             for time_index in axes(array, 3)
                 time_col[row_index] = time_index
-                component_col[row_index] = component
-                component_x_col[row_index] = component_x
-                vals[row_index] = array[component, component_x, time_index]
+                name_col[row_index] = name
+                name2_col[row_index] = name2
+                vals[row_index] = array[name, name2, time_index]
                 row_index += 1
             end
         end
@@ -422,8 +418,8 @@ function to_results_dataframe(
 
     return DataFrame(
         :time_index => time_col,
-        :name => component_col,
-        :name2 => component_x_col,
+        :name => name_col,
+        :name2 => name2_col,
         :value => vals,
     )
 end

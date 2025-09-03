@@ -235,7 +235,6 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 ) where {T <: PSY.Component}
     state_data = get_decision_state_data(state, key)
-    error("todo dt: $(typeof(state_data)) store_data: $(typeof(store_data))")
     column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
@@ -277,7 +276,6 @@ function update_decision_state!(
     state_data = get_decision_state_data(state, key)
     countdown_data =
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
-    error("todo dt: $(typeof(state_data))")
     column_names = get_column_names(key, state_data)[1]
     model_resolution = get_resolution(model_params)
     state_resolution = get_data_resolution(state_data)
