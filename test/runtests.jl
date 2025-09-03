@@ -33,6 +33,7 @@ const DISABLED_TEST_FILES = [
     # "test_recorder_events.jl"
     "test_services_constructor.jl",
     "test_security_constrained_models.jl",
+    "test_static_injection_security_constrained_models.jl",
     # "test_simulation_build.jl"
     # "test_simulation_execute.jl"
     # "test_simulation_models.jl"
