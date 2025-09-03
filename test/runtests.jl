@@ -31,7 +31,7 @@ const DISABLED_TEST_FILES = [
     # "test_problem_template.jl",
     "test_power_flow_in_the_loop.jl",
     # "test_recorder_events.jl"
-    "test_services_constructor.jl",
+    # "test_services_constructor.jl",
     "test_security_constrained_models.jl",
     "test_static_injection_security_constrained_models.jl",
     # "test_simulation_build.jl"
