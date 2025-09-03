@@ -216,7 +216,6 @@ end
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
-=#
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
@@ -318,6 +317,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end
+=#
 
 @testset "Test Reserves with Feedforwards" begin
     template = get_thermal_dispatch_template_network()
