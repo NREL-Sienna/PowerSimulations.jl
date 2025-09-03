@@ -218,8 +218,9 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
                 LOG_GROUP_SERVICE_CONSTUCTORS
             continue
         end
+        service_devices_key = (type = S, name = PSY.get_name(service))
         contributing_devices_ =
-            services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
+            services_mapping[service_devices_key].contributing_devices
         for d in contributing_devices_
             _add_contributing_device_by_type!(
                 service_model,
