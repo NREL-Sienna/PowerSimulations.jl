@@ -317,7 +317,7 @@ function _add_dense_pwl_loss_variables!(
         container,
         T(),
         D,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         segments,
         time_steps,
     )

@@ -478,7 +478,7 @@ function add_constraints!(
     ::NetworkModel{<:PM.AbstractPowerModel},
 ) where {T <: FlowRateConstraint, U <: PSY.TwoTerminalGenericHVDCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
 
     var = get_variable(container, FlowActivePowerVariable(), U)
     constraint_ub =
@@ -580,7 +580,7 @@ function _add_hvdc_flow_constraints!(
     constraint::Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
 ) where {T <: PSY.TwoTerminalGenericHVDCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
 
     variable = get_variable(container, var, T)
     constraint_ub =
@@ -734,7 +734,7 @@ function add_constraints!(
     ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {T <: PSY.TwoTerminalGenericHVDCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
     ft_var = get_variable(container, FlowActivePowerFromToVariable(), T)
     direction_var = get_variable(container, HVDCFlowDirectionVariable(), T)
@@ -876,7 +876,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     rect_dc_voltage_var = get_variable(container, HVDCRectifierDCVoltageVariable(), T)
     rect_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
     rect_delay_angle_var = get_variable(container, HVDCRectifierDelayAngleVariable(), T)
@@ -925,7 +925,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     inv_dc_voltage_var = get_variable(container, HVDCInverterDCVoltageVariable(), T)
     inv_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
     inv_extinction_angle_var =
@@ -975,7 +975,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     rect_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
     rect_delay_angle_var = get_variable(container, HVDCRectifierDelayAngleVariable(), T)
     rect_overlap_angle_var = get_variable(container, HVDCRectifierOverlapAngleVariable(), T)
@@ -1034,7 +1034,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     inv_ac_voltage_bus_var = get_variable(container, VoltageMagnitude(), PSY.ACBus)
     inv_extinction_angle_var =
         get_variable(container, HVDCInverterExtinctionAngleVariable(), T)
@@ -1094,7 +1094,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     rect_delay_angle_var = get_variable(container, HVDCRectifierDelayAngleVariable(), T)
     rect_overlap_angle_var = get_variable(container, HVDCRectifierOverlapAngleVariable(), T)
     rect_power_factor_var =
@@ -1156,7 +1156,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     inv_extinction_angle_var =
         get_variable(container, HVDCInverterExtinctionAngleVariable(), T)
     inv_overlap_angle_var = get_variable(container, HVDCInverterOverlapAngleVariable(), T)
@@ -1219,7 +1219,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     rect_ac_current_var = get_variable(container, HVDCRectifierACCurrentVariable(), T)
     dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
 
@@ -1254,7 +1254,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     inv_ac_current_var = get_variable(container, HVDCInverterACCurrentVariable(), T)
     dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)
 
@@ -1289,7 +1289,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     rect_ac_ppower_var = get_variable(container, HVDCActivePowerReceivedFromVariable(), T)
     rect_ac_qpower_var = get_variable(container, HVDCReactivePowerReceivedFromVariable(), T)
     rect_ac_current_var = get_variable(container, HVDCRectifierACCurrentVariable(), T)
@@ -1353,7 +1353,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     inv_ac_ppower_var = get_variable(container, HVDCActivePowerReceivedToVariable(), T)
     inv_ac_qpower_var = get_variable(container, HVDCReactivePowerReceivedToVariable(), T)
     inv_ac_current_var = get_variable(container, HVDCInverterACCurrentVariable(), T)
@@ -1417,7 +1417,7 @@ function add_constraints!(
     ::NetworkModel{PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     rect_dc_voltage_var = get_variable(container, HVDCRectifierDCVoltageVariable(), T)
     inv_dc_voltage_var = get_variable(container, HVDCInverterDCVoltageVariable(), T)
     dc_line_current_var = get_variable(container, DCLineCurrentFlowVariable(), T)

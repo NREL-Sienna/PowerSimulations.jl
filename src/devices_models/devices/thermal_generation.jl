@@ -728,7 +728,7 @@ function add_constraints!(
 
     if !isempty(ini_conds)
         varstop = get_variable(container, StopVariable(), T)
-        set_name = [PSY.get_name(d) for d in devices]
+        set_name = PSY.get_name.(devices)
         con = add_constraints_container!(container, ActiveRangeICConstraint(), T, set_name)
 
         for (ix, ic) in enumerate(ini_conds[:, 1])
@@ -1159,7 +1159,7 @@ function add_constraints!(
     ]
     varstop = get_variable(container, StopVariable(), T)
 
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
 
     con = [
         add_constraints_container!(
@@ -1235,7 +1235,7 @@ function add_constraints!(
         get_variable(container, ColdStartVariable(), T),
     ]
 
-    set_name = [PSY.get_name(d) for d in devices]
+    set_name = PSY.get_name.(devices)
     con = add_constraints_container!(
         container,
         StartTypeConstraint(),

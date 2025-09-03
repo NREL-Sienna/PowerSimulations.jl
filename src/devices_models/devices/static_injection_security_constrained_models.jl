@@ -300,7 +300,7 @@ function add_constraints!(
     V <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
     con_lb =
         add_constraints_container!(
             container,

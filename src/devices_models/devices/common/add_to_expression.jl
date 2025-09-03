@@ -27,7 +27,7 @@ function add_expressions!(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     add_expression_container!(container, T(), D, names, time_steps)
     return
 end

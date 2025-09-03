@@ -92,7 +92,7 @@ function add_constraints!(
     W <: RenewableConstantPowerFactor,
     X <: PM.AbstractPowerModel,
 }
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     time_steps = get_time_steps(container)
     p_var = get_variable(container, ActivePowerVariable(), V)
     q_var = get_variable(container, ReactivePowerVariable(), V)

@@ -76,8 +76,8 @@ function _add_feedforward_slack_variables!(container::OptimizationContainer,
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        device_names = [PSY.get_name(d) for d in devices]
-        IS.@assert_op set_name == device_names
+        device_names = PSY.get_name.(devices)
+        @assert issetequal(set_name, devices_names)
         IS.@assert_op set_time == time_steps
         service_name = get_service_name(model)
         var_type = get_entry_type(var)
@@ -120,7 +120,8 @@ function _add_feedforward_slack_variables!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         set_name, set_time = JuMP.axes(variable)
-        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        devices_names = PSY.get_name.(devices)
+        @assert issetequal(set_name, devices_names)
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
@@ -128,7 +129,7 @@ function _add_feedforward_slack_variables!(
             container,
             T(),
             U,
-            [PSY.get_name(d) for d in devices],
+            devices_names,
             time_steps;
             meta = "$(var_type)",
         )
