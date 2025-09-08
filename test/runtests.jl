@@ -37,12 +37,12 @@ const DISABLED_TEST_FILES = [
     # "test_simulation_build.jl"
     # "test_simulation_execute.jl"
     # "test_simulation_models.jl"
-    # "test_simulation_partitions.jl"
+    "test_simulation_partitions.jl",
     # "test_simulation_results.jl"
     # "test_simulation_results_export.jl"
     # "test_simulation_sequence.jl"
     # "test_simulation_store.jl"
-    "test_events.jl",
+    "test_events.jl", # TODO: Events Re-enable this test
     # "test_utils.jl"
 ]
 
