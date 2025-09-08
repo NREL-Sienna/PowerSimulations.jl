@@ -576,17 +576,15 @@ end
         ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    no_less_than = Dict(true => 334, false => 282)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 528, 0, no_less_than[false], 108, 192, true)
+    moi_tests(model, 528, 0, 282, 108, 192, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    # TODO: Events Fix this tests when finalizing the event model
-    # moi_tests(model, 528, 0, no_less_than[false], 108, 192, true)
+    moi_tests(model, 528, 0, 306, 108, 192, true)
 end
 
 @testset "Thermal MultiStart with MultiStart UC and AC - PF" begin
@@ -739,8 +737,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    # TODO: Events Fix this test
-    # moi_tests(model, 269, 0, 168, 144, 0, false)
+    moi_tests(model, 293, 0, 168, 144, 0, false)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
@@ -757,8 +754,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    # TODO: Events Fix this test
-    # moi_tests(model, 314, 0, 120, 96, 96, false)
+    moi_tests(model, 338, 0, 120, 96, 96, false)
 end
 
 @testset "Thermal Standard with Compact Dispatch and AC - PF" begin
@@ -775,8 +771,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    # TODO: Events Fix this test
-    # moi_tests(model, 389, 0, 312, 264, 0, false)
+    moi_tests(model, 413, 0, 312, 264, 0, false)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
@@ -793,8 +788,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    #TODO: Events Fix this test
-    # moi_tests(model, 362, 0, 192, 144, 96, false)
+    moi_tests(model, 386, 0, 192, 144, 96, false)
 end
 
 ############################# Model validation tests #######################################
@@ -904,8 +898,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    #TODO: Events Fix this test
-    # moi_tests(model, 389, 0, 288, 144, 0, false)
+    moi_tests(model, 413, 0, 288, 144, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalBasicDispatch" begin
@@ -935,8 +928,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    #TODO: Events Fix this test
-    # moi_tests(model, 384, 0, 264, 120, 0, false)
+    moi_tests(model, 408, 0, 264, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalCompactDispatch" begin
@@ -966,8 +958,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    #TODO: Events Fix this test
-    # moi_tests(model, 389, 0, 288, 144, 0, false)
+    moi_tests(model, 413, 0, 288, 144, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalStandardDispatch" begin
@@ -997,8 +988,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    # TODO: Events Fix this test
-    # moi_tests(model, 362, 0, 168, 96, 96, false)
+    moi_tests(model, 386, 0, 168, 96, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalBasicDispatch" begin
@@ -1028,8 +1018,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    #TODO: Events Fix this test
-    #moi_tests(model, 360, 0, 120, 48, 96, false)
+    moi_tests(model, 384, 0, 120, 48, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalCompactDispatch" begin
@@ -1059,8 +1048,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    #TODO: Events Fix this test
-    #moi_tests(model, 362, 0, 168, 96, 96, false)
+    moi_tests(model, 386, 0, 168, 96, 96, false)
 end
 
 @testset "Test Must Run ThermalGen" begin
