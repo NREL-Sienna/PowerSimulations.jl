@@ -778,19 +778,17 @@ end
     end
 end
 
-#= TODO: Network Fix this test for new Ward Interface
 @testset "StandardPTDF with Ward reduction Test" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
-    net_model = PTDFPowerModel
-    wr = PNM.get_ward_reduction(new_sys, [1, 2, 3, 4, 5]) #This is currently equivalent to the radial reduciton
+    #This ward reduction is equivalent to the radial reduciton, therefore flows should be unchanged
+    nr = NetworkReduction[WardReduction([1, 2, 3, 4, 5])]
+    ptdf = PTDF(new_sys; network_reductions = nr)
     template_uc = template_unit_commitment(;
-        network = NetworkModel(net_model;
-            PTDF_matrix = PTDF(new_sys; network_reduction = wr),
+        network = NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
             use_slacks = false,
         ),
     )
-    template_uc.network_model.PTDF_matrix.network_reduction.reduction_type
-    template_uc.network_model.network_reduction
     thermal_model = ThermalStandardUnitCommitment
     set_device_model!(template_uc, ThermalStandard, thermal_model)
 
@@ -815,7 +813,7 @@ end
 
     ##### Solve Original Model ####
     template_uc_orig = template_unit_commitment(;
-        network = NetworkModel(net_model;
+        network = NetworkModel(PTDFPowerModel;
             reduce_radial_branches = false,
             use_slacks = false,
         ),
@@ -843,6 +841,7 @@ end
     end
 end
 
+#=
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
