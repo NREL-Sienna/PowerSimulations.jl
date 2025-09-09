@@ -24,7 +24,8 @@ function add_variable!(
             get_jump_model(container),
             base_name = "$(var_type)_$(D)_{$(name), $(o), $(t)}",
         )
-        JuMP.set_upper_bound(variable[name, o, t], 0.0)
+        # TODO: Contingencies Implement method to get max change depending on the device and formulation
+        JuMP.set_upper_bound(variable[name, o, t], PSY.get_max_active_power(d))
         JuMP.set_lower_bound(variable[name, o, t], 0.0)
     end
 
