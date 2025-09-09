@@ -42,7 +42,7 @@ const DISABLED_TEST_FILES = [
     # "test_simulation_results_export.jl"
     # "test_simulation_sequence.jl"
     # "test_simulation_store.jl"
-    "test_events.jl",
+    # "test_events.jl",
     # "test_utils.jl"
 ]
 
