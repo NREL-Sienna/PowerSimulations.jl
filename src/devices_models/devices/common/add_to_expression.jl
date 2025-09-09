@@ -900,6 +900,9 @@ function add_to_expression!(
                     expressions[branch_outage_name, branch_name, t],
                     variable_branches[branch_name, t],
                     1.0,
+                )
+                _add_to_jump_expression!(
+                    expressions[branch_outage_name, branch_name, t],
                     variable_branches_outages[branch_outage_name, t],
                     lodf[branch_name, branch_outage_name],
                 )
