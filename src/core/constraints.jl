@@ -306,7 +306,7 @@ The specified constraint is formulated as:
 ```
 """
 struct RateLimitConstraint <: ConstraintType end
-struct PostContingencyRateLimitConstraintB <: PostContingencyConstraintType end
+struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end

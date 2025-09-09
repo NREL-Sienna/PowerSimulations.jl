@@ -225,7 +225,7 @@ function construct_device!(
         #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
         add_constraints!(
             container,
-            PostContingencyRateLimitConstraintB,
+            PostContingencyEmergencyRateLimitConstrain,
             PSY.get_components(PSY.ACTransmission, sys),
             generator_outages,
             model,
@@ -602,7 +602,7 @@ function add_constraints!(
     device_model::Union{DeviceModel{R, F}, ServiceModel{R, F}},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {
-    T <: PostContingencyRateLimitConstraintB,
+    T <: PostContingencyEmergencyRateLimitConstrain,
     U <: PostContingencyBranchFlow,
     V <: PSY.ACTransmission,
     R <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
@@ -667,7 +667,7 @@ function add_constraints!(
         # end
         limits = get_min_max_limits(
             branch,
-            PostContingencyRateLimitConstraintB,
+            PostContingencyEmergencyRateLimitConstrain,
             AbstractBranchFormulation,
             network_model,
         )
@@ -1147,7 +1147,7 @@ function construct_service!(
 
     add_constraints!(
         container,
-        PostContingencyRateLimitConstraintB,
+        PostContingencyEmergencyRateLimitConstrain,
         PostContingencyBranchFlow,
         PSY.get_available_components(PSY.ACTransmission, sys),
         service,

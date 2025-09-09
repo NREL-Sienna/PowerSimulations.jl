@@ -312,7 +312,7 @@ export RangeLimitConstraint
 export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
-export PostContingencyRateLimitConstraintB
+export PostContingencyEmergencyRateLimitConstrain
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint

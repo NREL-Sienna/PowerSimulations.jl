@@ -3,7 +3,7 @@ Min and max limits for post-contingency branch flows for Abstract Branch Formula
 """
 function get_min_max_limits(
     branch::PSY.ACBranch,
-    ::Type{<:PostContingencyRateLimitConstraintB},
+    ::Type{<:PostContingencyEmergencyRateLimitConstrain},
     ::Type{<:AbstractBranchFormulation},
     ::NetworkModel{<:AbstractPTDFModel},
 )
@@ -20,7 +20,7 @@ Add branch post-contingency rate limit constraints for ACBranch considering LODF
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{PostContingencyRateLimitConstraintB},
+    cons_type::Type{PostContingencyEmergencyRateLimitConstrain},
     branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
     branches_outages::Vector{T},
     device_model::DeviceModel{T, U},
@@ -86,7 +86,7 @@ function add_constraints!(
 
             limits = get_min_max_limits(
                 branch,
-                PostContingencyRateLimitConstraintB,
+                PostContingencyEmergencyRateLimitConstrain,
                 U,
                 network_model,
             )
