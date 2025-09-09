@@ -845,6 +845,9 @@ function add_to_expression!(
                     expressions[generator_outage_name, generator_name, t],
                     variable_generator[generator_name, t],
                     1.0,
+                )
+                _add_to_jump_expression!(
+                    expressions[generator_outage_name, generator_name, t],
                     variable_generator_change[generator_outage_name, generator_name, t],
                     1.0,
                 )
