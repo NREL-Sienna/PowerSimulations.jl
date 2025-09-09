@@ -774,9 +774,9 @@ function add_linear_ramp_constraints!(
     ramp_devices = _get_ramp_constraint_devices(container, devices)
     minutes_per_period = _get_minutes_per_period(container)
 
-    set_name = [PSY.get_name(r) for r in ramp_devices]
+    device_name_set = PSY.get_name.(ramp_devices)
     set_outages_name = [IS.get_uuid(r) for r in associated_outages]
-    if set_name == []
+    if device_name_set == []
         @debug "No Contributing devices to service $service with ramping constraints found in the system."
         return
     end
@@ -787,7 +787,7 @@ function add_linear_ramp_constraints!(
             T(),
             R,
             set_outages_name,
-            set_name,
+            device_name_set,
             time_steps;
             meta = "$service_name",
         )
@@ -802,7 +802,7 @@ function add_linear_ramp_constraints!(
     for device in devices
         name = PSY.get_name(device)
         # This is to filter out devices that dont need a ramping constraint
-        name ∉ set_name && continue
+        name ∉ device_name_set && continue
         ramp_limits = PSY.get_ramp_limits(device)
 
         @debug "add post-contingency ramping constraint for device $name"
