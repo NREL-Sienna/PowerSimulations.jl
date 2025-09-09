@@ -13,24 +13,43 @@ _maybe_flatten_pfem(pfem::PFS.PowerFlowEvaluationModel) =
     PFS.flatten_power_flow_evaluation_model(pfem)
 
 """
-Establishes the model for the network specified by type.
+Establishes the NetworkModel for a given PowerModels formulation type.
 
 # Arguments
+- `::Type{T}` where `T <: PM.AbstractPowerModel`: the power-system formulation type.
 
--`::Type{T}`: PowerModels AbstractPowerModel
+# Accepted keyword arguments
+- `use_slacks::Bool` = false
+    Adds slack buses to the network modeling.
+- `PTDF_matrix::Union{PNM.PowerNetworkMatrix, Nothing}` = nothing
+    PTDF/VirtualPTDF matrix produced by PowerNetworkMatrices (optional).
+- `LODF_matrix::Union{PNM.PowerNetworkMatrix, Nothing}` = nothing
+    LODF/VirtualLODF matrix produced by PowerNetworkMatrices (optional).
+- `reduce_radial_branches::Bool` = false
+    Enable radial branch reduction when building network matrices.
+- `reduce_degree_two_branches::Bool` = false
+    Enable degree-two branch reduction when building network matrices.
+- `subnetworks::Dict{Int, Set{Int}}` = Dict()
+    Optional mapping of reference bus → set of mapped buses. If not provided,
+    subnetworks are inferred from PTDF/VirtualPTDF or discovered from the system.
+- `duals::Vector{DataType}` = Vector{DataType}()
+    Constraint types for which duals should be recorded.
+- `power_flow_evaluation::Union{PFS.PowerFlowEvaluationModel, Vector{PFS.PowerFlowEvaluationModel}}`
+    Power-flow evaluation model(s). A single model is flattened to a vector internally.
 
-# Accepted Key Words
+# Notes
+- `modeled_branch_types` and `reduced_branch_tracker` are internal fields managed by the model.
+- `subsystem` can be set after construction via `set_subsystem!(model, id)`.
+- PTDF/LODF inputs are validated against the requested reduction flags and may raise
+  a ConflictingInputsError if they are inconsistent with `reduce_radial_branches`
+  or `reduce_degree_two_branches`.
 
-  - `use_slacks::Bool`: Adds slacks to the network modeling
-  - `PTDF_matrix::Union{PTDF, VirtualPTDF}`: PTDF Array calculated using PowerNetworkMatrices
-  - `LODF_matrix::Union{LODF, VirtualLODF}`: LODF Array calculated using PowerNetworkMatrices
-  - `duals::Vector{DataType}`: Constraint types to calculate the duals
-  - `reduce_radial_branches::Bool`: Skips modeling radial branches in the system to reduce problem size
-# Example
+# Examples
+ptdf = PNM.VirtualPTDF(system)
+nw = NetworkModel(PTDFPowerModel; PTDF_matrix = ptdf, reduce_radial_branches = true,
+                  power_flow_evaluation = PFS.PowerFlowEvaluationModel())
 
-ptdf_array = PTDF(system)
-nw = NetworkModel(PTDFPowerModel, ptdf = ptdf_array)
-nw = NetworkModel(PTDFPowerModel, lodf = lodf_array)
+nw2 = NetworkModel(CopperPlatePowerModel; subnetworks = Dict(1 => Set([1,2,3])))
 """
 mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     use_slacks::Bool
