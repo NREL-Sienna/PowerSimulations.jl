@@ -339,7 +339,7 @@ end
 function build_impl!(model::DecisionModel{<:DecisionProblem})
     build_pre_step!(model)
     @info "Instantiating Network Model"
-    instantiate_network_model(model)
+    instantiate_network_model!(model)
     handle_initial_conditions!(model)
     build_model!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))

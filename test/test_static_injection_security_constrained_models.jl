@@ -7,8 +7,16 @@
     constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.ThermalStandard, "lb"),
-        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.ThermalStandard, "ub"),
+        PSI.ConstraintKey(
+            PostContingencyEmergencyRateLimitConstrain,
+            PSY.ThermalStandard,
+            "lb",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyEmergencyRateLimitConstrain,
+            PSY.ThermalStandard,
+            "ub",
+        ),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(

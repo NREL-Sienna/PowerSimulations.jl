@@ -127,18 +127,6 @@ end
 
 function _add_to_jump_expression!(
     expression::T,
-    var1::JuMP.VariableRef,
-    multiplier1::Float64,
-    var2::JuMP.VariableRef,
-    multiplier2::Float64,
-) where {T <: JuMP.AbstractJuMPScalar}
-    _add_to_jump_expression!(expression, var1, multiplier1)
-    _add_to_jump_expression!(expression, var2, multiplier2)
-    return
-end
-
-function _add_to_jump_expression!(
-    expression::T,
     parameter::Float64,
     multiplier::Float64,
 ) where {T <: JuMP.AbstractJuMPScalar}
@@ -857,6 +845,9 @@ function add_to_expression!(
                     expressions[generator_outage_name, generator_name, t],
                     variable_generator[generator_name, t],
                     1.0,
+                )
+                _add_to_jump_expression!(
+                    expressions[generator_outage_name, generator_name, t],
                     variable_generator_change[generator_outage_name, generator_name, t],
                     1.0,
                 )
@@ -909,6 +900,9 @@ function add_to_expression!(
                     expressions[branch_outage_name, branch_name, t],
                     variable_branches[branch_name, t],
                     1.0,
+                )
+                _add_to_jump_expression!(
+                    expressions[branch_outage_name, branch_name, t],
                     variable_branches_outages[branch_outage_name, t],
                     lodf[branch_name, branch_outage_name],
                 )

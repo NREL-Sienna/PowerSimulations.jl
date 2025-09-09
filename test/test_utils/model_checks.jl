@@ -450,7 +450,7 @@ function check_constraint_count(
     ::Type{T},
 ) where {T <: PSY.Component}
     container = PSI.get_optimization_container(model)
-    set_name =
+    device_name_set =
         PSY.get_name.(
             PSI._get_ramp_constraint_devices(
                 container,
@@ -462,14 +462,14 @@ function check_constraint_count(
         PSI.RampConstraint(),
         T;
         meta = "up",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
     check_constraint_count(
         model,
         PSI.RampConstraint(),
         T;
         meta = "dn",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
     return
 end
@@ -490,19 +490,19 @@ function check_constraint_count(
         ),
         collect(get_components(PSY.get_available, T, model.sys)),
     )
-    set_name = PSY.get_name.(duration_devices)
+    device_name_set = PSY.get_name.(duration_devices)
     check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
         meta = "up",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
     return check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
         meta = "dn",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
 end

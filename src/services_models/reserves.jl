@@ -384,12 +384,12 @@ function add_constraints!(
         time_steps = get_time_steps(container)
         time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-        set_name = [PSY.get_name(d) for d in ramp_devices]
+        device_name_set = [PSY.get_name(d) for d in ramp_devices]
         con_up = add_constraints_container!(
             container,
             T(),
             SR,
-            set_name,
+            device_name_set,
             time_steps;
             meta = service_name,
         )
@@ -425,12 +425,12 @@ function add_constraints!(
         time_steps = get_time_steps(container)
         time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-        set_name = [PSY.get_name(d) for d in ramp_devices]
+        device_name_set = [PSY.get_name(d) for d in ramp_devices]
         con_down = add_constraints_container!(
             container,
             T(),
             SR,
-            set_name,
+            device_name_set,
             time_steps;
             meta = service_name,
         )

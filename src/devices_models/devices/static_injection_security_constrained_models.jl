@@ -24,7 +24,8 @@ function add_variable!(
             get_jump_model(container),
             base_name = "$(var_type)_$(D)_{$(name), $(o), $(t)}",
         )
-        JuMP.set_upper_bound(variable[name, o, t], 0.0)
+        # TODO: Contingencies Implement method to get max change depending on the device and formulation
+        JuMP.set_upper_bound(variable[name, o, t], PSY.get_max_active_power(d))
         JuMP.set_lower_bound(variable[name, o, t], 0.0)
     end
 
@@ -225,7 +226,7 @@ function construct_device!(
         #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
         add_constraints!(
             container,
-            PostContingencyRateLimitConstraintB,
+            PostContingencyEmergencyRateLimitConstrain,
             PSY.get_components(PSY.ACTransmission, sys),
             generator_outages,
             model,
@@ -602,7 +603,7 @@ function add_constraints!(
     device_model::Union{DeviceModel{R, F}, ServiceModel{R, F}},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {
-    T <: PostContingencyRateLimitConstraintB,
+    T <: PostContingencyEmergencyRateLimitConstrain,
     U <: PostContingencyBranchFlow,
     V <: PSY.ACTransmission,
     R <: Union{PSY.Generator, PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}},
@@ -667,7 +668,7 @@ function add_constraints!(
         # end
         limits = get_min_max_limits(
             branch,
-            PostContingencyRateLimitConstraintB,
+            PostContingencyEmergencyRateLimitConstrain,
             AbstractBranchFormulation,
             network_model,
         )
@@ -773,9 +774,9 @@ function add_linear_ramp_constraints!(
     ramp_devices = _get_ramp_constraint_devices(container, devices)
     minutes_per_period = _get_minutes_per_period(container)
 
-    set_name = [PSY.get_name(r) for r in ramp_devices]
+    device_name_set = PSY.get_name.(ramp_devices)
     set_outages_name = [IS.get_uuid(r) for r in associated_outages]
-    if set_name == []
+    if device_name_set == []
         @debug "No Contributing devices to service $service with ramping constraints found in the system."
         return
     end
@@ -786,7 +787,7 @@ function add_linear_ramp_constraints!(
             T(),
             R,
             set_outages_name,
-            set_name,
+            device_name_set,
             time_steps;
             meta = "$service_name",
         )
@@ -801,7 +802,7 @@ function add_linear_ramp_constraints!(
     for device in devices
         name = PSY.get_name(device)
         # This is to filter out devices that dont need a ramping constraint
-        name ∉ set_name && continue
+        name ∉ device_name_set && continue
         ramp_limits = PSY.get_ramp_limits(device)
 
         @debug "add post-contingency ramping constraint for device $name"
@@ -955,7 +956,11 @@ function add_variables!(
                     binary = binary
                 )
                 if device_is_in_reserve_devices
-                    JuMP.set_upper_bound(variable[outage_name, name, t], 0.0)
+                    # TODO: Use correct boundin method based on models
+                    JuMP.set_upper_bound(
+                        variable[outage_name, name, t],
+                        PSY.get_max_active_power(d),
+                    )
                     JuMP.set_lower_bound(variable[outage_name, name, t], 0.0)
                     JuMP.set_start_value(variable[outage_name, name, t], 0.0)
                     continue
@@ -1147,7 +1152,7 @@ function construct_service!(
 
     add_constraints!(
         container,
-        PostContingencyRateLimitConstraintB,
+        PostContingencyEmergencyRateLimitConstrain,
         PostContingencyBranchFlow,
         PSY.get_available_components(PSY.ACTransmission, sys),
         service,

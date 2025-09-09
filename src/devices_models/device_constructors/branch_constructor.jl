@@ -322,6 +322,7 @@ function construct_device!(
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
 
+    # TODO: Security constrained. Remove this line. Method not defined
     valid_outages = _get_all_scuc_valid_outages(sys, network_model)
 
     if isempty(valid_outages)
@@ -334,10 +335,9 @@ function construct_device!(
 
     lodf = get_LODF_matrix(network_model)
     removed_branches = PNM.get_removed_branches(lodf.network_reduction_data)
+    # TODO: Security constrained. This method might not be needed. Analyze why is here
     branches = get_available_components(
-        b ->
-            PSY.get_name(b) ∉ removed_branches &&
-                typeof(b) <: PSY.ACTransmission,
+        b -> PSY.get_name(b) ∉ removed_branches,
         PSY.ACTransmission,
         sys,
     )
@@ -358,7 +358,7 @@ function construct_device!(
 
         add_constraints!(
             container,
-            PostContingencyRateLimitConstraintB,
+            PostContingencyEmergencyRateLimitConstrain,
             branches,
             branches_outages,
             model,

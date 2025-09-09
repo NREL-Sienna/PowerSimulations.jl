@@ -219,7 +219,7 @@ end
         c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 324244.401,
+        c_sys5 => 241293.703,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
