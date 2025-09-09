@@ -116,7 +116,7 @@ function check_network_reduction_compatibility(
 end
 =#
 
-function instantiate_network_model(
+function instantiate_network_model!(
     model::NetworkModel{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
@@ -154,14 +154,14 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(
+function instantiate_network_model!(
     model::NetworkModel{AreaBalancePowerModel},
     sys::PSY.System,
 )
     return
 end
 
-function instantiate_network_model(
+function instantiate_network_model!(
     model::NetworkModel{CopperPlatePowerModel},
     sys::PSY.System,
 )
@@ -175,7 +175,7 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(
+function instantiate_network_model!(
     model::NetworkModel{<:AbstractPTDFModel},
     sys::PSY.System,
 )
@@ -253,7 +253,7 @@ function instantiate_network_model(
     return
 end
 
-function instantiate_network_model(
+function instantiate_network_model!(
     model::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
     sys::PSY.System,
 )
