@@ -43,11 +43,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -105,11 +101,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -161,11 +153,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -278,11 +266,7 @@ end
 
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -324,11 +308,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -372,11 +352,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -414,11 +390,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
