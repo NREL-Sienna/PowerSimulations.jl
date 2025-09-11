@@ -19,10 +19,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 144, 0, 168, 72, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 144, 0, 168, 72, 0, false, 24)
 end
 
 @testset "Renewable DCPLossLess Constantpower_factor" begin
@@ -46,10 +43,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 144, 0, 96, 0, 72, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 144, 0, 96, 0, 72, false, 24)
 end
 
 @testset "Renewable DCPLossLess FixedOutput" begin

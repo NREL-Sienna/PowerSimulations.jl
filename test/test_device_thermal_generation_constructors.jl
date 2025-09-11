@@ -144,10 +144,7 @@ end
     psi_aux_variable_test(model, aux_variables_keys)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 624, 240, 120, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 600, 0, 624, 240, 120, true, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -159,10 +156,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 384, 240, 120, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
@@ -214,10 +208,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
-    moi_tests(model, 432, 0, 312, 96, 144, true)
+    moi_tests(model, 432, 0, 312, 96, 144, true, 24)
 end
 
 ################################### Basic Unit Commitment tests ############################
@@ -268,10 +259,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 384, 240, 120, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -283,10 +271,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 384, 240, 120, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
@@ -324,10 +309,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 168, 96, 144, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 432, 0, 168, 96, 144, true, 24)
 end
 
 ################################### Basic Dispatch tests ###################################
@@ -355,10 +337,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 264, 240, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -368,10 +347,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 264, 240, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 # This Formulation is currently broken
@@ -396,10 +372,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 288, 0, 120, 96, 96, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 288, 0, 120, 96, 96, false, 24)
 end
 
 ################################### No Minimum Dispatch tests ##############################
@@ -440,10 +413,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 264, 240, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -455,10 +425,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 264, 240, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
@@ -534,10 +501,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 312, 288, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 240, 0, 312, 288, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -547,10 +511,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 264, 240, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 @testset "ThermalMultiStart with ThermalStandardDispatch With DC - PF" begin
@@ -584,10 +545,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 288, 0, 168, 144, 96, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 288, 0, 168, 144, 96, false, 24)
 end
 
 ################################### ThermalMultiStart Testing ##############################
@@ -663,10 +621,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 576, 0, 354, 156, 192, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 576, 0, 354, 156, 192, true, 24)
 end
 
 ################################ Thermal Compact UC Testing ################################
@@ -703,10 +658,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 624, 240, 120, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 600, 0, 624, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
@@ -718,10 +670,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 312, 96, 144, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 432, 0, 312, 96, 144, true, 24)
 end
 
 ################################ Thermal Basic Compact UC Testing ################################
@@ -758,10 +707,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 384, 240, 120, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
@@ -773,10 +719,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 168, 96, 144, true)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 432, 0, 168, 96, 144, true, 24)
 end
 
 ############################ Thermal Compact Dispatch Testing ##############################
@@ -828,10 +771,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 413, 0, 288, 264, 0, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 413, 0, 288, 264, 0, false, 24)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
@@ -848,10 +788,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 386, 0, 168, 144, 96, false)
-    # Outage constraint for reactive power is quadratic: 
-    @test JuMP.num_constraints(PSI.get_jump_model(model), GQEVF, MOI.LessThan{Float64}) ==
-          24
+    moi_tests(model, 386, 0, 168, 144, 96, false), 24
 end
 
 ############################# Model validation tests #######################################

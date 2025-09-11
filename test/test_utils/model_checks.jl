@@ -9,6 +9,7 @@ function moi_tests(
     greaterthan::Int,
     equalto::Int,
     binary::Bool,
+    lessthan_quadratic::Union{Int, Nothing} = nothing,
 )
     JuMPmodel = PSI.get_jump_model(model)
     @test JuMP.num_variables(JuMPmodel) == vars
@@ -18,7 +19,9 @@ function moi_tests(
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.EqualTo{Float64}) == equalto
     @test ((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(JuMPmodel)) ==
           binary
-
+    !isnothing(lessthan_quadratic) &&
+        @test JuMP.num_constraints(JuMPmodel, GQEVF, MOI.LessThan{Float64}) ==
+              lessthan_quadratic
     return
 end
 
