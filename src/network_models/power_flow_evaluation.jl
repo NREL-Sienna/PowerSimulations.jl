@@ -628,6 +628,8 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
     dest = get_aux_variable(container, key)
     nrd = PFS.get_network_reduction_data(pf_data)
     arc_lookup = PFS.get_arc_lookup(pf_data)
+    # PERF: could pre-compute a Dict of branch type to arcs, then intersect the arcs
+    # for the type U with the keys of the branch maps.
     for (arc, br) in nrd.direct_branch_map
         if br isa U # always a concrete class, so same as: typeof(br) == U
             name = PSY.get_name(br)
@@ -635,15 +637,19 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
             dest[name, :] = src[arc_ix, :]
         end
     end
-    for (arc, parallel_brs) in nrd.parallel_branch_map
+    for (arc, parallel_brs) in nrd.parallel_branch_map # parallel_brs is Set{ACTransmission}
         sample_line = first(parallel_brs)
         impedance = PSY.get_r(sample_line) + im * PSY.get_x(sample_line)
+        n_branches = length(parallel_brs)
         for br in parallel_brs
             if br isa U
-                @assert PSY.get_r(br) + im * PSY.get_x(br) == impedance "All parallel branches must have the same impedance"  # sanity check
+                @assert T <: PowerFlowLineFlowType "Only PowerFlowLineFlowType aux vars " *
+                                                   "can be used for parallel branches: got $T"
+                @assert PSY.get_r(br) + im * PSY.get_x(br) == impedance "All parallel " *
+                                                                        "branches must have the same impedance"
                 name = PSY.get_name(br)
                 arc_ix = arc_lookup[arc]
-                dest[name, :] = src[arc_ix, :]
+                dest[name, :] = 1 / n_branches .* src[arc_ix, :]
             end
         end
     end
