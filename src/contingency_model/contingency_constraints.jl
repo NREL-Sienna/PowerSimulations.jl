@@ -211,26 +211,23 @@ end
 
 function add_reactive_power_contingency_constraint(
     container::OptimizationContainer,
-    ::Type{T},
-    ::Type{R},
-    ::Type{P},
+    ::Type{ReactivePowerOutageConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{AvailableStatusParameter},
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
-    T <: ConstraintType,
-    R <: VariableType,
-    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
-    array_reactive = get_variable(container, R(), V)
+    array_reactive = get_variable(container, ReactivePowerVariable(), V)
     _add_reactive_power_contingency_constraint_impl!(
         container,
-        T,
+        ReactivePowerOutageConstraint,
         array_reactive,
-        P(),
+        AvailableStatusParameter(),
         devices,
         model,
     )
@@ -239,24 +236,30 @@ end
 
 function _add_reactive_power_contingency_constraint_impl!(
     container::OptimizationContainer,
-    ::Type{T},
+    ::Type{ReactivePowerOutageConstraint},
     array_reactive,
-    param::P,
+    param::AvailableStatusParameter,
     devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
 ) where {
-    T <: ConstraintType,
-    P <: ParameterType,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
     names = PSY.get_name.(devices)
     constraint_container =
-        add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
+        add_constraints_container!(
+            container,
+            ReactivePowerOutageConstraint(),
+            V,
+            names,
+            time_steps;
+            meta = "ub",
+        )
 
     param_array = get_parameter_array(container, param, V)
-    param_multiplier = get_parameter_multiplier_array(container, P(), V)
+    param_multiplier =
+        get_parameter_multiplier_array(container, AvailableStatusParameter(), V)
     jump_model = get_jump_model(container)
     time_steps = axes(constraint_container)[2]
     for device in devices, t in time_steps
