@@ -155,7 +155,7 @@ end
 end
 
 #=
-# the way this test removes components is problematic.
+# TODO:the way this test removes components is problematic. Needs updating
 @testset "HVDC with AC PF in the loop" begin
     sys = build_system(PSISystems, "RTS_GMLC_DA_sys")
 
