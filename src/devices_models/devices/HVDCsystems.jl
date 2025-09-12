@@ -136,7 +136,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
@@ -150,7 +150,7 @@ function add_to_expression!(
         T,
         U,
         devices,
-        DeviceModel{V, W}(),
+        device_model,
         network_model
     )
     return
@@ -161,7 +161,7 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
+    device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
@@ -175,7 +175,7 @@ function add_to_expression!(
         T,
         U,
         devices,
-        DeviceModel{V, W}(),
+        device_model,
         network_model,
     )
     return
