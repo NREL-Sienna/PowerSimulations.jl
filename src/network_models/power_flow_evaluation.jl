@@ -224,9 +224,9 @@ _add_two_terminal_elements_map!(
         input_key_map::Dict{Symbol, Dict{OptimizationContainerKey, Dict{String, Int64}}}
     )
 
-Adds mappings for two-terminal elements (HVDC components) that connect the power flow results (from -> to, to -> from) 
+Adds mappings for two-terminal elements (HVDC components) that connect the power flow results (from -> to, to -> from)
 to be added to the mappings for all component types.
-The results for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of 
+The results for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of
 these components.
 
 # Arguments
@@ -643,8 +643,8 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
         n_branches = length(parallel_brs)
         for br in parallel_brs
             if br isa U
-                @assert T <: PowerFlowLineFlowType "Only PowerFlowLineFlowType aux vars " *
-                                                   "can be used for parallel branches: got $T"
+                @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
+                                                     "can be used for parallel branches: got $T"
                 @assert PSY.get_r(br) + im * PSY.get_x(br) == impedance "All parallel " *
                                                                         "branches must have the same impedance"
                 name = PSY.get_name(br)
