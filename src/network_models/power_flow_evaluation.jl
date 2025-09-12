@@ -661,9 +661,9 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
     key::AuxVarKey{<:PowerFlowAuxVariableType, <:Any},
     system::PSY.System)
     # Skip the aux vars that the current power flow isn't meant to update
+    pf_e_data = latest_solved_power_flow_evaluation_data(container)
     pf_data = get_power_flow_data(pf_e_data)
     (key in branch_aux_vars(pf_data) || key in bus_aux_vars(pf_data)) && return
-    pf_e_data = latest_solved_power_flow_evaluation_data(container)
     calculate_aux_variable_value!(container, key, system, pf_e_data)
     return
 end
