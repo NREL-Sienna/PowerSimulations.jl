@@ -305,9 +305,10 @@ bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 
+# TODO: Needs update for MultiTerminal HVDC
 _get_branch_component_tuples(sys::PSY.System) = [
     (typeof(c), get_name(c)) for
-    c in PSY.get_available_components(PSY.Branch, sys)
+    c in PSY.get_available_components(PSY.ACBranch, sys)
 ]
 
 _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
@@ -316,7 +317,7 @@ _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
 _get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
     [
         (typeof(c), PSY.get_number(c)) for
-        c in PSY.get_available_components(PSY.Bus, PFS.get_system(pfd))
+        c in PSY.get_available_components(PSY.ACBus, PFS.get_system(pfd))
     ]
 
 function add_power_flow_data!(
@@ -659,9 +660,10 @@ end
 function calculate_aux_variable_value!(container::OptimizationContainer,
     key::AuxVarKey{<:PowerFlowAuxVariableType, <:Any},
     system::PSY.System)
-    pf_e_data = latest_solved_power_flow_evaluation_data(container)
-    pf_data = get_power_flow_data(pf_e_data)
     # Skip the aux vars that the current power flow isn't meant to update
+    pf_data = get_power_flow_data(pf_e_data)
     (key in branch_aux_vars(pf_data) || key in bus_aux_vars(pf_data)) && return
+    pf_e_data = latest_solved_power_flow_evaluation_data(container)
     calculate_aux_variable_value!(container, key, system, pf_e_data)
+    return
 end
