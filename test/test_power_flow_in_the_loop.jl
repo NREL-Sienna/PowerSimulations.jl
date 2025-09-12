@@ -60,7 +60,6 @@ end
         system = build_system(PSITestSystems, "c_sys5_uc")
 
         line = get_component(Line, system, "1")
-        replace_line && display(line)
         # split line into 2 parallel lines.
         if replace_line
             original_impedance = get_r(line) + im * get_x(line)
@@ -81,7 +80,6 @@ end
                     angle_limits = get_angle_limits(line),
                     rating = get_rating(line),
                 )
-                i == 1 && display(l)
                 add_component!(system, l)
             end
         end
@@ -99,7 +97,6 @@ end
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         results = OptimizationProblemResults(model_m)
         vd = read_aux_variables(results)
-        display(vd["PowerFlowLineActivePowerFromTo__Line"])
         if replace_line
             name = "$(get_name(line))_1"
             parallel_line_flow =
