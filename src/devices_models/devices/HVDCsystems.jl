@@ -130,7 +130,58 @@ function add_to_expression!(
     return
 end
 
+
 function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
+    X <: AreaPTDFPowerModel,
+}
+    _add_to_expression!(
+        container,
+        T,
+        U,
+        devices,
+        DeviceModel{V, W}(),
+        network_model
+    )
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    _add_to_expression!(
+        container,
+        T,
+        U,
+        devices,
+        DeviceModel{V, W}(),
+        network_model,
+    )
+    return
+end
+
+function _add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
