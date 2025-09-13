@@ -22,7 +22,7 @@ end
 @test_yes_cache((@debug "reading results from SimulationsResults cache"; @debug "msg 2"))
 
 ED_EXPECTED_VARS = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    # "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "SystemBalanceSlackDown__System",
@@ -30,7 +30,7 @@ ED_EXPECTED_VARS = [
 ]
 
 UC_EXPECTED_VARS = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    # "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "OnVariable__ThermalStandard",
@@ -97,11 +97,11 @@ function verify_export_results(results, export_path)
 end
 
 NATURAL_UNITS_VALUES = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    # "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "ActivePowerTimeSeriesParameter__PowerLoad",
-    "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
+    # "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
     "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
     "SystemBalanceSlackDown__System",
@@ -666,11 +666,11 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     @test length(expressions_keys) == 4
     expressions_inputs = (
         [
-            "ProductionCostExpression__HydroEnergyReservoir",
+            # "ProductionCostExpression__HydroEnergyReservoir",
             "ProductionCostExpression__ThermalStandard",
         ],
         [
-            (ProductionCostExpression, HydroEnergyReservoir),
+            # (ProductionCostExpression, HydroEnergyReservoir),
             (ProductionCostExpression, ThermalStandard),
         ],
     )

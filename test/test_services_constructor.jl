@@ -140,6 +140,7 @@ end
     moi_tests(model, 336, 0, 168, 120, 48, false)
 end
 
+#= TODO: Hydro
 @testset "Test Reserves from Hydro" begin
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
@@ -163,6 +164,7 @@ end
           PSI.ModelBuildStatus.BUILT
     moi_tests(model, 216, 0, 144, 96, 48, false)
 end
+=#
 
 @testset "Test Reserves from with slack variables" begin
     template = get_thermal_dispatch_template_network(

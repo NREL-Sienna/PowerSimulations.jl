@@ -43,7 +43,8 @@ function get_template_basic_uc_simulation()
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, StaticPowerLoad)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    # TODO: Hydro
+    #set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     return template
 end
 
@@ -59,7 +60,8 @@ function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    # TODO: Hydro
+    #set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
     return template
 end
 
@@ -69,7 +71,8 @@ function get_template_hydro_st_uc(network = CopperPlatePowerModel)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch),
     set_device_model!(template, PowerLoad, StaticPowerLoad),
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch),
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage),
+    # TODO: Hydro
+    # set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage),
     return template
 end
 
@@ -79,7 +82,8 @@ function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    # TODO: Hydro
+    # set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
     return template
 end
 

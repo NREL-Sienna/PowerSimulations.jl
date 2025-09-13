@@ -97,6 +97,7 @@ end
           PSI.ModelBuildStatus.BUILT
 end
 
+#= TODO: Hydro
 @testset "Emulation Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
@@ -143,6 +144,7 @@ end
     )
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
+=#
 
 @testset "Emulation Model Results" begin
     template = get_thermal_dispatch_template_network()

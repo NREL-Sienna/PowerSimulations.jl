@@ -136,7 +136,6 @@ function apply_affect!(
                 PSY.ThermalGen,
                 PSY.RenewableGen,
                 PSY.ElectricLoad,
-                PSY.EnergyReservoirStorage,
             }
         )     #TODO - extend to Hydro once outages are made in HydroPowerSimulations
             continue

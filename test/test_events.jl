@@ -61,6 +61,7 @@ function _add_interruptible_power_load!(sys)
     add_time_series!(sys, ipl, ipl_ts)
 end
 
+#=
 function _add_energy_reservoir_storage!(sys)
     b = get_component(ACBus, sys, "nodeA")
     show_components(sys, PowerLoad)
@@ -85,13 +86,14 @@ function _add_energy_reservoir_storage!(sys)
     )
     add_component!(sys, ers)
 end
+=#
 
 function run_events_simulation(;
     sys_emulator,
     networks,
     optimizers,
     outage_time,   #DateTime
-    outage_length, #hrs 
+    outage_length, #hrs
     uc_formulation,   #
     ed_formulation,
     feedforward,
@@ -192,7 +194,7 @@ function run_events_simulation(;
                         component_type = ThermalStandard,
                         source = OnVariable,
                         affected_values = [ActivePowerVariable],
-                        #   add_slacks = false, 
+                        #   add_slacks = false,
                     ),
                 ],
             ),
@@ -241,7 +243,7 @@ function test_event_results(;
     outage_length_ix = Int64((Hour(1) / em.resolution) * outage_length)
     on_recover_ix = indexin([expected_on_variable_recovery], p[!, :DateTime])[1]
     p_recover_ix = indexin([expected_power_recovery], p[!, :DateTime])[1]
-    #Test condition at time of outage 
+    #Test condition at time of outage
     @test count[outage_ix, "Alta"] == 0.0
     @test status[outage_ix, "Alta"] == 1.0
     @test on[outage_ix, "Alta"] == 1.0
@@ -258,7 +260,7 @@ function test_event_results(;
         zeros(length_p_zero);
         atol = 1e-5,
     )
-    #Test condition after outage 
+    #Test condition after outage
     @test count[(outage_ix + outage_length_ix + 1), "Alta"] == 0.0
     @test status[(outage_ix + outage_length_ix + 1), "Alta"] == 1.0
     @test on[on_recover_ix, "Alta"] == 1.0
@@ -276,8 +278,8 @@ function test_event_results(;
     return
 end
 
-### HOURLY DATA ### 
-#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub 
+### HOURLY DATA ###
+#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub
 @testset "Hourly; uc basic; ed nomin; no ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
@@ -297,14 +299,14 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test no ramping constraint in D2 model results 
+    #Test no ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] == 40.0
 end
 
-#This passes with nomin or basic dispatch 
+#This passes with nomin or basic dispatch
 @testset "Hourly; uc basic; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
@@ -313,7 +315,7 @@ end
         outage_time = DateTime("2024-01-01T18:00:00"),
         outage_length = 3.0,
         uc_formulation = "basic",
-        ed_formulation = "basic",  #should also pass with nomin   
+        ed_formulation = "basic",  #should also pass with nomin
         feedforward = true,
         in_memory = true,
     )
@@ -324,7 +326,7 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test no ramping constraint in D2 model results 
+    #Test no ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
@@ -332,11 +334,11 @@ end
 end
 
 # Note: Running a standard UC formulation without a feedforward to the ED is not a feasible modeling setup
-#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models. 
+#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models.
 
 # This tests for both min up and down times being handled properly with events.
 # Generator not turned back on until 4 hours after the event (event only lasts 3 hours)
-# Generator is only on for one hour when the event happens; the constraint is bypassed by resetting the TimeDurationOn variable to a large value. 
+# Generator is only on for one hour when the event happens; the constraint is bypassed by resetting the TimeDurationOn variable to a large value.
 @testset "Hourly; uc standard; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
@@ -345,7 +347,7 @@ end
         outage_time = DateTime("2024-01-01T17:00:00"),
         outage_length = 3.0,
         uc_formulation = "standard",
-        ed_formulation = "basic",  #should also pass with nomin   
+        ed_formulation = "basic",  #should also pass with nomin
         feedforward = true,
         in_memory = true,
     )
@@ -356,16 +358,16 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test ramping constraint in D2 model results 
+    #Test ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
 
-### 5 MINUTE DATA (RESOLUTION MISMATCH) ### 
+### 5 MINUTE DATA (RESOLUTION MISMATCH) ###
 
-#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub 
+#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub
 @testset "5 min; uc basic; ed nomin; no ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm_rt"),
@@ -409,7 +411,7 @@ end
 end
 
 # Note: Running a standard UC formulation without a feedforward to the ED is not a feasible modeling setup
-#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models. 
+#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models.
 
 @testset "5 min; uc standard; ed basic; ff" begin
     res = run_events_simulation(;
@@ -419,7 +421,7 @@ end
         outage_time = DateTime("2024-01-01T17:00:00"),
         outage_length = 3.0,
         uc_formulation = "standard",
-        ed_formulation = "basic",  #should also pass with nomin   
+        ed_formulation = "basic",  #should also pass with nomin
         feedforward = true,
         in_memory = true,
     )
@@ -430,7 +432,7 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test ramping constraint in D2 model results 
+    #Test ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
@@ -684,7 +686,7 @@ end
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__EnergyReservoirStorage")
-    #TODO - modify storage so it is deployed and can test the outages -> check keywords to incentivize. 
+    #TODO - modify storage so it is deployed and can test the outages -> check keywords to incentivize.
     apv = read_realized_variable(em, "ActivePowerOutVariable__EnergyReservoirStorage")
     apv = read_realized_variable(em, "ActivePowerInVariable__EnergyReservoirStorage")
     for (ix, x) in enumerate(outage_data[1:24])

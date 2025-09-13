@@ -927,8 +927,8 @@ function add_to_expression!(
 }
     _add_to_expression!(
         container,
-        T(),
-        U(),
+        T,
+        U,
         devices,
         device_model,
         network_model,
@@ -952,8 +952,8 @@ function add_to_expression!(
 }
     _add_to_expression!(
         container,
-        T(),
-        U(),
+        T,
+        U,
         devices,
         device_model,
         network_model,
