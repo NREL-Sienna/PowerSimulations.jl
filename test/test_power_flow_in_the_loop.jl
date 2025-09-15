@@ -117,10 +117,10 @@ end
     )
 end
 
-@testset "network reduction error" begin
+@testset "AC Power Flow in the loop with a breaker-switch" begin
     system = build_system(PSITestSystems, "c_sys5_uc")
-    # replace a line with a breaker-switch, so that we get a network reduction.
-    line = get_component(Line, system, "1")
+    # we choose a line to replace such that the arc lookup of a different line changes.
+    line = get_component(Line, system, "2")
     remove_component!(system, line)
     bs = PSY.DiscreteControlledACBranch(
         ;
@@ -136,6 +136,11 @@ end
         branch_status = PSY.DiscreteControlledBranchStatus.CLOSED,
     )
     add_component!(system, bs)
+    # these lines end up being parallel, so we set their impedances to be the same
+    line3 = get_component(Line, system, "3")
+    line6 = get_component(Line, system, "6")
+    PSY.set_r!(line3, PSY.get_r(line6))
+    PSY.set_x!(line3, PSY.get_x(line6))
     template = get_template_dispatch_with_network(
         NetworkModel(
             PTDFPowerModel;
@@ -144,14 +149,10 @@ end
         ),
     )
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
-    test_path = mktempdir()
-    mkpath(test_path)
-    PSI.set_output_dir!(model_m, test_path)
-    PSB.clear_all_serialized_systems()
-    # remove once we support breaker-switches.
-    @test_logs (:error, r"Buses are reduced.*") match_mode = :any begin
-        @test_throws Exception PSI.build_impl!(model_m)
-    end
+
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     # the interface currently doesn't allow for building a model with network
     # reductions. we'd have to pass kwargs all the way down to add_power_flow_data!.
 end

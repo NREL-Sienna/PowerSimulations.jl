@@ -62,6 +62,7 @@ function _make_temp_component_map(
     component_type::DataType,
     side::Union{Val{:from}, Val{:to}, Nothing},
 )
+    nrd = PFS.get_network_reduction_data(pf_data)
     temp_component_map = Dict{DataType, Dict{String, Int}}()
     components = PSY.get_available_components(component_type, sys)
     bus_lookup = PFS.get_bus_lookup(pf_data)
@@ -69,7 +70,7 @@ function _make_temp_component_map(
         comp_type = typeof(comp)
         bus_dict = get!(temp_component_map, comp_type, Dict{String, Int}())
         bus_number = PSY.get_number(_get_component_bus_for_map(comp, side))
-        bus_dict[PSY.get_name(comp)] = bus_lookup[bus_number]
+        bus_dict[PSY.get_name(comp)] = PNM.get_bus_index(bus_number, bus_lookup, nrd)
     end
     return temp_component_map
 end
@@ -85,9 +86,10 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
     )
     # Add ACBus components for voltage magnitude and angle export
     bus_lookup = PFS.get_bus_lookup(pf_data)
+    nrd = PFS.get_network_reduction_data(pf_data)
     temp_component_map[PSY.ACBus] =
         Dict(
-            PSY.get_name(c) => bus_lookup[PSY.get_number(c)] for
+            PSY.get_name(c) => PNM.get_bus_index(PSY.get_number(c), bus_lookup, nrd) for
             c in get_components(PSY.ACBus, sys)
         )
     return temp_component_map
@@ -603,17 +605,19 @@ _get_pf_result(::Type{PowerFlowVoltageStabilityFactors}, pf_data::PFS.PowerFlowD
     PFS.get_voltage_stability_factors(pf_data)
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{T, <:PSY.ACBus}, # TODO: does this work ok with DCBuses, too?
+    key::AuxVarKey{T, <:PSY.ACBus},
     ::PSY.System,
     pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData},
 ) where {T <: PowerFlowAuxVariableType}
     @debug "Updating $key from PowerFlowData"
     pf_data = get_power_flow_data(pf_e_data)
+    nrd = PFS.get_network_reduction_data(pf_data)
     src = _get_pf_result(T, pf_data)
-    lookup = PFS.get_bus_lookup(pf_data)
+    bus_lookup = PFS.get_bus_lookup(pf_data)
     dest = get_aux_variable(container, key)
-    for component_id in axes(dest, 1)  # these are bus numbers
-        dest[component_id, :] = src[lookup[component_id], :]
+    for bus_number in axes(dest, 1)
+        bus_ix = PNM.get_bus_index(bus_number, bus_lookup, nrd)
+        dest[bus_number, :] = src[bus_ix, :]
     end
     return
 end
@@ -657,6 +661,7 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
                     )
                 end
                 name = PSY.get_name(br)
+                # arc from parallel branch map may be different than get_arc_tuple(br, nrd)
                 arc_ix = arc_lookup[arc]
                 dest[name, :] = 1 / n_branches .* src[arc_ix, :]
             end

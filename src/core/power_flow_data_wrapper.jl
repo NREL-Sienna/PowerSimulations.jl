@@ -23,8 +23,6 @@ function check_network_reduction(pfd::PFS.PowerFlowData)
                 "in PowerSimulations.jl.",
             ),
         )
-    elseif length(PNM.get_reverse_bus_search_map(nrd)) != 0
-        @error("Buses are reduced, due to breaker-switches. This will likely cause errors.")
     end
     return
 end
