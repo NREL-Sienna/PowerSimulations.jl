@@ -1,9 +1,5 @@
-HiGHS_optimizer_small_gap = JuMP.optimizer_with_attributes(
-    HiGHS.Optimizer,
-    "time_limit" => 100.0,
-    "log_to_console" => false,
-    "mip_rel_gap" => 0.001,
-)
+HiGHS_optimizer_small_gap =
+    set_attribute!(deepcopy(HiGHS_optimizer), "mip_rel_gap" => 0.001)
 
 function _add_100_MW_reserves!(sys)
     r_up = ConstantReserve{ReserveUp}(

@@ -343,7 +343,7 @@ end
                 template_uc,
                 sys_5;
                 name = "UC",
-                optimizer = HiGHS.Optimizer,
+                optimizer = HiGHS_optimizer,
                 system_to_file = false,
                 store_variable_names = true,
             )
@@ -380,7 +380,7 @@ end
                 template_uc,
                 sys_5;
                 name = "UC",
-                optimizer = HiGHS.Optimizer,
+                optimizer = HiGHS_optimizer,
                 system_to_file = false,
             )
 
