@@ -16,12 +16,15 @@ check_network_reduction(::PFS.SystemPowerFlowContainer) = nothing
 
 function check_network_reduction(pfd::PFS.PowerFlowData)
     nrd = PFS.get_network_reduction_data(pfd)
-    if length(PNM.get_reverse_bus_search_map(nrd)) != 0
+    if !isempty(PNM.get_reductions(nrd))
         throw(
             IS.NotImplementedError(
-                "Network reduction is not supported in PowerSimulations.jl.",
+                "Network reductions of types $(PNM.get_reductions(nrd)) are not supported " *
+                "in PowerSimulations.jl.",
             ),
         )
+    elseif length(PNM.get_reverse_bus_search_map(nrd)) != 0
+        @error("Buses are reduced, due to breaker-switches. This will likely cause errors.")
     end
     return
 end

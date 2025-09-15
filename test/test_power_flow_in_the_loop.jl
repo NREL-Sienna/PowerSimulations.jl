@@ -60,7 +60,6 @@ end
         system = build_system(PSITestSystems, "c_sys5_uc")
 
         line = get_component(Line, system, "1")
-        replace_line && display(line)
         # split line into 2 parallel lines.
         if replace_line
             original_impedance = get_r(line) + im * get_x(line)
@@ -81,7 +80,6 @@ end
                     angle_limits = get_angle_limits(line),
                     rating = get_rating(line),
                 )
-                i == 1 && display(l)
                 add_component!(system, l)
             end
         end
@@ -99,7 +97,6 @@ end
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         results = OptimizationProblemResults(model_m)
         vd = read_aux_variables(results)
-        display(vd["PowerFlowLineActivePowerFromTo__Line"])
         if replace_line
             name = "$(get_name(line))_1"
             parallel_line_flow =
@@ -147,11 +144,16 @@ end
         ),
     )
     model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
-    # ideally, would @test_logs for IS.NotImplementedError, but build! catches all errors
-    # and does `@error "DecisionModel Build Failed"`, attaching the original error as
-    # a field named "exception." This means @test_logs can't see the original error message.
-    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.ModelBuildStatus.FAILED
+    test_path = mktempdir()
+    mkpath(test_path)
+    PSI.set_output_dir!(model_m, test_path)
+    PSB.clear_all_serialized_systems()
+    # remove once we support breaker-switches.
+    @test_logs (:error, r"Buses are reduced.*") match_mode = :any begin
+        @test_throws Exception PSI.build_impl!(model_m)
+    end
+    # the interface currently doesn't allow for building a model with network
+    # reductions. we'd have to pass kwargs all the way down to add_power_flow_data!.
 end
 
 #=

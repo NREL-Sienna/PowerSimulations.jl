@@ -631,14 +631,14 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
     arc_lookup = PFS.get_arc_lookup(pf_data)
     # PERF: could pre-compute a Dict of branch type to arcs, then intersect the arcs
     # for the type U with the keys of the branch maps.
-    for (arc, br) in nrd.direct_branch_map
-        if br isa U # always a concrete class, so same as: typeof(br) == U
+    for (arc, br) in PNM.get_direct_branch_map(nrd)
+        if br isa U # always a concrete type, so same as: typeof(br) == U
             name = PSY.get_name(br)
             arc_ix = arc_lookup[arc]
             dest[name, :] = src[arc_ix, :]
         end
     end
-    for (arc, parallel_brs) in nrd.parallel_branch_map # parallel_brs is Set{ACTransmission}
+    for (arc, parallel_brs) in PNM.get_parallel_branch_map(nrd) # parallel_brs is Set{ACTransmission}
         sample_line = first(parallel_brs)
         impedance = PSY.get_r(sample_line) + im * PSY.get_x(sample_line)
         n_branches = length(parallel_brs)
@@ -646,8 +646,16 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
             if br isa U
                 @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
                                                      "can be used for parallel branches: got $T"
-                @assert PSY.get_r(br) + im * PSY.get_x(br) == impedance "All parallel " *
-                                                                        "branches must have the same impedance"
+                if PSY.get_r(br) + im * PSY.get_x(br) != impedance
+                    throw(
+                        error(
+                            "All parallel branches must have the same impedance: " *
+                            "got $(PSY.get_name(br)) with impedance " *
+                            "$(PSY.get_r(br) + im * PSY.get_x(br)) and " *
+                            "$(PSY.get_name(sample_line)) with impedance $impedance.",
+                        ),
+                    )
+                end
                 name = PSY.get_name(br)
                 arc_ix = arc_lookup[arc]
                 dest[name, :] = 1 / n_branches .* src[arc_ix, :]
@@ -658,12 +666,12 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
 end
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{<:PowerFlowAuxVariableType, <:Any},
+    key::AuxVarKey{<:PowerFlowAuxVariableType, <:PSY.Component},
     system::PSY.System)
     # Skip the aux vars that the current power flow isn't meant to update
+    pf_e_data = latest_solved_power_flow_evaluation_data(container)
     pf_data = get_power_flow_data(pf_e_data)
     (key in branch_aux_vars(pf_data) || key in bus_aux_vars(pf_data)) && return
-    pf_e_data = latest_solved_power_flow_evaluation_data(container)
     calculate_aux_variable_value!(container, key, system, pf_e_data)
     return
 end
