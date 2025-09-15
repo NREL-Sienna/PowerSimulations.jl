@@ -43,8 +43,8 @@ function get_template_basic_uc_simulation()
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, StaticPowerLoad)
-    # TODO: Hydro
-    #set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -60,8 +60,8 @@ function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
-    # TODO: Hydro
-    #set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -71,8 +71,8 @@ function get_template_hydro_st_uc(network = CopperPlatePowerModel)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch),
     set_device_model!(template, PowerLoad, StaticPowerLoad),
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch),
-    # TODO: Hydro
-    # set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage),
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -82,8 +82,8 @@ function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
-    # TODO: Hydro
-    # set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 

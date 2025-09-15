@@ -191,7 +191,7 @@ end
             step = 2,
         )
         # This value needs to be checked
-        @test length(events) == 20
+        @test length(events) == 21
 
         PSI.show_simulation_events(
             devnull,
@@ -214,7 +214,7 @@ end
             step = 2,
             model_name = "UC",
         )
-        @test length(events) == 20
+        @test length(events) == 21
         PSI.show_simulation_events(
             devnull,
             PSI.InitialConditionUpdateEvent,
