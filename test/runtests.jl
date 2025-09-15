@@ -37,7 +37,7 @@ const DISABLED_TEST_FILES = [
     # "test_simulation_build.jl"
     # "test_simulation_execute.jl"
     # "test_simulation_models.jl"
-    "test_simulation_partitions.jl",
+    "test_simulation_partitions.jl", # Broken due to data
     "test_simulation_results.jl", # TODO: Hydro This test is broken due to changes in HydroEer
     # "test_simulation_results_export.jl"
     # "test_simulation_sequence.jl"
