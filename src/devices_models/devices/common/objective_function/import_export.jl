@@ -1,3 +1,6 @@
+_include_min_gen_power_in_constraint(::PSY.Source, ::ActivePowerOutVariable) = false
+_include_min_gen_power_in_constraint(::PSY.Source, ::ActivePowerInVariable) = false
+
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -12,13 +15,12 @@ function _add_variable_cost_to_objective!(
     @debug "Import Export Cost" _group = PSI.LOG_GROUP_COST_FUNCTIONS component_name
     import_cost_curves = PSY.get_import_offer_curves(cost_function)
     if !isnothing(import_cost_curves)
-        _add_variable_cost_helper!(
+        add_pwl_term!(
+            false,
             container,
-            T(),
             component,
             cost_function,
-            import_cost_curves,
-            PSI._add_pwl_term!,
+            T(),
             U(),
         )
     end
@@ -39,13 +41,12 @@ function _add_variable_cost_to_objective!(
     @debug "Import Export Cost" _group = PSI.LOG_GROUP_COST_FUNCTIONS component_name
     export_cost_curves = PSY.get_export_offer_curves(cost_function)
     if !isnothing(export_cost_curves)
-        _add_variable_cost_helper!(
+        add_pwl_term!(
+            true,
             container,
-            T(),
             component,
             cost_function,
-            export_cost_curves,
-            PSI._add_pwl_term_decremental!,
+            T(),
             U(),
         )
     end
