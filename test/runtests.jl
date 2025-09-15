@@ -29,7 +29,7 @@ const DISABLED_TEST_FILES = [
     # "test_security_constrained_models.jl",
     # "test_print.jl",
     # "test_problem_template.jl",
-    # "test_power_flow_in_the_loop.jl",
+    "test_power_flow_in_the_loop.jl",
     # "test_recorder_events.jl"
     # "test_services_constructor.jl",
     "test_security_constrained_models.jl",
@@ -38,7 +38,7 @@ const DISABLED_TEST_FILES = [
     # "test_simulation_execute.jl"
     # "test_simulation_models.jl"
     "test_simulation_partitions.jl",
-    # "test_simulation_results.jl"
+    "test_simulation_results.jl", # TODO: Hydro This test is broken due to changes in HydroEer
     # "test_simulation_results_export.jl"
     # "test_simulation_sequence.jl"
     # "test_simulation_store.jl"

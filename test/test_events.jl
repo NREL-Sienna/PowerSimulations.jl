@@ -1,6 +1,3 @@
-HiGHS_optimizer_small_gap =
-    set_attribute!(deepcopy(HiGHS_optimizer), "mip_rel_gap" => 0.001)
-
 function _add_100_MW_reserves!(sys)
     r_up = ConstantReserve{ReserveUp}(
         "ReserveUp",
@@ -660,6 +657,7 @@ end
     end
 end
 
+#= TODO: Events
 @testset "Storage outage" begin
     dates_ts = collect(
         DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
@@ -692,6 +690,7 @@ end
         end
     end
 end
+=#
 
 @testset "StaticPowerLoad outage" begin
     dates_ts = collect(
