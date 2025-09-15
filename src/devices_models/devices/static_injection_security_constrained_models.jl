@@ -956,11 +956,9 @@ function add_variables!(
                     binary = binary
                 )
                 if device_is_in_reserve_devices
+                    #The device that suffered the outage cannot contribute with reserves deployment for its own contingency.
                     # TODO: Use correct boundin method based on models
-                    JuMP.set_upper_bound(
-                        variable[outage_name, name, t],
-                        PSY.get_max_active_power(d),
-                    )
+                    JuMP.set_upper_bound( variable[outage_name, name, t], 0.0)
                     JuMP.set_lower_bound(variable[outage_name, name, t], 0.0)
                     JuMP.set_start_value(variable[outage_name, name, t], 0.0)
                     continue
