@@ -447,13 +447,13 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
-#= TODO: Hydro Needs hydro fix
 @testset "Decision Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -462,7 +462,7 @@ end
     @test !PSI.has_initial_condition_value(
         initial_conditions_data,
         ActivePowerVariable(),
-        HydroEnergyReservoir,
+        HydroTurbine,
     )
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
@@ -470,7 +470,8 @@ end
     template = get_thermal_dispatch_template_network()
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
-    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyCommitment)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
@@ -480,11 +481,10 @@ end
     @test PSI.has_initial_condition_value(
         initial_conditions_data,
         OnVariable(),
-        HydroEnergyReservoir,
+        HydroTurbine,
     )
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
-=#
 
 @testset "Test serialization of InitialConditionsData" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5")
