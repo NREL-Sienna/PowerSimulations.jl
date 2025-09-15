@@ -10,8 +10,8 @@
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "lb"),
-        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "ub"),
+        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstraint, PSY.Line, "ub"),
     ]
     PTDF_ref = IdDict{System, VirtualPTDF}(
         c_sys5 => VirtualPTDF(c_sys5),
@@ -129,8 +129,8 @@ end
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "lb"),
-        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "ub"),
+        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstraint, PSY.Line, "ub"),
     ]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
@@ -279,8 +279,8 @@ end
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "lb"),
-        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "ub"),
+        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstraint, PSY.Line, "ub"),
     ]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),

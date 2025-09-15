@@ -8,12 +8,12 @@
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(
-            PostContingencyEmergencyRateLimitConstrain,
+            PostContingencyEmergencyRateLimitConstraint,
             PSY.ThermalStandard,
             "lb",
         ),
         PSI.ConstraintKey(
-            PostContingencyEmergencyRateLimitConstrain,
+            PostContingencyEmergencyRateLimitConstraint,
             PSY.ThermalStandard,
             "ub",
         ),
