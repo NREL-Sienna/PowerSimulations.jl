@@ -140,11 +140,11 @@ end
     moi_tests(model, 336, 0, 168, 120, 48, false)
 end
 
-#= TODO: Hydro
 @testset "Test Reserves from Hydro" begin
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     set_service_model!(
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve5"),
@@ -162,9 +162,8 @@ end
     model = DecisionModel(template, c_sys5_hyd)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 216, 0, 144, 96, 48, false)
+    moi_tests(model, 312, 0, 120, 96, 72, false)
 end
-=#
 
 @testset "Test Reserves from with slack variables" begin
     template = get_thermal_dispatch_template_network(
