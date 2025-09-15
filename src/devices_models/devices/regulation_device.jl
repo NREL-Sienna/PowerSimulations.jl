@@ -183,7 +183,7 @@ function add_constraints!(
     area_reserve_up = get_variable(container, DeltaActivePowerUpVariable(), PSY.AGC)
     area_reserve_dn = get_variable(container, DeltaActivePowerDownVariable(), PSY.AGC)
 
-    component_names = [PSY.get_name(d) for d in devices]
+    component_names = PSY.get_name.(devices)
     participation_assignment_up = add_constraints_container!(
         container,
         S(),

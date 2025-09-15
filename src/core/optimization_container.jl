@@ -484,9 +484,9 @@ function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
     dc_bus_numbers::Vector{Int},
-    ::Type{PTDFPowerModel},
+    ::Type{T},
     bus_reduction_map::Dict{Int64, Set{Int64}},
-)
+) where {(T <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel})}
     time_steps = get_time_steps(container)
     if isempty(bus_reduction_map)
         ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
@@ -552,6 +552,48 @@ function _make_system_expressions!(
     if length(subnetworks) > 1
         @warn "The system contains $(length(subnetworks)) synchronous regions. \
                When combined with AreaPTDFPowerModel, the model can be infeasible if the data doesn't \
+               have a well defined topology"
+        subnetworks_ref_buses = collect(keys(subnetworks))
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
+            _make_container_array(subnetworks_ref_buses, time_steps)
+    end
+
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, time_steps)
+    end
+
+    return
+end
+
+#TODO Check if for SecurityConstrainedAreaPTDFPowerModel need something else
+function _make_system_expressions!(
+    container::OptimizationContainer,
+    subnetworks::Dict{Int, Set{Int}},
+    dc_bus_numbers::Vector{Int},
+    ::Type{SecurityConstrainedAreaPTDFPowerModel},
+    areas::IS.FlattenIteratorWrapper{PSY.Area},
+    bus_reduction_map::Dict{Int64, Set{Int64}},
+)
+    time_steps = get_time_steps(container)
+    if isempty(bus_reduction_map)
+        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
+    else
+        ac_bus_numbers = collect(keys(bus_reduction_map))
+    end
+    container.expressions = Dict(
+        # Enforces the balance by Area
+        ExpressionKey(ActivePowerBalance, PSY.Area) =>
+            _make_container_array(PSY.get_name.(areas), time_steps),
+        # Keeps track of the Injections by bus.
+        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
+        # Bus numbers are sorted to guarantee consistency in the order between the
+        # containers
+            _make_container_array(sort!(ac_bus_numbers), time_steps),
+    )
+    if length(subnetworks) > 1
+        @warn "The system contains $(length(subnetworks)) synchronous regions. \
+               When combined with SecurityConstrainedAreaPTDFPowerModel, the model can be infeasible if the data doesn't \
                have a well defined topology"
         subnetworks_ref_buses = collect(keys(subnetworks))
         container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
@@ -644,16 +686,16 @@ end
 
 function initialize_system_expressions!(
     container::OptimizationContainer,
-    network_model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
-)
+) where {T <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel}}
     areas = get_available_components(network_model, PSY.Area, system)
     if isempty(areas)
         throw(
             IS.ConflictingInputsError(
-                "AreaPTDFPowerModel doesn't support systems with no Areas",
+                "AreaPTDFPowerModel/SecurityConstrainedAreaPTDFPowerModel doesn't support systems with no Areas",
             ),
         )
     end
@@ -679,6 +721,7 @@ function build_impl!(
 )
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
+
     initialize_system_expressions!(
         container,
         get_network_model(template),
@@ -733,7 +776,6 @@ function build_impl!(
                 LOG_GROUP_OPTIMIZATION_CONTAINER
         end
     end
-
     for device_model in values(template.devices)
         @debug "Building Model for $(get_component_type(device_model)) with $(get_formulation(device_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -760,7 +802,6 @@ function build_impl!(
         @debug "Problem size:" get_problem_size(container) _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     end
-
     for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
@@ -1231,7 +1272,8 @@ function _add_param_container!(
     attribute::TimeSeriesAttributes{V},
     param_axs,
     multiplier_axs,
-    time_steps;
+    additional_axs,
+    time_steps::UnitRange{Int};
     sparse = false,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
@@ -1239,14 +1281,24 @@ function _add_param_container!(
     else
         param_type = Float64
     end
-
     if sparse
-        param_array = sparse_container_spec(param_type, param_axs, time_steps)
-        multiplier_array = sparse_container_spec(Float64, multiplier_axs, time_steps)
-    else
-        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+        param_array =
+            sparse_container_spec(param_type, param_axs, additional_axs..., time_steps)
         multiplier_array =
-            fill!(DenseAxisArray{Float64}(undef, multiplier_axs, time_steps), NaN)
+            sparse_container_spec(Float64, multiplier_axs, additional_axs..., time_steps)
+    else
+        param_array =
+            DenseAxisArray{param_type}(undef, param_axs, additional_axs..., time_steps)
+        multiplier_array =
+            fill!(
+                DenseAxisArray{Float64}(
+                    undef,
+                    multiplier_axs,
+                    additional_axs...,
+                    time_steps,
+                ),
+                NaN,
+            )
     end
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
@@ -1306,7 +1358,8 @@ function add_param_container!(
     name::String,
     param_axs,
     multiplier_axs,
-    time_steps;
+    additional_axs,
+    time_steps::UnitRange{Int};
     sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
@@ -1321,6 +1374,7 @@ function add_param_container!(
         attributes,
         param_axs,
         multiplier_axs,
+        additional_axs,
         time_steps;
         sparse = sparse,
     )
@@ -1571,7 +1625,7 @@ function get_expression(container::OptimizationContainer, key::ExpressionKey)
     if var === nothing
         throw(
             IS.InvalidValue(
-                "constraint $key is not stored. $(collect(keys(container.expressions)))",
+                "expression $key is not stored. $(collect(keys(container.expressions)))",
             ),
         )
     end
@@ -1997,11 +2051,12 @@ function lazy_container_addition!(
     axs...;
     kwargs...,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
-    if !has_container_key(container, T, U)
+    meta = get(kwargs, :meta, IS.Optimization.CONTAINER_KEY_EMPTY_META)
+    if !has_container_key(container, T, U, meta)
         expr_container =
             add_expression_container!(container, expression, U, axs...; kwargs...)
     else
-        expr_container = get_expression(container, expression, U)
+        expr_container = get_expression(container, expression, U, meta)
     end
     return expr_container
 end

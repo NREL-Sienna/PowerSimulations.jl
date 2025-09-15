@@ -19,7 +19,10 @@ get_variable_binary(::ReactivePowerVariable, ::Type{<:PSY.Source}, ::AbstractSou
 get_variable_lower_bound(::ReactivePowerVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_reactive_power_limits(d).min
 get_variable_upper_bound(::ReactivePowerVariable, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_reactive_power_limits(d).max
 
-get_multiplier_value(::TimeSeriesParameter, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).max
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).max
+# This additional method definition is used to avoid ambiguity with the method defined in default_interface_methods.jl
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, d::PSY.Source, ::AbstractSourceFormulation) = 1.0
+
 
 #! format: on
 function get_default_time_series_names(

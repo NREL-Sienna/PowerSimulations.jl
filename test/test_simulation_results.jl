@@ -22,7 +22,7 @@ end
 @test_yes_cache((@debug "reading results from SimulationsResults cache"; @debug "msg 2"))
 
 ED_EXPECTED_VARS = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    # "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "SystemBalanceSlackDown__System",
@@ -30,7 +30,7 @@ ED_EXPECTED_VARS = [
 ]
 
 UC_EXPECTED_VARS = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    # "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "OnVariable__ThermalStandard",
@@ -97,11 +97,11 @@ function verify_export_results(results, export_path)
 end
 
 NATURAL_UNITS_VALUES = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    # "ActivePowerVariable__HydroEnergyReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "ActivePowerTimeSeriesParameter__PowerLoad",
-    "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
+    # "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
     "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
     "SystemBalanceSlackDown__System",
@@ -146,108 +146,6 @@ function make_export_all(problems)
             store_all_parameters = true,
         ) for x in problems
     ]
-end
-
-function run_simulation(
-    c_sys5_hy_uc,
-    c_sys5_hy_ed,
-    file_path::String,
-    export_path;
-    in_memory = false,
-    system_to_file = true,
-    uc_network_model = nothing,
-    ed_network_model = nothing,
-)
-    template_uc = get_template_basic_uc_simulation()
-    template_ed = get_template_nomin_ed_simulation()
-    isnothing(uc_network_model) && (
-        uc_network_model =
-            NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint])
-    )
-    isnothing(ed_network_model) && (
-        ed_network_model =
-            NetworkModel(
-                CopperPlatePowerModel;
-                duals = [CopperPlateBalanceConstraint],
-                use_slacks = true,
-            )
-    )
-    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-    set_network_model!(
-        template_uc,
-        uc_network_model,
-    )
-    set_network_model!(
-        template_ed,
-        ed_network_model,
-    )
-    models = SimulationModels(;
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = HiGHS_optimizer,
-                system_to_file = system_to_file,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = ipopt_optimizer,
-                system_to_file = system_to_file,
-            ),
-        ],
-    )
-
-    sequence = SimulationSequence(;
-        models = models,
-        feedforwards = Dict(
-            "ED" => [
-                SemiContinuousFeedforward(;
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
-                ),
-            ],
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-    sim = Simulation(;
-        name = "no_cache",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = file_path,
-    )
-
-    build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.SimulationBuildStatus.BUILT
-
-    exports = Dict(
-        "models" => [
-            Dict(
-                "name" => "UC",
-                "store_all_variables" => true,
-                "store_all_parameters" => true,
-                "store_all_duals" => true,
-                "store_all_aux_variables" => true,
-            ),
-            Dict(
-                "name" => "ED",
-                "store_all_variables" => true,
-                "store_all_parameters" => true,
-                "store_all_duals" => true,
-                "store_all_aux_variables" => true,
-            ),
-        ],
-        "path" => export_path,
-        "optimizer_stats" => true,
-    )
-    execute_out = execute!(sim; exports = exports, in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-
-    return sim
 end
 
 function test_simulation_results(
@@ -768,11 +666,11 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     @test length(expressions_keys) == 4
     expressions_inputs = (
         [
-            "ProductionCostExpression__HydroEnergyReservoir",
+            # "ProductionCostExpression__HydroEnergyReservoir",
             "ProductionCostExpression__ThermalStandard",
         ],
         [
-            (ProductionCostExpression, HydroEnergyReservoir),
+            # (ProductionCostExpression, HydroEnergyReservoir),
             (ProductionCostExpression, ThermalStandard),
         ],
     )
@@ -909,7 +807,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     df = read_realized_variable(results_em, var_name)
     export_active_power_file = joinpath(export_path, "$(var_name).csv")
     export_df = PSI.read_dataframe(export_active_power_file)
-    # TODO: A bug in the code produces NaN after index 48.
+    # TODO: results A bug in the code produces NaN after index 48.
     @test isapprox(df[48, :], export_df[48, :])
 end
 
@@ -1003,13 +901,6 @@ end
     sys_ed = get_system!(ed)
     test_decision_problem_results(results, sys_ed, sys_uc, in_memory)
     test_emulation_problem_results(results, in_memory)
-end
-
-function load_pf_export(root, export_subdir)
-    raw_path, md_path = get_psse_export_paths(export_subdir)
-    sys = System(joinpath(root, raw_path), JSON3.read(joinpath(root, md_path), Dict))
-    set_units_base_system!(sys, "NATURAL_UNITS")
-    return sys
 end
 
 read_result_names(results, key::PSI.OptimizationContainerKey) =

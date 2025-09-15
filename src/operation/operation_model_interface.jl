@@ -177,6 +177,7 @@ function build_initial_conditions!(model::OperationModel)
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
+
         if requires_init
             @debug "initial_conditions required for $device_type" _group =
                 LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -445,10 +446,10 @@ function serialize_optimization_model(model::OperationModel)
     return
 end
 
-function instantiate_network_model(model::OperationModel)
+function instantiate_network_model!(model::OperationModel)
     template = get_template(model)
     network_model = get_network_model(template)
-    instantiate_network_model(network_model, get_system(model))
+    instantiate_network_model!(network_model, get_system(model))
     return
 end
 

@@ -4,39 +4,45 @@ include("includes.jl")
 import Aqua
 Aqua.test_undefined_exports(PowerSimulations)
 Aqua.test_ambiguities(PowerSimulations)
-#Aqua.test_stale_deps(PowerSimulations)
+Aqua.test_stale_deps(PowerSimulations)
 #Aqua.test_persistent_tasks(PowerSimulations)
 Aqua.test_unbound_args(PowerSimulations)
 
 const LOG_FILE = "power-simulations-test.log"
 
 const DISABLED_TEST_FILES = [
-    # "test_basic_model_structs.jl"
-    # "test_device_branch_constructors.jl"
-    # "test_device_hvdc.jl"
-    # "test_device_lcc.jl"
-    # "test_device_load_constructors.jl"
-    # "test_device_renewable_generation_constructors.jl"
-    # "test_device_thermal_generation_constructors.jl"
-    # "test_formulation_combinations.jl"
-    # "test_ic_reconciliation.jl"
-    # "test_initialization_problem.jl"
-    # "test_model_decision.jl"
-    # "test_model_emulation.jl"
-    # "test_network_constructors.jl"
-    # "test_print.jl"
-    # "test_problem_template.jl"
+    # "test_basic_model_structs.jl",
+    # "test_device_branch_constructors.jl",
+    # "test_device_hvdc.jl",
+    # "test_device_lcc.jl",
+    # "test_device_load_constructors.jl",
+    # "test_device_renewable_generation_constructors.jl",
+    # "test_device_thermal_generation_constructors.jl",
+    "test_device_source_constructors.jl",
+    # "test_formulation_combinations.jl",
+    "test_market_bid_cost.jl",
+    # "test_ic_reconciliation.jl",
+    # "test_initialization_problem.jl",
+    # "test_model_decision.jl",
+    # "test_model_emulation.jl",
+    # "test_network_constructors.jl",
+    # "test_security_constrained_models.jl",
+    # "test_print.jl",
+    # "test_problem_template.jl",
     "test_power_flow_in_the_loop.jl",
     # "test_recorder_events.jl"
-    # "test_services_constructor.jl"
+    # "test_services_constructor.jl",
+    "test_security_constrained_models.jl",
+    "test_static_injection_security_constrained_models.jl",
     # "test_simulation_build.jl"
     # "test_simulation_execute.jl"
     # "test_simulation_models.jl"
-    # "test_simulation_partitions.jl"
-    # "test_simulation_results.jl"
+    "test_simulation_partitions.jl",
+    "test_simulation_results.jl", # TODO: Hydro This test is broken due to changes in HydroEer
     # "test_simulation_results_export.jl"
     # "test_simulation_sequence.jl"
     # "test_simulation_store.jl"
+    # "test_events.jl",
     # "test_utils.jl"
 ]
 

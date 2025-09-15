@@ -1,5 +1,8 @@
+abstract type PostContingencyConstraintType <: ConstraintType end
+
 struct AbsoluteValueConstraint <: ConstraintType end
 """
+
 Struct to create the constraint for starting up ThermalMultiStart units.
 For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations) for ThermalMultiStartUnitCommitment.
 
@@ -46,6 +49,19 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint to balance active power.
+For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
+
+The specified constraint is generally formulated as:
+
+```math
+\\sum_{g \\in \\mathcal{G}_c} p_{g,t} &= \\sum_{g \\in \\mathcal{G}} \\Delta p_{g, c, t} &\\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1, \\dots, T\\}
+```
+"""
+struct PostContingencyGenerationBalanceConstraint <: PostContingencyConstraintType end
+
 """
 Struct to create the duration constraint for commitment formulations, i.e. min-up and min-down.
 
@@ -225,32 +241,36 @@ r_{d,t} \\le \\text{RequirementTimeSeriesParameter}_{t} \\cdot \\text{PF}\\quad 
 """
 struct ParticipationFractionConstraint <: ConstraintType end
 """
-Struct to create the PieceWiseLinearCostConstraint associated with a specified variable.
+Struct to create the PiecewiseLinearCostConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
-struct PieceWiseLinearCostConstraint <: ConstraintType end
+struct PiecewiseLinearCostConstraint <: ConstraintType end
+
+abstract type AbstractPiecewiseLinearBlockOfferConstraint <: ConstraintType end
 
 """
-Struct to create the PieceWiseLinearBlockOfferConstraint associated with a specified variable.
-
-See [Piecewise linear cost functions](@ref pwl_cost) for more information.
-"""
-struct PieceWiseLinearBlockOfferConstraint <: ConstraintType end
-
-"""
-Struct to create the PieceWiseLinearBlockDecrementalOfferConstraint associated with a specified variable.
+Struct to create the PiecewiseLinearBlockIncrementalOfferConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
-struct PieceWiseLinearBlockDecrementalOfferConstraint <: ConstraintType end
+struct PiecewiseLinearBlockIncrementalOfferConstraint <:
+       AbstractPiecewiseLinearBlockOfferConstraint end
 
 """
-Struct to create the PieceWiseLinearUpperBoundConstraint associated with a specified variable.
+Struct to create the PiecewiseLinearBlockDecrementalOfferConstraint associated with a specified variable.
 
 See [Piecewise linear cost functions](@ref pwl_cost) for more information.
 """
-struct PieceWiseLinearUpperBoundConstraint <: ConstraintType end
+struct PiecewiseLinearBlockDecrementalOfferConstraint <:
+       AbstractPiecewiseLinearBlockOfferConstraint end
+
+"""
+Struct to create the PiecewiseLinearUpperBoundConstraint associated with a specified variable.
+
+See [Piecewise linear cost functions](@ref pwl_cost) for more information.
+"""
+struct PiecewiseLinearUpperBoundConstraint <: ConstraintType end
 
 """
 Struct to create the RampConstraint associated with a specified thermal device or reserve service.
@@ -268,6 +288,7 @@ r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D
 ```
 """
 struct RampConstraint <: ConstraintType end
+struct PostContingencyRampConstraint <: PostContingencyConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 """
@@ -285,6 +306,7 @@ The specified constraint is formulated as:
 ```
 """
 struct RateLimitConstraint <: ConstraintType end
+struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
 struct RateLimitConstraintFromTo <: ConstraintType end
 struct RateLimitConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
@@ -459,6 +481,9 @@ in its most basic formulation is of the form:
 P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
 ```
 """
+
+abstract type PostContingencyVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 """
 Struct to create the constraint to limit active power output expressions.
@@ -484,6 +509,35 @@ P^\\text{min} \\le p_t \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\
 ```
 """
 struct ActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+
+"""
+Struct to create the constraint to limit post-contingency active power expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct PostContingencyActivePowerVariableLimitsConstraint <:
+       PostContingencyVariableLimitsConstraint end
+
+"""
+Struct to create the constraint to limit post-contingency active power reserve deploymentexpressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+\\Delta rsv_{r, c, t}  \\le rsv_{r, c, t}, \\quad \\forall r \\in \\mathcal{R} \\ \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint <:
+       PostContingencyVariableLimitsConstraint end
+
 """
 Struct to create the constraint to limit reactive power expressions.
 For more information check [Device Formulations](@ref formulation_intro).

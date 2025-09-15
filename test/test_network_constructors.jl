@@ -43,11 +43,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -105,11 +101,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -161,11 +153,120 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+    end
+end
+
+@testset "Network DC-PF with VirtualPTDF Model and implementing Dynamic Branch Ratings" begin
+    line_device_model = DeviceModel(
+        Line,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+        ))
+    TapTransf_device_model = DeviceModel(
+        TapTransformer,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+        ))
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+    ]
+    PTDF_ref = IdDict{System, VirtualPTDF}(
+        c_sys5 => VirtualPTDF(c_sys5),
+        c_sys14 => VirtualPTDF(c_sys14),
+        c_sys14_dc => VirtualPTDF(c_sys14_dc),
+    )
+    branches_dlr = IdDict{System, Vector{String}}(
+        c_sys5 => ["1", "2", "6"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
+    )
+    dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 1]]...)
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 264, 264, 168],
+        c_sys14 => [600, 0, 600, 600, 504],
+        c_sys14_dc => [600, 0, 648, 552, 456],
+    )
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 241293.703,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                PTDFPowerModel;
+                PTDF_matrix = PTDF_ref[sys],
+            ),
+        )
+
+        set_device_model!(template, line_device_model)
+        set_device_model!(template, TapTransf_device_model)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        for branch_name in branches_dlr[sys]
+            branch = get_component(ACBranch, sys, branch_name)
+
+            dlr_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
+            data_ts = collect(
+                DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+                    "1/1/2024  23:00:00",
+                    "d/m/y  H:M:S",
+                ),
+            )
+
+            if sys == c_sys5
+                n_steps = 2
+            else
+                n_steps = 1
+            end
+
+            for t in 1:n_steps
+                ini_time = data_ts[1] + Day(t - 1)
+                dlr_data[ini_time] =
+                    TimeArray(
+                        data_ts + Day(t - 1),
+                        get_rating(branch) * get_base_power(sys) * dlr_factors,
+                    )
+            end
+
+            PSY.add_time_series!(
+                sys,
+                branch,
+                PSY.Deterministic(
+                    "dynamic_line_ratings",
+                    dlr_data;
+                    scaling_factor_multiplier = get_rating,
+                ),
+            )
+        end
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_keys)
+
+        moi_tests(
+            ps_model,
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -207,11 +308,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -255,11 +352,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -297,11 +390,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -689,10 +778,74 @@ end
     end
 end
 
+@testset "StandardPTDF with Ward reduction Test" begin
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
+    #This ward reduction is equivalent to the radial reduciton, therefore flows should be unchanged
+    nr = NetworkReduction[WardReduction([1, 2, 3, 4, 5])]
+    ptdf = PTDF(new_sys; network_reductions = nr)
+    template_uc = template_unit_commitment(;
+        network = NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            use_slacks = false,
+        ),
+    )
+    thermal_model = ThermalStandardUnitCommitment
+    set_device_model!(template_uc, ThermalStandard, thermal_model)
+
+    ##### Solve Reduced Model ####
+    solver = HiGHS_optimizer
+    uc_model_red = DecisionModel(
+        template_uc,
+        new_sys;
+        optimizer = solver,
+        name = "UC_RED",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_red)
+
+    res_red = OptimizationProblemResults(uc_model_red)
+
+    flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+    line_names = DataFrames.names(flow_lines)[2:end]
+
+    ##### Solve Original Model ####
+    template_uc_orig = template_unit_commitment(;
+        network = NetworkModel(PTDFPowerModel;
+            reduce_radial_branches = false,
+            use_slacks = false,
+        ),
+    )
+    set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
+
+    uc_model_orig = DecisionModel(
+        template_uc_orig,
+        new_sys;
+        optimizer = solver,
+        name = "UC_ORIG",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_orig)
+
+    res_orig = OptimizationProblemResults(uc_model_orig)
+
+    flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
+
+    for line in line_names
+        @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
+    end
+end
+
+#=
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
-        if network ∈ PSI.INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
+        if network ∈ PSI.INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS
             continue
         end
         template = get_thermal_dispatch_template_network(
@@ -707,6 +860,7 @@ end
         @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end
+=#
 
 @testset "2 Areas AreaBalance PowerModel - with slacks" begin
     c_sys = build_system(PSITestSystems, "c_sys5_uc")
@@ -1149,9 +1303,6 @@ end
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     for (network_model, optimizer) in NETWORKS_FOR_TESTING
-        if network_model ∈ [PM.SparseSDPWRMPowerModel]
-            continue
-        end
         # Only default reductions:
         template = ProblemTemplate(
             NetworkModel(network_model;

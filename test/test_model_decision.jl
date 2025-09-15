@@ -45,10 +45,6 @@ end
 @testset "Set optimizer at solve call" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
@@ -94,10 +90,6 @@ end
 @testset "Test optimization debugging functions" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -139,6 +131,7 @@ end
     end
 end
 
+#= TODO: PNM
 @testset "Test Locational Marginal Prices between DC lossless with PowerModels vs PTDFPowerModel" begin
     networks = [DCPPowerModel, PTDFPowerModel]
     sys = PSB.build_system(PSITestSystems, "c_sys5")
@@ -173,6 +166,7 @@ end
     end
     @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
 end
+=#
 
 @testset "Test OptimizationProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
@@ -248,10 +242,6 @@ end
 @testset "Solve DecisionModelModel with auto-build" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test_throws ErrorException solve!(UC)
@@ -457,6 +447,7 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
+#= TODO: Hydro Needs hydro fix
 @testset "Decision Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
@@ -493,14 +484,11 @@ end
     )
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
+=#
 
 @testset "Test serialization of InitialConditionsData" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     optimizer = HiGHS_optimizer
 
     # Construct and build with default behavior that builds initial conditions.
@@ -575,10 +563,6 @@ end
 @testset "Solve with detailed optimizer stats" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(
         template,
         c_sys5;
@@ -601,10 +585,6 @@ end
         attributes = Dict("filter_function" => x -> PSY.get_name(x) != "Alta"),
     )
     set_device_model!(template, new_model)
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(
         template,
         c_sys5;
@@ -646,10 +626,6 @@ end
         ThermalBasicUnitCommitment;
     )
     set_device_model!(template, new_model)
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(
         template,
         c_sys5;

@@ -75,12 +75,12 @@ Error: Constraints participating in conflict basis (IIS)
 │ │               ("317_Hybrid", 26) │
 │ └──────────────────────────────────┘
 │ ┌─────────────────────────────────────────────┐
-│ │ PieceWiseLinearCostConstraint__HybridSystem │
+│ │ PiecewiseLinearCostConstraint__HybridSystem │
 │ ├─────────────────────────────────────────────┤
 │ │                          ("317_Hybrid", 26) │
 │ └─────────────────────────────────────────────┘
 │ ┌────────────────────────────────────────────────┐
-│ │ PieceWiseLinearCostConstraint__ThermalStandard │
+│ │ PiecewiseLinearCostConstraint__ThermalStandard │
 │ ├────────────────────────────────────────────────┤
 │ │                            ("202_STEAM_3", 26) │
 │ │                            ("101_STEAM_3", 26) │

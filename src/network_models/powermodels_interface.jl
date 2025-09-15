@@ -7,11 +7,12 @@
 # Model Definitions
 
 const UNSUPPORTED_POWERMODELS =
-    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
-
-const INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS = [
-    PM.SparseSDPWRMPowerModel,
-]
+    [
+        PM.SOCBFPowerModel,
+        PM.SOCBFConicPowerModel,
+        PM.IVRPowerModel,
+        PM.SparseSDPWRMPowerModel,
+    ]
 
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
@@ -464,43 +465,33 @@ function add_pm_variable_refs!(
     time_steps::UnitRange{Int},
 )
     all_branch_maps_by_type = model.network_reduction.all_branch_maps_by_type
-    for d_type in Set(device_types)
-        for (pm_v, ps_v) in pm_variable_map[d_class]
-            if pm_v in pm_variable_types
-                for direction in fieldnames(typeof(ps_v))
-                    var_type = getfield(ps_v, direction)
-                    var_type === nothing && continue
-                    branch_names =
-                        get_branch_name_variable_axis(all_branch_maps_by_type, d_type)
-                    var_container = add_variable_container!(
-                        container,
-                        var_type,
-                        d_type,
-                        branch_names,
-                        time_steps,
-                    )
-                    for t in time_steps
-                        for map in [
-                            "direct_branch_map",
-                            "series_branch_map",
-                            "parallel_branch_map",
-                        ]
-                            network_reduction_map = all_branch_maps_by_type[map]
-                            !haskey(network_reduction_map, d_type) && continue
-                            for (arc_tuple, reduction_entry) in
-                                network_reduction_map[d_type]
-                                pm_d = pm_map[arc_tuple]
-                                var =
-                                    PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
-                                _add_variable_to_container!(
-                                    var_container,
-                                    var,
-                                    reduction_entry,
-                                    d_type,
-                                    t,
-                                )
-                            end
-                        end
+    for d_type in device_types, (pm_v, ps_v) in pm_variable_map[d_class]
+        if pm_v in pm_variable_types
+            for direction in fieldnames(typeof(ps_v))
+                var_type = getfield(ps_v, direction)
+                var_type === nothing && continue
+                branch_names =
+                    get_branch_name_variable_axis(all_branch_maps_by_type, d_type)
+                var_container = add_variable_container!(
+                    container,
+                    var_type,
+                    d_type,
+                    branch_names,
+                    time_steps,
+                )
+                for t in time_steps, map in NETWORK_REDUCTION_MAPS
+                    network_reduction_map = all_branch_maps_by_type[map]
+                    !haskey(network_reduction_map, d_type) && continue
+                    for (arc_tuple, reduction_entry) in network_reduction_map[d_type]
+                        pm_d = pm_map[arc_tuple]
+                        var = PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
+                        _add_variable_to_container!(
+                            var_container,
+                            var,
+                            reduction_entry,
+                            d_type,
+                            t,
+                        )
                     end
                 end
             end

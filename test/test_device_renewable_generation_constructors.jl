@@ -19,7 +19,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 144, 0, 192, 72, 0, false)
+    moi_tests(model, 144, 0, 168, 72, 0, false, 24)
 end
 
 @testset "Renewable DCPLossLess Constantpower_factor" begin
@@ -43,7 +43,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_re;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 144, 0, 120, 0, 72, false)
+    moi_tests(model, 144, 0, 96, 0, 72, false, 24)
 end
 
 @testset "Renewable DCPLossLess FixedOutput" begin

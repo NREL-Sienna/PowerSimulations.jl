@@ -1,8 +1,5 @@
 test_path = mktempdir()
-
 const TIME1 = DateTime("2024-01-01T00:00:00")
-const TIME2 = TIME1 + Hour(1)
-const TIME3 = TIME1 + Day(1)
 
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [
@@ -41,7 +38,7 @@ const TIME3 = TIME1 + Day(1)
     end
 end
 
-#TODO: This test
+#TODO: ThermalGen
 #=
 @testset "Test Thermal Generation Cost Functions Fuel Cost time series" begin
     test_cases = [
@@ -71,50 +68,6 @@ end
     end
 end
 =#
-
-#TODO: timeseries market_bid_cost
-@testset "Test Thermal Generation MarketBidCost models" begin
-    test_cases = [
-        ("Base case", "fixed_market_bid_cost", 20532.76, 30.0, 30.0),
-        ("Greater initial input, no load", "fixed_market_bid_cost", 20532.76, 31.0, 31.0),
-        ("Greater initial input only", "fixed_market_bid_cost", 20532.76, 30.0, 31.0),
-    ]
-    for (name, sys_name, cost_reference, my_no_load, my_initial_input) in test_cases
-        @testset "$name" begin
-            sys = build_system(PSITestSystems, "c_$(sys_name)")
-            unit1 = get_component(ThermalStandard, sys, "Test Unit1")
-            old_fd = get_function_data(
-                get_value_curve(get_incremental_offer_curves(get_operation_cost(unit1))),
-            )
-            new_vc = PiecewiseIncrementalCurve(old_fd, my_initial_input, my_no_load)
-            set_incremental_offer_curves!(get_operation_cost(unit1), CostCurve(new_vc))
-            set_no_load_cost!(get_operation_cost(unit1), my_no_load)
-            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
-            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
-            set_device_model!(template, PowerLoad, StaticPowerLoad)
-            model = DecisionModel(
-                template,
-                sys;
-                name = "UC_$(sys_name)",
-                optimizer = HiGHS_optimizer,
-                system_to_file = false,
-                optimizer_solve_log_print = true,
-            )
-            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
-            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-            results = OptimizationProblemResults(model)
-            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
-            var_unit_cost = sum(expr[!, "Test Unit1"])
-            unit_cost_due_to_initial =
-                sum(.~iszero.(expr[!, "Test Unit1"]) .* my_initial_input)
-            @test isapprox(
-                var_unit_cost,
-                cost_reference + unit_cost_due_to_initial;
-                atol = 1,
-            )
-        end
-    end
-end
 
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
@@ -191,7 +144,7 @@ end
     psi_aux_variable_test(model, aux_variables_keys)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 648, 240, 120, true)
+    moi_tests(model, 600, 0, 624, 240, 120, true, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -203,7 +156,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 408, 240, 120, true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
@@ -255,7 +208,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 336, 96, 144, true)
+    moi_tests(model, 432, 0, 312, 96, 144, true, 24)
 end
 
 ################################### Basic Unit Commitment tests ############################
@@ -306,7 +259,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 408, 240, 120, true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -318,7 +271,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 408, 240, 120, true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
@@ -356,7 +309,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 192, 96, 144, true)
+    moi_tests(model, 432, 0, 168, 96, 144, true, 24)
 end
 
 ################################### Basic Dispatch tests ###################################
@@ -384,7 +337,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 288, 240, 0, false)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -394,7 +347,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 288, 240, 0, false)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 # This Formulation is currently broken
@@ -419,7 +372,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 288, 0, 144, 96, 96, false)
+    moi_tests(model, 288, 0, 120, 96, 96, false, 24)
 end
 
 ################################### No Minimum Dispatch tests ##############################
@@ -460,7 +413,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 288, 240, 0, false)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -472,7 +425,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 288, 240, 0, false)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
@@ -548,7 +501,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 336, 288, 0, false)
+    moi_tests(model, 240, 0, 312, 288, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -558,7 +511,7 @@ end
     psi_checkobjfun_test(model, GQEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 288, 240, 0, false)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 @testset "ThermalMultiStart with ThermalStandardDispatch With DC - PF" begin
@@ -592,7 +545,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 288, 0, 192, 144, 96, false)
+    moi_tests(model, 288, 0, 168, 144, 96, false, 24)
 end
 
 ################################### ThermalMultiStart Testing ##############################
@@ -623,16 +576,15 @@ end
         ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    no_less_than = Dict(true => 334, false => 282)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 528, 0, no_less_than[false], 108, 192, true)
+    moi_tests(model, 528, 0, 282, 108, 192, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 528, 0, no_less_than[false], 108, 192, true)
+    moi_tests(model, 528, 0, 306, 108, 192, true)
 end
 
 @testset "Thermal MultiStart with MultiStart UC and AC - PF" begin
@@ -669,7 +621,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 576, 0, 378, 156, 192, true)
+    moi_tests(model, 576, 0, 354, 156, 192, true, 24)
 end
 
 ################################ Thermal Compact UC Testing ################################
@@ -706,7 +658,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 648, 240, 120, true)
+    moi_tests(model, 600, 0, 624, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
@@ -718,7 +670,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 336, 96, 144, true)
+    moi_tests(model, 432, 0, 312, 96, 144, true, 24)
 end
 
 ################################ Thermal Basic Compact UC Testing ################################
@@ -755,7 +707,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 600, 0, 408, 240, 120, true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
@@ -767,7 +719,7 @@ end
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 432, 0, 192, 96, 144, true)
+    moi_tests(model, 432, 0, 168, 96, 144, true, 24)
 end
 
 ############################ Thermal Compact Dispatch Testing ##############################
@@ -785,7 +737,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 269, 0, 168, 144, 0, false)
+    moi_tests(model, 293, 0, 168, 144, 0, false)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
@@ -802,7 +754,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 314, 0, 120, 96, 96, false)
+    moi_tests(model, 338, 0, 120, 96, 96, false)
 end
 
 @testset "Thermal Standard with Compact Dispatch and AC - PF" begin
@@ -819,7 +771,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 389, 0, 312, 264, 0, false)
+    moi_tests(model, 413, 0, 288, 264, 0, false, 24)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
@@ -836,7 +788,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 362, 0, 192, 144, 96, false)
+    moi_tests(model, 386, 0, 168, 144, 96, false), 24
 end
 
 ############################# Model validation tests #######################################
@@ -898,7 +850,13 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     systems = [c_sys5, c_sys5_dc]
-    networks = [DCPPowerModel, NFAPowerModel, PTDFPowerModel, CopperPlatePowerModel]
+    networks = [
+        PTDFPowerModel,
+        DCPPowerModel,
+        NFAPowerModel,
+        PTDFPowerModel,
+        CopperPlatePowerModel,
+    ]
     commitment_models = [ThermalStandardUnitCommitment, ThermalCompactUnitCommitment]
 
     for net in networks, sys in systems, model in commitment_models
@@ -940,7 +898,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 389, 0, 288, 144, 0, false)
+    moi_tests(model, 413, 0, 288, 144, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalBasicDispatch" begin
@@ -970,7 +928,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 384, 0, 264, 120, 0, false)
+    moi_tests(model, 408, 0, 264, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalCompactDispatch" begin
@@ -1000,7 +958,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 389, 0, 288, 144, 0, false)
+    moi_tests(model, 413, 0, 288, 144, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalStandardDispatch" begin
@@ -1030,7 +988,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 362, 0, 168, 96, 96, false)
+    moi_tests(model, 386, 0, 168, 96, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalBasicDispatch" begin
@@ -1060,7 +1018,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 360, 0, 120, 48, 96, false)
+    moi_tests(model, 384, 0, 120, 48, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalCompactDispatch" begin
@@ -1090,7 +1048,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 362, 0, 168, 96, 96, false)
+    moi_tests(model, 386, 0, 168, 96, 96, false)
 end
 
 @testset "Test Must Run ThermalGen" begin
@@ -1316,343 +1274,6 @@ end
         PSI.get_invariant_terms(PSI.get_objective_expression(container)),
         JuMP.QuadExpr,
     )
-end
-
-"Helper function to make a time series from an initial value (can be a single number or tuple) and some increments"
-function _make_deterministic_ts(name, ini_val, res_incr, interval_incr, horizon, interval)
-    series1 = [ini_val .+ i * res_incr for i in 0:(horizon - 1)]
-    series2 = [ini_val .+ i * res_incr .+ interval_incr for i in 1:horizon]
-    startup_data = OrderedDict(
-        TIME1 => series1,
-        TIME1 + interval => series2,
-    )
-    return Deterministic(; name = name, data = startup_data, resolution = Hour(1))
-end
-
-"""
-Add startup and shutdown time series to a certain component. `with_increments`: whether the
-elements should be increasing over time or constant. Version A: designed for
-`c_fixed_market_bid_cost`.
-"""
-function add_startup_shutdown_ts_a!(sys::System, with_increments::Bool)
-    res_incr = with_increments ? 0.05 : 0.0
-    interval_incr = with_increments ? 0.01 : 0.0
-    unit1 = get_component(ThermalStandard, sys, "Test Unit1")
-    @assert get_operation_cost(unit1) isa MarketBidCost
-    startup_ts_1 = _make_deterministic_ts(
-        "start_up",
-        (1.0, 1.5, 2.0),
-        res_incr,
-        interval_incr,
-        5,
-        Hour(1),
-    )
-    set_start_up!(sys, unit1, startup_ts_1)
-    shutdown_ts_1 =
-        _make_deterministic_ts("shut_down", 0.5, res_incr, interval_incr, 5, Hour(1))
-    set_shut_down!(sys, unit1, shutdown_ts_1)
-    return startup_ts_1, shutdown_ts_1
-end
-
-"""
-Add startup and shutdown time series to a certain component. `with_increments`: whether the
-elements should be increasing over time or constant. Version B: designed for `c_sys5_pglib`.
-"""
-function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
-    res_incr = with_increments ? 0.05 : 0.0
-    interval_incr = with_increments ? 0.01 : 0.0
-    unit1 = get_component(ThermalMultiStart, sys, "115_STEAM_1")
-    @assert get_operation_cost(unit1) isa MarketBidCost
-    startup_ts_1 = _make_deterministic_ts(
-        "start_up",
-        (300.0, 450.0, 500.0),
-        res_incr,
-        interval_incr,
-        24,
-        Day(1),
-    )
-    set_start_up!(sys, unit1, startup_ts_1)
-    shutdown_ts_1 =
-        _make_deterministic_ts("shut_down", 100.0, res_incr, interval_incr, 24, Day(1))
-    set_shut_down!(sys, unit1, shutdown_ts_1)
-    return startup_ts_1, shutdown_ts_1
-end
-
-_read_one_value(res_uc, var_name, gentype, unit_name) =
-    combine(
-        vcat(values(read_variable(res_uc, var_name, gentype))...), unit_name .=> sum)[
-        1,
-        1,
-    ]
-
-"Run a simple simulation with the system and return information useful for testing time-varying startup and shutdown functionality"
-function run_startup_shutdown_sim(sys::System; multistart::Bool = false)
-    gentype = multistart ? ThermalMultiStart : ThermalStandard
-    genname = multistart ? "115_STEAM_1" : "Test Unit1"
-
-    template = ProblemTemplate(
-        NetworkModel(
-            CopperPlatePowerModel;
-            duals = [CopperPlateBalanceConstraint],
-        ),
-    )
-    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
-    multistart &&
-        set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    set_device_model!(template, PowerLoad, StaticPowerLoad)
-
-    model = DecisionModel(
-        template,
-        sys;
-        name = "UC",
-        store_variable_names = true,
-        optimizer = HiGHS_optimizer,
-        system_to_file = false,
-    )
-
-    # Test solving the model outside of a Simulation
-    model_ = deepcopy(model)
-    @test build!(model_; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
-    @test solve!(model_) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-
-    models = SimulationModels(;
-        decision_models = [
-            model,
-        ],
-    )
-    sequence = SimulationSequence(;
-        models = models,
-        feedforwards = Dict(
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-
-    sim = Simulation(;
-        name = "compact_sim",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        initial_time = TIME1,
-        simulation_folder = mktempdir(),
-    )
-
-    build!(sim; serialize = false)
-    execute!(sim; enable_progress_bar = true)
-
-    sim_res = SimulationResults(sim)
-    res_uc = get_decision_problem_results(sim_res, "UC")
-
-    # Test correctness of written shutdown cost parameters
-    # TODO test startup too once we are able to write those
-    sh_uc = read_parameter(res_uc, PSI.ShutdownCostParameter, gentype)
-    for (step_dt, step_df) in pairs(sh_uc)
-        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
-            comp = get_component(gentype, sys, gen_name)
-            fc_comp =
-                get_shut_down(comp, PSY.get_operation_cost(comp); start_time = step_dt)
-            @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
-            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
-        end
-    end
-
-    switches = if multistart
-        (
-            _read_one_value(res_uc, PSI.HotStartVariable, gentype, genname),
-            _read_one_value(res_uc, PSI.WarmStartVariable, gentype, genname),
-            _read_one_value(res_uc, PSI.ColdStartVariable, gentype, genname),
-            _read_one_value(res_uc, PSI.StopVariable, gentype, genname),
-        )
-    else
-        (
-            _read_one_value(res_uc, PSI.StartVariable, gentype, genname),
-            _read_one_value(res_uc, PSI.StopVariable, gentype, genname),
-        )
-    end
-    return model_, model, res_uc, switches
-end
-
-"Read the relevant startup variables: no multistart case"
-_read_start_vars(::Val{false}, res_uc::PSI.SimulationProblemResults) =
-    read_variable(res_uc, PSI.StartVariable, ThermalStandard)
-
-"Read the relevant startup variables: yes multistart case"
-function _read_start_vars(::Val{true}, res_uc::PSI.SimulationProblemResults)
-    hot_vars = read_variable(res_uc, PSI.HotStartVariable, ThermalMultiStart)
-    warm_vars = read_variable(res_uc, PSI.WarmStartVariable, ThermalMultiStart)
-    cold_vars = read_variable(res_uc, PSI.ColdStartVariable, ThermalMultiStart)
-
-    @assert all(keys(hot_vars) .== keys(warm_vars))
-    @assert all(keys(hot_vars) .== keys(cold_vars))
-    @assert all(
-        all(hot_vars[k][!, :DateTime] .== warm_vars[k][!, :DateTime]) for
-        k in keys(hot_vars)
-    )
-    @assert all(
-        all(hot_vars[k][!, :DateTime] .== cold_vars[k][!, :DateTime]) for
-        k in keys(hot_vars)
-    )
-    # Make a dictionary of combined dataframes where the entries are (hot, warm, cold)
-    combined_vars = Dict(
-        k => DataFrame(
-            "DateTime" => hot_vars[k][!, :DateTime],
-            [
-                gen_name => [
-                    (hot, warm, cold) for (hot, warm, cold) in zip(
-                        hot_vars[k][!, gen_name],
-                        warm_vars[k][!, gen_name],
-                        cold_vars[k][!, gen_name],
-                    )
-                ] for gen_name in names(select(hot_vars[k], Not(:DateTime)))
-            ]...,
-        ) for k in keys(hot_vars)
-    )
-    return combined_vars
-end
-
-"""
-Read startup and shutdown cost time series from a `System` and multiply by relevant start
-and stop variables in the `SimulationProblemResults` to determine the cost that should have
-been incurred by time-varying `MarketBidCost` startup and shutdown costs. Must run
-separately for multistart vs. not.
-"""
-function cost_due_to_time_varying_startup_shutdown(
-    sys::System,
-    res_uc::PSI.SimulationProblemResults;
-    multistart = false,
-)
-    gentype = multistart ? ThermalMultiStart : ThermalStandard
-    start_vars = _read_start_vars(Val(multistart), res_uc)
-    stop_vars = read_variable(res_uc, PSI.StopVariable, gentype)
-    result = SortedDict{DateTime, DataFrame}()
-    @assert all(keys(start_vars) .== keys(stop_vars))
-    for step_dt in keys(start_vars)
-        start_df = start_vars[step_dt]
-        stop_df = stop_vars[step_dt]
-        @assert names(start_df) == names(stop_df)
-        @assert start_df[!, :DateTime] == stop_df[!, :DateTime]
-        result[step_dt] = DataFrame(:DateTime => start_df[!, :DateTime])
-        for gen_name in names(DataFrames.select(start_df, Not(:DateTime)))
-            comp = get_component(gentype, sys, gen_name)
-            cost = PSY.get_operation_cost(comp)
-            (cost isa PSY.MarketBidCost) || continue
-            PSI.is_time_variant(get_start_up(cost)) || continue
-            @assert PSI.is_time_variant(get_shut_down(cost))
-            startup_ts = get_start_up(comp, cost; start_time = step_dt)
-            shutdown_ts = get_shut_down(comp, cost; start_time = step_dt)
-
-            @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(startup_ts))
-            @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(shutdown_ts))
-            startup_values = if multistart
-                TimeSeries.values(startup_ts)
-            else
-                getproperty.(TimeSeries.values(startup_ts), :hot)
-            end
-            result[step_dt][!, gen_name] =
-                LinearAlgebra.dot.(start_df[!, gen_name], startup_values) .+
-                stop_df[!, gen_name] .* TimeSeries.values(shutdown_ts)
-        end
-    end
-    return result
-end
-
-"Modifies `c_sys5_pglib` to facilitate the exercise of the multi-start capability in a test simulation"
-function modify_sys_for_multistart!(sys::System, load_mult, therm_mult)
-    for load in get_components(PowerLoad, sys)
-        set_max_active_power!(load, get_max_active_power(load) * load_mult)
-    end
-    for therm in get_components(ThermalStandard, sys)
-        op_cost = get_operation_cost(therm)
-        prop = get_proportional_term(get_value_curve(get_variable(op_cost)))
-        set_variable!(op_cost, CostCurve(LinearCurve(prop * therm_mult)))
-    end
-end
-
-function create_multistart_sys(with_increments::Bool, load_mult, therm_mult)
-    c_sys5_pglib = Logging.with_logger(Logging.NullLogger()) do
-        PSB.build_system(PSITestSystems, "c_sys5_pglib")
-    end
-    modify_sys_for_multistart!(c_sys5_pglib, load_mult, therm_mult)
-    sel = make_selector(ThermalMultiStart, "115_STEAM_1")
-    ms_comp = get_component(sel, c_sys5_pglib)
-    old_op = get_operation_cost(ms_comp)
-    inc = CostCurve(IncrementalCurve(get_value_curve(get_variable(old_op))))
-    set_operation_cost!(
-        ms_comp,
-        MarketBidCost(;
-            no_load_cost = get_fixed(old_op),
-            start_up = get_start_up(old_op),
-            shut_down = get_shut_down(old_op),
-            incremental_offer_curves = inc,
-        ),
-    )
-    add_startup_shutdown_ts_b!(c_sys5_pglib, with_increments)
-    return c_sys5_pglib
-end
-
-"""
-The methodology here is: run a simulation where the startup and shutdown time series have
-constant values through time, then run a nearly identical simulation where the values vary
-very slightly through time, not enough to affect the decisions but enough to affect the
-objective value, then compare the size of the objective value change to an expectation
-computed manually.
-"""
-function run_obj_fun_test(sys1, sys2; multistart::Bool = false)
-    model1_, model1, res_uc1, switches1 =
-        run_startup_shutdown_sim(sys1; multistart = multistart)
-    model2_, model2, res_uc2, switches2 =
-        run_startup_shutdown_sim(sys2; multistart = multistart)
-
-    ground_truth_1 =
-        cost_due_to_time_varying_startup_shutdown(sys1, res_uc1; multistart = multistart)
-    ground_truth_2 =
-        cost_due_to_time_varying_startup_shutdown(sys2, res_uc2; multistart = multistart)
-    @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
-
-    # Sum across components, time periods to get one value per step
-    total1 = [
-        only(sum(eachcol(combine(val, Not(:DateTime) .=> sum)))) for
-        val in values(ground_truth_1)
-    ]
-    total2 = [
-        only(sum(eachcol(combine(val, Not(:DateTime) .=> sum)))) for
-        val in values(ground_truth_2)
-    ]
-    ground_truth = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
-
-    obj1 = PSI.read_optimizer_stats(res_uc1)[!, "objective_value"]
-    obj2 = PSI.read_optimizer_stats(res_uc2)[!, "objective_value"]
-    obj_diff = obj2 .- obj1
-
-    @test all(isapprox.(obj_diff, ground_truth; atol = 0.0001))
-    return switches1, switches2
-end
-
-@testset "MarketBidCost with time series startup and shutdown, ThermalStandard" begin
-    sys1 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
-    add_startup_shutdown_ts_a!(sys1, false)
-    sys2 = PSB.build_system(PSITestSystems, "c_fixed_market_bid_cost")
-    add_startup_shutdown_ts_a!(sys2, true)
-    (switches1, switches2) = run_obj_fun_test(sys1, sys2)
-    @test all(isapprox.(switches1, (2.0, 3.0)))
-    @test all(isapprox.(switches1, switches2))
-end
-
-@testset "MarketBidCost with time series startup and shutdown, ThermalMultiStart" begin
-    # Scenario 1: hot and warm starts
-    c_sys5_pglib1 = create_multistart_sys(false, 1.0, 7.5)
-    c_sys5_pglib2 = create_multistart_sys(true, 1.0, 7.5)
-    (switches1, switches2) =
-        run_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
-    @test all(isapprox.(switches1, (2.0, 1.0, 0.0, 3.0)))
-    @test all(isapprox.(switches1, switches2))
-
-    # Scenario 2: hot and cold starts
-    c_sys5_pglib1 = create_multistart_sys(false, 1.05, 7.5)
-    c_sys5_pglib2 = create_multistart_sys(true, 1.05, 7.5)
-    (switches1, switches2) =
-        run_obj_fun_test(c_sys5_pglib1, c_sys5_pglib2; multistart = true)
-    @test all(isapprox.(switches1, (1.0, 0.0, 1.0, 1.0)))
-    @test all(isapprox.(switches1, switches2))
 end
 
 @testset "Thermal UC With Slack on Ramps" begin

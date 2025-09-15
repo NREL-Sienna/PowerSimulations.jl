@@ -24,6 +24,10 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLo
 get_multiplier_value(::ReactivePowerTimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_reactive_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = PSY.get_max_active_power(d)
 
+# To avoid ambiguity with default_interface_methods.jl:
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.ElectricLoad, ::StaticPowerLoad) = 1.0
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = 1.0
+
 
 ########################Objective Function##################################################
 proportional_cost(cost::Nothing, ::OnVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
@@ -79,7 +83,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
     jump_model = get_jump_model(container)
@@ -145,7 +149,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps;
         meta = "binary",
     )

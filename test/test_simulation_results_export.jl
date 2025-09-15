@@ -36,8 +36,8 @@ function _make_params()
         Dict(
             "ActivePowerVariable__ThermalStandard" =>
                 PSI.VariableKey(ActivePowerVariable, ThermalStandard),
-            "EnergyVariable__HydroEnergyReservoir" =>
-                PSI.VariableKey(EnergyVariable, HydroEnergyReservoir),
+            #"EnergyVariable__HydroEnergyReservoir" =>
+            #    PSI.VariableKey(EnergyVariable, HydroEnergyReservoir),
             "OnVariable__ThermalStandard" =>
                 PSI.VariableKey(OnVariable, ThermalStandard),
         ),

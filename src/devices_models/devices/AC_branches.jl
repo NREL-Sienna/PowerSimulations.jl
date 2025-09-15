@@ -27,6 +27,7 @@ get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACBranch, ::AbstractB
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACBranch, ::StaticBranch) = 1.0/PSY.get_base_power(d)
 
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation} = DeviceModel(T, U)
@@ -77,11 +78,7 @@ function add_variables!(
     devices::IS.FlattenIteratorWrapper{U},
     formulation::AbstractBranchFormulation,
 ) where {
-    T <: Union{
-        FlowActivePowerVariable,
-        FlowActivePowerSlackUpperBound,
-        FlowActivePowerSlackLowerBound,
-    },
+    T <: AbstractACActivePowerFlow,
     U <: PSY.ACBranch}
     time_steps = get_time_steps(container)
     network_reduction_data = network_model.network_reduction
@@ -320,7 +317,7 @@ function _add_dense_pwl_loss_variables!(
         container,
         T(),
         D,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         segments,
         time_steps,
     )
@@ -498,6 +495,19 @@ function get_min_max_limits(
     ::Type{PhaseAngleControl},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (min = -π / 2, max = π / 2)
+end
+
+function _get_device_dynamic_branch_rating_time_series(
+    param_container::ParameterContainer,
+    device::PSY.ACBranch,
+    ts_name::String,
+    ts_type::DataType,
+)
+    device_dlr_params = []
+    if PSY.has_time_series(device, ts_type, ts_name)
+        device_dlr_params = get_parameter_column_refs(param_container, get_name(device))
+    end
+    return device_dlr_params
 end
 
 """

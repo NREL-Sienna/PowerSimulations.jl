@@ -134,10 +134,12 @@ end
 
 @testset "Test SemiContinuous Feedforward with Active and Reactive Power variables" begin
     template_uc = get_template_basic_uc_simulation()
+    set_device_model!(template_uc, Line, StaticBranchUnbounded)
     set_network_model!(template_uc, NetworkModel(DCPPowerModel; use_slacks = true))
     # network slacks added because of data issues
     template_ed =
         get_template_nomin_ed_simulation(NetworkModel(ACPPowerModel; use_slacks = true))
+    set_device_model!(template_ed, Line, StaticBranchUnbounded)
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     models = SimulationModels(;

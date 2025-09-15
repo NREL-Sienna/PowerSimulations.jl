@@ -342,7 +342,7 @@ function update_decision_state!(
                 n_remaining_indices = length(subsequent_outage_occurence_data)
             end
             for ix in outage_index:(state_data_index + n_remaining_indices)
-                # Set the offset parameter to equal the negative of the timeseries parameter 
+                # Set the offset parameter to equal the negative of the timeseries parameter
                 state_data.values[name, ix] =
                     -1.0 * activepower_data.values[name, ix]
             end
@@ -471,7 +471,7 @@ function update_decision_state!(
             mttr_hr = _get_time_to_recover(event, event_model, simulation_time)
             mttr_state_resolution = mttr_hr * resolution_ratio
             if !isinteger(mttr_state_resolution)
-                @warn "MTTR is not an integer after conversion from hours to $state_resolution resolution 
+                @warn "MTTR is not an integer after conversion from hours to $state_resolution resolution
                     MTTR will be rounded up to $(Int(ceil(mttr_state_resolution))) steps of $state_resolution"
                 mttr_state_resolution = ceil(mttr_state_resolution)
             end
@@ -598,6 +598,53 @@ function update_decision_state!(
         if event_occurrence_data.values[name, event_occurence_index] == 1.0
             state_data.values[name, (state_data_index + 1):end] .= 0.0
         end
+    end
+    return
+end
+
+function update_decision_state!(
+    state::SimulationState,
+    key::OptimizationContainerKey,
+    store_data::DenseAxisArray{Float64, 3},
+    simulation_time::Dates.DateTime,
+    model_params::ModelStoreParams,
+)
+    state_data = get_decision_state_data(state, key)
+    column_names = get_column_names(key, state_data)[2]
+    outages = get_column_names(key, state_data)[1]
+
+    model_resolution = get_resolution(model_params)
+    state_resolution = get_data_resolution(state_data)
+    resolution_ratio = model_resolution ÷ state_resolution
+    state_timestamps = state_data.timestamps
+    @assert_op resolution_ratio >= 1
+
+    if simulation_time > get_end_of_step_timestamp(state_data)
+        state_data_index = 1
+        state_data.timestamps[:] .=
+            range(
+                simulation_time;
+                step = state_resolution,
+                length = get_num_rows(state_data),
+            )
+    else
+        state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    end
+
+    offset = resolution_ratio - 1
+    result_time_index = axes(store_data)[3]
+    set_update_timestamp!(state_data, simulation_time)
+    for t in result_time_index
+        state_range = state_data_index:(state_data_index + offset)
+        for name in column_names, i in state_range
+            #loop pelo -outages, names t
+            for outage in outages
+                # TODO: We could also interpolate here
+                state_data.values[outage, name, i] = store_data[outage, name, t]
+            end
+        end
+        set_last_recorded_row!(state_data, state_range[end])
+        state_data_index += resolution_ratio
     end
     return
 end

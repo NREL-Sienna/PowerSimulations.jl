@@ -5,7 +5,7 @@ function apply_simulation_events!(simulation::Simulation)
     for event_model in events
         extend_event_parameters!(simulation, event_model)
         if check_condition(simulation_state, event_model)
-            # TODO: for other event categories we need to do something else
+            # TODO: Events for other event categories we need to do something else
             em_model = get_emulation_model(get_models(simulation))
             sys = get_system(em_model)
             model_name = get_name(em_model)
@@ -136,7 +136,6 @@ function apply_affect!(
                 PSY.ThermalGen,
                 PSY.RenewableGen,
                 PSY.ElectricLoad,
-                PSY.EnergyReservoirStorage,
             }
         )     #TODO - extend to Hydro once outages are made in HydroPowerSimulations
             continue

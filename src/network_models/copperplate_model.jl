@@ -6,7 +6,7 @@ function add_constraints!(
 ) where {
     T <: CopperPlateBalanceConstraint,
     U <: PSY.System,
-    V <: Union{CopperPlatePowerModel, PTDFPowerModel},
+    V <: Union{CopperPlatePowerModel, PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
     time_steps = get_time_steps(container)
     expressions = get_expression(container, ActivePowerBalance(), U)
@@ -24,10 +24,11 @@ function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     sys::U,
-    network_model::NetworkModel{AreaPTDFPowerModel},
+    network_model::NetworkModel{V},
 ) where {
     T <: CopperPlateBalanceConstraint,
     U <: PSY.System,
+    V <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
 }
     time_steps = get_time_steps(container)
     expressions = get_expression(container, ActivePowerBalance(), PSY.Area)

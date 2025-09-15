@@ -38,14 +38,15 @@ function _make_5_bus_with_import_export()
     add_component!(sys, source)
     return sys
 end
+
 @testset "ImportExportSource Source With CopperPlate" begin
     constraint_keys = [
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PieceWiseLinearBlockOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PieceWiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
     sys = _make_5_bus_with_import_export()
@@ -64,8 +65,8 @@ end
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PieceWiseLinearBlockOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PieceWiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
     sys = _make_5_bus_with_import_export()
@@ -83,8 +84,8 @@ end
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PieceWiseLinearBlockOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PieceWiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
     sys = _make_5_bus_with_import_export()
@@ -159,8 +160,8 @@ end
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PieceWiseLinearBlockOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PieceWiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
         PSI.ConstraintKey(ActivePowerOutVariableTimeSeriesLimitsConstraint, Source, "ub"),
         PSI.ConstraintKey(ActivePowerInVariableTimeSeriesLimitsConstraint, Source, "ub"),
     ]

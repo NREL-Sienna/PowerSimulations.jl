@@ -21,7 +21,7 @@ Available Network Models are:
   - Linear approximations: `DCPPowerModel`, `NFAPowerModel`.
   - Quadratic approximations: `DCPLLPowerModel`, `LPACCPowerModel`
   - Quadratic relaxations: `SOCWRPowerModel`, `SOCWRConicPowerModel`, `SOCBFPowerModel`, `SOCBFConicPowerModel`, `QCRMPowerModel`, `QCLSPowerModel`.
-  - SDP relaxations: `SDPWRMPowerModel`, `SparseSDPWRMPowerModel`.
+  - SDP relaxations: `SDPWRMPowerModel`.
 
 All of these formulations are described in the [PowerModels.jl documentation](https://lanl-ansi.github.io/PowerModels.jl/stable/formulation-details/) and will not be described here.
 

@@ -40,6 +40,7 @@ function build_simulation(
     index::Union{Nothing, Integer} = nothing;
     initial_time = nothing,
     num_steps = nothing,
+    HiGHS_optimizer = HiGHS_optimizer,
 )
     if isnothing(partitions) && isnothing(num_steps)
         error("num_steps must be set if partitions is nothing")
@@ -107,8 +108,6 @@ function build_simulation(
         force = true,
     )
 
-    HiGHSoptimizer = optimizer_with_attributes(HiGHS.Optimizer)
-
     template_uc = template_unit_commitment()
     set_network_model!(
         template_uc,
@@ -128,14 +127,14 @@ function build_simulation(
             DecisionModel(
                 template_uc,
                 c_sys5_pjm_da;
-                optimizer = HiGHSoptimizer,
+                optimizer = HiGHS_optimizer,
                 name = "UC",
                 initialize_model = false,
             ),
             DecisionModel(
                 template_ed,
                 c_sys5_pjm_rt;
-                optimizer = HiGHSoptimizer,
+                optimizer = HiGHS_optimizer,
                 name = "ED",
                 calculate_conflict = false,
             ),
