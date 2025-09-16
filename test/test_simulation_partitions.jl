@@ -53,6 +53,7 @@ end
         regular_name;
         initial_time = DateTime("2024-01-02T00:00:00"),
         num_steps = 1,
+        HiGHS_optimizer = HiGHS_optimizer,
     )
     @test execute_simulation(regular_sim) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 

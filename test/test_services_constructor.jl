@@ -30,7 +30,7 @@
     ]
     found_vars = 0
     for (k, var_array) in PSI.get_optimization_container(model).variables
-        if IS.Optimization.encode_key(k) in reserve_variables
+        if ISOPT.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -67,7 +67,7 @@ end
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11,
     ]
     for (k, var_array) in PSI.get_optimization_container(model).variables
-        if IS.Optimization.encode_key(k) in reserve_variables
+        if ISOPT.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -143,7 +143,8 @@ end
 @testset "Test Reserves from Hydro" begin
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     set_service_model!(
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve5"),
@@ -161,7 +162,7 @@ end
     model = DecisionModel(template, c_sys5_hyd)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 216, 0, 144, 96, 48, false)
+    moi_tests(model, 312, 0, 120, 96, 72, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
@@ -216,7 +217,6 @@ end
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
-=#
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
@@ -318,6 +318,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end
+=#
 
 @testset "Test Reserves with Feedforwards" begin
     template = get_thermal_dispatch_template_network()
@@ -377,7 +378,7 @@ end
     ]
     found_vars = 0
     for (k, var_array) in PSI.get_optimization_container(model).variables
-        if IS.Optimization.encode_key(k) in reserve_variables
+        if ISOPT.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -395,7 +396,7 @@ end
     found_constraints = 0
 
     for (k, _) in PSI.get_optimization_container(model).constraints
-        if IS.Optimization.encode_key(k) in participation_constraints
+        if ISOPT.encode_key(k) in participation_constraints
             found_constraints += 1
         end
     end

@@ -52,7 +52,7 @@ function add_event_constraints!(
             device_model,
             W,
         )
-        add_parameterized_upper_bound_range_constraints(
+        add_reactive_power_contingency_constraint(
             container,
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
@@ -124,12 +124,12 @@ function add_event_constraints!(
             container,
             ActivePowerOutageConstraint,
             lhs_type,
-            parameter_type,
+            AvailableStatusParameter,
             devices_with_attributes,
             device_model,
             W,
         )
-        add_parameterized_upper_bound_range_constraints(
+        add_reactive_power_contingency_constraint(
             container,
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
@@ -196,7 +196,7 @@ function add_event_constraints!(
             device_model,
             W,
         )
-        add_parameterized_upper_bound_range_constraints(
+        add_reactive_power_contingency_constraint(
             container,
             ReactivePowerOutageConstraint,
             ReactivePowerVariable,
@@ -207,4 +207,79 @@ function add_event_constraints!(
         )
     end
     return
+end
+
+function add_reactive_power_contingency_constraint(
+    container::OptimizationContainer,
+    ::Type{ReactivePowerOutageConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{AvailableStatusParameter},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    model::DeviceModel{V, W},
+    ::Type{X},
+) where {
+    V <: PSY.Component,
+    W <: AbstractDeviceFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    array_reactive = get_variable(container, ReactivePowerVariable(), V)
+    _add_reactive_power_contingency_constraint_impl!(
+        container,
+        ReactivePowerOutageConstraint,
+        array_reactive,
+        AvailableStatusParameter(),
+        devices,
+        model,
+    )
+    return
+end
+
+function _add_reactive_power_contingency_constraint_impl!(
+    container::OptimizationContainer,
+    ::Type{ReactivePowerOutageConstraint},
+    array_reactive,
+    param::AvailableStatusParameter,
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    model::DeviceModel{V, W},
+) where {
+    V <: PSY.Component,
+    W <: AbstractDeviceFormulation,
+}
+    time_steps = get_time_steps(container)
+    names = PSY.get_name.(devices)
+    constraint_container =
+        add_constraints_container!(
+            container,
+            ReactivePowerOutageConstraint(),
+            V,
+            names,
+            time_steps;
+            meta = "ub",
+        )
+
+    param_array = get_parameter_array(container, param, V)
+    param_multiplier =
+        get_parameter_multiplier_array(container, AvailableStatusParameter(), V)
+    jump_model = get_jump_model(container)
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        name = PSY.get_name(device)
+        ub = _get_reactive_power_upper_bound(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            (array_reactive[name, t])^2 <= (ub * param_array[name, t])
+        )
+    end
+    return
+end
+
+function _get_reactive_power_upper_bound(device::PSY.StaticInjection)
+    return maximum([
+        PSY.get_reactive_power_limits(device).max^2,
+        PSY.get_reactive_power_limits(device).min^2,
+    ])
+end
+
+function _get_reactive_power_upper_bound(device::PSY.ElectricLoad)
+    return PSY.get_max_reactive_power(device)^2
 end

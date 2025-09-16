@@ -1,7 +1,7 @@
 """
 Stores results data for one EmulationModel
 """
-mutable struct EmulationModelStore <: IS.Optimization.AbstractModelStore
+mutable struct EmulationModelStore <: ISOPT.AbstractModelStore
     data_container::DatasetContainer{InMemoryDataset}
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end

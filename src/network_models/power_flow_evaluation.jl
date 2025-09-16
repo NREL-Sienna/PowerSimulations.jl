@@ -224,9 +224,9 @@ _add_two_terminal_elements_map!(
         input_key_map::Dict{Symbol, Dict{OptimizationContainerKey, Dict{String, Int64}}}
     )
 
-Adds mappings for two-terminal elements (HVDC components) that connect the power flow results (from -> to, to -> from) 
+Adds mappings for two-terminal elements (HVDC components) that connect the power flow results (from -> to, to -> from)
 to be added to the mappings for all component types.
-The results for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of 
+The results for these elements are added as bus injections in the `PowerFlowData` as a simplified representation of
 these components.
 
 # Arguments
@@ -291,10 +291,10 @@ branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 # Same for bus aux vars
 function bus_aux_vars(data::PFS.ACPowerFlowData)
     vars = [PowerFlowVoltageAngle, PowerFlowVoltageMagnitude]
-    if get_calculate_loss_factors(data)
+    if PFS.get_calculate_loss_factors(data)
         push!(vars, PowerFlowLossFactors)
     end
-    if get_calculate_voltage_stability_factors(data)
+    if PFS.get_calculate_voltage_stability_factors(data)
         push!(vars, PowerFlowVoltageStabilityFactors)
     end
     return vars
@@ -305,14 +305,10 @@ bus_aux_vars(::PFS.PTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.vPTDFPowerFlowData) = DataType[]
 bus_aux_vars(::PFS.PSSEExporter) = DataType[]
 
-function _get_branch_component_tuples(pfd::PFS.PowerFlowData)
-    branch_types = PFS.get_branch_type(pfd)
-    return [(branch_types[val], key) for (key, val) in pairs(PFS.get_branch_lookup(pfd))]
-end
-
-_get_branch_component_tuples(pfd::PFS.SystemPowerFlowContainer) = [
+# TODO: Needs update for MultiTerminal HVDC
+_get_branch_component_tuples(sys::PSY.System) = [
     (typeof(c), get_name(c)) for
-    c in PSY.get_available_components(PSY.Branch, PFS.get_system(pfd))
+    c in PSY.get_available_components(PSY.ACBranch, sys)
 ]
 
 _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
@@ -321,7 +317,7 @@ _get_bus_component_tuples(pfd::PFS.PowerFlowData) =
 _get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
     [
         (typeof(c), PSY.get_number(c)) for
-        c in PSY.get_available_components(PSY.Bus, PFS.get_system(pfd))
+        c in PSY.get_available_components(PSY.ACBus, PFS.get_system(pfd))
     ]
 
 function add_power_flow_data!(
@@ -343,7 +339,7 @@ function add_power_flow_data!(
         my_branch_aux_vars = branch_aux_vars(pf_data)
         my_bus_aux_vars = bus_aux_vars(pf_data)
 
-        my_branch_components = _get_branch_component_tuples(pf_data)
+        my_branch_components = _get_branch_component_tuples(sys)
         for branch_aux_var in my_branch_aux_vars
             to_add_to = get!(
                 branch_aux_var_components,
@@ -594,43 +590,80 @@ _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
 _get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_magnitude(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
-    PFS.get_branch_reactivepower_flow_from_to(pf_data)
+    PFS.get_arc_reactivepower_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =
-    PFS.get_branch_reactivepower_flow_to_from(pf_data)
+    PFS.get_arc_reactivepower_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowData) =
-    PFS.get_branch_activepower_flow_from_to(pf_data)
+    PFS.get_arc_activepower_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
-    PFS.get_branch_activepower_flow_to_from(pf_data)
+    PFS.get_arc_activepower_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
     PFS.get_loss_factors(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageStabilityFactors}, pf_data::PFS.PowerFlowData) =
     PFS.get_voltage_stability_factors(pf_data)
 
-_get_pf_lookup(::Type{<:PSY.Bus}, pf_data::PFS.PowerFlowData) = PFS.get_bus_lookup(pf_data)
-_get_pf_lookup(::Type{<:PSY.Branch}, pf_data::PFS.PowerFlowData) =
-    PFS.get_branch_lookup(pf_data)
-
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{T, U},
-    system::PSY.System, pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData},
-) where {T <: PowerFlowAuxVariableType, U}
+    key::AuxVarKey{T, <:PSY.ACBus}, # TODO: does this work ok with DCBuses, too?
+    ::PSY.System,
+    pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData},
+) where {T <: PowerFlowAuxVariableType}
     @debug "Updating $key from PowerFlowData"
     pf_data = get_power_flow_data(pf_e_data)
     src = _get_pf_result(T, pf_data)
-    lookup = _get_pf_lookup(U, pf_data)
+    lookup = PFS.get_bus_lookup(pf_data)
     dest = get_aux_variable(container, key)
-    for component_id in axes(dest, 1)  # these are bus numbers or branch names
+    for component_id in axes(dest, 1)  # these are bus numbers
         dest[component_id, :] = src[lookup[component_id], :]
     end
     return
 end
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
-    key::AuxVarKey{T, <:Any} where {T <: PowerFlowAuxVariableType},
+    key::AuxVarKey{T, U},
+    ::PSY.System,
+    pf_e_data::PowerFlowEvaluationData{<:PFS.PowerFlowData},
+) where {T <: PowerFlowAuxVariableType, U <: PSY.Branch}
+    @debug "Updating $key from PowerFlowData"
+    pf_data = get_power_flow_data(pf_e_data)
+    src = _get_pf_result(T, pf_data)
+    dest = get_aux_variable(container, key)
+    nrd = PFS.get_network_reduction_data(pf_data)
+    arc_lookup = PFS.get_arc_lookup(pf_data)
+    # PERF: could pre-compute a Dict of branch type to arcs, then intersect the arcs
+    # for the type U with the keys of the branch maps.
+    for (arc, br) in nrd.direct_branch_map
+        if br isa U # always a concrete class, so same as: typeof(br) == U
+            name = PSY.get_name(br)
+            arc_ix = arc_lookup[arc]
+            dest[name, :] = src[arc_ix, :]
+        end
+    end
+    for (arc, parallel_brs) in nrd.parallel_branch_map # parallel_brs is Set{ACTransmission}
+        sample_line = first(parallel_brs)
+        impedance = PSY.get_r(sample_line) + im * PSY.get_x(sample_line)
+        n_branches = length(parallel_brs)
+        for br in parallel_brs
+            if br isa U
+                @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
+                                                     "can be used for parallel branches: got $T"
+                @assert PSY.get_r(br) + im * PSY.get_x(br) == impedance "All parallel " *
+                                                                        "branches must have the same impedance"
+                name = PSY.get_name(br)
+                arc_ix = arc_lookup[arc]
+                dest[name, :] = 1 / n_branches .* src[arc_ix, :]
+            end
+        end
+    end
+    return
+end
+
+function calculate_aux_variable_value!(container::OptimizationContainer,
+    key::AuxVarKey{<:PowerFlowAuxVariableType, <:Any},
     system::PSY.System)
+    # Skip the aux vars that the current power flow isn't meant to update
     pf_e_data = latest_solved_power_flow_evaluation_data(container)
     pf_data = get_power_flow_data(pf_e_data)
-    # Skip the aux vars that the current power flow isn't meant to update
     (key in branch_aux_vars(pf_data) || key in bus_aux_vars(pf_data)) && return
     calculate_aux_variable_value!(container, key, system, pf_e_data)
+    return
 end

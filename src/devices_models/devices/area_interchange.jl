@@ -81,7 +81,7 @@ function add_constraints!(
     ::NetworkModel{T},
 ) where {T <: PM.AbstractActivePowerModel}
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
 
     con_ub = add_constraints_container!(
         container,
@@ -171,7 +171,7 @@ function add_constraints!(
     @assert !isempty(inter_area_branch_map)
 
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
 
     con_ub = add_constraints_container!(
         container,

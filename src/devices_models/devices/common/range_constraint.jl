@@ -95,7 +95,7 @@ function _add_lower_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
 
     con_lb =
         add_constraints_container!(container, T(), V, device_names, time_steps; meta = "lb")
@@ -117,7 +117,7 @@ function _add_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
 
     con_ub =
         add_constraints_container!(container, T(), V, device_names, time_steps; meta = "ub")
@@ -245,7 +245,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     ::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_lb = add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -270,7 +270,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     ::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.ThermalGen, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_lb = add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -304,7 +304,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.ThermalGen, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_ub = add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -338,7 +338,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_ub = add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -422,7 +422,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     IS.@assert_op length(binary_variables) == 1
@@ -456,7 +456,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     IS.@assert_op length(binary_variables) == 1
@@ -563,7 +563,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     X <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     con_lb = add_constraints_container!(container, T(), W, names, time_steps; meta = "lb")
@@ -595,7 +595,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     X <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     con_ub = add_constraints_container!(container, T(), W, names, time_steps; meta = "ub")

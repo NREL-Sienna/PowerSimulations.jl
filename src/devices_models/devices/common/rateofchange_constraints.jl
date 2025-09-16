@@ -95,16 +95,30 @@ function add_linear_ramp_constraints!(
     expr_dn = get_expression(container, ActivePowerRangeExpressionLB(), V)
     expr_up = get_expression(container, ActivePowerRangeExpressionUB(), V)
 
-    set_name = [PSY.get_name(r) for r in ramp_devices]
+    device_name_set = PSY.get_name.(ramp_devices)
     con_up =
-        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            device_name_set,
+            time_steps;
+            meta = "up",
+        )
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            device_name_set,
+            time_steps;
+            meta = "dn",
+        )
 
     for ic in initial_conditions_power
         name = get_component_name(ic)
         # This is to filter out devices that dont need a ramping constraint
-        name ∉ set_name && continue
+        name ∉ device_name_set && continue
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
@@ -151,16 +165,30 @@ function add_linear_ramp_constraints!(
     IC = _get_initial_condition_type(T, V, W)
     initial_conditions_power = get_initial_condition(container, IC(), V)
 
-    set_name = [PSY.get_name(r) for r in ramp_devices]
+    device_name_set = PSY.get_name.(ramp_devices)
     con_up =
-        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            device_name_set,
+            time_steps;
+            meta = "up",
+        )
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            device_name_set,
+            time_steps;
+            meta = "dn",
+        )
 
     for ic in initial_conditions_power
         name = get_component_name(ic)
         # This is to filter out devices that dont need a ramping constraint
-        name ∉ set_name && continue
+        name ∉ device_name_set && continue
         ramp_limits = PSY.get_ramp_limits(get_component(ic))
         ic_power = get_value(ic)
         @debug "add rate_of_change_constraint" name ic_power
@@ -237,17 +265,31 @@ function add_semicontinuous_ramp_constraints!(
     expr_dn = get_expression(container, ActivePowerRangeExpressionLB(), V)
     expr_up = get_expression(container, ActivePowerRangeExpressionUB(), V)
 
-    set_name = [PSY.get_name(r) for r in ramp_devices]
+    device_name_set = PSY.get_name.(ramp_devices)
     con_up =
-        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            device_name_set,
+            time_steps;
+            meta = "up",
+        )
     con_down =
-        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            device_name_set,
+            time_steps;
+            meta = "dn",
+        )
 
     for ic in initial_conditions_power
         component = get_component(ic)
         name = get_component_name(ic)
         # This is to filter out devices that dont need a ramping constraint
-        name ∉ set_name && continue
+        name ∉ device_name_set && continue
         device = get_component(ic)
         ramp_limits = PSY.get_ramp_limits(device)
         power_limits = PSY.get_active_power_limits(device)

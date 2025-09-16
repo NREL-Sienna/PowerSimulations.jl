@@ -26,7 +26,7 @@ function add_variable!(
         container,
         var_type,
         D,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
     return

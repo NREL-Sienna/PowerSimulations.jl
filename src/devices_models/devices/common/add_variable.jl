@@ -11,6 +11,8 @@ function add_variables!(
     return
 end
 
+#=
+# TODO: Contingency. Is this needed?
 """
 Add Contingency-related variables to the OptimizationContainer for any component.
 """
@@ -24,6 +26,7 @@ function add_variables!(
     add_variable!(container, T(), devices, devices_outages, formulation)
     return
 end
+=#
 
 """
 Add variables to the OptimizationContainer for a service.
@@ -90,7 +93,7 @@ function add_variable!(
         container,
         variable_type,
         D,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
 

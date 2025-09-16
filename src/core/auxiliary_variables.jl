@@ -29,24 +29,29 @@ Auxiliary Variable for the bus voltage magnitued results from power flow evaluat
 struct PowerFlowVoltageMagnitude <: PowerFlowAuxVariableType end
 
 """
+Auxiliary Variable for line power flow results from power flow evaluation
+"""
+abstract type LineFlowAuxVariableType <: PowerFlowAuxVariableType end
+
+"""
 Auxiliary Variable for the line reactive flow in the from -> to direction from power flow evaluation
 """
-struct PowerFlowLineReactivePowerFromTo <: PowerFlowAuxVariableType end
+struct PowerFlowLineReactivePowerFromTo <: LineFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line reactive flow in the to -> from direction from power flow evaluation
 """
-struct PowerFlowLineReactivePowerToFrom <: PowerFlowAuxVariableType end
+struct PowerFlowLineReactivePowerToFrom <: LineFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line active flow in the from -> to direction from power flow evaluation
 """
-struct PowerFlowLineActivePowerFromTo <: PowerFlowAuxVariableType end
+struct PowerFlowLineActivePowerFromTo <: LineFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line active flow in the to -> from direction from power flow evaluation
 """
-struct PowerFlowLineActivePowerToFrom <: PowerFlowAuxVariableType end
+struct PowerFlowLineActivePowerToFrom <: LineFlowAuxVariableType end
 
 """
 Auxiliary Variable for the loss factors from AC power flow evaluation that are calculated using the Jacobian matrix

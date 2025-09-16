@@ -83,7 +83,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
     jump_model = get_jump_model(container)
@@ -149,7 +149,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps;
         meta = "binary",
     )

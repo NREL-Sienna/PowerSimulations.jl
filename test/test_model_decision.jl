@@ -45,10 +45,6 @@ end
 @testset "Set optimizer at solve call" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
@@ -95,39 +91,35 @@ end
     @test isfile(joinpath(variables_dir, "ActivePowerVariable__ThermalStandard.csv"))
 end
 
-# @testset "Test optimization debugging functions" begin
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     template = get_thermal_standard_uc_template()
-#     set_service_model!(
-#         template,
-#         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-#     )
-#     model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
-#     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
-#           PSI.ModelBuildStatus.BUILT
-#     container = PSI.get_optimization_container(model)
-#     MOIU.attach_optimizer(container.JuMPmodel)
-#     constraint_indices = get_all_constraint_index(model)
-#     for (key, index, moi_index) in constraint_indices
-#         val1 = get_constraint_index(model, moi_index)
-#         val2 = container.constraints[key].data[index]
-#         @test val1 == val2
-#     end
-#     @test get_constraint_index(model, length(constraint_indices) + 1) === nothing
+@testset "Test optimization debugging functions" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    container = PSI.get_optimization_container(model)
+    MOIU.attach_optimizer(container.JuMPmodel)
+    constraint_indices = get_all_constraint_index(model)
+    for (key, index, moi_index) in constraint_indices
+        val1 = get_constraint_index(model, moi_index)
+        val2 = container.constraints[key].data[index]
+        @test val1 == val2
+    end
+    @test get_constraint_index(model, length(constraint_indices) + 1) === nothing
 
-#     var_keys = PSI.get_all_variable_keys(model)
-#     var_index = get_all_variable_index(model)
-#     for (ix, (key, index, moi_index)) in enumerate(var_keys)
-#         index_tuple = var_index[ix]
-#         @test index_tuple[1] == IS.Optimization.encode_key(key)
-#         @test index_tuple[2] == index
-#         @test index_tuple[3] == moi_index
-#         val1 = get_variable_index(model, moi_index)
-#         val2 = container.variables[key].data[index]
-#         @test val1 == val2
-#     end
-#     @test get_variable_index(model, length(var_index) + 1) === nothing
-# end
+    var_keys = PSI.get_all_variable_keys(model)
+    var_index = get_all_variable_index(model)
+    for (ix, (key, index, moi_index)) in enumerate(var_keys)
+        index_tuple = var_index[ix]
+        @test index_tuple[1] == ISOPT.encode_key(key)
+        @test index_tuple[2] == index
+        @test index_tuple[3] == moi_index
+        val1 = get_variable_index(model, moi_index)
+        val2 = container.variables[key].data[index]
+        @test val1 == val2
+    end
+    @test get_variable_index(model, length(var_index) + 1) === nothing
+end
 
 # @testset "Decision Model Solve with Slacks" begin
 #     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
@@ -143,40 +135,42 @@ end
 #     end
 # end
 
-# @testset "Test Locational Marginal Prices between DC lossless with PowerModels vs PTDFPowerModel" begin
-#     networks = [DCPPowerModel, PTDFPowerModel]
-#     sys = PSB.build_system(PSITestSystems, "c_sys5")
-#     ptdf = PTDF(sys)
-#     # These are the duals of interest for the test
-#     dual_constraint = [[NodalBalanceActiveConstraint], [CopperPlateBalanceConstraint]]
-#     LMPs = []
-#     for (ix, network) in enumerate(networks)
-#         template = get_template_dispatch_with_network(
-#             NetworkModel(network; PTDF_matrix = ptdf, duals = dual_constraint[ix]),
-#         )
-#         if network == PTDFPowerModel
-#             set_device_model!(
-#                 template,
-#                 DeviceModel(PSY.Line, PSI.StaticBranch; duals = [NetworkFlowConstraint]),
-#             )
-#         end
-#         model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-#         @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
-#               PSI.ModelBuildStatus.BUILT
-#         @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-#         res = OptimizationProblemResults(model)
+#= TODO: PNM
+@testset "Test Locational Marginal Prices between DC lossless with PowerModels vs PTDFPowerModel" begin
+    networks = [DCPPowerModel, PTDFPowerModel]
+    sys = PSB.build_system(PSITestSystems, "c_sys5")
+    ptdf = PTDF(sys)
+    # These are the duals of interest for the test
+    dual_constraint = [[NodalBalanceActiveConstraint], [CopperPlateBalanceConstraint]]
+    LMPs = []
+    for (ix, network) in enumerate(networks)
+        template = get_template_dispatch_with_network(
+            NetworkModel(network; PTDF_matrix = ptdf, duals = dual_constraint[ix]),
+        )
+        if network == PTDFPowerModel
+            set_device_model!(
+                template,
+                DeviceModel(PSY.Line, PSI.StaticBranch; duals = [NetworkFlowConstraint]),
+            )
+        end
+        model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+        res = OptimizationProblemResults(model)
 
-#         # These tests require results to be working
-#         if network == PTDFPowerModel
-#             push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
-#         else
-#             duals = read_dual(res, NodalBalanceActiveConstraint, ACBus)
-#             duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
-#             push!(LMPs, duals[!, sort(propertynames(duals))])
-#         end
-#     end
-#     @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
-# end
+        # These tests require results to be working
+        if network == PTDFPowerModel
+            push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
+        else
+            duals = read_dual(res, NodalBalanceActiveConstraint, ACBus)
+            duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
+            push!(LMPs, duals[!, sort(propertynames(duals))])
+        end
+    end
+    @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
+end
+=#
 
 # @testset "Test OptimizationProblemResults interfaces" begin
 #     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
@@ -222,24 +216,24 @@ end
 #         @test all(vals .== param_vals[!, name])
 #     end
 
-#     res = OptimizationProblemResults(model)
-#     @test length(list_variable_names(res)) == 1
-#     @test length(list_dual_names(res)) == 1
-#     @test get_model_base_power(res) == 100.0
-#     @test isa(get_objective_value(res), Float64)
-#     @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
-#     @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
-#     @test isa(IS.Optimization.get_total_cost(res), Float64)
-#     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
-#     @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
-#     @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
-#     @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
-#     @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
-#     @test isa(PSI.get_resolution(res), Dates.TimePeriod)
-#     @test isa(PSI.get_forecast_horizon(res), Int64)
-#     @test isa(get_realized_timestamps(res), StepRange{DateTime})
-#     @test isa(IS.Optimization.get_source_data(res), PSY.System)
-#     @test length(get_timestamps(res)) == 24
+    res = OptimizationProblemResults(model)
+    @test length(list_variable_names(res)) == 1
+    @test length(list_dual_names(res)) == 1
+    @test get_model_base_power(res) == 100.0
+    @test isa(get_objective_value(res), Float64)
+    @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
+    @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
+    @test isa(ISOPT.get_total_cost(res), Float64)
+    @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
+    @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
+    @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
+    @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
+    @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
+    @test isa(PSI.get_resolution(res), Dates.TimePeriod)
+    @test isa(PSI.get_forecast_horizon(res), Int64)
+    @test isa(get_realized_timestamps(res), StepRange{DateTime})
+    @test isa(ISOPT.get_source_data(res), PSY.System)
+    @test length(get_timestamps(res)) == 24
 
 #     PSY.set_available!(first(get_components(ThermalStandard, get_system(res))), false)
 #     @test collect(get_components(ThermalStandard, res)) ==
@@ -249,19 +243,15 @@ end
 #           collect(get_available_groups(sel, get_system(res)))
 # end
 
-# @testset "Solve DecisionModelModel with auto-build" begin
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     template = get_thermal_standard_uc_template()
-#     set_service_model!(
-#         template,
-#         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-#     )
-#     UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
-#     output_dir = mktempdir(; cleanup = true)
-#     @test_throws ErrorException solve!(UC)
-#     @test solve!(UC; optimizer = HiGHS_optimizer, output_dir = output_dir) ==
-#           PSI.RunStatus.SUCCESSFULLY_FINALIZED
-# end
+@testset "Solve DecisionModelModel with auto-build" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    output_dir = mktempdir(; cleanup = true)
+    @test_throws ErrorException solve!(UC)
+    @test solve!(UC; optimizer = HiGHS_optimizer, output_dir = output_dir) ==
+          PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end
 
 # @testset "Test Serialization, deserialization and write optimizer problem" begin
 #     fpath = mktempdir(; cleanup = true)
@@ -343,16 +333,16 @@ end
 #     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
 #     @test var1_a == var2
 
-#     # Serialize to a new directory with the exported function.
-#     results_path = joinpath(path, "results")
-#     serialize_results(results1, results_path)
-#     @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
-#     results3 = OptimizationProblemResults(results_path)
-#     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
-#     @test var1_a == var3
-#     @test get_system(results3) === nothing
-#     set_system!(results3, get_system(results1))
-#     @test get_system(results3) isa PSY.System
+    # Serialize to a new directory with the exported function.
+    results_path = joinpath(path, "results")
+    serialize_results(results1, results_path)
+    @test isfile(joinpath(results_path, ISOPT._PROBLEM_RESULTS_FILENAME))
+    results3 = OptimizationProblemResults(results_path)
+    var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
+    @test var1_a == var3
+    @test get_system(results3) === nothing
+    set_system!(results3, get_system(results1))
+    @test get_system(results3) isa PSY.System
 
 #     exp_file =
 #         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
@@ -360,8 +350,8 @@ end
 #     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
 #     @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
 
-#     @test length(readdir(IS.Optimization.export_realized_results(results1))) === 7
-# end
+    @test length(readdir(ISOPT.export_realized_results(results1))) === 7
+end
 
 # @testset "Test Numerical Stability of Constraints" begin
 #     template = get_thermal_dispatch_template_network()
@@ -375,24 +365,24 @@ end
 #     bounds = PSI.get_constraint_numerical_bounds(model)
 #     _check_constraint_bounds(bounds, valid_bounds)
 
-#     model_bounds = PSI.get_detailed_constraint_numerical_bounds(model)
-#     valid_model_bounds = Dict(
-#         :CopperPlateBalanceConstraint__System => (
-#             coefficient = (min = 1.0, max = 1.0),
-#             rhs = (min = 6.434489705000001, max = 9.930296584),
-#         ),
-#         :ActivePowerVariableLimitsConstraint__ThermalStandard__lb =>
-#             (coefficient = (min = 1.0, max = 1.0), rhs = (min = Inf, max = -Inf)),
-#         :ActivePowerVariableLimitsConstraint__ThermalStandard__ub =>
-#             (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 6.0)),
-#     )
-#     for (constraint_key, constraint_bounds) in model_bounds
-#         _check_constraint_bounds(
-#             constraint_bounds,
-#             valid_model_bounds[IS.Optimization.encode_key(constraint_key)],
-#         )
-#     end
-# end
+    model_bounds = PSI.get_detailed_constraint_numerical_bounds(model)
+    valid_model_bounds = Dict(
+        :CopperPlateBalanceConstraint__System => (
+            coefficient = (min = 1.0, max = 1.0),
+            rhs = (min = 6.434489705000001, max = 9.930296584),
+        ),
+        :ActivePowerVariableLimitsConstraint__ThermalStandard__lb =>
+            (coefficient = (min = 1.0, max = 1.0), rhs = (min = Inf, max = -Inf)),
+        :ActivePowerVariableLimitsConstraint__ThermalStandard__ub =>
+            (coefficient = (min = 1.0, max = 1.0), rhs = (min = 0.4, max = 6.0)),
+    )
+    for (constraint_key, constraint_bounds) in model_bounds
+        _check_constraint_bounds(
+            constraint_bounds,
+            valid_model_bounds[ISOPT.encode_key(constraint_key)],
+        )
+    end
+end
 
 # @testset "Test Numerical Stability of Variables" begin
 #     template = get_template_basic_uc_simulation()
@@ -405,20 +395,20 @@ end
 #     bounds = PSI.get_variable_numerical_bounds(model)
 #     _check_variable_bounds(bounds, valid_bounds)
 
-#     model_bounds = PSI.get_detailed_variable_numerical_bounds(model)
-#     valid_model_bounds = Dict(
-#         :StopVariable__ThermalStandard => (min = 0.0, max = 1.0),
-#         :StartVariable__ThermalStandard => (min = 0.0, max = 1.0),
-#         :ActivePowerVariable__ThermalStandard => (min = 0.4, max = 6.0),
-#         :OnVariable__ThermalStandard => (min = 0.0, max = 1.0),
-#     )
-#     for (variable_key, variable_bounds) in model_bounds
-#         _check_variable_bounds(
-#             variable_bounds,
-#             valid_model_bounds[IS.Optimization.encode_key(variable_key)],
-#         )
-#     end
-# end
+    model_bounds = PSI.get_detailed_variable_numerical_bounds(model)
+    valid_model_bounds = Dict(
+        :StopVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :StartVariable__ThermalStandard => (min = 0.0, max = 1.0),
+        :ActivePowerVariable__ThermalStandard => (min = 0.4, max = 6.0),
+        :OnVariable__ThermalStandard => (min = 0.0, max = 1.0),
+    )
+    for (variable_key, variable_bounds) in model_bounds
+        _check_variable_bounds(
+            variable_bounds,
+            valid_model_bounds[ISOPT.encode_key(variable_key)],
+        )
+    end
+end
 
 # @testset "Decision Model initial_conditions test for ThermalGen" begin
 #     ######## Test with ThermalStandardUnitCommitment ########
@@ -461,51 +451,49 @@ end
 #     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 # end
 
-# @testset "Decision Model initial_conditions test for Hydro" begin
-#     ######## Test with HydroDispatchRunOfRiver ########
-#     template = get_thermal_dispatch_template_network()
-#     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
-#     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
-#     set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
-#     model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
-#     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
-#           PSI.ModelBuildStatus.BUILT
-#     initial_conditions_data =
-#         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
-#     @test !PSI.has_initial_condition_value(
-#         initial_conditions_data,
-#         ActivePowerVariable(),
-#         HydroEnergyReservoir,
-#     )
-#     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+@testset "Decision Model initial_conditions test for Hydro" begin
+    ######## Test with HydroDispatchRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test !PSI.has_initial_condition_value(
+        initial_conditions_data,
+        ActivePowerVariable(),
+        HydroTurbine,
+    )
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-#     ######## Test with HydroCommitmentRunOfRiver ########
-#     template = get_thermal_dispatch_template_network()
-#     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
-#     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
-#     set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
-#     model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
+    ######## Test with HydroCommitmentRunOfRiver ########
+    template = get_thermal_dispatch_template_network()
+    c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
+    set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyCommitment)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
+    model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
-#     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
-#           PSI.ModelBuildStatus.BUILT
-#     initial_conditions_data =
-#         PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
-#     @test PSI.has_initial_condition_value(
-#         initial_conditions_data,
-#         OnVariable(),
-#         HydroEnergyReservoir,
-#     )
-#     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-# end
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    initial_conditions_data =
+        PSI.get_initial_conditions_data(PSI.get_optimization_container(model))
+    @test PSI.has_initial_condition_value(
+        initial_conditions_data,
+        OnVariable(),
+        HydroTurbine,
+    )
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end
 
-# @testset "Test serialization of InitialConditionsData" begin
-#     sys = PSB.build_system(PSITestSystems, "c_sys5")
-#     template = get_thermal_standard_uc_template()
-#     set_service_model!(
-#         template,
-#         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-#     )
-#     optimizer = HiGHS_optimizer
+@testset "Test serialization of InitialConditionsData" begin
+    sys = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    optimizer = HiGHS_optimizer
 
 #     # Construct and build with default behavior that builds initial conditions.
 #     model = DecisionModel(template, sys; optimizer = optimizer)
@@ -576,94 +564,82 @@ end
 #     PSI.ModelBuildStatus.FAILED
 # end
 
-# @testset "Solve with detailed optimizer stats" begin
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     template = get_thermal_standard_uc_template()
-#     set_service_model!(
-#         template,
-#         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-#     )
-#     UC = DecisionModel(
-#         template,
-#         c_sys5;
-#         optimizer = HiGHS_optimizer,
-#         detailed_optimizer_stats = true,
-#     )
-#     output_dir = mktempdir(; cleanup = true)
-#     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
-#     @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-#     # We only test this field because most free solvers don't support detailed stats
-#     @test !ismissing(get_optimizer_stats(UC).objective_bound)
-# end
+@testset "Solve with detailed optimizer stats" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    UC = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = HiGHS_optimizer,
+        detailed_optimizer_stats = true,
+    )
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
+    @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    # We only test this field because most free solvers don't support detailed stats
+    @test !ismissing(get_optimizer_stats(UC).objective_bound)
+end
 
-# @testset "Test filter function atttribute" begin
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     template = get_thermal_standard_uc_template()
-#     new_model = DeviceModel(
-#         ThermalStandard,
-#         ThermalBasicUnitCommitment;
-#         attributes = Dict("filter_function" => x -> PSY.get_name(x) != "Alta"),
-#     )
-#     set_device_model!(template, new_model)
-#     set_service_model!(
-#         template,
-#         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-#     )
-#     UC = DecisionModel(
-#         template,
-#         c_sys5;
-#         optimizer = HiGHS_optimizer,
-#         detailed_optimizer_stats = true,
-#     )
-#     output_dir = mktempdir(; cleanup = true)
-#     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
-#     @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-#     # We only test this field because most free solvers don't support detailed stats
-#     p_variable = PSI.get_variable(
-#         PSI.get_optimization_container(UC),
-#         ActivePowerVariable(),
-#         ThermalStandard,
-#     )
-#     @test "Alta" ∉ axes(p_variable, 1)
-# end
-#
-# @testset "Test for isolated buses" begin
-#     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-#     add_component!(c_sys5,
-#         ACBus(
-#             10,
-#             "node_none",
-#             true,
-#             "ISOLATED",
-#             0,
-#             1.0,
-#             (min = 0.9, max = 1.05),
-#             230,
-#             nothing,
-#             nothing,
-#         ),
-#     )
+@testset "Test filter function atttribute" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    template = get_thermal_standard_uc_template()
+    new_model = DeviceModel(
+        ThermalStandard,
+        ThermalBasicUnitCommitment;
+        attributes = Dict("filter_function" => x -> PSY.get_name(x) != "Alta"),
+    )
+    set_device_model!(template, new_model)
+    UC = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = HiGHS_optimizer,
+        detailed_optimizer_stats = true,
+    )
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
+    @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    # We only test this field because most free solvers don't support detailed stats
+    p_variable = PSI.get_variable(
+        PSI.get_optimization_container(UC),
+        ActivePowerVariable(),
+        ThermalStandard,
+    )
+    @test "Alta" ∉ axes(p_variable, 1)
+end
 
-#     template = get_thermal_standard_uc_template()
-#     new_model = DeviceModel(
-#         ThermalStandard,
-#         ThermalBasicUnitCommitment;
-#     )
-#     set_device_model!(template, new_model)
-#     set_service_model!(
-#         template,
-#         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-#     )
-#     UC = DecisionModel(
-#         template,
-#         c_sys5;
-#         optimizer = HiGHS_optimizer,
-#         detailed_optimizer_stats = true,
-#     )
-#     output_dir = mktempdir(; cleanup = true)
-#     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
-#     @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-# end
+@testset "Test for isolated buses" begin
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    add_component!(c_sys5,
+        ACBus(
+            10,
+            "node_none",
+            true,
+            "ISOLATED",
+            0,
+            1.0,
+            (min = 0.9, max = 1.05),
+            230,
+            nothing,
+            nothing,
+        ),
+    )
+
+    template = get_thermal_standard_uc_template()
+    new_model = DeviceModel(
+        ThermalStandard,
+        ThermalBasicUnitCommitment;
+    )
+    set_device_model!(template, new_model)
+    UC = DecisionModel(
+        template,
+        c_sys5;
+        optimizer = HiGHS_optimizer,
+        detailed_optimizer_stats = true,
+    )
+    output_dir = mktempdir(; cleanup = true)
+    @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
+    @test solve!(UC) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end
 
 # @testset "Test for single row result variables" begin
 #     template = get_thermal_dispatch_template_network()

@@ -35,6 +35,7 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PSB = PowerSystemCaseBuilder
 const PNM = PowerNetworkMatrices
+const ISOPT = InfrastructureSystems.Optimization
 
 const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
@@ -45,5 +46,6 @@ include("test_utils/model_checks.jl")
 include("test_utils/mock_operation_models.jl")
 include("test_utils/solver_definitions.jl")
 include("test_utils/operations_problem_templates.jl")
+include("test_utils/run_simulation.jl")
 
 ENV["RUNNING_PSI_TESTS"] = "true"

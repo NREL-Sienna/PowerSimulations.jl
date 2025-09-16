@@ -22,7 +22,11 @@ end
 @test_yes_cache((@debug "reading results from SimulationsResults cache"; @debug "msg 2"))
 
 ED_EXPECTED_VARS = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__HydroTurbine",
+    "EnergyVariable__HydroReservoir",
+    "WaterSpillageVariable__HydroReservoir",
+    "HydroEnergySurplusVariable__HydroReservoir",
+    "HydroEnergyShortageVariable__HydroReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "SystemBalanceSlackDown__System",
@@ -30,7 +34,11 @@ ED_EXPECTED_VARS = [
 ]
 
 UC_EXPECTED_VARS = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__HydroTurbine",
+    "EnergyVariable__HydroReservoir",
+    "WaterSpillageVariable__HydroReservoir",
+    "HydroEnergySurplusVariable__HydroReservoir",
+    "HydroEnergyShortageVariable__HydroReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "OnVariable__ThermalStandard",
@@ -97,11 +105,12 @@ function verify_export_results(results, export_path)
 end
 
 NATURAL_UNITS_VALUES = [
-    "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__HydroTurbine",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
+    "EnergyVariable__HydroReservoir",
     "ActivePowerTimeSeriesParameter__PowerLoad",
-    "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
+    "ActivePowerTimeSeriesParameter__HydroTurbine",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
     "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
     "SystemBalanceSlackDown__System",
@@ -148,108 +157,6 @@ function make_export_all(problems)
     ]
 end
 
-function run_simulation(
-    c_sys5_hy_uc,
-    c_sys5_hy_ed,
-    file_path::String,
-    export_path;
-    in_memory = false,
-    system_to_file = true,
-    uc_network_model = nothing,
-    ed_network_model = nothing,
-)
-    template_uc = get_template_basic_uc_simulation()
-    template_ed = get_template_nomin_ed_simulation()
-    isnothing(uc_network_model) && (
-        uc_network_model =
-            NetworkModel(CopperPlatePowerModel; duals = [CopperPlateBalanceConstraint])
-    )
-    isnothing(ed_network_model) && (
-        ed_network_model =
-            NetworkModel(
-                CopperPlatePowerModel;
-                duals = [CopperPlateBalanceConstraint],
-                use_slacks = true,
-            )
-    )
-    set_device_model!(template_ed, InterruptiblePowerLoad, StaticPowerLoad)
-    set_network_model!(
-        template_uc,
-        uc_network_model,
-    )
-    set_network_model!(
-        template_ed,
-        ed_network_model,
-    )
-    models = SimulationModels(;
-        decision_models = [
-            DecisionModel(
-                template_uc,
-                c_sys5_hy_uc;
-                name = "UC",
-                optimizer = HiGHS_optimizer,
-                system_to_file = system_to_file,
-            ),
-            DecisionModel(
-                template_ed,
-                c_sys5_hy_ed;
-                name = "ED",
-                optimizer = ipopt_optimizer,
-                system_to_file = system_to_file,
-            ),
-        ],
-    )
-
-    sequence = SimulationSequence(;
-        models = models,
-        feedforwards = Dict(
-            "ED" => [
-                SemiContinuousFeedforward(;
-                    component_type = ThermalStandard,
-                    source = OnVariable,
-                    affected_values = [ActivePowerVariable],
-                ),
-            ],
-        ),
-        ini_cond_chronology = InterProblemChronology(),
-    )
-    sim = Simulation(;
-        name = "no_cache",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = file_path,
-    )
-
-    build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.SimulationBuildStatus.BUILT
-
-    exports = Dict(
-        "models" => [
-            Dict(
-                "name" => "UC",
-                "store_all_variables" => true,
-                "store_all_parameters" => true,
-                "store_all_duals" => true,
-                "store_all_aux_variables" => true,
-            ),
-            Dict(
-                "name" => "ED",
-                "store_all_variables" => true,
-                "store_all_parameters" => true,
-                "store_all_duals" => true,
-                "store_all_aux_variables" => true,
-            ),
-        ],
-        "path" => export_path,
-        "optimizer_stats" => true,
-    )
-    execute_out = execute!(sim; exports = exports, in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-
-    return sim
-end
-
 function test_simulation_results(
     file_path::String,
     export_path;
@@ -285,8 +192,8 @@ function test_simulation_results(
         # @test isempty(results_ed)
         # @test isempty(results)
 
-        # verify_export_results(results, export_path)
-        # @test length(readdir(export_realized_results(results_ed))) === 18
+        verify_export_results(results, export_path)
+        @test length(readdir(export_realized_results(results_ed))) === 22
 
         # # Test that you can't read a failed simulation.
         # PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)
@@ -805,11 +712,11 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     @test length(expressions_keys) == 4
     expressions_inputs = (
         [
-            "ProductionCostExpression__HydroEnergyReservoir",
+            # "ProductionCostExpression__HydroEnergyReservoir",
             "ProductionCostExpression__ThermalStandard",
         ],
         [
-            (ProductionCostExpression, HydroEnergyReservoir),
+            # (ProductionCostExpression, HydroEnergyReservoir),
             (ProductionCostExpression, ThermalStandard),
         ],
     )
@@ -954,7 +861,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     df = read_realized_variable(results_em, var_name)
     export_active_power_file = joinpath(export_path, "$(var_name).csv")
     export_df = PSI.read_dataframe(export_active_power_file)
-    # TODO: A bug in the code produces NaN after index 48.
+    # TODO: results A bug in the code produces NaN after index 48.
     @test isapprox(df[48, :], export_df[48, :])
 end
 
@@ -1050,151 +957,5 @@ end
     test_emulation_problem_results(results, in_memory)
 end
 
-function load_pf_export(root, export_subdir)
-    raw_path, md_path = get_psse_export_paths(export_subdir)
-    sys = System(joinpath(root, raw_path), JSON3.read(joinpath(root, md_path), Dict))
-    set_units_base_system!(sys, "NATURAL_UNITS")
-    return sys
-end
-
 read_result_names(results, key::PSI.OptimizationContainerKey) =
     Set(names(only(values(PSI.read_results_with_keys(results, [key])))[!, Not(:DateTime)]))
-
-# This test is broken because the simulation calls a function that does not exist (get_calculate_loss_factors).
-# @testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
-#                                                                                (true, false)
-#     for calculate_voltage_stability_factors in (true, false)
-#         file_path = mktempdir(; cleanup = true)
-#         export_path = mktempdir(; cleanup = true)
-#         pf_path = mktempdir(; cleanup = true)
-#         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
-#         c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
-#         sim = run_simulation(
-#             c_sys5_hy_uc,
-#             c_sys5_hy_ed,
-#             file_path,
-#             export_path;
-#             ed_network_model = NetworkModel(
-#                 CopperPlatePowerModel;
-#                 duals = [CopperPlateBalanceConstraint],
-#                 use_slacks = true,
-#                 power_flow_evaluation =
-#                 ACPowerFlow(;
-#                     exporter = PSSEExportPowerFlow(:v33, pf_path; write_comments = true),
-#                     calculate_loss_factors = calculate_loss_factors,
-#                     calculate_voltage_stability_factors = calculate_voltage_stability_factors,
-#                 ),
-#             ),
-#         )
-#         results = SimulationResults(sim)
-#         results_ed = get_decision_problem_results(results, "ED")
-#         thermal_results = first(
-#             values(
-#                 PSI.read_results_with_keys(results_ed,
-#                     [PSI.VariableKey(ActivePowerVariable, ThermalStandard)], table_format = TableFormat.WIDE),
-#             ),
-#         )
-#         first_result = first(thermal_results)
-#         last_result = last(thermal_results)
-
-#         available_aux_variables = list_aux_variable_keys(results_ed)
-#         loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
-#         voltage_stability_aux_var_key =
-#             PSI.AuxVarKey(PowerFlowVoltageStabilityFactors, ACBus)
-
-#         # here we check if the loss factors are stored in the results, the values are tested in PowerFlows.jl
-#         if calculate_loss_factors
-#             @test loss_factors_aux_var_key ∈ available_aux_variables
-#             loss_factors = first(
-#                 values(
-#                     PSI.read_results_with_keys(results_ed,
-#                         [loss_factors_aux_var_key], table_format = TableFormat.WIDE),
-#                 ),
-#             )
-#             @test !isnothing(loss_factors)
-#             @test nrow(loss_factors) == 48 * 12
-#         else
-#             @test loss_factors_aux_var_key ∉ available_aux_variables
-#         end
-
-#         if calculate_voltage_stability_factors
-#             @test voltage_stability_aux_var_key ∈ available_aux_variables
-#             voltage_stability = first(
-#                 values(
-#                     PSI.read_results_with_keys(results_ed,
-#                         [voltage_stability_aux_var_key], table_format = TableFormat.WIDE),
-#                 ),
-#             )
-#             @test !isnothing(voltage_stability)
-#             @test nrow(voltage_stability) == 48 * 12
-#         else
-#             @test voltage_stability_aux_var_key ∉ available_aux_variables
-#         end
-
-#         @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
-#         first_export = load_pf_export(pf_path, "export_1_1")
-#         last_export = load_pf_export(pf_path, "export_48_12")
-
-#         # Test that the active powers written to the first and last exports line up with the real simulation results
-#         for gen_name in get_name.(get_components(ThermalStandard, c_sys5_hy_ed))
-#             this_first_result = first_result[gen_name]
-#             this_first_exported =
-#                 get_active_power(get_component(ThermalStandard, first_export, gen_name))
-#             @test isapprox(this_first_result, this_first_exported)
-
-#             this_last_result = last_result[gen_name]
-#             this_last_exported =
-#                 get_active_power(get_component(ThermalStandard, last_export, gen_name))
-#             @test isapprox(this_last_result, this_last_exported)
-#         end
-#     end
-# end
-
-# TODO DT: This simulation fails.
-# @testset "Test DC power flow in the loop setup: RTS ED, PTDF, no export" begin
-#     sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
-#     template_ed = get_template_nomin_ed_simulation()
-#     set_device_model!(template_ed, Line, StaticBranchUnbounded)
-#     set_network_model!(
-#         template_ed,
-#         NetworkModel(
-#             PTDFPowerModel;
-#             use_slacks = true,
-#             PTDF_matrix = PTDF(sys_rts_rt),
-#             power_flow_evaluation = DCPowerFlow(),
-#         ),
-#     )
-#     model = DecisionModel(template_ed, sys_rts_rt; name = "ED", optimizer = HiGHS_optimizer)
-#     output_dir = mktempdir(; cleanup = true)
-#     build_out = build!(model; output_dir = output_dir, console_level = Logging.Error)
-#     @test build_out == PSI.ModelBuildStatus.BUILT
-#     execute_out = solve!(model; in_memory = true)
-#     @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-#     results = OptimizationProblemResults(model)
-
-#     # Test correspondence between buses in system and buses in power flow in the loop
-#     sys_buses = Set(string.(get_number.(get_components(ACBus, sys_rts_rt))))
-#     pfe_buses = read_result_names(results, PSI.AuxVarKey(PowerFlowVoltageAngle, ACBus))
-#     @test sys_buses == pfe_buses
-
-#     # Test correspondence between system and branches in power flow in the loop
-#     branch_sel = rebuild_selector(make_selector(
-#             make_selector.(PNM.get_ac_branches(sys_rts_rt))...); groupby = typeof)
-#     for group in get_groups(branch_sel, sys_rts_rt)
-#         sys_branches = Set(get_name.(get_components(group, sys_rts_rt)))
-#         pfe_branches = read_result_names(
-#             results,
-#             PSI.AuxVarKey(
-#                 PowerFlowLineActivePowerFromTo,
-#                 getproperty(PSY, Symbol(get_name(group)))),
-#         )
-#         @test length(sys_branches) == length(pfe_branches)
-#         @test sys_branches == pfe_branches
-#     end
-
-#     # Test correspondence between lines in optimization problem and lines in power flow in the loop
-#     opt_names = read_result_names(results, PSI.VariableKey(FlowActivePowerVariable, Line))
-#     pfe_names = read_result_names(results,
-#         PSI.AuxVarKey(PowerFlowLineActivePowerFromTo, Line))
-#     @test opt_names == pfe_names
-# end

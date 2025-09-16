@@ -235,7 +235,7 @@ struct SecurityConstrainedAreaPTDFPowerModel <: AbstractSecurityConstrainedPTDFM
     QCRMPowerModel, QCLSPowerModel,
 
     # sdp relaxations
-    SDPWRMPowerModel, SparseSDPWRMPowerModel
+    SDPWRMPowerModel
 ================================================#
 
 ##### Exact Non-Convex Models #####

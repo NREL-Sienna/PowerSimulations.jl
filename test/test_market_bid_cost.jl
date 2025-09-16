@@ -242,14 +242,10 @@ read_parameter_dict(
 
 function load_sys_incr()
     # NOTE we are using the fixed one so we can add time series ourselves
-    # NOTE we need time_series_in_memory because while PSI can handle "ragged" time series
-    # of PiecewiseStepData with varying number of tranches, IS HDF serialization cannot
     sys = load_and_fix_system(
         PSITestSystems,
-        "c_fixed_market_bid_cost";
-        time_series_in_memory = true,
+        "c_fixed_market_bid_cost",
     )
-    @assert PSY.stores_time_series_in_memory(sys)  # bug in PSB if this fails
     tweak_system!(sys, 1.05, 1.0, 1.0)
     get_y_coords(
         get_function_data(

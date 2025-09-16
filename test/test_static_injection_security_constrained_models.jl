@@ -7,8 +7,16 @@
     constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.ThermalStandard, "lb"),
-        PSI.ConstraintKey(PostContingencyRateLimitConstraintB, PSY.ThermalStandard, "ub"),
+        PSI.ConstraintKey(
+            PostContingencyEmergencyRateLimitConstrain,
+            PSY.ThermalStandard,
+            "lb",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyEmergencyRateLimitConstrain,
+            PSY.ThermalStandard,
+            "ub",
+        ),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(
@@ -21,7 +29,7 @@
             PSY.VariableReserve{ReserveDown},
             "Reserve2",
         ),
-        PSI.ConstraintKey(PostContingengyGenerationBalanceConstraint, PSY.ThermalStandard),
+        PSI.ConstraintKey(PostContingencyGenerationBalanceConstraint, PSY.ThermalStandard),
         PSI.ConstraintKey(
             PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
             PSY.ThermalStandard,
@@ -80,11 +88,7 @@
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])

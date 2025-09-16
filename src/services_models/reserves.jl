@@ -2,13 +2,16 @@
 ############################### Reserve Variables #########################################
 
 get_variable_multiplier(_, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = NaN
-############################### ActivePowerReserveVariable, Reserve #########################################
-get_variable_binary(::PostContingencyActivePowerReserveDeploymentVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
-function get_variable_upper_bound(::PostContingencyActivePowerReserveDeploymentVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractReservesFormulation)
+############################### PostContingencyActivePowerReserveDeploymentVariable, Reserve #########################################
+get_variable_binary(::PostContingencyActivePowerReserveDeploymentVariable, ::Type{<:PSY.Reserve}, ::AbstractSecurityConstrainedReservesFormulation) = false
+function get_variable_upper_bound(::PostContingencyActivePowerReserveDeploymentVariable, r::PSY.Reserve, d::PSY.Device, ::AbstractSecurityConstrainedReservesFormulation)
     return  PSY.get_max_active_power(d)
 end
 get_variable_lower_bound(::PostContingencyActivePowerReserveDeploymentVariable, ::PSY.Reserve, ::PSY.Device, _) = 0.0
-get_variable_warm_start_value(::PostContingencyActivePowerReserveDeploymentVariable, d::PSY.Reserve, ::AbstractReservesFormulation) = 0.0
+get_variable_warm_start_value(::PostContingencyActivePowerReserveDeploymentVariable, d::PSY.Reserve, ::AbstractSecurityConstrainedReservesFormulation) = 0.0
+get_variable_multiplier(::AbstractContingencyVariableType, ::Type{<:PSY.Reserve{PSY.ReserveDown}}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0
+get_variable_multiplier(::AbstractContingencyVariableType, ::Type{<:PSY.Reserve{PSY.ReserveUp}}, ::AbstractSecurityConstrainedReservesFormulation) = 1.0
+get_variable_multiplier(::VariableType, ::Type{<:PSY.Generator}, ::AbstractSecurityConstrainedReservesFormulation) = -1.0
 
 ############################### ActivePowerReserveVariable, Reserve #########################################
 get_variable_binary(::ActivePowerReserveVariable, ::Type{<:PSY.Reserve}, ::AbstractReservesFormulation) = false
@@ -381,12 +384,12 @@ function add_constraints!(
         time_steps = get_time_steps(container)
         time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-        set_name = [PSY.get_name(d) for d in ramp_devices]
+        device_name_set = [PSY.get_name(d) for d in ramp_devices]
         con_up = add_constraints_container!(
             container,
             T(),
             SR,
-            set_name,
+            device_name_set,
             time_steps;
             meta = service_name,
         )
@@ -422,12 +425,12 @@ function add_constraints!(
         time_steps = get_time_steps(container)
         time_frame = PSY.get_time_frame(service)
         variable = get_variable(container, ActivePowerReserveVariable(), SR, service_name)
-        set_name = [PSY.get_name(d) for d in ramp_devices]
+        device_name_set = [PSY.get_name(d) for d in ramp_devices]
         con_down = add_constraints_container!(
             container,
             T(),
             SR,
-            set_name,
+            device_name_set,
             time_steps;
             meta = service_name,
         )

@@ -474,10 +474,10 @@ function _get_pwl_cost_expression(
     name = PSY.get_name(component)
     pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
     ordc_cost = JuMP.AffExpr(0.0)
-    for i in 1:length(slopes_normalized)
+    for (i, slope) in enumerate(slopes_normalized)
         JuMP.add_to_expression!(
             ordc_cost,
-            slopes[i] * multiplier,
+            slope * multiplier,
             pwl_var_container[(name, i, time_period)],
         )
     end

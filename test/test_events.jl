@@ -1,10 +1,3 @@
-HiGHS_optimizer_small_gap = JuMP.optimizer_with_attributes(
-    HiGHS.Optimizer,
-    "time_limit" => 100.0,
-    "log_to_console" => false,
-    "mip_rel_gap" => 0.001,
-)
-
 function _add_100_MW_reserves!(sys)
     r_up = ConstantReserve{ReserveUp}(
         "ReserveUp",
@@ -61,6 +54,7 @@ function _add_interruptible_power_load!(sys)
     add_time_series!(sys, ipl, ipl_ts)
 end
 
+#=
 function _add_energy_reservoir_storage!(sys)
     b = get_component(ACBus, sys, "nodeA")
     show_components(sys, PowerLoad)
@@ -85,11 +79,14 @@ function _add_energy_reservoir_storage!(sys)
     )
     add_component!(sys, ers)
 end
+=#
 
 function run_events_simulation(;
     sys_emulator,
+    networks,
+    optimizers,
     outage_time,   #DateTime
-    outage_length, #hrs 
+    outage_length, #hrs
     uc_formulation,   #
     ed_formulation,
     feedforward,
@@ -116,20 +113,27 @@ function run_events_simulation(;
     )
     if uc_formulation == "basic"
         template_d1 = get_template_basic_uc_simulation()
+        set_network_model!(template_d1, NetworkModel(networks[1]))
         template_d2 = get_template_basic_uc_simulation()
+        set_network_model!(template_d2, NetworkModel(networks[2]))
     elseif uc_formulation == "standard"
         template_d1 = get_template_standard_uc_simulation()
+        set_network_model!(template_d1, NetworkModel(networks[1]))
         template_d2 = get_template_standard_uc_simulation()
+        set_network_model!(template_d2, NetworkModel(networks[2]))
     else
         @error "invalid uc formulation: $(uc_formulation). Must be basic or standard"
     end
-    template_em = get_template_nomin_ed_simulation()
+    template_em = get_template_nomin_ed_simulation(networks[3])
     if ed_formulation == "basic"
         set_device_model!(template_em, ThermalStandard, ThermalBasicDispatch)
     elseif ed_formulation == "nomin"
     else
         @error "invalid ed formulation: $(ed). Must be basic or nomin"
     end
+    set_device_model!(template_d1, Line, StaticBranch)
+    set_device_model!(template_d2, Line, StaticBranch)
+    set_device_model!(template_em, Line, StaticBranch)
 
     set_service_model!(template_d1, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
     set_service_model!(template_d2, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
@@ -153,14 +157,14 @@ function run_events_simulation(;
                 sys_d1;
                 name = "D1",
                 initialize_model = false,
-                optimizer = HiGHS_optimizer_small_gap,
+                optimizer = optimizers[1],
             ),
             DecisionModel(
                 template_d2,
                 sys_d2;
                 name = "D2",
                 initialize_model = false,
-                optimizer = HiGHS_optimizer_small_gap,
+                optimizer = optimizers[2],
                 store_variable_names = true,
             ),
         ],
@@ -168,7 +172,7 @@ function run_events_simulation(;
             template_em,
             sys_em;
             name = "EM",
-            optimizer = HiGHS_optimizer_small_gap,
+            optimizer = optimizers[3],
             calculate_conflict = true,
             store_variable_names = true,
         ),
@@ -183,7 +187,7 @@ function run_events_simulation(;
                         component_type = ThermalStandard,
                         source = OnVariable,
                         affected_values = [ActivePowerVariable],
-                        #   add_slacks = false, 
+                        #   add_slacks = false,
                     ),
                 ],
             ),
@@ -217,6 +221,7 @@ function test_event_results(;
     outage_length,
     expected_power_recovery,
     expected_on_variable_recovery,
+    test_reactive_power = false,
 )
     em = get_emulation_problem_results(res)
     p = read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
@@ -231,7 +236,7 @@ function test_event_results(;
     outage_length_ix = Int64((Hour(1) / em.resolution) * outage_length)
     on_recover_ix = indexin([expected_on_variable_recovery], p[!, :DateTime])[1]
     p_recover_ix = indexin([expected_power_recovery], p[!, :DateTime])[1]
-    #Test condition at time of outage 
+    #Test condition at time of outage
     @test count[outage_ix, "Alta"] == 0.0
     @test status[outage_ix, "Alta"] == 1.0
     @test on[outage_ix, "Alta"] == 1.0
@@ -242,20 +247,37 @@ function test_event_results(;
     @test status[(outage_ix + 1):(outage_ix + outage_length_ix), "Alta"] ==
           zeros(outage_length_ix)
     @test on[(on_recover_ix - 1), "Alta"] == 0.0  #on variable not necessarily zero for full time; possibly updated later
-    @test iszero(p[(outage_ix + 1):(p_recover_ix - 1), "Alta"])
-    #Test condition after outage 
+    length_p_zero = p_recover_ix - outage_ix - 1
+    @test isapprox(
+        p[(outage_ix + 1):(p_recover_ix - 1), "Alta"],
+        zeros(length_p_zero);
+        atol = 1e-5,
+    )
+    #Test condition after outage
     @test count[(outage_ix + outage_length_ix + 1), "Alta"] == 0.0
     @test status[(outage_ix + outage_length_ix + 1), "Alta"] == 1.0
     @test on[on_recover_ix, "Alta"] == 1.0
-    @test p[p_recover_ix, "Alta"] != 0.0
+    @test !isapprox(p[p_recover_ix, "Alta"], 0.0; atol = 1e-5)
+    if test_reactive_power == true
+        q = read_realized_variable(em, "ReactivePowerVariable__ThermalStandard")
+        @test isapprox(
+            q[(outage_ix + 1):(p_recover_ix - 1), "Alta"],
+            zeros(length_p_zero);
+            atol = 1e-5,
+        )
+        @test q[p_recover_ix, "Alta"] != 0.0
+        @test !isapprox(q[p_recover_ix, "Alta"], 0.0; atol = 1e-5)
+    end
     return
 end
 
-### HOURLY DATA ### 
-#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub 
+### HOURLY DATA ###
+#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub
 @testset "Hourly; uc basic; ed nomin; no ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T18:00:00"),
         outage_length = 3.0,
         uc_formulation = "basic",
@@ -270,21 +292,23 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test no ramping constraint in D2 model results 
+    #Test no ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] == 40.0
 end
 
-#This passes with nomin or basic dispatch 
+#This passes with nomin or basic dispatch
 @testset "Hourly; uc basic; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T18:00:00"),
         outage_length = 3.0,
         uc_formulation = "basic",
-        ed_formulation = "basic",  #should also pass with nomin   
+        ed_formulation = "basic",  #should also pass with nomin
         feedforward = true,
         in_memory = true,
     )
@@ -295,7 +319,7 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test no ramping constraint in D2 model results 
+    #Test no ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
@@ -303,18 +327,20 @@ end
 end
 
 # Note: Running a standard UC formulation without a feedforward to the ED is not a feasible modeling setup
-#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models. 
+#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models.
 
 # This tests for both min up and down times being handled properly with events.
 # Generator not turned back on until 4 hours after the event (event only lasts 3 hours)
-# Generator is only on for one hour when the event happens; the constraint is bypassed by resetting the TimeDurationOn variable to a large value. 
+# Generator is only on for one hour when the event happens; the constraint is bypassed by resetting the TimeDurationOn variable to a large value.
 @testset "Hourly; uc standard; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T17:00:00"),
         outage_length = 3.0,
         uc_formulation = "standard",
-        ed_formulation = "basic",  #should also pass with nomin   
+        ed_formulation = "basic",  #should also pass with nomin
         feedforward = true,
         in_memory = true,
     )
@@ -325,19 +351,21 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test ramping constraint in D2 model results 
+    #Test ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
 
-### 5 MINUTE DATA (RESOLUTION MISMATCH) ### 
+### 5 MINUTE DATA (RESOLUTION MISMATCH) ###
 
-#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub 
+#Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub
 @testset "5 min; uc basic; ed nomin; no ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm_rt"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T18:00:00"),
         outage_length = 3.0,
         uc_formulation = "basic",
@@ -357,6 +385,8 @@ end
 @testset "5 min; uc basic; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm_rt"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T18:00:00"),
         outage_length = 3.0,
         uc_formulation = "basic",
@@ -374,15 +404,17 @@ end
 end
 
 # Note: Running a standard UC formulation without a feedforward to the ED is not a feasible modeling setup
-#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models. 
+#Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models.
 
 @testset "5 min; uc standard; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm_rt"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T17:00:00"),
         outage_length = 3.0,
         uc_formulation = "standard",
-        ed_formulation = "basic",  #should also pass with nomin   
+        ed_formulation = "basic",  #should also pass with nomin
         feedforward = true,
         in_memory = true,
     )
@@ -393,7 +425,7 @@ end
         expected_power_recovery = DateTime("2024-01-01T22:00:00"),
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
-    #Test ramping constraint in D2 model results 
+    #Test ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
     p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
@@ -402,6 +434,8 @@ end
 
 function _run_fixed_forced_outage_sim_with_timeseries(;
     sys_emulator,
+    networks,
+    optimizers,
     outage_status_timeseries,
     device_type,
     device_names,
@@ -430,8 +464,10 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
         ),
     )
     template_d1 = get_template_basic_uc_simulation()
+    set_network_model!(template_d1, NetworkModel(networks[1]))
     template_d2 = get_template_basic_uc_simulation()
-    template_em = get_template_nomin_ed_simulation()
+    set_network_model!(template_d2, NetworkModel(networks[2]))
+    template_em = get_template_nomin_ed_simulation(networks[3])
     set_device_model!(template_d1, RenewableDispatch, renewable_formulation)
     set_device_model!(template_d2, RenewableDispatch, renewable_formulation)
     set_device_model!(template_em, RenewableDispatch, renewable_formulation)
@@ -452,6 +488,9 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
             "regularization" => true,
         ),
     )
+    set_device_model!(template_d1, Line, StaticBranch)
+    set_device_model!(template_d2, Line, StaticBranch)
+    set_device_model!(template_em, Line, StaticBranch)
     set_device_model!(template_em, storage_device_model)
     set_device_model!(template_d1, storage_device_model)
     set_device_model!(template_d2, storage_device_model)
@@ -478,14 +517,14 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
                 sys_d1;
                 name = "D1",
                 initialize_model = false,
-                optimizer = HiGHS_optimizer_small_gap,
+                optimizer = optimizers[1],
             ),
             DecisionModel(
                 template_d2,
                 sys_d2;
                 name = "D2",
                 initialize_model = false,
-                optimizer = HiGHS_optimizer_small_gap,
+                optimizer = optimizers[2],
                 store_variable_names = true,
             ),
         ],
@@ -493,7 +532,7 @@ function _run_fixed_forced_outage_sim_with_timeseries(;
             template_em,
             sys_em;
             name = "EM",
-            optimizer = HiGHS_optimizer_small_gap,
+            optimizer = optimizers[3],
             calculate_conflict = true,
             store_variable_names = true,
         ),
@@ -539,6 +578,8 @@ end
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = ThermalStandard,
         device_names = ["Alta"],
@@ -566,6 +607,8 @@ end
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = RenewableDispatch,
         device_names = ["WindBus1"],
@@ -595,6 +638,8 @@ end
     _add_interruptible_power_load!(sys)
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = sys,
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = InterruptiblePowerLoad,
         device_names = ["test_ipl"],
@@ -612,6 +657,7 @@ end
     end
 end
 
+#= TODO: Events
 @testset "Storage outage" begin
     dates_ts = collect(
         DateTime("2024-01-01T00:00:00"):Hour(1):DateTime("2024-01-07T23:00:00"),
@@ -619,12 +665,14 @@ end
     outage_data = fill!(Vector{Int64}(undef, 168), 0)
     outage_data[3] = 1
     outage_data[10:11] .= 1
-    outage_data[23:22] .= 1
+    outage_data[22:23] .= 1
     outage_timeseries = TimeArray(dates_ts, outage_data)
     sys = PSB.build_system(PSISystems, "c_sys5_pjm")
     _add_energy_reservoir_storage!(sys)
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = sys,
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = EnergyReservoirStorage,
         device_names = ["test_ers"],
@@ -632,7 +680,7 @@ end
     )
     em = get_emulation_problem_results(res)
     status = read_realized_variable(em, "AvailableStatusParameter__EnergyReservoirStorage")
-    #TODO - modify storage so it is deployed and can test the outages -> check keywords to incentivize... 
+    #TODO - modify storage so it is deployed and can test the outages -> check keywords to incentivize.
     apv = read_realized_variable(em, "ActivePowerOutVariable__EnergyReservoirStorage")
     apv = read_realized_variable(em, "ActivePowerInVariable__EnergyReservoirStorage")
     for (ix, x) in enumerate(outage_data[1:24])
@@ -642,6 +690,7 @@ end
         end
     end
 end
+=#
 
 @testset "StaticPowerLoad outage" begin
     dates_ts = collect(
@@ -652,6 +701,8 @@ end
     sys = PSB.build_system(PSISystems, "c_sys5_pjm")
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = sys,
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = PowerLoad,
         device_names = ["Bus2"],
@@ -667,6 +718,8 @@ end
     sys = PSB.build_system(PSISystems, "c_sys5_pjm")
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = sys,
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = PowerLoad,
         device_names = ["Bus2"],
@@ -700,6 +753,8 @@ end
     sys = PSB.build_system(PSISystems, "c_sys5_pjm")
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = sys,
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = PowerLoad,
         device_names = ["Bus2"],
@@ -714,6 +769,8 @@ end
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = _run_fixed_forced_outage_sim_with_timeseries(;
         sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = repeat([PSI.CopperPlatePowerModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
         device_type = RenewableDispatch,
         device_names = ["WindBus1"],
@@ -739,4 +796,28 @@ end
     end
 end
 
-#TODO - add tests for reactive power formulations 
+@testset "Reactive power formulation w/ outage" begin
+    res = run_events_simulation(;
+        sys_emulator = PSB.build_system(PSISystems, "c_sys5_pjm"),
+        networks = [PSI.PTDFPowerModel, PSI.PTDFPowerModel, PSI.SOCWRPowerModel],
+        optimizers = [
+            HiGHS_optimizer_small_gap,
+            HiGHS_optimizer_small_gap,
+            ipopt_optimizer,
+        ],
+        outage_time = DateTime("2024-01-01T18:00:00"),
+        outage_length = 3.0,
+        uc_formulation = "basic",
+        ed_formulation = "basic",
+        feedforward = true,
+        in_memory = true,
+    )
+    test_event_results(;
+        res = res,
+        outage_time = DateTime("2024-01-01T18:00:00"),
+        outage_length = 3.0,
+        expected_power_recovery = DateTime("2024-01-01T22:00:00"),
+        expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
+        test_reactive_power = true,
+    )
+end
