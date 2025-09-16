@@ -59,8 +59,6 @@ end
 
 to_matrix(array::Matrix) = array
 
-to_matrix(array::Matrix) = array
-
 function to_matrix(array::DenseAxisArray{T, 1}) where {T}
     data = array.data[:]
     return reshape(data, length(data), 1)
