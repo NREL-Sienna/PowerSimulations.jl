@@ -97,7 +97,6 @@ end
           PSI.ModelBuildStatus.BUILT
 end
 
-#= TODO: Hydro
 @testset "Emulation Model initial_conditions test for Hydro" begin
     ######## Test with HydroDispatchRunOfRiver ########
     template = get_thermal_dispatch_template_network()
@@ -108,7 +107,8 @@ end
         force_build = true,
     )
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -117,7 +117,7 @@ end
     @test !PSI.has_initial_condition_value(
         initial_conditions_data,
         ActivePowerVariable(),
-        HydroEnergyReservoir,
+        HydroTurbine,
     )
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
@@ -130,7 +130,8 @@ end
         force_build = true,
     )
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
-    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyCommitment)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     model = EmulationModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
     @test build!(model; executions = 10, output_dir = mktempdir(; cleanup = true)) ==
@@ -140,11 +141,10 @@ end
     @test PSI.has_initial_condition_value(
         initial_conditions_data,
         OnVariable(),
-        HydroEnergyReservoir,
+        HydroTurbine,
     )
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
-=#
 
 @testset "Emulation Model Results" begin
     template = get_thermal_dispatch_template_network()

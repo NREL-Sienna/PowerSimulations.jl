@@ -184,14 +184,14 @@ end
             PSI.get_simulation_dir(sim);
             step = 1,
         )
-        @test length(events) == 0
+        @test length(events) == 23
         events = PSI.list_simulation_events(
             PSI.InitialConditionUpdateEvent,
             PSI.get_simulation_dir(sim);
             step = 2,
         )
         # This value needs to be checked
-        @test length(events) == 20
+        @test length(events) == 46
 
         PSI.show_simulation_events(
             devnull,
@@ -214,7 +214,7 @@ end
             step = 2,
             model_name = "UC",
         )
-        @test length(events) == 20
+        @test length(events) == 22
         PSI.show_simulation_events(
             devnull,
             PSI.InitialConditionUpdateEvent,

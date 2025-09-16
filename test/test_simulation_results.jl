@@ -22,7 +22,11 @@ end
 @test_yes_cache((@debug "reading results from SimulationsResults cache"; @debug "msg 2"))
 
 ED_EXPECTED_VARS = [
-    # "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__HydroTurbine",
+    "EnergyVariable__HydroReservoir",
+    "WaterSpillageVariable__HydroReservoir",
+    "HydroEnergySurplusVariable__HydroReservoir",
+    "HydroEnergyShortageVariable__HydroReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "SystemBalanceSlackDown__System",
@@ -30,7 +34,11 @@ ED_EXPECTED_VARS = [
 ]
 
 UC_EXPECTED_VARS = [
-    # "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__HydroTurbine",
+    "EnergyVariable__HydroReservoir",
+    "WaterSpillageVariable__HydroReservoir",
+    "HydroEnergySurplusVariable__HydroReservoir",
+    "HydroEnergyShortageVariable__HydroReservoir",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
     "OnVariable__ThermalStandard",
@@ -97,11 +105,12 @@ function verify_export_results(results, export_path)
 end
 
 NATURAL_UNITS_VALUES = [
-    # "ActivePowerVariable__HydroEnergyReservoir",
+    "ActivePowerVariable__HydroTurbine",
     "ActivePowerVariable__RenewableDispatch",
     "ActivePowerVariable__ThermalStandard",
+    "EnergyVariable__HydroReservoir",
     "ActivePowerTimeSeriesParameter__PowerLoad",
-    # "ActivePowerTimeSeriesParameter__HydroEnergyReservoir",
+    "ActivePowerTimeSeriesParameter__HydroTurbine",
     "ActivePowerTimeSeriesParameter__RenewableDispatch",
     "ActivePowerTimeSeriesParameter__InterruptiblePowerLoad",
     "SystemBalanceSlackDown__System",
@@ -184,7 +193,7 @@ function test_simulation_results(
         @test isempty(results)
 
         verify_export_results(results, export_path)
-        @test length(readdir(export_realized_results(results_ed))) === 18
+        @test length(readdir(export_realized_results(results_ed))) === 22
 
         # Test that you can't read a failed simulation.
         PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)

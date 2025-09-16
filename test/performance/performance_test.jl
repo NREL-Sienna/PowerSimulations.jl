@@ -45,8 +45,6 @@ try
         set_device_model!(template_uc, Transformer2W, StaticBranchUnbounded)
         set_device_model!(template_uc, TapTransformer, StaticBranchUnbounded)
         set_device_model!(template_uc, HydroDispatch, FixedOutput)
-        # TODO: Hydro
-        # set_device_model!(template_uc, HydroEnergyReservoir, HydroDispatchRunOfRiver)
         set_service_model!(
             template_uc,
             ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
@@ -60,8 +58,6 @@ try
         set_device_model!(template_ed, ThermalMultiStart, ThermalBasicDispatch)
         set_device_model!(template_ed, ThermalStandard, ThermalBasicDispatch)
         set_device_model!(template_ed, HydroDispatch, HydroDispatchRunOfRiver)
-        # TODO: Hydro
-        # set_device_model!(template_ed, HydroEnergyReservoir, HydroDispatchRunOfRiver)
 
         template_em = deepcopy(template_ed)
         set_device_model!(template_ed, Line, StaticBranchUnbounded)
