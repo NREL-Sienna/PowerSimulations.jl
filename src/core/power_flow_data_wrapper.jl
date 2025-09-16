@@ -19,8 +19,8 @@ function check_network_reduction(pfd::PFS.PowerFlowData)
     if !isempty(PNM.get_reductions(nrd))
         throw(
             IS.NotImplementedError(
-                "Network reductions of types $(PNM.get_reductions(nrd)) are not supported " *
-                "in PowerSimulations.jl.",
+                "Power flow in-the-loop on reduced networks isn't supported. Network " *
+                "reductions of types $(PNM.get_reductions(nrd)) present.",
             ),
         )
     end

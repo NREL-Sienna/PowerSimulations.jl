@@ -153,7 +153,7 @@ end
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-    # the interface currently doesn't allow for building a model with network
+    # the interface currently doesn't allow for power flow in-the-loop on networks with
     # reductions. we'd have to pass kwargs all the way down to add_power_flow_data!.
 end
 
