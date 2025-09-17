@@ -1,4 +1,4 @@
-#Preliminar tests for Static Injection Security Constrained Models
+#Preliminary tests for Static Injection Security Constrained Models
 @testset "G-n with reserves deliverability constraints Dispatch with responding reserves only up" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
     systems = [c_sys5]
