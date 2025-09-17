@@ -122,7 +122,9 @@ function objective_function!(
     container::OptimizationContainer,
     sys::PSY.System,
     network_model::NetworkModel{T},
-) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel, AbstractSecurityConstrainedPTDFModel}}
+) where {
+    T <: Union{CopperPlatePowerModel, PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
+}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.System)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
     reference_buses = get_reference_buses(network_model)

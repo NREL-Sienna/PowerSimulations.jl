@@ -323,9 +323,9 @@ function construct_device!(
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
 
     associated_outages_pairs = PSY.get_component_supplemental_attribute_pairs(
-                                V,
-                                PSY.UnplannedOutage,
-                                sys)
+        V,
+        PSY.UnplannedOutage,
+        sys)
 
     if isempty(associated_outages_pairs)
         @info "No associated outage supplemental attributes found assicuiatted with devices: $V. Skipping contingency variable addition for that service."
@@ -341,7 +341,7 @@ function construct_device!(
         PSY.ACTransmission,
         sys,
     )
-    
+
     add_to_expression!(
         container,
         PostContingencyBranchFlow,
@@ -360,7 +360,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, SecurityConstrainedPTDFPowerModel)
     add_constraint_dual!(container, sys, model)

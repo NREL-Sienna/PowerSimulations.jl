@@ -642,7 +642,6 @@ function add_constraints!(
 
     expressions = get_expression(container, U(), R, service_name)
 
-
     for branch in branches
         branch_name = PSY.get_name(branch)
         if !(branch_name in retained_branches_names)
@@ -661,7 +660,6 @@ function add_constraints!(
             outage_name = IS.get_uuid(outage)
 
             for t in time_steps
-
                 con_ub[outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
                         expressions[outage_name, branch_name, t] <=
