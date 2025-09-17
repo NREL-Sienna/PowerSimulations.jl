@@ -224,13 +224,14 @@ function test_event_results(;
     test_reactive_power = false,
 )
     em = get_emulation_problem_results(res)
-    p = read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+    p = read_realized_variable(em, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
     count = read_realized_variable(
         em,
         "AvailableStatusChangeCountdownParameter__ThermalStandard",
+        table_format = TableFormat.WIDE,
     )
-    on = read_realized_variable(em, "OnVariable__ThermalStandard")
-    status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard")
+    on = read_realized_variable(em, "OnVariable__ThermalStandard", table_format = TableFormat.WIDE)
+    status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard", table_format = TableFormat.WIDE)
 
     outage_ix = indexin([outage_time], p[!, :DateTime])[1]
     outage_length_ix = Int64((Hour(1) / em.resolution) * outage_length)
@@ -259,7 +260,7 @@ function test_event_results(;
     @test on[on_recover_ix, "Alta"] == 1.0
     @test !isapprox(p[p_recover_ix, "Alta"], 0.0; atol = 1e-5)
     if test_reactive_power == true
-        q = read_realized_variable(em, "ReactivePowerVariable__ThermalStandard")
+        q = read_realized_variable(em, "ReactivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
         @test isapprox(
             q[(outage_ix + 1):(p_recover_ix - 1), "Alta"],
             zeros(length_p_zero);
@@ -294,7 +295,7 @@ end
     )
     #Test no ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
-    p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
+    p_d2 = read_realized_variables(d2, table_format = TableFormat.WIDE)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] == 40.0
 end
@@ -321,7 +322,7 @@ end
     )
     #Test no ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
-    p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
+    p_d2 = read_realized_variables(d2, table_format = TableFormat.WIDE)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] == 40.0
 end
@@ -353,7 +354,7 @@ end
     )
     #Test ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
-    p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
+    p_d2 = read_realized_variables(d2, table_format = TableFormat.WIDE)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
@@ -427,7 +428,7 @@ end
     )
     #Test ramping constraint in D2 model results
     d2 = get_decision_problem_results(res, "D2")
-    p_d2 = read_realized_variables(d2)["ActivePowerVariable__ThermalStandard"]
+    p_d2 = read_realized_variables(d2, table_format = TableFormat.WIDE)["ActivePowerVariable__ThermalStandard"]
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
@@ -586,8 +587,8 @@ end
         renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
-    status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard")
-    apv = read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+    status = read_realized_variable(em, "AvailableStatusParameter__ThermalStandard", table_format = TableFormat.WIDE)
+    apv = read_realized_variable(em, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(status[!, "Alta"][ix])
         if Int64(status[!, "Alta"][ix]) == 0.0
@@ -615,8 +616,8 @@ end
         renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
-    status = read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch")
-    apv = read_realized_variable(em, "ActivePowerVariable__RenewableDispatch")
+    status = read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch", table_format = TableFormat.WIDE)
+    apv = read_realized_variable(em, "ActivePowerVariable__RenewableDispatch", table_format = TableFormat.WIDE)
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(status[!, "WindBus1"][ix])
         if Int64(status[!, "WindBus1"][ix]) == 0.0
@@ -646,8 +647,8 @@ end
         renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
-    status = read_realized_variable(em, "AvailableStatusParameter__InterruptiblePowerLoad")
-    apv = read_realized_variable(em, "ActivePowerVariable__InterruptiblePowerLoad")
+    status = read_realized_variable(em, "AvailableStatusParameter__InterruptiblePowerLoad", table_format = TableFormat.WIDE)
+    apv = read_realized_variable(em, "ActivePowerVariable__InterruptiblePowerLoad", table_format = TableFormat.WIDE)
 
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(status[!, "test_ipl"][ix])
@@ -679,10 +680,10 @@ end
         renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
-    status = read_realized_variable(em, "AvailableStatusParameter__EnergyReservoirStorage")
+    status = read_realized_variable(em, "AvailableStatusParameter__EnergyReservoirStorage", table_format = TableFormat.WIDE)
     #TODO - modify storage so it is deployed and can test the outages -> check keywords to incentivize.
-    apv = read_realized_variable(em, "ActivePowerOutVariable__EnergyReservoirStorage")
-    apv = read_realized_variable(em, "ActivePowerInVariable__EnergyReservoirStorage")
+    apv = read_realized_variable(em, "ActivePowerOutVariable__EnergyReservoirStorage", table_format = TableFormat.WIDE)
+    apv = read_realized_variable(em, "ActivePowerInVariable__EnergyReservoirStorage", table_format = TableFormat.WIDE)
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(status[!, "test_ers"][ix])
         if Int64(status[!, "test_ers"][ix]) == 0.0
@@ -710,7 +711,7 @@ end
     )
     em = get_emulation_problem_results(res)
     active_power_thermal_no_outage =
-        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
     outage_data[3] = 1
     outage_data[10:11] .= 1
     outage_data[23:22] .= 1
@@ -726,11 +727,11 @@ end
         renewable_formulation = RenewableFullDispatch,
     )
     em = get_emulation_problem_results(res)
-    status = read_realized_variable(em, "AvailableStatusParameter__PowerLoad")
+    status = read_realized_variable(em, "AvailableStatusParameter__PowerLoad", table_format = TableFormat.WIDE)
     active_power_load =
-        read_realized_variable(em, "ActivePowerTimeSeriesParameter__PowerLoad")
+        read_realized_variable(em, "ActivePowerTimeSeriesParameter__PowerLoad", table_format = TableFormat.WIDE)
     active_power_thermal_outage =
-        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(status[!, "Bus2"][ix])
         if outage_data[ix] == 1.0
@@ -762,7 +763,7 @@ end
     )
     em = get_emulation_problem_results(res)
     active_power_thermal_no_outage =
-        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
     outage_data[3] = 1
     outage_data[10:11] .= 1
     outage_data[23:22] .= 1
@@ -778,11 +779,11 @@ end
     )
     em = get_emulation_problem_results(res)
     renewable_status =
-        read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch")
+        read_realized_variable(em, "AvailableStatusParameter__RenewableDispatch", table_format = TableFormat.WIDE)
     active_power_thermal_outage =
-        read_realized_variable(em, "ActivePowerVariable__ThermalStandard")
+        read_realized_variable(em, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
     active_power_renewable =
-        read_realized_variable(em, "ActivePowerTimeSeriesParameter__RenewableDispatch")
+        read_realized_variable(em, "ActivePowerTimeSeriesParameter__RenewableDispatch", table_format = TableFormat.WIDE)
     for (ix, x) in enumerate(outage_data[1:24])
         @test x != Int64(renewable_status[!, "WindBus1"][ix])
         if outage_data[ix] == 1.0
