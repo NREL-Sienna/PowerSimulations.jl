@@ -1,3 +1,5 @@
+const IntegerAxis = Union{Vector{Int}, UnitRange{Int}}
+
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
     param = JuMP.@variable(jump_model, base_name = "param")
@@ -260,7 +262,7 @@ function to_results_dataframe(array::DenseAxisArray, timestamps)
 end
 
 function to_results_dataframe(
-    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
     timestamps,
     ::Val{TableFormat.LONG},
 )
@@ -297,7 +299,7 @@ _collect_timestamps(timestamps::Vector{Dates.DateTime}) = timestamps
 _collect_timestamps(timestamps) = collect(timestamps)
 
 function to_results_dataframe(
-    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
     ::Nothing,
     ::Val{TableFormat.LONG},
 )
@@ -322,7 +324,7 @@ function to_results_dataframe(
 end
 
 function to_results_dataframe(
-    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
     timestamps,
     ::Val{TableFormat.WIDE},
 )
@@ -332,7 +334,7 @@ function to_results_dataframe(
 end
 
 function to_results_dataframe(
-    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
     ::Nothing,
     ::Val{TableFormat.WIDE},
 )
