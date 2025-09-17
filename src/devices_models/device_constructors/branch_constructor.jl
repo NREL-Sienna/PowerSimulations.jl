@@ -1574,11 +1574,11 @@ end
 function _strip_double_circuit_identifiers(flow_vars_names::Vector{String})
     branch_names = deepcopy(flow_vars_names)
     for (ix, name) in enumerate(branch_names)
-        if occursin("_double_circuit", name) 
+        if occursin("_double_circuit", name)
             new_name = replace(name, "_double_circuit" => "")
             branch_names[ix] = new_name
-        end 
-    end 
+        end
+    end
     return branch_names
 end 
     for map in NETWORK_REDUCTION_MAPS
