@@ -25,9 +25,6 @@ end
           (["1", "2"],)
     @test PSI.get_column_names_from_axis_array(DenseAxisArray(rand(2, 3), 1:2, 1:3)) ==
           (["1", "2"],)
-    @test PSI.get_column_names_from_axis_array(
-        DenseAxisArray(rand(2, 3), ["1", "2"], components),
-    ) == (components,)
 end
 
 @testset "Test get_column_names_from_axis_array with DenseAxisArray 3D" begin

@@ -118,10 +118,9 @@ function get_column_names_from_axis_array(
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 1, <:Tuple{Union{Vector{Int}, UnitRange{Int}}}},
+    array::DenseAxisArray{T, 1, <:Tuple{IntegerAxis}},
 ) where {T}
-    # TODO: This happens because buses are stored by indexes instead of name.
-    # Is it permanently ok?
+    # This happens because buses are stored by numbers instead of name.
     return (string.(axes(array, 1)),)
 end
 
@@ -132,26 +131,9 @@ function get_column_names_from_axis_array(
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{Vector{Int}, UnitRange{Int}}},
+    array::DenseAxisArray{T, 2, <:Tuple{IntegerAxis, UnitRange{Int}}},
 ) where {T}
     return (string.(axes(array, 1)),)
-end
-
-# TODO DT: do we need this one?
-function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{UnitRange{Int}, UnitRange{Int}}},
-) where {T}
-    return (string.(axes(array, 1)),)
-end
-
-function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, Vector{String}}},
-) where {T}
-    # Currently, variables that don't have timestamps have a dummy axes to keep
-    # two axes in the Store (HDF or Memory).
-    # TODO DT: confirm this with Jose.
-    #     Also, the old code may have asserted an array of size 1, so something may be off.
-    return (axes(array, 2),)
 end
 
 function get_column_names_from_axis_array(
@@ -161,7 +143,7 @@ function get_column_names_from_axis_array(
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, UnitRange{Int}, UnitRange{Int}}},
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, IntegerAxis, UnitRange{Int}}},
 ) where {T}
     return (axes(array, 1), string.(axes(array, 2)))
 end
@@ -235,7 +217,11 @@ function to_dataframe(
     array::DenseAxisArray{T, 1},
     key::OptimizationContainerKey,
 ) where {T <: JumpSupportedLiterals}
-    return DataFrame(to_matrix(array), get_column_names_from_axis_array(key, array)[1])
+    cols = get_column_names_from_axis_array(key, array)[1]
+    if length(cols) != 1
+        error("Expected a single column, got $(length(cols))")
+    end
+    return DataFrame(Symbol(cols[1]) => array.data)
 end
 
 function to_dataframe(array::SparseAxisArray, key::OptimizationContainerKey)
@@ -259,6 +245,14 @@ Convert a DenseAxisArray containing components to a results DataFrame consumable
 """
 function to_results_dataframe(array::DenseAxisArray, timestamps)
     return to_results_dataframe(array, timestamps, Val(TableFormat.LONG))()
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{Vector{String}}},
+    timestamps,
+    ::Val{TableFormat.LONG},
+)
+    return DataFrames.DataFrame(:DateTime => [1], :name => axes(array, 1), :value => array.data)
 end
 
 function to_results_dataframe(
@@ -320,37 +314,6 @@ function to_results_dataframe(
         :time_index => time_col,
         :name => name_col,
         :value => reshape(permutedims(array.data), num_rows),
-    )
-end
-
-# TODO: do we really need this? Can we change the storage to not add the dummy ["1"] value?
-function to_results_dataframe(
-    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, Vector{String}}},
-    ::Nothing,
-    ::Val{TableFormat.LONG},
-)
-    # This is an odd case with batteries where an axis has a dummy ["1"] value.
-    # There is no time component. We will fake the time to be consistent.
-    if size(array, 1) != 1 && axes(array, 1) != ["1"]
-        error("Expected axis 1 to be [\"1\"], received $(axes(array, 1))")
-    end
-    num_rows = size(array, 2)
-    time_col = Vector{Int}(undef, num_rows)
-    name_col = Vector{String}(undef, num_rows)
-    value_col = Vector{Float64}(undef, num_rows)
-
-    row_index = 1
-    for name in axes(array, 2)
-        time_col[row_index] = row_index
-        name_col[row_index] = name
-        value_col[row_index] = array["1", name]
-        row_index += 1
-    end
-
-    return DataFrame(
-        :time_index => time_col,
-        :name => name_col,
-        :value => value_col,
     )
 end
 

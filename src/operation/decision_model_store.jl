@@ -67,10 +67,8 @@ function write_result!(
     update_timestamp::Dates.DateTime,
     array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange}},
 ) where {T}
-    columns = get_column_names_from_axis_array(array)
-    @assert_op length(columns) == 1
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(array.data, columns[1], 1:size(array, 2))
+    container[key][index] = array
     return
 end
 
@@ -94,12 +92,10 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 1},
-)
-    columns = get_column_names_from_axis_array(array)
-    @assert_op length(columns) == 1
+    array::DenseAxisArray{T, 1, <:Tuple{Vector{String}}},
+) where {T}
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns[1])
+    container[key][index] = array
     return
 end
 
@@ -109,13 +105,10 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 3},
-)
-    columns = get_column_names_from_axis_array(array)
-    @assert_op length(columns) == 2
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
+) where {T}
     container = getfield(store, get_store_container_type(key))
-    container[key][index] =
-        DenseAxisArray(array.data, columns[1], columns[2], 1:size(array, 3))
+    container[key][index] = array.data
     return
 end
 
