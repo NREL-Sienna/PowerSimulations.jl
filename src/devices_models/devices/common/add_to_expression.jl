@@ -797,7 +797,6 @@ function add_to_expression!(
 end
 
 
-
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -859,7 +858,7 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: AbstractCompactUnitCommitment,
-    X <: Union{PTDFPowerModel,AbstractSecurityConstrainedPTDFModel},
+    X <: Union{PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
 }
     _add_to_expression!(
         container,
@@ -871,7 +870,6 @@ function add_to_expression!(
     )
     return
 end
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -1267,7 +1265,7 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: AbstractCompactUnitCommitment,
-    X <:PTDFPowerModel,
+    X <: PTDFPowerModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), _system_expression_type(PTDFPowerModel))
