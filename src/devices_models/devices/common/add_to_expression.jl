@@ -857,6 +857,7 @@ function add_to_expression!(
     return
 end
 
+
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -918,7 +919,7 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: AbstractCompactUnitCommitment,
-    X <: Union{PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
+    X <: Union{PTDFPowerModel,AbstractSecurityConstrainedPTDFModel},
 }
     _add_to_expression!(
         container,
@@ -930,6 +931,7 @@ function add_to_expression!(
     )
     return
 end
+
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -1325,7 +1327,7 @@ function add_to_expression!(
     U <: OnVariable,
     V <: PSY.ThermalGen,
     W <: AbstractCompactUnitCommitment,
-    X <: PTDFPowerModel,
+    X <:PTDFPowerModel,
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), _system_expression_type(PTDFPowerModel))
@@ -1794,15 +1796,15 @@ function add_to_expression!(
     V <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
 }
     variable =
-        get_variable(container, U(), _system_expression_type(W))
+        get_variable(container, U(), _system_expression_type(AreaPTDFPowerModel))
     expression =
-        get_expression(container, T(), _system_expression_type(W))
+        get_expression(container, T(), _system_expression_type(AreaPTDFPowerModel))
     areas = get_available_components(network_model, PSY.Area, sys)
     for t in get_time_steps(container), n in PSY.get_name.(areas)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Area, W()),
+            get_variable_multiplier(U(), PSY.Area, AreaPTDFPowerModel()),
         )
     end
     return

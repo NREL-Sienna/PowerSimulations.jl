@@ -3,7 +3,7 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [ c_sys5]#, c_sys14, c_sys14_dc] TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
+    systems = [c_sys5]#, c_sys14, c_sys14_dc] TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
@@ -40,7 +40,6 @@
         c_sys14_dc => 141964.156,
     )
     for (ix, sys) in enumerate(systems)
-        
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 SecurityConstrainedPTDFPowerModel;
@@ -48,7 +47,7 @@
                 LODF_matrix = LODF_ref[sys],
             ),
         )
-        
+
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         for branch_name in lines_outages[sys]
@@ -154,7 +153,6 @@ end
         set_device_model!(template, TapTransf_device_model)
 
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-
 
         #Add Outage attribute
         for branch_name in branches_dlr[sys]
@@ -313,5 +311,4 @@ end
             10000,
         )
     end
-    
 end
