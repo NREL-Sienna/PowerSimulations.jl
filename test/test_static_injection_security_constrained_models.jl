@@ -236,10 +236,12 @@ end
         )
     end
 end
+
 @testset "G-n with reserves deliverability constraints with AreaPTDFPowerModel" begin
-    c_sys5_2area = PSB.build_system(PSITestSystems, "two_area_pjm_DA"; add_reserves = true)
-    systems = [c_sys5]
-    objfuncs = [GAEVF, GQEVF, GQEVF]
+    c_sys5_2area = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
+    transform_single_time_series!(c_sys5_2area, Hour(24), Hour(1))
+    systems = [c_sys5_2area]
+    objfuncs = [GAEVF]
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"),
@@ -259,13 +261,13 @@ end
             PostContingencyEmergencyRateLimitConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1_1 -ub",
-        ), 
+        ),
         PSI.ConstraintKey(
             PostContingencyEmergencyRateLimitConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1_2 -ub",
-        ), 
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        ),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(
             RequirementConstraint,
@@ -309,16 +311,16 @@ end
         ),
     ]
     PTDF_ref = IdDict{System, PTDF}(
-        c_sys5 => PTDF(c_sys5),
+        c_sys5_2area => PTDF(c_sys5_2area),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [504, 0, 552, 432, 192],
+        c_sys5_2area => [1032, 0, 1392, 1200, 408],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 329000.0,
+        c_sys5_2area => 497000.0,
     )
     components_outages_cases = IdDict{System, Tuple{Vector{String}, Vector{String}}}(
-        c_sys5 => (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"]),
+        c_sys5_2area => (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"]),
     )
     for (ix, sys) in enumerate(systems)
         components_outages_names, reserve_names = components_outages_cases[sys]
@@ -331,7 +333,7 @@ end
             # --- Add Outage Supplemental attribute to device and services that should respond ---
             component = get_component(ThermalStandard, sys, component_name)
             add_supplemental_attribute!(sys, component, transition_data)
-            reserve_up = get_component(VariableReserve{ReserveUp}, c_sys5, reserve_name)
+            reserve_up = get_component(VariableReserve{ReserveUp}, sys, reserve_name)
             add_supplemental_attribute!(sys, reserve_up, transition_data)
         end
 
