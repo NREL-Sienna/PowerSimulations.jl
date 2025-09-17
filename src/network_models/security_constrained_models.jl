@@ -15,7 +15,6 @@ function get_min_max_limits(
     return (min = -1 * PSY.get_rating_b(branch), max = PSY.get_rating_b(branch))
 end
 
-
 """
 Default implementation to add branch Expressions for Post-Contingency Flows
 """
@@ -24,7 +23,9 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
-    associated_outages_pairs::Vector{@NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}},
+    associated_outages_pairs::Vector{
+        @NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}
+    },
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
@@ -41,9 +42,9 @@ function add_to_expression!(
         V,
         [PSY.get_name(branch_outage) for (branch_outage, _) in associated_outages_pairs],
         get_name.(branches),
-        time_steps
+        time_steps,
     )
-    
+
     lodf = get_LODF_matrix(network_model)
     variable_branches_outages = get_variable(container, U(), V)
 
@@ -67,7 +68,7 @@ function add_to_expression!(
                     variable_branches[branch_name, t],
                     1.0,
                 )
-                
+
                 _add_to_jump_expression!(
                     expressions[branch_outage_name, branch_name, t],
                     variable_branches_outages[branch_outage_name, t],
@@ -76,11 +77,9 @@ function add_to_expression!(
             end
         end
     end
-    
+
     return
 end
-
-
 
 """
 Add branch post-contingency rate limit constraints for ACBranch considering LODF and Security Constraints
@@ -89,7 +88,9 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{PostContingencyEmergencyRateLimitConstraint},
     branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
-    associated_outages_pairs::Vector{@NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}},
+    associated_outages_pairs::Vector{
+        @NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}
+    },
     device_model::DeviceModel{V, U},
     network_model::NetworkModel{X},
 ) where {
@@ -131,7 +132,6 @@ function add_constraints!(
             PostContingencyDynamicBranchRatingTimeSeriesParameter,
             typeof(branch),
         )
-        
 
         for (branch_outage, outage) in associated_outages_pairs
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
@@ -149,7 +149,6 @@ function add_constraints!(
             )
 
             for t in time_steps
-
                 con_ub[b_outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
                         expressions[b_outage_name, branch_name, t] <=
