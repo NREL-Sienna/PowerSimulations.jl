@@ -40,6 +40,7 @@
         c_sys14_dc => 141964.156,
     )
     for (ix, sys) in enumerate(systems)
+        
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 SecurityConstrainedPTDFPowerModel;
@@ -47,7 +48,7 @@
                 LODF_matrix = LODF_ref[sys],
             ),
         )
-
+        
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         for branch_name in lines_outages[sys]
