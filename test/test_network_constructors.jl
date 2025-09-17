@@ -534,12 +534,24 @@ end
 
     results = OptimizationProblemResults(ps_model)
     hvdc_flow =
-        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -588,12 +600,24 @@ end
 
     results = OptimizationProblemResults(ps_model)
     hvdc_flow =
-        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -636,12 +660,24 @@ end
 
     results = OptimizationProblemResults(ps_model)
     hvdc_flow =
-        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -690,12 +726,24 @@ end
 
     results = OptimizationProblemResults(ps_model)
     hvdc_flow =
-        read_variable(results, "FlowActivePowerVariable__TwoTerminalGenericHVDCLine")
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -744,7 +792,11 @@ end
 
         res_red = OptimizationProblemResults(uc_model_red)
 
-        flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+        flow_lines = read_variable(
+            res_red,
+            "FlowActivePowerVariable__Line";
+            table_format = TableFormat.WIDE,
+        )
         line_names = DataFrames.names(flow_lines)[2:end]
 
         ##### Solve Original Model ####
@@ -770,7 +822,11 @@ end
 
         res_orig = OptimizationProblemResults(uc_model_orig)
 
-        flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
+        flow_lines_orig = read_variable(
+            res_orig,
+            "FlowActivePowerVariable__Line";
+            table_format = TableFormat.WIDE,
+        )
 
         for line in line_names
             @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
@@ -808,7 +864,11 @@ end
 
     res_red = OptimizationProblemResults(uc_model_red)
 
-    flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+    flow_lines = read_variable(
+        res_red,
+        "FlowActivePowerVariable__Line";
+        table_format = TableFormat.WIDE,
+    )
     line_names = DataFrames.names(flow_lines)[2:end]
 
     ##### Solve Original Model ####
@@ -834,7 +894,11 @@ end
 
     res_orig = OptimizationProblemResults(uc_model_orig)
 
-    flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
+    flow_lines_orig = read_variable(
+        res_orig,
+        "FlowActivePowerVariable__Line";
+        table_format = TableFormat.WIDE,
+    )
 
     for line in line_names
         @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
@@ -891,7 +955,11 @@ end
     @test size(copper_plate_constraints) == (2, 24)
 
     results = OptimizationProblemResults(ps_model)
-    slacks_up = read_variable(results, "SystemBalanceSlackUp__Area")
+    slacks_up = read_variable(
+        results,
+        "SystemBalanceSlackUp__Area";
+        table_format = TableFormat.WIDE,
+    )
     @test all(slacks_up[!, "Area_1"] .> 0.0)
     @test all(slacks_up[!, "Area_2"] .≈ 0.0)
 end
@@ -918,13 +986,25 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test all(interarea_flow[!, "1_2"] .<= 150)
     @test all(interarea_flow[!, "1_2"] .>= -150)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
     zone_1_gen = sum(
@@ -1007,7 +1087,11 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test interarea_flow[4, "1_2"] != 0.0
     @test interarea_flow[5, "1_2"] == 0.0
@@ -1041,13 +1125,25 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 497551, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test all(interarea_flow[!, "1_2"] .<= 100.0 + PSI.ABSOLUTE_TOLERANCE)
     @test all(interarea_flow[!, "1_2"] .>= -100.0 - PSI.ABSOLUTE_TOLERANCE)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
     zone_1_gen = sum(
@@ -1151,7 +1247,11 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 489842, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test interarea_flow[1, "1_2"] != 0.0
     @test interarea_flow[5, "1_2"] == 0.0

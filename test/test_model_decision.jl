@@ -55,33 +55,113 @@ end
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
     @test size(read_variable(res, "StartVariable__ThermalStandard")) == (120, 3)
     @test size(
-        read_variable(res, "StartVariable__ThermalStandard"; table_format = TableFormat.WIDE),
+        read_variable(
+            res,
+            "StartVariable__ThermalStandard";
+            table_format = TableFormat.WIDE,
+        ),
     ) == (24, 6)
     @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (72, 3)
     @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) ==
           (120, 3)
     @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (120, 3)
-    @test length(read_variables(res, table_format = TableFormat.WIDE)) == 4
-    @test length(read_parameters(res, table_format = TableFormat.WIDE)) == 1
-    @test length(read_duals(res, table_format = TableFormat.WIDE)) == 0
-    @test length(read_expressions(res, table_format = TableFormat.WIDE)) == 2
-    @test read_variables(res, ["StartVariable__ThermalStandard"], table_format = TableFormat.WIDE)["StartVariable__ThermalStandard"] ==
-          read_variable(res, "StartVariable__ThermalStandard", table_format = TableFormat.WIDE)
-    @test read_variables(res, [(StartVariable, ThermalStandard)], table_format = TableFormat.WIDE)["StartVariable__ThermalStandard"] ==
-          read_variable(res, StartVariable, ThermalStandard, table_format = TableFormat.WIDE)
-    @test read_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"], table_format = TableFormat.WIDE)["ActivePowerTimeSeriesParameter__PowerLoad"] ==
-          read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad", table_format = TableFormat.WIDE)
-    @test read_parameters(res, [(ActivePowerTimeSeriesParameter, PowerLoad)], table_format = TableFormat.WIDE)["ActivePowerTimeSeriesParameter__PowerLoad"] ==
-          read_parameter(res, ActivePowerTimeSeriesParameter, PowerLoad, table_format = TableFormat.WIDE)
-    @test read_aux_variables(res, ["TimeDurationOff__ThermalStandard"], table_format = TableFormat.WIDE)["TimeDurationOff__ThermalStandard"] ==
-          read_aux_variable(res, "TimeDurationOff__ThermalStandard", table_format = TableFormat.WIDE)
-    @test read_aux_variables(res, [(TimeDurationOff, ThermalStandard)], table_format = TableFormat.WIDE)["TimeDurationOff__ThermalStandard"] ==
-          read_aux_variable(res, TimeDurationOff, ThermalStandard, table_format = TableFormat.WIDE)
-    @test read_expressions(res, ["ProductionCostExpression__ThermalStandard"], table_format = TableFormat.WIDE)["ProductionCostExpression__ThermalStandard"] == read_expression(res, "ProductionCostExpression__ThermalStandard", table_format = TableFormat.WIDE)
-    @test read_expressions(res, [(PSI.ProductionCostExpression, ThermalStandard)], table_format = TableFormat.WIDE)["ProductionCostExpression__ThermalStandard"] ==
-          read_expression(res, PSI.ProductionCostExpression, ThermalStandard, table_format = TableFormat.WIDE)
-    @test length(read_aux_variables(res, table_format = TableFormat.WIDE)) == 2
-    @test first(keys(read_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)], table_format = TableFormat.WIDE))) ==
+    @test length(read_variables(res; table_format = TableFormat.WIDE)) == 4
+    @test length(read_parameters(res; table_format = TableFormat.WIDE)) == 1
+    @test length(read_duals(res; table_format = TableFormat.WIDE)) == 0
+    @test length(read_expressions(res; table_format = TableFormat.WIDE)) == 2
+    @test read_variables(
+        res,
+        ["StartVariable__ThermalStandard"];
+        table_format = TableFormat.WIDE,
+    )["StartVariable__ThermalStandard"] ==
+          read_variable(
+        res,
+        "StartVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_variables(
+        res,
+        [(StartVariable, ThermalStandard)];
+        table_format = TableFormat.WIDE,
+    )["StartVariable__ThermalStandard"] ==
+          read_variable(
+        res,
+        StartVariable,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test read_parameters(
+        res,
+        ["ActivePowerTimeSeriesParameter__PowerLoad"];
+        table_format = TableFormat.WIDE,
+    )["ActivePowerTimeSeriesParameter__PowerLoad"] ==
+          read_parameter(
+        res,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_parameters(
+        res,
+        [(ActivePowerTimeSeriesParameter, PowerLoad)];
+        table_format = TableFormat.WIDE,
+    )["ActivePowerTimeSeriesParameter__PowerLoad"] ==
+          read_parameter(
+        res,
+        ActivePowerTimeSeriesParameter,
+        PowerLoad;
+        table_format = TableFormat.WIDE,
+    )
+    @test read_aux_variables(
+        res,
+        ["TimeDurationOff__ThermalStandard"];
+        table_format = TableFormat.WIDE,
+    )["TimeDurationOff__ThermalStandard"] ==
+          read_aux_variable(
+        res,
+        "TimeDurationOff__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_aux_variables(
+        res,
+        [(TimeDurationOff, ThermalStandard)];
+        table_format = TableFormat.WIDE,
+    )["TimeDurationOff__ThermalStandard"] ==
+          read_aux_variable(
+        res,
+        TimeDurationOff,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test read_expressions(
+        res,
+        ["ProductionCostExpression__ThermalStandard"];
+        table_format = TableFormat.WIDE,
+    )["ProductionCostExpression__ThermalStandard"] == read_expression(
+        res,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_expressions(
+        res,
+        [(PSI.ProductionCostExpression, ThermalStandard)];
+        table_format = TableFormat.WIDE,
+    )["ProductionCostExpression__ThermalStandard"] ==
+          read_expression(
+        res,
+        PSI.ProductionCostExpression,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test length(read_aux_variables(res; table_format = TableFormat.WIDE)) == 2
+    @test first(
+        keys(
+            read_aux_variables(
+                res,
+                [(PSI.TimeDurationOff, ThermalStandard)];
+                table_format = TableFormat.WIDE,
+            ),
+        ),
+    ) ==
           "TimeDurationOff__ThermalStandard"
     export_results(res)
     results_dir = joinpath(output_dir, "results")
@@ -186,11 +266,17 @@ end
     constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
     dual_results = PSI.read_duals(container)[constraint_key]
-    dual_results_read = read_dual(res, constraint_key, table_format = TableFormat.WIDE)
+    dual_results_read = read_dual(res, constraint_key; table_format = TableFormat.WIDE)
     realized_dual_results =
-        read_duals(res, [constraint_key], table_format = TableFormat.WIDE)[PSI.encode_key_as_string(constraint_key)]
+        read_duals(res, [constraint_key]; table_format = TableFormat.WIDE)[PSI.encode_key_as_string(
+            constraint_key,
+        )]
     realized_dual_results_string =
-        read_duals(res, [PSI.encode_key_as_string(constraint_key)], table_format = TableFormat.WIDE)[PSI.encode_key_as_string(
+        read_duals(
+            res,
+            [PSI.encode_key_as_string(constraint_key)];
+            table_format = TableFormat.WIDE,
+        )[PSI.encode_key_as_string(
             constraint_key,
         )]
     @test dual_results ==
@@ -221,13 +307,22 @@ end
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
     @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
-    @test isa(read_variables(res, table_format = TableFormat.WIDE), Dict{String, DataFrames.DataFrame})
+    @test isa(
+        read_variables(res; table_format = TableFormat.WIDE),
+        Dict{String, DataFrames.DataFrame},
+    )
     @test isa(ISOPT.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
-    @test isa(read_duals(res, table_format = TableFormat.WIDE), Dict{String, DataFrames.DataFrame})
+    @test isa(
+        read_duals(res; table_format = TableFormat.WIDE),
+        Dict{String, DataFrames.DataFrame},
+    )
     @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
-    @test isa(read_parameters(res, table_format = TableFormat.WIDE), Dict{String, DataFrames.DataFrame})
+    @test isa(
+        read_parameters(res; table_format = TableFormat.WIDE),
+        Dict{String, DataFrames.DataFrame},
+    )
     @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(PSI.get_forecast_horizon(res), Int64)
     @test isa(get_realized_timestamps(res), StepRange{DateTime})

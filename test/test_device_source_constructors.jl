@@ -144,8 +144,19 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     res = OptimizationProblemResults(model)
-    p_out = read_variable(res, "ActivePowerOutVariable__Source")[!, 2]
-    p_in = read_variable(res, "ActivePowerInVariable__Source")[!, 2]
+    p_out = read_variable(
+        res,
+        "ActivePowerOutVariable__Source";
+        table_format = TableFormat.WIDE,
+    )[
+        !,
+        2,
+    ]
+    p_in =
+        read_variable(res, "ActivePowerInVariable__Source"; table_format = TableFormat.WIDE)[
+            !,
+            2,
+        ]
 
     # Test that is zero when the time series is zero
     @test p_out[5] == 0.0

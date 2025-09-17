@@ -1060,6 +1060,8 @@ function _write_dataset!(
     array::Matrix{Float64},
     index::EmulationModelIndexType,
 )
+    # TODO: something is broken here. In at least one case, dataset is 2d, not 3d.
+    # test_events.jl, OnStatusParameter__ThermalStandard
     dataset[index, :, :] = array
     return
 end

@@ -123,23 +123,27 @@ function compare_results(rpath, epath, model, field, name, timestamp)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
     df2 = PSI.read_dataframe(ep)
+    # TODO: Store the tables in the same format.
+    measure_vars = [x for x in names(df2) if x != "DateTime"]
+    df2_long = DataFrames.stack(
+        df2,
+        measure_vars;
+        variable_name = :name,
+        value_name = :value,
+    )
 
     if name ∈ NATURAL_UNITS_VALUES
-        df2[!, 2:end] .*= 100.0
+        df2_long[!, :value] .*= 100.0
     end
 
     names1 = names(df1)
-    names2 = names(df2)
+    names2 = names(df2_long)
     names1 != names2 && return false
-    size(df1) != size(df2) && return false
+    size(df1) != size(df2_long) && return false
 
-    for (row1, row2) in zip(eachrow(df1), eachrow(df2))
-        for name in names1
-            if !isapprox(row1[name], row2[name])
-                @error "File mismatch" rp ep row1 row2
-                return false
-            end
-        end
+    if !isapprox(df1.value, df2_long.value)
+        @error "File mismatch" rp ep row1 row2
+        return false
     end
 
     return true
@@ -176,48 +180,48 @@ function test_simulation_results(
         )
         results = SimulationResults(sim)
         test_decision_problem_results(results, c_sys5_hy_ed, c_sys5_hy_uc, in_memory)
-        # if !in_memory
-        #     test_decision_problem_results_kwargs_handling(
-        #         dirname(results.path),
-        #         c_sys5_hy_ed,
-        #         c_sys5_hy_uc,
-        #     )
-        # end
-        # test_emulation_problem_results(results, in_memory)
+        if !in_memory
+            test_decision_problem_results_kwargs_handling(
+                dirname(results.path),
+                c_sys5_hy_ed,
+                c_sys5_hy_uc,
+            )
+        end
+        test_emulation_problem_results(results, in_memory)
 
-        # results_ed = get_decision_problem_results(results, "ED")
-        # @test !isempty(results_ed)
-        # @test !isempty(results)
-        # empty!(results)
-        # @test isempty(results_ed)
-        # @test isempty(results)
+        results_ed = get_decision_problem_results(results, "ED")
+        @test !isempty(results_ed)
+        @test !isempty(results)
+        empty!(results)
+        @test isempty(results_ed)
+        @test isempty(results)
 
         verify_export_results(results, export_path)
         @test length(readdir(export_realized_results(results_ed))) === 22
 
-        # # Test that you can't read a failed simulation.
-        # PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)
-        # PSI.serialize_status(sim)
-        # @test PSI.deserialize_status(sim) == PSI.RunStatus.FAILED
-        # @test_throws ErrorException SimulationResults(sim)
-        # @test_logs(
-        #     match_mode = :any,
-        #     (:warn, r"Results may not be valid"),
-        #     SimulationResults(sim, ignore_status = true),
-        # )
+        # Test that you can't read a failed simulation.
+        PSI.set_simulation_status!(sim, PSI.RunStatus.FAILED)
+        PSI.serialize_status(sim)
+        @test PSI.deserialize_status(sim) == PSI.RunStatus.FAILED
+        @test_throws ErrorException SimulationResults(sim)
+        @test_logs(
+            match_mode = :any,
+            (:warn, r"Results may not be valid"),
+            SimulationResults(sim, ignore_status = true),
+        )
 
-        # if in_memory
-        #     @test !isempty(
-        #         sim.internal.store.dm_data[:ED].variables[PSI.VariableKey(
-        #             ActivePowerVariable,
-        #             ThermalStandard,
-        #         )],
-        #     )
-        #     @test !isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
-        #     empty!(sim.internal.store)
-        #     @test isempty(sim.internal.store.dm_data[:ED].variables)
-        #     @test isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
-        # end
+        if in_memory
+            @test !isempty(
+                sim.internal.store.dm_data[:ED].variables[PSI.VariableKey(
+                    ActivePowerVariable,
+                    ThermalStandard,
+                )],
+            )
+            @test !isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
+            empty!(sim.internal.store)
+            @test isempty(sim.internal.store.dm_data[:ED].variables)
+            @test isempty(sim.internal.store.dm_data[:ED].optimizer_stats)
+        end
     end
 end
 
@@ -810,6 +814,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         variables_inputs[1];
         start_time = start_time,
         len = len,
+        table_format = TableFormat.WIDE,
     )
     df = first(values(vars))
     @test length(unique(df.DateTime)) == len
@@ -820,21 +825,25 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         variables_inputs[1],
         start_time = start_time,
         len = 100000,
+        table_format = TableFormat.WIDE,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
         start_time = start_time + Dates.Second(1),
+        table_format = TableFormat.WIDE,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
         start_time = start_time - Dates.Hour(1000),
+        table_format = TableFormat.WIDE,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
         len = 100000,
+        table_format = TableFormat.WIDE,
     )
 
     @test isempty(results_em)

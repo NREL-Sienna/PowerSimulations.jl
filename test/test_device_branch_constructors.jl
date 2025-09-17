@@ -263,7 +263,8 @@ end
 
     solve!(model)
 
-    ptdf_vars = read_variables(OptimizationProblemResults(model), table_format = TableFormat.WIDE)
+    ptdf_vars =
+        read_variables(OptimizationProblemResults(model); table_format = TableFormat.WIDE)
     ptdf_values = ptdf_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
     ptdf_objective = PSI.get_optimization_container(model).optimizer_stats.objective_value
 
@@ -278,7 +279,8 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    dcp_vars = read_variables(OptimizationProblemResults(model), table_format = TableFormat.WIDE)
+    dcp_vars =
+        read_variables(OptimizationProblemResults(model); table_format = TableFormat.WIDE)
     dcp_values = dcp_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
     dcp_objective =
         PSI.get_optimization_container(model).optimizer_stats.objective_value
@@ -338,11 +340,24 @@ end
             )
 
             solve!(model_ref; output_dir = mktempdir())
-            ref_vars = read_variables(OptimizationProblemResults(model_ref), table_format = TableFormat.WIDE)
+            ref_vars = read_variables(
+                OptimizationProblemResults(model_ref);
+                table_format = TableFormat.WIDE,
+            )
             ref_values = ref_vars["FlowActivePowerVariable__Line"]
-            hvdc_ref_values = ref_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
+            hvdc_ref_values =
+                ref_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
             ref_objective = model_ref.internal.container.optimizer_stats.objective_value
-            ref_total_gen = sum(sum.(eachrow(DataFrames.select(ref_vars["ActivePowerVariable__ThermalStandard"], Not(:DateTime)))))
+            ref_total_gen = sum(
+                sum.(
+                    eachrow(
+                        DataFrames.select(
+                            ref_vars["ActivePowerVariable__ThermalStandard"],
+                            Not(:DateTime),
+                        ),
+                    )
+                ),
+            )
             set_device_model!(
                 template_uc,
                 DeviceModel(TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch),
@@ -357,16 +372,24 @@ end
             )
 
             solve!(model; output_dir = mktempdir())
-            no_loss_vars = read_variables(OptimizationProblemResults(model), table_format = TableFormat.WIDE)
+            no_loss_vars = read_variables(
+                OptimizationProblemResults(model);
+                table_format = TableFormat.WIDE,
+            )
             no_loss_values = no_loss_vars["FlowActivePowerVariable__Line"]
-            hvdc_ft_no_loss_values = no_loss_vars["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"]
-            hvdc_tf_no_loss_values = no_loss_vars["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"]
+            hvdc_ft_no_loss_values =
+                no_loss_vars["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"]
+            hvdc_tf_no_loss_values =
+                no_loss_vars["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"]
             no_loss_objective =
                 PSI.get_optimization_container(model).optimizer_stats.objective_value
             no_loss_total_gen = sum(
                 sum.(
                     eachrow(
-                        DataFrames.select(no_loss_vars["ActivePowerVariable__ThermalStandard"], Not(:DateTime))
+                        DataFrames.select(
+                            no_loss_vars["ActivePowerVariable__ThermalStandard"],
+                            Not(:DateTime),
+                        ),
                     ),
                 ),
             )
@@ -401,13 +424,21 @@ end
             )
 
             solve!(model_wl; output_dir = mktempdir())
-            dispatch_vars = read_variables(OptimizationProblemResults(model_wl), table_format = TableFormat.WIDE)
-            dispatch_values_ft = dispatch_vars["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"]
-            dispatch_values_tf = dispatch_vars["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"]
+            dispatch_vars = read_variables(
+                OptimizationProblemResults(model_wl);
+                table_format = TableFormat.WIDE,
+            )
+            dispatch_values_ft =
+                dispatch_vars["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"]
+            dispatch_values_tf =
+                dispatch_vars["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"]
             wl_total_gen = sum(
                 sum.(
                     eachrow(
-                        DataFrames.select(dispatch_vars["ActivePowerVariable__ThermalStandard"], Not(:DateTime))
+                        DataFrames.select(
+                            dispatch_vars["ActivePowerVariable__ThermalStandard"],
+                            Not(:DateTime),
+                        ),
                     ),
                 ),
             )
@@ -645,7 +676,11 @@ end
               PSI.ModelBuildStatus.BUILT
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         res = OptimizationProblemResults(model_m)
-        vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line", table_format = TableFormat.WIDE)
+        vars = read_variable(
+            res,
+            "FlowActivePowerSlackUpperBound__Line";
+            table_format = TableFormat.WIDE,
+        )
         # some relaxations will find a solution with 0.0 slack
         @test sum(vars[!, "2"]) >= -1e-6
     end
@@ -678,7 +713,11 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model_m)
-    vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line", table_format = TableFormat.WIDE)
+    vars = read_variable(
+        res,
+        "FlowActivePowerSlackUpperBound__Line";
+        table_format = TableFormat.WIDE,
+    )
     # some relaxations will find a solution with 0.0 slack
     @test sum(vars[!, "2"]) >= -1e-6
 end
