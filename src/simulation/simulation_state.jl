@@ -162,7 +162,11 @@ function _initialize_system_states!(
         field_containers = getfield(emulation_container, field)
         for (key, value) in field_containers
             !should_write_resulting_value(key) && continue
-            column_names = get_column_names_from_axis_array(key, value)
+            if field == :parameters
+                column_names = get_column_names(key, value)
+            else
+                column_names = get_column_names_from_axis_array(key, value)
+            end
             set_dataset!(
                 emulator_states,
                 key,
