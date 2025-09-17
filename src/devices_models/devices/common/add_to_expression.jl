@@ -1796,15 +1796,15 @@ function add_to_expression!(
     V <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
 }
     variable =
-        get_variable(container, U(), _system_expression_type(AreaPTDFPowerModel))
+        get_variable(container, U(), _system_expression_type(W))
     expression =
-        get_expression(container, T(), _system_expression_type(AreaPTDFPowerModel))
+        get_expression(container, T(), _system_expression_type(W))
     areas = get_available_components(network_model, PSY.Area, sys)
     for t in get_time_steps(container), n in PSY.get_name.(areas)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Area, AreaPTDFPowerModel()),
+            get_variable_multiplier(U(), PSY.Area, W()),
         )
     end
     return
