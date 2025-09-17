@@ -323,6 +323,37 @@ function to_results_dataframe(
     )
 end
 
+# TODO: do we really need this? Can we change the storage to not add the dummy ["1"] value?
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, Vector{String}}},
+    ::Nothing,
+    ::Val{TableFormat.LONG},
+)
+    # This is an odd case with batteries where an axis has a dummy ["1"] value.
+    # There is no time component. We will fake the time to be consistent.
+    if size(array, 1) != 1 && axes(array, 1) != ["1"]
+        error("Expected axis 1 to be [\"1\"], received $(axes(array, 1))")
+    end
+    num_rows = size(array, 2)
+    time_col = Vector{Int}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+    value_col = Vector{Float64}(undef, num_rows)
+
+    row_index = 1
+    for name in axes(array, 2)
+        time_col[row_index] = row_index
+        name_col[row_index] = name
+        value_col[row_index] = array["1", name]
+        row_index += 1
+    end
+
+    return DataFrame(
+        :time_index => time_col,
+        :name => name_col,
+        :value => value_col,
+    )
+end
+
 function to_results_dataframe(
     array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
     timestamps,
