@@ -642,7 +642,6 @@ function add_constraints!(
 
     expressions = get_expression(container, U(), R, service_name)
 
-    #param_keys = get_parameter_keys(container)
 
     for branch in branches
         branch_name = PSY.get_name(branch)
@@ -651,21 +650,6 @@ function add_constraints!(
             continue
         end
 
-        # param_key = ParameterKey(
-        #     PostContingencyDynamicBranchRatingTimeSeriesParameter,
-        #     typeof(branch),
-        # )
-        # has_dlr_ts = (param_key in param_keys) && PSY.has_time_series(branch)
-
-        #device_dynamic_branch_rating_ts = []
-        # if has_dlr_ts
-        #     device_dynamic_branch_rating_ts, mult =
-        #         _get_device_post_contingency_dynamic_branch_rating_time_series(
-        #             container,
-        #             param_key,
-        #             branch_name,
-        #             network_model)
-        # end
         limits = get_min_max_limits(
             branch,
             PostContingencyEmergencyRateLimitConstraint,
@@ -677,14 +661,6 @@ function add_constraints!(
             outage_name = IS.get_uuid(outage)
 
             for t in time_steps
-                # device_dynamic_branch_rating_ts is empty if this device doesn't have a time series
-                # if !isempty(device_dynamic_branch_rating_ts)
-                #     limits = (
-                #         min = -1 * device_dynamic_branch_rating_ts[t] *
-                #               mult[branch_name, t],
-                #         max = device_dynamic_branch_rating_ts[t] * mult[branch_name, t],
-                #     ) #update limits
-                # end
 
                 con_ub[outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
