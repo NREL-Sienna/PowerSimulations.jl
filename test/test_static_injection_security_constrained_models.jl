@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 @testset "G-n with reserves deliverability constraints Dispatch with responding reserves only up, including reduction of parallel circuits" begin
+=======
+@testset "G-n with reserves deliverability constraints Dispatch with responding reserves only up" begin
+>>>>>>> 7f8134278 (add test case with parallel lines)
     for add_parallel_line in [true, false]
         c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
         if add_parallel_line
@@ -94,6 +98,10 @@
                 reserve_up = get_component(VariableReserve{ReserveUp}, c_sys5, "Reserve1")
                 add_supplemental_attribute!(sys, reserve_up, transition_data)
             end
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7f8134278 (add test case with parallel lines)
             template = get_thermal_dispatch_template_network(
                 NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
             )
@@ -399,6 +407,7 @@ end
         )
     end
 end
+<<<<<<< HEAD
 
 @testset "G-1 (Thermal Formulation) with deliverability constraints including reduction of parallel circuits" begin
     for add_parallel_line in [true, false]
@@ -523,3 +532,5 @@ end
         end
     end
 end
+=======
+>>>>>>> 7f8134278 (add test case with parallel lines)
