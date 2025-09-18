@@ -568,29 +568,6 @@ function add_to_expression!(
     return
 end
 
-function _make_post_contingency_flow_expressions!(
-    jump_model::JuMP.Model,
-    name_thread::String,
-    time_steps::UnitRange{Int},
-    ptdf_col::AbstractVector{Float64},
-    nodal_power_deployment_expressions::Matrix{JuMP.AffExpr},
-)
-    #@debug Threads.threadid() name_thread
-    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
-    for t in time_steps
-        expressions[t] = JuMP.@expression(
-            jump_model,
-            sum(
-                ptdf_col[i] * nodal_power_deployment_expressions[i, t] for
-                i in 1:length(ptdf_col)
-            )
-        )
-    end
-    #return name_thread, expressions
-    # change when using the not concurrent version
-    return expressions
-end
-
 """
 Add branch post-contingency rate limit constraints for ACBranch after a G-k outage
 """
@@ -610,13 +587,21 @@ function add_constraints!(
     F <: Union{AbstractSecurityConstrainedUnitCommitment,
         AbstractSecurityConstrainedReservesFormulation},
 }
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    network_reduction_data = get_network_reduction(network_model)
+    ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+
+    device_names = get_branch_name_constraint_axis(
+        network_reduction_data,
+        all_branch_maps_by_type,
+        RateLimitConstraint,
+        reduced_branch_tracker,
+    )
     time_steps = get_time_steps(container)
 
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
-
-    network_reduction = get_network_reduction(network_model)
-    retained_branches_names = PNM.get_retained_branches_names(network_reduction)
 
     con_lb =
         add_constraints_container!(
@@ -624,7 +609,7 @@ function add_constraints!(
             T(),
             R,
             IS.get_uuid.(associated_outages),
-            retained_branches_names,
+            device_names,
             time_steps;
             meta = "$service_name -lb",
         )
@@ -635,43 +620,39 @@ function add_constraints!(
             T(),
             R,
             IS.get_uuid.(associated_outages),
-            retained_branches_names,
+            device_names,
             time_steps;
             meta = "$service_name -ub",
         )
-
     expressions = get_expression(container, U(), R, service_name)
-
-    for branch in branches
-        branch_name = PSY.get_name(branch)
-        if !(branch_name in retained_branches_names)
-            @debug "Branch $branch_name not in the reduced network, skipping post-contingency rate limit constraints."
-            continue
-        end
-
-        limits = get_min_max_limits(
-            branch,
-            PostContingencyEmergencyRateLimitConstraint,
-            AbstractBranchFormulation,
-            network_model,
-        )
-
-        for outage in associated_outages
-            outage_name = IS.get_uuid(outage)
-
-            for t in time_steps
-                con_ub[outage_name, branch_name, t] =
-                    JuMP.@constraint(get_jump_model(container),
-                        expressions[outage_name, branch_name, t] <=
-                        limits.max)
-                con_lb[outage_name, branch_name, t] =
-                    JuMP.@constraint(get_jump_model(container),
-                        expressions[outage_name, branch_name, t] >=
-                        limits.min)
+    for ac_type in ac_transmission_types
+        for map in NETWORK_REDUCTION_MAPS
+            network_reduction_map = all_branch_maps_by_type[map]
+            !haskey(network_reduction_map, ac_type) && continue
+            for (_, reduction_entry) in network_reduction_map[ac_type]
+                limits =
+                    get_min_max_limits(reduction_entry, RateLimitConstraint, StaticBranch)    # TODO - Add method to use PostContingencyEmergencyRateLimitConstraint to get rating b 
+                names = _get_branch_names(reduction_entry)
+                for ci_name in names
+                    if ci_name in device_names
+                        for outage in associated_outages
+                            outage_id = IS.get_uuid(outage)
+                            for t in time_steps
+                                con_ub[outage_id, ci_name, t] =
+                                    JuMP.@constraint(get_jump_model(container),
+                                        expressions[outage_id, ci_name, t] <=
+                                        limits.max)
+                                con_lb[outage_id, ci_name, t] =
+                                    JuMP.@constraint(get_jump_model(container),
+                                        expressions[outage_id, ci_name, t] >=
+                                        limits.min)
+                            end
+                        end
+                    end
+                end
             end
         end
     end
-
     return
 end
 
@@ -1418,10 +1399,10 @@ function add_to_expression!(
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-    network_reduction = get_network_reduction(network_model)
-    branches_names = PNM.get_retained_branches_names(network_reduction)
+    network_reduction_data = get_network_reduction(network_model)
+    branches_names = get_branch_name_variable_axis(network_reduction_data)
 
-    expression = lazy_container_addition!(
+    expression_container = lazy_container_addition!(
         container,
         T(),
         R,
@@ -1430,28 +1411,80 @@ function add_to_expression!(
         time_steps;
         meta = service_name,
     )
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    reduced_branch_expression_tracker = get_expression_dict(reduced_branch_tracker)
+    ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     nodal_power_deployment_expressions = get_expression(container, U(), R, service_name)
 
     jump_model = get_jump_model(container)
     ptdf = get_PTDF_matrix(network_model)
 
-    for branch in branches_names
-        ptdf_col = ptdf[branch, :]
-
-        for outage in associated_outages
-            name_outage = IS.get_uuid(outage)
-
-            expression[name_outage, branch, :] .= _make_post_contingency_flow_expressions!(
-                jump_model,
-                branch * string(name_outage),
-                time_steps,
-                ptdf_col,
-                nodal_power_deployment_expressions[name_outage, :, :].data,
-            )
+    for ac_type in ac_transmission_types
+        for map_name in NETWORK_REDUCTION_MAPS
+            map = all_branch_maps_by_type[map_name]
+            !haskey(map, ac_type) && continue
+            for (arc_tuple, reduction_entry) in map[ac_type]
+                ptdf_col = ptdf[arc_tuple, :]
+                for outage in associated_outages
+                    outage_id = IS.get_uuid(outage)
+                    expression_build_stage = 2
+                    has_entry, entry_name = _search_for_reduced_branch_expression(
+                        reduced_branch_tracker,
+                        reduction_entry,
+                        R,
+                        service_name,
+                        T,
+                        expression_build_stage,
+                        time_steps[1],
+                    )
+                    if has_entry
+                        equivalent_branch_expressions =
+                            [
+                                reduced_branch_expression_tracker[(R, service_name)][(
+                                    T,
+                                    1,
+                                )][entry_name][t] for t in time_steps
+                            ]
+                    else
+                        branch_name = first(_get_branch_names(reduction_entry))
+                        equivalent_branch_expressions = _make_flow_expressions!(
+                            jump_model,
+                            branch_name * string(outage_id),
+                            time_steps,
+                            ptdf_col,
+                            nodal_power_deployment_expressions[outage_id, :, :].data,
+                        )
+                        for (ix, t) in enumerate(time_steps)
+                            equivalent_branch_expression = equivalent_branch_expressions[ix]
+                            _add_expression_to_tracker!(
+                                reduced_branch_tracker,
+                                equivalent_branch_expression,
+                                reduction_entry,
+                                R,
+                                service_name,
+                                T,
+                                expression_build_stage,
+                                t,
+                            )
+                        end
+                    end
+                    for (ix, t) in enumerate(time_steps)
+                        equivalent_branch_expression = equivalent_branch_expressions[ix]
+                        _add_expression_to_container!(
+                            expression_container,
+                            equivalent_branch_expression,
+                            outage_id,
+                            reduction_entry,
+                            R,
+                            t,
+                        )
+                    end
+                end
+            end
         end
     end
-
     return
 end
 
@@ -1479,8 +1512,8 @@ function add_to_expression!(
 
     network_reduction_data = get_network_reduction(network_model)
     branches_names = get_branch_name_variable_axis(network_reduction_data)
-    # Add container with all of the branch names combined. 
-    expression = lazy_container_addition!(
+
+    expression_container = lazy_container_addition!(
         container,
         T(),
         R,
@@ -1489,6 +1522,8 @@ function add_to_expression!(
         time_steps;
         meta = service_name,
     )
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    reduced_branch_expression_tracker = get_expression_dict(reduced_branch_tracker)
     ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
@@ -1498,26 +1533,103 @@ function add_to_expression!(
             U(),
             ac_type,
         )
-        for map_name in NETWORK_REDUCTION_MAPS
-            map = all_branch_maps_by_type[map_name]
-            !haskey(map, ac_type) && continue
-            for (arc_tuple, reduction_entry) in map[ac_type]
-                for outage in associated_outages
-                    name_outage = IS.get_uuid(outage)
-                    for t in time_steps
-                        # NOTE : we didn't need to track the expressions before... why?
-                        # TODO -> first, review the existing tracking code to see what is usable. 
-                        # TODO - search for an existing expression
-                        # TODO - make the actuall expression here
-                        # TODO - add the expression to the tracker.
-                        # TODO - multiple dispatch by reduction_entry type (ACTransmission, Set{ACTransmission}, Vector{Any}) to add the expression to the container. 
+        for t in time_steps
+            for map_name in NETWORK_REDUCTION_MAPS
+                map = all_branch_maps_by_type[map_name]
+                !haskey(map, ac_type) && continue
+                for reduction_entry in values(map[ac_type])
+                    expression_build_stage = 1
+                    has_entry, entry_name = _search_for_reduced_branch_expression(
+                        reduced_branch_tracker,
+                        reduction_entry,
+                        R,
+                        service_name,
+                        T,
+                        expression_build_stage,
+                        t,
+                    )
+                    if has_entry
+                        equivalent_branch_expression =
+                            reduced_branch_expression_tracker[(R, service_name)][(T, 1)][entry_name][t]
+                    else
+                        branch_name = first(_get_branch_names(reduction_entry))
+                        variable = flow_variables[branch_name, t]
+                        equivalent_branch_expression =
+                            JuMP.@expression(get_jump_model(container), variable * 1.0)
+
+                        _add_expression_to_tracker!(
+                            reduced_branch_tracker,
+                            equivalent_branch_expression,
+                            reduction_entry,
+                            R,
+                            service_name,
+                            T,
+                            expression_build_stage,
+                            t,
+                        )
+                    end
+                    for outage in associated_outages
+                        outage_id = IS.get_uuid(outage)
+                        _add_expression_to_container!(
+                            expression_container,
+                            equivalent_branch_expression,
+                            outage_id,
+                            reduction_entry,
+                            R,
+                            t,
+                        )
                     end
                 end
             end
         end
     end
-
     return
+end
+
+function _add_expression_to_container!(
+    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression::JuMP.AffExpr,
+    outage_id::Base.UUID,
+    entry::U,
+    type::Type{T},
+    t,
+) where {T <: PSY.Component, U <: PSY.ACTransmission}
+    name = PSY.get_name(entry)
+    expression_container[outage_id, name, t] = expression
+end
+
+function _add_expression_to_container!(
+    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression::JuMP.AffExpr,
+    outage_id::Base.UUID,
+    double_circuit::Set{U},
+    type::Type{T},
+    t,
+) where {T <: PSY.Component, U <: PSY.ACTransmission}
+    for circuit in double_circuit
+        name = PSY.get_name(circuit) * "_double_circuit"
+        expression_container[outage_id, name, t] = expression
+    end
+end
+
+function _add_expression_to_container!(
+    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression::JuMP.AffExpr,
+    outage_id::Base.UUID,
+    series_chain::Vector{Any},
+    type::Type{T},
+    t,
+) where {T <: PSY.Component}
+    for segment in series_chain
+        _add_expression_to_container!(
+            expression_container,
+            expression,
+            outage_id,
+            segment,
+            type,
+            t,
+        )
+    end
 end
 
 function add_constraints!(
