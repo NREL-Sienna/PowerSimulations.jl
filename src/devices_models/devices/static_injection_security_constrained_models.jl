@@ -1477,9 +1477,9 @@ function add_to_expression!(
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-    network_reduction = get_network_reduction(network_model)
-    branches_names = PNM.get_retained_branches_names(network_reduction)
-
+    network_reduction_data = get_network_reduction(network_model)
+    branches_names = get_branch_name_variable_axis(network_reduction_data)
+    # Add container with all of the branch names combined. 
     expression = lazy_container_addition!(
         container,
         T(),
@@ -1489,22 +1489,30 @@ function add_to_expression!(
         time_steps;
         meta = service_name,
     )
+    ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
-    for branch in branches_names
+    for ac_type in ac_transmission_types
         flow_variables = get_variable(
             container,
             U(),
-            typeof(get_component(PSY.ACTransmission, sys, branch)),
+            ac_type,
         )
-        for outage in associated_outages
-            name_outage = IS.get_uuid(outage)
-
-            for t in time_steps
-                _add_to_jump_expression!(
-                    expression[name_outage, branch, t],
-                    flow_variables[branch, t],
-                    1.0,
-                )
+        for map_name in NETWORK_REDUCTION_MAPS
+            map = all_branch_maps_by_type[map_name]
+            !haskey(map, ac_type) && continue
+            for (arc_tuple, reduction_entry) in map[ac_type]
+                for outage in associated_outages
+                    name_outage = IS.get_uuid(outage)
+                    for t in time_steps
+                        # NOTE : we didn't need to track the expressions before... why?
+                        # TODO -> first, review the existing tracking code to see what is usable. 
+                        # TODO - search for an existing expression
+                        # TODO - make the actuall expression here
+                        # TODO - add the expression to the tracker.
+                        # TODO - multiple dispatch by reduction_entry type (ACTransmission, Set{ACTransmission}, Vector{Any}) to add the expression to the container. 
+                    end
+                end
             end
         end
     end
