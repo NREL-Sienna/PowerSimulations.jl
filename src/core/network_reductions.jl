@@ -176,6 +176,17 @@ function get_branch_name_constraint_axis(
     return name_axis
 end
 
+function get_branch_name_variable_axis(nrd::PNM.NetworkReductionData)
+    ac_transmission_types = PNM.get_ac_transmission_types(nrd)
+    all_branch_maps_by_type = nrd.all_branch_maps_by_type
+    name_axis = Vector{String}()
+    for T in ac_transmission_types
+        names_by_type = get_branch_name_variable_axis(all_branch_maps_by_type, T)
+        name_axis = vcat(name_axis, names_by_type) # TODO change implementation to avoid repeated concatonating  
+    end
+    return name_axis
+end
+
 function get_branch_name_variable_axis(
     all_branch_maps_by_type::Dict,
     ::Type{T},
