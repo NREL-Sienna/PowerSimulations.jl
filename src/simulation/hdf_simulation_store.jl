@@ -642,6 +642,24 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
+    array::DenseAxisArray{Float64, 2},
+)
+    if size(array, 2) != 1
+        error("Unexpected axes: $(axes(array))")
+    end
+    dataset = _get_em_dataset(store, key)
+    _write_dataset!(dataset.values, reshape(array.data, length(array.data)), index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
     array::DenseAxisArray{Float64},
 )
     dataset = _get_em_dataset(store, key)
@@ -1060,9 +1078,8 @@ function _write_dataset!(
     array::Matrix{Float64},
     index::EmulationModelIndexType,
 )
-    # TODO: something is broken here. In at least one case, dataset is 2d, not 3d.
-    # test_events.jl, OnStatusParameter__ThermalStandard
     dataset[index, :, :] = array
+    @debug "wrote em dataset" dataset index
     return
 end
 
