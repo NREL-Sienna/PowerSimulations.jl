@@ -2196,6 +2196,52 @@ function add_constraints!(
     return
 end
 
+function _add_expression_to_container!(
+    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression::JuMP.AffExpr,
+    outage_id::Base.UUID,
+    entry::U,
+    type::Type{T},
+    t,
+) where {T <: PSY.Component, U <: PSY.ACTransmission}
+    name = PSY.get_name(entry)
+    expression_container[outage_id, name, t] = expression
+end
+
+function _add_expression_to_container!(
+    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression::JuMP.AffExpr,
+    outage_id::Base.UUID,
+    double_circuit::Set{U},
+    type::Type{T},
+    t,
+) where {T <: PSY.Component, U <: PSY.ACTransmission}
+    for circuit in double_circuit
+        name = PSY.get_name(circuit) * "_double_circuit"
+        expression_container[outage_id, name, t] = expression
+    end
+end
+
+function _add_expression_to_container!(
+    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression::JuMP.AffExpr,
+    outage_id::Base.UUID,
+    series_chain::Vector{Any},
+    type::Type{T},
+    t,
+) where {T <: PSY.Component}
+    for segment in series_chain
+        _add_expression_to_container!(
+            expression_container,
+            expression,
+            outage_id,
+            segment,
+            type,
+            t,
+        )
+    end
+end
+
 function add_constraints!(
     container::OptimizationContainer,
     sys::PSY.System,
