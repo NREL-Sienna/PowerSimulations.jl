@@ -6,6 +6,13 @@ struct BranchReductionOptimizationTracker
         Type{<:PSY.ACTransmission},
         Dict{Type{<:ISOPT.VariableType}, Dict{String, Dict{Int, JuMP.VariableRef}}},
     }
+    expression_dict::Dict{
+        Tuple{Type{<:PSY.Component}, String},
+        Dict{
+            Tuple{Type{<:ISOPT.ExpressionType}, Int},
+            Dict{String, Dict{Int, JuMP.AffExpr}},
+        },
+    }
     constraint_dict::Dict{
         Type{<:PSY.ACTransmission},
         Dict{Type{<:ISOPT.ConstraintType}, Vector{String}},
@@ -14,11 +21,13 @@ end
 
 get_variable_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.variable_dict
+get_expression_dict(reduction_tracker::BranchReductionOptimizationTracker) =
+    reduction_tracker.expression_dict
 get_constraint_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.constraint_dict
 
 function BranchReductionOptimizationTracker()
-    return BranchReductionOptimizationTracker(Dict(), Dict())
+    return BranchReductionOptimizationTracker(Dict(), Dict(), Dict())
 end
 
 # TODO: get rid of this function and implement something more efficient without the
@@ -32,6 +41,68 @@ function _has_keys_nested(nested_dict::Dict, keys::Vector)
         end
     end
     return true
+end
+
+function _search_for_reduced_branch_expression(
+    ::BranchReductionOptimizationTracker,
+    ::PSY.ACTransmission,
+    ::Type{U},
+    ::String,
+    ::Type{T},
+    ::Int,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component,
+}
+    return (false, EMPTY_BRANCH_NAME_MATCH)
+end
+
+function _search_for_reduced_branch_expression(
+    ::BranchReductionOptimizationTracker,
+    ::Set{PSY.ACTransmission},
+    ::Type{U},
+    ::String,
+    ::Type{T},
+    ::Int,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component}
+    return (false, EMPTY_BRANCH_NAME_MATCH)
+end
+
+function _search_for_reduced_branch_expression(
+    reduction_tracker::BranchReductionOptimizationTracker,
+    series_chain::Vector{Any},
+    component_key_1::Type{U},
+    component_key_2::String,
+    expression_key_1::Type{T},
+    expression_key_2::Int,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component,
+}
+    reduced_branch_expression_tracker = get_expression_dict(reduction_tracker)
+    for segment in series_chain
+        segment_type = _get_segment_type(segment)
+        segment_names = _get_branch_names(segment)
+        if segment_type == U
+            if _has_keys_nested(
+                reduced_branch_expression_tracker,
+                [
+                    (component_key_1, component_key_2),
+                    (expression_key_1, expression_key_2),
+                    first(segment_names),
+                    t,
+                ],
+            )
+                return (true, first(segment_names))
+            end
+        end
+    end
+    return (false, EMPTY_BRANCH_NAME_MATCH)
 end
 
 function _search_for_reduced_branch_variable(
@@ -81,6 +152,102 @@ function _search_for_reduced_branch_variable(
         end
     end
     return (false, EMPTY_BRANCH_NAME_MATCH)
+end
+
+function _add_expression_to_tracker!(
+    ::BranchReductionOptimizationTracker,
+    ::JuMP.AffExpr,
+    reduction_entry::PSY.ACTransmission,
+    component_key_1::Type{U},
+    component_key_2::String,
+    expression_key_1::Type{T},
+    expression_key_2::Int,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component,
+}
+    return
+end
+
+function _add_expression_to_tracker!(
+    ::BranchReductionOptimizationTracker,
+    ::JuMP.AffExpr,
+    reduction_entry::Set{PSY.ACTransmission},
+    component_key_1::Type{U},
+    component_key_2::String,
+    expression_key_1::Type{T},
+    expression_key_2::Int,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component,
+}
+    return
+end
+
+function _add_expression_to_tracker!(
+    reduction_tracker::BranchReductionOptimizationTracker,
+    expression::JuMP.AffExpr,
+    reduction_entry::Vector{Any},
+    component_key_1::Type{U},
+    component_key_2::String,
+    expression_key_1::Type{T},
+    expression_key_2::Int,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component,
+}
+    for segment in reduction_entry
+        segment_names = _get_branch_names(segment)
+        for segment_name in segment_names
+            _add_to_expression_tracker!(
+                reduction_tracker,
+                expression,
+                component_key_1,
+                component_key_2,
+                expression_key_1,
+                expression_key_2,
+                segment_name,
+                t,
+            )
+        end
+    end
+    return
+end
+
+function _add_to_expression_tracker!(
+    reduction_tracker::BranchReductionOptimizationTracker,
+    expression::JuMP.AffExpr,
+    component_key_1::Type{U},
+    component_key_2::String,
+    expression_key_1::Type{T},
+    expression_key_2::Int,
+    segment_name::String,
+    t::Int,
+) where {
+    T <: PostContingencyExpressions,
+    U <: PSY.Component,
+}
+    reduced_branch_expression_tracker = get_expression_dict(reduction_tracker)
+    level_1_map = get!(
+        reduced_branch_expression_tracker,
+        (component_key_1, component_key_2),
+        Dict{
+            Tuple{Type{<:ISOPT.ExpressionType}, Int},
+            Dict{String, Dict{Int, JuMP.AffExpr}},
+        }(),
+    )
+    level_2_map =
+        get!(
+            level_1_map,
+            (expression_key_1, expression_key_2),
+            Dict{String, Dict{Int, JuMP.AffExpr}}(),
+        )
+    level_3_map = get!(level_2_map, segment_name, Dict{Int, JuMP.AffExpr}())
+    level_3_map[t] = expression
+    return
 end
 
 function _add_variable_to_tracker!(
@@ -158,6 +325,28 @@ _get_segment_type(::T) where {T <: PSY.ACBranch} = T
 _get_segment_type(tfw_tuple::Tuple{PSY.ThreeWindingTransformer, Int}) =
     typeof(first(tfw_tuple))
 _get_segment_type(x::Set) = typeof(first(x))
+
+function get_branch_name_constraint_axis(
+    nrd::PNM.NetworkReductionData,
+    all_branch_maps_by_type::Dict,
+    ::Type{U},
+    reduction_tracker::BranchReductionOptimizationTracker,
+) where {U <: ISOPT.ConstraintType}
+    ac_transmission_types = PNM.get_ac_transmission_types(nrd)
+    name_axis = Vector{String}()
+    for ac_type in ac_transmission_types
+        name_axis_by_type = Vector{String}()
+        for map_name in NETWORK_REDUCTION_MAPS
+            map = all_branch_maps_by_type[map_name]
+            !haskey(map, ac_type) && continue
+            for entry in values(map[ac_type])
+                _add_names_to_axis!(name_axis, entry, ac_type, U, reduction_tracker)
+            end
+        end
+        vcat(name_axis, name_axis_by_type)
+    end
+    return name_axis
+end
 
 function get_branch_name_constraint_axis(
     all_branch_maps_by_type::Dict,
