@@ -1,3 +1,5 @@
+# TODO - error if a the outage is associated with a reduced branch in N-1 formulation
+# TODO - remove this method (get_min_max_limits) after refactoring N-1 for network reductions
 """
 Min and max limits for post-contingency branch flows for Abstract Branch Formulation and SecurityConstrainedPTDF Network formulation
 """
