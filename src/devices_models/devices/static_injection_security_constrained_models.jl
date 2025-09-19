@@ -879,7 +879,7 @@ function construct_service!(
 
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
     if isempty(associated_outages)
-        @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for that service."
+        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for service formulation $F."
         return
     end
 
@@ -920,7 +920,7 @@ function construct_service!(
 
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
     if isempty(associated_outages)
-        @info "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for that service."
+        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for service formulation $F."
         return
     end
 
