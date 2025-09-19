@@ -687,15 +687,13 @@ function add_linear_ramp_constraints!(
         for outage in associated_outages
             name_outage = IS.get_uuid(outage)
             associated_devices =
-                PSY.get_name.(
                     PSY.get_associated_components(
                         sys,
                         outage;
                         component_type = PSY.Generator,
-                    )
                 )
 
-            if name in associated_devices
+            if device in associated_devices
                 continue
             end
 
@@ -817,14 +815,11 @@ function add_variables!(
 
     for outage in associated_outages
         outage_name = IS.get_uuid(outage)
-        associated_devices =
-            PSY.get_name.(
-                PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
-            )
+        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
 
-        for d in contributing_devices
-            name = PSY.get_name(d)
-            device_is_in_reserve_devices = name in associated_devices
+        for device in contributing_devices
+            name = PSY.get_name(device)
+            device_is_in_reserve_devices = device in associated_devices
 
             for t in time_steps
                 variable[outage_name, name, t] = JuMP.@variable(
@@ -1146,16 +1141,14 @@ function add_to_expression!(
     mult = get_variable_multiplier(U(), R, F())
 
     for outage in associated_outages
-        associated_devices =
-            PSY.get_name.(
-                PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
-            )
+        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+
         name_outage = IS.get_uuid(outage)
 
-        for d in contributing_devices
-            name = PSY.get_name(d)
+        for device in contributing_devices
+            name = PSY.get_name(device)
 
-            if name in associated_devices
+            if device in associated_devices #The contributting device cannot contribute to the reserves deployment if it has the outage
                 continue
             end
 
@@ -1212,20 +1205,18 @@ function add_to_expression!(
     network_reduction = get_network_reduction(network_model)
 
     for outage in associated_outages
-        associated_devices =
-            PSY.get_name.(
-                PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
-            )
+        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        
         name_outage = IS.get_uuid(outage)
 
-        for d in contributing_devices
-            name = PSY.get_name(d)
+        for device in contributing_devices
+            name = PSY.get_name(device)
 
-            if name in associated_devices
+            if device in associated_devices
                 continue
             end
 
-            bus_number = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+            bus_number = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(device))
 
             for t in time_steps
                 _add_to_jump_expression!(
@@ -1277,15 +1268,15 @@ function add_to_expression!(
 
     network_reduction = get_network_reduction(network_model)
 
-    for (d, outage) in attribute_device_map
+    for (device, outage) in attribute_device_map
         if !(outage in associated_outages)
             continue
         end
         name_outage = IS.get_uuid(outage)
-        name = PSY.get_name(d)
-        variable = get_variable(container, U(), typeof(d))
-        mult = get_variable_multiplier(U(), typeof(d), F())
-        bus_number = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        name = PSY.get_name(device)
+        variable = get_variable(container, U(), typeof(device))
+        mult = get_variable_multiplier(U(), typeof(device), F())
+        bus_number = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(device))
         for t in time_steps
             _add_to_jump_expression!(
                 expression[name_outage, bus_number, t],
@@ -1582,7 +1573,7 @@ function add_constraints!(
         container,
         T(),
         R,
-        [IS.get_uuid(d) for d in associated_outages],
+        [IS.get_uuid(o) for o in associated_outages],
         time_steps;
         meta = service_name,
     )
@@ -1730,17 +1721,14 @@ function add_constraints!(
     )
 
     for outage in associated_outages
-        associated_devices =
-            PSY.get_name.(
-                PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
-            )
+        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         name_outage = IS.get_uuid(outage)
 
         for device in contributing_devices
             name = get_name(device)
             @debug "adding $T for device $name and outage $name_outage"
 
-            if name in associated_devices
+            if device in associated_devices
                 continue
             end
 
