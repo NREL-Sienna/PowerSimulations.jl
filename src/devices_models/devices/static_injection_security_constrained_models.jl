@@ -859,7 +859,8 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.Reserve, F <: RangeReserveWithDeliverabilityConstraints}
+) where {SR <: PSY.AbstractReserve, 
+         F <: AbstractSecurityConstrainedReservesFormulation}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
@@ -899,11 +900,12 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::ServiceModel{SR, RangeReserveWithDeliverabilityConstraints},
+    model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {SR <: PSY.Reserve}
+) where {SR <: PSY.AbstractReserve,
+         F <: AbstractSecurityConstrainedReservesFormulation}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
