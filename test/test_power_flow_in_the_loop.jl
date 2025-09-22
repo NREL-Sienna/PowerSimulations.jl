@@ -61,7 +61,6 @@ end
         system = build_system(PSITestSystems, "c_sys5_uc")
 
         line = get_component(Line, system, "1")
-        replace_line && display(line)
         # split line into 2 parallel lines.
         if replace_line
             original_impedance = get_r(line) + im * get_x(line)
@@ -82,7 +81,6 @@ end
                     angle_limits = get_angle_limits(line),
                     rating = get_rating(line),
                 )
-                i == 1 && display(l)
                 add_component!(system, l)
             end
         end
@@ -253,12 +251,10 @@ end
                     [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]),
             ),
         )
-        display(typeof(thermal_results))
         min_time = minimum(thermal_results.DateTime)
         max_time = maximum(thermal_results.DateTime)
         first_result = filter(row -> row[:DateTime] == min_time, thermal_results)
         last_result = filter(row -> row[:DateTime] == max_time, thermal_results)
-        show(first_result)
 
         available_aux_variables = list_aux_variable_keys(results_ed)
         loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
@@ -276,7 +272,6 @@ end
             )
             @test !isnothing(loss_factors)
             # count distinct time periods
-            show(loss_factors)
             @test length(unique(loss_factors.DateTime)) == 48 * 12
         else
             @test loss_factors_aux_var_key ∉ available_aux_variables
