@@ -174,6 +174,7 @@ function construct_device!(
     model::DeviceModel{T, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen, D <: AbstractSecurityConstrainedUnitCommitment}
+
     devices = get_available_components(model, sys)
     add_constraints!(
         container,
