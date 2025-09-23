@@ -796,66 +796,6 @@ function add_to_expression!(
     return
 end
 
-"""
-Default implementation to add generators Expressions for Post-Contingency Generation
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    ::Type{D},
-    generators::IS.FlattenIteratorWrapper{V},
-    generator_outages::Vector{V},
-    ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
-) where {
-    T <: PostContingencyActivePowerGeneration,
-    U <: ActivePowerVariable,
-    D <: PostContingencyActivePowerChangeVariable,
-    V <: PSY.Generator,
-    W <: AbstractSecurityConstrainedUnitCommitment,
-    X <: AbstractPTDFModel,
-}
-    time_steps = get_time_steps(container)
-
-    expressions =
-        lazy_container_addition!(container, PostContingencyActivePowerGeneration, V,
-            get_name.(generator_outages),
-            get_name.(generators),
-            time_steps)
-
-    #variable_generator_outages = get_variable(container, U(), V)
-    variable_generator = get_variable(container, U(), V)
-    variable_generator_change = get_variable(container, D(), V)
-
-    for generator in generators
-        variable_generator = get_variable(container, U(), typeof(generator))
-        generator_name = get_name(generator)
-
-        for generator_outage in generator_outages
-            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
-            if generator_outage == generator
-                continue
-            end
-
-            generator_outage_name = get_name(generator_outage)
-
-            for t in time_steps
-                _add_to_jump_expression!(
-                    expressions[generator_outage_name, generator_name, t],
-                    variable_generator[generator_name, t],
-                    1.0,
-                )
-                _add_to_jump_expression!(
-                    expressions[generator_outage_name, generator_name, t],
-                    variable_generator_change[generator_outage_name, generator_name, t],
-                    1.0,
-                )
-            end
-        end
-    end
-    return
-end
 
 
 function add_to_expression!(
