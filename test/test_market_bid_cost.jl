@@ -49,6 +49,92 @@ const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
     end
 end
 
+@testset "Test Renewable Dispatch MarketBidCost models" begin
+    test_cases = [
+        ("Base case", "fixed_market_bid_cost", 18487.236, 30.0, 30.0),
+        ("Greater initial input, no load", "fixed_market_bid_cost", 18487.236, 31.0, 31.0),
+        ("Greater initial input only", "fixed_market_bid_cost", 18487.236, 30.0, 31.0),
+    ]
+    for (name, sys_name, cost_reference, my_no_load, my_initial_input) in test_cases
+        @testset "$name" begin
+            sys = build_system(PSITestSystems, "c_$(sys_name)")
+            PSY.with_units_base(sys, IS.UnitSystem.SYSTEM_BASE) do
+                sys = build_system(PSITestSystems, "c_$(sys_name)")
+                unit1 = get_component(ThermalStandard, sys, "Test Unit1")
+                remove_component!(sys, unit1)
+                @assert unit1 isa ThermalStandard
+
+                rg1 = PSY.RenewableDispatch(;
+                    name = "RG1",
+                    available = true,
+                    bus = get_bus(unit1),
+                    active_power = get_active_power(unit1),
+                    reactive_power = get_reactive_power(unit1),
+                    rating = get_rating(unit1),
+                    prime_mover_type = PSY.PrimeMovers.PVe,
+                    reactive_power_limits = get_reactive_power_limits(unit1),
+                    power_factor = 0.9,
+                    operation_cost = MarketBidCost(;
+                        start_up = (hot = 0.0, warm = 0.0, cold = 0.0),
+                        shut_down = 0.0,
+                    ),
+                    base_power = get_base_power(unit1),
+                )
+                add_component!(sys, rg1)
+
+                # add a max_active_power time series to the component
+                load = first(PSY.get_components(PSY.PowerLoad, sys))
+                load_ts = get_time_series(Deterministic, load, "max_active_power")
+                num_windows = length(get_data(load_ts))
+                num_forecast_steps =
+                    floor(Int, get_horizon(load_ts) / get_interval(load_ts))
+                total_steps = num_windows + num_forecast_steps - 1
+                dates = range(
+                    get_initial_timestamp(load_ts);
+                    step = get_interval(load_ts),
+                    length = total_steps,
+                )
+                MAGNITUDE = 2.0
+                RANDOM_VARIATION = 0.2
+                rg_data =
+                    MAGNITUDE .* ones(total_steps) .+ RANDOM_VARIATION .* rand(total_steps)
+                rg_ts = SingleTimeSeries("max_active_power", TimeArray(dates, rg_data))
+                add_time_series!(sys, rg1, rg_ts)
+                transform_single_time_series!(
+                    sys,
+                    get_horizon(load_ts),
+                    get_interval(load_ts),
+                )
+
+                # attach the market bid cost to the renewable generator
+                old_fd = get_function_data(
+                    get_value_curve(
+                        get_incremental_offer_curves(get_operation_cost(unit1)),
+                    ),
+                )
+                new_vc = PiecewiseIncrementalCurve(old_fd, my_initial_input, my_no_load)
+                set_incremental_offer_curves!(get_operation_cost(rg1), CostCurve(new_vc))
+                set_no_load_cost!(get_operation_cost(rg1), my_no_load)
+
+                template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+                set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+                set_device_model!(template, PowerLoad, StaticPowerLoad)
+                set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+                model = DecisionModel(
+                    template,
+                    sys;
+                    name = "UC_$(sys_name)",
+                    optimizer = HiGHS_optimizer,
+                    system_to_file = false,
+                    optimizer_solve_log_print = true,
+                )
+                @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+                @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+            end
+        end
+    end
+end
+
 "Set the no_load_cost to `nothing` and the initial_input to the old no_load_cost. Not designed for time series"
 function no_load_to_initial_input!(comp::Generator)
     cost = get_operation_cost(comp)::MarketBidCost
@@ -675,12 +761,18 @@ end
 
 """
 Helper function to tweak load powers, non-MBC generator powers, and non-MBC generator costs
-to exercise the generators we want to test
+to exercise the generators we want to test.
+
+Multiplies {} for {} by {}:
+- max active power, all loads, load_pow_mult
+- active power limits, non-MBC ThermalStandard, therm_pow_mult
+- operational costs, non-MBC ThermalStandard, therm_price_mult
 """
 function tweak_system!(sys::System, load_pow_mult, therm_pow_mult, therm_price_mult)
     for load in get_components(PowerLoad, sys)
         set_max_active_power!(load, get_max_active_power(load) * load_pow_mult)
     end
+    # replace with type of component?
     for therm in get_components(ThermalStandard, sys)
         op_cost = get_operation_cost(therm)
         op_cost isa MarketBidCost && continue
@@ -889,6 +981,7 @@ end
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
 
     for use_simulation in (false, true)
+        # the following 3 tests all fail when use_simulation is false.
         (decisions1, decisions2) = run_startup_shutdown_obj_fun_test(
             c_sys5_pglib1a,
             c_sys5_pglib2a;

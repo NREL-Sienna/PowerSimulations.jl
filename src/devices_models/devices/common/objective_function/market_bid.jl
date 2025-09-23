@@ -258,6 +258,37 @@ function _process_market_bid_parameters_helper(
     end
 end
 
+mbc_params(::Union{Type{PSY.ThermalStandard}, Type{PSY.ThermalMultiStart}}) = (
+    StartupCostParameter(),
+    ShutdownCostParameter(),
+    IncrementalCostAtMinParameter(),
+    IncrementalPiecewiseLinearSlopeParameter(),
+    IncrementalPiecewiseLinearBreakpointParameter(),
+)
+
+# TODO check startup, shutdown, cost at min and @warn if they're nonzero.
+mbc_params(::Type{PSY.RenewableDispatch}) = (
+    IncrementalPiecewiseLinearSlopeParameter(),
+    IncrementalPiecewiseLinearBreakpointParameter(),
+)
+
+# warnings are captured by the context manager, so we don't actually see them...
+function check_renewable_mbc(mbc::PSY.MarketBidCost)
+    # TODO a time series of all 0.0's should be allowed too.
+    if !isnothing(PSY.get_no_load_cost(mbc)) && PSY.get_no_load_cost(mbc) != 0.0
+        @warn "Nonzero no-load cost for renewable generation market bid cost is not supported and will be ignored." maxlog =
+            1
+    end
+    if PSY.get_start_up(mbc) != PSY.single_start_up_to_stages(0.0)
+        @warn "Nonzero startup cost for renewable generation market bid cost is not supported and will be ignored." maxlog =
+            1
+    end
+    if PSY.get_shut_down(mbc) != 0.0
+        @warn "Nonzero shutdown cost for renewable generation market bid cost is not supported and will be ignored." maxlog =
+            1
+    end
+end
+
 "Validate MarketBidCosts and add the appropriate parameters"
 function process_market_bid_parameters!(
     container::OptimizationContainer,
@@ -265,15 +296,15 @@ function process_market_bid_parameters!(
     model::DeviceModel,
 )
     devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
-
+    # TODO multiple dispatch way to integrate with existing validation, inside of
+    # _process_market_bid_parameters_helper?
+    if get_component_type(model) === PSY.RenewableDispatch
+        for device in devices
+            check_renewable_mbc(PSY.get_operation_cost(device))
+        end
+    end
     # TODO decremental
-    for param in (
-        StartupCostParameter(),
-        ShutdownCostParameter(),
-        IncrementalCostAtMinParameter(),
-        IncrementalPiecewiseLinearSlopeParameter(),
-        IncrementalPiecewiseLinearBreakpointParameter(),
-    )
+    for param in mbc_params(get_component_type(model))
         _process_market_bid_parameters_helper(param, container, model, devices)
     end
 end
@@ -312,6 +343,8 @@ end
 ################# PWL Constraints ################
 ##################################################
 
+# without this, you get "variable OnVariable__RenewableDispatch is not stored"
+_include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
 _include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
 _include_min_gen_power_in_constraint(::PSY.InterruptiblePowerLoad, ::ActivePowerVariable) =
     false
