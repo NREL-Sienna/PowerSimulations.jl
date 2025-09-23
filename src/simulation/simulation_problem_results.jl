@@ -294,16 +294,29 @@ See also [`load_results!`](@ref) to preload data into memory.
   - `start_time::Dates.DateTime`: Start time of the requested results. Emulation problems
     only.
   - `len::Int`: Number of rows in each DataFrame. Emulation problems only.
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns, matching earlier versions
+    of PowerSimulations.jl.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 
 # Examples
 
 ```julia
-julia > variables_as_strings =
+julia> variables_as_strings =
     ["ActivePowerVariable__ThermalStandard", "ActivePowerVariable__RenewableDispatch"]
-julia > variables_as_types =
+julia> variables_as_types =
     [(ActivePowerVariable, ThermalStandard), (ActivePowerVariable, RenewableDispatch)]
-julia > read_realized_variables(results, variables_as_strings)
-julia > read_realized_variables(results, variables_as_types)
+julia> df_long =read_realized_variables(results, variables_as_strings)
+julia> df_long = read_realized_variables(results, variables_as_types)
+julia> df_wide = read_realized_variables(results, variables_as_types, table_format = TableFormat.WIDE)
+julia> using DataFramesMeta
+julia> df_agg_generators = @chain df_long begin
+    @groupby(:DateTime)
+    @combine(:value = sum(:value))
+end
 ```
 """
 function read_realized_variables(res::SimulationProblemResults; kwargs...)
@@ -365,12 +378,19 @@ See also [`load_results!`](@ref) to preload data into memory.
   - `start_time::Dates.DateTime`: Start time of the requested results. Emulation problems
     only.
   - `len::Int`: Number of rows in each DataFrame. Emulation problems only.
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 
 # Examples
 
 ```julia
 julia > read_realized_variable(results, "ActivePowerVariable__ThermalStandard")
 julia > read_realized_variable(results, (ActivePowerVariable, ThermalStandard))
+julia > read_realized_variable(results, (ActivePowerVariable, ThermalStandard), table_format = TableFormat.WIDE)
 ```
 """
 function read_realized_variable(

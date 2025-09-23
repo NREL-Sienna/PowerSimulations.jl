@@ -196,7 +196,7 @@ Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
 function get_column_names(key::ParameterKey, c::ParameterContainer)
-    return get_column_names(key, get_multiplier_array(c))
+    return get_column_names_from_axis_array(key, get_multiplier_array(c))
 end
 
 const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}
@@ -407,8 +407,8 @@ should_write_resulting_value(::Type{<:EventParameter}) = true
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
-should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = false  # because 3D is currently unsupported
-should_write_resulting_value(::Type{<:AbstractPiecewiseLinearSlopeParameter}) = false  # because 3D is currently unsupported
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearSlopeParameter}) = true
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = true
 
 convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
 convert_result_to_natural_units(

@@ -101,8 +101,16 @@ end
     @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     results = OptimizationProblemResults(model)
-    expr = read_expression(results, "ProductionCostExpression__InterruptiblePowerLoad")
-    p_l = read_variable(results, "ActivePowerVariable__InterruptiblePowerLoad")
+    expr = read_expression(
+        results,
+        "ProductionCostExpression__InterruptiblePowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    p_l = read_variable(
+        results,
+        "ActivePowerVariable__InterruptiblePowerLoad";
+        table_format = TableFormat.WIDE,
+    )
     index = findfirst(row -> isapprox(100, row; atol = 1e-6), p_l.IloadBus4)
     calculated_cost = expr[index, "IloadBus4"][1]
     @test isapprox(-5700, calculated_cost; atol = 1)

@@ -43,12 +43,13 @@
         only(PSI.get_power_flow_evaluation_data(PSI.get_optimization_container(model_m))),
     )
     base_power = get_base_power(system)
+    phase_results = vd["FlowActivePowerVariable__PhaseShiftingTransformer"]
 
     # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
     @test isapprox(
         data.bus_activepower_injection[data.bus_lookup[get_number(get_to(arc))], :] *
         base_power,
-        vd["FlowActivePowerVariable__PhaseShiftingTransformer"][:, get_name(line)],
+        filter(row -> row[:name] == get_name(line), phase_results)[!, :value],
         atol = 1e-9,
         rtol = 0,
     )
@@ -97,16 +98,18 @@ end
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         results = OptimizationProblemResults(model_m)
         vd = read_aux_variables(results)
+        active_power_ft = vd["PowerFlowLineActivePowerFromTo__Line"]
+        reactive_power_ft = vd["PowerFlowLineReactivePowerFromTo__Line"]
         if replace_line
             name = "$(get_name(line))_1"
             parallel_line_flow =
-                vd["PowerFlowLineActivePowerFromTo__Line"][:, name][1] +
-                im * vd["PowerFlowLineReactivePowerFromTo__Line"][:, name][1]
+                filter(row -> row[:name] == name, active_power_ft)[1, :value][1] +
+                im * filter(row -> row[:name] == name, reactive_power_ft)[1, :value][1]
         else
             name = get_name(line)
             original_line_flow =
-                vd["PowerFlowLineActivePowerFromTo__Line"][:, name][1] +
-                im * vd["PowerFlowLineReactivePowerFromTo__Line"][:, name][1]
+                filter(row -> row[:name] == name, active_power_ft)[1, :value][1] +
+                im * filter(row -> row[:name] == name, reactive_power_ft)[1, :value][1]
         end
     end
 
@@ -254,8 +257,10 @@ end
                     [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]),
             ),
         )
-        first_result = first(thermal_results)
-        last_result = last(thermal_results)
+        min_time = minimum(thermal_results.DateTime)
+        max_time = maximum(thermal_results.DateTime)
+        first_result = filter(row -> row[:DateTime] == min_time, thermal_results)
+        last_result = filter(row -> row[:DateTime] == max_time, thermal_results)
 
         available_aux_variables = list_aux_variable_keys(results_ed)
         loss_factors_aux_var_key = PSI.AuxVarKey(PowerFlowLossFactors, ACBus)
@@ -272,7 +277,8 @@ end
                 ),
             )
             @test !isnothing(loss_factors)
-            @test nrow(loss_factors) == 48 * 12
+            # count distinct time periods
+            @test length(unique(loss_factors.DateTime)) == 48 * 12
         else
             @test loss_factors_aux_var_key ∉ available_aux_variables
         end
@@ -286,23 +292,25 @@ end
                 ),
             )
             @test !isnothing(voltage_stability)
-            @test nrow(voltage_stability) == 48 * 12
+            @test length(unique(voltage_stability.DateTime)) == 48 * 12
         else
             @test voltage_stability_aux_var_key ∉ available_aux_variables
         end
 
         @test length(filter(x -> isdir(joinpath(pf_path, x)), readdir(pf_path))) == 48 * 12
+        # this now returns a system?!
         first_export = load_pf_export(pf_path, "export_1_1")
         last_export = load_pf_export(pf_path, "export_48_12")
 
         # Test that the active powers written to the first and last exports line up with the real simulation results
         for gen_name in get_name.(get_components(ThermalStandard, c_sys5_hy_ed))
-            this_first_result = first_result[gen_name]
+            this_first_result =
+                filter(row -> row[:name] == gen_name, first_result)[1, :value]
             this_first_exported =
                 get_active_power(get_component(ThermalStandard, first_export, gen_name))
             @test isapprox(this_first_result, this_first_exported)
 
-            this_last_result = last_result[gen_name]
+            this_last_result = filter(row -> row[:name] == gen_name, last_result)[1, :value]
             this_last_exported =
                 get_active_power(get_component(ThermalStandard, last_export, gen_name))
             @test isapprox(this_last_result, this_last_exported)

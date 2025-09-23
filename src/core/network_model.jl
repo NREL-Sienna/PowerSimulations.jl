@@ -435,6 +435,7 @@ _assign_subnetworks_to_buses(
     ::NetworkModel{T},
     ::PSY.System,
 ) where {T <: PM.AbstractPowerModel} = nothing
+
 function get_reference_bus(
     model::NetworkModel{T},
     b::PSY.ACBus,

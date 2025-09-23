@@ -30,7 +30,11 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
             @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             results = OptimizationProblemResults(model)
-            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
+            expr = read_expression(
+                results,
+                "ProductionCostExpression__ThermalStandard";
+                table_format = TableFormat.WIDE,
+            )
             var_unit_cost = sum(expr[!, "Test Unit"])
             @test isapprox(var_unit_cost, cost_reference; atol = 1)
             @test expr[!, "Test Unit"][end] == 0.0
@@ -1075,14 +1079,14 @@ end
         )
 
         solve!(model; output_dir = mktempdir())
-        ptdf_vars = get_variable_values(OptimizationProblemResults(model))
-        power =
-            ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}(
-                "",
-            )]
-        on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
-        start = ptdf_vars[PowerSimulations.VariableKey{StartVariable, ThermalStandard}("")]
-        stop = ptdf_vars[PowerSimulations.VariableKey{StopVariable, ThermalStandard}("")]
+        ptdf_vars = read_variables(
+            OptimizationProblemResults(model);
+            table_format = TableFormat.WIDE,
+        )
+        power = ptdf_vars["ActivePowerVariable__ThermalStandard"]
+        on = ptdf_vars["OnVariable__ThermalStandard"]
+        start = ptdf_vars["StartVariable__ThermalStandard"]
+        stop = ptdf_vars["StopVariable__ThermalStandard"]
         power_sundance = power[!, "Sundance"]
         @test all(power_sundance .>= 1.0)
         for v in [on, start, stop]
@@ -1196,7 +1200,12 @@ end
     res_uc = get_decision_problem_results(sim_res, "UC")
 
     # Test time series <-> parameter correspondence
-    fc_uc = read_parameter(res_uc, PSI.FuelCostParameter, PSY.ThermalStandard)
+    fc_uc = read_parameter(
+        res_uc,
+        PSI.FuelCostParameter,
+        PSY.ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
     for (step_dt, step_df) in pairs(fc_uc)
         for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
             fc_comp = get_fuel_cost(
@@ -1209,7 +1218,11 @@ end
     end
 
     # Test effect on decision
-    th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
+    th_uc = read_realized_variable(
+        res_uc,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
     p_brighton = th_uc[!, "Brighton"]
     p_solitude = th_uc[!, "Solitude"]
 
@@ -1380,8 +1393,16 @@ end
     res = OptimizationProblemResults(problem)
 
     # Test that plant 101_STEAM_3 (using max power) have proper cost expression
-    cost = read_expression(res, "ProductionCostExpression__ThermalStandard")
-    p_th = read_variable(res, "ActivePowerVariable__ThermalStandard")
+    cost = read_expression(
+        res,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    p_th = read_variable(
+        res,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
     steam3 = get_component(ThermalStandard, sys, "101_STEAM_3")
     val_curve = PSY.get_value_curve(PSY.get_variable(PSY.get_operation_cost(steam3)))
     io_curve = InputOutputCurve(val_curve)

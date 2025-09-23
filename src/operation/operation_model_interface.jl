@@ -42,8 +42,12 @@ end
 
 get_problem_base_power(model::OperationModel) = PSY.get_base_power(model.sys)
 get_settings(model::OperationModel) = get_optimization_container(model).settings
+
 get_optimizer_stats(model::OperationModel) =
-    get_optimizer_stats(get_optimization_container(model))
+# This deepcopy is important because the optimization container is overwritten
+# at each solve in a simulation.
+    deepcopy(get_optimizer_stats(get_optimization_container(model)))
+
 get_simulation_info(model::OperationModel) = model.simulation_info
 get_simulation_number(model::OperationModel) = get_number(get_simulation_info(model))
 set_simulation_number!(model::OperationModel, val) =
@@ -177,7 +181,6 @@ function build_initial_conditions!(model::OperationModel)
     requires_init = false
     for (device_type, device_model) in get_device_models(get_template(model))
         requires_init = requires_initialization(get_formulation(device_model)())
-
         if requires_init
             @debug "initial_conditions required for $device_type" _group =
                 LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -390,27 +393,9 @@ read_aux_variable(model::OperationModel, key::AuxVarKey) = _read_results(model, 
 read_variable(model::OperationModel, key::VariableKey) = _read_results(model, key)
 read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model, key)
 
-function _read_col_name(axes)
-    if length(axes) == 1
-        error("Axes of size 1 are not supported")
-    end
-    # Currently, variables that don't have timestamps have a dummy axes to keep
-    # two axes in the Store (HDF or Memory). This if-else is used to decide if a
-    # dummy axes is being used or not.
-    if typeof(axes[2]) <: UnitRange{Int}
-        return axes[1]
-    elseif typeof(axes[2]) <: Vector{String}
-        IS.@assert_op length(axes[1]) == 1
-        return axes[2]
-    else
-        error("Second axes in store is not allowed to be $(typeof(axes[2]))")
-    end
-end
-
 function _read_results(model::OperationModel, key::OptimizationContainerKey)
-    res = read_results(get_store(model), key)
-    col_name = _read_col_name(axes(res))
-    return DataFrames.DataFrame(permutedims(res.data), col_name)
+    array = read_results(get_store(model), key)
+    return return to_results_dataframe(array, nothing, Val(TableFormat.LONG))
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

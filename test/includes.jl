@@ -17,12 +17,13 @@ using Logging
 # Dependencies for testing
 using PowerModels
 using DataFrames
+using DataFramesMeta
 using Dates
 using JuMP
+import JuMP.Containers: DenseAxisArray, SparseAxisArray
 using TimeSeries
 using CSV
 import JSON3
-using DataFrames
 using DataStructures
 import UUIDs
 using Random

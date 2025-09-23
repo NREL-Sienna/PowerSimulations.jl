@@ -35,9 +35,11 @@ const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             results = OptimizationProblemResults(model)
             expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
-            var_unit_cost = sum(expr[!, "Test Unit1"])
+            component_df = @rsubset(expr, :name == "Test Unit1")
+            var_unit_cost =
+                only(@combine(component_df, :var_unit_cost = sum(:value)).var_unit_cost)
             unit_cost_due_to_initial =
-                sum(.~iszero.(expr[!, "Test Unit1"]) .* my_initial_input)
+                nrow(@rsubset(component_df, :value != 0)) * my_initial_input
             @test isapprox(
                 var_unit_cost,
                 cost_reference + unit_cost_due_to_initial;
@@ -338,14 +340,14 @@ function build_sys_incr(
     return sys
 end
 
-_read_one_value(res, var_name, gentype, unit_name) =
-    combine(
-        vcat(values(read_variable_dict(res, var_name, gentype))...),
-        unit_name .=> sum,
-    )[
-        1,
-        1,
-    ]
+function _read_one_value(res, var_name, gentype, unit_name)
+    df = @chain begin
+        vcat(values(read_variable_dict(res, var_name, gentype))...)
+        @rsubset(:name == unit_name)
+        @combine(:value = sum(:value))
+    end
+    return df[1, 1]
+end
 
 function build_generic_mbc_model(sys::System; multistart::Bool = false)
     template = ProblemTemplate(
@@ -380,7 +382,11 @@ function run_generic_mbc_prob(sys::System; multistart::Bool = false, test_succes
     return model, res
 end
 
-function run_generic_mbc_sim(sys::System; multistart::Bool = false)
+function run_generic_mbc_sim(
+    sys::System;
+    multistart::Bool = false,
+    in_memory_store::Bool = false,
+)
     model = build_generic_mbc_model(sys; multistart = multistart)
     models = SimulationModels(;
         decision_models = [
@@ -404,7 +410,7 @@ function run_generic_mbc_sim(sys::System; multistart::Bool = false)
     )
 
     build!(sim; serialize = false)
-    execute!(sim; enable_progress_bar = true)
+    execute!(sim; enable_progress_bar = true, in_memory = in_memory_store)
 
     sim_res = SimulationResults(sim)
     res = get_decision_problem_results(sim_res, "UC")
@@ -416,9 +422,14 @@ Run a simple simulation with the system and return information useful for testin
 time-varying startup and shutdown functionality. Pass `simulation = false` to use a single
 decision model, `true` for a full simulation.
 """
-function run_startup_shutdown_test(sys::System; multistart::Bool = false, simulation = true)
+function run_startup_shutdown_test(
+    sys::System;
+    multistart::Bool = false,
+    simulation = true,
+    in_memory_store::Bool = false,
+)
     model, res = if simulation
-        run_generic_mbc_sim(sys; multistart = multistart)
+        run_generic_mbc_sim(sys; multistart = multistart, in_memory_store = in_memory_store)
     else
         run_generic_mbc_prob(sys; multistart = multistart)
     end
@@ -429,12 +440,17 @@ function run_startup_shutdown_test(sys::System; multistart::Bool = false, simula
     genname = multistart ? "115_STEAM_1" : "Test Unit1"
     sh_param = read_parameter_dict(res, PSI.ShutdownCostParameter, gentype)
     for (step_dt, step_df) in pairs(sh_param)
-        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
+        for gen_name in unique(step_df.name)
             comp = get_component(gentype, sys, gen_name)
             fc_comp =
                 get_shut_down(comp, PSY.get_operation_cost(comp); start_time = step_dt)
             @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
-            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
+            @test all(
+                isapprox.(
+                    @rsubset(step_df, :name == gen_name).value,
+                    TimeSeries.values(fc_comp),
+                ),
+            )
         end
     end
 
@@ -459,9 +475,14 @@ Run a simple simulation with the system and return information useful for testin
 time-varying startup and shutdown functionality.  Pass `simulation = false` to use a single
 decision model, `true` for a full simulation.
 """
-function run_mbc_sim(sys::System; is_decremental::Bool = false, simulation = true)
+function run_mbc_sim(
+    sys::System;
+    is_decremental::Bool = false,
+    simulation = true,
+    in_memory_store = false,
+)
     model, res = if simulation
-        run_generic_mbc_sim(sys)
+        run_generic_mbc_sim(sys; in_memory_store = in_memory_store)
     else
         run_generic_mbc_prob(sys)
     end
@@ -469,7 +490,7 @@ function run_mbc_sim(sys::System; is_decremental::Bool = false, simulation = tru
     # TODO test slopes, breakpoints too once we are able to write those
     ii_param = read_parameter_dict(res, PSI.IncrementalCostAtMinParameter, ThermalStandard)
     for (step_dt, step_df) in pairs(ii_param)
-        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
+        for gen_name in unique(step_df.name)
             comp = get_component(ThermalStandard, sys, gen_name)
             ii_comp = get_incremental_initial_input(
                 comp,
@@ -477,7 +498,12 @@ function run_mbc_sim(sys::System; is_decremental::Bool = false, simulation = tru
                 start_time = step_dt,
             )
             @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(ii_comp))
-            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(ii_comp)))
+            @test all(
+                isapprox.(
+                    @rsubset(step_df, :name == gen_name).value,
+                    TimeSeries.values(ii_comp),
+                ),
+            )
         end
     end
 
@@ -514,21 +540,21 @@ function _read_start_vars(::Val{true}, res::IS.Results)
         all(hot_vars[k][!, :DateTime] .== cold_vars[k][!, :DateTime]) for
         k in keys(hot_vars)
     )
-    # Make a dictionary of combined dataframes where the entries are (hot, warm, cold)
-    combined_vars = Dict(
-        k => DataFrame(
-            "DateTime" => hot_vars[k][!, :DateTime],
-            [
-                gen_name => [
-                    (hot, warm, cold) for (hot, warm, cold) in zip(
-                        hot_vars[k][!, gen_name],
-                        warm_vars[k][!, gen_name],
-                        cold_vars[k][!, gen_name],
-                    )
-                ] for gen_name in names(select(hot_vars[k], Not(:DateTime)))
-            ]...,
-        ) for k in keys(hot_vars)
-    )
+    combined_vars = Dict{DateTime, DataFrame}()
+    for timestamp in keys(hot_vars)
+        hot = hot_vars[timestamp]
+        warm = warm_vars[timestamp]
+        cold = cold_vars[timestamp]
+        combined_vars[timestamp] = @chain DataFrames.rename(hot, :value => :hot) begin
+            innerjoin(DataFrames.rename(warm, :value => :warm); on = [:DateTime, :name])
+            innerjoin(
+                DataFrames.rename(cold, :value => :cold);
+                on = [:DateTime, :name],
+            )
+            @transform(@byrow(:value = (:hot, :warm, :cold)))
+            @select(:DateTime, :name, :value)
+        end
+    end
     return combined_vars
 end
 
@@ -547,14 +573,16 @@ function cost_due_to_time_varying_startup_shutdown(
     start_vars = _read_start_vars(Val(multistart), res)
     stop_vars = read_variable_dict(res, PSI.StopVariable, gentype)
     result = SortedDict{DateTime, DataFrame}()
-    @assert all(keys(start_vars) .== keys(stop_vars))  # doesn't work with IS.@assert_op
+    IS.@assert_op collect(keys(start_vars)) == collect(keys(stop_vars))
     for step_dt in keys(start_vars)
         start_df = start_vars[step_dt]
         stop_df = stop_vars[step_dt]
-        @assert names(start_df) == names(stop_df)
+        @assert unique(start_df.name) == unique(stop_df.name)
         @assert start_df[!, :DateTime] == stop_df[!, :DateTime]
-        result[step_dt] = DataFrame(:DateTime => start_df[!, :DateTime])
-        for gen_name in names(DataFrames.select(start_df, Not(:DateTime)))
+        timestamps = unique(start_df.DateTime)
+        component_names = unique(start_df.name)
+        dfs = Vector{DataFrame}()
+        for gen_name in component_names
             comp = get_component(gentype, sys, gen_name)
             cost = PSY.get_operation_cost(comp)
             (cost isa PSY.MarketBidCost) || continue
@@ -563,16 +591,30 @@ function cost_due_to_time_varying_startup_shutdown(
             startup_ts = get_start_up(comp, cost; start_time = step_dt)
             shutdown_ts = get_shut_down(comp, cost; start_time = step_dt)
 
-            @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(startup_ts))
-            @assert all(start_df[!, :DateTime] .== TimeSeries.timestamp(shutdown_ts))
+            @assert all(unique(start_df.DateTime) .== TimeSeries.timestamp(startup_ts))
+            @assert all(unique(start_df.DateTime) .== TimeSeries.timestamp(shutdown_ts))
             startup_values = if multistart
                 TimeSeries.values(startup_ts)
             else
                 getproperty.(TimeSeries.values(startup_ts), :hot)
             end
-            result[step_dt][!, gen_name] =
-                LinearAlgebra.dot.(start_df[!, gen_name], startup_values) .+
-                stop_df[!, gen_name] .* TimeSeries.values(shutdown_ts)
+            push!(
+                dfs,
+                DataFrame(
+                    :DateTime => timestamps,
+                    :name => repeat([gen_name], length(timestamps)),
+                    :value =>
+                        LinearAlgebra.dot.(
+                            @rsubset(start_df, :name == gen_name).value,
+                            startup_values,
+                        ) .+
+                        @rsubset(stop_df, :name == gen_name).value .*
+                        TimeSeries.values(shutdown_ts),
+                ),
+            )
+        end
+        if !isempty(dfs)
+            result[step_dt] = vcat(dfs...)
         end
     end
     return result
@@ -594,26 +636,39 @@ function cost_due_to_time_varying_mbc(
         power_df = power_vars[step_dt]
         @assert names(on_df) == names(power_df)
         @assert on_df[!, :DateTime] == power_df[!, :DateTime]
-        result[step_dt] = DataFrame(:DateTime => on_df[!, :DateTime])
-        for gen_name in names(DataFrames.select(on_df, Not(:DateTime)))
+        step_df = DataFrame(:DateTime => unique(on_df.DateTime))
+        gen_names = unique(on_df.name)
+        for gen_name in gen_names
             comp = get_component(gentype, sys, gen_name)
             cost = PSY.get_operation_cost(comp)
             (cost isa MarketBidCost) || continue
-            result[step_dt][!, gen_name] .= 0.0
+            step_df[!, gen_name] .= 0.0
             if PSI.is_time_variant(get_incremental_initial_input(cost))
                 ii_ts = get_incremental_initial_input(comp, cost; start_time = step_dt)
-                @assert all(on_df[!, :DateTime] .== TimeSeries.timestamp(ii_ts))
-                result[step_dt][!, gen_name] .+=
-                    on_df[!, gen_name] .* TimeSeries.values(ii_ts)
+                @assert all(unique(on_df.DateTime) .== TimeSeries.timestamp(ii_ts))
+                step_df[!, gen_name] .+=
+                    @rsubset(on_df, :name == gen_name).value .*
+                    TimeSeries.values(ii_ts)
             end
             # TODO decremental
             if PSI.is_time_variant(get_incremental_offer_curves(cost))
                 vc_ts = get_incremental_offer_curves(comp, cost; start_time = step_dt)
-                @assert all(power_df[!, :DateTime] .== TimeSeries.timestamp(vc_ts))
-                result[step_dt][!, gen_name] .+=
-                    _calc_pwi_cost.(power_df[!, gen_name], TimeSeries.values(vc_ts))
+                @assert all(unique(power_df.DateTime) .== TimeSeries.timestamp(vc_ts))
+                step_df[!, gen_name] .+=
+                    _calc_pwi_cost.(
+                        @rsubset(power_df, :name == gen_name).value,
+                        TimeSeries.values(vc_ts),
+                    )
             end
         end
+        measure_vars = [x for x in names(step_df) if x != "DateTime"]
+        result[step_dt] =
+            DataFrames.stack(
+                step_df,
+                measure_vars;
+                variable_name = :name,
+                value_name = :value,
+            )
     end
     return result
 end
@@ -666,15 +721,10 @@ end
 function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
     @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
 
-    # Sum across components, time periods to get one value per step
-    total1 = [
-        only(sum(eachcol(combine(val, Not(:DateTime) .=> sum)))) for
-        val in values(ground_truth_1)
-    ]
-    total2 = [
-        only(sum(eachcol(combine(val, Not(:DateTime) .=> sum)))) for
-        val in values(ground_truth_2)
-    ]
+    total1 =
+        [only(@combine(df, :total = sum(:value)).total) for df in values(ground_truth_1)]
+    total2 =
+        [only(@combine(df, :total = sum(:value)).total) for df in values(ground_truth_2)]
     ground_truth_diff = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
 
     obj1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
@@ -695,17 +745,29 @@ affect the objective value, then compare the size of the objective value change 
 expectation computed manually.
 
 Pass `simulation = false` to use a single decision model, `true` for a full simulation.
+Pass `in_memory_store = true` to use an in-memory store for the simulation. Default is HDF5.
 """
 function run_startup_shutdown_obj_fun_test(
     sys1,
     sys2;
     multistart::Bool = false,
     simulation = true,
+    in_memory_store::Bool = false,
 )
     _, res1, decisions1 =
-        run_startup_shutdown_test(sys1; multistart = multistart, simulation = simulation)
+        run_startup_shutdown_test(
+            sys1;
+            multistart = multistart,
+            simulation = simulation,
+            in_memory_store = in_memory_store,
+        )
     _, res2, decisions2 =
-        run_startup_shutdown_test(sys2; multistart = multistart, simulation = simulation)
+        run_startup_shutdown_test(
+            sys2;
+            multistart = multistart,
+            simulation = simulation,
+            in_memory_store = in_memory_store,
+        )
 
     ground_truth_1 =
         cost_due_to_time_varying_startup_shutdown(sys1, res1; multistart = multistart)
@@ -717,11 +779,27 @@ function run_startup_shutdown_obj_fun_test(
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
-function run_mbc_obj_fun_test(sys1, sys2; is_decremental::Bool = false, simulation = true)
+function run_mbc_obj_fun_test(
+    sys1,
+    sys2;
+    is_decremental::Bool = false,
+    simulation = true,
+    in_memory_store = false,
+)
     _, res1, decisions1 =
-        run_mbc_sim(sys1; is_decremental = is_decremental, simulation = simulation)
+        run_mbc_sim(
+            sys1;
+            is_decremental = is_decremental,
+            simulation = simulation,
+            in_memory_store = in_memory_store,
+        )
     _, res2, decisions2 =
-        run_mbc_sim(sys2; is_decremental = is_decremental, simulation = simulation)
+        run_mbc_sim(
+            sys2;
+            is_decremental = is_decremental,
+            simulation = simulation,
+            in_memory_store = in_memory_store,
+        )
 
     ground_truth_1 =
         cost_due_to_time_varying_mbc(sys1, res1; is_decremental = is_decremental)
@@ -780,11 +858,19 @@ approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
     add_startup_shutdown_ts_a!(sys2, true)
 
     for use_simulation in (false, true)
-        (decisions1, decisions2) =
-            run_startup_shutdown_obj_fun_test(sys1, sys2; simulation = use_simulation)
-        @test all(isapprox.(decisions1, decisions2))
-        # Make sure our tests included sufficent startups and shutdowns
-        @assert all(approx_geq_1.(decisions1))
+        in_memory_store_opts = use_simulation ? [false, true] : [false]
+        for in_memory_store in in_memory_store_opts
+            (decisions1, decisions2) =
+                run_startup_shutdown_obj_fun_test(
+                    sys1,
+                    sys2;
+                    simulation = use_simulation,
+                    in_memory_store = in_memory_store,
+                )
+            @test all(isapprox.(decisions1, decisions2))
+            # Make sure our tests included sufficent startups and shutdowns
+            @assert all(approx_geq_1.(decisions1))
+        end
     end
 end
 
@@ -835,10 +921,18 @@ end
     varying = build_sys_incr(true, false, false)
 
     for use_simulation in (false, true)
-        decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
-        @test all(isapprox.(decisions1, decisions2))
-        @assert all(approx_geq_1.(decisions1))
+        in_memory_store_opts = use_simulation ? [false, true] : [false]
+        for in_memory_store in in_memory_store_opts
+            decisions1, decisions2 =
+                run_mbc_obj_fun_test(
+                    baseline,
+                    varying;
+                    simulation = use_simulation,
+                    in_memory_store = in_memory_store,
+                )
+            @test all(isapprox.(decisions1, decisions2))
+            @assert all(approx_geq_1.(decisions1))
+        end
     end
 end
 
@@ -847,10 +941,18 @@ end
     varying = build_sys_incr(false, false, true)
 
     for use_simulation in (false, true)
-        decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
-        @assert all(isapprox.(decisions1, decisions2))
-        @assert all(approx_geq_1.(decisions1))
+        in_memory_store_opts = use_simulation ? [false, true] : [false]
+        for in_memory_store in in_memory_store_opts
+            decisions1, decisions2 =
+                run_mbc_obj_fun_test(
+                    baseline,
+                    varying;
+                    simulation = use_simulation,
+                    in_memory_store = in_memory_store,
+                )
+            @test all(isapprox.(decisions1, decisions2))
+            @assert all(approx_geq_1.(decisions1))
+        end
     end
 end
 
@@ -859,10 +961,18 @@ end
     varying = build_sys_incr(false, true, false)
 
     for use_simulation in (false, true)
-        decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
-        @assert all(isapprox.(decisions1, decisions2))
-        @assert all(approx_geq_1.(decisions1))
+        in_memory_store_opts = use_simulation ? [false, true] : [false]
+        for in_memory_store in in_memory_store_opts
+            decisions1, decisions2 =
+                run_mbc_obj_fun_test(
+                    baseline,
+                    varying;
+                    simulation = use_simulation,
+                    in_memory_store = in_memory_store,
+                )
+            @test all(isapprox.(decisions1, decisions2))
+            @assert all(approx_geq_1.(decisions1))
+        end
     end
 end
 
@@ -944,4 +1054,24 @@ end
     mkpath(test_path)
     PSI.set_output_dir!(model, test_path)
     @test_throws "Inconsistent minimum breakpoint values" PSI.build_impl!(model)
+end
+
+@testset "Test 3d results" begin
+    # TODO DT: Test actual values
+    varying = build_sys_incr(true, true, true)
+    for in_memory_store in (false, true)
+        # model1, res1 = run_generic_mbc_sim(baseline)
+        model2, res2 = run_generic_mbc_sim(varying; in_memory_store = in_memory_store)
+        parameters = read_parameters(res2)
+        @test haskey(
+            parameters,
+            "IncrementalPiecewiseLinearBreakpointParameter__ThermalStandard",
+        )
+        for df in
+            values(
+            parameters["IncrementalPiecewiseLinearBreakpointParameter__ThermalStandard"],
+        )
+            @test names(df) == ["DateTime", "name", "name2", "value"]
+        end
+    end
 end

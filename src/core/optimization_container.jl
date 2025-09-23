@@ -2086,6 +2086,32 @@ function get_time_series_initial_values!(
     return ts_values
 end
 
+"""
+Get the column names for the specified container in the OptimizationContainer.
+
+# Arguments
+- `container::OptimizationContainer`: The optimization container.
+- `field::Symbol`: The field for which to retrieve the column names.
+- `key::OptimizationContainerKey`: The key for which to retrieve the column names.
+
+# Returns
+- `Tuple`: Tuple of Vector{String}.
+"""
+function get_column_names(
+    ::OptimizationContainer,
+    field::Symbol,
+    subcontainer,
+    key::OptimizationContainerKey,
+)
+    return if field == :parameters
+        # Parameters are stored in ParameterContainer.
+        get_column_names(key, subcontainer)
+    else
+        # The others are in DenseAxisArrays.
+        get_column_names_from_axis_array(key, subcontainer)
+    end
+end
+
 lookup_value(container::OptimizationContainer, key::VariableKey) =
     get_variable(container, key)
 lookup_value(container::OptimizationContainer, key::ParameterKey) =

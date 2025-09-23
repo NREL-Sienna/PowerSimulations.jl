@@ -610,13 +610,25 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test all(interarea_flow[!, "1_2"] .<= 150)
     @test all(interarea_flow[!, "1_2"] .>= -150)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
     zone_1_gen = sum(
@@ -743,7 +755,11 @@ end
 
     results = OptimizationProblemResults(ps_model)
     interface_results =
-        read_expression(results, "InterfaceTotalFlow__TransmissionInterface")
+        read_expression(
+            results,
+            "InterfaceTotalFlow__TransmissionInterface";
+            table_format = TableFormat.WIDE,
+        )
     for i in 1:24
         @test interface_results[!, "interface1_2_3"][i] <= 100.0
     end

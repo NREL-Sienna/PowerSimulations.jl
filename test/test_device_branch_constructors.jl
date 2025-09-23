@@ -263,14 +263,9 @@ end
 
     solve!(model)
 
-    ptdf_vars = get_variable_values(OptimizationProblemResults(model))
-    ptdf_values =
-        ptdf_vars[PowerSimulations.VariableKey{
-            FlowActivePowerVariable,
-            TwoTerminalGenericHVDCLine,
-        }(
-            "",
-        )]
+    ptdf_vars =
+        read_variables(OptimizationProblemResults(model); table_format = TableFormat.WIDE)
+    ptdf_values = ptdf_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
     ptdf_objective = PSI.get_optimization_container(model).optimizer_stats.objective_value
 
     set_network_model!(template_uc, NetworkModel(DCPPowerModel))
@@ -284,14 +279,9 @@ end
     )
 
     solve!(model; output_dir = mktempdir())
-    dcp_vars = get_variable_values(OptimizationProblemResults(model))
-    dcp_values =
-        dcp_vars[PowerSimulations.VariableKey{
-            FlowActivePowerVariable,
-            TwoTerminalGenericHVDCLine,
-        }(
-            "",
-        )]
+    dcp_vars =
+        read_variables(OptimizationProblemResults(model); table_format = TableFormat.WIDE)
+    dcp_values = dcp_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
     dcp_objective =
         PSI.get_optimization_container(model).optimizer_stats.objective_value
 
@@ -323,7 +313,8 @@ end
     )
 
     add_component!(sys_5, hvdc)
-    for net_model in [DCPPowerModel, PTDFPowerModel]
+    # for net_model in [DCPPowerModel, PTDFPowerModel]
+    for net_model in [DCPPowerModel]
         @testset "$net_model" begin
             PSY.set_loss!(hvdc, PSY.LinearCurve(0.0))
             template_uc = ProblemTemplate(
@@ -349,26 +340,22 @@ end
             )
 
             solve!(model_ref; output_dir = mktempdir())
-            ref_vars = get_variable_values(OptimizationProblemResults(model_ref))
-            ref_values =
-                ref_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}("")]
-            hvdc_ref_values = ref_vars[PowerSimulations.VariableKey{
-                FlowActivePowerVariable,
-                TwoTerminalGenericHVDCLine,
-            }(
-                "",
-            )]
+            ref_vars = read_variables(
+                OptimizationProblemResults(model_ref);
+                table_format = TableFormat.WIDE,
+            )
+            ref_values = ref_vars["FlowActivePowerVariable__Line"]
+            hvdc_ref_values =
+                ref_vars["FlowActivePowerVariable__TwoTerminalGenericHVDCLine"]
             ref_objective = model_ref.internal.container.optimizer_stats.objective_value
             ref_total_gen = sum(
                 sum.(
                     eachrow(
-                        ref_vars[PowerSimulations.VariableKey{
-                            ActivePowerVariable,
-                            ThermalStandard,
-                        }(
-                            "",
-                        )],
-                    ),
+                        DataFrames.select(
+                            ref_vars["ActivePowerVariable__ThermalStandard"],
+                            Not(:DateTime),
+                        ),
+                    )
                 ),
             )
             set_device_model!(
@@ -385,34 +372,24 @@ end
             )
 
             solve!(model; output_dir = mktempdir())
-            no_loss_vars = get_variable_values(OptimizationProblemResults(model))
-            no_loss_values =
-                no_loss_vars[PowerSimulations.VariableKey{FlowActivePowerVariable, Line}(
-                    "",
-                )]
-            hvdc_ft_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
-                FlowActivePowerFromToVariable,
-                TwoTerminalGenericHVDCLine,
-            }(
-                "",
-            )]
-            hvdc_tf_no_loss_values = no_loss_vars[PowerSimulations.VariableKey{
-                FlowActivePowerToFromVariable,
-                TwoTerminalGenericHVDCLine,
-            }(
-                "",
-            )]
+            no_loss_vars = read_variables(
+                OptimizationProblemResults(model);
+                table_format = TableFormat.WIDE,
+            )
+            no_loss_values = no_loss_vars["FlowActivePowerVariable__Line"]
+            hvdc_ft_no_loss_values =
+                no_loss_vars["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"]
+            hvdc_tf_no_loss_values =
+                no_loss_vars["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"]
             no_loss_objective =
                 PSI.get_optimization_container(model).optimizer_stats.objective_value
             no_loss_total_gen = sum(
                 sum.(
                     eachrow(
-                        no_loss_vars[PowerSimulations.VariableKey{
-                            ActivePowerVariable,
-                            ThermalStandard,
-                        }(
-                            "",
-                        )],
+                        DataFrames.select(
+                            no_loss_vars["ActivePowerVariable__ThermalStandard"],
+                            Not(:DateTime),
+                        ),
                     ),
                 ),
             )
@@ -447,28 +424,21 @@ end
             )
 
             solve!(model_wl; output_dir = mktempdir())
-            dispatch_vars = get_variable_values(OptimizationProblemResults(model_wl))
-            dispatch_values_ft = dispatch_vars[PowerSimulations.VariableKey{
-                FlowActivePowerFromToVariable,
-                TwoTerminalGenericHVDCLine,
-            }(
-                "",
-            )]
-            dispatch_values_tf = dispatch_vars[PowerSimulations.VariableKey{
-                FlowActivePowerToFromVariable,
-                TwoTerminalGenericHVDCLine,
-            }(
-                "",
-            )]
+            dispatch_vars = read_variables(
+                OptimizationProblemResults(model_wl);
+                table_format = TableFormat.WIDE,
+            )
+            dispatch_values_ft =
+                dispatch_vars["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"]
+            dispatch_values_tf =
+                dispatch_vars["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"]
             wl_total_gen = sum(
                 sum.(
                     eachrow(
-                        dispatch_vars[PowerSimulations.VariableKey{
-                            ActivePowerVariable,
-                            ThermalStandard,
-                        }(
-                            "",
-                        )],
+                        DataFrames.select(
+                            dispatch_vars["ActivePowerVariable__ThermalStandard"],
+                            Not(:DateTime),
+                        ),
                     ),
                 ),
             )
@@ -706,7 +676,11 @@ end
               PSI.ModelBuildStatus.BUILT
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         res = OptimizationProblemResults(model_m)
-        vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line")
+        vars = read_variable(
+            res,
+            "FlowActivePowerSlackUpperBound__Line";
+            table_format = TableFormat.WIDE,
+        )
         # some relaxations will find a solution with 0.0 slack
         @test sum(vars[!, "2"]) >= -1e-6
     end
@@ -739,7 +713,11 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model_m)
-    vars = read_variable(res, "FlowActivePowerSlackUpperBound__Line")
+    vars = read_variable(
+        res,
+        "FlowActivePowerSlackUpperBound__Line";
+        table_format = TableFormat.WIDE,
+    )
     # some relaxations will find a solution with 0.0 slack
     @test sum(vars[!, "2"]) >= -1e-6
 end

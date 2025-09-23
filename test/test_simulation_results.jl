@@ -123,23 +123,27 @@ function compare_results(rpath, epath, model, field, name, timestamp)
     ep = joinpath(epath, model, field, filename)
     df1 = PSI.read_dataframe(rp)
     df2 = PSI.read_dataframe(ep)
+    # TODO: Store the tables in the same format.
+    measure_vars = [x for x in names(df2) if x != "DateTime"]
+    df2_long = DataFrames.stack(
+        df2,
+        measure_vars;
+        variable_name = :name,
+        value_name = :value,
+    )
 
     if name ∈ NATURAL_UNITS_VALUES
-        df2[!, 2:end] .*= 100.0
+        df2_long[!, :value] .*= 100.0
     end
 
     names1 = names(df1)
-    names2 = names(df2)
+    names2 = names(df2_long)
     names1 != names2 && return false
-    size(df1) != size(df2) && return false
+    size(df1) != size(df2_long) && return false
 
-    for (row1, row2) in zip(eachrow(df1), eachrow(df2))
-        for name in names1
-            if !isapprox(row1[name], row2[name])
-                @error "File mismatch" rp ep row1 row2
-                return false
-            end
-        end
+    if !isapprox(df1.value, df2_long.value)
+        @error "File mismatch" rp ep row1 row2
+        return false
     end
 
     return true
@@ -253,6 +257,17 @@ function test_decision_problem_results_values(
     p_thermal_standard_ed = read_variable(results_ed, ActivePowerVariable, ThermalStandard)
     @test length(keys(p_thermal_standard_ed)) == 48
     for v in values(p_thermal_standard_ed)
+        @test length(unique(v.DateTime)) == 12
+        @test length(unique(v.name)) == 5
+    end
+    p_thermal_standard_ed_wide = read_variable(
+        results_ed,
+        ActivePowerVariable,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test length(keys(p_thermal_standard_ed)) == 48
+    for v in values(p_thermal_standard_ed_wide)
         @test size(v) == (12, 6)
     end
 
@@ -260,33 +275,36 @@ function test_decision_problem_results_values(
         read_parameter(results_ed, ActivePowerTimeSeriesParameter, RenewableDispatch)
     @test length(keys(ren_dispatch_params)) == 48
     for v in values(ren_dispatch_params)
-        @test size(v) == (12, 4)
+        @test length(unique(v.DateTime)) == 12
+        @test length(unique(v.name)) == 3
     end
 
     network_duals = read_dual(results_ed, CopperPlateBalanceConstraint, PSY.System)
     @test length(keys(network_duals)) == 48
     for v in values(network_duals)
-        @test size(v) == (12, 2)
+        @test length(unique(v.DateTime)) == 12
+        @test length(unique(v.name)) == 1
     end
 
     expression = read_expression(results_ed, PSI.ProductionCostExpression, ThermalStandard)
     @test length(keys(expression)) == 48
     for v in values(expression)
-        @test size(v) == (12, 6)
+        @test length(unique(v.DateTime)) == 12
+        @test length(unique(v.name)) == 5
     end
 
     for var_key in
         ((ActivePowerVariable, RenewableDispatch), (ActivePowerVariable, ThermalStandard))
         variable_by_initial_time = read_variable(results_uc, var_key...)
         for df in values(variable_by_initial_time)
-            @test size(df)[1] == 24
+            @test length(unique(df.DateTime)) == 24
         end
     end
 
     realized_variable_uc = read_realized_variables(results_uc)
     @test length(keys(realized_variable_uc)) == length(UC_EXPECTED_VARS)
     for var in values(realized_variable_uc)
-        @test size(var)[1] == 48
+        @test length(unique(var.DateTime)) == 48
     end
 
     realized_variable_uc =
@@ -295,7 +313,7 @@ function test_decision_problem_results_values(
           read_realized_variables(results_uc, ["ActivePowerVariable__ThermalStandard"])
     @test length(keys(realized_variable_uc)) == 1
     for var in values(realized_variable_uc)
-        @test size(var)[1] == 48
+        @test length(unique(var.DateTime)) == 48
     end
 
     # Test custom indexing.
@@ -306,13 +324,18 @@ function test_decision_problem_results_values(
             start_time = Dates.DateTime("2024-01-01T01:00:00"),
             len = 47,
         )
-    @test realized_variable_uc["ActivePowerVariable__ThermalStandard"][2:end, :] ==
-          realized_variable_uc2["ActivePowerVariable__ThermalStandard"]
+    @test unique(realized_variable_uc["ActivePowerVariable__ThermalStandard"].DateTime)[2:end] ==
+          unique(realized_variable_uc2["ActivePowerVariable__ThermalStandard"].DateTime)
+    @test realized_variable_uc2["ActivePowerVariable__ThermalStandard"] ==
+          @rsubset(
+        realized_variable_uc["ActivePowerVariable__ThermalStandard"],
+        :DateTime > Dates.DateTime("2024-01-01T00:00:00")
+    )
 
     realized_param_uc = read_realized_parameters(results_uc)
     @test length(keys(realized_param_uc)) == 3
     for param in values(realized_param_uc)
-        @test size(param)[1] == 48
+        @test length(unique(param.DateTime)) == 48
     end
 
     realized_param_uc = read_realized_parameters(
@@ -325,7 +348,7 @@ function test_decision_problem_results_values(
     )
     @test length(keys(realized_param_uc)) == 1
     for param in values(realized_param_uc)
-        @test size(param)[1] == 48
+        @test length(unique(param.DateTime)) == 48
     end
 
     realized_duals_ed = read_realized_duals(results_ed)
@@ -360,7 +383,8 @@ function test_decision_problem_results_values(
     )
     @test length(keys(realized_expressions)) == 1
     for exp in values(realized_expressions)
-        @test size(exp)[1] == 48
+        @test length(unique(exp.DateTime)) == 48
+        @test length(unique(exp.name)) == 3
     end
 
     #request non sync data
@@ -376,14 +400,15 @@ function test_decision_problem_results_values(
     )
 
     # request good window
-    @test size(
-        read_realized_variables(
-            results_ed,
-            [(ActivePowerVariable, ThermalStandard)];
-            start_time = DateTime("2024-01-02T23:10:00"),
-            len = 10,
-        )["ActivePowerVariable__ThermalStandard"],
-    )[1] == 10
+    @test length(
+        unique(
+            read_realized_variables(
+                results_ed,
+                [(ActivePowerVariable, ThermalStandard)];
+                start_time = DateTime("2024-01-02T23:10:00"),
+                len = 10,
+            )["ActivePowerVariable__ThermalStandard"].DateTime),
+    ) == 10
 
     # request bad window
     @test_logs(
@@ -610,7 +635,8 @@ function test_decision_problem_results_values(
         timestamps = PSI._process_timestamps(myres, initial_time, 3)
         result_keys = [PSI.VariableKey(ActivePowerVariable, ThermalStandard)]
 
-        res1 = PSI.read_results_with_keys(myres, result_keys)
+        res1 =
+            PSI.read_results_with_keys(myres, result_keys; table_format = TableFormat.WIDE)
         @test Set(keys(res1)) == Set(result_keys)
         res1_df = res1[first(result_keys)]
         @test size(res1_df) == (576, 6)
@@ -619,7 +645,12 @@ function test_decision_problem_results_values(
         @test first(eltype.(eachcol(res1_df))) === DateTime
 
         res2 =
-            PSI.read_results_with_keys(myres, result_keys; cols = ["Park City", "Brighton"])
+            PSI.read_results_with_keys(
+                myres,
+                result_keys;
+                cols = ["Park City", "Brighton"],
+                table_format = TableFormat.WIDE,
+            )
         @test Set(keys(res2)) == Set(result_keys)
         res2_df = res2[first(result_keys)]
         @test size(res2_df) == (576, 3)
@@ -628,13 +659,23 @@ function test_decision_problem_results_values(
         @test first(eltype.(eachcol(res2_df))) === DateTime
 
         res3_df =
-            PSI.read_results_with_keys(myres, result_keys; start_time = timestamps[2])[first(
+            PSI.read_results_with_keys(
+                myres,
+                result_keys;
+                start_time = timestamps[2],
+                table_format = TableFormat.WIDE,
+            )[first(
                 result_keys,
             )]
         @test res3_df[1, "DateTime"] == timestamps[2]
 
         res4_df =
-            PSI.read_results_with_keys(myres, result_keys; len = 2)[first(result_keys)]
+            PSI.read_results_with_keys(
+                myres,
+                result_keys;
+                len = 2,
+                table_format = TableFormat.WIDE,
+            )[first(result_keys)]
         @test size(res4_df) == (2, 6)
     end
 end
@@ -668,7 +709,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     for input in duals_inputs
         duals_value = first(values(read_realized_duals(results_em, input)))
         @test duals_value isa DataFrames.DataFrame
-        @test DataFrames.nrow(duals_value) == 576
+        @test length(unique(duals_value.DateTime)) == 576
     end
 
     expressions_keys = collect(keys(read_realized_expressions(results_em)))
@@ -686,19 +727,25 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     for input in expressions_inputs
         expressions_value = first(values(read_realized_expressions(results_em, input)))
         @test expressions_value isa DataFrames.DataFrame
-        @test DataFrames.nrow(expressions_value) == 576
+        @test length(unique(expressions_value.DateTime)) == 576
     end
 
-    @test DataFrames.nrow(
-        read_realized_expression(results_em, "ProductionCostExpression__ThermalStandard"),
-    ) == 576
-    @test DataFrames.nrow(
-        read_realized_expression(
-            results_em,
-            ProductionCostExpression,
-            ThermalStandard;
-            len = 10,
+    @test length(
+        unique(
+            read_realized_expression(
+                results_em,
+                "ProductionCostExpression__ThermalStandard",
+            ).DateTime,
         ),
+    ) == 576
+    @test length(
+        unique(
+            read_realized_expression(
+                results_em,
+                ProductionCostExpression,
+                ThermalStandard;
+                len = 10,
+            ).DateTime),
     ) == 10
 
     parameters_keys = collect(keys(read_realized_parameters(results_em)))
@@ -716,15 +763,16 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
     for input in parameters_inputs
         parameters_value = first(values(read_realized_parameters(results_em, input)))
         @test parameters_value isa DataFrames.DataFrame
-        @test DataFrames.nrow(parameters_value) == 576
+        @test length(unique(parameters_value.DateTime)) == 576
     end
 
-    @test DataFrames.nrow(
-        read_realized_parameter(
-            results_em,
-            "ActivePowerTimeSeriesParameter__RenewableDispatch";
-            len = 10,
-        ),
+    @test length(
+        unique(
+            read_realized_parameter(
+                results_em,
+                "ActivePowerTimeSeriesParameter__RenewableDispatch";
+                len = 10,
+            ).DateTime),
     ) == 10
 
     expected_vars = union(Set(ED_EXPECTED_VARS), UC_EXPECTED_VARS)
@@ -737,7 +785,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         [(ActivePowerVariable, ThermalStandard), (ActivePowerVariable, RenewableDispatch)],
     )
     for input in variables_inputs
-        vars = read_realized_variables(results_em, input)
+        vars = read_realized_variables(results_em, input; table_format = TableFormat.WIDE)
         var_keys = collect(keys(vars))
         @test length(var_keys) == 2
         @test first(var_keys) == "ActivePowerVariable__ThermalStandard"
@@ -757,6 +805,7 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
             ThermalStandard;
             start_time = start_time,
             len = len,
+            table_format = TableFormat.WIDE,
         ),
     ) == len
 
@@ -765,9 +814,10 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         variables_inputs[1];
         start_time = start_time,
         len = len,
+        table_format = TableFormat.WIDE,
     )
     df = first(values(vars))
-    @test DataFrames.nrow(df) == len
+    @test length(unique(df.DateTime)) == len
     @test df[!, "DateTime"][1] == start_time
 
     @test_throws IS.InvalidValue read_realized_variables(
@@ -775,21 +825,25 @@ function test_emulation_problem_results(results::SimulationResults, in_memory)
         variables_inputs[1],
         start_time = start_time,
         len = 100000,
+        table_format = TableFormat.WIDE,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
         start_time = start_time + Dates.Second(1),
+        table_format = TableFormat.WIDE,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
         start_time = start_time - Dates.Hour(1000),
+        table_format = TableFormat.WIDE,
     )
     @test_throws IS.InvalidValue read_realized_variables(
         results_em,
         variables_inputs[1],
         len = 100000,
+        table_format = TableFormat.WIDE,
     )
 
     @test isempty(results_em)

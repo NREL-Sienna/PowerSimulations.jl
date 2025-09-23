@@ -321,12 +321,19 @@ Return the values for the requested variable. It keeps requests when performing 
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 
 # Examples
 
 ```julia
 read_variable(results, ActivePowerVariable, ThermalStandard)
 read_variable(results, "ActivePowerVariable__ThermalStandard")
+read_variable(results, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
 ```
 """
 function read_variable(
@@ -335,10 +342,14 @@ function read_variable(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(VariableKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
-    return make_dataframes(_read_results(res, [key], timestamps, store)[key])
+    return make_dataframes(
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
+    )
 end
 
 """
@@ -351,6 +362,12 @@ Return the values for the requested dual. It keeps requests when performing mult
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 """
 function read_dual(
     res::SimulationProblemResults{DecisionModelSimulationResults},
@@ -358,11 +375,13 @@ function read_dual(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -375,6 +394,12 @@ Return the values for the requested parameter. It keeps requests when performing
     splatted into a ParameterKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 """
 function read_parameter(
     res::SimulationProblemResults{DecisionModelSimulationResults},
@@ -382,11 +407,13 @@ function read_parameter(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -406,11 +433,13 @@ function read_aux_variable(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(AuxVarKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -430,11 +459,13 @@ function read_expression(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(ExpressionKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -536,12 +567,13 @@ function read_results_with_keys(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
     cols::Union{Colon, Vector{String}} = (:),
+    table_format = TableFormat.LONG,
 )
     meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values =
         _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing; cols = cols)
-    return get_realization(result_values, meta)
+    return get_realization(result_values, meta; table_format = table_format)
 end
 
 function _are_results_cached(

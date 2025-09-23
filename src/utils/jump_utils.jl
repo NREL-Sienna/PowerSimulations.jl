@@ -1,3 +1,5 @@
+const IntegerAxis = Union{Vector{Int}, UnitRange{Int}}
+
 #Given the changes in syntax in ParameterJuMP and the new format to create anonymous parameters
 function add_jump_parameter(jump_model::JuMP.Model, val::Number)
     param = JuMP.@variable(jump_model, base_name = "param")
@@ -44,65 +46,32 @@ function fix_parameter_value(input::JuMP.VariableRef, value::Float64)
     return
 end
 
-function to_matrix(array::DenseAxisArray{T, 1, K}) where {T, K <: NTuple{1, Any}}
+"""
+Convert Vectors, DenseAxisArrays, and SparkAxisArrays to a matrix.
+
+- If the input is a 1d array or DenseAxisArray, the returned matrix will have
+  a number of rows equal to the length of the input and one column.
+- If the input is a 2d DenseAxisArray, the dimensions are transposed, due to the way we
+  store outputs in JuMP.
+"""
+function to_matrix(vec::Vector)
+    data = vec[:]
+    return reshape(data, length(data), 1)
+end
+
+to_matrix(array::Matrix) = array
+
+function to_matrix(array::DenseAxisArray{T, 1}) where {T}
     data = array.data[:]
     return reshape(data, length(data), 1)
 end
 
-to_matrix(array::DenseAxisArray{T, 2} where {T}) = permutedims(array.data)
-
-function to_matrix(::DenseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    error(
-        "Converting $(N)-dimensional DenseAxisArrays to matrix is currently not supported",
-    )
+function to_matrix(array::DenseAxisArray{T, 2}) where {T}
+    return permutedims(array.data)
 end
 
-function get_column_names(key::OptimizationContainerKey)
-    return ([encode_key_as_string(key)],)
-end
-
-function get_column_names(
-    key::OptimizationContainerKey,
-    ::DenseAxisArray{T, 1, K},
-) where {T, K <: NTuple{1, Any}}
-    return get_column_names(key)
-end
-
-function get_column_names(
-    k::OptimizationContainerKey,
-    array::DenseAxisArray{T, 2, K},
-) where {T, K <: NTuple{2, Any}}
-    return (string.(axes(array)[1]),)
-end
-
-function get_column_names(
-    k::OptimizationContainerKey,
-    array::DenseAxisArray{T, 3, K},
-) where {T, K <: NTuple{3, Any}}
-    return (string.(axes(array)[1]), string.(axes(array)[2]))
-end
-
-function _get_column_names(arr::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    return sort!(collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(arr.data))))
-end
-
-function get_column_names(
-    ::OptimizationContainerKey,
-    array::SparseAxisArray{T, N, K},
-) where {T, N, K <: NTuple{N, Any}}
-    return (get_column_names(array),)
-end
-
-function get_column_names(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    return _get_column_names(array)
-end
-
-function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
-    return join(val, PSI_NAME_DELIMITER)
-end
-
-function encode_tuple_to_column(val::Tuple{String, Int})
-    return join(string.(val), PSI_NAME_DELIMITER)
+function to_matrix(array::DenseAxisArray)
+    error("Converting type = $(typeof(array)) to a matrix is not supported.")
 end
 
 function _to_matrix(
@@ -118,17 +87,345 @@ function _to_matrix(
 end
 
 function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    # Don't use _get_column_names to avoid additional string conversion
+    # Don't use get_column_names_from_axis_array to avoid additional string conversion
+    # TODO DT: I don't understand why we have two mechanisms of creating columns.
+    # Why does get_column_names_from_axis_array rely on encode_tuple_to_column?
     columns = sort!(unique!([k[1:(N - 1)] for k in keys(array.data)]))
     return _to_matrix(array, columns)
 end
 
-function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
-    columns = _get_column_names(array)
-    return DataFrames.DataFrame(_to_matrix(array, columns), columns)
+"""
+Return column names from the axes of a JuMP DenseAxisArray or SparseAxisArray.
+The columns are returned as a tuple of vector of strings.
+1d and 2d arrays will return a tuple of length 1.
+3d arrays will return a tuple of length 2.
+
+There are two variants of this function:
+  - get_column_names_from_axis_array(array)
+  - get_column_names_from_axis_array(::OptimizationContainerKey, array)
+  
+When the variant with the key is called:
+  In cases where the array has one dimension, retrieve the column names from the key.
+  In cases where the array has two or more dimensions, retrieve the column names from the
+  axes.
+"""
+# TODO DT: the docstring describes what the code does.
+# The behavior of key vs axes seems suspect to me.
+function get_column_names_from_axis_array(
+    array::DenseAxisArray{T, 1, <:Tuple{Vector{String}}},
+) where {T}
+    return (axes(array, 1),)
 end
 
-to_matrix(array::Matrix) = array
+function get_column_names_from_axis_array(
+    array::DenseAxisArray{T, 1, <:Tuple{IntegerAxis}},
+) where {T}
+    # This happens because buses are stored by numbers instead of name.
+    return (string.(axes(array, 1)),)
+end
+
+function get_column_names_from_axis_array(
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+) where {T}
+    return (axes(array, 1),)
+end
+
+function get_column_names_from_axis_array(
+    array::DenseAxisArray{T, 2, <:Tuple{IntegerAxis, UnitRange{Int}}},
+) where {T}
+    return (string.(axes(array, 1)),)
+end
+
+function get_column_names_from_axis_array(
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
+) where {T}
+    return (axes(array, 1), axes(array, 2))
+end
+
+function get_column_names_from_axis_array(
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, IntegerAxis, UnitRange{Int}}},
+) where {T}
+    return (axes(array, 1), string.(axes(array, 2)))
+end
+
+function get_column_names_from_axis_array(
+    key::OptimizationContainerKey,
+    ::DenseAxisArray{T, 1},
+) where {T}
+    return get_column_names_from_key(key)
+end
+
+function get_column_names_from_axis_array(::OptimizationContainerKey, array::DenseAxisArray)
+    return get_column_names_from_axis_array(array)
+end
+
+function get_column_names_from_axis_array(
+    ::OptimizationContainerKey,
+    array::SparseAxisArray,
+)
+    return get_column_names_from_axis_array(array)
+end
+
+function get_column_names_from_axis_array(
+    array::SparseAxisArray{T, N, K},
+) where {T, N, K <: NTuple{N, Any}}
+    return (
+        sort!(
+            collect(Set(encode_tuple_to_column(k[1:(N - 1)]) for k in keys(array.data))),
+        ),
+    )
+end
+
+"""
+Return the column names from a key as a tuple of vector of strings.
+Only useful for 1d DenseAxisArrays.
+"""
+function get_column_names_from_key(key::OptimizationContainerKey)
+    return ([encode_key_as_string(key)],)
+end
+
+function encode_tuple_to_column(val::NTuple{N, <:AbstractString}) where {N}
+    return join(val, PSI_NAME_DELIMITER)
+end
+
+function encode_tuple_to_column(val::Tuple{String, Int})
+    return join(string.(val), PSI_NAME_DELIMITER)
+end
+
+"""
+Create a DataFrame from a JuMP DenseAxisArray or SparseAxisArray.
+
+# Arguments
+
+  - `array`: JuMP DenseAxisArray or SparseAxisArray to convert
+  - `key::OptimizationContainerKey`:
+"""
+function to_dataframe(
+    array::DenseAxisArray{T, 2},
+    key::OptimizationContainerKey,
+) where {T <: JumpSupportedLiterals}
+    return DataFrame(to_matrix(array), get_column_names_from_axis_array(key, array)[1])
+end
+
+function to_dataframe(
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+) where {T <: JumpSupportedLiterals}
+    return DataFrame(to_matrix(array), get_column_names_from_axis_array(array)[1])
+end
+
+function to_dataframe(
+    array::DenseAxisArray{T, 1},
+    key::OptimizationContainerKey,
+) where {T <: JumpSupportedLiterals}
+    cols = get_column_names_from_axis_array(key, array)[1]
+    if length(cols) != 1
+        error("Expected a single column, got $(length(cols))")
+    end
+    return DataFrame(Symbol(cols[1]) => array.data)
+end
+
+function to_dataframe(array::SparseAxisArray, key::OptimizationContainerKey)
+    return DataFrame(to_matrix(array), get_column_names_from_axis_array(key, array)[1])
+end
+
+"""
+Convert a DenseAxisArray containing components to a results DataFrame consumable by users.
+
+# Arguments
+- `array: DenseAxisArray`: JuMP DenseAxisArray to convert
+- `timestamps`: Iterable of timestamps for each component or nothing if time is not known.
+  The resulting DataFrame will have the column "DateTime" if timestamps is not nothing.
+  Otherwise, it will have the column "time_index", representing the index of the time
+  dimension.
+- `::Val{TableFormat}`: Format of the table to create.
+  If it is TableFormat.LONG, the DataFrame will have the column "name", and, if
+  the data has three dimensions, "name2."
+  If it is TableFormat.WIDE, the DataFrame will have columns for each component. Wide
+  format does not support arrays with more than two dimensions.
+"""
+function to_results_dataframe(array::DenseAxisArray, timestamps)
+    return to_results_dataframe(array, timestamps, Val(TableFormat.LONG))()
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{Vector{String}}},
+    timestamps,
+    ::Val{TableFormat.LONG},
+)
+    return DataFrames.DataFrame(
+        :DateTime => [1],
+        :name => axes(array, 1),
+        :value => array.data,
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
+    timestamps,
+    ::Val{TableFormat.LONG},
+)
+    num_timestamps = size(array, 2)
+    if length(timestamps) != num_timestamps
+        error(
+            "The number of timestamps must match the number of rows per component. " *
+            "timestamps = $(length(timestamps)) " *
+            "num_timestamps = $num_timestamps",
+        )
+    end
+    num_rows = length(array.data)
+    timestamps_arr = _collect_timestamps(timestamps)
+    time_col = Vector{Dates.DateTime}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+
+    row_index = 1
+    for name in axes(array, 1)
+        for time_index in axes(array, 2)
+            time_col[row_index] = timestamps_arr[time_index]
+            name_col[row_index] = name
+            row_index += 1
+        end
+    end
+
+    return DataFrame(
+        :DateTime => time_col,
+        :name => name_col,
+        :value => reshape(permutedims(array.data), num_rows),
+    )
+end
+
+_collect_timestamps(timestamps::Vector{Dates.DateTime}) = timestamps
+_collect_timestamps(timestamps) = collect(timestamps)
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
+    ::Nothing,
+    ::Val{TableFormat.LONG},
+)
+    num_rows = length(array.data)
+    time_col = Vector{Int}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+
+    row_index = 1
+    for name in axes(array, 1)
+        for time_index in axes(array, 2)
+            time_col[row_index] = time_index
+            name_col[row_index] = name
+            row_index += 1
+        end
+    end
+
+    return DataFrame(
+        :time_index => time_col,
+        :name => name_col,
+        :value => reshape(permutedims(array.data), num_rows),
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
+    timestamps,
+    ::Val{TableFormat.WIDE},
+)
+    df = DataFrame(to_matrix(array), axes(array, 1))
+    DataFrames.insertcols!(df, 1, :DateTime => timestamps)
+    return df
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
+    ::Nothing,
+    ::Val{TableFormat.WIDE},
+)
+    df = DataFrame(to_matrix(array), axes(array, 1))
+    DataFrames.insertcols!(df, 1, :time_index => axes(array, 2))
+    return df
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{
+        Float64,
+        3,
+        <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}},
+    },
+    timestamps,
+    ::Val{TableFormat.LONG},
+)
+    num_timestamps = size(array, 3)
+    if length(timestamps) != num_timestamps
+        error(
+            "The number of timestamps must match the number of rows per component. " *
+            "timestamps = $(length(timestamps)) " *
+            "num_timestamps = $num_timestamps",
+        )
+    end
+    num_rows = length(array.data)
+    timestamps_arr = _collect_timestamps(timestamps)
+    time_col = Vector{Dates.DateTime}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+    name2_col = Vector{String}(undef, num_rows)
+    vals = Vector{Float64}(undef, num_rows)
+
+    row_index = 1
+    for name in axes(array, 1)
+        for name2 in axes(array, 2)
+            for time_index in axes(array, 3)
+                time_col[row_index] = timestamps_arr[time_index]
+                name_col[row_index] = name
+                name2_col[row_index] = name2
+                vals[row_index] = array[name, name2, time_index]
+                row_index += 1
+            end
+        end
+    end
+
+    return DataFrame(
+        :DateTime => time_col,
+        :name => name_col,
+        :name2 => name2_col,
+        :value => vals,
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{
+        Float64,
+        3,
+        <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}},
+    },
+    ::Nothing,
+    ::Val{TableFormat.LONG},
+)
+    num_rows = length(array.data)
+    time_col = Vector{Int}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+    name2_col = Vector{String}(undef, num_rows)
+    vals = Vector{Float64}(undef, num_rows)
+
+    row_index = 1
+    for name in axes(array, 1)
+        for name2 in axes(array, 2)
+            for time_index in axes(array, 3)
+                time_col[row_index] = time_index
+                name_col[row_index] = name
+                name2_col[row_index] = name2
+                vals[row_index] = array[name, name2, time_index]
+                row_index += 1
+            end
+        end
+    end
+
+    return DataFrame(
+        :time_index => time_col,
+        :name => name_col,
+        :name2 => name2_col,
+        :value => vals,
+    )
+end
+
+function to_dataframe(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
+    columns = get_column_names_from_axis_array(array)
+    return DataFrames.DataFrame(_to_matrix(array, columns), columns)
+end
 
 """
 Returns the correct container specification for the selected type of JuMP Model
@@ -194,7 +491,7 @@ function _calc_dimensions(
     horizon::Int,
 )
     ax = axes(array)
-    columns = get_column_names(key, array)
+    columns = get_column_names_from_axis_array(key, array)
     # Two use cases for read:
     # 1. Read data for one execution for one device.
     # 2. Read data for one execution for all devices.
@@ -227,7 +524,7 @@ function _calc_dimensions(
     num_rows::Int,
     horizon::Int,
 )
-    columns = get_column_names(key, array)
+    columns = get_column_names_from_axis_array(key, array)
     dims = (horizon, length.(columns)..., num_rows)
     return Dict("columns" => columns, "dims" => dims)
 end

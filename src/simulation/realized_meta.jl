@@ -52,6 +52,33 @@ function _make_dataframe(
     num_rows::Int,
     meta::RealizedMeta,
     key::OptimizationContainerKey,
+    ::Val{TableFormat.LONG},
+)
+    # TODO: Implement long format directly.
+    df = _make_dataframe(
+        columns,
+        results_by_time,
+        num_rows,
+        meta,
+        key,
+        Val(TableFormat.WIDE),
+    )
+    measure_vars = [x for x in names(df) if x != "DateTime"]
+    return DataFrames.stack(
+        df,
+        measure_vars;
+        variable_name = :name,
+        value_name = :value,
+    )
+end
+
+function _make_dataframe(
+    columns::Tuple{Vector{String}},
+    results_by_time::ResultsByTime{Matrix{Float64}, 1},
+    num_rows::Int,
+    meta::RealizedMeta,
+    key::OptimizationContainerKey,
+    ::Val{TableFormat.WIDE},
 )
     num_cols = length(columns[1])
     matrix = Matrix{Float64}(undef, num_rows, num_cols)
@@ -81,7 +108,8 @@ end
 
 function get_realization(
     results::Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}},
-    meta::RealizedMeta,
+    meta::RealizedMeta;
+    table_format = TableFormat.LONG,
 )
     realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     lk = ReentrantLock()
@@ -90,7 +118,14 @@ function get_realization(
     Threads.@threads for key in collect(keys(results))
         results_by_time = results[key]
         columns = get_column_names(results_by_time)
-        df = _make_dataframe(columns, results_by_time, num_rows, meta, key)
+        df = _make_dataframe(
+            columns,
+            results_by_time,
+            num_rows,
+            meta,
+            key,
+            Val(table_format),
+        )
         lock(lk) do
             realized_values[key] = df
         end

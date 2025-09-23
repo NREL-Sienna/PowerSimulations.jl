@@ -453,38 +453,42 @@ function _get_emulation_store_requirements(sim::Simulation)
 
     for (key, state_values) in get_duals_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.duals[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_parameters_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.parameters[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_variables_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.variables[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.aux_variables[key] =
-            Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_expression_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.expressions[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
     return reqs
 end
@@ -885,21 +889,17 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         if store_update_time < state_update_time
             _update_timestamp = max(store_update_time + state_resolution, sim_ini_time)
             while _update_timestamp <= state_update_time
-                try
-                    state_values =
-                        get_decision_state_value(sim_state, key, _update_timestamp)
-                    ix = get_last_recorded_row(em_store, key) + 1
-                    write_result!(
-                        store,
-                        model_name,
-                        key,
-                        ix,
-                        _update_timestamp,
-                        state_values,
-                    )
-                catch
-                    @error "could not write result for $(PSI.encode_key_as_string(key))"
-                end
+                state_values =
+                    get_decision_state_value(sim_state, key, _update_timestamp)
+                ix = get_last_recorded_row(em_store, key) + 1
+                write_result!(
+                    store,
+                    model_name,
+                    key,
+                    ix,
+                    _update_timestamp,
+                    state_values,
+                )
                 _update_timestamp += state_resolution
             end
         end

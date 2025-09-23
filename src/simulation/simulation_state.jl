@@ -104,10 +104,11 @@ function _initialize_model_states!(
     for field in fieldnames(DatasetContainer)
         field_containers = getfield(container, field)
         field_states = getfield(states, field)
-        for (key, value) in field_containers
+        for (key, field_container) in field_containers
             !should_write_resulting_value(key) && continue
             value_counts = params[key].horizon ÷ params[key].resolution
-            column_names = get_column_names(key, value)
+            column_names = get_column_names(container, field, field_container, key)
+            # TODO DT: why would we overwrite a key? Is this a bug?
             if !haskey(field_states, key) || get_num_rows(field_states[key]) < value_counts
                 field_states[key] = InMemoryDataset(
                     NaN,
@@ -161,7 +162,11 @@ function _initialize_system_states!(
         field_containers = getfield(emulation_container, field)
         for (key, value) in field_containers
             !should_write_resulting_value(key) && continue
-            column_names = get_column_names(key, value)
+            if field == :parameters
+                column_names = get_column_names(key, value)
+            else
+                column_names = get_column_names_from_axis_array(key, value)
+            end
             set_dataset!(
                 emulator_states,
                 key,
