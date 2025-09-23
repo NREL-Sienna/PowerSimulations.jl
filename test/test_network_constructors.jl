@@ -902,9 +902,6 @@ end
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
-        if network ∈ PSI.INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS
-            continue
-        end
         template = get_thermal_dispatch_template_network(
             NetworkModel(network;
                 PTDF_matrix = PTDF(new_sys),
