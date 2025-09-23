@@ -174,7 +174,6 @@ function construct_device!(
     model::DeviceModel{T, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen, D <: AbstractSecurityConstrainedUnitCommitment}
-
     devices = get_available_components(model, sys)
     add_constraints!(
         container,
@@ -712,7 +711,7 @@ function add_to_expression!(
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         outage_id = IS.get_uuid(outage)
-        
+
         for device in devices
             if device in associated_devices #The contributing device cannot contribute to the power deployment if it has the outage
                 continue
