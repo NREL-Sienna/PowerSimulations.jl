@@ -447,10 +447,9 @@ end
                 PostContingencyEmergencyRateLimitConstraint,
                 ThermalStandard,
                 "ub",
-            ), 
+            ),
             #PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
             PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-            
             PSI.ConstraintKey(
                 PostContingencyGenerationBalanceConstraint,
                 ThermalStandard,
