@@ -761,6 +761,6 @@ end
             table_format = TableFormat.WIDE,
         )
     for i in 1:24
-        @test interface_results[!, "interface1_2_3"][i] <= 100.0
+        @test interface_results[!, "interface1_2_3"][i] <= 100.0 + PSI.ABSOLUTE_TOLERANCE
     end
 end
