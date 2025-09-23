@@ -8,7 +8,6 @@ function add_variables!(
     T <: PostContingencyActivePowerChangeVariable,
     D <: PSY.ThermalGen,
 }
-   
     time_steps = get_time_steps(container)
     binary = get_variable_binary(T(), D, formulation)
     settings = get_settings(container)
@@ -18,7 +17,7 @@ function add_variables!(
         PSY.UnplannedOutage,
         sys,
     )
-    
+
     associated_outages = unique([outage for (_, outage) in generator_outages_pairs])
 
     variable = add_variable_container!(
@@ -32,7 +31,8 @@ function add_variables!(
 
     for outage in associated_outages
         outage_id = IS.get_uuid(outage)
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
 
         for device in devices
             name = PSY.get_name(device)
@@ -62,15 +62,14 @@ function add_variables!(
 
                 if get_warm_start(settings)
                     init = get_variable_warm_start_value(var_type, device, formulation)
-                    init !== nothing && JuMP.set_start_value(variable[outage_id, name, t], init)
+                    init !== nothing &&
+                        JuMP.set_start_value(variable[outage_id, name, t], init)
                 end
             end
         end
     end
     return
 end
-
-
 
 """
 This function creates the arguments model for a full thermal Security-Constrained dispatch formulation depending on combination of devices, device_formulation and system_formulation
@@ -153,8 +152,7 @@ function construct_device!(
         @warn "No associated outage supplemental attributes found associated with Generators. Skipping contingency variables addition for formulation $D."
         return
     end
-    
-    
+
     add_variables!(
         container,
         sys,
@@ -162,7 +160,7 @@ function construct_device!(
         devices,
         D(),
     )
-    
+
     return
 end
 
@@ -176,7 +174,6 @@ function construct_device!(
     model::DeviceModel{T, D},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {T <: PSY.ThermalGen, D <: AbstractSecurityConstrainedUnitCommitment}
-
     devices = get_available_components(model, sys)
     add_constraints!(
         container,
@@ -215,7 +212,6 @@ function construct_device!(
 
     add_constraint_dual!(container, sys, model)
 
-
     generator_outages_pairs = PSY.get_component_supplemental_attribute_pairs(
         PSY.Generator,
         PSY.UnplannedOutage,
@@ -226,7 +222,7 @@ function construct_device!(
         @warn "No associated outage supplemental attributes found associated with Generators. Skipping contingency expresions/constraints addition for formulation $D."
         return
     end
-    
+
     add_to_expression!(
         container,
         sys,
@@ -246,7 +242,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     add_to_expression!(
         container,
         sys,
@@ -274,7 +270,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     add_to_expression!(
         container,
         sys,
@@ -293,7 +289,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
     add_to_expression!(
         container,
@@ -313,7 +309,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
     add_constraints!(
         container,
@@ -324,7 +320,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     #ADD RAMPING CONSTRAINTS
     add_constraints!(
         container,
@@ -334,7 +330,7 @@ function construct_device!(
         devices,
         model,
         network_model;
-        service = ""
+        service = "",
     )
 
     return
@@ -383,13 +379,12 @@ function add_to_expression!(
         generator_name = get_name(generator)
 
         for outage in associated_outages
-            
             associated_devices =
-                    PSY.get_associated_components(
-                        sys,
-                        outage;
-                        component_type = PSY.Generator,
-                    )
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = PSY.Generator,
+                )
 
             generator_is_in_associated_devices = generator in associated_devices # generator_outage == generator
 
@@ -469,13 +464,12 @@ function add_constraints!(
         device_name = get_name(device)
 
         for outage in associated_outages
-
             associated_devices =
-                    PSY.get_associated_components(
-                        sys,
-                        outage;
-                        component_type = PSY.Generator,
-                    )
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = PSY.Generator,
+                )
 
             generator_is_in_associated_devices = device in associated_devices # generator_outage == generator
 
@@ -508,9 +502,16 @@ function add_constraints!(
 end
 
 #TODO check where this should go.
-_get_variable_multiplier(_::ActivePowerVariable, ::Type{<:PSY.Generator}, ::AbstractSecurityConstrainedUnitCommitment) = -1.0 #"_" avoids ambiguity
-_get_variable_multiplier(_::PostContingencyActivePowerChangeVariable, ::Type{<:PSY.Generator}, ::AbstractSecurityConstrainedUnitCommitment) = 1.0
-
+_get_variable_multiplier(
+    _::ActivePowerVariable,
+    ::Type{<:PSY.Generator},
+    ::AbstractSecurityConstrainedUnitCommitment,
+) = -1.0 #"_" avoids ambiguity
+_get_variable_multiplier(
+    _::PostContingencyActivePowerChangeVariable,
+    ::Type{<:PSY.Generator},
+    ::AbstractSecurityConstrainedUnitCommitment,
+) = 1.0
 
 """
 Default implementation to add variables to PostContingencySystemBalanceExpressions for G-1 formulation
@@ -540,10 +541,9 @@ function add_to_expression!(
     associated_outages = unique([outage for (_, outage) in generator_outages_pairs])
 
     expression =
-        lazy_container_addition!(container, T(), V, 
-            IS.get_uuid.(associated_outages), 
+        lazy_container_addition!(container, T(), V,
+            IS.get_uuid.(associated_outages),
             time_steps)
-
 
     for (device, outage) in generator_outages_pairs
         # if !(outage in associated_outages)
@@ -592,15 +592,16 @@ function add_to_expression!(
     associated_outages = unique([outage for (_, outage) in generator_outages_pairs])
 
     expression =
-        lazy_container_addition!(container, T(), V, 
-            IS.get_uuid.(associated_outages), 
+        lazy_container_addition!(container, T(), V,
+            IS.get_uuid.(associated_outages),
             time_steps)
-    
+
     reserve_deployment_variable = get_variable(container, U(), V)
     mult = _get_variable_multiplier(U(), V, W())
 
     for outage in associated_outages
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         outage_id = IS.get_uuid(outage)
 
         for device in devices
@@ -649,7 +650,13 @@ function add_constraints!(
 
     expressions = get_expression(container, U(), V)
     constraint =
-        add_constraints_container!(container, T(), V, IS.get_uuid.(associated_outages), time_steps)
+        add_constraints_container!(
+            container,
+            T(),
+            V,
+            IS.get_uuid.(associated_outages),
+            time_steps,
+        )
 
     for t in time_steps, outage in associated_outages
         outage_id = IS.get_uuid(outage)
@@ -659,7 +666,6 @@ function add_constraints!(
 
     return
 end
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -694,7 +700,7 @@ function add_to_expression!(
         V,
         IS.get_uuid.(associated_outages),
         bus_numbers,
-        time_steps
+        time_steps,
     )
 
     postcontingency_variable = get_variable(container, U(), V)
@@ -702,9 +708,10 @@ function add_to_expression!(
     network_reduction = get_network_reduction(network_model)
 
     for outage in associated_outages
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         outage_id = IS.get_uuid(outage)
-        
+
         for device in devices
             if device in associated_devices #The contributing device cannot contribute to the power deployment if it has the outage
                 continue
@@ -756,7 +763,7 @@ function add_to_expression!(
         V,
         IS.get_uuid.(associated_outages),
         bus_numbers,
-        time_steps
+        time_steps,
     )
 
     network_reduction = get_network_reduction(network_model)
@@ -814,7 +821,7 @@ function add_to_expression!(
         V,
         IS.get_uuid.(associated_outages),
         branches_names,
-        time_steps
+        time_steps,
     )
 
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
@@ -878,9 +885,7 @@ function add_to_expression!(
             end
         end
     end
-
 end
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -914,7 +919,7 @@ function add_to_expression!(
         V,
         IS.get_uuid.(associated_outages),
         branches_names,
-        time_steps
+        time_steps,
     )
 
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
@@ -1009,7 +1014,7 @@ function add_constraints!(
     U <: PostContingencyBranchFlow,
     V <: PSY.ACTransmission,
     R <: PSY.Generator,
-    F <: AbstractSecurityConstrainedUnitCommitment
+    F <: AbstractSecurityConstrainedUnitCommitment,
 }
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     network_reduction_data = get_network_reduction(network_model)
@@ -1039,7 +1044,7 @@ function add_constraints!(
             IS.get_uuid.(associated_outages),
             device_names,
             time_steps;
-            meta="lb"
+            meta = "lb",
         )
 
     con_ub =
@@ -1050,7 +1055,7 @@ function add_constraints!(
             IS.get_uuid.(associated_outages),
             device_names,
             time_steps;
-            meta="ub"
+            meta = "ub",
         )
     expressions = get_expression(container, U(), R, "")
     for ac_type in ac_transmission_types
@@ -1104,7 +1109,7 @@ function add_constraints!(
     F <: Union{AbstractSecurityConstrainedUnitCommitment,
         AbstractSecurityConstrainedReservesFormulation},
     N <: AbstractPTDFModel,
-    S <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, String}
+    S <: Union{PSY.Reserve{PSY.ReserveDown}, PSY.Reserve{PSY.ReserveUp}, String},
 }
     add_linear_ramp_constraints!(
         container,
@@ -1165,7 +1170,6 @@ function add_linear_ramp_constraints!(
         service_name = PSY.get_name(service)
         associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
     end
-    
 
     ramp_devices = _get_ramp_constraint_devices(container, devices)
     minutes_per_period = _get_minutes_per_period(container)
@@ -1206,11 +1210,11 @@ function add_linear_ramp_constraints!(
         for outage in associated_outages
             name_outage = IS.get_uuid(outage)
             associated_devices =
-                    PSY.get_associated_components(
-                        sys,
-                        outage;
-                        component_type = PSY.Generator,
-                    )
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = PSY.Generator,
+                )
 
             if device in associated_devices
                 continue
@@ -1253,7 +1257,7 @@ function _add_post_contingency_ramp_constraints!(
         variable[name_outage, name, t] <=
         ramp_limits.up * minutes_per_period
     )
-   
+
     return
 end
 
@@ -1330,7 +1334,8 @@ function add_variables!(
 
     for outage in associated_outages
         outage_name = IS.get_uuid(outage)
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
 
         for device in contributing_devices
             name = PSY.get_name(device)
@@ -1374,8 +1379,8 @@ function construct_service!(
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {SR <: PSY.AbstractReserve, 
-         F <: AbstractSecurityConstrainedReservesFormulation}
+) where {SR <: PSY.AbstractReserve,
+    F <: AbstractSecurityConstrainedReservesFormulation}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
@@ -1420,7 +1425,7 @@ function construct_service!(
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {SR <: PSY.AbstractReserve,
-         F <: AbstractSecurityConstrainedReservesFormulation}
+    F <: AbstractSecurityConstrainedReservesFormulation}
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
@@ -1564,7 +1569,6 @@ function construct_service!(
         service = service,
     )
 
-
     return
 end
 
@@ -1659,7 +1663,8 @@ function add_to_expression!(
     mult = get_variable_multiplier(U(), R, F())
 
     for outage in associated_outages
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
 
         name_outage = IS.get_uuid(outage)
 
@@ -1723,7 +1728,8 @@ function add_to_expression!(
     network_reduction = get_network_reduction(network_model)
 
     for outage in associated_outages
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         outage_id = IS.get_uuid(outage)
 
         for device in contributing_devices
@@ -2060,7 +2066,6 @@ function _add_expression_to_container!(
     end
 end
 
-
 """
 Add post-contingency Generation Balance Constraints for Generators for G-k with reserves formulation (SecurityConstrainedReservesFormulation)
 """
@@ -2191,7 +2196,6 @@ function add_constraints!(
     return
 end
 
-
 function add_constraints!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -2237,7 +2241,8 @@ function add_constraints!(
     )
 
     for outage in associated_outages
-        associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         name_outage = IS.get_uuid(outage)
 
         for device in contributing_devices
