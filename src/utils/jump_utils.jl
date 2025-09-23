@@ -252,7 +252,11 @@ function to_results_dataframe(
     timestamps,
     ::Val{TableFormat.LONG},
 )
-    return DataFrames.DataFrame(:DateTime => [1], :name => axes(array, 1), :value => array.data)
+    return DataFrames.DataFrame(
+        :DateTime => [1],
+        :name => axes(array, 1),
+        :value => array.data,
+    )
 end
 
 function to_results_dataframe(
