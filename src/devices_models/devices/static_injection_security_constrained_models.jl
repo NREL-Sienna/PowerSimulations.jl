@@ -40,7 +40,7 @@ function add_variables!(
 
             for t in time_steps
                 variable[outage_id, name, t] = JuMP.@variable(
-            get_jump_model(container),
+                    get_jump_model(container),
                     base_name = "$(var_type)_$(D)_{$(outage_id), $(name), $(t)}",
                     binary = binary
                 )
@@ -52,7 +52,7 @@ function add_variables!(
                     continue
                 end
 
-        # TODO: Contingencies Implement method to get max change depending on the device and formulation
+                # TODO: Contingencies Implement method to get max change depending on the device and formulation
                 ub = get_variable_upper_bound(var_type, device, formulation)
                 ub !== nothing && JuMP.set_upper_bound(variable[outage_id, name, t], ub)
 
@@ -63,7 +63,7 @@ function add_variables!(
                 if get_warm_start(settings)
                     init = get_variable_warm_start_value(var_type, device, formulation)
                     init !== nothing && JuMP.set_start_value(variable[outage_id, name, t], init)
-    end
+                end
             end
         end
     end
@@ -179,10 +179,10 @@ function construct_device!(
 
     devices = get_available_components(model, sys)
     add_constraints!(
-            container,
+        container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerRangeExpressionLB,
-            devices,
+        devices,
         model,
         network_model,
     )
@@ -227,31 +227,31 @@ function construct_device!(
         return
     end
     
-        add_to_expression!(
-            container,
+    add_to_expression!(
+        container,
         sys,
-            PostContingencyActivePowerGeneration,
-            ActivePowerVariable,
-            PostContingencyActivePowerChangeVariable,
-            devices,
-            model,
-            network_model,
-        )
-        add_constraints!(
-            container,
-        sys,
-            PostContingencyActivePowerVariableLimitsConstraint,
         PostContingencyActivePowerGeneration,
-            devices,
-            model,
-            network_model,
-        )
-
-        add_to_expression!(
-            container,
+        ActivePowerVariable,
+        PostContingencyActivePowerChangeVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
         sys,
-            PostContingencyActivePowerBalance,
-            ActivePowerVariable,
+        PostContingencyActivePowerVariableLimitsConstraint,
+        PostContingencyActivePowerGeneration,
+        devices,
+        model,
+        network_model,
+    )
+    
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyActivePowerBalance,
+        ActivePowerVariable,
         devices,
         model,
         network_model,
@@ -260,27 +260,27 @@ function construct_device!(
         container,
         sys,
         PostContingencyActivePowerBalance,
-            PostContingencyActivePowerChangeVariable,
-            devices,
-            model,
-            network_model,
-        )
-        add_constraints!(
-            container,
+        PostContingencyActivePowerChangeVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
         sys,
-            PostContingencyGenerationBalanceConstraint,
+        PostContingencyGenerationBalanceConstraint,
         PostContingencyActivePowerBalance,
-            devices,
-            model,
-            network_model,
-        )
-
-        add_to_expression!(
-            container,
+        devices,
+        model,
+        network_model,
+    )
+    
+    add_to_expression!(
+        container,
         sys,
-            PostContingencyNodalActivePowerDeployment,
-            PostContingencyActivePowerChangeVariable,
-            devices,
+        PostContingencyNodalActivePowerDeployment,
+        PostContingencyActivePowerChangeVariable,
+        devices,
         model,
         network_model,
     )
@@ -290,17 +290,17 @@ function construct_device!(
         PostContingencyNodalActivePowerDeployment,
         ActivePowerVariable,
         devices,
-            model,
-            network_model,
-        )
-
-        #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
-        add_to_expression!(
-            container,
-            sys,
-            PostContingencyBranchFlow,
-            FlowActivePowerVariable,
-            devices,
+        model,
+        network_model,
+    )
+    
+    #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyBranchFlow,
+        FlowActivePowerVariable,
+        devices,
         model,
         network_model,
     )
@@ -310,35 +310,35 @@ function construct_device!(
         PostContingencyBranchFlow,
         PostContingencyNodalActivePowerDeployment,
         devices,
-            model,
-            network_model,
-        )
-
-        #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
-        add_constraints!(
-            container,
+        model,
+        network_model,
+    )
+    
+    #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
+    add_constraints!(
+        container,
         sys,
-            PostContingencyEmergencyRateLimitConstraint,
+        PostContingencyEmergencyRateLimitConstraint,
         PostContingencyBranchFlow,
-            PSY.get_components(PSY.ACTransmission, sys),
-            model,
-            network_model,
-        )
-
-        #ADD RAMPING CONSTRAINTS
-        add_constraints!(
-            container,
+        PSY.get_components(PSY.ACTransmission, sys),
+        model,
+        network_model,
+    )
+    
+    #ADD RAMPING CONSTRAINTS
+    add_constraints!(
+        container,
         sys,
-            PostContingencyRampConstraint,
-            PostContingencyActivePowerChangeVariable,
-            devices,
-            model,
+        PostContingencyRampConstraint,
+        PostContingencyActivePowerChangeVariable,
+        devices,
+        model,
         network_model;
         service = ""
-        )
+    )
 
     return
-    end
+end
 
 """
 Default implementation to add generators Expressions for Post-Contingency Generation
@@ -389,7 +389,7 @@ function add_to_expression!(
                         sys,
                         outage;
                         component_type = PSY.Generator,
-        )
+                    )
 
             generator_is_in_associated_devices = generator in associated_devices # generator_outage == generator
 
@@ -555,10 +555,10 @@ function add_to_expression!(
         variable = get_variable(container, U(), typeof(device))
         mult = _get_variable_multiplier(U(), typeof(device), W())
 
-                for t in time_steps
-                    _add_to_jump_expression!(
+        for t in time_steps
+            _add_to_jump_expression!(
                 expression[outage_id, t],
-                        variable[name, t],
+                variable[name, t],
                 mult,
             )
         end
@@ -689,7 +689,7 @@ function add_to_expression!(
     bus_numbers = PNM.get_bus_axis(ptdf)
 
     expression = lazy_container_addition!(
-            container,
+        container,
         T(),
         V,
         IS.get_uuid.(associated_outages),
@@ -704,7 +704,7 @@ function add_to_expression!(
     for outage in associated_outages
         associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
         outage_id = IS.get_uuid(outage)
-
+        
         for device in devices
             if device in associated_devices #The contributing device cannot contribute to the power deployment if it has the outage
                 continue
@@ -1162,8 +1162,8 @@ function add_linear_ramp_constraints!(
         )
         associated_outages = unique([outage for (_, outage) in generator_outages_pairs])
     else
-    service_name = PSY.get_name(service)
-    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+        service_name = PSY.get_name(service)
+        associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
     end
     
 
@@ -1210,7 +1210,7 @@ function add_linear_ramp_constraints!(
                         sys,
                         outage;
                         component_type = PSY.Generator,
-                )
+                    )
 
             if device in associated_devices
                 continue
@@ -1350,14 +1350,14 @@ function add_variables!(
                     continue
                 end
 
-                ub = get_variable_upper_bound(variable_type(), service, d, formulation)
+                ub = get_variable_upper_bound(variable_type(), service, device, formulation)
                 ub !== nothing && JuMP.set_upper_bound(variable[outage_name, name, t], ub)
 
-                lb = get_variable_lower_bound(variable_type(), service, d, formulation)
+                lb = get_variable_lower_bound(variable_type(), service, device, formulation)
                 lb !== nothing && !binary &&
                     JuMP.set_lower_bound(variable[outage_name, name, t], lb)
 
-                init = get_variable_warm_start_value(variable_type(), d, formulation)
+                init = get_variable_warm_start_value(variable_type(), device, formulation)
                 init !== nothing &&
                     JuMP.set_start_value(variable[outage_name, name, t], init)
             end
@@ -1434,6 +1434,12 @@ function construct_service!(
         contributing_devices,
         model,
     )
+
+    objective_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
 
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
     if isempty(associated_outages)
@@ -1558,11 +1564,6 @@ function construct_service!(
         service = service,
     )
 
-    objective_function!(container, service, model)
-
-    add_feedforward_constraints!(container, model, service)
-
-    add_constraint_dual!(container, sys, model)
 
     return
 end
@@ -1723,22 +1724,20 @@ function add_to_expression!(
 
     for outage in associated_outages
         associated_devices = PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
-        
-        name_outage = IS.get_uuid(outage)
+        outage_id = IS.get_uuid(outage)
 
         for device in contributing_devices
-            name = PSY.get_name(device)
-
             if device in associated_devices
                 continue
             end
 
+            name = PSY.get_name(device)
             bus_number = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(device))
 
             for t in time_steps
                 _add_to_jump_expression!(
-                    expression[name_outage, bus_number, t],
-                    reserve_deployment_variable[name_outage, name, t],
+                    expression[outage_id, bus_number, t],
+                    reserve_deployment_variable[outage_id, name, t],
                     mult,
                 )
             end
