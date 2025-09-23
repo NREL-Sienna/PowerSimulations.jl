@@ -24,13 +24,13 @@ function add_variables!(
         container,
         T(),
         D,
-        [IS.get_uuid(outage) for outage in associated_outages], #TODO if 2 Gen are associated with the same outage this will fail.
+        string.(IS.get_uuid.(associated_outages)),
         [PSY.get_name(d) for d in devices],
         time_steps,
     )
 
     for outage in associated_outages
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
 
@@ -367,7 +367,7 @@ function add_to_expression!(
 
     expressions =
         lazy_container_addition!(container, T(), V,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             PSY.get_name.(generators),
             time_steps)
 
@@ -388,7 +388,7 @@ function add_to_expression!(
 
             generator_is_in_associated_devices = generator in associated_devices # generator_outage == generator
 
-            outage_id = IS.get_uuid(outage)
+            outage_id = string(IS.get_uuid(outage))
 
             for t in time_steps
                 _add_to_jump_expression!(
@@ -442,7 +442,7 @@ function add_constraints!(
             container,
             T(),
             V,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             device_names,
             time_steps;
             meta = "lb",
@@ -453,7 +453,7 @@ function add_constraints!(
             container,
             T(),
             V,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             device_names,
             time_steps;
             meta = "ub",
@@ -473,7 +473,7 @@ function add_constraints!(
 
             generator_is_in_associated_devices = device in associated_devices # generator_outage == generator
 
-            outage_id = IS.get_uuid(outage)
+            outage_id = string(IS.get_uuid(outage))
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
             if generator_is_in_associated_devices
                 continue
@@ -542,7 +542,7 @@ function add_to_expression!(
 
     expression =
         lazy_container_addition!(container, T(), V,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             time_steps)
 
     for (device, outage) in generator_outages_pairs
@@ -550,7 +550,7 @@ function add_to_expression!(
         #     continue
         # end
 
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
         name = PSY.get_name(device)
         variable = get_variable(container, U(), typeof(device))
         mult = _get_variable_multiplier(U(), typeof(device), W())
@@ -593,7 +593,7 @@ function add_to_expression!(
 
     expression =
         lazy_container_addition!(container, T(), V,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             time_steps)
 
     reserve_deployment_variable = get_variable(container, U(), V)
@@ -602,7 +602,7 @@ function add_to_expression!(
     for outage in associated_outages
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
 
         for device in devices
             if device in associated_devices #The contributting device cannot contribute to the reserves deployment if it has the outage
@@ -654,12 +654,12 @@ function add_constraints!(
             container,
             T(),
             V,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             time_steps,
         )
 
     for t in time_steps, outage in associated_outages
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
         constraint[outage_id, t] =
             JuMP.@constraint(get_jump_model(container), expressions[outage_id, t] == 0)
     end
@@ -698,7 +698,7 @@ function add_to_expression!(
         container,
         T(),
         V,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         bus_numbers,
         time_steps,
     )
@@ -710,7 +710,7 @@ function add_to_expression!(
     for outage in associated_outages
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
 
         for device in devices
             if device in associated_devices #The contributing device cannot contribute to the power deployment if it has the outage
@@ -761,7 +761,7 @@ function add_to_expression!(
         container,
         T(),
         V,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         bus_numbers,
         time_steps,
     )
@@ -772,7 +772,7 @@ function add_to_expression!(
         if !(outage in associated_outages)
             continue
         end
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
         name = PSY.get_name(device)
         variable = get_variable(container, U(), typeof(device))
         mult = _get_variable_multiplier(U(), typeof(device), W())
@@ -819,7 +819,7 @@ function add_to_expression!(
         container,
         T(),
         V,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         branches_names,
         time_steps,
     )
@@ -871,7 +871,7 @@ function add_to_expression!(
                         )
                     end
                     for outage in associated_outages
-                        outage_id = IS.get_uuid(outage)
+                        @show outage_id = string(IS.get_uuid(outage))
                         _add_expression_to_container!(
                             expression_container,
                             equivalent_branch_expression,
@@ -917,7 +917,7 @@ function add_to_expression!(
         container,
         T(),
         V,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         branches_names,
         time_steps,
     )
@@ -939,7 +939,7 @@ function add_to_expression!(
             for (arc_tuple, reduction_entry) in map[ac_type]
                 ptdf_col = ptdf[arc_tuple, :]
                 for outage in associated_outages
-                    outage_id = IS.get_uuid(outage)
+                    outage_id = string(IS.get_uuid(outage))
                     expression_build_stage = 2
                     has_entry, entry_name = _search_for_reduced_branch_expression(
                         reduced_branch_tracker,
@@ -1041,7 +1041,7 @@ function add_constraints!(
             container,
             T(),
             R,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             device_names,
             time_steps;
             meta = "lb",
@@ -1052,7 +1052,7 @@ function add_constraints!(
             container,
             T(),
             R,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             device_names,
             time_steps;
             meta = "ub",
@@ -1069,7 +1069,7 @@ function add_constraints!(
                 for ci_name in names
                     if ci_name in device_names
                         for outage in associated_outages
-                            outage_id = IS.get_uuid(outage)
+                            outage_id = string(IS.get_uuid(outage))
                             for t in time_steps
                                 con_ub[outage_id, ci_name, t] =
                                     JuMP.@constraint(get_jump_model(container),
@@ -1175,7 +1175,7 @@ function add_linear_ramp_constraints!(
     minutes_per_period = _get_minutes_per_period(container)
 
     device_name_set = PSY.get_name.(ramp_devices)
-    set_outages_name = [IS.get_uuid(r) for r in associated_outages]
+    set_outages_name = [string(IS.get_uuid(r)) for r in associated_outages]
     if device_name_set == []
         @debug "No Contributing devices to service $service with ramping constraints found in the system."
         return
@@ -1208,7 +1208,7 @@ function add_linear_ramp_constraints!(
         @debug "add post-contingency ramping constraint for device $name"
 
         for outage in associated_outages
-            name_outage = IS.get_uuid(outage)
+            name_outage = string(IS.get_uuid(outage))
             associated_devices =
                 PSY.get_associated_components(
                     sys,
@@ -1245,7 +1245,7 @@ function _add_post_contingency_ramp_constraints!(
     ::Type{PostContingencyActivePowerChangeVariable},
     variable,
     constraint,
-    name_outage::Base.UUID,
+    name_outage::String,
     name::String,
     t::Int64,
     ramp_limits,
@@ -1266,7 +1266,7 @@ function _add_post_contingency_ramp_constraints!(
     ::Type{PostContingencyActivePowerReserveDeploymentVariable},
     variable,
     con_up,
-    name_outage::Base.UUID,
+    name_outage::String,
     name::String,
     t::Int64,
     ramp_limits,
@@ -1287,7 +1287,7 @@ function _add_post_contingency_ramp_constraints!(
     ::Type{PostContingencyActivePowerReserveDeploymentVariable},
     variable,
     con_down,
-    name_outage::Base.UUID,
+    name_outage::String,
     name::String,
     t::Int64,
     ramp_limits,
@@ -1326,14 +1326,14 @@ function add_variables!(
         container,
         variable_type(),
         R,
-        [IS.get_uuid(outage) for outage in associated_outages],
+        [string(IS.get_uuid(outage)) for outage in associated_outages],
         [PSY.get_name(d) for d in contributing_devices],
         time_steps;
         meta = get_name(service),
     )
 
     for outage in associated_outages
-        outage_name = IS.get_uuid(outage)
+        outage_name = string(IS.get_uuid(outage))
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator)
 
@@ -1601,7 +1601,7 @@ function add_to_expression!(
         container,
         T(),
         R,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         time_steps;
         meta = service_name,
     )
@@ -1610,7 +1610,7 @@ function add_to_expression!(
         if !(outage in associated_outages)
             continue
         end
-        name_outage = IS.get_uuid(outage)
+        name_outage = string(IS.get_uuid(outage))
         name = PSY.get_name(d)
         variable = get_variable(container, U(), typeof(d))
         mult = get_variable_multiplier(U(), typeof(d), F())
@@ -1654,7 +1654,7 @@ function add_to_expression!(
         container,
         T(),
         R,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         time_steps;
         meta = service_name,
     )
@@ -1666,7 +1666,7 @@ function add_to_expression!(
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
 
-        name_outage = IS.get_uuid(outage)
+        name_outage = string(IS.get_uuid(outage))
 
         for device in contributing_devices
             name = PSY.get_name(device)
@@ -1716,7 +1716,7 @@ function add_to_expression!(
         container,
         T(),
         R,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         bus_numbers,
         time_steps;
         meta = service_name,
@@ -1730,7 +1730,7 @@ function add_to_expression!(
     for outage in associated_outages
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
-        outage_id = IS.get_uuid(outage)
+        outage_id = string(IS.get_uuid(outage))
 
         for device in contributing_devices
             if device in associated_devices
@@ -1782,7 +1782,7 @@ function add_to_expression!(
         container,
         T(),
         R,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         bus_numbers,
         time_steps;
         meta = service_name,
@@ -1794,7 +1794,7 @@ function add_to_expression!(
         if !(outage in associated_outages)
             continue
         end
-        name_outage = IS.get_uuid(outage)
+        name_outage = string(IS.get_uuid(outage))
         name = PSY.get_name(device)
         variable = get_variable(container, U(), typeof(device))
         mult = get_variable_multiplier(U(), typeof(device), F())
@@ -1840,7 +1840,7 @@ function add_to_expression!(
         container,
         T(),
         R,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         branches_names,
         time_steps;
         meta = service_name,
@@ -1862,7 +1862,7 @@ function add_to_expression!(
             for (arc_tuple, reduction_entry) in map[ac_type]
                 ptdf_col = ptdf[arc_tuple, :]
                 for outage in associated_outages
-                    outage_id = IS.get_uuid(outage)
+                    outage_id = string(IS.get_uuid(outage))
                     expression_build_stage = 2
                     has_entry, entry_name = _search_for_reduced_branch_expression(
                         reduced_branch_tracker,
@@ -1951,7 +1951,7 @@ function add_to_expression!(
         container,
         T(),
         R,
-        IS.get_uuid.(associated_outages),
+        string.(IS.get_uuid.(associated_outages)),
         branches_names,
         time_steps;
         meta = service_name,
@@ -2003,7 +2003,7 @@ function add_to_expression!(
                         )
                     end
                     for outage in associated_outages
-                        outage_id = IS.get_uuid(outage)
+                        outage_id = string(IS.get_uuid(outage))
                         _add_expression_to_container!(
                             expression_container,
                             equivalent_branch_expression,
@@ -2021,9 +2021,9 @@ function add_to_expression!(
 end
 
 function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression_container::JuMPAffineExpression3DArrayStringStringInt,
     expression::JuMP.AffExpr,
-    outage_id::Base.UUID,
+    outage_id::String,
     entry::U,
     type::Type{T},
     t,
@@ -2033,9 +2033,9 @@ function _add_expression_to_container!(
 end
 
 function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression_container::JuMPAffineExpression3DArrayStringStringInt,
     expression::JuMP.AffExpr,
-    outage_id::Base.UUID,
+    outage_id::String,
     double_circuit::Set{U},
     type::Type{T},
     t,
@@ -2047,9 +2047,9 @@ function _add_expression_to_container!(
 end
 
 function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression_container::JuMPAffineExpression3DArrayStringStringInt,
     expression::JuMP.AffExpr,
-    outage_id::Base.UUID,
+    outage_id::String,
     series_chain::Vector{Any},
     type::Type{T},
     t,
@@ -2094,7 +2094,7 @@ function add_constraints!(
         container,
         T(),
         R,
-        [IS.get_uuid(o) for o in associated_outages],
+        [string(IS.get_uuid(o)) for o in associated_outages],
         time_steps;
         meta = service_name,
     )
@@ -2102,7 +2102,7 @@ function add_constraints!(
     j_model = get_jump_model(container)
 
     for t in time_steps, outage in associated_outages
-        name_outage = IS.get_uuid(outage)
+        name_outage = string(IS.get_uuid(outage))
         constraint[name_outage, t] =
             JuMP.@constraint(j_model, expressions[name_outage, t] == 0)
     end
@@ -2148,7 +2148,7 @@ function add_constraints!(
             container,
             T(),
             R,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             device_names,
             time_steps;
             meta = "$service_name -lb",
@@ -2159,7 +2159,7 @@ function add_constraints!(
             container,
             T(),
             R,
-            IS.get_uuid.(associated_outages),
+            string.(IS.get_uuid.(associated_outages)),
             device_names,
             time_steps;
             meta = "$service_name -ub",
@@ -2176,7 +2176,7 @@ function add_constraints!(
                 for ci_name in names
                     if ci_name in device_names
                         for outage in associated_outages
-                            outage_id = IS.get_uuid(outage)
+                            outage_id = string(IS.get_uuid(outage))
                             for t in time_steps
                                 con_ub[outage_id, ci_name, t] =
                                     JuMP.@constraint(get_jump_model(container),
@@ -2197,9 +2197,9 @@ function add_constraints!(
 end
 
 function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression_container::JuMPAffineExpression3DArrayStringStringInt,
     expression::JuMP.AffExpr,
-    outage_id::Base.UUID,
+    outage_id::String,
     entry::U,
     type::Type{T},
     t,
@@ -2209,9 +2209,9 @@ function _add_expression_to_container!(
 end
 
 function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression_container::JuMPAffineExpression3DArrayStringStringInt,
     expression::JuMP.AffExpr,
-    outage_id::Base.UUID,
+    outage_id::String,
     double_circuit::Set{U},
     type::Type{T},
     t,
@@ -2223,9 +2223,9 @@ function _add_expression_to_container!(
 end
 
 function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayIntStringInt,
+    expression_container::JuMPAffineExpression3DArrayStringStringInt,
     expression::JuMP.AffExpr,
-    outage_id::Base.UUID,
+    outage_id::String,
     series_chain::Vector{Any},
     type::Type{T},
     t,
@@ -2266,7 +2266,7 @@ function add_constraints!(
             container,
             T(),
             R,
-            [IS.get_uuid(r) for r in associated_outages],
+            [string(IS.get_uuid(r)) for r in associated_outages],
             [PSY.get_name(r) for r in contributing_devices],
             time_steps;
             meta = service_name,
@@ -2289,7 +2289,7 @@ function add_constraints!(
     for outage in associated_outages
         associated_devices =
             PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
-        name_outage = IS.get_uuid(outage)
+        name_outage = string(IS.get_uuid(outage))
 
         for device in contributing_devices
             name = get_name(device)
