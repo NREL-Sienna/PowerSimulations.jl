@@ -457,9 +457,9 @@ should_write_resulting_value(::Type{PiecewiseLinearBlockDecrementalOffer}) = fal
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
 should_write_resulting_value(::Type{PostContingencyActivePowerReserveDeploymentVariable}) =
-    false #TODO: Make true when 3Dimensional is ready
+    true 
 should_write_resulting_value(::Type{PostContingencyActivePowerChangeVariable}) =
-    false #TODO: Make true when 3Dimensional is ready
+    true
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PostContingencyActivePowerChangeVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true
