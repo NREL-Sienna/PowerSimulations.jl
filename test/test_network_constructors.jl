@@ -211,6 +211,7 @@ end
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
+    n_steps = 2
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
             NetworkModel(
@@ -224,8 +225,7 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         for branch_name in branches_dlr[sys]
-            branch = get_component(ACBranch, sys, branch_name)
-
+            branch = get_component(PSY.ACTransmission, sys, branch_name)
             dlr_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
             data_ts = collect(
                 DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
@@ -233,12 +233,6 @@ end
                     "d/m/y  H:M:S",
                 ),
             )
-
-            if sys == c_sys5
-                n_steps = 2
-            else
-                n_steps = 1
-            end
 
             for t in 1:n_steps
                 ini_time = data_ts[1] + Day(t - 1)
@@ -905,7 +899,6 @@ end
     end
 end
 
-#=
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
@@ -924,7 +917,6 @@ end
         @test PSI.get_optimization_container(ps_model).pm !== nothing
     end
 end
-=#
 
 @testset "2 Areas AreaBalance PowerModel - with slacks" begin
     c_sys = build_system(PSITestSystems, "c_sys5_uc")
