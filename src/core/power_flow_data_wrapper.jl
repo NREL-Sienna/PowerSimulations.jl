@@ -16,10 +16,11 @@ check_network_reduction(::PFS.SystemPowerFlowContainer) = nothing
 
 function check_network_reduction(pfd::PFS.PowerFlowData)
     nrd = PFS.get_network_reduction_data(pfd)
-    if length(PNM.get_reverse_bus_search_map(nrd)) != 0
+    if !isempty(PNM.get_reductions(nrd))
         throw(
             IS.NotImplementedError(
-                "Network reduction is not supported in PowerSimulations.jl.",
+                "Power flow in-the-loop on reduced networks isn't supported. Network " *
+                "reductions of types $(PNM.get_reductions(nrd)) present.",
             ),
         )
     end
