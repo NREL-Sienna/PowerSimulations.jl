@@ -108,7 +108,7 @@ function write_result!(
     array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
 ) where {T}
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = array.data
+    container[key][index] = array
     return
 end
 
