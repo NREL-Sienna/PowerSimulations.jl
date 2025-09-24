@@ -12,8 +12,12 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
-
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), ReactivePowerTimeSeriesParameter)
+        add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+    end
     process_market_bid_parameters!(container, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)

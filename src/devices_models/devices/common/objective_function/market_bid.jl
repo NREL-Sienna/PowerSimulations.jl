@@ -210,6 +210,55 @@ function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjec
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
 
+# Renewable-specific validations that warn when costs are nonzero.
+# There warnings are captured by the with_logger, though, so we don't actually see them.
+function validate_mbc_component(
+    ::StartupCostParameter,
+    device::PSY.RenewableDispatch,
+    model,
+)
+    startup = PSY.get_start_up(PSY.get_operation_cost(device))
+    apply_maybe_across_time_series(device, startup) do x
+        if x != PSY.single_start_up_to_stages(0.0)
+            # println("should see warning about startup")
+            @warn "Nonzero startup cost detected for renewable generation $(get_name(device))." maxlog =
+                1
+        end
+    end
+end
+
+function validate_mbc_component(
+    ::ShutdownCostParameter,
+    device::PSY.RenewableDispatch,
+    model,
+)
+    shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
+    apply_maybe_across_time_series(device, shutdown) do x
+        if x != 0.0
+            # println("should see warning about shutdown")
+            @warn "Nonzero shutdown cost detected for renewable generation $(get_name(device))." maxlog =
+                1
+        end
+    end
+end
+
+function validate_mbc_component(
+    ::IncrementalCostAtMinParameter,
+    device::PSY.RenewableDispatch,
+    model,
+)
+    no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
+    if !isnothing(no_load_cost)
+        apply_maybe_across_time_series(device, no_load_cost) do x
+            if x != 0.0
+                # println("should see warning about no-load")
+                @warn "Nonzero no-load cost detected for renewable generation $(get_name(device))." maxlog =
+                    1
+            end
+        end
+    end
+end
+
 # Validate that initial input ts always appears if variable ts appears, warn if initial input ts appears without variable ts
 validate_mbc_component(
     ::IncrementalCostAtMinParameter,
@@ -251,41 +300,10 @@ function _process_market_bid_parameters_helper(
     model,
     devices,
 ) where {P <: ParameterType}
+    validate_mbc_component.(Ref(P()), devices, Ref(model))
     if _consider_parameter(P(), container, model)
-        validate_mbc_component.(Ref(P()), devices, Ref(model))
         ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
-    end
-end
-
-mbc_params(::Union{Type{PSY.ThermalStandard}, Type{PSY.ThermalMultiStart}}) = (
-    StartupCostParameter(),
-    ShutdownCostParameter(),
-    IncrementalCostAtMinParameter(),
-    IncrementalPiecewiseLinearSlopeParameter(),
-    IncrementalPiecewiseLinearBreakpointParameter(),
-)
-
-# TODO check startup, shutdown, cost at min and @warn if they're nonzero.
-mbc_params(::Type{PSY.RenewableDispatch}) = (
-    IncrementalPiecewiseLinearSlopeParameter(),
-    IncrementalPiecewiseLinearBreakpointParameter(),
-)
-
-# warnings are captured by the context manager, so we don't actually see them...
-function check_renewable_mbc(mbc::PSY.MarketBidCost)
-    # TODO a time series of all 0.0's should be allowed too.
-    if !isnothing(PSY.get_no_load_cost(mbc)) && PSY.get_no_load_cost(mbc) != 0.0
-        @warn "Nonzero no-load cost for renewable generation market bid cost is not supported and will be ignored." maxlog =
-            1
-    end
-    if PSY.get_start_up(mbc) != PSY.single_start_up_to_stages(0.0)
-        @warn "Nonzero startup cost for renewable generation market bid cost is not supported and will be ignored." maxlog =
-            1
-    end
-    if PSY.get_shut_down(mbc) != 0.0
-        @warn "Nonzero shutdown cost for renewable generation market bid cost is not supported and will be ignored." maxlog =
-            1
     end
 end
 
@@ -294,18 +312,33 @@ function process_market_bid_parameters!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel,
+    incremental::Bool = true,
+    decremental::Bool = false,
 )
     devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
-    # TODO multiple dispatch way to integrate with existing validation, inside of
-    # _process_market_bid_parameters_helper?
-    if get_component_type(model) === PSY.RenewableDispatch
-        for device in devices
-            check_renewable_mbc(PSY.get_operation_cost(device))
+    for param in (
+        StartupCostParameter(),
+        ShutdownCostParameter(),
+    )
+        _process_market_bid_parameters_helper(param, container, model, devices)
+    end
+    if incremental
+        for param in (
+            IncrementalCostAtMinParameter(),
+            IncrementalPiecewiseLinearSlopeParameter(),
+            IncrementalPiecewiseLinearBreakpointParameter(),
+        )
+            _process_market_bid_parameters_helper(param, container, model, devices)
         end
     end
-    # TODO decremental
-    for param in mbc_params(get_component_type(model))
-        _process_market_bid_parameters_helper(param, container, model, devices)
+    if decremental
+        for param in (
+            DecrementalCostAtMinParameter(),
+            DecrementalPiecewiseLinearSlopeParameter(),
+            DecrementalPiecewiseLinearBreakpointParameter(),
+        )
+            _process_market_bid_parameters_helper(param, container, model, devices)
+        end
     end
 end
 
