@@ -871,7 +871,7 @@ function add_to_expression!(
                         )
                     end
                     for outage in associated_outages
-                        @show outage_id = string(IS.get_uuid(outage))
+                        outage_id = string(IS.get_uuid(outage))
                         _add_expression_to_container!(
                             expression_container,
                             equivalent_branch_expression,
