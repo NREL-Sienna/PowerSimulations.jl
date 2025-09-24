@@ -271,7 +271,7 @@ function update_variable_cost!(
         add_to_objective_variant_expression!(container, cost_expr)
         set_expression!(
             container,
-            ProductionCostExpression,
+            ProductionCostExpression, # for loads, this should be...?
             cost_expr,
             component,
             time_period,

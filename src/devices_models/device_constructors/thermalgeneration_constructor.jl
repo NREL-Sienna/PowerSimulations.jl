@@ -15,8 +15,6 @@ function _handle_common_thermal_parameters!(
     devices,
     model::DeviceModel,
 )
-    # won't this always be true, too, then?
-    # there is a single test case where it isnt.
     if haskey(get_time_series_names(model), FuelCostParameter)
         add_parameters!(container, FuelCostParameter, devices, model)
     end
