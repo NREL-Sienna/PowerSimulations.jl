@@ -309,7 +309,6 @@ function construct_device!(
         model,
         network_model,
     )
-
     #ADD CONSTRAINT FOR EACH CONTINGENCY: FLOW <= RATE LIMIT
     add_constraints!(
         container,
@@ -823,7 +822,6 @@ function add_to_expression!(
         branches_names,
         time_steps,
     )
-
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     reduced_branch_expression_tracker = get_expression_dict(reduced_branch_tracker)
     ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
@@ -1502,7 +1500,6 @@ function construct_service!(
     )
 
     # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
-
     add_to_expression!(
         container,
         sys,
@@ -1940,7 +1937,6 @@ function add_to_expression!(
     N <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
-
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
@@ -2029,7 +2025,8 @@ function _add_expression_to_container!(
     t,
 ) where {T <: PSY.Component, U <: PSY.ACTransmission}
     name = PSY.get_name(entry)
-    expression_container[outage_id, name, t] = expression
+    JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
+    #expression_container[outage_id, name, t] = expression
 end
 
 function _add_expression_to_container!(
@@ -2042,7 +2039,8 @@ function _add_expression_to_container!(
 ) where {T <: PSY.Component, U <: PSY.ACTransmission}
     for circuit in double_circuit
         name = PSY.get_name(circuit) * "_double_circuit"
-        expression_container[outage_id, name, t] = expression
+        JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
+        #expression_container[outage_id, name, t] = expression
     end
 end
 
@@ -2055,7 +2053,7 @@ function _add_expression_to_container!(
     t,
 ) where {T <: PSY.Component}
     for segment in series_chain
-        _add_expression_to_container!(
+        _add_expression_to_container!(#TODO REVIEW IF THIS OVERWRITING
             expression_container,
             expression,
             outage_id,
@@ -2205,7 +2203,8 @@ function _add_expression_to_container!(
     t,
 ) where {T <: PSY.Component, U <: PSY.ACTransmission}
     name = PSY.get_name(entry)
-    expression_container[outage_id, name, t] = expression
+    JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
+    #expression_container[outage_id, name, t] = expression
 end
 
 function _add_expression_to_container!(
@@ -2218,7 +2217,8 @@ function _add_expression_to_container!(
 ) where {T <: PSY.Component, U <: PSY.ACTransmission}
     for circuit in double_circuit
         name = PSY.get_name(circuit) * "_double_circuit"
-        expression_container[outage_id, name, t] = expression
+        JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
+        #expression_container[outage_id, name, t] = expression
     end
 end
 
@@ -2231,7 +2231,7 @@ function _add_expression_to_container!(
     t,
 ) where {T <: PSY.Component}
     for segment in series_chain
-        _add_expression_to_container!(
+        _add_expression_to_container!(#todo review this
             expression_container,
             expression,
             outage_id,
