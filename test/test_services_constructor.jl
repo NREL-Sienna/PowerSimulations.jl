@@ -665,7 +665,7 @@ end
     )
 end
 
-@testset "Test Interfaces on Interchanges" begin
+@testset "Test Interfaces on Interchanges with AreaBalance" begin
     sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
     interchange1 = AreaInterchange(;
@@ -729,7 +729,6 @@ end
             resolution = Hour(1),
             optimizer = HiGHS_optimizer,
             store_variable_names = true,
-            optimizer_solve_log_print = true,
         )
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -737,6 +736,110 @@ end
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     moi_tests(ps_model, 8568, 0, 2136, 1416, 2664, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (3, 24)
+
+    interchange_constraints_ub =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "ub")
+    interchange_constraints_lb =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "lb")
+    @test size(interchange_constraints_ub) == (1, 24)
+    @test size(interchange_constraints_lb) == (1, 24)
+
+    interchange_constraints_ub["interface1_2_3", 1]
+    # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interface_results =
+        read_expression(
+            results,
+            "InterfaceTotalFlow__TransmissionInterface";
+            table_format = TableFormat.WIDE,
+        )
+    for i in 1:24
+        @test interface_results[!, "interface1_2_3"][i] <= 100.0 + PSI.ABSOLUTE_TOLERANCE
+    end
+end
+
+@testset "Test Interfaces on Interchanges with AreaPTDFPowerModel" begin
+    sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
+    interchange1 = AreaInterchange(;
+        name = "interchange1_2",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    interchange2 = AreaInterchange(;
+        name = "interchange1_3",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "3"),
+    )
+    interchange3 = AreaInterchange(;
+        name = "interchange3_2",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "3"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    add_components!(
+        sys_rts_da,
+        [interchange1, interchange2, interchange3],
+    )
+    # This interface is limiting all the flows into 1
+    interface = TransmissionInterface(;
+        name = "interface1_2_3",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("interchange1_2" => 1,
+            "interchange1_3" => -1,
+        ),
+    )
+    add_service!(
+        sys_rts_da,
+        interface,
+        [interchange1, interchange2],
+    )
+    template = ProblemTemplate(NetworkModel(AreaPTDFPowerModel; use_slacks = true))
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableNonDispatch, FixedOutput)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, Line, StaticBranchUnbounded)
+    set_device_model!(
+        template,
+        DeviceModel(AreaInterchange, StaticBranchUnbounded; use_slacks = false),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
+    )
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 10944, 0, 2136, 1416, 4896, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =

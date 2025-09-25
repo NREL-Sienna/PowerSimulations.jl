@@ -1792,12 +1792,11 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     sys::PSY.System,
-    network_model::NetworkModel{
-        Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
-    },
+    network_model::NetworkModel{V},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
+    V <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
 }
     variable =
         get_variable(container, U(), _system_expression_type(AreaPTDFPowerModel))
