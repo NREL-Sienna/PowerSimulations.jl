@@ -509,7 +509,6 @@ end
 
 @testset "2 Subnetworks HVDC DC-PF with CopperPlatePowerModel" begin
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
-    # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(NetworkModel(CopperPlatePowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
@@ -755,6 +754,18 @@ end
         ),
     )
     @test all(isapprox.(sum(zone_2_gen .+ zone_2_load; dims = 2), 0.0; atol = 1e-3))
+
+    # Test passing a Virtual PTDF Model with higher tolerance
+    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
+    # Test passing a VirtualPTDF Model
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(PTDFPowerModel; PTDF_matrix = VirtualPTDF(c_sys5; tol = 1e-2)),
+    )
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 # These models are easier to test due to their lossless nature
