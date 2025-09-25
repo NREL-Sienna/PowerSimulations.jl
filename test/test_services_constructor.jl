@@ -764,7 +764,7 @@ end
     end
 end
 
-@testset "Test Interfaces on Interchanges with AreaPTDFPowerModel" begin
+@testset "Test Interfaces on Interchanges and Double Circuits with AreaPTDFPowerModel" begin
     sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
     interchange1 = AreaInterchange(;
@@ -796,7 +796,7 @@ end
         [interchange1, interchange2, interchange3],
     )
     # This interface is limiting all the flows into 1
-    interface = TransmissionInterface(;
+    interface1 = TransmissionInterface(;
         name = "interface1_2_3",
         available = true,
         active_power_flow_limits = (min = 0.0, max = 1.0),
@@ -807,9 +807,26 @@ end
     )
     add_service!(
         sys_rts_da,
-        interface,
+        interface1,
         [interchange1, interchange2],
     )
+
+    #Add an interface on a double circuit: 
+    double_circuit_1 = get_component(Line, sys_rts_da, "A33-1")
+    double_circuit_2 = get_component(Line, sys_rts_da, "A33-2")
+    interface2 = TransmissionInterface(;
+        name = "interface_double_circuit",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("A33-1" => 1,  "A33-2" => 1),
+    )
+    add_service!(
+        sys_rts_da,
+        interface2,
+        [double_circuit_1, double_circuit_2],
+    )
+
     template = ProblemTemplate(NetworkModel(AreaPTDFPowerModel; use_slacks = true))
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
