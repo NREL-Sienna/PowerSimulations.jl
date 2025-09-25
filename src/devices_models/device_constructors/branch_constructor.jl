@@ -1540,37 +1540,74 @@ function _get_branch_map(
     sys::PSY.System,
 )
     @assert !isempty(network_model.modeled_branch_types)
-
+    network_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    for branch_type in network_model.modeled_branch_types
-        if branch_type == PSY.AreaInterchange
-            continue
-        end
-        if !has_container_key(container, FlowActivePowerVariable, branch_type)
-            continue
-        end
-        flow_vars = get_variable(container, FlowActivePowerVariable(), branch_type)
-        branch_names = axes(flow_vars)[1]
-        for bname in branch_names
-            d = PSY.get_component(branch_type, sys, bname)
-            area_from = PSY.get_area(PSY.get_arc(d).from)
-            area_to = PSY.get_area(PSY.get_arc(d).to)
-            if area_from != area_to
-                branch_typed_dict = get!(
-                    inter_area_branch_map,
-                    (area_from, area_to),
-                    Dict{DataType, Vector{<:PSY.ACBranch}}(),
-                )
-                if !haskey(branch_typed_dict, branch_type)
-                    branch_typed_dict[branch_type] = [d]
-                else
-                    push!(branch_typed_dict[branch_type], d)
+    for map in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        for branch_type in network_model.modeled_branch_types
+            !haskey(network_reduction_map, branch_type) && continue
+            branch_type == PSY.AreaInterchange && continue
+            !has_container_key(container, FlowActivePowerVariable, branch_type) && continue
+            for reduction_entry in values(network_reduction_map[branch_type])
+                area_from, area_to = _get_area_from_to(reduction_entry)
+                if area_from != area_to
+                    branch_typed_dict = get!(
+                        inter_area_branch_map,
+                        (area_from, area_to),
+                        Dict{DataType, Vector{<:PSY.ACBranch}}(),
+                    )
+                    _add_to_branch_map!(branch_typed_dict, branch_type, reduction_entry)
                 end
             end
         end
     end
     return inter_area_branch_map
+end
+
+function _add_to_branch_map!(
+    branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
+    branch_type::Type{<:PSY.ACTransmission},
+    reduction_entry::PSY.ACTransmission,
+)
+    if !haskey(branch_typed_dict, branch_type)
+        branch_typed_dict[branch_type] = [reduction_entry]
+    else
+        push!(branch_typed_dict[branch_type], reduction_entry)
+    end
+end
+
+function _add_to_branch_map!(
+    branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
+    branch_type::Type{<:PSY.ACTransmission},
+    reduction_entry::Set{PSY.ACTransmission},
+)
+    for branch in reduction_entry
+        _add_to_branch_map!(branch_typed_dict, branch_type, branch)
+    end
+end
+
+function _get_area_from_to(reduction_entry::PSY.ACTransmission)
+    area_from = PSY.get_area(PSY.get_arc(reduction_entry).from)
+    area_to = PSY.get_area(PSY.get_arc(reduction_entry).to)
+    return area_from, area_to
+end
+
+function _get_area_from_to(reduction_entry::Set{PSY.ACTransmission})
+    return _get_area_from_to(first(reduction_entry))
+end
+
+function _get_area_from_to(reduction_entry::Vector{Any})
+    area_froms = [_get_area_from_to(x)[1] for x in reduction_entry]
+    area_tos = [_get_area_from_to(x)[2] for x in reduction_entry]
+    all_areas = vcat(area_froms, area_tos)
+    if length(unique(all_areas)) > 1
+        error(
+            "Inter-area line found as part of a degree two chain reduction; this feature is not supported",
+        )
+    end
+    return first(all_areas), first(all_areas)
 end
 
 function construct_device!(
