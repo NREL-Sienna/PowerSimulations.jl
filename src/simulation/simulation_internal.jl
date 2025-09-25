@@ -82,7 +82,7 @@ function SimulationInternal(
         file_level,
         cache_size_mib,
         min_cache_flush_size_mib,
-        Random.Xoshiro(RNG_SEED),
+        Random.Xoshiro(IS.get_random_seed()),
     )
 end
 
