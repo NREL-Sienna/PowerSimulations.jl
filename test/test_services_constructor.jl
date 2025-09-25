@@ -810,7 +810,7 @@ end
         interface,
         [interchange1, interchange2],
     )
-    template = ProblemTemplate(NetworkModel(AreaPTDFPowerModel; use_slacks = false))
+    template = ProblemTemplate(NetworkModel(AreaPTDFPowerModel; use_slacks = true))
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
@@ -839,7 +839,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 10800, 0, 2136, 1416, 4896, false)
+    moi_tests(ps_model, 10944, 0, 2136, 1416, 4896, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
