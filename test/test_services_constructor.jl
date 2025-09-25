@@ -839,7 +839,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 8568, 0, 2136, 1416, 2664, false)
+    moi_tests(ps_model, 10800, 0, 2136, 1416, 4896, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
