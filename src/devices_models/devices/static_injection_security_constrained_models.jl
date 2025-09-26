@@ -2022,54 +2022,6 @@ function add_to_expression!(
     return
 end
 
-function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayStringStringInt,
-    expression::JuMP.AffExpr,
-    outage_id::String,
-    entry::U,
-    type::Type{T},
-    t,
-) where {T <: PSY.Component, U <: PSY.ACTransmission}
-    name = PSY.get_name(entry)
-    JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
-    #expression_container[outage_id, name, t] = expression
-end
-
-function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayStringStringInt,
-    expression::JuMP.AffExpr,
-    outage_id::String,
-    double_circuit::Set{U},
-    type::Type{T},
-    t,
-) where {T <: PSY.Component, U <: PSY.ACTransmission}
-    for circuit in double_circuit
-        name = PSY.get_name(circuit) * "_double_circuit"
-        JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
-        #expression_container[outage_id, name, t] = expression
-    end
-end
-
-function _add_expression_to_container!(
-    expression_container::JuMPAffineExpression3DArrayStringStringInt,
-    expression::JuMP.AffExpr,
-    outage_id::String,
-    series_chain::Vector{Any},
-    type::Type{T},
-    t,
-) where {T <: PSY.Component}
-    for segment in series_chain
-        _add_expression_to_container!(#TODO REVIEW IF THIS OVERWRITING
-            expression_container,
-            expression,
-            outage_id,
-            segment,
-            type,
-            t,
-        )
-    end
-end
-
 """
 Add post-contingency Generation Balance Constraints for Generators for G-k with reserves formulation (SecurityConstrainedReservesFormulation)
 """
