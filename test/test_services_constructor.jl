@@ -819,7 +819,7 @@ end
         available = true,
         active_power_flow_limits = (min = 0.0, max = 1.0),
         violation_penalty = 1000.0,
-        direction_mapping = Dict("A33-1" => 1,  "A33-2" => 1),
+        direction_mapping = Dict("A33-1" => 1, "A33-2" => 1),
     )
     add_service!(
         sys_rts_da,
@@ -856,7 +856,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 10944, 0, 2136, 1416, 4896, false)
+    moi_tests(ps_model, 10944, 0, 2160, 1440, 4896, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -867,8 +867,8 @@ end
         PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "ub")
     interchange_constraints_lb =
         PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "lb")
-    @test size(interchange_constraints_ub) == (1, 24)
-    @test size(interchange_constraints_lb) == (1, 24)
+    @test size(interchange_constraints_ub) == (2, 24)
+    @test size(interchange_constraints_lb) == (2, 24)
 
     interchange_constraints_ub["interface1_2_3", 1]
     # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
@@ -883,4 +883,147 @@ end
     for i in 1:24
         @test interface_results[!, "interface1_2_3"][i] <= 100.0 + PSI.ABSOLUTE_TOLERANCE
     end
+end
+
+@testset "Test bad data for interfaces with reductions" begin
+    sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
+
+    # Add an interface on a double circuit: 
+    double_circuit_1 = get_component(Line, sys_rts_da, "A33-1")
+    double_circuit_2 = get_component(Line, sys_rts_da, "A33-2")
+    interface_double_circuit = TransmissionInterface(;
+        name = "interface_double_circuit",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("A33-1" => 1, "A33-2" => 1),
+    )
+    add_service!(
+        sys_rts_da,
+        interface_double_circuit,
+        [double_circuit_1, double_circuit_2],
+    )
+
+    # Add interface on a series chain: 
+    series_chain_1 = get_component(Line, sys_rts_da, "CA-1")
+    series_chain_2 = get_component(Line, sys_rts_da, "C35")
+    interface_series_chain = TransmissionInterface(;
+        name = "interface_series_chain",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("CA-1" => -1, "C35" => -1),
+    )
+    add_service!(
+        sys_rts_da,
+        interface_series_chain,
+        [series_chain_1, series_chain_2],
+    )
+    ptdf = PTDF(sys_rts_da; network_reductions = NetworkReduction[DegreeTwoReduction()])
+    template = ProblemTemplate(
+        NetworkModel(
+            AreaPTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_degree_two_branches = true,
+            use_slacks = true,
+        ),
+    )
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableNonDispatch, FixedOutput)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, Line, StaticBranchUnbounded)
+    set_device_model!(
+        template,
+        DeviceModel(AreaInterchange, StaticBranchUnbounded; use_slacks = false),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
+    )
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+
+    # Test bad direction data for interface on double circuit: 
+    set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => -1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+
+    # Test bad direction data for interface on series chain: 
+    set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => 1))
+    set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => -1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+    set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => 1))
+
+    # Test only including part of a double circuit in an interface: 
+    pop!(get_services(double_circuit_1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+
+    # Test only including part of a series chain in an interface: 
+    push!(get_services(double_circuit_1), interface_double_circuit)
+    pop!(get_services(series_chain_1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
 end
