@@ -1540,47 +1540,6 @@ function _get_branch_map(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    for branch_type in network_model.modeled_branch_types
-        if branch_type == PSY.AreaInterchange
-            continue
-        end
-        if !has_container_key(container, FlowActivePowerVariable, branch_type)
-            continue
-        end
-        flow_vars = get_variable(container, FlowActivePowerVariable(), branch_type)
-        flow_vars_names = axes(flow_vars)[1]
-        branch_names = _strip_double_circuit_identifiers(flow_vars_names)
-        for bname in branch_names
-            d = PSY.get_component(branch_type, sys, bname)
-            area_from = PSY.get_area(PSY.get_arc(d).from)
-            area_to = PSY.get_area(PSY.get_arc(d).to)
-            if area_from != area_to
-                branch_typed_dict = get!(
-                    inter_area_branch_map,
-                    (area_from, area_to),
-                    Dict{DataType, Vector{<:PSY.ACBranch}}(),
-                )
-                if !haskey(branch_typed_dict, branch_type)
-                    branch_typed_dict[branch_type] = [d]
-                else
-                    push!(branch_typed_dict[branch_type], d)
-                end
-            end
-        end
-    end
-    return inter_area_branch_map
-end
-
-function _strip_double_circuit_identifiers(flow_vars_names::Vector{String})
-    branch_names = deepcopy(flow_vars_names)
-    for (ix, name) in enumerate(branch_names)
-        if occursin("_double_circuit", name)
-            new_name = replace(name, "_double_circuit" => "")
-            branch_names[ix] = new_name
-        end
-    end
-    return branch_names
-end 
     for map in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         for branch_type in network_model.modeled_branch_types
