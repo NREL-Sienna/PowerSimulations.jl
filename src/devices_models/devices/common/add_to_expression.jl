@@ -1647,7 +1647,7 @@ function add_to_expression!(
             variable = get_variable(container, FlowActivePowerVariable(), branch_type)
             contributing_devices = contributing_devices_map[branch_type]
             for (arc_tuple, reduction_entry) in network_reduction_map[branch_type]
-                if _reduction_entry_in_interface(
+                if _reduced_entry_in_interface(
                     reduction_entry,
                     contributing_devices,
                 )
@@ -1697,6 +1697,7 @@ function _get_direction(
     direction_map::Dict{String, Int},
     network_reduction_data::PNM.NetworkReductionData,
 )
+    # Loops through parallel branches twice, but there are relatively few parallel branches per reduction entry:
     directions = [
         _get_direction(arc_tuple, x, direction_map, network_reduction_data) for
         x in reduction_entry
@@ -1739,7 +1740,7 @@ function _get_direction(
     end
 end
 
-function _reduction_entry_in_interface(
+function _reduced_entry_in_interface(
     reduction_entry::PSY.ACTransmission,
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
@@ -1749,12 +1750,12 @@ function _reduction_entry_in_interface(
     return false
 end
 
-function _reduction_entry_in_interface(
+function _reduced_entry_in_interface(
     reduction_entry::Set{PSY.ACTransmission},
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
     in_interface = [
-        _reduction_entry_in_interface(x, contributing_devices) for
+        _reduced_entry_in_interface(x, contributing_devices) for
         x in reduction_entry
     ]
     if all(in_interface .== false)
@@ -1770,12 +1771,12 @@ function _reduction_entry_in_interface(
     end
 end
 
-function _reduction_entry_in_interface(
+function _reduced_entry_in_interface(
     reduction_entry::Vector{Any},
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
     in_interface = [
-        _reduction_entry_in_interface(x, contributing_devices) for
+        _reduced_entry_in_interface(x, contributing_devices) for
         x in reduction_entry
     ]
     if all(in_interface .== false)
