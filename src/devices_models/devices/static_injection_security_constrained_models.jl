@@ -828,6 +828,7 @@ function add_to_expression!(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     for ac_type in ac_transmission_types
+        !(ac_type in network_model.modeled_branch_types) && continue
         flow_variables = get_variable(
             container,
             U(),
@@ -931,6 +932,7 @@ function add_to_expression!(
     ptdf = get_PTDF_matrix(network_model)
 
     for ac_type in ac_transmission_types
+        !(ac_type in network_model.modeled_branch_types) && continue
         for map_name in NETWORK_REDUCTION_MAPS
             map = all_branch_maps_by_type[map_name]
             !haskey(map, ac_type) && continue
@@ -1057,9 +1059,11 @@ function add_constraints!(
         )
     expressions = get_expression(container, U(), R, "")
     for ac_type in ac_transmission_types
+        !(ac_type in network_model.modeled_branch_types) && continue
         for map in NETWORK_REDUCTION_MAPS
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, ac_type) && continue
+            #!haskey(network_model.modeled_branch_types, ac_type) && continue
             for (_, reduction_entry) in network_reduction_map[ac_type]
                 limits =
                     get_min_max_limits(reduction_entry, RateLimitConstraint, StaticBranch)    # TODO - Add method to use PostContingencyEmergencyRateLimitConstraint to get rating b 
@@ -1853,6 +1857,7 @@ function add_to_expression!(
     ptdf = get_PTDF_matrix(network_model)
 
     for ac_type in ac_transmission_types
+        !(ac_type in network_model.modeled_branch_types) && continue
         for map_name in NETWORK_REDUCTION_MAPS
             map = all_branch_maps_by_type[map_name]
             !haskey(map, ac_type) && continue
@@ -1958,6 +1963,7 @@ function add_to_expression!(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     for ac_type in ac_transmission_types
+        !(ac_type in network_model.modeled_branch_types) && continue
         flow_variables = get_variable(
             container,
             U(),
@@ -2164,6 +2170,7 @@ function add_constraints!(
         )
     expressions = get_expression(container, U(), R, service_name)
     for ac_type in ac_transmission_types
+        !(ac_type in network_model.modeled_branch_types) && continue
         for map in NETWORK_REDUCTION_MAPS
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, ac_type) && continue
@@ -2218,7 +2225,6 @@ function _add_expression_to_container!(
     for circuit in double_circuit
         name = PSY.get_name(circuit) * "_double_circuit"
         JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
-        #expression_container[outage_id, name, t] = expression
     end
 end
 
