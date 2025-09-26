@@ -601,6 +601,7 @@ function construct_service!(
         FlowActivePowerVariable,
         service,
         model,
+        network_model,
     )
 
     if get_use_slacks(model)
@@ -695,6 +696,7 @@ function construct_service!(
         FlowActivePowerVariable,
         service,
         model,
+        network_model,
     )
 
     if get_use_slacks(model)

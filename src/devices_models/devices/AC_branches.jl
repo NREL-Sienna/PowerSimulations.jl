@@ -403,7 +403,7 @@ end
 ################################## Rate Limits constraint_infos ############################
 
 function get_rating(double_circuit::Set{PSY.ACTransmission})
-    return minimum([PSY.get_rating(circuit) for circuit in double_circuit])
+    return sum([PSY.get_rating(circuit) for circuit in double_circuit])
 end
 function get_rating(series_chain::Vector{Any})
     return minimum([get_rating(segment) for segment in series_chain])

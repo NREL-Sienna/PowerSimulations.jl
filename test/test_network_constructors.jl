@@ -1399,6 +1399,66 @@ end
     @test get_n_constraints_in_container(ps_model) == 95
 end
 
+@testset "Branch bounds of parallel and series reductions" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    l1_parallel = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-4-i_1"))
+    l2_parallel = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-4-i_2"))
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )][
+            "1-4-i_1_double_circuit",
+            1,
+        ],
+    ) == l1_parallel + l2_parallel
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )][
+            "1-4-i_2_double_circuit",
+            1,
+        ],
+    ) == l1_parallel + l2_parallel
+    l1_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "9-5-i_1"))
+    l2_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-9-i_1"))
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{
+            FlowActivePowerVariable,
+            Transformer2W,
+        }(
+            "",
+        )][
+            "9-5-i_1",
+            1,
+        ],
+    ) == minimum([l1_series, l2_series])
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )][
+            "1-9-i_1",
+            1,
+        ],
+    ) == minimum([l1_series, l2_series])
+end
+
 @testset "Network reductions - PowerModels" begin
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
