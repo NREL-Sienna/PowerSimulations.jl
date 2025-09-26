@@ -1,3 +1,5 @@
+# TODO - series network reduction elements are currently Vector{Any} (https://github.com/NREL-Sienna/PowerNetworkMatrices.jl/issues/189)
+# When this design changes, type signatures should be updated from ::Vector{Any} throughout PSI 
 const NETWORK_REDUCTION_MAPS =
     ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
 
