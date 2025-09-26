@@ -177,6 +177,7 @@ function instantiate_network_model!(
     model::NetworkModel{AreaBalancePowerModel},
     sys::PSY.System,
 )
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
