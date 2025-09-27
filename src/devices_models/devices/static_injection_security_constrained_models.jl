@@ -470,13 +470,9 @@ function add_constraints!(
                     component_type = PSY.Generator,
                 )
 
-            generator_is_in_associated_devices = device in associated_devices # generator_outage == generator
+            generator_is_in_associated_devices = device in associated_devices
 
             outage_id = string(IS.get_uuid(outage))
-            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
-            if generator_is_in_associated_devices
-                continue
-            end
 
             limits = get_min_max_limits(
                 device,
@@ -485,6 +481,16 @@ function add_constraints!(
             )
 
             for t in time_steps
+                #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
+                if generator_is_in_associated_devices
+                    con_ub[outage_id, device_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[outage_id, device_name, t] == 0.0)
+                    con_lb[outage_id, device_name, t] =
+                        JuMP.@constraint(get_jump_model(container),
+                            expressions[outage_id, device_name, t] == 0.0)
+                    continue
+                end
                 con_ub[outage_id, device_name, t] =
                     JuMP.@constraint(get_jump_model(container),
                         expressions[outage_id, device_name, t] <=
@@ -605,7 +611,7 @@ function add_to_expression!(
 
         for device in devices
             if device in associated_devices #The contributting device cannot contribute to the reserves deployment if it has the outage
-                continue
+                mult = 0.0
             end
 
             name = PSY.get_name(device)
@@ -713,7 +719,7 @@ function add_to_expression!(
 
         for device in devices
             if device in associated_devices #The contributing device cannot contribute to the power deployment if it has the outage
-                continue
+                mult = 0.0
             end
             name = PSY.get_name(device)
             bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(device))
@@ -1219,7 +1225,7 @@ function add_linear_ramp_constraints!(
                 )
 
             if device in associated_devices
-                continue
+                minutes_per_period = 0
             end
 
             for t in time_steps
@@ -1673,7 +1679,7 @@ function add_to_expression!(
             name = PSY.get_name(device)
 
             if device in associated_devices #The contributting device cannot contribute to the reserves deployment if it has the outage
-                continue
+                mult = 0.0
             end
 
             for t in time_steps
@@ -1735,7 +1741,7 @@ function add_to_expression!(
 
         for device in contributing_devices
             if device in associated_devices
-                continue
+                mult = 0.0
             end
 
             name = PSY.get_name(device)
@@ -2253,11 +2259,17 @@ function add_constraints!(
             name = get_name(device)
             @debug "adding $T for device $name and outage $name_outage"
 
-            if device in associated_devices
-                continue
-            end
+            generator_is_in_associated_devices = device in associated_devices
 
             for t in time_steps
+                if generator_is_in_associated_devices
+                    constraint[name_outage, name, t] = JuMP.@constraint(
+                        get_jump_model(container),
+                        variable_outage[name_outage, name, t] ==
+                        0.0
+                    )
+                    continue
+                end
                 constraint[name_outage, name, t] = JuMP.@constraint(
                     get_jump_model(container),
                     variable_outage[name_outage, name, t] <=
