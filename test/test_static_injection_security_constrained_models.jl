@@ -76,7 +76,7 @@
             c_sys5 => PTDF(c_sys5),
         )
         test_results = IdDict{System, Vector{Int}}(
-            c_sys5 => [504, 0, 552, 432, 192],
+            c_sys5 => [504, 0, 552, 432, 216],
         )
         test_obj_values = IdDict{System, Float64}(
             c_sys5 => 329000.0,
@@ -329,7 +329,7 @@ end
         c_sys5 => PTDF(c_sys5),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [1104, 0, 1200, 600, 336],
+        c_sys5 => [1104, 0, 1200, 600, 384],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 254242.0,
@@ -475,7 +475,7 @@ end
         c_sys5_2area => PTDF(c_sys5_2area),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [1032, 0, 1392, 1200, 408],
+        c_sys5_2area => [1032, 0, 1392, 1200, 456],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5_2area => 497000.0,
@@ -608,7 +608,7 @@ end
             c_sys5 => PTDF(c_sys5),
         )
         test_results = IdDict{System, Vector{Int}}(
-            c_sys5 => [744, 0, 912, 504, 312],
+            c_sys5 => [744, 0, 912, 504, 360],
         )
         test_obj_values = IdDict{System, Float64}(
             c_sys5 => 263507.0,
