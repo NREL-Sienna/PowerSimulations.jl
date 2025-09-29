@@ -636,25 +636,23 @@ end
 """
 Write an emulation model result for an execution index value and the timestamp of the update
 """
-# TODO: This function is broken. test_events.jl needs it, but we need to fix it in the right
-# way.
-# function write_result!(
-#     store::HdfSimulationStore,
-#     ::Symbol,
-#     key::OptimizationContainerKey,
-#     index::EmulationModelIndexType,
-#     simulation_time::Dates.DateTime,
-#     array::DenseAxisArray{Float64, 2},
-# )
-#     if size(array, 2) != 1
-#         error("Unexpected axes: $(axes(array))")
-#     end
-#     dataset = _get_em_dataset(store, key)
-#     _write_dataset!(dataset.values, reshape(array.data, length(array.data)), index)
-#     set_last_recorded_row!(dataset, index)
-#     set_update_timestamp!(dataset, simulation_time)
-#     return
-# end
+function write_result!(
+    store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    array::DenseAxisArray{Float64, 2},
+)
+    # TODO: This is a temporary fix.
+    # Not sure why the special case for this dimension size is needed.
+    data = size(array, 2) == 1 ? reshape(array.data, length(array.data)) : array.data
+    dataset = _get_em_dataset(store, key)
+    _write_dataset!(dataset.values, data, index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
 
 function write_result!(
     store::HdfSimulationStore,
