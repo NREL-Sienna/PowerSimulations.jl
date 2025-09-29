@@ -646,6 +646,8 @@ function write_result!(
 )
     # TODO: This is a temporary fix.
     # Not sure why the special case for this dimension size is needed.
+    # It fails with the key = InfrastructureSystems.Optimization.ParameterKey{OnStatusParameter, ThermalStandard}("")
+    # The array size is 5 x 1
     data = size(array, 2) == 1 ? reshape(array.data, length(array.data)) : array.data
     dataset = _get_em_dataset(store, key)
     _write_dataset!(dataset.values, data, index)
