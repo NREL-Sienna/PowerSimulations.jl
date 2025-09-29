@@ -457,7 +457,7 @@ should_write_resulting_value(::Type{PiecewiseLinearBlockDecrementalOffer}) = fal
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
 should_write_resulting_value(::Type{PostContingencyActivePowerReserveDeploymentVariable}) =
-    true 
+    true
 should_write_resulting_value(::Type{PostContingencyActivePowerChangeVariable}) =
     true
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true

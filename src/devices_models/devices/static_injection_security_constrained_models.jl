@@ -484,8 +484,8 @@ function add_constraints!(
                 #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
                 if generator_is_in_associated_devices
                     con_ub[outage_id, device_name, t] =
-                    JuMP.@constraint(get_jump_model(container),
-                        expressions[outage_id, device_name, t] == 0.0)
+                        JuMP.@constraint(get_jump_model(container),
+                            expressions[outage_id, device_name, t] == 0.0)
                     con_lb[outage_id, device_name, t] =
                         JuMP.@constraint(get_jump_model(container),
                             expressions[outage_id, device_name, t] == 0.0)
