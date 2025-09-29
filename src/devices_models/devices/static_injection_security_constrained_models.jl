@@ -1028,6 +1028,7 @@ function add_constraints!(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     device_names = get_branch_name_constraint_axis(
+        network_model.modeled_branch_types,
         network_reduction_data,
         all_branch_maps_by_type,
         RateLimitConstraint,
@@ -2095,6 +2096,7 @@ function add_constraints!(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     device_names = get_branch_name_constraint_axis(
+        network_model.modeled_branch_types,
         network_reduction_data,
         all_branch_maps_by_type,
         RateLimitConstraint,
