@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 @testset "G-n with reserves deliverability constraints Dispatch with responding reserves only up, including reduction of parallel circuits" begin
-=======
-@testset "G-n with reserves deliverability constraints Dispatch with responding reserves only up" begin
->>>>>>> 7f8134278 (add test case with parallel lines)
     for add_parallel_line in [true, false]
         c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
         if add_parallel_line
@@ -98,10 +94,6 @@
                 reserve_up = get_component(VariableReserve{ReserveUp}, c_sys5, "Reserve1")
                 add_supplemental_attribute!(sys, reserve_up, transition_data)
             end
-<<<<<<< HEAD
-=======
-
->>>>>>> 7f8134278 (add test case with parallel lines)
             template = get_thermal_dispatch_template_network(
                 NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
             )
@@ -133,11 +125,9 @@
     end
 end
 
-
 @testset "Test if G-n with reserves deliverability constraints builds when there is a device without set_device_model!()" begin
-
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-    
+
     l4 = get_component(Line, c_sys5, "4")
     l4_copy = MonitoredLine(;
         name = PSY.get_name(l4) * "_copy",
@@ -232,9 +222,9 @@ end
             reserve_up = get_component(VariableReserve{ReserveUp}, c_sys5, "Reserve1")
             add_supplemental_attribute!(sys, reserve_up, transition_data)
         end
-        
 
-        template = ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]))
+        template =
+            ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]))
         set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
         set_device_model!(template, PowerLoad, StaticPowerLoad)
         #set_device_model!(template, MonitoredLine, StaticBranchBounds)
@@ -253,9 +243,8 @@ end
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-                PSI.ModelBuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
     end
-
 end
 
 @testset "G-n with reserves deliverability constraints UC allowing 2 reserve products to respond" begin
@@ -532,7 +521,6 @@ end
         )
     end
 end
-<<<<<<< HEAD
 
 @testset "G-1 (Thermal Formulation) with deliverability constraints including reduction of parallel circuits" begin
     for add_parallel_line in [true, false]
@@ -657,5 +645,3 @@ end
         end
     end
 end
-=======
->>>>>>> 7f8134278 (add test case with parallel lines)
