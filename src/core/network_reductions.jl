@@ -327,6 +327,7 @@ _get_segment_type(tfw_tuple::Tuple{PSY.ThreeWindingTransformer, Int}) =
 _get_segment_type(x::Set) = typeof(first(x))
 
 function get_branch_name_constraint_axis(
+    modeled_branch_types::Vector{DataType},
     nrd::PNM.NetworkReductionData,
     all_branch_maps_by_type::Dict,
     ::Type{U},
@@ -335,6 +336,7 @@ function get_branch_name_constraint_axis(
     ac_transmission_types = PNM.get_ac_transmission_types(nrd)
     name_axis = Vector{String}()
     for ac_type in ac_transmission_types
+        (ac_type ∉ modeled_branch_types) && continue
         name_axis_by_type = Vector{String}()
         for map_name in NETWORK_REDUCTION_MAPS
             map = all_branch_maps_by_type[map_name]
