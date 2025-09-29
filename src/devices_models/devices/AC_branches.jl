@@ -563,6 +563,19 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
+
+    has_dlr_ts =
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+    
+    if has_dlr_ts
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = get_default_time_series_type(container)
+        param_container =
+            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+        mult = get_multiplier_array(param_container)
+    end
+    
     for map in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, T) && continue
@@ -571,7 +584,25 @@ function add_constraints!(
             names = _get_branch_names(reduction_entry)
             for ci_name in names
                 if ci_name in device_names
+                    
+                    if has_dlr_ts
+                        device_dynamic_branch_rating_ts =
+                            _get_device_dynamic_branch_rating_time_series(
+                                param_container,
+                                reduction_entry,
+                                ts_name,
+                                ts_type)
+                    end
+
                     for t in time_steps
+
+                        if has_dlr_ts && !isempty(device_dynamic_branch_rating_ts)
+                            limits = (
+                                min = -1 * device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
+                                max = device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
+                            ) #update limits
+                        end
+
                         con_ub[ci_name, t] =
                             JuMP.@constraint(get_jump_model(container),
                                 array[ci_name, t] -
