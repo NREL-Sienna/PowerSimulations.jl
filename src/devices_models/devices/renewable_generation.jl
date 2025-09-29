@@ -46,6 +46,7 @@ function get_min_max_limits(
     return PSY.get_reactive_power_limits(device)
 end
 
+# aha. this is why it's always expecting 2 time series.
 function get_default_time_series_names(
     ::Type{<:PSY.RenewableGen},
     ::Type{<:Union{FixedOutput, AbstractRenewableFormulation}},
