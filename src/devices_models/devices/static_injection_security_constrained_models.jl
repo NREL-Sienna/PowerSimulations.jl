@@ -834,7 +834,7 @@ function add_to_expression!(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     for ac_type in ac_transmission_types
-        !(ac_type in network_model.modeled_branch_types) && continue
+        !(has_container_key(container, U, ac_type)) && continue
         flow_variables = get_variable(
             container,
             U(),
@@ -1026,9 +1026,10 @@ function add_constraints!(
     network_reduction_data = get_network_reduction(network_model)
     ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    modeled_branch_types = _get_modeled_branch_types(container, network_model)
 
     device_names = get_branch_name_constraint_axis(
-        network_model.modeled_branch_types,
+        modeled_branch_types,
         network_reduction_data,
         all_branch_maps_by_type,
         RateLimitConstraint,
@@ -1098,6 +1099,18 @@ function add_constraints!(
     return
 end
 
+function _get_modeled_branch_types(
+    container::OptimizationContainer,
+    network_model::NetworkModel{<:AbstractPTDFModel},
+)
+    modeled_branch_types_with_devices = DataType[]
+    for branch_type in network_model.modeled_branch_types
+        if has_container_key(container, FlowActivePowerVariable, branch_type)
+            push!(modeled_branch_types_with_devices, branch_type)
+        end
+    end
+    return modeled_branch_types_with_devices
+end
 """
 This function adds the post-contingency ramping limits
 """
@@ -1970,7 +1983,7 @@ function add_to_expression!(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
 
     for ac_type in ac_transmission_types
-        !(ac_type in network_model.modeled_branch_types) && continue
+        !(has_container_key(container, U, ac_type)) && continue
         flow_variables = get_variable(
             container,
             U(),
@@ -2094,9 +2107,10 @@ function add_constraints!(
     network_reduction_data = get_network_reduction(network_model)
     ac_transmission_types = PNM.get_ac_transmission_types(network_reduction_data)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    modeled_branch_types = _get_modeled_branch_types(container, network_model)
 
     device_names = get_branch_name_constraint_axis(
-        network_model.modeled_branch_types,
+        modeled_branch_types,
         network_reduction_data,
         all_branch_maps_by_type,
         RateLimitConstraint,
