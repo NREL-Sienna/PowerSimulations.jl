@@ -239,7 +239,7 @@ end
                 dlr_data[ini_time] =
                     TimeArray(
                         data_ts + Day(t - 1),
-                        get_rating(branch) * get_base_power(sys) * dlr_factors,
+                        dlr_factors,
                     )
             end
             PSY.add_time_series!(
@@ -272,7 +272,7 @@ end
     end
 end
 
-@testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings With Parallel circuits" begin
+@testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings With Parallel and series circuits" begin
     line_device_model = DeviceModel(
         Line,
         StaticBranch;
@@ -336,7 +336,7 @@ end
                 dlr_data[ini_time] =
                     TimeArray(
                         data_ts + Day(t - 1),
-                        get_rating(branch) * get_base_power(sys) * dlr_factors,
+                        dlr_factors,
                     )
             end
             PSY.add_time_series!(
