@@ -499,15 +499,49 @@ end
 
 function _get_device_dynamic_branch_rating_time_series(
     param_container::ParameterContainer,
-    device::PSY.ACBranch,
+    branch::U,
+    type::Type{T},
     ts_name::String,
     ts_type::DataType,
-)
-    device_dlr_params = []
-    if PSY.has_time_series(device, ts_type, ts_name)
-        device_dlr_params = get_parameter_column_refs(param_container, get_name(device))
+)where {U <: PSY.ACTransmission, T <: PSY.Component}
+    branch_dlr_params = []
+    if PSY.has_time_series(branch, ts_type, ts_name)
+        branch_dlr_params = get_parameter_column_refs(param_container, get_name(branch))
     end
-    return device_dlr_params
+    return branch_dlr_params
+end
+
+function _get_device_dynamic_branch_rating_time_series(
+    param_container::ParameterContainer,
+    double_circuit::Set{U},
+    type::Type{T},
+    ts_name::String,
+    ts_type::DataType,
+)where {T <: PSY.Component, U <: PSY.ACTransmission}
+    branch_dlr_params = []
+    for device in double_circuit
+        if PSY.has_time_series(device, ts_type, ts_name)
+            branch_dlr_params = get_parameter_column_refs(param_container, get_name(device))
+        end
+    end
+    return branch_dlr_params
+end
+
+function _get_device_dynamic_branch_rating_time_series(
+    param_container::ParameterContainer,
+    series_chain::Vector{Any},
+    type::Type{T},
+    ts_name::String,
+    ts_type::DataType,
+) where {T <: PSY.Component}
+    chain_dlr_params = []
+    
+    for segment in series_chain
+        if PSY.has_time_series(segment, ts_type, ts_name)
+            device_dlr_params = get_parameter_column_refs(param_container, get_name(segment))
+        end
+    end
+    return chain_dlr_params
 end
 
 """
@@ -590,6 +624,7 @@ function add_constraints!(
                             _get_device_dynamic_branch_rating_time_series(
                                 param_container,
                                 reduction_entry,
+                                T,
                                 ts_name,
                                 ts_type)
                     end
