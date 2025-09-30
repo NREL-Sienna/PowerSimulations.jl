@@ -3,23 +3,7 @@
         c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
         if add_parallel_line
             l4 = get_component(Line, c_sys5, "4")
-            l4_copy = Line(;
-                name = PSY.get_name(l4) * "_copy",
-                available = PSY.get_available(l4),
-                active_power_flow = PSY.get_active_power_flow(l4),
-                reactive_power_flow = PSY.get_reactive_power_flow(l4),
-                arc = PSY.get_arc(l4),
-                r = PSY.get_r(l4),
-                x = PSY.get_x(l4),
-                b = PSY.get_b(l4),
-                rating = PSY.get_rating(l4),
-                angle_limits = PSY.get_angle_limits(l4),
-                rating_b = PSY.get_rating_b(l4),
-                rating_c = PSY.get_rating_c(l4),
-                g = PSY.get_g(l4),
-                services = PSY.get_services(l4),
-                ext = PSY.get_ext(l4))
-            add_component!(c_sys5, l4_copy)
+            add_parallel_ac_transmission!(c_sys5, l4, PSY.Line)
         end
         systems = [c_sys5]
         objfuncs = [GAEVF, GQEVF, GQEVF]
@@ -129,24 +113,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
     l4 = get_component(Line, c_sys5, "4")
-    l4_copy = MonitoredLine(;
-        name = PSY.get_name(l4) * "_copy",
-        available = PSY.get_available(l4),
-        active_power_flow = PSY.get_active_power_flow(l4),
-        reactive_power_flow = PSY.get_reactive_power_flow(l4),
-        arc = PSY.get_arc(l4),
-        r = PSY.get_r(l4),
-        x = PSY.get_x(l4),
-        b = PSY.get_b(l4),
-        flow_limits = (from_to = PSY.get_rating(l4), to_from = PSY.get_rating(l4)),
-        rating = PSY.get_rating(l4),
-        angle_limits = PSY.get_angle_limits(l4),
-        rating_b = PSY.get_rating_b(l4),
-        rating_c = PSY.get_rating_c(l4),
-        g = PSY.get_g(l4),
-        services = PSY.get_services(l4),
-        ext = PSY.get_ext(l4))
-    add_component!(c_sys5, l4_copy)
+    add_parallel_ac_transmission!(c_sys5, l4, PSY.Line, PSY.MonitoredLine)
     remove_component!(c_sys5, l4)
 
     systems = [c_sys5]
@@ -527,23 +494,7 @@ end
         c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc")
         if add_parallel_line
             l4 = get_component(Line, c_sys5, "4")
-            l4_copy = Line(;
-                name = PSY.get_name(l4) * "_copy",
-                available = PSY.get_available(l4),
-                active_power_flow = PSY.get_active_power_flow(l4),
-                reactive_power_flow = PSY.get_reactive_power_flow(l4),
-                arc = PSY.get_arc(l4),
-                r = PSY.get_r(l4),
-                x = PSY.get_x(l4),
-                b = PSY.get_b(l4),
-                rating = PSY.get_rating(l4),
-                angle_limits = PSY.get_angle_limits(l4),
-                rating_b = PSY.get_rating_b(l4),
-                rating_c = PSY.get_rating_c(l4),
-                g = PSY.get_g(l4),
-                services = PSY.get_services(l4),
-                ext = PSY.get_ext(l4))
-            add_component!(c_sys5, l4_copy)
+            add_parallel_ac_transmission!(c_sys5, l4, PSY.Line)
         end
         systems = [c_sys5]
         objfuncs = [GAEVF, GQEVF, GQEVF]
