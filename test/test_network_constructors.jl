@@ -272,7 +272,6 @@ end
     end
 end
 
-
 @testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings With Parallel circuits" begin
     line_device_model = DeviceModel(
         Line,
