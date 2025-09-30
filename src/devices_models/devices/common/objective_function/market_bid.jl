@@ -220,7 +220,6 @@ function validate_mbc_component(
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
         if x != PSY.single_start_up_to_stages(0.0)
-            # println("should see warning about startup")
             @warn "Nonzero startup cost detected for renewable generation $(get_name(device))." maxlog =
                 1
         end
@@ -235,7 +234,6 @@ function validate_mbc_component(
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
         if x != 0.0
-            # println("should see warning about shutdown")
             @warn "Nonzero shutdown cost detected for renewable generation $(get_name(device))." maxlog =
                 1
         end
@@ -251,7 +249,6 @@ function validate_mbc_component(
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                # println("should see warning about no-load")
                 @warn "Nonzero no-load cost detected for renewable generation $(get_name(device))." maxlog =
                     1
             end
