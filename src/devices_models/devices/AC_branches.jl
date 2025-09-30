@@ -403,7 +403,7 @@ end
 ################################## Rate Limits constraint_infos ############################
 
 function get_rating(double_circuit::Set{PSY.ACTransmission})
-    return minimum([PSY.get_rating(circuit) for circuit in double_circuit])
+    return sum([PSY.get_rating(circuit) for circuit in double_circuit])
 end
 function get_rating(series_chain::Vector{Any})
     return minimum([get_rating(segment) for segment in series_chain])
@@ -419,14 +419,7 @@ function get_min_max_limits(
     constraint_type::Type{<:ConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_circuit = [
-        get_min_max_limits(device, constraint_type, branch_formulation) for
-        device in double_circuit
-    ]
-    min_by_circuit = [x.min for x in min_max_by_circuit]
-    max_by_circuit = [x.max for x in min_max_by_circuit]
-    # Limit by most restictive circuit:
-    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+    return (min = -1 * get_rating(double_circuit), max = get_rating(double_circuit))
 end
 
 """
@@ -465,14 +458,7 @@ function get_min_max_limits(
     constraint_type::Type{<:ConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_segment = [
-        get_min_max_limits(segment, constraint_type, branch_formulation) for
-        segment in series_chain
-    ]
-    min_by_segment = [x.min for x in min_max_by_segment]
-    max_by_segment = [x.max for x in min_max_by_segment]
-    # Limit by most restictive segment:
-    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+    return (min = -1 * get_rating(series_chain), max = get_rating(series_chain))
 end
 
 """
