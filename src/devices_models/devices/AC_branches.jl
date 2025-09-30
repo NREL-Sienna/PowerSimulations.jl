@@ -483,52 +483,103 @@ function get_min_max_limits(
     return (min = -π / 2, max = π / 2)
 end
 
-function _get_device_dynamic_branch_rating_time_series(
+function get_dynamic_branch_rating(
+    param_container::ParameterContainer,
+    branch::U,
+    ::Type{T},
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+) where {U <: PSY.ACTransmission, T <: PSY.Component}
+    if PSY.has_time_series(branch, ts_type, ts_name)
+        branch_dlr_params = get_parameter_column_refs(param_container, get_name(branch))
+        return branch_dlr_params[t] * mult[ci_name, t]
+    end
+
+    return get_rating(branch)
+end
+
+function _get_device_dynamic_branch_rating_limits(
     param_container::ParameterContainer,
     branch::U,
     type::Type{T},
     ts_name::String,
     ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
 ) where {U <: PSY.ACTransmission, T <: PSY.Component}
-    branch_dlr_params = []
-    if PSY.has_time_series(branch, ts_type, ts_name)
-        branch_dlr_params = get_parameter_column_refs(param_container, get_name(branch))
-    end
-    return branch_dlr_params
+    rating = get_dynamic_branch_rating(
+        param_container,
+        branch,
+        T,
+        ts_name,
+        ts_type,
+        t,
+        ci_name,
+        mult,
+    )
+    return (min = -1 * rating, max = rating)
 end
 
-function _get_device_dynamic_branch_rating_time_series(
+function _get_device_dynamic_branch_rating_limits(
     param_container::ParameterContainer,
     double_circuit::Set{U},
     type::Type{T},
     ts_name::String,
     ts_type::DataType,
-) where {T <: PSY.Component, U <: PSY.ACTransmission}
-    branch_dlr_params = []
-    for device in double_circuit
-        if PSY.has_time_series(device, ts_type, ts_name)
-            branch_dlr_params = get_parameter_column_refs(param_container, get_name(device))
-        end
-    end
-    return branch_dlr_params
+    t::Int,
+    ci_name::String,
+    mult,
+) where {U <: PSY.ACTransmission, T <: PSY.Component}
+    equivalent_rating = sum(
+        [
+        rating = get_dynamic_branch_rating(
+            param_container,
+            circuit,
+            T,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        )
+        for circuit in double_circuit
+    ]
+    )
+
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
-function _get_device_dynamic_branch_rating_time_series(
+function _get_device_dynamic_branch_rating_limits(
     param_container::ParameterContainer,
     series_chain::Vector{Any},
     type::Type{T},
     ts_name::String,
     ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
 ) where {T <: PSY.Component}
-    chain_dlr_params = []
+    equivalent_rating = minimum(
+        [
+        rating = get_dynamic_branch_rating(
+            param_container,
+            segment,
+            T,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        )
+        for segment in series_chain
+    ]
+    )
 
-    for segment in series_chain
-        if PSY.has_time_series(segment, ts_type, ts_name)
-            device_dlr_params =
-                get_parameter_column_refs(param_container, get_name(segment))
-        end
-    end
-    return chain_dlr_params
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
@@ -605,23 +656,18 @@ function add_constraints!(
             names = _get_branch_names(reduction_entry)
             for ci_name in names
                 if ci_name in device_names
-                    if has_dlr_ts
-                        device_dynamic_branch_rating_ts =
-                            _get_device_dynamic_branch_rating_time_series(
-                                param_container,
-                                reduction_entry,
-                                T,
-                                ts_name,
-                                ts_type)
-                    end
-
                     for t in time_steps
-                        if has_dlr_ts && !isempty(device_dynamic_branch_rating_ts)
-                            limits = (
-                                min = -1 * device_dynamic_branch_rating_ts[t] *
-                                      mult[ci_name, t],
-                                max = device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
-                            ) #update limits
+                        if has_dlr_ts
+                            limits =
+                                _get_device_dynamic_branch_rating_limits(
+                                    param_container,
+                                    reduction_entry,
+                                    T,
+                                    ts_name,
+                                    ts_type,
+                                    t,
+                                    ci_name,
+                                    mult)
                         end
 
                         con_ub[ci_name, t] =
