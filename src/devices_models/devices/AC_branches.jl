@@ -503,7 +503,7 @@ function _get_device_dynamic_branch_rating_time_series(
     type::Type{T},
     ts_name::String,
     ts_type::DataType,
-)where {U <: PSY.ACTransmission, T <: PSY.Component}
+) where {U <: PSY.ACTransmission, T <: PSY.Component}
     branch_dlr_params = []
     if PSY.has_time_series(branch, ts_type, ts_name)
         branch_dlr_params = get_parameter_column_refs(param_container, get_name(branch))
@@ -517,7 +517,7 @@ function _get_device_dynamic_branch_rating_time_series(
     type::Type{T},
     ts_name::String,
     ts_type::DataType,
-)where {T <: PSY.Component, U <: PSY.ACTransmission}
+) where {T <: PSY.Component, U <: PSY.ACTransmission}
     branch_dlr_params = []
     for device in double_circuit
         if PSY.has_time_series(device, ts_type, ts_name)
@@ -535,10 +535,11 @@ function _get_device_dynamic_branch_rating_time_series(
     ts_type::DataType,
 ) where {T <: PSY.Component}
     chain_dlr_params = []
-    
+
     for segment in series_chain
         if PSY.has_time_series(segment, ts_type, ts_name)
-            device_dlr_params = get_parameter_column_refs(param_container, get_name(segment))
+            device_dlr_params =
+                get_parameter_column_refs(param_container, get_name(segment))
         end
     end
     return chain_dlr_params
@@ -600,7 +601,7 @@ function add_constraints!(
 
     has_dlr_ts =
         haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
-    
+
     if has_dlr_ts
         ts_name =
             get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
@@ -609,7 +610,7 @@ function add_constraints!(
             get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
         mult = get_multiplier_array(param_container)
     end
-    
+
     for map in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, T) && continue
@@ -618,7 +619,6 @@ function add_constraints!(
             names = _get_branch_names(reduction_entry)
             for ci_name in names
                 if ci_name in device_names
-                    
                     if has_dlr_ts
                         device_dynamic_branch_rating_ts =
                             _get_device_dynamic_branch_rating_time_series(
@@ -630,10 +630,10 @@ function add_constraints!(
                     end
 
                     for t in time_steps
-
                         if has_dlr_ts && !isempty(device_dynamic_branch_rating_ts)
                             limits = (
-                                min = -1 * device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
+                                min = -1 * device_dynamic_branch_rating_ts[t] *
+                                      mult[ci_name, t],
                                 max = device_dynamic_branch_rating_ts[t] * mult[ci_name, t],
                             ) #update limits
                         end
