@@ -2,7 +2,7 @@ function add_parallel_ac_transmission!(
     sys::System,
     ac_transmission::PSY.Line,
     ::Type{T},
-    ) where {T<:PSY.Line} 
+) where {T <: PSY.Line}
     ac_transmission_copy = Line(;
         name = PSY.get_name(ac_transmission) * "_copy",
         available = PSY.get_available(ac_transmission),
@@ -23,12 +23,11 @@ function add_parallel_ac_transmission!(
 end
 
 function add_parallel_ac_transmission!(
-    sys::System, 
-    ac_transmission::PSY.ACTransmission, 
+    sys::System,
+    ac_transmission::PSY.ACTransmission,
     ::Type{T},
-    ::Type{MonitoredLine}
-) where {T<:PSY.Line}
-
+    ::Type{MonitoredLine},
+) where {T <: PSY.Line}
     ac_transmission_copy = MonitoredLine(;
         name = PSY.get_name(ac_transmission) * "_copy",
         available = PSY.get_available(ac_transmission),
@@ -38,7 +37,10 @@ function add_parallel_ac_transmission!(
         r = PSY.get_r(ac_transmission),
         x = PSY.get_x(ac_transmission),
         b = PSY.get_b(ac_transmission),
-        flow_limits = (from_to = PSY.get_rating(ac_transmission), to_from = PSY.get_rating(ac_transmission)),
+        flow_limits = (
+            from_to = PSY.get_rating(ac_transmission),
+            to_from = PSY.get_rating(ac_transmission),
+        ),
         rating = PSY.get_rating(ac_transmission),
         angle_limits = PSY.get_angle_limits(ac_transmission),
         rating_b = PSY.get_rating_b(ac_transmission),
