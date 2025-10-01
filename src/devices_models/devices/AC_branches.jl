@@ -411,6 +411,42 @@ end
 function get_rating(device::T) where {T <: PSY.ACTransmission}
     return PSY.get_rating(device)
 end
+
+"""
+Get Rating for ACTransmisssion components for PostContingencyEmergencyRateLimitConstraint
+"""
+function get_rating(
+    double_circuit::Set{PSY.ACTransmission},
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+)
+    return sum([PSY.get_rating(circuit, T) for circuit in double_circuit])
+end
+
+"""
+Get Rating for ACTransmisssion components for PostContingencyEmergencyRateLimitConstraint
+"""
+function get_rating(
+    series_chain::Vector{Any},
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+)
+    return minimum([get_rating(segment, T) for segment in series_chain])
+end
+
+"""
+Get Rating for ACTransmisssion components for PostContingencyEmergencyRateLimitConstraint
+"""
+function get_rating(
+    device::T,
+    ::Type{<:PostContingencyEmergencyRateLimitConstraint},
+) where {T <: PSY.ACTransmission}
+    if PSY.get_rating_b(device) === nothing
+        @warn "Branch $(get_name(device)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
+            \n Consider including post-contingency limits using set_rating_b!()."
+        return PSY.get_rating(device)
+    end
+    return PSY.get_rating_b(device)
+end
+
 """
 Min and max limits for Abstract Branch Formulation
 """
@@ -481,6 +517,61 @@ function get_min_max_limits(
     ::Type{PhaseAngleControl},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return (min = -π / 2, max = π / 2)
+end
+
+"""
+Min and max limits for post-contingency branch flows for Security Constrained Formulations
+"""
+function get_min_max_limits(
+    branch::PSY.ACBranch,
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+    U::Type{<:AbstractBranchFormulation},
+)
+    return _get_min_max_limits(branch, T, U)
+end
+
+"""
+Min and max limits for post-contingency branch flows for Security Constrained Formulations
+"""
+function get_min_max_limits(
+    branch::PSY.MonitoredLine,
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+    U::Type{<:AbstractBranchFormulation},
+)
+    return _get_min_max_limits(branch, T, U)
+end
+
+function _get_min_max_limits(
+    branch::PSY.ACBranch,
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+    ::Type{<:AbstractBranchFormulation},
+)
+    rating = get_rating(branch, T)
+    return (min = -1 * rating, max = rating)
+end
+
+"""
+Min and max limits for post-contingency branch flows for Security Constrained Formulations
+"""
+function get_min_max_limits(
+    double_circuit::Set{PSY.ACTransmission},
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    equivalent_rating = get_rating(double_circuit, T)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits for post-contingency branch flows for Security Constrained Formulations
+"""
+function get_min_max_limits(
+    series_chain::Vector{Any},
+    T::Type{<:PostContingencyEmergencyRateLimitConstraint},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    equivalent_rating = get_rating(series_chain, T)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 function get_dynamic_branch_rating(

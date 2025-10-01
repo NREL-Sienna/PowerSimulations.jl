@@ -1,21 +1,4 @@
 # TODO - error if a the outage is associated with a reduced branch in N-1 formulation
-# TODO - remove this method (get_min_max_limits) after refactoring N-1 for network reductions
-"""
-Min and max limits for post-contingency branch flows for Abstract Branch Formulation and SecurityConstrainedPTDF Network formulation
-"""
-function get_min_max_limits(
-    branch::PSY.ACBranch,
-    ::Type{<:PostContingencyEmergencyRateLimitConstraint},
-    ::Type{<:AbstractBranchFormulation},
-    ::NetworkModel{<:AbstractPTDFModel},
-)
-    if PSY.get_rating_b(branch) === nothing
-        @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
-            \n Consider including post-contingency limits using set_rating_b!()."
-        return (min = -1 * PSY.get_rating(branch), max = PSY.get_rating(branch))
-    end
-    return (min = -1 * PSY.get_rating_b(branch), max = PSY.get_rating_b(branch))
-end
 
 """
 Default implementation to add branch Expressions for Post-Contingency Flows
@@ -88,7 +71,7 @@ Add branch post-contingency rate limit constraints for ACBranch considering LODF
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{PostContingencyEmergencyRateLimitConstraint},
+    cons_type::Type{T},
     branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
     associated_outages_pairs::Vector{
         @NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}
@@ -96,6 +79,7 @@ function add_constraints!(
     device_model::DeviceModel{V, U},
     network_model::NetworkModel{X},
 ) where {
+    T <: PostContingencyEmergencyRateLimitConstraint,
     V <: PSY.ACTransmission,
     U <: AbstractBranchFormulation,
     X <: AbstractSecurityConstrainedPTDFModel,
@@ -145,9 +129,8 @@ function add_constraints!(
 
             limits = get_min_max_limits(
                 branch,
-                PostContingencyEmergencyRateLimitConstraint,
+                T,
                 U,
-                network_model,
             )
 
             for t in time_steps
