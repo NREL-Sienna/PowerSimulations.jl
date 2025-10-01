@@ -679,6 +679,12 @@ function test_decision_problem_results_values(
         @test names(res2_df) ==
               ["DateTime", "Park City", "Brighton"]
         @test first(eltype.(eachcol(res2_df))) === DateTime
+        compare_long_and_wide_realized_results_2d(
+            PSI.read_results_with_keys,
+            myres,
+            result_keys;
+            cols = ["Park City", "Brighton"],
+        )
 
         res3_df =
             PSI.read_results_with_keys(
