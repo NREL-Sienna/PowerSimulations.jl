@@ -373,7 +373,14 @@ end
 ################# PWL Constraints ################
 ##################################################
 
-# without this, you get "variable OnVariable__RenewableDispatch is not stored"
+_include_min_gen_power_in_constraint(
+    ::PSY.EnergyReservoirStorage,
+    ::ActivePowerInVariable,
+) = false
+_include_min_gen_power_in_constraint(
+    ::PSY.EnergyReservoirStorage,
+    ::ActivePowerOutVariable,
+) = false
 _include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
 _include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
 _include_min_gen_power_in_constraint(::PSY.InterruptiblePowerLoad, ::ActivePowerVariable) =
