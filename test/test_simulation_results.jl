@@ -1,3 +1,4 @@
+using Base: COMPILETIME_PREFERENCES
 # Read the actual data of a result to see what the timestamps are
 actual_timestamps(result) = result |> values |> first |> x -> x.data |> keys |> collect
 
@@ -306,6 +307,7 @@ function test_decision_problem_results_values(
     for var in values(realized_variable_uc)
         @test length(unique(var.DateTime)) == 48
     end
+    compare_long_and_wide_realized_results_2d(read_realized_variables, results_uc)
 
     realized_variable_uc =
         read_realized_variables(results_uc, [(ActivePowerVariable, ThermalStandard)])
@@ -331,14 +333,34 @@ function test_decision_problem_results_values(
         realized_variable_uc["ActivePowerVariable__ThermalStandard"],
         :DateTime > Dates.DateTime("2024-01-01T00:00:00")
     )
+    compare_long_and_wide_realized_results_2d(
+        read_realized_variables,
+        results_uc,
+        [(ActivePowerVariable, ThermalStandard)];
+        start_time = Dates.DateTime("2024-01-01T01:00:00"),
+        len = 47,
+    )
+    compare_long_and_wide_realized_results_2d(
+        read_realized_variables,
+        results_uc,
+        [(ActivePowerVariable, ThermalStandard)];
+        start_time = Dates.DateTime("2024-01-02T12:00:00"),
+        len = 10,
+    )
 
     realized_param_uc = read_realized_parameters(results_uc)
     @test length(keys(realized_param_uc)) == 3
     for param in values(realized_param_uc)
         @test length(unique(param.DateTime)) == 48
     end
+    compare_long_and_wide_realized_results_2d(read_realized_parameters, results_uc)
 
     realized_param_uc = read_realized_parameters(
+        results_uc,
+        [(ActivePowerTimeSeriesParameter, RenewableDispatch)],
+    )
+    compare_long_and_wide_realized_results_2d(
+        read_realized_parameters,
         results_uc,
         [(ActivePowerTimeSeriesParameter, RenewableDispatch)],
     )
@@ -933,6 +955,24 @@ function test_decision_problem_results_kwargs_handling(
     )
 
     test_decision_problem_results_values(results_ed, results_uc, c_sys5_hy_ed, c_sys5_hy_uc)
+end
+
+function compare_long_and_wide_realized_results_2d(func, args...; kwargs...)
+    long_results = func(args...; table_format = TableFormat.LONG, kwargs...)
+    wide_results = func(args...; table_format = TableFormat.WIDE, kwargs...)
+    @test sort!(collect(keys(long_results))) == sort!(collect(keys(wide_results)))
+    for (key, long_value) in long_results
+        wide_value = wide_results[key]
+        measure_vars = [x for x in names(wide_value) if x != "DateTime"]
+        wide_converted = DataFrames.stack(
+            wide_value,
+            measure_vars;
+            variable_name = :name,
+            value_name = :value,
+        )
+        @test @orderby(wide_converted, :DateTime, :name) ==
+              @orderby(long_value, :DateTime, :name)
+    end
 end
 
 @testset "Test simulation results" begin
