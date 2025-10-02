@@ -2150,7 +2150,7 @@ function add_constraints!(
             !haskey(network_reduction_map, ac_type) && continue
             for (_, reduction_entry) in network_reduction_map[ac_type]
                 limits =
-                    get_min_max_limits(reduction_entry, T, StaticBranch)    # TODO - Add method to use PostContingencyEmergencyRateLimitConstraint to get rating b 
+                    get_min_max_limits(reduction_entry, T, StaticBranch)
                 names = _get_branch_names(reduction_entry)
                 for ci_name in names
                     if ci_name in device_names
