@@ -47,87 +47,127 @@ function RealizedMeta(
 end
 
 function _make_dataframe(
-    columns::Tuple{Vector{String}},
-    results_by_time::ResultsByTime{Matrix{Float64}, 1},
-    num_rows::Int,
+    results_by_time::ResultsByTime{DataFrame, N},
+    num_timestamps::Int,
     meta::RealizedMeta,
     key::OptimizationContainerKey,
     ::Val{TableFormat.LONG},
-)
-    # TODO: Implement long format directly.
-    df = _make_dataframe(
-        columns,
-        results_by_time,
-        num_rows,
-        meta,
-        key,
-        Val(TableFormat.WIDE),
-    )
-    measure_vars = [x for x in names(df) if x != "DateTime"]
-    return DataFrames.stack(
-        df,
-        measure_vars;
-        variable_name = :name,
-        value_name = :value,
-    )
-end
-
-function _make_dataframe(
-    columns::Tuple{Vector{String}},
-    results_by_time::ResultsByTime{Matrix{Float64}, 1},
-    num_rows::Int,
-    meta::RealizedMeta,
-    key::OptimizationContainerKey,
-    ::Val{TableFormat.WIDE},
-)
-    num_cols = length(columns[1])
-    matrix = Matrix{Float64}(undef, num_rows, num_cols)
+) where {N}
+    @assert !isempty(results_by_time)
     row_index = 1
-    for (step, (_, array)) in enumerate(results_by_time)
+    dfs = DataFrame[]
+    first_cols = names(first(values(results_by_time.data)))
+    for (step, (_, df)) in enumerate(results_by_time)
+        if step > 1 && names(df) != first_cols
+            error("Mismatched columns. First df = $(first_cols), other df = $(names(df))")
+        end
         first_id = step > 1 ? 1 : meta.start_offset
         last_id =
             step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
-        if last_id - first_id > size(array, 1)
+        if last_id - first_id > DataFrames.nrow(df)
             error(
-                "Variable $(encode_key_as_string(key)) has $(size(array, 1)) number of steps, that is different than the default problem horizon. \
+                "Variable $(encode_key_as_string(key)) has $(DataFrames.nrow(df)) number of steps, that is different than the default problem horizon. \
             Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
             )
         end
-        row_end = row_index + last_id - first_id
-        matrix[row_index:row_end, :] = array[first_id:last_id, :]
+        offset = (step - 1) * meta.interval_len
+        df2 = @chain df begin
+            @subset(first_id .<= :time_index .<= last_id)
+            @transform(:actual_time_index = :time_index .+ offset)
+            @select(Not(:time_index))
+            @rename(:time_index = :actual_time_index)
+        end
+        push!(dfs, df2)
         row_index += last_id - first_id + 1
     end
-    df = DataFrames.DataFrame(matrix, collect(columns[1]); copycols = false)
+
+    combined_df = vcat(dfs...)
+    time_df = DataFrame(;
+        DateTime = meta.realized_timestamps,
+        time_index = (meta.start_offset):(meta.start_offset + length(
+            meta.realized_timestamps,
+        ) - 1),
+    )
+    result_df = @chain begin
+        innerjoin(combined_df, time_df; on = :time_index)
+        @select(:DateTime, Not(:DateTime, :time_index))
+        @orderby(:DateTime)
+    end
+
+    actual_num_timestamps = length(unique(result_df.DateTime))
+    if actual_num_timestamps != num_timestamps
+        error(
+            "Mismatched number of timestamps. Expected $(num_timestamps), got $actual_num_timestamps",
+        )
+    end
+
+    return result_df
+end
+
+function _make_dataframe(
+    results_by_time::ResultsByTime{DataFrame, N},
+    num_timestamps::Int,
+    meta::RealizedMeta,
+    key::OptimizationContainerKey,
+    ::Val{TableFormat.WIDE},
+) where {N}
+    @assert !isempty(results_by_time)
+    row_index = 1
+    dfs = DataFrame[]
+    first_cols = names(first(values(results_by_time.data)))
+    for (step, (_, df)) in enumerate(results_by_time)
+        if step > 1 && names(df) != first_cols
+            error("Mismatched columns. First df = $(first_cols), other df = $(names(df))")
+        end
+        first_id = step > 1 ? 1 : meta.start_offset
+        last_id =
+            step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
+        if last_id - first_id > DataFrames.nrow(df)
+            error(
+                "Variable $(encode_key_as_string(key)) has $(DataFrames.nrow(df)) number of steps, that is different than the default problem horizon. \
+            Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
+            )
+        end
+        df2 = df[first_id:last_id, :]
+        push!(dfs, df2)
+        row_index += last_id - first_id + 1
+    end
+
+    df = vcat(dfs...)
     DataFrames.insertcols!(
         df,
         1,
         :DateTime => meta.realized_timestamps,
     )
+    DataFrames.select!(df, DataFrames.Not(:time_index))
+    if DataFrames.nrow(df) != num_timestamps
+        error(
+            "Mismatched number of rows. Expected $(num_timestamps), got $(DataFrames.nrow(df))",
+        )
+    end
+
     return df
 end
 
 function get_realization(
-    results::Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}},
+    results::Dict{OptimizationContainerKey, ResultsByTime{DataFrame}},
     meta::RealizedMeta;
     table_format = TableFormat.LONG,
 )
     realized_values = Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     lk = ReentrantLock()
-    num_rows = length(meta.realized_timestamps)
+    num_timestamps = length(meta.realized_timestamps)
     start = time()
     Threads.@threads for key in collect(keys(results))
         results_by_time = results[key]
-        columns = get_column_names(results_by_time)
-        df = _make_dataframe(
-            columns,
-            results_by_time,
-            num_rows,
-            meta,
-            key,
-            Val(table_format),
-        )
         lock(lk) do
-            realized_values[key] = df
+            realized_values[key] = _make_dataframe(
+                results_by_time,
+                num_timestamps,
+                meta,
+                key,
+                Val(table_format),
+            )
         end
     end
 
@@ -136,6 +176,5 @@ function get_realization(
         @info "Time to read results: $duration seconds. You will likely get faster " *
               "results by starting Julia with multiple threads."
     end
-
     return realized_values
 end

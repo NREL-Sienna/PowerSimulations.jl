@@ -71,6 +71,8 @@ _consider_parameter(
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 
+_has_market_bid_cost(::PSY.RenewableNonDispatch) = false
+
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 
@@ -210,6 +212,52 @@ function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjec
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
 
+# Renewable-specific validations that warn when costs are nonzero.
+# There warnings are captured by the with_logger, though, so we don't actually see them.
+function validate_mbc_component(
+    ::StartupCostParameter,
+    device::PSY.RenewableDispatch,
+    model,
+)
+    startup = PSY.get_start_up(PSY.get_operation_cost(device))
+    apply_maybe_across_time_series(device, startup) do x
+        if x != PSY.single_start_up_to_stages(0.0)
+            @warn "Nonzero startup cost detected for renewable generation $(get_name(device))." maxlog =
+                1
+        end
+    end
+end
+
+function validate_mbc_component(
+    ::ShutdownCostParameter,
+    device::PSY.RenewableDispatch,
+    model,
+)
+    shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
+    apply_maybe_across_time_series(device, shutdown) do x
+        if x != 0.0
+            @warn "Nonzero shutdown cost detected for renewable generation $(get_name(device))." maxlog =
+                1
+        end
+    end
+end
+
+function validate_mbc_component(
+    ::IncrementalCostAtMinParameter,
+    device::PSY.RenewableDispatch,
+    model,
+)
+    no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
+    if !isnothing(no_load_cost)
+        apply_maybe_across_time_series(device, no_load_cost) do x
+            if x != 0.0
+                @warn "Nonzero no-load cost detected for renewable generation $(get_name(device))." maxlog =
+                    1
+            end
+        end
+    end
+end
+
 # Validate that initial input ts always appears if variable ts appears, warn if initial input ts appears without variable ts
 validate_mbc_component(
     ::IncrementalCostAtMinParameter,
@@ -251,8 +299,8 @@ function _process_market_bid_parameters_helper(
     model,
     devices,
 ) where {P <: ParameterType}
+    validate_mbc_component.(Ref(P()), devices, Ref(model))
     if _consider_parameter(P(), container, model)
-        validate_mbc_component.(Ref(P()), devices, Ref(model))
         ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
     end
@@ -263,18 +311,33 @@ function process_market_bid_parameters!(
     container::OptimizationContainer,
     devices,
     model::DeviceModel,
+    incremental::Bool = true,
+    decremental::Bool = false,
 )
     devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
-
-    # TODO decremental
     for param in (
         StartupCostParameter(),
         ShutdownCostParameter(),
-        IncrementalCostAtMinParameter(),
-        IncrementalPiecewiseLinearSlopeParameter(),
-        IncrementalPiecewiseLinearBreakpointParameter(),
     )
         _process_market_bid_parameters_helper(param, container, model, devices)
+    end
+    if incremental
+        for param in (
+            IncrementalCostAtMinParameter(),
+            IncrementalPiecewiseLinearSlopeParameter(),
+            IncrementalPiecewiseLinearBreakpointParameter(),
+        )
+            _process_market_bid_parameters_helper(param, container, model, devices)
+        end
+    end
+    if decremental
+        for param in (
+            DecrementalCostAtMinParameter(),
+            DecrementalPiecewiseLinearSlopeParameter(),
+            DecrementalPiecewiseLinearBreakpointParameter(),
+        )
+            _process_market_bid_parameters_helper(param, container, model, devices)
+        end
     end
 end
 
@@ -312,6 +375,8 @@ end
 ################# PWL Constraints ################
 ##################################################
 
+# without this, you get "variable OnVariable__RenewableDispatch is not stored"
+_include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
 _include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
 _include_min_gen_power_in_constraint(::PSY.InterruptiblePowerLoad, ::ActivePowerVariable) =
     false

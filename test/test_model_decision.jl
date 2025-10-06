@@ -298,7 +298,7 @@ end
         name = get_name(load)
         vals = get_time_series_values(Deterministic, load, "max_active_power")
         vals = vals .* get_max_active_power(load) * -1.0
-        @test all(vals .== param_vals[!, name])
+        @test all(vals .== param_vals[name, :])
     end
 
     res = OptimizationProblemResults(model)
@@ -760,6 +760,5 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model)
     shortage = read_variable(res, "StorageEnergyShortageVariable__EnergyReservoirStorage")
-    @show shortage
     # @test nrow(shortage) == 1
 end

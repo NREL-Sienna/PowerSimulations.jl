@@ -254,24 +254,30 @@ function _process_timestamps(
 end
 
 function _read_results(
-    ::Type{Matrix{Float64}},
+    ::Type{DataFrame},
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
     store::Union{Nothing, <:SimulationStore};
     cols::Union{Colon, Vector{String}} = (:),
+    table_format::TableFormat = TableFormat.LONG,
 )
     vals = _read_results(res, result_keys, timestamps, store)
-    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{DataFrame}}()
     for (result_key, result_data) in vals
-        inner_converted = SortedDict(
-            (date_key, Matrix{Float64}(permutedims(inner_data[cols, :].data)))
-            for (date_key, inner_data) in result_data.data)
-        converted_vals[result_key] = ResultsByTime{Matrix{Float64}, 1}(
+        inner_converted = SortedDict{Dates.DateTime, DataFrame}()
+        for (date_key, inner_data) in result_data
+            extra = ntuple(_ -> (:), ndims(inner_data) - 1)
+            inner_converted[date_key] =
+                to_results_dataframe(inner_data[cols, extra...], nothing, Val(table_format))
+        end
+        _cols = (cols isa Vector) ? (cols,) : result_data.column_names
+        num_dims = length(_cols)
+        converted_vals[result_key] = ResultsByTime{DataFrame, num_dims}(
             result_data.key,
             inner_converted,
             result_data.resolution,
-            (cols isa Vector) ? (cols,) : result_data.column_names)
+            _cols)
     end
     return converted_vals
 end
@@ -572,7 +578,15 @@ function read_results_with_keys(
     meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values =
-        _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing; cols = cols)
+        _read_results(
+            DataFrame,
+            res,
+            result_keys,
+            timestamps,
+            nothing;
+            cols = cols,
+            table_format = table_format,
+        )
     return get_realization(result_values, meta; table_format = table_format)
 end
 

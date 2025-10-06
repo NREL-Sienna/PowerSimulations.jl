@@ -28,7 +28,7 @@ function _get_initial_conditions_value(
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
     else
-        val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        val = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
     end
     @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -51,7 +51,7 @@ function _get_initial_conditions_value(
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
     else
-        val = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        val = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
     end
     @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
@@ -76,7 +76,7 @@ function _get_initial_conditions_value(
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
     else
-        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        var = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
         val = 0.0
         if !PSY.get_status(component) && !(var > ABSOLUTE_TOLERANCE)
             val = PSY.get_time_at_status(component)
@@ -102,7 +102,7 @@ function _get_initial_conditions_value(
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
     else
-        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        var = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
         val = 0.0
         if !PSY.get_status(component) && !(var > ABSOLUTE_TOLERANCE)
             val = PSY.get_time_at_status(component)
@@ -131,7 +131,7 @@ function _get_initial_conditions_value(
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
     else
-        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        var = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
         val = 0.0
         if PSY.get_status(component) && (var > ABSOLUTE_TOLERANCE)
             val = PSY.get_time_at_status(component)
@@ -157,7 +157,7 @@ function _get_initial_conditions_value(
     if !has_initial_condition_value(ic_data, var_type, W)
         val = initial_condition_default(U(), component, V())
     else
-        var = get_initial_condition_value(ic_data, var_type, W)[1, PSY.get_name(component)]
+        var = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
         val = 0.0
         if PSY.get_status(component) && (var > ABSOLUTE_TOLERANCE)
             val = PSY.get_time_at_status(component)

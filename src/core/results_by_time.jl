@@ -46,6 +46,19 @@ function _check_column_consistency(
     # TODO:
 end
 
+function _check_column_consistency(
+    data::SortedDict{Dates.DateTime, DataFrame},
+    cols::NTuple{N, Vector{String}},
+) where {N}
+    for df in values(data)
+        if DataFrames.ncol(df) != length(cols[1])
+            error(
+                "Mismatch in length of DataFrame columns: $(DataFrames.ncol(df)) $(length(cols[1]))",
+            )
+        end
+    end
+end
+
 # TODO: Implement consistency check for other sizes
 
 # This struct behaves like a dict, delegating to its 'data' field.
@@ -61,6 +74,7 @@ get_column_names(x::ResultsByTime) = x.column_names
 get_num_rows(::ResultsByTime{DenseAxisArray{Float64, 2}}, data) = size(data, 2)
 get_num_rows(::ResultsByTime{DenseAxisArray{Float64, 3}}, data) = size(data, 3)
 get_num_rows(::ResultsByTime{Matrix{Float64}}, data) = size(data, 1)
+get_num_rows(::ResultsByTime{DataFrame}, data) = DataFrames.nrow(data)
 
 function _add_timestamps!(
     df::DataFrames.DataFrame,

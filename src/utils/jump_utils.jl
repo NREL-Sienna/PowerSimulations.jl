@@ -88,7 +88,7 @@ end
 
 function to_matrix(array::SparseAxisArray{T, N, K}) where {T, N, K <: NTuple{N, Any}}
     # Don't use get_column_names_from_axis_array to avoid additional string conversion
-    # TODO DT: I don't understand why we have two mechanisms of creating columns.
+    # TODO: I don't understand why we have two mechanisms of creating columns.
     # Why does get_column_names_from_axis_array rely on encode_tuple_to_column?
     columns = sort!(unique!([k[1:(N - 1)] for k in keys(array.data)]))
     return _to_matrix(array, columns)
@@ -109,7 +109,7 @@ When the variant with the key is called:
   In cases where the array has two or more dimensions, retrieve the column names from the
   axes.
 """
-# TODO DT: the docstring describes what the code does.
+# TODO: the docstring describes what the code does.
 # The behavior of key vs axes seems suspect to me.
 function get_column_names_from_axis_array(
     array::DenseAxisArray{T, 1, <:Tuple{Vector{String}}},
@@ -125,25 +125,25 @@ function get_column_names_from_axis_array(
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, IntegerAxis}},
 ) where {T}
     return (axes(array, 1),)
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{IntegerAxis, UnitRange{Int}}},
+    array::DenseAxisArray{T, 2, <:Tuple{IntegerAxis, IntegerAxis}},
 ) where {T}
     return (string.(axes(array, 1)),)
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, IntegerAxis}},
 ) where {T}
     return (axes(array, 1), axes(array, 2))
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, IntegerAxis, UnitRange{Int}}},
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, IntegerAxis, IntegerAxis}},
 ) where {T}
     return (axes(array, 1), string.(axes(array, 2)))
 end

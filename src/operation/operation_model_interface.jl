@@ -395,7 +395,7 @@ read_expression(model::OperationModel, key::ExpressionKey) = _read_results(model
 
 function _read_results(model::OperationModel, key::OptimizationContainerKey)
     array = read_results(get_store(model), key)
-    return return to_results_dataframe(array, nothing, Val(TableFormat.LONG))
+    return to_results_dataframe(array, nothing, Val(TableFormat.LONG))
 end
 
 read_optimizer_stats(model::OperationModel) = read_optimizer_stats(get_store(model))

@@ -644,11 +644,13 @@ function write_result!(
     simulation_time::Dates.DateTime,
     array::DenseAxisArray{Float64, 2},
 )
-    if size(array, 2) != 1
-        error("Unexpected axes: $(axes(array))")
-    end
+    # TODO: This is a temporary fix.
+    # Not sure why the special case for this dimension size is needed.
+    # It fails with the key = InfrastructureSystems.Optimization.ParameterKey{OnStatusParameter, ThermalStandard}("")
+    # The array size is 5 x 1
+    data = size(array, 2) == 1 ? reshape(array.data, length(array.data)) : array.data
     dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, reshape(array.data, length(array.data)), index)
+    _write_dataset!(dataset.values, data, index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
