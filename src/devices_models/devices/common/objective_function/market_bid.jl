@@ -71,6 +71,8 @@ _consider_parameter(
 _has_market_bid_cost(device::PSY.StaticInjection) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 
+_has_market_bid_cost(::PSY.RenewableNonDispatch) = false
+
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 
