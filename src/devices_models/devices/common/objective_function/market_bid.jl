@@ -49,7 +49,7 @@ _consider_parameter(
 ) where {T, D} = has_container_key(container, StopVariable, T)
 
 _consider_parameter(
-    ::IncrementalCostAtMinParameter,
+    ::AbstractCostAtMinParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = has_container_key(container, OnVariable, T)
@@ -57,13 +57,13 @@ _consider_parameter(
 # For slopes and breakpoints, the relevant variables won't have been created yet, so we'll
 # just check all components for the presence of the relevant time series
 _consider_parameter(
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::AbstractPiecewiseLinearSlopeParameter,
     ::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = true
 
 _consider_parameter(
-    ::IncrementalPiecewiseLinearBreakpointParameter,
+    ::AbstractPiecewiseLinearBreakpointParameter,
     ::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = true
@@ -83,6 +83,10 @@ _has_parameter_time_series(::IncrementalCostAtMinParameter, device::PSY.StaticIn
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
 
+_has_parameter_time_series(::DecrementalCostAtMinParameter, device::PSY.StaticInjection) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_decremental_initial_input(PSY.get_operation_cost(device)))
+
 _has_parameter_time_series(
     ::IncrementalPiecewiseLinearSlopeParameter,
     device::PSY.StaticInjection,
@@ -91,11 +95,25 @@ _has_parameter_time_series(
     is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
+    ::DecrementalPiecewiseLinearSlopeParameter,
+    device::PSY.StaticInjection,
+) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_decremental_offer_curves(PSY.get_operation_cost(device)))
+
+_has_parameter_time_series(
     ::IncrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
 ) =
     _has_market_bid_cost(device) &&
     is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+
+_has_parameter_time_series(
+    ::DecrementalPiecewiseLinearBreakpointParameter,
+    device::PSY.StaticInjection,
+) =
+    _has_market_bid_cost(device) &&
+    is_time_variant(PSY.get_decremental_offer_curves(PSY.get_operation_cost(device)))
 
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
     initial_input = get_initial_input_maybe_decremental(Val(decremental), device)

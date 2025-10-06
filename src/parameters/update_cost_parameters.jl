@@ -117,7 +117,7 @@ end
 function handle_variable_cost_parameter(
     ::IncrementalCostAtMinParameter,
     op_cost::PSY.MarketBidCost,
-    component::PSY.Generator,  # TODO handle decremental case
+    component::Union{PSY.Generator, PSY.Storage},  # TODO handle decremental case
     name,
     parameter_array,
     parameter_multiplier,
@@ -149,7 +149,7 @@ end
 function handle_variable_cost_parameter(
     ::T,
     op_cost::PSY.MarketBidCost,
-    component::PSY.Generator,  # TODO handle decremental case
+    component::Union{PSY.Generator, PSY.Storage},  # TODO handle decremental case
     name,
     parameter_array,
     parameter_multiplier,
