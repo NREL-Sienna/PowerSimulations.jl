@@ -482,8 +482,8 @@ import TimeSeries
 
 # I/O Imports
 import DataFrames
-import DataFrames: DataFrame, DataFrameRow, innerjoin
-import DataFramesMeta: @chain, @select
+import DataFrames: DataFrame, DataFrameRow, Not, innerjoin
+import DataFramesMeta: @chain, @orderby, @rename, @select, @subset, @transform
 import CSV
 import HDF5
 import PrettyTables

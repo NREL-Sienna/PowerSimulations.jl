@@ -1196,7 +1196,7 @@ end
 end
 
 @testset "Test 3d results" begin
-    # TODO DT: Test actual values
+    # TODO: Test actual values
     varying = build_sys_incr(true, true, true)
     for in_memory_store in (false, true)
         # model1, res1 = run_generic_mbc_sim(baseline)
@@ -1212,6 +1212,11 @@ end
         )
             @test names(df) == ["DateTime", "name", "name2", "value"]
         end
+        for df in values(read_realized_parameters(res2))
+            @test names(df) == ["DateTime", "name", "name2", "value"]
+        end
+
+        # TODO: Test actual values
     end
 end
 

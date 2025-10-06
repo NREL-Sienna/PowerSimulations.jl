@@ -238,6 +238,79 @@ end
 
 end
 
+@testset "Test simulation with VariableReserve" begin
+    template_uc = get_template_basic_uc_simulation()
+    set_network_model!(template_uc, NetworkModel(PTDFPowerModel; use_slacks = true))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+    set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+    template_ed =
+        get_template_nomin_ed_simulation(NetworkModel(PTDFPowerModel; use_slacks = true))
+    set_device_model!(template_ed, DeviceModel(Line, StaticBranchUnbounded))
+    set_service_model!(template_ed, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
+    c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_ed"; add_reserves = true)
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                c_sys5_hy_uc;
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                initialize_model = false,
+            ),
+            DecisionModel(
+                template_ed,
+                c_sys5_hy_ed;
+                name = "ED",
+                optimizer = ipopt_optimizer,
+                initialize_model = false,
+            ),
+        ],
+    )
+
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                SemiContinuousFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [ActivePowerVariable],
+                ),
+                FixValueFeedforward(;
+                    component_type = VariableReserve{ReserveUp},
+                    source = ActivePowerReserveVariable,
+                    affected_values = [ActivePowerReserveVariable],
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+
+    sim = Simulation(;
+        name = "reserve_feedforward",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+    build_out = build!(sim)
+    @test build_out == PSI.SimulationBuildStatus.BUILT
+    execute_out = execute!(sim)
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results = SimulationResults(sim)
+    for name in list_decision_problems(results)
+        res = get_decision_problem_results(results, name)
+        parameters = read_realized_parameters(res)
+        @test !isempty(parameters)
+        for (key, df1) in parameters
+            df2 = read_realized_parameter(res, key)
+            @test df1 == df2
+        end
+    end
+end
+
 #= Re-enable when cost functions are updated
 function test_3_stage_simulation_with_feedforwards(in_memory)
     sys_rts_da = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
