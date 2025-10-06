@@ -90,7 +90,7 @@ function _make_dataframe(
     )
     result_df = @chain begin
         innerjoin(combined_df, time_df; on = :time_index)
-        @select(:DateTime, :name, :value)
+        @select(:DateTime, Not(:DateTime, :time_index))
         @orderby(:DateTime)
     end
 
