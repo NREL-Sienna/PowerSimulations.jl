@@ -47,6 +47,7 @@ include("test_utils/mock_operation_models.jl")
 include("test_utils/solver_definitions.jl")
 include("test_utils/operations_problem_templates.jl")
 include("test_utils/run_simulation.jl")
+include("test_utils/add_components_to_system.jl")
 
 ENV["RUNNING_PSI_TESTS"] = "true"
 ENV["SIENNA_RANDOM_SEED"] = 1234  # Set a fixed seed for reproducibility in tests

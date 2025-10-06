@@ -181,6 +181,31 @@ function add_to_expression!(
     return
 end
 
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    device_model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: AbstractConverterFormulation,
+    X <: Union{PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
+}
+    _add_to_expression!(
+        container,
+        T,
+        U,
+        devices,
+        device_model,
+        network_model,
+    )
+    return
+end
+
 function _add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},

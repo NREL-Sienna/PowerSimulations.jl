@@ -1,18 +1,69 @@
+# TODO - error if a the outage is associated with a reduced branch in N-1 formulation
+
 """
-Min and max limits for post-contingency branch flows for Abstract Branch Formulation and SecurityConstrainedPTDF Network formulation
+Default implementation to add branch Expressions for Post-Contingency Flows
 """
-function get_min_max_limits(
-    branch::PSY.ACBranch,
-    ::Type{<:PostContingencyEmergencyRateLimitConstrain},
-    ::Type{<:AbstractBranchFormulation},
-    ::NetworkModel{<:AbstractPTDFModel},
-)
-    if PSY.get_rating_b(branch) === nothing
-        @warn "Branch $(get_name(branch)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
-            \n Consider including post-contingency limits using set_rating_b!()."
-        return (min = -1 * PSY.get_rating(branch), max = PSY.get_rating(branch))
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
+    associated_outages_pairs::Vector{
+        @NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}
+    },
+    ::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: PostContingencyBranchFlow,
+    U <: FlowActivePowerVariable,
+    V <: PSY.ACTransmission,
+    W <: AbstractBranchFormulation,
+    X <: AbstractSecurityConstrainedPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    expressions = lazy_container_addition!(
+        container,
+        T(),
+        V,
+        [PSY.get_name(branch_outage) for (branch_outage, _) in associated_outages_pairs],
+        get_name.(branches),
+        time_steps,
+    )
+
+    lodf = get_LODF_matrix(network_model)
+    variable_branches_outages = get_variable(container, U(), V)
+
+    for branch in branches
+        variable_branches = get_variable(container, U(), typeof(branch))
+        branch_name = get_name(branch)
+
+        for (branch_outage, outage) in associated_outages_pairs
+            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
+            if branch_outage == branch
+                continue
+            end
+
+            branch_outage_name = get_name(branch_outage)
+
+            index_lodf_branch = (branch.arc.from.number, branch.arc.to.number)
+            index_lodf_outage = (branch_outage.arc.from.number, branch_outage.arc.to.number)
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expressions[branch_outage_name, branch_name, t],
+                    variable_branches[branch_name, t],
+                    1.0,
+                )
+
+                _add_to_jump_expression!(
+                    expressions[branch_outage_name, branch_name, t],
+                    variable_branches_outages[branch_outage_name, t],
+                    lodf[index_lodf_branch, index_lodf_outage],#lodf[branch_name, branch_outage_name],#
+                )
+            end
+        end
     end
-    return (min = -1 * PSY.get_rating_b(branch), max = PSY.get_rating_b(branch))
+
+    return
 end
 
 """
@@ -20,24 +71,27 @@ Add branch post-contingency rate limit constraints for ACBranch considering LODF
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{PostContingencyEmergencyRateLimitConstrain},
+    cons_type::Type{T},
     branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
-    branches_outages::Vector{T},
-    device_model::DeviceModel{T, U},
-    network_model::NetworkModel{V},
+    associated_outages_pairs::Vector{
+        @NamedTuple{component::V, supplemental_attribute::PSY.UnplannedOutage}
+    },
+    device_model::DeviceModel{V, U},
+    network_model::NetworkModel{X},
 ) where {
-    T <: PSY.ACTransmission,
+    T <: PostContingencyEmergencyRateLimitConstraint,
+    V <: PSY.ACTransmission,
     U <: AbstractBranchFormulation,
-    V <: AbstractSecurityConstrainedPTDFModel,
+    X <: AbstractSecurityConstrainedPTDFModel,
 }
     time_steps = get_time_steps(container)
-    device_names = PSY.get_name.(devices)
+    device_names = PSY.get_name.(branches)
 
     con_lb = add_constraints_container!(
         container,
         cons_type(),
-        T,
-        get_name.(branches_outages),
+        V,
+        [get_name(branch_outage) for (branch_outage, _) in associated_outages_pairs],
         device_names,
         time_steps;
         meta = "lb",
@@ -46,14 +100,14 @@ function add_constraints!(
     con_ub = add_constraints_container!(
         container,
         cons_type(),
-        T,
-        get_name.(branches_outages),
+        V,
+        [get_name(branch_outage) for (branch_outage, _) in associated_outages_pairs],
         device_names,
         time_steps;
         meta = "ub",
     )
 
-    expressions = get_expression(container, PostContingencyBranchFlow(), T)
+    expressions = get_expression(container, PostContingencyBranchFlow(), V)
 
     param_keys = get_parameter_keys(container)
 
@@ -64,19 +118,8 @@ function add_constraints!(
             PostContingencyDynamicBranchRatingTimeSeriesParameter,
             typeof(branch),
         )
-        has_dlr_ts = (param_key in param_keys) && PSY.has_time_series(branch)
 
-        device_dynamic_branch_rating_ts = []
-        if has_dlr_ts
-            device_dynamic_branch_rating_ts, mult =
-                _get_device_post_contingency_dynamic_branch_rating_time_series(
-                    container,
-                    param_key,
-                    branch_name,
-                    network_model)
-        end
-
-        for branch_outage in branches_outages
+        for (branch_outage, outage) in associated_outages_pairs
             #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
             if branch == branch_outage
                 continue
@@ -86,21 +129,11 @@ function add_constraints!(
 
             limits = get_min_max_limits(
                 branch,
-                PostContingencyEmergencyRateLimitConstrain,
+                T,
                 U,
-                network_model,
             )
 
             for t in time_steps
-                # device_dynamic_branch_rating_ts is empty if this device doesn't have a time series
-                if !isempty(device_dynamic_branch_rating_ts)
-                    limits = (
-                        min = -1 * device_dynamic_branch_rating_ts[t] *
-                              mult[branch_name, t],
-                        max = device_dynamic_branch_rating_ts[t] * mult[branch_name, t],
-                    ) #update limits
-                end
-
                 con_ub[b_outage_name, branch_name, t] =
                     JuMP.@constraint(get_jump_model(container),
                         expressions[b_outage_name, branch_name, t] <=

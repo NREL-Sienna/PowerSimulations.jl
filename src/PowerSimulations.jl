@@ -313,7 +313,7 @@ export RangeLimitConstraint
 export RateLimitConstraint
 export RateLimitConstraintFromTo
 export RateLimitConstraintToFrom
-export PostContingencyEmergencyRateLimitConstrain
+export PostContingencyEmergencyRateLimitConstraint
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
@@ -542,6 +542,7 @@ include("core/abstract_simulation_store.jl")
 include("core/operation_model_abstract_types.jl")
 include("core/abstract_feedforward.jl")
 include("core/variables.jl")
+include("core/expressions.jl")
 include("core/network_reductions.jl")
 include("core/network_model.jl")
 include("core/parameters.jl")
@@ -551,7 +552,6 @@ include("core/event_model.jl")
 include("core/device_model.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
-include("core/expressions.jl")
 include("core/initial_conditions.jl")
 include("core/settings.jl")
 include("core/cache_utils.jl")

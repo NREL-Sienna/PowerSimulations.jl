@@ -796,122 +796,6 @@ function add_to_expression!(
     return
 end
 
-"""
-Default implementation to add generators Expressions for Post-Contingency Generation
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    ::Type{D},
-    generators::IS.FlattenIteratorWrapper{V},
-    generator_outages::Vector{V},
-    ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
-) where {
-    T <: PostContingencyActivePowerGeneration,
-    U <: ActivePowerVariable,
-    D <: PostContingencyActivePowerChangeVariable,
-    V <: PSY.Generator,
-    W <: AbstractSecurityConstrainedUnitCommitment,
-    X <: AbstractPTDFModel,
-}
-    time_steps = get_time_steps(container)
-
-    expressions =
-        lazy_container_addition!(container, PostContingencyActivePowerGeneration, V,
-            get_name.(generator_outages),
-            get_name.(generators),
-            time_steps)
-
-    #variable_generator_outages = get_variable(container, U(), V)
-    variable_generator = get_variable(container, U(), V)
-    variable_generator_change = get_variable(container, D(), V)
-
-    for generator in generators
-        variable_generator = get_variable(container, U(), typeof(generator))
-        generator_name = get_name(generator)
-
-        for generator_outage in generator_outages
-            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
-            if generator_outage == generator
-                continue
-            end
-
-            generator_outage_name = get_name(generator_outage)
-
-            for t in time_steps
-                _add_to_jump_expression!(
-                    expressions[generator_outage_name, generator_name, t],
-                    variable_generator[generator_name, t],
-                    1.0,
-                )
-                _add_to_jump_expression!(
-                    expressions[generator_outage_name, generator_name, t],
-                    variable_generator_change[generator_outage_name, generator_name, t],
-                    1.0,
-                )
-            end
-        end
-    end
-    return
-end
-
-"""
-Default implementation to add branch Expressions for Post-Contingency Flows
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    branches::IS.FlattenIteratorWrapper{PSY.ACTransmission},
-    branches_outages::Vector{V},
-    ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
-) where {
-    T <: PostContingencyBranchFlow,
-    U <: FlowActivePowerVariable,
-    V <: PSY.ACTransmission,
-    W <: AbstractBranchFormulation,
-    X <: AbstractSecurityConstrainedPTDFModel,
-}
-    time_steps = get_time_steps(container)
-
-    expressions = lazy_container_addition!(container, PostContingencyBranchFlow, V)
-
-    lodf = get_LODF_matrix(network_model)
-
-    variable_branches_outages = get_variable(container, U(), V)
-
-    for branch in branches
-        variable_branches = get_variable(container, U(), typeof(branch))
-        branch_name = get_name(branch)
-
-        for branch_outage in branches_outages
-            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
-            if branch_outage == branch
-                continue
-            end
-
-            branch_outage_name = get_name(branch_outage)
-
-            for t in time_steps
-                _add_to_jump_expression!(
-                    expressions[branch_outage_name, branch_name, t],
-                    variable_branches[branch_name, t],
-                    1.0,
-                )
-                _add_to_jump_expression!(
-                    expressions[branch_outage_name, branch_name, t],
-                    variable_branches_outages[branch_outage_name, t],
-                    lodf[branch_name, branch_outage_name],
-                )
-            end
-        end
-    end
-    return
-end
-
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -949,6 +833,56 @@ function add_to_expression!(
     V <: PSY.ThermalGen,
     W <: AbstractCompactUnitCommitment,
     X <: PM.AbstractPowerModel,
+}
+    _add_to_expression!(
+        container,
+        T,
+        U,
+        devices,
+        device_model,
+        network_model,
+    )
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    device_model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnVariable,
+    V <: PSY.ThermalGen,
+    W <: AbstractCompactUnitCommitment,
+    X <: Union{PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
+}
+    _add_to_expression!(
+        container,
+        T,
+        U,
+        devices,
+        device_model,
+        network_model,
+    )
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    device_model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: OnVariable,
+    V <: PSY.ThermalGen,
+    W <: AbstractCompactUnitCommitment,
+    X <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
     _add_to_expression!(
         container,
@@ -1248,7 +1182,7 @@ function add_to_expression!(
     U <: VariableType,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: PTDFPowerModel,
+    X <: Union{PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
 }
     variable = get_variable(container, U(), V)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -1926,22 +1860,22 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     sys::PSY.System,
-    network_model::NetworkModel{V},
+    network_model::NetworkModel{W},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    V <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
+    W <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
 }
     variable =
-        get_variable(container, U(), _system_expression_type(AreaPTDFPowerModel))
+        get_variable(container, U(), _system_expression_type(W))
     expression =
-        get_expression(container, T(), _system_expression_type(AreaPTDFPowerModel))
+        get_expression(container, T(), _system_expression_type(W))
     areas = get_available_components(network_model, PSY.Area, sys)
     for t in get_time_steps(container), n in PSY.get_name.(areas)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Area, AreaPTDFPowerModel()),
+            get_variable_multiplier(U(), PSY.Area, W()),
         )
     end
     return

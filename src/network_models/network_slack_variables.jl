@@ -10,7 +10,7 @@ function add_variables!(
     network_model::NetworkModel{U},
 ) where {
     T <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    U <: Union{CopperPlatePowerModel, PTDFPowerModel},
+    U <: Union{CopperPlatePowerModel, PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
 }
     time_steps = get_time_steps(container)
     reference_buses = get_reference_buses(network_model)
@@ -122,7 +122,9 @@ function objective_function!(
     container::OptimizationContainer,
     sys::PSY.System,
     network_model::NetworkModel{T},
-) where {T <: Union{CopperPlatePowerModel, PTDFPowerModel}}
+) where {
+    T <: Union{CopperPlatePowerModel, PTDFPowerModel, AbstractSecurityConstrainedPTDFModel},
+}
     variable_up = get_variable(container, SystemBalanceSlackUp(), PSY.System)
     variable_dn = get_variable(container, SystemBalanceSlackDown(), PSY.System)
     reference_buses = get_reference_buses(network_model)

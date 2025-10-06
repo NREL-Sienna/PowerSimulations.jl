@@ -24,6 +24,17 @@ const JuMPAffineExpressionDArrayStringInt = JuMP.Containers.DenseAxisArray{
         JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
     },
 }
+const JuMPAffineExpression3DArrayStringStringInt = JuMP.Containers.DenseAxisArray{
+    JuMP.AffExpr,
+    3,
+    Tuple{Vector{String}, Vector{String}, UnitRange{Int64}},
+    Tuple{
+        JuMP.Containers._AxisLookup{Dict{String, Int64}},
+        JuMP.Containers._AxisLookup{Dict{String, Int64}},
+        JuMP.Containers._AxisLookup{Tuple{Int64, Int64}},
+    },
+}
+
 const JuMPAffineExpressionDArrayIntInt = JuMP.Containers.DenseAxisArray{
     JuMP.AffExpr,
     2,

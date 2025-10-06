@@ -322,49 +322,45 @@ function construct_device!(
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, RateLimitConstraint, devices, model, network_model)
 
-    # TODO: Security constrained. Remove this line. Method not defined
-    valid_outages = _get_all_scuc_valid_outages(sys, network_model)
+    associated_outages_pairs = PSY.get_component_supplemental_attribute_pairs(
+        V,
+        PSY.UnplannedOutage,
+        sys)
 
-    if isempty(valid_outages)
-        throw(
-            ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACTransmission)
-                to add the LODF expressions/constraints for the requested network model: $network_model.",
-            ))
+    if isempty(associated_outages_pairs)
+        @info "No associated outage supplemental attributes found assicuiatted with devices: $V. Skipping contingency variable addition for that service."
+        return
     end
 
-    lodf = get_LODF_matrix(network_model)
-    removed_branches = PNM.get_removed_branches(lodf.network_reduction_data)
+    network_reduction = get_network_reduction(network_model)
+    branches_names = PNM.get_retained_branches_names(network_reduction)
+
     # TODO: Security constrained. This method might not be needed. Analyze why is here
     branches = get_available_components(
-        b -> PSY.get_name(b) ∉ removed_branches,
+        b -> PSY.get_name(b) in branches_names,
         PSY.ACTransmission,
         sys,
     )
 
-    #TODO Handle also N-2 cases
-    branches_outages =
-        _get_all_single_outage_branches_by_type(sys, valid_outages, branches, V)
-    if !isempty(branches_outages)
-        add_to_expression!(
-            container,
-            PostContingencyBranchFlow,
-            FlowActivePowerVariable,
-            branches,
-            branches_outages,
-            model,
-            network_model,
-        )
+    add_to_expression!(
+        container,
+        PostContingencyBranchFlow,
+        FlowActivePowerVariable,
+        branches,
+        associated_outages_pairs,
+        model,
+        network_model,
+    )
 
-        add_constraints!(
-            container,
-            PostContingencyEmergencyRateLimitConstrain,
-            branches,
-            branches_outages,
-            model,
-            network_model,
-        )
-    end
+    add_constraints!(
+        container,
+        PostContingencyEmergencyRateLimitConstraint,
+        branches,
+        associated_outages_pairs,
+        model,
+        network_model,
+    )
+
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, SecurityConstrainedPTDFPowerModel)
     add_constraint_dual!(container, sys, model)
