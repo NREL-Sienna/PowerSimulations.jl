@@ -57,6 +57,11 @@ get_variable_lower_bound(::RateofChangeConstraintSlackDown, d::PSY.ThermalGen, :
 get_variable_binary(::RateofChangeConstraintSlackUp, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_lower_bound(::RateofChangeConstraintSlackUp, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 0.0
 
+############## PostContingencyActivePowerChangeVariable, ThermalGen ####################
+get_variable_binary(::PostContingencyActivePowerChangeVariable, ::Type{<:PSY.ThermalGen}, ::AbstractSecurityConstrainedUnitCommitment) = false
+get_variable_warm_start_value(::PostContingencyActivePowerChangeVariable, d::PSY.ThermalGen, ::AbstractSecurityConstrainedUnitCommitment) = 0.0
+get_variable_lower_bound(::PostContingencyActivePowerChangeVariable, d::PSY.ThermalGen, ::AbstractSecurityConstrainedUnitCommitment) = -1.0
+get_variable_upper_bound(::PostContingencyActivePowerChangeVariable, d::PSY.ThermalGen, ::AbstractSecurityConstrainedUnitCommitment) = 1.0
 
 ########################### Parameter related set functions ################################
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_max_active_power(d)
@@ -89,8 +94,16 @@ initial_condition_variable(::InitialTimeDurationOff, d::PSY.ThermalGen, ::Abstra
 function proportional_cost(container::OptimizationContainer, cost::PSY.ThermalGenerationCost, S::OnVariable, T::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
     return onvar_cost(container, cost, S, T, U, t) + PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) + PSY.get_fixed(cost)
 end
+is_time_variant_term(::OptimizationContainer, ::PSY.ThermalGenerationCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) = false
 
-proportional_cost(cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_no_load_cost(cost)
+# TODO decremental case
+proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, ::OnVariable, comp::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) =
+    _lookup_maybe_time_variant_param(container, comp, t,
+    Val(is_time_variant(PSY.get_incremental_initial_input(cost))),
+    PSY.get_initial_input ∘ PSY.get_incremental_offer_curves ∘ PSY.get_operation_cost,
+    IncrementalCostAtMinParameter())
+is_time_variant_term(::OptimizationContainer, cost::PSY.MarketBidCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) =
+    is_time_variant(PSY.get_incremental_initial_input(cost))
 
 proportional_cost(::Union{PSY.MarketBidCost, PSY.ThermalGenerationCost}, ::Union{RateofChangeConstraintSlackUp, RateofChangeConstraintSlackDown}, ::PSY.ThermalGen, ::AbstractThermalFormulation) = CONSTRAINT_VIOLATION_SLACK_COST
 
@@ -100,20 +113,35 @@ has_multistart_variables(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitm
 
 objective_function_multiplier(::VariableType, ::AbstractThermalFormulation)=OBJECTIVE_FUNCTION_POSITIVE
 
-shut_down_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
-shut_down_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=PSY.get_shut_down(cost)
-
 sos_status(::PSY.ThermalGen, ::AbstractThermalDispatchFormulation)=SOSStatusVariable.NO_VARIABLE
 sos_status(::PSY.ThermalGen, ::AbstractThermalUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::AbstractStandardUnitCommitment)=SOSStatusVariable.VARIABLE
 sos_status(::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=SOSStatusVariable.VARIABLE
 
-start_up_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.ThermalGenerationCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalGen, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::ThermalMultiStartUnitCommitment)=PSY.get_start_up(cost)
-# If the formulation used ignores start up costs, the model ignores that data.
-start_up_cost(cost::PSY.MarketBidCost, ::PSY.ThermalMultiStart, ::AbstractThermalFormulation)=maximum(PSY.get_start_up(cost))
+# Startup cost interpretations!
+# Validators: check that the types match (formulation is optional) and redirect to the simpler methods
+start_up_cost(cost, ::PSY.ThermalGen, ::T, ::Union{AbstractThermalFormulation, Nothing} = nothing) where {T <: StartVariable} =
+    start_up_cost(cost, T())
+start_up_cost(cost, ::PSY.ThermalMultiStart, ::T, ::ThermalMultiStartUnitCommitment = ThermalMultiStartUnitCommitment()) where {T <: MultiStartVariable} =
+    start_up_cost(cost, T())
+
+# Implementations: given a single number, tuple, or StartUpStages and a variable, do the right thing
+# Single number to anything
+start_up_cost(cost::Float64, ::StartVariable) = cost
+# TODO in the case where we have a single number startup cost and we're modeling a multi-start, do we set all the values to that number?
+start_up_cost(cost::Float64, ::T) where {T <: MultiStartVariable} =
+    start_up_cost((hot = cost, warm = cost, cold = cost), T())
+
+# 3-tuple to anything
+start_up_cost(cost::NTuple{3, Float64}, ::T) where {T <: VariableType} =
+    start_up_cost(StartUpStages(cost), T())
+
+# `StartUpStages` to anything
+start_up_cost(cost::StartUpStages, ::ColdStartVariable) = cost.cold
+start_up_cost(cost::StartUpStages, ::WarmStartVariable) = cost.warm
+start_up_cost(cost::StartUpStages, ::HotStartVariable) = cost.hot
+# TODO in the opposite case, do we want to get the maximum or the hot?
+start_up_cost(cost::StartUpStages, ::StartVariable) = maximum(cost)
 
 uses_compact_power(::PSY.ThermalGen, ::AbstractThermalFormulation)=false
 uses_compact_power(::PSY.ThermalGen, ::AbstractCompactUnitCommitment )=true
@@ -700,8 +728,13 @@ function add_constraints!(
 
     if !isempty(ini_conds)
         varstop = get_variable(container, StopVariable(), T)
-        set_name = [PSY.get_name(d) for d in devices]
-        con = add_constraints_container!(container, ActiveRangeICConstraint(), T, set_name)
+        device_name_set = PSY.get_name.(devices)
+        con = add_constraints_container!(
+            container,
+            ActiveRangeICConstraint(),
+            T,
+            device_name_set,
+        )
 
         for (ix, ic) in enumerate(ini_conds[:, 1])
             name = get_component_name(ic)
@@ -839,6 +872,8 @@ function initial_conditions!(
     formulation::Union{ThermalBasicUnitCommitment, ThermalBasicCompactUnitCommitment},
 ) where {T <: PSY.ThermalGen}
     add_initial_condition!(container, devices, formulation, DeviceStatus())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOn())
+    add_initial_condition!(container, devices, formulation, InitialTimeDurationOff())
     return
 end
 
@@ -1129,7 +1164,7 @@ function add_constraints!(
     ]
     varstop = get_variable(container, StopVariable(), T)
 
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
 
     con = [
         add_constraints_container!(
@@ -1205,12 +1240,12 @@ function add_constraints!(
         get_variable(container, ColdStartVariable(), T),
     ]
 
-    set_name = [PSY.get_name(d) for d in devices]
+    device_name_set = PSY.get_name.(devices)
     con = add_constraints_container!(
         container,
         StartTypeConstraint(),
         T,
-        set_name,
+        device_name_set,
         time_steps,
     )
 
@@ -1253,7 +1288,7 @@ function add_constraints!(
         get_initial_condition(container, InitialTimeDurationOff(), PSY.ThermalMultiStart)
 
     time_steps = get_time_steps(container)
-    set_name = [get_component_name(ic) for ic in initial_conditions_offtime]
+    device_name_set = [get_component_name(ic) for ic in initial_conditions_offtime]
     varbin = get_variable(container, OnVariable(), T)
     varstarts = [
         get_variable(container, HotStartVariable(), T),
@@ -1264,7 +1299,7 @@ function add_constraints!(
         container,
         StartupInitialConditionConstraint(),
         T,
-        set_name,
+        device_name_set,
         time_steps,
         1:(MAX_START_STAGES - 1);
         sparse = true,
@@ -1274,7 +1309,7 @@ function add_constraints!(
         container,
         StartupInitialConditionConstraint(),
         T,
-        set_name,
+        device_name_set,
         time_steps,
         1:(MAX_START_STAGES - 1);
         sparse = true,
@@ -1480,7 +1515,7 @@ function objective_function!(
     ::Type{<:PM.AbstractPowerModel},
 ) where {U <: ThermalMultiStartUnitCommitment}
     add_variable_cost!(container, PowerAboveMinimumVariable(), devices, U())
-    for var_type in START_VARIABLES
+    for var_type in MULTI_START_VARIABLES
         add_start_up_cost!(container, var_type(), devices, U())
     end
     add_shut_down_cost!(container, StopVariable(), devices, U())

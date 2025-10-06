@@ -88,7 +88,7 @@ make_system_filename(sys::PSY.System) = make_system_filename(IS.get_uuid(sys))
 make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"
 
 function check_hvdc_line_limits_consistency(
-    d::Union{PSY.TwoTerminalHVDCLine, PSY.TModelHVDCLine},
+    d::Union{PSY.TwoTerminalGenericHVDCLine, PSY.TModelHVDCLine},
 )
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
@@ -111,7 +111,7 @@ function check_hvdc_line_limits_consistency(
     return
 end
 
-function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalHVDCLine)
+function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalGenericHVDCLine)
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
     from_max = PSY.get_active_power_limits_from(d).max
@@ -282,11 +282,11 @@ function _get_piecewise_pointcurve_per_system_unit(
 end
 
 """
-Obtain the normalized PiecewiseStep cost data in system base per unit
-depending on the specified power units.
+Obtain the normalized PiecewiseStepData in system base per unit depending on the specified
+power units.
 
-Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h),
-so they also require transformation.
+Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h), so they also
+require transformation.
 """
 function get_piecewise_incrementalcurve_per_system_unit(
     cost_component::PSY.PiecewiseStepData,
@@ -294,8 +294,27 @@ function get_piecewise_incrementalcurve_per_system_unit(
     system_base_power::Float64,
     device_base_power::Float64,
 )
+    return PSY.PiecewiseStepData(
+        get_piecewise_incrementalcurve_per_system_unit(
+            PSY.get_x_coords(cost_component),
+            PSY.get_y_coords(cost_component),
+            unit_system,
+            system_base_power,
+            device_base_power,
+        )...,
+    )
+end
+
+function get_piecewise_incrementalcurve_per_system_unit(
+    x_coords::AbstractVector,
+    y_coords::AbstractVector,
+    unit_system::PSY.UnitSystem,
+    system_base_power::Float64,
+    device_base_power::Float64,
+)
     return _get_piecewise_incrementalcurve_per_system_unit(
-        cost_component,
+        x_coords,
+        y_coords,
         Val{unit_system}(),
         system_base_power,
         device_base_power,
@@ -303,44 +322,42 @@ function get_piecewise_incrementalcurve_per_system_unit(
 end
 
 function _get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    x_coords::AbstractVector,
+    y_coords::AbstractVector,
     ::Val{PSY.UnitSystem.SYSTEM_BASE},
     system_base_power::Float64,
     device_base_power::Float64,
 )
-    return cost_component
+    return x_coords, y_coords
 end
 
 function _get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    x_coords::AbstractVector,
+    y_coords::AbstractVector,
     ::Val{PSY.UnitSystem.DEVICE_BASE},
     system_base_power::Float64,
     device_base_power::Float64,
 )
-    x_coords = PSY.get_x_coords(cost_component)
-    y_coords = PSY.get_y_coords(cost_component)
     ratio = device_base_power / system_base_power
     x_coords_normalized = x_coords .* ratio
     y_coords_normalized = y_coords ./ ratio
-    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+    return x_coords_normalized, y_coords_normalized
 end
 
 function _get_piecewise_incrementalcurve_per_system_unit(
-    cost_component::PSY.PiecewiseStepData,
+    x_coords::AbstractVector,
+    y_coords::AbstractVector,
     ::Val{PSY.UnitSystem.NATURAL_UNITS},
     system_base_power::Float64,
     device_base_power::Float64,
 )
-    x_coords = PSY.get_x_coords(cost_component)
-    y_coords = PSY.get_y_coords(cost_component)
     x_coords_normalized = x_coords ./ system_base_power
     y_coords_normalized = y_coords .* system_base_power
-    return PSY.PiecewiseStepData(x_coords_normalized, y_coords_normalized)
+    return x_coords_normalized, y_coords_normalized
 end
 
-function is_time_variant(cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve})
-    return isa(PSY.get_fuel_cost(cost_function), IS.TimeSeriesKey)
-end
+is_time_variant(::IS.TimeSeriesKey) = true
+is_time_variant(::Any) = false
 
 function create_temporary_cost_function_in_system_per_unit(
     original_cost_function::PSY.CostCurve,
@@ -361,6 +378,7 @@ function create_temporary_cost_function_in_system_per_unit(
         PSY.PiecewisePointCurve(new_data),
         PSY.UnitSystem.SYSTEM_BASE,
         PSY.get_fuel_cost(original_cost_function),
+        PSY.LinearCurve(0.0),  # setting fuel offtake cost to default value of 0
         PSY.get_vom_cost(original_cost_function),
     )
 end

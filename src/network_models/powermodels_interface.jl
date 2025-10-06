@@ -7,11 +7,12 @@
 # Model Definitions
 
 const UNSUPPORTED_POWERMODELS =
-    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
-
-const INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS = [
-    PM.SparseSDPWRMPowerModel,
-]
+    [
+        PM.SOCBFPowerModel,
+        PM.SOCBFConicPowerModel,
+        PM.IVRPowerModel,
+        PM.SparseSDPWRMPowerModel,
+    ]
 
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
@@ -250,12 +251,12 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
 
     network_model = get_network_model(template)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         ac_bus_numbers =
             PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
-        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
+        bus_reduction_map = PNM.get_bus_reduction_map(network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
 
@@ -290,12 +291,12 @@ function powermodels_network!(
     pm_data, PM_map = pass_to_pm(sys, template, time_steps[end])
 
     network_model = get_network_model(template)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         ac_bus_numbers =
             PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
-        bus_reduction_map = PNM.get_bus_reduction_map(radial_network_reduction)
+        bus_reduction_map = PNM.get_bus_reduction_map(network_reduction)
         ac_bus_numbers = collect(keys(bus_reduction_map))
     end
 
@@ -327,7 +328,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] =
         Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing))
-    pm_variable_map[TwoTerminalHVDCTypes] =
+    pm_variable_map[PSY.TwoTerminalHVDC] =
         Dict(:p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing))
 
     return pm_variable_map
@@ -338,7 +339,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
     pm_variable_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
-    pm_variable_map[TwoTerminalHVDCTypes] = Dict(
+    pm_variable_map[PSY.TwoTerminalHVDC] = Dict(
         :p_dc => (
             from_to = FlowActivePowerFromToVariable(),
             to_from = FlowActivePowerToFromVariable(),
@@ -362,7 +363,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
             to_from = FlowReactivePowerToFromVariable(),
         ),
     )
-    pm_variable_map[TwoTerminalHVDCTypes] = Dict(
+    pm_variable_map[PSY.TwoTerminalHVDC] = Dict(
         :p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing),
         :q_dc => (
             from_to = FlowReactivePowerFromToVariable(),
@@ -406,13 +407,14 @@ function add_pm_variable_refs!(
     container::OptimizationContainer,
     system_formulation::Type{S},
     ::PSY.System,
+    model::NetworkModel,
 ) where {S <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
     bus_dict = container.pm.ext[:PMmap].bus
     ACbranch_dict = container.pm.ext[:PMmap].arcs
-    ACbranch_types = typeof.(values(ACbranch_dict))
+    ACbranch_types = PNM.get_ac_transmission_types(model.network_reduction)
     DCbranch_dict = container.pm.ext[:PMmap].arcs_dc
-    DCbranch_types = typeof.(values(DCbranch_dict))
+    DCbranch_types = Set(typeof.(values(DCbranch_dict)))
 
     pm_variable_types = keys(PM.var(container.pm, 1))
 
@@ -431,6 +433,7 @@ function add_pm_variable_refs!(
 
     add_pm_variable_refs!(
         container,
+        model,
         PSY.ACBranch,
         ACbranch_types,
         ACbranch_dict,
@@ -440,7 +443,8 @@ function add_pm_variable_refs!(
     )
     add_pm_variable_refs!(
         container,
-        TwoTerminalHVDCTypes,
+        model,
+        PSY.TwoTerminalHVDC,
         DCbranch_types,
         DCbranch_dict,
         pm_variable_map,
@@ -452,8 +456,55 @@ end
 
 function add_pm_variable_refs!(
     container::OptimizationContainer,
-    d_class::Type,
-    device_types::Vector,
+    model::NetworkModel,
+    d_class::Type{PSY.ACBranch},
+    device_types::Set,
+    pm_map::Dict,
+    pm_variable_map::Dict,
+    pm_variable_types::Base.KeySet,
+    time_steps::UnitRange{Int},
+)
+    all_branch_maps_by_type = model.network_reduction.all_branch_maps_by_type
+    for d_type in device_types, (pm_v, ps_v) in pm_variable_map[d_class]
+        if pm_v in pm_variable_types
+            for direction in fieldnames(typeof(ps_v))
+                var_type = getfield(ps_v, direction)
+                var_type === nothing && continue
+                branch_names =
+                    get_branch_name_variable_axis(all_branch_maps_by_type, d_type)
+                var_container = add_variable_container!(
+                    container,
+                    var_type,
+                    d_type,
+                    branch_names,
+                    time_steps,
+                )
+                for t in time_steps, map in NETWORK_REDUCTION_MAPS
+                    network_reduction_map = all_branch_maps_by_type[map]
+                    !haskey(network_reduction_map, d_type) && continue
+                    for (arc_tuple, reduction_entry) in network_reduction_map[d_type]
+                        pm_d = pm_map[arc_tuple]
+                        var = PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
+                        _add_variable_to_container!(
+                            var_container,
+                            var,
+                            reduction_entry,
+                            d_type,
+                            t,
+                        )
+                    end
+                end
+            end
+        end
+    end
+    return
+end
+
+function add_pm_variable_refs!(
+    container::OptimizationContainer,
+    ::NetworkModel,
+    d_class::Type{PSY.TwoTerminalHVDC},
+    device_types::Set,
     pm_map::Dict,
     pm_variable_map::Dict,
     pm_variable_types::Base.KeySet,

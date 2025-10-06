@@ -35,14 +35,14 @@ function _add_pwl_variables!(
     time_period::Int,
     cost_data::PSY.PiecewiseLinearData,
 ) where {T <: PSY.Component}
-    var_container = lazy_container_addition!(container, PieceWiseLinearCostVariable(), T)
+    var_container = lazy_container_addition!(container, PiecewiseLinearCostVariable(), T)
     # length(PiecewiseStepData) gets number of segments, here we want number of points
     pwlvars = Array{JuMP.VariableRef}(undef, length(cost_data) + 1)
     for i in 1:(length(cost_data) + 1)
         pwlvars[i] =
             var_container[(component_name, i, time_period)] = JuMP.@variable(
                 get_jump_model(container),
-                base_name = "PieceWiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
+                base_name = "PiecewiseLinearCostVariable_$(component_name)_{pwl_$(i), $time_period}",
                 lower_bound = 0.0,
                 upper_bound = 1.0
             )
@@ -119,13 +119,13 @@ function _add_pwl_constraint!(
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
-        PieceWiseLinearCostConstraint(),
+        PiecewiseLinearCostConstraint(),
         T,
         axes(variables)...,
     )
     len_cost_data = length(break_points)
     jump_model = get_jump_model(container)
-    pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
+    pwl_vars = get_variable(container, PiecewiseLinearCostVariable(), T)
     name = PSY.get_name(component)
     const_container[name, period] = JuMP.@constraint(
         jump_model,
@@ -135,7 +135,7 @@ function _add_pwl_constraint!(
     bin = _get_bin_lhs(container, sos_status, component, period)
     const_normalization_container = lazy_container_addition!(
         container,
-        PieceWiseLinearCostConstraint(),
+        PiecewiseLinearCostConstraint(),
         T,
         axes(variables)...;
         meta = "normalization",
@@ -167,13 +167,13 @@ function _add_pwl_constraint!(
     variables = get_variable(container, U(), T)
     const_container = lazy_container_addition!(
         container,
-        PieceWiseLinearCostConstraint(),
+        PiecewiseLinearCostConstraint(),
         T,
         axes(variables)...,
     )
     len_cost_data = length(break_points)
     jump_model = get_jump_model(container)
-    pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
+    pwl_vars = get_variable(container, PiecewiseLinearCostVariable(), T)
     name = PSY.get_name(component)
 
     if sos_status == SOSStatusVariable.NO_VARIABLE
@@ -204,7 +204,7 @@ function _add_pwl_constraint!(
 
     const_normalization_container = lazy_container_addition!(
         container,
-        PieceWiseLinearCostConstraint(),
+        PiecewiseLinearCostConstraint(),
         T,
         axes(variables)...;
         meta = "normalization",
@@ -239,7 +239,7 @@ function _add_pwl_sos_constraint!(
     )
 
     jump_model = get_jump_model(container)
-    pwl_vars = get_variable(container, PieceWiseLinearCostVariable(), T)
+    pwl_vars = get_variable(container, PiecewiseLinearCostVariable(), T)
     bp_count = length(break_points)
     pwl_vars_subset = [pwl_vars[name, i, period] for i in 1:bp_count]
     JuMP.@constraint(jump_model, pwl_vars_subset in MOI.SOS2(collect(1:bp_count)))
@@ -258,13 +258,14 @@ function _get_pwl_cost_expression(
     multiplier::Float64,
 ) where {T <: PSY.Component}
     name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, PieceWiseLinearCostVariable(), T)
+    pwl_var_container = get_variable(container, PiecewiseLinearCostVariable(), T)
     gen_cost = JuMP.AffExpr(0.0)
     y_coords_cost_data = PSY.get_y_coords(cost_data)
     for (i, cost) in enumerate(y_coords_cost_data)
         JuMP.add_to_expression!(
             gen_cost,
-            cost * multiplier * pwl_var_container[(name, i, time_period)],
+            (cost * multiplier),
+            pwl_var_container[(name, i, time_period)],
         )
     end
     return gen_cost
@@ -537,13 +538,13 @@ function _add_variable_cost_to_objective!(
     pwl_fuel_consumption_expressions =
         _add_pwl_term!(container, component, cost_function, T(), U())
 
-    is_time_variant_ = is_time_variant(cost_function)
+    is_time_variant_ = is_time_variant(PSY.get_fuel_cost(cost_function))
     for t in get_time_steps(container)
         fuel_cost_value = get_fuel_cost_value(
             container,
             component,
             t,
-            Val{is_time_variant_}(),
+            is_time_variant_,
         )
         pwl_cost_expression = pwl_fuel_consumption_expressions[t] * fuel_cost_value
         add_to_expression!(

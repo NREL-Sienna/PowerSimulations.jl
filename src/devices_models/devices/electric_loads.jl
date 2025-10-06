@@ -24,6 +24,10 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLo
 get_multiplier_value(::ReactivePowerTimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_reactive_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = PSY.get_max_active_power(d)
 
+# To avoid ambiguity with default_interface_methods.jl:
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.ElectricLoad, ::StaticPowerLoad) = 1.0
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = 1.0
+
 
 ########################Objective Function##################################################
 proportional_cost(cost::Nothing, ::OnVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
@@ -79,7 +83,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
     jump_model = get_jump_model(container)
@@ -129,6 +133,35 @@ function add_constraints!(
         model,
         X,
     )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    T::Type{ActivePowerVariableLimitsConstraint},
+    U::Type{OnVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::NetworkModel{X},
+) where {V <: PSY.ControllableLoad, W <: PowerLoadInterruption, X <: PM.AbstractPowerModel}
+    time_steps = get_time_steps(container)
+    constraint = add_constraints_container!(
+        container,
+        T(),
+        V,
+        PSY.get_name.(devices),
+        time_steps;
+        meta = "binary",
+    )
+    on_variable = get_variable(container, U(), V)
+    power = get_variable(container, ActivePowerVariable(), V)
+    jump_model = get_jump_model(container)
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        pmax = PSY.get_max_active_power(d)
+        constraint[name, t] =
+            JuMP.@constraint(jump_model, power[name, t] <= on_variable[name, t] * pmax)
+    end
     return
 end
 

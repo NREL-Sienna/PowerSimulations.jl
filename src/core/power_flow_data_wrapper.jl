@@ -12,7 +12,23 @@ mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowContainer}
     is_solved::Bool
 end
 
+check_network_reduction(::PFS.SystemPowerFlowContainer) = nothing
+
+function check_network_reduction(pfd::PFS.PowerFlowData)
+    nrd = PFS.get_network_reduction_data(pfd)
+    if !isempty(PNM.get_reductions(nrd))
+        throw(
+            IS.NotImplementedError(
+                "Power flow in-the-loop on reduced networks isn't supported. Network " *
+                "reductions of types $(PNM.get_reductions(nrd)) present.",
+            ),
+        )
+    end
+    return
+end
+
 function PowerFlowEvaluationData(power_flow_data::T) where {T <: PFS.PowerFlowContainer}
+    check_network_reduction(power_flow_data)
     return PowerFlowEvaluationData{T}(
         power_flow_data,
         Dict{Symbol, Dict{OptimizationContainerKey, <:Any}}(),

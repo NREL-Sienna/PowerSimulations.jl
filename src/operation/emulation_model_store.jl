@@ -1,7 +1,7 @@
 """
 Stores results data for one EmulationModel
 """
-mutable struct EmulationModelStore <: IS.Optimization.AbstractModelStore
+mutable struct EmulationModelStore <: ISOPT.AbstractModelStore
     data_container::DatasetContainer{InMemoryDataset}
     optimizer_stats::OrderedDict{Int, OptimizerStats}
 end
@@ -79,7 +79,7 @@ function initialize_storage!(
         for (key, field_container) in field_containers
             @debug "Adding $(encode_key_as_string(key)) to EmulationModelStore" _group =
                 LOG_GROUP_MODEL_STORE
-            column_names = get_column_names(key, field_container)
+            column_names = get_column_names(container, type, field_container, key)
             results_container[key] = InMemoryDataset(
                 fill!(
                     DenseAxisArray{Float64}(undef, column_names..., 1:num_of_executions),
@@ -97,10 +97,20 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 2},
+    array::DenseAxisArray{Float64, 2},
 )
-    @assert_op size(array)[2] == 1
-    write_result!(store, name, key, index, update_timestamp, array[:, 1])
+    if size(array, 2) == 1
+        write_result!(store, name, key, index, update_timestamp, array[:, 1])
+    else
+        container = get_data_field(store, get_store_container_type(key))
+        set_value!(
+            container[key],
+            array,
+            index,
+        )
+        set_last_recorded_row!(container[key], index)
+        set_update_timestamp!(container[key], update_timestamp)
+    end
     return
 end
 
@@ -110,7 +120,7 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 1},
+    array::DenseAxisArray{Float64, 1},
 )
     container = get_data_field(store, get_store_container_type(key))
     set_value!(
@@ -144,7 +154,7 @@ end
 
 function get_column_names(store::EmulationModelStore, key::OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
-    return get_column_names(key, container[key].values)
+    return get_column_names_from_axis_array(key, container[key].values)
 end
 
 function get_dataset_size(store::EmulationModelStore, key::OptimizationContainerKey)

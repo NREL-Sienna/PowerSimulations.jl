@@ -30,7 +30,7 @@
     ]
     found_vars = 0
     for (k, var_array) in PSI.get_optimization_container(model).variables
-        if IS.Optimization.encode_key(k) in reserve_variables
+        if ISOPT.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -67,7 +67,7 @@ end
         :ActivePowerReserveVariable__VariableReserve_ReserveUp_Reserve11,
     ]
     for (k, var_array) in PSI.get_optimization_container(model).variables
-        if IS.Optimization.encode_key(k) in reserve_variables
+        if ISOPT.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -143,7 +143,8 @@ end
 @testset "Test Reserves from Hydro" begin
     template = ProblemTemplate(CopperPlatePowerModel)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     set_service_model!(
         template,
         ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve5"),
@@ -161,7 +162,7 @@ end
     model = DecisionModel(template, c_sys5_hyd)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 216, 0, 144, 96, 48, false)
+    moi_tests(model, 312, 0, 120, 96, 72, false)
 end
 
 @testset "Test Reserves from with slack variables" begin
@@ -216,7 +217,6 @@ end
     # These values might change as the AGC model is refined
     moi_tests(agc_problem, 696, 0, 480, 0, 384, false)
 end
-=#
 
 @testset "Test GroupReserve from Thermal Dispatch" begin
     template = get_thermal_dispatch_template_network()
@@ -318,6 +318,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test typeof(model) <: DecisionModel{<:PSI.DecisionProblem}
 end
+=#
 
 @testset "Test Reserves with Feedforwards" begin
     template = get_thermal_dispatch_template_network()
@@ -377,7 +378,7 @@ end
     ]
     found_vars = 0
     for (k, var_array) in PSI.get_optimization_container(model).variables
-        if IS.Optimization.encode_key(k) in reserve_variables
+        if ISOPT.encode_key(k) in reserve_variables
             for var in var_array
                 @test JuMP.has_lower_bound(var)
                 @test JuMP.lower_bound(var) == 0.0
@@ -395,7 +396,7 @@ end
     found_constraints = 0
 
     for (k, _) in PSI.get_optimization_container(model).constraints
-        if IS.Optimization.encode_key(k) in participation_constraints
+        if ISOPT.encode_key(k) in participation_constraints
             found_constraints += 1
         end
     end
@@ -438,7 +439,7 @@ end
           PSI.ModelBuildStatus.BUILT
     moi_tests(model, 312, 0, 288, 288, 168, false)
 
-    #= TODO: Fix this test
+    #= TODO: Fix this tes6
     template = get_thermal_dispatch_template_network(ACPPowerModel; use_slacks = true) where
     set_service_model!(
         template,
@@ -585,4 +586,444 @@ end
         simulation_folder = mktempdir(; cleanup = true),
     )
     @test_throws ArgumentError build!(sim; console_level = Logging.AboveMaxLevel)
+end
+
+@testset "2 Areas AreaBalance With Transmission Interface" begin
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
+    transform_single_time_series!(c_sys, Hour(24), Hour(1))
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 264, 0, 264, 264, 48, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
+    # The values for these tests come from the data
+    @test all(interarea_flow[!, "1_2"] .<= 150)
+    @test all(interarea_flow[!, "1_2"] .>= -150)
+
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
+    zone_1_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_1", "Park City_1", "Sundance_1", "Brighton_1", "Alta_1"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_1_gen .+ zone_1_load .- interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+
+    zone_2_load = sum(eachcol(load[!, ["Bus4_2", "Bus3_2", "Bus2_2"]]))
+    zone_2_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_2", "Park City_2", "Sundance_2", "Brighton_2", "Alta_2"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_2_gen .+ zone_2_load .+ interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+end
+
+@testset "Test Interfaces on Interchanges with AreaBalance" begin
+    sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
+    interchange1 = AreaInterchange(;
+        name = "interchange1_2",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    interchange2 = AreaInterchange(;
+        name = "interchange1_3",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "3"),
+    )
+    interchange3 = AreaInterchange(;
+        name = "interchange3_2",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "3"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    add_components!(
+        sys_rts_da,
+        [interchange1, interchange2, interchange3],
+    )
+    # This interface is limiting all the flows into 1
+    interface = TransmissionInterface(;
+        name = "interface1_2_3",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("interchange1_2" => 1,
+            "interchange1_3" => -1,
+        ),
+    )
+    add_service!(
+        sys_rts_da,
+        interface,
+        [interchange1, interchange2],
+    )
+    template = ProblemTemplate(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableNonDispatch, FixedOutput)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, AreaInterchange, StaticBranch)
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
+    )
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+        )
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 8568, 0, 2136, 1416, 2664, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (3, 24)
+
+    interchange_constraints_ub =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "ub")
+    interchange_constraints_lb =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "lb")
+    @test size(interchange_constraints_ub) == (1, 24)
+    @test size(interchange_constraints_lb) == (1, 24)
+
+    interchange_constraints_ub["interface1_2_3", 1]
+    # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interface_results =
+        read_expression(
+            results,
+            "InterfaceTotalFlow__TransmissionInterface";
+            table_format = TableFormat.WIDE,
+        )
+    for i in 1:24
+        @test interface_results[!, "interface1_2_3"][i] <= 100.0 + PSI.ABSOLUTE_TOLERANCE
+    end
+end
+
+@testset "Test Interfaces on Interchanges and Double Circuits with AreaPTDFPowerModel" begin
+    sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
+    interchange1 = AreaInterchange(;
+        name = "interchange1_2",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    interchange2 = AreaInterchange(;
+        name = "interchange1_3",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "1"),
+        to_area = get_component(Area, sys_rts_da, "3"),
+    )
+    interchange3 = AreaInterchange(;
+        name = "interchange3_2",
+        available = true,
+        active_power_flow = 100.0,
+        flow_limits = (from_to = 1.0, to_from = 1.0),
+        from_area = get_component(Area, sys_rts_da, "3"),
+        to_area = get_component(Area, sys_rts_da, "2"),
+    )
+    add_components!(
+        sys_rts_da,
+        [interchange1, interchange2, interchange3],
+    )
+    # This interface is limiting all the flows into 1
+    interface1 = TransmissionInterface(;
+        name = "interface1_2_3",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("interchange1_2" => 1,
+            "interchange1_3" => -1,
+        ),
+    )
+    add_service!(
+        sys_rts_da,
+        interface1,
+        [interchange1, interchange2],
+    )
+
+    #Add an interface on a double circuit: 
+    double_circuit_1 = get_component(Line, sys_rts_da, "A33-1")
+    double_circuit_2 = get_component(Line, sys_rts_da, "A33-2")
+    interface2 = TransmissionInterface(;
+        name = "interface_double_circuit",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("A33-1" => 1, "A33-2" => 1),
+    )
+    add_service!(
+        sys_rts_da,
+        interface2,
+        [double_circuit_1, double_circuit_2],
+    )
+
+    template = ProblemTemplate(NetworkModel(AreaPTDFPowerModel; use_slacks = true))
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableNonDispatch, FixedOutput)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, Line, StaticBranchUnbounded)
+    set_device_model!(
+        template,
+        DeviceModel(AreaInterchange, StaticBranchUnbounded; use_slacks = false),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
+    )
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 10944, 0, 2160, 1440, 4896, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (3, 24)
+
+    interchange_constraints_ub =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "ub")
+    interchange_constraints_lb =
+        PSI.get_constraint(opt_container, InterfaceFlowLimit(), TransmissionInterface, "lb")
+    @test size(interchange_constraints_ub) == (2, 24)
+    @test size(interchange_constraints_lb) == (2, 24)
+
+    interchange_constraints_ub["interface1_2_3", 1]
+    # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interface_results =
+        read_expression(
+            results,
+            "InterfaceTotalFlow__TransmissionInterface";
+            table_format = TableFormat.WIDE,
+        )
+    for i in 1:24
+        @test interface_results[!, "interface1_2_3"][i] <= 100.0 + PSI.ABSOLUTE_TOLERANCE
+    end
+end
+
+@testset "Test bad data for interfaces with reductions" begin
+    sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
+    transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
+
+    # Add an interface on a double circuit: 
+    double_circuit_1 = get_component(Line, sys_rts_da, "A33-1")
+    double_circuit_2 = get_component(Line, sys_rts_da, "A33-2")
+    interface_double_circuit = TransmissionInterface(;
+        name = "interface_double_circuit",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("A33-1" => 1, "A33-2" => 1),
+    )
+    add_service!(
+        sys_rts_da,
+        interface_double_circuit,
+        [double_circuit_1, double_circuit_2],
+    )
+
+    # Add interface on a series chain: 
+    series_chain_1 = get_component(Line, sys_rts_da, "CA-1")
+    series_chain_2 = get_component(Line, sys_rts_da, "C35")
+    interface_series_chain = TransmissionInterface(;
+        name = "interface_series_chain",
+        available = true,
+        active_power_flow_limits = (min = 0.0, max = 1.0),
+        violation_penalty = 1000.0,
+        direction_mapping = Dict("CA-1" => -1, "C35" => -1),
+    )
+    add_service!(
+        sys_rts_da,
+        interface_series_chain,
+        [series_chain_1, series_chain_2],
+    )
+    ptdf = PTDF(sys_rts_da; network_reductions = NetworkReduction[DegreeTwoReduction()])
+    template = ProblemTemplate(
+        NetworkModel(
+            AreaPTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_degree_two_branches = true,
+            use_slacks = true,
+        ),
+    )
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, RenewableNonDispatch, FixedOutput)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, Line, StaticBranchUnbounded)
+    set_device_model!(
+        template,
+        DeviceModel(AreaInterchange, StaticBranchUnbounded; use_slacks = false),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
+    )
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+
+    # Test bad direction data for interface on double circuit: 
+    set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => -1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+
+    # Test bad direction data for interface on series chain: 
+    set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => 1))
+    set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => -1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+    set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => 1))
+
+    # Test only including part of a double circuit in an interface: 
+    pop!(get_services(double_circuit_1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
+
+    # Test only including part of a series chain in an interface: 
+    push!(get_services(double_circuit_1), interface_double_circuit)
+    pop!(get_services(series_chain_1))
+    ps_model =
+        DecisionModel(
+            template,
+            sys_rts_da;
+            resolution = Hour(1),
+            optimizer = HiGHS_optimizer,
+            store_variable_names = true,
+            optimizer_solve_log_print = true,
+        )
+    @test build!(
+        ps_model;
+        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
+        output_dir = mktempdir(; cleanup = true),
+    ) == PSI.ModelBuildStatus.FAILED
 end

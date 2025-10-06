@@ -269,12 +269,11 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(get_dm_data(store)[problem], type)
-                # First dim is Horizon, Last number of steps
-                n_dims = max(1, length(reqs["dims"]) - 2)
-                datasets[key] = HDF5Dataset{n_dims}(
+                column_lengths = reqs["dims"][2:(end - 1)]
+                datasets[key] = HDF5Dataset{length(column_lengths)}(
                     dataset,
                     column_dataset,
-                    reqs["dims"],
+                    column_lengths,
                     get_resolution(problem_params),
                     initial_time,
                 )
@@ -321,12 +320,11 @@ function initialize_problem_storage!(
                 end
                 column_dataset = group[col]
                 datasets = getfield(store.em_data, type)
-                # First dim is Horizon, Last number of steps
-                n_dims = max(1, length(reqs["dims"]) - 2)
-                datasets[key] = HDF5Dataset{n_dims}(
+                column_lengths = reqs["dims"][2:end]
+                datasets[key] = HDF5Dataset{length(column_lengths)}(
                     dataset,
                     column_dataset,
-                    reqs["dims"],
+                    column_lengths,
                     get_resolution(emulation_params),
                     initial_time,
                 )
@@ -470,7 +468,7 @@ function get_number_of_dimensions(
     i::Type{EmulationModelIndexType},
     key::OptimizationContainerKey,
 )
-    return length(get_column_names(store, i, model_name, key))
+    return length(get_column_names(store, i, key))
 end
 
 function get_emulation_model_dataset_size(
@@ -644,10 +642,30 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     simulation_time::Dates.DateTime,
-    data::DenseAxisArray,
+    array::DenseAxisArray{Float64, 2},
+)
+    # TODO: This is a temporary fix.
+    # Not sure why the special case for this dimension size is needed.
+    # It fails with the key = InfrastructureSystems.Optimization.ParameterKey{OnStatusParameter, ThermalStandard}("")
+    # The array size is 5 x 1
+    data = size(array, 2) == 1 ? reshape(array.data, length(array.data)) : array.data
+    dataset = _get_em_dataset(store, key)
+    _write_dataset!(dataset.values, data, index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    array::DenseAxisArray{Float64},
 )
     dataset = _get_em_dataset(store, key)
-    _write_dataset!(dataset.values, to_matrix(data), index)
+    _write_dataset!(dataset.values, array.data, index)
     set_last_recorded_row!(dataset, index)
     set_update_timestamp!(dataset, simulation_time)
     return
@@ -765,12 +783,11 @@ function _deserialize_attributes!(store::HdfSimulationStore)
                     column_dataset = group[_make_column_name(name)]
                     resolution =
                         get_resolution(get_decision_model_params(store, model_name))
-                    dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
-                    n_dims = max(1, ndims(dataset) - 2)
-                    item = HDF5Dataset{n_dims}(
+                    column_lengths = size(dataset)[2:(end - 1)]
+                    item = HDF5Dataset{length(column_lengths)}(
                         dataset,
                         column_dataset,
-                        dims,
+                        column_lengths,
                         resolution,
                         initial_time,
                     )
@@ -814,12 +831,11 @@ function _deserialize_attributes!(store::HdfSimulationStore)
             if !endswith(name, "columns")
                 dataset = group[name]
                 column_dataset = group[_make_column_name(name)]
-                dims = (horizon_count, size(dataset)[2:end]..., size(dataset)[1])
-                n_dims = max(1, ndims(dataset) - 1)
-                item = HDF5Dataset{n_dims}(
+                column_lengths = size(dataset)[2:end]
+                item = HDF5Dataset{length(column_lengths)}(
                     dataset,
                     column_dataset,
-                    dims,
+                    column_lengths,
                     resolution,
                     initial_time,
                 )
@@ -1051,7 +1067,7 @@ end
 # Specific data set writing function that writes emulation model data. It dispatches on the index type of the dataset
 function _write_dataset!(
     dataset::HDF5.Dataset,
-    array::Array{Float64, 2},
+    array::Vector{Float64},
     index::EmulationModelIndexType,
 )
     dataset[index, :] = array
@@ -1061,10 +1077,21 @@ end
 
 function _write_dataset!(
     dataset::HDF5.Dataset,
-    array::Array{Float64, 4},
+    array::Matrix{Float64},
     index::EmulationModelIndexType,
 )
     dataset[index, :, :] = array
+    @debug "wrote em dataset" dataset index
+    return
+end
+
+# TODO DT: this looked wrong. Was it tested?
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 4},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :, :, :] = array
     @debug "wrote em dataset" dataset index
     return
 end

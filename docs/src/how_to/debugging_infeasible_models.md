@@ -9,7 +9,7 @@ One of the most common infeasibility issues observed is due to not enough genera
 
 The recommended solution for any of these cases is adding slack variables to the network model, for example:
 
-```julia
+```@repl tutorial
 template_uc = ProblemTemplate(
     NetworkModel(
         CopperPlatePowerModel;
@@ -26,7 +26,7 @@ In this case, if the problem is now feasible, the user can check the solution of
 
 In many scenarios, certain units are also required to provide reserve requirements, e.g. thermal units mandated to provide up-regulation. In such scenarios, it is also possible to add slack variables, by specifying the service model (`RangeReserve`) for the specific service type (`VariableReserve{ReserveUp}`) as:
 
-```julia
+```@repl tutorial
 set_service_model!(
     template_uc,
     ServiceModel(
@@ -43,7 +43,7 @@ Again, if the problem is now feasible, check the solution of `ReserveRequirement
 
 Some solvers allows to identify which constraints and variables are producing the infeasibility, by finding the irreducible infeasible set (IIS), that is the subset of constraints and variable bounds that will become feasible if any single constraint or variable bound is removed.
 
-To enable this feature in `PowerSimulations` the keyword argument `calculate_conflict` must be set to `true`, when creating the `DecisionModel`. Note that not all solvers allow the computation of the IIS, but most commercial solvers have this capability. It is also recommended to enable the keyword argument `store_variable_names=true` to help understanding which variables are with infeasibility issues.
+To enable this feature in `PowerSimulations` the keyword argument `calculate_conflict` must be set to `true`, when creating the [`DecisionModel`](@ref). Note that not all solvers allow the computation of the IIS, but most commercial solvers have this capability. It is also recommended to enable the keyword argument `store_variable_names=true` to help understanding which variables are with infeasibility issues.
 
 The following code creates a decision model with the `Xpress` optimizer, and enabling the `calculate_conflict=true` keyword argument.
 
@@ -75,12 +75,12 @@ Error: Constraints participating in conflict basis (IIS)
 │ │               ("317_Hybrid", 26) │
 │ └──────────────────────────────────┘
 │ ┌─────────────────────────────────────────────┐
-│ │ PieceWiseLinearCostConstraint__HybridSystem │
+│ │ PiecewiseLinearCostConstraint__HybridSystem │
 │ ├─────────────────────────────────────────────┤
 │ │                          ("317_Hybrid", 26) │
 │ └─────────────────────────────────────────────┘
 │ ┌────────────────────────────────────────────────┐
-│ │ PieceWiseLinearCostConstraint__ThermalStandard │
+│ │ PiecewiseLinearCostConstraint__ThermalStandard │
 │ ├────────────────────────────────────────────────┤
 │ │                            ("202_STEAM_3", 26) │
 │ │                            ("101_STEAM_3", 26) │

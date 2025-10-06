@@ -16,7 +16,6 @@ const NETWORKS_FOR_TESTING = [
     (PM.BFAPowerModel, fast_ipopt_optimizer),
     #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not implemented
     (PM.SDPWRMPowerModel, scs_solver),
-    (PM.SparseSDPWRMPowerModel, scs_solver),
 ]
 
 function get_thermal_standard_uc_template()
@@ -34,7 +33,7 @@ function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)
-    set_device_model!(template, TwoTerminalHVDCLine, HVDCTwoTerminalLossless)
+    set_device_model!(template, TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless)
     return template
 end
 
@@ -44,7 +43,8 @@ function get_template_basic_uc_simulation()
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, StaticPowerLoad)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -60,7 +60,8 @@ function get_template_nomin_ed_simulation(network = CopperPlatePowerModel)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -70,7 +71,8 @@ function get_template_hydro_st_uc(network = CopperPlatePowerModel)
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch),
     set_device_model!(template, PowerLoad, StaticPowerLoad),
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch),
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage),
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -80,7 +82,8 @@ function get_template_hydro_st_ed(network = CopperPlatePowerModel, duals = [])
     set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, InterruptiblePowerLoad, PowerLoadDispatch)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     return template
 end
 
@@ -91,6 +94,6 @@ function get_template_dispatch_with_network(network = PTDFPowerModel)
     set_device_model!(template, Line, StaticBranch)
     set_device_model!(template, Transformer2W, StaticBranchBounds)
     set_device_model!(template, TapTransformer, StaticBranchBounds)
-    set_device_model!(template, TwoTerminalHVDCLine, HVDCTwoTerminalLossless)
+    set_device_model!(template, TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless)
     return template
 end

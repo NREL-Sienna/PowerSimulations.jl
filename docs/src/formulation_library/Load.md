@@ -179,7 +179,7 @@ on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
 
 ## Valid configurations
 
-Valid `DeviceModel`s for subtypes of `ElectricLoad` include the following:
+Valid [`DeviceModel`](@ref)s for subtypes of `ElectricLoad` include the following:
 
 ```@eval
 using PowerSimulations

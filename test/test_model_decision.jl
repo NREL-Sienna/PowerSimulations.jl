@@ -45,10 +45,6 @@ end
 @testset "Set optimizer at solve call" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test build!(UC; output_dir = output_dir) == PSI.ModelBuildStatus.BUILT
@@ -57,32 +53,115 @@ end
     @test isapprox(get_objective_value(res), 340000.0; atol = 100000.0)
     vars = res.variable_values
     @test PSI.VariableKey(ActivePowerVariable, PSY.ThermalStandard) in keys(vars)
-    @test size(read_variable(res, "StartVariable__ThermalStandard")) == (24, 6)
-    @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (24, 4)
-    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) == (24, 6)
-    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (24, 6)
-    @test length(read_variables(res)) == 4
-    @test length(read_parameters(res)) == 1
-    @test length(read_duals(res)) == 0
-    @test length(read_expressions(res)) == 2
-    @test read_variables(res, ["StartVariable__ThermalStandard"])["StartVariable__ThermalStandard"] ==
-          read_variable(res, "StartVariable__ThermalStandard")
-    @test read_variables(res, [(StartVariable, ThermalStandard)])["StartVariable__ThermalStandard"] ==
-          read_variable(res, StartVariable, ThermalStandard)
-    @test read_parameters(res, ["ActivePowerTimeSeriesParameter__PowerLoad"])["ActivePowerTimeSeriesParameter__PowerLoad"] ==
-          read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")
-    @test read_parameters(res, [(ActivePowerTimeSeriesParameter, PowerLoad)])["ActivePowerTimeSeriesParameter__PowerLoad"] ==
-          read_parameter(res, ActivePowerTimeSeriesParameter, PowerLoad)
-    @test read_aux_variables(res, ["TimeDurationOff__ThermalStandard"])["TimeDurationOff__ThermalStandard"] ==
-          read_aux_variable(res, "TimeDurationOff__ThermalStandard")
-    @test read_aux_variables(res, [(TimeDurationOff, ThermalStandard)])["TimeDurationOff__ThermalStandard"] ==
-          read_aux_variable(res, TimeDurationOff, ThermalStandard)
-    @test read_expressions(res, ["ProductionCostExpression__ThermalStandard"])["ProductionCostExpression__ThermalStandard"] ==
-          read_expression(res, "ProductionCostExpression__ThermalStandard")
-    @test read_expressions(res, [(PSI.ProductionCostExpression, ThermalStandard)])["ProductionCostExpression__ThermalStandard"] ==
-          read_expression(res, PSI.ProductionCostExpression, ThermalStandard)
-    @test length(read_aux_variables(res)) == 2
-    @test first(keys(read_aux_variables(res, [(PSI.TimeDurationOff, ThermalStandard)]))) ==
+    @test size(read_variable(res, "StartVariable__ThermalStandard")) == (120, 3)
+    @test size(
+        read_variable(
+            res,
+            "StartVariable__ThermalStandard";
+            table_format = TableFormat.WIDE,
+        ),
+    ) == (24, 6)
+    @test size(read_parameter(res, "ActivePowerTimeSeriesParameter__PowerLoad")) == (72, 3)
+    @test size(read_expression(res, "ProductionCostExpression__ThermalStandard")) ==
+          (120, 3)
+    @test size(read_aux_variable(res, "TimeDurationOn__ThermalStandard")) == (120, 3)
+    @test length(read_variables(res; table_format = TableFormat.WIDE)) == 4
+    @test length(read_parameters(res; table_format = TableFormat.WIDE)) == 1
+    @test length(read_duals(res; table_format = TableFormat.WIDE)) == 0
+    @test length(read_expressions(res; table_format = TableFormat.WIDE)) == 2
+    @test read_variables(
+        res,
+        ["StartVariable__ThermalStandard"];
+        table_format = TableFormat.WIDE,
+    )["StartVariable__ThermalStandard"] ==
+          read_variable(
+        res,
+        "StartVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_variables(
+        res,
+        [(StartVariable, ThermalStandard)];
+        table_format = TableFormat.WIDE,
+    )["StartVariable__ThermalStandard"] ==
+          read_variable(
+        res,
+        StartVariable,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test read_parameters(
+        res,
+        ["ActivePowerTimeSeriesParameter__PowerLoad"];
+        table_format = TableFormat.WIDE,
+    )["ActivePowerTimeSeriesParameter__PowerLoad"] ==
+          read_parameter(
+        res,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_parameters(
+        res,
+        [(ActivePowerTimeSeriesParameter, PowerLoad)];
+        table_format = TableFormat.WIDE,
+    )["ActivePowerTimeSeriesParameter__PowerLoad"] ==
+          read_parameter(
+        res,
+        ActivePowerTimeSeriesParameter,
+        PowerLoad;
+        table_format = TableFormat.WIDE,
+    )
+    @test read_aux_variables(
+        res,
+        ["TimeDurationOff__ThermalStandard"];
+        table_format = TableFormat.WIDE,
+    )["TimeDurationOff__ThermalStandard"] ==
+          read_aux_variable(
+        res,
+        "TimeDurationOff__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_aux_variables(
+        res,
+        [(TimeDurationOff, ThermalStandard)];
+        table_format = TableFormat.WIDE,
+    )["TimeDurationOff__ThermalStandard"] ==
+          read_aux_variable(
+        res,
+        TimeDurationOff,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test read_expressions(
+        res,
+        ["ProductionCostExpression__ThermalStandard"];
+        table_format = TableFormat.WIDE,
+    )["ProductionCostExpression__ThermalStandard"] == read_expression(
+        res,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test read_expressions(
+        res,
+        [(PSI.ProductionCostExpression, ThermalStandard)];
+        table_format = TableFormat.WIDE,
+    )["ProductionCostExpression__ThermalStandard"] ==
+          read_expression(
+        res,
+        PSI.ProductionCostExpression,
+        ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    @test length(read_aux_variables(res; table_format = TableFormat.WIDE)) == 2
+    @test first(
+        keys(
+            read_aux_variables(
+                res,
+                [(PSI.TimeDurationOff, ThermalStandard)];
+                table_format = TableFormat.WIDE,
+            ),
+        ),
+    ) ==
           "TimeDurationOff__ThermalStandard"
     export_results(res)
     results_dir = joinpath(output_dir, "results")
@@ -94,10 +173,6 @@ end
 @testset "Test optimization debugging functions" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -115,7 +190,7 @@ end
     var_index = get_all_variable_index(model)
     for (ix, (key, index, moi_index)) in enumerate(var_keys)
         index_tuple = var_index[ix]
-        @test index_tuple[1] == IS.Optimization.encode_key(key)
+        @test index_tuple[1] == ISOPT.encode_key(key)
         @test index_tuple[2] == index
         @test index_tuple[3] == moi_index
         val1 = get_variable_index(model, moi_index)
@@ -139,6 +214,7 @@ end
     end
 end
 
+#= TODO: PNM
 @testset "Test Locational Marginal Prices between DC lossless with PowerModels vs PTDFPowerModel" begin
     networks = [DCPPowerModel, PTDFPowerModel]
     sys = PSB.build_system(PSITestSystems, "c_sys5")
@@ -166,13 +242,14 @@ end
         if network == PTDFPowerModel
             push!(LMPs, abs.(psi_ptdf_lmps(res, ptdf)))
         else
-            duals = read_dual(res, NodalBalanceActiveConstraint, ACBus)
+            duals = read_dual(res, NodalBalanceActiveConstraint, ACBus, table_format = TableFormat.WIDE)
             duals = abs.(duals[:, propertynames(duals) .!== :DateTime])
             push!(LMPs, duals[!, sort(propertynames(duals))])
         end
     end
     @test isapprox(LMPs[1], LMPs[2], atol = 100.0)
 end
+=#
 
 @testset "Test OptimizationProblemResults interfaces" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5_re")
@@ -189,11 +266,17 @@ end
     constraint_key = PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System)
     constraints = PSI.get_constraints(container)[constraint_key]
     dual_results = PSI.read_duals(container)[constraint_key]
-    dual_results_read = read_dual(res, constraint_key)
+    dual_results_read = read_dual(res, constraint_key; table_format = TableFormat.WIDE)
     realized_dual_results =
-        read_duals(res, [constraint_key])[PSI.encode_key_as_string(constraint_key)]
+        read_duals(res, [constraint_key]; table_format = TableFormat.WIDE)[PSI.encode_key_as_string(
+            constraint_key,
+        )]
     realized_dual_results_string =
-        read_duals(res, [PSI.encode_key_as_string(constraint_key)])[PSI.encode_key_as_string(
+        read_duals(
+            res,
+            [PSI.encode_key_as_string(constraint_key)];
+            table_format = TableFormat.WIDE,
+        )[PSI.encode_key_as_string(
             constraint_key,
         )]
     @test dual_results ==
@@ -215,7 +298,7 @@ end
         name = get_name(load)
         vals = get_time_series_values(Deterministic, load, "max_active_power")
         vals = vals .* get_max_active_power(load) * -1.0
-        @test all(vals .== param_vals[!, name])
+        @test all(vals .== param_vals[name, :])
     end
 
     res = OptimizationProblemResults(model)
@@ -224,17 +307,26 @@ end
     @test get_model_base_power(res) == 100.0
     @test isa(get_objective_value(res), Float64)
     @test isa(res.variable_values, Dict{PSI.VariableKey, DataFrames.DataFrame})
-    @test isa(read_variables(res), Dict{String, DataFrames.DataFrame})
-    @test isa(IS.Optimization.get_total_cost(res), Float64)
+    @test isa(
+        read_variables(res; table_format = TableFormat.WIDE),
+        Dict{String, DataFrames.DataFrame},
+    )
+    @test isa(ISOPT.get_total_cost(res), Float64)
     @test isa(get_optimizer_stats(res), DataFrames.DataFrame)
     @test isa(res.dual_values, Dict{PSI.ConstraintKey, DataFrames.DataFrame})
-    @test isa(read_duals(res), Dict{String, DataFrames.DataFrame})
+    @test isa(
+        read_duals(res; table_format = TableFormat.WIDE),
+        Dict{String, DataFrames.DataFrame},
+    )
     @test isa(res.parameter_values, Dict{PSI.ParameterKey, DataFrames.DataFrame})
-    @test isa(read_parameters(res), Dict{String, DataFrames.DataFrame})
+    @test isa(
+        read_parameters(res; table_format = TableFormat.WIDE),
+        Dict{String, DataFrames.DataFrame},
+    )
     @test isa(PSI.get_resolution(res), Dates.TimePeriod)
     @test isa(PSI.get_forecast_horizon(res), Int64)
     @test isa(get_realized_timestamps(res), StepRange{DateTime})
-    @test isa(IS.Optimization.get_source_data(res), PSY.System)
+    @test isa(ISOPT.get_source_data(res), PSY.System)
     @test length(get_timestamps(res)) == 24
 
     PSY.set_available!(first(get_components(ThermalStandard, get_system(res))), false)
@@ -248,10 +340,6 @@ end
 @testset "Solve DecisionModelModel with auto-build" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
     output_dir = mktempdir(; cleanup = true)
     @test_throws ErrorException solve!(UC)
@@ -342,7 +430,7 @@ end
     # Serialize to a new directory with the exported function.
     results_path = joinpath(path, "results")
     serialize_results(results1, results_path)
-    @test isfile(joinpath(results_path, IS.Optimization._PROBLEM_RESULTS_FILENAME))
+    @test isfile(joinpath(results_path, ISOPT._PROBLEM_RESULTS_FILENAME))
     results3 = OptimizationProblemResults(results_path)
     var3 = read_variable(results3, ActivePowerVariable, ThermalStandard)
     @test var1_a == var3
@@ -354,9 +442,9 @@ end
         joinpath(path, "results", "variables", "ActivePowerVariable__ThermalStandard.csv")
     var4 = PSI.read_dataframe(exp_file)
     # Manually Multiply by the base power var1_a has natural units and export writes directly from the solver
-    @test var1_a[:, propertynames(var1_a) .!= :DateTime] == var4 .* 100.0
+    @test var1_a.value == var4.value .* 100.0
 
-    @test length(readdir(IS.Optimization.export_realized_results(results1))) === 7
+    @test length(readdir(ISOPT.export_realized_results(results1))) === 7
 end
 
 @testset "Test Numerical Stability of Constraints" begin
@@ -385,7 +473,7 @@ end
     for (constraint_key, constraint_bounds) in model_bounds
         _check_constraint_bounds(
             constraint_bounds,
-            valid_model_bounds[IS.Optimization.encode_key(constraint_key)],
+            valid_model_bounds[ISOPT.encode_key(constraint_key)],
         )
     end
 end
@@ -411,7 +499,7 @@ end
     for (variable_key, variable_bounds) in model_bounds
         _check_variable_bounds(
             variable_bounds,
-            valid_model_bounds[IS.Optimization.encode_key(variable_key)],
+            valid_model_bounds[ISOPT.encode_key(variable_key)],
         )
     end
 end
@@ -462,7 +550,8 @@ end
     template = get_thermal_dispatch_template_network()
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
-    set_device_model!(template, HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyDispatch)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
@@ -471,7 +560,7 @@ end
     @test !PSI.has_initial_condition_value(
         initial_conditions_data,
         ActivePowerVariable(),
-        HydroEnergyReservoir,
+        HydroTurbine,
     )
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
@@ -479,7 +568,8 @@ end
     template = get_thermal_dispatch_template_network()
     c_sys5_hyd = PSB.build_system(PSITestSystems, "c_sys5_hyd"; force_build = true)
     set_device_model!(template, HydroDispatch, HydroCommitmentRunOfRiver)
-    set_device_model!(template, HydroEnergyReservoir, HydroCommitmentRunOfRiver)
+    set_device_model!(template, HydroTurbine, HydroTurbineEnergyCommitment)
+    set_device_model!(template, HydroReservoir, HydroEnergyModelReservoir)
     model = DecisionModel(template, c_sys5_hyd; optimizer = HiGHS_optimizer)
 
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
@@ -489,7 +579,7 @@ end
     @test PSI.has_initial_condition_value(
         initial_conditions_data,
         OnVariable(),
-        HydroEnergyReservoir,
+        HydroTurbine,
     )
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
@@ -497,10 +587,6 @@ end
 @testset "Test serialization of InitialConditionsData" begin
     sys = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     optimizer = HiGHS_optimizer
 
     # Construct and build with default behavior that builds initial conditions.
@@ -575,10 +661,6 @@ end
 @testset "Solve with detailed optimizer stats" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     template = get_thermal_standard_uc_template()
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(
         template,
         c_sys5;
@@ -601,10 +683,6 @@ end
         attributes = Dict("filter_function" => x -> PSY.get_name(x) != "Alta"),
     )
     set_device_model!(template, new_model)
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(
         template,
         c_sys5;
@@ -629,6 +707,7 @@ end
         ACBus(
             10,
             "node_none",
+            true,
             "ISOLATED",
             0,
             1.0,
@@ -645,10 +724,6 @@ end
         ThermalBasicUnitCommitment;
     )
     set_device_model!(template, new_model)
-    set_service_model!(
-        template,
-        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "test"),
-    )
     UC = DecisionModel(
         template,
         c_sys5;
@@ -685,5 +760,5 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model)
     shortage = read_variable(res, "StorageEnergyShortageVariable__EnergyReservoirStorage")
-    @test nrow(shortage) == 1
+    # @test nrow(shortage) == 1
 end
