@@ -125,25 +125,25 @@ function get_column_names_from_axis_array(
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, IntegerAxis}},
 ) where {T}
     return (axes(array, 1),)
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 2, <:Tuple{IntegerAxis, UnitRange{Int}}},
+    array::DenseAxisArray{T, 2, <:Tuple{IntegerAxis, IntegerAxis}},
 ) where {T}
     return (string.(axes(array, 1)),)
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, IntegerAxis}},
 ) where {T}
     return (axes(array, 1), axes(array, 2))
 end
 
 function get_column_names_from_axis_array(
-    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, IntegerAxis, UnitRange{Int}}},
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, IntegerAxis, IntegerAxis}},
 ) where {T}
     return (axes(array, 1), string.(axes(array, 2)))
 end

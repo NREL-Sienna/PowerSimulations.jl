@@ -1531,15 +1531,15 @@ end
 
 # Slow implementation not to be used in hot loops
 function read_parameters(container::OptimizationContainer)
-    params_dict = Dict{ParameterKey, DataFrames.DataFrame}()
+    params_dict = Dict{ParameterKey, DenseAxisArray}()
     parameters = get_parameters(container)
     (parameters === nothing || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         # TODO: all functions similar to calculate_parameter_values should be in one
         # place and be consistent in behavior.
         #params_dict[k] = to_dataframe(calculate_parameter_values(v))
-        param_array = to_dataframe(get_parameter_values(v), k)
-        multiplier_array = to_dataframe(get_multiplier_array(v), k)
+        param_array = get_parameter_values(v)
+        multiplier_array = get_multiplier_array(v)
         params_dict[k] = _calculate_parameter_values(k, param_array, multiplier_array)
     end
     return params_dict
@@ -1718,7 +1718,7 @@ function write_initial_conditions_data!(
             if field == STORE_CONTAINER_PARAMETERS
                 ic_data_dict[key] = ic_container_dict[key]
             else
-                ic_data_dict[key] = to_dataframe(jump_value.(field_container), key)
+                ic_data_dict[key] = jump_value.(field_container)
             end
         end
     end
