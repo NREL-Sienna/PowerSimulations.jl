@@ -267,8 +267,8 @@ function check_duration_on_initial_conditions_values(
     for ic in duration_on_data
         name = PSY.get_name(ic.component)
         on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
-            1,
             name,
+            1,
         ]
         duration_on = PSI.jump_value(PSI.get_value(ic))
         if on_var == 1.0 && PSY.get_status(ic.component)
@@ -293,8 +293,8 @@ function check_duration_off_initial_conditions_values(
     for ic in duration_off_data
         name = PSY.get_name(ic.component)
         on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
-            1,
             name,
+            1,
         ]
         duration_off = PSI.jump_value(PSI.get_value(ic))
         if on_var == 0.0 && !PSY.get_status(ic.component)
@@ -341,8 +341,8 @@ function check_status_initial_conditions_values(model, ::Type{T}) where {T <: PS
     for ic in initial_conditions
         name = PSY.get_name(ic.component)
         status = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
-            1,
             name,
+            1,
         ]
         @test PSI.jump_value(PSI.get_value(ic)) == status
     end
@@ -363,8 +363,8 @@ function check_active_power_initial_condition_values(
             ActivePowerVariable(),
             T,
         )[
-            1,
             name,
+            1,
         ]
         @test PSI.jump_value(PSI.get_value(ic)) == power
     end
@@ -388,8 +388,8 @@ function check_active_power_abovemin_initial_condition_values(
             PSI.PowerAboveMinimumVariable(),
             T,
         )[
-            1,
             name,
+            1,
         ]
         @test PSI.jump_value(PSI.get_value(ic)) == power
     end
