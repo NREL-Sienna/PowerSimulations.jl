@@ -265,13 +265,12 @@ function _read_results(
     vals = _read_results(res, result_keys, timestamps, store)
     converted_vals = Dict{OptimizationContainerKey, ResultsByTime{DataFrame}}()
     for (result_key, result_data) in vals
-        inner_converted = SortedDict(
-            (
-                date_key,
-                to_results_dataframe(inner_data[cols, :], nothing, Val(table_format)),
-            )
-            for (date_key, inner_data) in result_data
-        )
+        inner_converted = SortedDict{Dates.DateTime, DataFrame}()
+        for (date_key, inner_data) in result_data
+            extra = ntuple(_ -> (:), ndims(inner_data) - 1)
+            inner_converted[date_key] =
+                to_results_dataframe(inner_data[cols, extra...], nothing, Val(table_format))
+        end
         _cols = (cols isa Vector) ? (cols,) : result_data.column_names
         num_dims = length(_cols)
         converted_vals[result_key] = ResultsByTime{DataFrame, num_dims}(

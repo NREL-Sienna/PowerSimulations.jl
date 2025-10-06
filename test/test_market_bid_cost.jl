@@ -1212,8 +1212,15 @@ end
         )
             @test names(df) == ["DateTime", "name", "name2", "value"]
         end
-        for df in values(read_realized_parameters(res2))
-            @test names(df) == ["DateTime", "name", "name2", "value"]
+        for (key, df) in read_realized_parameters(res2)
+            if key in (
+                "IncrementalPiecewiseLinearBreakpointParameter__ThermalStandard",
+                "IncrementalPiecewiseLinearSlopeParameter__ThermalStandard",
+            )
+                @test names(df) == ["DateTime", "name", "name2", "value"]
+            else
+                @test names(df) == ["DateTime", "name", "value"]
+            end
         end
 
         # TODO: Test actual values
