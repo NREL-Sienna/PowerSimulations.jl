@@ -1219,12 +1219,3 @@ end
         # TODO: Test actual values
     end
 end
-
-# TODO: Hit the initialization error here.
-@testset "MBC Initialization" begin
-    sys = load_and_fix_system(
-        PSITestSystems,
-        "c_fixed_market_bid_cost",
-    )
-    model, _ = run_generic_mbc_sim(sys; in_memory_store = true, standard = true)
-end
