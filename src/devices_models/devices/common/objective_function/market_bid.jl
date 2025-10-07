@@ -48,6 +48,7 @@ _consider_parameter(
     ::DeviceModel{T, D},
 ) where {T, D} = has_container_key(container, StopVariable, T)
 
+# FIXME storage doesn't currently have an OnVariable. should it have one?
 _consider_parameter(
     ::AbstractCostAtMinParameter,
     container::OptimizationContainer,
@@ -234,13 +235,13 @@ end
 # There warnings are captured by the with_logger, though, so we don't actually see them.
 function validate_mbc_component(
     ::StartupCostParameter,
-    device::PSY.RenewableDispatch,
+    device::Union{PSY.RenewableDispatch, PSY.Storage},
     model,
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
         if x != PSY.single_start_up_to_stages(0.0)
-            @warn "Nonzero startup cost detected for renewable generation $(get_name(device))." maxlog =
+            @warn "Nonzero startup cost detected for renewable generation or storage device $(get_name(device))." maxlog =
                 1
         end
     end
@@ -248,13 +249,13 @@ end
 
 function validate_mbc_component(
     ::ShutdownCostParameter,
-    device::PSY.RenewableDispatch,
+    device::Union{PSY.RenewableDispatch, PSY.Storage},
     model,
 )
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
         if x != 0.0
-            @warn "Nonzero shutdown cost detected for renewable generation $(get_name(device))." maxlog =
+            @warn "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device))." maxlog =
                 1
         end
     end
@@ -262,14 +263,30 @@ end
 
 function validate_mbc_component(
     ::IncrementalCostAtMinParameter,
-    device::PSY.RenewableDispatch,
+    device::Union{PSY.RenewableDispatch, PSY.Storage},
     model,
 )
     no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                @warn "Nonzero no-load cost detected for renewable generation $(get_name(device))." maxlog =
+                @warn "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device))." maxlog =
+                    1
+            end
+        end
+    end
+end
+
+function validate_mbc_component(
+    ::DecrementalCostAtMinParameter,
+    device::PSY.Storage,
+    model,
+)
+    no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
+    if !isnothing(no_load_cost)
+        apply_maybe_across_time_series(device, no_load_cost) do x
+            if x != 0.0
+                @warn "Nonzero no-load cost detected for storage device $(get_name(device))." maxlog =
                     1
             end
         end
@@ -354,6 +371,9 @@ function process_market_bid_parameters!(
             DecrementalPiecewiseLinearSlopeParameter(),
             DecrementalPiecewiseLinearBreakpointParameter(),
         )
+            #_consider_parameter is false for DecrementalCostAtMinParameter for some reason
+            @show param
+            @show _consider_parameter(param, container, model)
             _process_market_bid_parameters_helper(param, container, model, devices)
         end
     end
@@ -760,7 +780,7 @@ function _add_variable_cost_to_objective!(
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     add_pwl_term!(
-        false,
+        false, # I suspect this is a problem. could very well be decremental, storage
         container,
         component,
         cost_function,
