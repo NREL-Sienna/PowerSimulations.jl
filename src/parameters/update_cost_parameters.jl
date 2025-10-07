@@ -49,8 +49,10 @@ _get_parameter_field(::StartupCostParameter, args...; kwargs...) =
     PSY.get_start_up(args...; kwargs...)
 _get_parameter_field(::ShutdownCostParameter, args...; kwargs...) =
     PSY.get_shut_down(args...; kwargs...)
-_get_parameter_field(::AbstractCostAtMinParameter, args...; kwargs...) =
+_get_parameter_field(::IncrementalCostAtMinParameter, args...; kwargs...) =
     PSY.get_incremental_initial_input(args...; kwargs...)
+_get_parameter_field(::DecrementalCostAtMinParameter, args...; kwargs...) =
+    PSY.get_decremental_initial_input(args...; kwargs...)
 
 _maybe_tuple(::StartupCostParameter, value) = Tuple(value)
 _maybe_tuple(::ShutdownCostParameter, value) = value
