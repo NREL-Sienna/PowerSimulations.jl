@@ -37,21 +37,27 @@ function _update_parameter_values!(
 end
 
 # We only support certain time series costs for MarketBidCost, nothing to do for all the others
+# We group them this way because we implement them that way: avoids method ambiguity issues
 handle_variable_cost_parameter(
-    ::StartupCostParameter,
-    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
-handle_variable_cost_parameter(
-    ::ShutdownCostParameter,
-    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
-handle_variable_cost_parameter(
-    ::AbstractCostAtMinParameter,
+    ::Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 handle_variable_cost_parameter(
     ::AbstractPiecewiseLinearSlopeParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
+_get_parameter_field(::StartupCostParameter, args...; kwargs...) =
+    PSY.get_start_up(args...; kwargs...)
+_get_parameter_field(::ShutdownCostParameter, args...; kwargs...) =
+    PSY.get_shut_down(args...; kwargs...)
+_get_parameter_field(::AbstractCostAtMinParameter, args...; kwargs...) =
+    PSY.get_incremental_initial_input(args...; kwargs...)
+
+_maybe_tuple(::StartupCostParameter, value) = Tuple(value)
+_maybe_tuple(::ShutdownCostParameter, value) = value
+_maybe_tuple(::AbstractCostAtMinParameter, value) = value
+
 function handle_variable_cost_parameter(
-    ::StartupCostParameter,
+    param::Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
     op_cost::PSY.MarketBidCost,
     component,
     name,
@@ -62,78 +68,14 @@ function handle_variable_cost_parameter(
     initial_forecast_time,
     horizon,
 )
-    is_time_variant(PSY.get_start_up(op_cost)) || return
-    ts_vector = PSY.get_start_up(
-        component, op_cost;
+    is_time_variant(_get_parameter_field(param, op_cost)) || return
+    ts_vector = _get_parameter_field(param, component, op_cost;
         start_time = initial_forecast_time,
         len = horizon,
     )
     for (t, value) in enumerate(TimeSeries.values(ts_vector))
-        _set_param_value!(parameter_array, Tuple(value), name, t)
-        update_variable_cost!(
-            container,
-            parameter_array,
-            parameter_multiplier,
-            attributes,
-            component,
-            t,
-        )
-    end
-    return
-end
-
-function handle_variable_cost_parameter(
-    ::ShutdownCostParameter,
-    op_cost::PSY.MarketBidCost,
-    component,
-    name,
-    parameter_array,
-    parameter_multiplier,
-    attributes,
-    container,
-    initial_forecast_time,
-    horizon,
-)
-    is_time_variant(PSY.get_shut_down(op_cost)) || return
-    ts_vector = PSY.get_shut_down(
-        component, op_cost;
-        start_time = initial_forecast_time,
-        len = horizon,
-    )
-    for (t, value) in enumerate(TimeSeries.values(ts_vector))
-        _set_param_value!(parameter_array, value, name, t)
-        update_variable_cost!(
-            container,
-            parameter_array,
-            parameter_multiplier,
-            attributes,
-            component,
-            t,
-        )
-    end
-    return
-end
-
-function handle_variable_cost_parameter(
-    ::AbstractCostAtMinParameter,
-    op_cost::PSY.MarketBidCost,
-    component::PSY.Generator,  # TODO handle decremental case
-    name,
-    parameter_array,
-    parameter_multiplier,
-    attributes,
-    container,
-    initial_forecast_time,
-    horizon,
-)
-    is_time_variant(PSY.get_incremental_initial_input(op_cost)) || return
-    ts_vector = PSY.get_incremental_initial_input(
-        component, op_cost;
-        start_time = initial_forecast_time,
-        len = horizon,
-    )
-    for (t, value) in enumerate(TimeSeries.values(ts_vector))
-        _set_param_value!(parameter_array, value, name, t)
+        # startup needs Tuple(value), rest just value. (slight type instability)
+        _set_param_value!(parameter_array, _maybe_tuple(param, value), name, t)
         update_variable_cost!(
             container,
             parameter_array,
