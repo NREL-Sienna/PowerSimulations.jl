@@ -411,31 +411,32 @@ end
 make_tranche_axis(n_tranches) = "tranche_" .* string.(1:n_tranches)
 
 # Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
-# TODO decremental case
 function calc_additional_axes(
     ::OptimizationContainer,
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::P,
     devices::U,
     ::DeviceModel{D, W},
 ) where {
+    P <: AbstractPiecewiseLinearSlopeParameter,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
+    curves = _get_parameter_field.((P(),), PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
     return (make_tranche_axis(max_tranches),)
 end
 
 function calc_additional_axes(
     ::OptimizationContainer,
-    ::IncrementalPiecewiseLinearBreakpointParameter,
+    ::P,
     devices::U,
     ::DeviceModel{D, W},
 ) where {
+    P <: AbstractPiecewiseLinearBreakpointParameter,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
+    curves = _get_parameter_field.((P(),), PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
     return (make_tranche_axis(max_tranches + 1),)  # one more breakpoint than tranches
 end
@@ -522,7 +523,6 @@ function _add_parameters!(
     jump_model = get_jump_model(container)
 
     additional_axes = calc_additional_axes(container, param, active_devices, model)
-    @show additional_axes
     param_container = add_param_container!(
         container,
         param,

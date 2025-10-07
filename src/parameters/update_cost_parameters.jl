@@ -45,6 +45,7 @@ handle_variable_cost_parameter(
     ::AbstractPiecewiseLinearSlopeParameter,
     op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.MarketBidCost)
 
+# typically used just with 1 arg, _get_parameter_field(T(), operation_cost).
 _get_parameter_field(::StartupCostParameter, args...; kwargs...) =
     PSY.get_start_up(args...; kwargs...)
 _get_parameter_field(::ShutdownCostParameter, args...; kwargs...) =
@@ -53,6 +54,24 @@ _get_parameter_field(::IncrementalCostAtMinParameter, args...; kwargs...) =
     PSY.get_incremental_initial_input(args...; kwargs...)
 _get_parameter_field(::DecrementalCostAtMinParameter, args...; kwargs...) =
     PSY.get_decremental_initial_input(args...; kwargs...)
+_get_parameter_field(
+    ::Union{
+        IncrementalPiecewiseLinearSlopeParameter,
+        IncrementalPiecewiseLinearBreakpointParameter,
+    },
+    args...;
+    kwargs...,
+) =
+    PSY.get_incremental_offer_curves(args...; kwargs...)
+_get_parameter_field(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    args...;
+    kwargs...,
+) =
+    PSY.get_decremental_offer_curves(args...; kwargs...)
 
 _maybe_tuple(::StartupCostParameter, value) = Tuple(value)
 _maybe_tuple(::ShutdownCostParameter, value) = value
@@ -90,12 +109,6 @@ function handle_variable_cost_parameter(
     return
 end
 
-# Helper function to get the appropriate getter function
-_offer_curves(::IncrementalPiecewiseLinearSlopeParameter, args...; kwargs...) =
-    PSY.get_incremental_offer_curves(args...; kwargs...)
-_offer_curves(::DecrementalPiecewiseLinearSlopeParameter, args...; kwargs...) =
-    PSY.get_decremental_offer_curves(args...; kwargs...)
-
 function handle_variable_cost_parameter(
     slope_param::T,
     op_cost::PSY.MarketBidCost,
@@ -108,8 +121,8 @@ function handle_variable_cost_parameter(
     initial_forecast_time,
     horizon,
 ) where {T <: AbstractPiecewiseLinearSlopeParameter}
-    is_time_variant(_offer_curves(slope_param, op_cost)) || return
-    ts_vector = _offer_curves(slope_param,
+    is_time_variant(_get_parameter_field(slope_param, op_cost)) || return
+    ts_vector = _get_parameter_field(slope_param,
         component, op_cost;
         start_time = initial_forecast_time,
         len = horizon,

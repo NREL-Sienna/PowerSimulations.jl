@@ -80,41 +80,26 @@ _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) 
 _has_parameter_time_series(::ShutdownCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(device)))
 
-_has_parameter_time_series(::IncrementalCostAtMinParameter, device::PSY.StaticInjection) =
+_has_parameter_time_series(
+    ::T,
+    device::PSY.StaticInjection,
+) where {T <: AbstractCostAtMinParameter} =
     _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
-
-_has_parameter_time_series(::DecrementalCostAtMinParameter, device::PSY.StaticInjection) =
-    _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_decremental_initial_input(PSY.get_operation_cost(device)))
+    is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::T,
     device::PSY.StaticInjection,
-) =
+) where {T <: AbstractPiecewiseLinearSlopeParameter} =
     _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+    is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
-    ::DecrementalPiecewiseLinearSlopeParameter,
+    ::T,
     device::PSY.StaticInjection,
-) =
+) where {T <: AbstractPiecewiseLinearBreakpointParameter} =
     _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_decremental_offer_curves(PSY.get_operation_cost(device)))
-
-_has_parameter_time_series(
-    ::IncrementalPiecewiseLinearBreakpointParameter,
-    device::PSY.StaticInjection,
-) =
-    _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
-
-_has_parameter_time_series(
-    ::DecrementalPiecewiseLinearBreakpointParameter,
-    device::PSY.StaticInjection,
-) =
-    _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_decremental_offer_curves(PSY.get_operation_cost(device)))
+    is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
     initial_input = get_initial_input_maybe_decremental(Val(decremental), device)
@@ -241,8 +226,9 @@ function validate_mbc_component(
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
         if x != PSY.single_start_up_to_stages(0.0)
-            @warn "Nonzero startup cost detected for renewable generation or storage device $(get_name(device))." maxlog =
-                1
+            println(
+                "Nonzero startup cost detected for renewable generation or storage device $(get_name(device)).",
+            )
         end
     end
 end
@@ -255,8 +241,9 @@ function validate_mbc_component(
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
         if x != 0.0
-            @warn "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device))." maxlog =
-                1
+            println(
+                "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device)).",
+            )
         end
     end
 end
@@ -270,8 +257,9 @@ function validate_mbc_component(
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                @warn "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device))." maxlog =
-                    1
+                println(
+                    "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device)).",
+                )
             end
         end
     end
@@ -286,8 +274,9 @@ function validate_mbc_component(
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                @warn "Nonzero no-load cost detected for storage device $(get_name(device))." maxlog =
-                    1
+                println(
+                    "Nonzero no-load cost detected for storage device $(get_name(device)).",
+                )
             end
         end
     end
@@ -371,9 +360,6 @@ function process_market_bid_parameters!(
             DecrementalPiecewiseLinearSlopeParameter(),
             DecrementalPiecewiseLinearBreakpointParameter(),
         )
-            #_consider_parameter is false for DecrementalCostAtMinParameter for some reason
-            @show param
-            @show _consider_parameter(param, container, model)
             _process_market_bid_parameters_helper(param, container, model, devices)
         end
     end
