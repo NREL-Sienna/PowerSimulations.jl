@@ -95,6 +95,8 @@ function build_simulation(
         c = get_operation_cost(th)
         PSY.set_start_up!(c, 3000.0)
         PSY.set_shut_down!(c, 1500.0)
+        PSY.set_must_run!(th, true)
+        set_status!(th, true)
     end
 
     to_json(
@@ -113,14 +115,13 @@ function build_simulation(
         template_uc,
         NetworkModel(
             PTDFPowerModel;
-            PTDF_matrix = PTDF(c_sys5_pjm_da),
-            # duals = [CopperPlateBalanceConstraint]
         ),
     )
 
     set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
     template_ed = deepcopy(template_uc)
-    set_device_model!(template_ed, ThermalStandard, ThermalStandardDispatch)
+    # template_ed.network_model.use_slacks = true
+    set_device_model!(template_ed, ThermalStandard, ThermalBasicDispatch)
 
     models = SimulationModels(;
         decision_models = [
@@ -129,14 +130,15 @@ function build_simulation(
                 c_sys5_pjm_da;
                 optimizer = HiGHS_optimizer,
                 name = "UC",
-                initialize_model = false,
+                initialize_model = true,
             ),
             DecisionModel(
                 template_ed,
                 c_sys5_pjm_rt;
                 optimizer = HiGHS_optimizer,
                 name = "ED",
-                calculate_conflict = false,
+                calculate_conflict = true,
+                initialize_model = true,
             ),
         ],
     )

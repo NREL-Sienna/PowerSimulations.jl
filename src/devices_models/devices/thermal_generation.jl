@@ -14,8 +14,7 @@ get_expression_type_for_reserve(::ActivePowerReserveVariable, ::Type{<:PSY.Therm
 ############## ActivePowerVariable, ThermalGen ####################
 get_variable_binary(::ActivePowerVariable, ::Type{<:PSY.ThermalGen}, ::AbstractThermalFormulation) = false
 get_variable_warm_start_value(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power(d)
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).min
-get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalUnitCommitment) = nothing
+get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_must_run(d) ? PSY.get_active_power_limits(d).min : 0.0
 get_variable_upper_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_active_power_limits(d).max
 get_variable_lower_bound(::ActivePowerVariable, d::PSY.ThermalGen, ::ThermalDispatchNoMin) = 0.0
 

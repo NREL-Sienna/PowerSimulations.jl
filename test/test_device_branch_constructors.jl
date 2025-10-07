@@ -313,8 +313,7 @@ end
     )
 
     add_component!(sys_5, hvdc)
-    # for net_model in [DCPPowerModel, PTDFPowerModel]
-    for net_model in [DCPPowerModel]
+    for net_model in [DCPPowerModel, PTDFPowerModel]
         @testset "$net_model" begin
             PSY.set_loss!(hvdc, PSY.LinearCurve(0.0))
             template_uc = ProblemTemplate(

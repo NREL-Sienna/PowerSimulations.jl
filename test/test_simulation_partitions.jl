@@ -62,7 +62,6 @@ end
 
     functions = (
         read_realized_aux_variables,
-        read_realized_duals,
         read_realized_expressions,
         read_realized_parameters,
         read_realized_variables,
@@ -73,8 +72,8 @@ end
         partitioned_model_results = get_decision_problem_results(partitioned_results, name)
 
         for func in functions
-            regular = func(regular_model_results)
-            partitioned = func(partitioned_model_results)
+            regular = func(regular_model_results; table_format = TableFormat.WIDE)
+            partitioned = func(partitioned_model_results; table_format = TableFormat.WIDE)
             @test sort(collect(keys(regular))) == sort(collect(keys(partitioned)))
             for key in keys(regular)
                 t_start = regular[key][1, 1]

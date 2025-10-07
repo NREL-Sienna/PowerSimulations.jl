@@ -30,7 +30,7 @@ function _get_initial_conditions_value(
     else
         val = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
     end
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return InitialCondition{U, Float64}(component, val)
 end
@@ -53,7 +53,7 @@ function _get_initial_conditions_value(
     else
         val = get_initial_condition_value(ic_data, var_type, W)[PSY.get_name(component), 1]
     end
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return InitialCondition{U, JuMP.VariableRef}(
         component,
@@ -82,7 +82,7 @@ function _get_initial_conditions_value(
             val = PSY.get_time_at_status(component)
         end
     end
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return InitialCondition{U, Float64}(component, val)
 end
@@ -108,7 +108,7 @@ function _get_initial_conditions_value(
             val = PSY.get_time_at_status(component)
         end
     end
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return InitialCondition{U, JuMP.VariableRef}(
         component,
@@ -137,7 +137,7 @@ function _get_initial_conditions_value(
             val = PSY.get_time_at_status(component)
         end
     end
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return InitialCondition{U, Float64}(component, val)
 end
@@ -163,7 +163,7 @@ function _get_initial_conditions_value(
             val = PSY.get_time_at_status(component)
         end
     end
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return InitialCondition{U, JuMP.VariableRef}(
         component,
@@ -184,7 +184,7 @@ function _get_initial_conditions_value(
 } where {U <: InitialEnergyLevel}
     var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, add_jump_parameter(get_jump_model(container), val))
 end
@@ -202,7 +202,7 @@ function _get_initial_conditions_value(
 } where {U <: InitialEnergyLevel}
     var_type = initial_condition_variable(U(), component, V())
     val = initial_condition_default(U(), component, V())
-    @debug "Device $(PSY.get_name(component)) initialized $U as $var_type" _group =
+    @debug "Device $(PSY.get_name(component)) initialized $U as $val" _group =
         LOG_GROUP_BUILD_INITIAL_CONDITIONS
     return T(component, val)
 end
