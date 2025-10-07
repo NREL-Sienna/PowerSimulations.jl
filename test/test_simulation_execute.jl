@@ -311,15 +311,14 @@ end
     end
 end
 
-#= Re-enable when cost functions are updated
 function test_3_stage_simulation_with_feedforwards(in_memory)
     sys_rts_da = PSB.build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
     sys_rts_ha = deepcopy(sys_rts_rt)
 
-    PSY.transform_single_time_series!(sys_rts_da, 36, Hour(24))
-    PSY.transform_single_time_series!(sys_rts_ha, 24, Hour(1))
-    PSY.transform_single_time_series!(sys_rts_rt, 12, Hour(1))
+    PSY.transform_single_time_series!(sys_rts_da, Hour(36), Hour(24))
+    PSY.transform_single_time_series!(sys_rts_ha, Hour(2), Hour(1))
+    PSY.transform_single_time_series!(sys_rts_rt, Hour(1), Hour(1))
 
     template_uc = get_template_standard_uc_simulation()
     set_network_model!(template_uc, NetworkModel(CopperPlatePowerModel))
@@ -336,21 +335,21 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
                 sys_rts_da;
                 name = "UC",
                 optimizer = HiGHS_optimizer,
-                initialize_model = false,
+                initialize_model = true,
             ),
             DecisionModel(
                 template_ha,
                 sys_rts_ha;
                 name = "HA",
                 optimizer = HiGHS_optimizer,
-                initialize_model = false,
+                initialize_model = true,
             ),
             DecisionModel(
                 template_ed,
                 sys_rts_rt;
                 name = "ED",
                 optimizer = HiGHS_optimizer,
-                initialize_model = false,
+                initialize_model = true,
             ),
         ],
     )
@@ -378,8 +377,8 @@ function test_3_stage_simulation_with_feedforwards(in_memory)
     )
     build_out = build!(sim)
     @test build_out == PSI.SimulationBuildStatus.BUILT
-    # execute_out = execute!(sim, in_memory = in_memory)
-    # @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    execute_out = execute!(sim; in_memory = in_memory)
+    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "Test 3 stage simulation with FeedForwards" begin
@@ -387,43 +386,3 @@ end
         test_3_stage_simulation_with_feedforwards(in_memory)
     end
 end
-
-# TODO: MBC Re-enable once MarketBid Cost is re-implemented
-@testset "UC with MarketBid Cost in ThermalGenerators simulations" begin
-    template = get_thermal_dispatch_template_network(
-        NetworkModel(CopperPlatePowerModel; use_slacks = true),
-    )
-    set_device_model!(template, DeviceModel(ThermalStandard, ThermalDispatchNoMin))
-    set_device_model!(template, DeviceModel(ThermalMultiStart, ThermalBasicUnitCommitment))
-
-    models = SimulationModels(;
-        decision_models = [
-            DecisionModel(
-                UnitCommitmentProblem,
-                template,
-                PSB.build_system(PSITestSystems, "c_market_bid_cost");
-                optimizer = HiGHS_optimizer,
-                initialize_model = false,
-            ),
-        ],
-    )
-
-    sequence =
-        SimulationSequence(;
-            models = models,
-            ini_cond_chronology = InterProblemChronology(),
-        )
-
-    sim = Simulation(;
-        name = "pwl_cost_test",
-        steps = 2,
-        models = models,
-        sequence = sequence,
-        simulation_folder = mktempdir(; cleanup = true),
-    )
-
-    @test build!(sim) == PSI.SimulationBuildStatus.BUILT
-    @test execute!(sim) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-    # TODO: Add more testing of resulting values
-end
-=#
