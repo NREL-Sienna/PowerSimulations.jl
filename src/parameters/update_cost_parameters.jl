@@ -115,9 +115,9 @@ function handle_variable_cost_parameter(
 end
 
 function handle_variable_cost_parameter(
-    ::IncrementalCostAtMinParameter,
+    ::AbstractCostAtMinParameter,
     op_cost::PSY.MarketBidCost,
-    component::Union{PSY.Generator, PSY.Storage},  # TODO handle decremental case
+    component::PSY.Generator,  # TODO handle decremental case
     name,
     parameter_array,
     parameter_multiplier,
@@ -146,10 +146,16 @@ function handle_variable_cost_parameter(
     return
 end
 
+# Helper function to get the appropriate getter function
+_offer_curves(::IncrementalPiecewiseLinearSlopeParameter, args...; kwargs...) =
+    PSY.get_incremental_offer_curves(args...; kwargs...)
+_offer_curves(::DecrementalPiecewiseLinearSlopeParameter, args...; kwargs...) =
+    PSY.get_decremental_offer_curves(args...; kwargs...)
+
 function handle_variable_cost_parameter(
-    ::T,
+    slope_param::T,
     op_cost::PSY.MarketBidCost,
-    component::Union{PSY.Generator, PSY.Storage},  # TODO handle decremental case
+    component,
     name,
     parameter_array,
     parameter_multiplier,
@@ -157,9 +163,9 @@ function handle_variable_cost_parameter(
     container,
     initial_forecast_time,
     horizon,
-) where {T <: IncrementalPiecewiseLinearSlopeParameter}
-    is_time_variant(PSY.get_incremental_offer_curves(op_cost)) || return
-    ts_vector = PSY.get_incremental_offer_curves(
+) where {T <: AbstractPiecewiseLinearSlopeParameter}
+    is_time_variant(_offer_curves(slope_param, op_cost)) || return
+    ts_vector = _offer_curves(slope_param,
         component, op_cost;
         start_time = initial_forecast_time,
         len = horizon,
