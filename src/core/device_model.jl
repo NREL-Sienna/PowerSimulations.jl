@@ -102,14 +102,6 @@ get_subsystem(m::DeviceModel) = m.subsystem
 
 set_subsystem!(m::DeviceModel, id::String) = m.subsystem = id
 
-function get_reference_bus(
-    m::DeviceModel{T, U},
-    d::T,
-) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    # TODO: this is a bug, function does not exist 
-    return get_subnetworks_map(m)[d]
-end
-
 function _set_model!(
     dict::Dict,
     model::DeviceModel{D, B},
