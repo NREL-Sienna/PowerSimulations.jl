@@ -52,7 +52,7 @@ function _validate_eltype(::Type{T}, component::PSY.Component, element, msg = ""
     result = _validate_eltype_helper(T, element)
     result || throw(
         ArgumentError(
-            "Expected element type $T but got $(typeof(x)) for $(get_name(component))" *
+            "Expected element type $T but got $(typeof(element)) for $(get_name(component))" *
             msg,
         ),
     )
