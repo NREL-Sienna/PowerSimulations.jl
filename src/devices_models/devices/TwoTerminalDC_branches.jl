@@ -1,49 +1,22 @@
 #################################### Branch Variables ##################################################
-get_variable_binary(
-    _,
-    ::Type{<:PSY.TwoTerminalGenericHVDCLine},
-    ::AbstractTwoTerminalDCLineFormulation,
-) =
-    false
-get_variable_binary(
-    ::FlowActivePowerVariable,
-    ::Type{<:PSY.TwoTerminalGenericHVDCLine},
-    ::AbstractTwoTerminalDCLineFormulation,
-) = false
-
-get_variable_binary(
-    ::HVDCFlowDirectionVariable,
-    ::Type{<:PSY.TwoTerminalGenericHVDCLine},
-    ::AbstractTwoTerminalDCLineFormulation,
-) = true
-
-get_variable_multiplier(
-    ::FlowActivePowerVariable,
-    ::Type{<:PSY.TwoTerminalGenericHVDCLine},
-    _,
-) =
-    NaN
-get_parameter_multiplier(
-    ::FixValueParameter,
-    ::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = 1.0
-
-get_variable_multiplier(
-    ::FlowActivePowerFromToVariable,
-    ::Type{<:PSY.TwoTerminalGenericHVDCLine},
-    ::AbstractTwoTerminalDCLineFormulation,
-) = -1.0
-
-get_variable_multiplier(
-    ::FlowActivePowerToFromVariable,
-    ::Type{<:PSY.TwoTerminalGenericHVDCLine},
-    ::AbstractTwoTerminalDCLineFormulation,
-) = -1.0
+#! format: off
+get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCPiecewiseLossVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCActivePowerReceivedFromVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCActivePowerReceivedToVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation,) = false
+get_variable_binary(::HVDCPiecewiseBinaryLossVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation,) = true
+get_variable_binary(_, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation) = false
+get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation) = false
+get_variable_binary(::HVDCFlowDirectionVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation) = true
+get_variable_multiplier(::FlowActivePowerVariable, ::Type{<:PSY.TwoTerminalHVDC}, _) = NaN
+get_parameter_multiplier(::FixValueParameter, ::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = 1.0
+get_variable_multiplier(::FlowActivePowerFromToVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation) = -1.0
+get_variable_multiplier(::FlowActivePowerToFromVariable, ::Type{<:PSY.TwoTerminalHVDC}, ::AbstractTwoTerminalDCLineFormulation) = -1.0
 
 function get_variable_multiplier(
     ::HVDCLosses,
-    d::PSY.TwoTerminalGenericHVDCLine,
+    d::PSY.TwoTerminalHVDC,
     ::HVDCTwoTerminalDispatch,
 )
     loss = PSY.get_loss(d)
@@ -61,87 +34,23 @@ function get_variable_multiplier(
     end
 end
 
-get_variable_lower_bound(
-    ::FlowActivePowerVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalUnbounded,
-) = nothing
-
-get_variable_upper_bound(
-    ::FlowActivePowerVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalUnbounded,
-) = nothing
-
-get_variable_lower_bound(
-    ::FlowActivePowerVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = nothing
-
-get_variable_upper_bound(
-    ::FlowActivePowerVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = nothing
-
-get_variable_lower_bound(
-    ::HVDCLosses,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalDispatch,
-) = 0.0
-
-get_variable_upper_bound(
-    ::FlowActivePowerFromToVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalDispatch,
-) = PSY.get_active_power_limits_from(d).max
-
-get_variable_lower_bound(
-    ::FlowActivePowerFromToVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalDispatch,
-) = PSY.get_active_power_limits_from(d).min
-
-get_variable_upper_bound(
-    ::FlowActivePowerToFromVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalDispatch,
-) = PSY.get_active_power_limits_to(d).max
-
-get_variable_lower_bound(
-    ::FlowActivePowerToFromVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::HVDCTwoTerminalDispatch,
-) = PSY.get_active_power_limits_to(d).min
-
-get_variable_upper_bound(
-    ::HVDCActivePowerReceivedFromVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = PSY.get_active_power_limits_from(d).max
-
-get_variable_lower_bound(
-    ::HVDCActivePowerReceivedFromVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = PSY.get_active_power_limits_from(d).min
-
-get_variable_upper_bound(
-    ::HVDCActivePowerReceivedToVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = PSY.get_active_power_limits_to(d).max
-
-get_variable_lower_bound(
-    ::HVDCActivePowerReceivedToVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::AbstractTwoTerminalDCLineFormulation,
-) = PSY.get_active_power_limits_to(d).min
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalUnbounded) = nothing
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalUnbounded) = nothing
+get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = nothing
+get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = nothing
+get_variable_lower_bound(::HVDCLosses, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalDispatch) = 0.0
+get_variable_upper_bound(::FlowActivePowerFromToVariable, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalDispatch) = PSY.get_active_power_limits_from(d).max
+get_variable_lower_bound(::FlowActivePowerFromToVariable, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalDispatch) = PSY.get_active_power_limits_from(d).min
+get_variable_upper_bound(::FlowActivePowerToFromVariable, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalDispatch) = PSY.get_active_power_limits_to(d).max
+get_variable_lower_bound(::FlowActivePowerToFromVariable, d::PSY.TwoTerminalHVDC, ::HVDCTwoTerminalDispatch) = PSY.get_active_power_limits_to(d).min
+get_variable_upper_bound(::HVDCActivePowerReceivedFromVariable, d::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = PSY.get_active_power_limits_from(d).max
+get_variable_lower_bound(::HVDCActivePowerReceivedFromVariable, d::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = PSY.get_active_power_limits_from(d).min
+get_variable_upper_bound(::HVDCActivePowerReceivedToVariable, d::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = PSY.get_active_power_limits_to(d).max
+get_variable_lower_bound(::HVDCActivePowerReceivedToVariable, d::PSY.TwoTerminalHVDC, ::AbstractTwoTerminalDCLineFormulation) = PSY.get_active_power_limits_to(d).min
 
 function get_variable_upper_bound(
     ::HVDCLosses,
-    d::PSY.TwoTerminalGenericHVDCLine,
+    d::PSY.TwoTerminalHVDC,
     ::HVDCTwoTerminalDispatch,
 )
     loss = PSY.get_loss(d)
@@ -159,131 +68,72 @@ function get_variable_upper_bound(
     end
 end
 
-get_variable_upper_bound(
-    ::HVDCPiecewiseLossVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
-) = 1.0
-
-get_variable_lower_bound(
-    ::HVDCPiecewiseLossVariable,
-    d::PSY.TwoTerminalGenericHVDCLine,
-    ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss},
-) = 0.0
+get_variable_upper_bound(::HVDCPiecewiseLossVariable, d::PSY.TwoTerminalHVDC, ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss}) = 1.0
+get_variable_lower_bound(::HVDCPiecewiseLossVariable, d::PSY.TwoTerminalHVDC, ::Union{HVDCTwoTerminalDispatch, HVDCTwoTerminalPiecewiseLoss}) = 0.0
 
 #################################### LCC ##################################################
-
-get_variable_binary(
-    ::Union{
-        HVDCActivePowerReceivedFromVariable,
-        HVDCActivePowerReceivedToVariable,
-        HVDCReactivePowerReceivedFromVariable,
-        HVDCReactivePowerReceivedToVariable,
-        HVDCRectifierDelayAngleVariable,
-        HVDCInverterExtinctionAngleVariable,
-        HVDCRectifierPowerFactorAngleVariable,
-        HVDCInverterPowerFactorAngleVariable,
-        HVDCRectifierOverlapAngleVariable,
-        HVDCInverterOverlapAngleVariable,
-        HVDCRectifierDCVoltageVariable,
-        HVDCInverterDCVoltageVariable,
-        HVDCRectifierACCurrentVariable,
-        HVDCInverterACCurrentVariable,
-        DCLineCurrentFlowVariable,
-        HVDCRectifierTapSettingVariable,
-        HVDCInverterTapSettingVariable,
-    },
-    ::Type{<:PSY.TwoTerminalLCCLine},
-    ::Union{
-        HVDCTwoTerminalLCC,
-    },
-) = false
-
-get_variable_upper_bound(
-    ::HVDCRectifierDelayAngleVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_rectifier_delay_angle_limits(d).max
-
-get_variable_lower_bound(
-    ::HVDCRectifierDelayAngleVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_rectifier_delay_angle_limits(d).min
-
-get_variable_upper_bound(
-    ::HVDCInverterExtinctionAngleVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_inverter_extinction_angle_limits(d).max
-
-get_variable_lower_bound(
-    ::HVDCInverterExtinctionAngleVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_inverter_extinction_angle_limits(d).min
-
-get_variable_upper_bound(
-    ::HVDCRectifierTapSettingVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_rectifier_tap_limits(d).max
-
-get_variable_lower_bound(
-    ::HVDCRectifierTapSettingVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_rectifier_tap_limits(d).min
-
-get_variable_upper_bound(
-    ::HVDCInverterTapSettingVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_inverter_tap_limits(d).max
-
-get_variable_lower_bound(
-    ::HVDCInverterTapSettingVariable,
-    d::PSY.TwoTerminalLCCLine,
-    ::HVDCTwoTerminalLCC,
-) = PSY.get_inverter_tap_limits(d).min
-
+get_variable_binary(::HVDCActivePowerReceivedFromVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCActivePowerReceivedToVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCReactivePowerReceivedFromVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCReactivePowerReceivedToVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCRectifierDelayAngleVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCInverterExtinctionAngleVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCRectifierPowerFactorAngleVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCInverterPowerFactorAngleVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCRectifierOverlapAngleVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCInverterOverlapAngleVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCRectifierDCVoltageVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCInverterDCVoltageVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCRectifierACCurrentVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCInverterACCurrentVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::DCLineCurrentFlowVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCRectifierTapSettingVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_binary(::HVDCInverterTapSettingVariable, ::Type{PSY.TwoTerminalLCCLine}, ::HVDCTwoTerminalLCC) = false
+get_variable_upper_bound(::HVDCRectifierDelayAngleVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_rectifier_delay_angle_limits(d).max
+get_variable_lower_bound(::HVDCRectifierDelayAngleVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_rectifier_delay_angle_limits(d).min
+get_variable_upper_bound(::HVDCInverterExtinctionAngleVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_inverter_extinction_angle_limits(d).max
+get_variable_lower_bound(::HVDCInverterExtinctionAngleVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_inverter_extinction_angle_limits(d).min
+get_variable_upper_bound(::HVDCRectifierTapSettingVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_rectifier_tap_limits(d).max
+get_variable_lower_bound(::HVDCRectifierTapSettingVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_rectifier_tap_limits(d).min
+get_variable_upper_bound(::HVDCInverterTapSettingVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_inverter_tap_limits(d).max
+get_variable_lower_bound(::HVDCInverterTapSettingVariable, d::PSY.TwoTerminalLCCLine, ::HVDCTwoTerminalLCC) = PSY.get_inverter_tap_limits(d).min
+#! format: on
 ##########################################################
-
 function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.TwoTerminalGenericHVDCLine, V <: AbstractTwoTerminalDCLineFormulation}
+) where {U <: PSY.TwoTerminalHVDC, V <: AbstractTwoTerminalDCLineFormulation}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
 function get_default_attributes(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.TwoTerminalGenericHVDCLine, V <: AbstractTwoTerminalDCLineFormulation}
+) where {U <: PSY.TwoTerminalHVDC, V <: AbstractTwoTerminalDCLineFormulation}
     return Dict{String, Any}()
 end
 
 get_initial_conditions_device_model(
     ::OperationModel,
     ::DeviceModel{T, U},
-) where {T <: PSY.TwoTerminalGenericHVDCLine, U <: AbstractTwoTerminalDCLineFormulation} =
+) where {T <: PSY.TwoTerminalHVDC, U <: AbstractTwoTerminalDCLineFormulation} =
     DeviceModel(T, U)
 
 ####################################### PWL Constraints #######################################################
 
-function _get_range_segments(::PSY.TwoTerminalGenericHVDCLine, loss::PSY.LinearCurve)
+function _get_range_segments(::PSY.TwoTerminalHVDC, loss::PSY.LinearCurve)
     return 1:4
 end
 
 function _get_range_segments(
-    ::PSY.TwoTerminalGenericHVDCLine,
+    ::PSY.TwoTerminalHVDC,
     loss::PSY.PiecewiseIncrementalCurve,
 )
     loss_factors = PSY.get_slopes(loss)
     return 1:(2 * length(loss_factors) + 2)
 end
 
-function _get_pwl_loss_params(d::PSY.TwoTerminalGenericHVDCLine, loss::PSY.LinearCurve)
+function _get_pwl_loss_params(d::PSY.TwoTerminalHVDC, loss::PSY.LinearCurve)
     from_to_loss_params = Vector{Float64}(undef, 4)
     to_from_loss_params = Vector{Float64}(undef, 4)
     loss_factor = PSY.get_proportional_term(loss)
@@ -311,7 +161,7 @@ function _get_pwl_loss_params(d::PSY.TwoTerminalGenericHVDCLine, loss::PSY.Linea
 end
 
 function _get_pwl_loss_params(
-    d::PSY.TwoTerminalGenericHVDCLine,
+    d::PSY.TwoTerminalHVDC,
     loss::PSY.PiecewiseIncrementalCurve,
 )
     p_breakpoints = PSY.get_x_coords(loss)
@@ -360,7 +210,7 @@ function add_constraints!(
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     ::DeviceModel{U, HVDCTwoTerminalPiecewiseLoss},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: HVDCFlowCalculationConstraint, U <: PSY.TwoTerminalHVDC}
     var_pwl = get_variable(container, HVDCPiecewiseLossVariable(), U)
     var_pwl_bin = get_variable(container, HVDCPiecewiseBinaryLossVariable(), U)
     names = PSY.get_name.(devices)
@@ -424,7 +274,7 @@ function add_constraints!(
 end
 
 #################################### Rate Limits Constraints ##################################################
-function _get_flow_bounds(d::PSY.TwoTerminalGenericHVDCLine)
+function _get_flow_bounds(d::PSY.TwoTerminalHVDC)
     check_hvdc_line_limits_consistency(d)
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
@@ -457,18 +307,18 @@ end
 add_constraints!(
     ::OptimizationContainer,
     ::Type{<:Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom}},
-    ::IS.FlattenIteratorWrapper{<:PSY.TwoTerminalGenericHVDCLine},
-    ::DeviceModel{<:PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalUnbounded},
+    ::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, HVDCTwoTerminalUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) = nothing
+) where {T <: PSY.TwoTerminalHVDC} = nothing
 
 add_constraints!(
     ::OptimizationContainer,
     ::Type{FlowRateConstraint},
-    ::IS.FlattenIteratorWrapper{<:PSY.TwoTerminalGenericHVDCLine},
-    ::DeviceModel{<:PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalUnbounded},
+    ::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, HVDCTwoTerminalUnbounded},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) = nothing
+) where {T <: PSY.TwoTerminalHVDC} = nothing
 
 function add_constraints!(
     container::OptimizationContainer,
@@ -476,7 +326,7 @@ function add_constraints!(
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     ::DeviceModel{U, HVDCTwoTerminalLossless},
     ::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: FlowRateConstraint, U <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: FlowRateConstraint, U <: PSY.TwoTerminalHVDC}
     time_steps = get_time_steps(container)
     names = PSY.get_name.(devices)
 
@@ -507,7 +357,7 @@ function add_constraints!(
     devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
     ::DeviceModel{U, HVDCTwoTerminalLossless},
     network_model::NetworkModel{CopperPlatePowerModel},
-) where {T <: FlowRateConstraint, U <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: FlowRateConstraint, U <: PSY.TwoTerminalHVDC}
     time_steps = get_time_steps(container)
     names = String[]
     modeled_devices = U[]
@@ -546,7 +396,7 @@ function _add_hvdc_flow_constraints!(
     container::OptimizationContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     constraint::FlowRateConstraintFromTo,
-) where {T <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: PSY.TwoTerminalHVDC}
     _add_hvdc_flow_constraints!(
         container,
         devices,
@@ -559,7 +409,7 @@ function _add_hvdc_flow_constraints!(
     container::OptimizationContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     constraint::FlowRateConstraintToFrom,
-) where {T <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: PSY.TwoTerminalHVDC}
     _add_hvdc_flow_constraints!(
         container,
         devices,
@@ -578,7 +428,7 @@ function _add_hvdc_flow_constraints!(
         HVDCActivePowerReceivedToVariable,
     },
     constraint::Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
-) where {T <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: PSY.TwoTerminalHVDC}
     time_steps = get_time_steps(container)
     names = PSY.get_name.(devices)
 
@@ -614,7 +464,7 @@ function add_constraints!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
-    U <: PSY.TwoTerminalGenericHVDCLine,
+    U <: PSY.TwoTerminalHVDC,
 }
     inter_network_branches = U[]
     for d in devices
@@ -638,7 +488,7 @@ function add_constraints!(
     ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {
     T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
-    U <: PSY.TwoTerminalGenericHVDCLine,
+    U <: PSY.TwoTerminalHVDC,
 }
     _add_hvdc_flow_constraints!(container, devices, T())
     return
@@ -652,7 +502,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: Union{FlowRateConstraintToFrom, FlowRateConstraintFromTo},
-    U <: PSY.TwoTerminalGenericHVDCLine,
+    U <: PSY.TwoTerminalHVDC,
 }
     _add_hvdc_flow_constraints!(container, devices, T())
     return
@@ -666,7 +516,7 @@ function add_constraints!(
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
-    U <: PSY.TwoTerminalGenericHVDCLine,
+    U <: PSY.TwoTerminalHVDC,
     V <: HVDCTwoTerminalPiecewiseLoss,
 }
     inter_network_branches = U[]
@@ -705,7 +555,7 @@ function add_constraints!(
     ::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: Union{FlowRateConstraintFromTo, FlowRateConstraintToFrom},
-    U <: PSY.TwoTerminalGenericHVDCLine,
+    U <: PSY.TwoTerminalHVDC,
     V <: HVDCTwoTerminalPiecewiseLoss,
 }
     if T <: FlowRateConstraintFromTo
@@ -732,7 +582,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     ::DeviceModel{T, <:AbstractTwoTerminalDCLineFormulation},
     ::NetworkModel{<:PM.AbstractDCPModel},
-) where {T <: PSY.TwoTerminalGenericHVDCLine}
+) where {T <: PSY.TwoTerminalHVDC}
     time_steps = get_time_steps(container)
     names = PSY.get_name.(devices)
     tf_var = get_variable(container, FlowActivePowerToFromVariable(), T)
