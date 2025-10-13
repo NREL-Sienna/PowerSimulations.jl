@@ -160,8 +160,54 @@ end
     # reductions. we'd have to pass kwargs all the way down to add_power_flow_data!.
 end
 
-#=
-# the way this test removes components is problematic.
+"""
+Remove components from a system while preserving time series data on other components.
+(There ought to be a better way to do this than this roundabout method, but I have yet to find one:
+simply removing the time series on the components to be removed is not sufficient.)
+"""
+function remove_components!(sys::System, components::Vector{PSY.StaticInjection})
+    # record the time series
+    key_to_comp = Dict{TimeSeriesKey, Vector{PSY.Component}}()
+    key_to_ts = Dict{TimeSeriesKey, Union{AbstractDeterministic, SingleTimeSeries}}()
+    for comp in get_components(PSY.Device, sys)
+        for key in PSY.get_time_series_keys(comp)
+            a = get!(key_to_comp, key, [])
+            push!(a, comp)
+            ts = PSY.get_time_series(comp, key)
+            if key in keys(key_to_ts)
+                @assert ts == key_to_ts[key] "Mismatched time series for key $key"
+            end
+            key_to_ts[key] = deepcopy(ts)
+        end
+    end
+    # remove all time series
+    clear_time_series!(sys)
+    # remove the components
+    removed_components = Set{PSY.Component}()
+    for c in components
+        push!(removed_components, c)
+        remove_component!(sys, c)
+    end
+    # add back the time series
+    for (key, comps) in key_to_comp
+        for comp in comps
+            if comp ∉ removed_components
+                ts = key_to_ts[key]
+                if !(ts isa DeterministicSingleTimeSeries)
+                    add_time_series!(sys, comp, ts)
+                end
+            end
+        end
+    end
+    for ts in values(key_to_ts)
+        if ts isa AbstractDeterministic
+            transform_single_time_series!(sys, get_horizon(ts), get_interval(ts))
+            break
+        end
+    end
+    return
+end
+
 @testset "HVDC with AC PF in the loop" begin
     sys = build_system(PSISystems, "RTS_GMLC_DA_sys")
 
@@ -170,16 +216,21 @@ end
     to = get_to(get_arc(hvdc))
 
     # remove components that impact total bus power at the HVDC line buses
-    components = get_components(
-        x -> get_number(get_bus(x)) ∈ (get_number(from), get_number(to)),
-        StaticInjection,
-        sys,
+    components = collect(
+        get_components(
+            x -> get_number(get_bus(x)) ∈ (get_number(from), get_number(to)),
+            StaticInjection,
+            sys,
+        ),
     )
-    for c in components
-        remove_component!(sys, c)
+    remove_components!(sys, components)
+    change_to_PQ = ["Chifa", "Arne"]
+    for bus_name in change_to_PQ
+        bus = get_component(PSY.ACBus, sys, bus_name)
+        @assert !isnothing(bus) "bus does not exist"
+        set_bustype!(bus, PSY.ACBusTypes.PQ)
     end
-    # change reference bus to a different bus to be able to check powers at from and to buses
-    set_bustype!(from, ACBusTypes.PV)
+
     set_bustype!(get_component(ACBus, sys, "Arthur"), ACBusTypes.REF)
 
     template_uc =
@@ -209,20 +260,18 @@ end
     base_power = get_base_power(sys)
 
     # test that the power flow results for the HVDC buses match the HVDC power transfer from the simulation
-    @test isapprox(
-        data.bus_activepower_injection[data.bus_lookup[get_number(from)], :] * base_power,
-        vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
-        atol = 1e-9,
-        rtol = 0,
+    hvdc_from_to = read_variable(
+        results,
+        "FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine";
+        table_format = TableFormat.WIDE,
     )
     @test isapprox(
         data.bus_activepower_injection[data.bus_lookup[get_number(to)], :] * base_power,
-        vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
+        hvdc_from_to[:, "DC1"],
         atol = 1e-9,
         rtol = 0,
     )
 end
-=#
 
 @testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
                                                                                (true, false)
