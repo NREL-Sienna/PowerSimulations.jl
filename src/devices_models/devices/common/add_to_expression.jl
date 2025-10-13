@@ -742,7 +742,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.ACTransmission,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
@@ -1369,7 +1369,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.ACTransmission,
     W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
@@ -1443,7 +1443,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.ACTransmission,
     W <: AbstractBranchFormulation,
     X <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
@@ -1483,7 +1483,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.ACTransmission,
     W <: AbstractBranchFormulation,
 }
     inter_network_branches = V[]
@@ -1719,12 +1719,12 @@ function _get_direction(
     direction_map::Dict{String, Int},
     network_reduction_data,
 )
-    # direction of segments from the user provided mapping: 
+    # direction of segments from the user provided mapping:
     mapping_directions = [
         _get_direction(arc_tuple, x, direction_map, network_reduction_data) for
         x in reduction_entry
     ]
-    # direction of segments relative to the reduced degree two chain: 
+    # direction of segments relative to the reduced degree two chain:
     _, segment_orientations =
         PNM._get_chain_data(arc_tuple, reduction_entry, network_reduction_data)
     segment_directions = [x == :FromTo ? 1.0 : -1.0 for x in segment_orientations]

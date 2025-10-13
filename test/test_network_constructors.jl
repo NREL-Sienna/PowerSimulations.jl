@@ -70,8 +70,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
@@ -121,8 +121,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
@@ -185,8 +185,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
@@ -280,8 +280,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PSI.FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(PSI.FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
@@ -323,8 +323,8 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     # Check for voltage and angle constraints
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
-        PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
+        PSI.ConstraintKey(FlowRateConstraintFromTo, PSY.Line),
+        PSI.ConstraintKey(FlowRateConstraintToFrom, PSY.Line),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]

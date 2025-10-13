@@ -326,7 +326,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
-    pm_variable_map[PSY.ACBranch] =
+    pm_variable_map[PSY.ACTransmission] =
         Dict(:p => (from_to = FlowActivePowerVariable(), to_from = nothing))
     pm_variable_map[PSY.TwoTerminalHVDC] =
         Dict(:p_dc => (from_to = FlowActivePowerVariable(), to_from = nothing))
@@ -338,7 +338,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle())
-    pm_variable_map[PSY.ACBranch] = Dict(:p => FlowActivePowerFromToVariable())
+    pm_variable_map[PSY.ACTransmission] = Dict(:p => FlowActivePowerFromToVariable())
     pm_variable_map[PSY.TwoTerminalHVDC] = Dict(
         :p_dc => (
             from_to = FlowActivePowerFromToVariable(),
@@ -353,7 +353,7 @@ function PMvarmap(::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_variable_map = Dict{Type, Dict{Symbol, Union{VariableType, NamedTuple}}}()
 
     pm_variable_map[PSY.ACBus] = Dict(:va => VoltageAngle(), :vm => VoltageMagnitude())
-    pm_variable_map[PSY.ACBranch] = Dict(
+    pm_variable_map[PSY.ACTransmission] = Dict(
         :p => (
             from_to = FlowActivePowerFromToVariable(),
             to_from = FlowActivePowerToFromVariable(),
@@ -434,7 +434,7 @@ function add_pm_variable_refs!(
     add_pm_variable_refs!(
         container,
         model,
-        PSY.ACBranch,
+        PSY.ACTransmission,
         ACbranch_types,
         ACbranch_dict,
         pm_variable_map,
@@ -457,7 +457,7 @@ end
 function add_pm_variable_refs!(
     container::OptimizationContainer,
     model::NetworkModel,
-    d_class::Type{PSY.ACBranch},
+    d_class::Type{PSY.ACTransmission},
     device_types::Set,
     pm_map::Dict,
     pm_variable_map::Dict,

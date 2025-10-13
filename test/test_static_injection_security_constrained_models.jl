@@ -5,8 +5,8 @@
     systems = [c_sys5]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(
             PostContingencyEmergencyRateLimitConstrain,
             PSY.ThermalStandard,

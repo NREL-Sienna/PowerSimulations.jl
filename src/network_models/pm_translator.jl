@@ -233,7 +233,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     ::Tuple{Int, Int},
-    branch::PSY.ACBranch,
+    branch::PSY.ACTransmission,
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -263,7 +263,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     ::Tuple{Int, Int},
-    branch::PSY.ACBranch,
+    branch::PSY.ACTransmission,
     ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
 )
@@ -451,7 +451,7 @@ function get_branches_to_pm(
     ::Type{T},
     branch_template::BranchModelContainer,
     start_idx = 0,
-) where {T <: PSY.ACBranch, S <: PM.AbstractPowerModel}
+) where {T <: PSY.ACTransmission, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{Tuple{Int, Int}, PM_MAP_TUPLE}()
     network_reduction_data = get_network_reduction(network_model)
@@ -553,7 +553,7 @@ function pass_to_pm(sys::PSY.System, template::ProblemTemplate, time_periods::In
     ac_lines, PMmap_ac = get_branches_to_pm(
         sys,
         get_network_model(template),
-        PSY.ACBranch,
+        PSY.ACTransmission,
         template.branches,
     )
     two_terminal_dc_lines, PMmap_dc = get_branches_to_pm(
