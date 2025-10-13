@@ -190,6 +190,7 @@ function instantiate_network_model!(
     end
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
+        model.network_reduction = PNM.get_network_reduction_data(PNM.Ybus(sys))
         _assign_subnetworks_to_buses(model, sys)
     end
     return
