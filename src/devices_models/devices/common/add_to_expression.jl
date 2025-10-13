@@ -742,7 +742,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
-    V <: PSY.ACTransmission,
+    V <: PSY.ACBranch,
     W <: AbstractDeviceFormulation,
     X <: PM.AbstractPowerModel,
 }
@@ -1369,7 +1369,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACTransmission,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
     X <: PM.AbstractActivePowerModel,
 }
@@ -1443,7 +1443,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACTransmission,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
     X <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
@@ -1483,7 +1483,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACTransmission,
+    V <: PSY.ACBranch,
     W <: AbstractBranchFormulation,
 }
     inter_network_branches = V[]
