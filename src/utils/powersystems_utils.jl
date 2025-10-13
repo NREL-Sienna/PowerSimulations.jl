@@ -44,6 +44,9 @@ function get_available_components(
     end
 end
 
+_filter_function(x::PSY.ACBus) =
+    PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED && PSY.get_available(x)
+
 function get_available_components(
     model::NetworkModel,
     ::Type{PSY.ACBus},
@@ -51,7 +54,7 @@ function get_available_components(
 )
     subsystem = get_subsystem(model)
     return PSY.get_components(
-        x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED && PSY.get_available(x),
+        _filter_function,
         PSY.ACBus,
         sys;
         subsystem_name = subsystem,
