@@ -51,7 +51,7 @@ function get_available_components(
 )
     subsystem = get_subsystem(model)
     return PSY.get_components(
-        x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
+        x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED && PSY.get_available(x),
         PSY.ACBus,
         sys;
         subsystem_name = subsystem,
