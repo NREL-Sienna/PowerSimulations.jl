@@ -428,7 +428,9 @@ function _assign_subnetworks_to_buses(
             end
         end
         if !bus_mapped
-            error("Bus $(PSY.summary(bus)) not mapped to any reference bus: Mapped bus number: $(mapped_bus_no)")
+            error(
+                "Bus $(PSY.summary(bus)) not mapped to any reference bus: Mapped bus number: $(mapped_bus_no)",
+            )
         end
     end
     return
