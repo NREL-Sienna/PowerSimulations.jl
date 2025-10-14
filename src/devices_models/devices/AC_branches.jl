@@ -412,6 +412,7 @@ function get_rating(device::T) where {T <: PSY.ACTransmission}
     return PSY.get_rating(device)
 end
 
+#TODO - TRANSFORM TO get_arc_rating()
 """
 Get Rating for ACTransmisssion components for PostContingencyEmergencyRateLimitConstraint
 """
@@ -419,7 +420,7 @@ function get_rating(
     double_circuit::Set{PSY.ACTransmission},
     T::Type{<:PostContingencyEmergencyRateLimitConstraint},
 )
-    return sum([PSY.get_rating(circuit, T) for circuit in double_circuit])
+    return sum([get_rating(circuit, T) for circuit in double_circuit])
 end
 
 """
