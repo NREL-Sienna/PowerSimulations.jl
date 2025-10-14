@@ -1414,7 +1414,7 @@ function construct_service!(
         ActivePowerReserveVariable,
         service,
         contributing_devices,
-        RangeReserve(),
+        RampReserve(),
     )
 
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
@@ -1454,6 +1454,7 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(container, RampConstraint, service, contributing_devices, model)
     add_constraints!(
         container,
         ParticipationFractionConstraint,
