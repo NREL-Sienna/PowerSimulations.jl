@@ -768,13 +768,15 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    devices::IS.FlattenIteratorWrapper{PSY.TwoTerminalGenericHVDCLine},
-    ::DeviceModel{PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
+    V <: PSY.TwoTerminalHVDC,
 }
+    # TODO: Implement topology check
     error(
         "here the check for appropriate topology needs to be done based on the network model and the network reduction",
     )
@@ -1952,11 +1954,10 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     sys::PSY.System,
-    ::NetworkModel{W},
+    ::NetworkModel{AreaBalancePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    W <: AreaBalancePowerModel,
 }
     variable = get_variable(container, U(), PSY.Area)
     expression = get_expression(container, T(), PSY.Area)
@@ -1965,7 +1966,7 @@ function add_to_expression!(
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Area, W),
+            get_variable_multiplier(U(), PSY.Area, AreaBalancePowerModel),
         )
     end
     return

@@ -12,7 +12,7 @@ const PM_BUSTYPES = Dict{PSY.ACBusTypes, Int}(
 struct PMmap
     bus::Dict{Int, PSY.ACBus}
     arcs::Dict{Tuple{Int, Int}, PM_MAP_TUPLE}
-    arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalGenericHVDCLine}
+    arcs_dc::Dict{PM_MAP_TUPLE, PSY.TwoTerminalHVDC}
 end
 
 function get_branch_to_pm(
