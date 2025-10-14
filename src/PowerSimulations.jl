@@ -37,7 +37,7 @@ export EventModel
 export ServiceModel
 export RangeReserve
 export RampReserve
-export RangeReserveWithDeliverabilityConstraints
+export RampReserveWithDeliverabilityConstraints
 export StepwiseCostReserve
 export NonSpinningReserve
 export PIDSmoothACE

@@ -84,7 +84,7 @@
             set_service_model!(template,
                 ServiceModel(
                     VariableReserve{ReserveUp},
-                    RangeReserveWithDeliverabilityConstraints,
+                    RampReserveWithDeliverabilityConstraints,
                     "Reserve1",
                 ))
 
@@ -203,7 +203,7 @@ end
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RangeReserveWithDeliverabilityConstraints,
+                RampReserveWithDeliverabilityConstraints,
                 "Reserve1",
             ))
 
@@ -323,14 +323,14 @@ end
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RangeReserveWithDeliverabilityConstraints,
+                RampReserveWithDeliverabilityConstraints,
                 "Reserve1",
             ))
 
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RangeReserveWithDeliverabilityConstraints,
+                RampReserveWithDeliverabilityConstraints,
                 "Reserve11",
             ))
 
@@ -460,13 +460,13 @@ end
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RangeReserveWithDeliverabilityConstraints,
+                RampReserveWithDeliverabilityConstraints,
                 "Reserve1_1",
             ))
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
-                RangeReserveWithDeliverabilityConstraints,
+                RampReserveWithDeliverabilityConstraints,
                 "Reserve1_2",
             ))
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
