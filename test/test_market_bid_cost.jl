@@ -463,15 +463,26 @@ function build_generic_mbc_model(sys::System;
             duals = [CopperPlateBalanceConstraint],
         ),
     )
-    if standard
-        set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
-    else
-        set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+
+    device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
+        ThermalStandard => ThermalBasicUnitCommitment,
+        ThermalMultiStart => ThermalMultiStartUnitCommitment,
+        PowerLoad => StaticPowerLoad,
+        InterruptiblePowerLoad => PowerLoadDispatch,
+        RenewableDispatch => RenewableFullDispatch,
+        HydroDispatch => HydroCommitmentRunOfRiver,
+        EnergyReservoirStorage => StorageDispatchWithReserves,
+    )
+
+    for (device, formulation) in device_to_formulation
+        if standard && device == ThermalStandard
+            set_device_model!(template, device, ThermalStandardUnitCommitment)
+        elseif multistart && device == ThermalMultiStart
+            set_device_model!(template, device, ThermalMultiStartUnitCommitment)
+        elseif !isempty(get_components(device, sys))
+            set_device_model!(template, device, formulation)
+        end
     end
-    multistart &&
-        set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
-    set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
 
     model = DecisionModel(
         template,
@@ -504,6 +515,7 @@ function run_generic_mbc_sim(
     multistart::Bool = false,
     in_memory_store::Bool = false,
     standard::Bool = false,
+    test_success = true,
 )
     model = build_generic_mbc_model(sys; multistart = multistart, standard = standard)
     models = SimulationModels(;
@@ -527,8 +539,10 @@ function run_generic_mbc_sim(
         simulation_folder = mktempdir(),
     )
 
-    build!(sim; serialize = false)
-    execute!(sim; enable_progress_bar = true, in_memory = in_memory_store)
+    test_success && @test build!(sim; serialize = false) == PSI.SimulationBuildStatus.BUILT
+    test_success &&
+        @test execute!(sim; enable_progress_bar = true, in_memory = in_memory_store) ==
+              PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     sim_res = SimulationResults(sim)
     res = get_decision_problem_results(sim_res, "UC")
@@ -1226,4 +1240,44 @@ end
 
         # TODO: Test actual values
     end
+end
+
+@testset "concavity check error" begin
+    sys = build_system(PSITestSystems, "c_sys5_il")
+    load = first(get_components(PSY.InterruptiblePowerLoad, sys))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(load))
+    non_decr_slopes = [0.13, 0.11, 0.12]  # Non-decreasing slopes (should trigger error)
+    x_coords = [0.1, 0.3, 0.6, 1.0]
+    pw_curve = PiecewiseIncrementalCurve(0.0, 0.0, x_coords, non_decr_slopes)
+    add_mbc_inner!(sys, selector; decr_curve = pw_curve)  # Fixed: pass selector, not slopes
+
+    comp = first(get_components(selector, sys))
+    @assert typeof(get_operation_cost(comp)) == PSY.MarketBidCost
+
+    model = build_generic_mbc_model(sys)
+    mkpath(test_path)
+    PSI.set_output_dir!(model, test_path)
+    msg = "ArgumentError: Decremental MarketBidCost for component $(get_name(load)) is non-concave"
+    @test_throws msg PSI.build_impl!(model)
+end
+
+@testset "InterruptibleLoad with MBC" begin
+    sys = build_system(PSITestSystems, "c_sys5_il")
+    load = first(get_components(PSY.InterruptiblePowerLoad, sys))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(load))
+    add_mbc!(sys, selector; incremental = false, decremental = true)
+    @assert typeof(get_operation_cost(load)) == PSY.MarketBidCost
+    _, res = run_generic_mbc_prob(sys)
+end
+
+@testset "InterruptibleLoad with time series MBC" begin
+    sys = build_system(PSITestSystems, "c_sys5_il")
+    load = first(get_components(PSY.InterruptiblePowerLoad, sys))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(load))
+    add_mbc!(sys, selector; incremental = false, decremental = true)
+    extend_mbc!(sys, selector)
+    op_cost = get_operation_cost(load)
+    @assert typeof(op_cost) == PSY.MarketBidCost
+    @assert typeof(get_decremental_offer_curves(op_cost)) <: PSY.TimeSeriesKey
+    _, res = run_generic_mbc_sim(sys)
 end

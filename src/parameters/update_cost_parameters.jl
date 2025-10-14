@@ -98,6 +98,7 @@ function handle_variable_cost_parameter(
         # startup needs Tuple(value), rest just value. (slight type instability)
         _set_param_value!(parameter_array, _maybe_tuple(param, value), name, t)
         update_variable_cost!(
+            param,
             container,
             parameter_array,
             parameter_multiplier,
@@ -132,6 +133,7 @@ function handle_variable_cost_parameter(
             _unwrap_for_param(T(), value, lookup_additional_axes(parameter_array))
         _set_param_value!(parameter_array, unwrapped_value, name, t)
         update_variable_cost!(
+            slope_param,
             container,
             value,  # intentionally passing the PiecewiseStepData here, not the unwrapped
             parameter_multiplier,
@@ -174,6 +176,7 @@ function handle_variable_cost_parameter(
         end
         _set_param_value!(parameter_array, value, name, t)
         update_variable_cost!(
+            FuelCostParameter(),
             container,
             parameter_array,
             parameter_multiplier,
@@ -186,15 +189,20 @@ function handle_variable_cost_parameter(
     return
 end
 
+_linear_block_param(::Type{IncrementalPiecewiseLinearSlopeParameter}) =
+    PiecewiseLinearBlockIncrementalOffer()
+_linear_block_param(::Type{DecrementalPiecewiseLinearSlopeParameter}) =
+    PiecewiseLinearBlockDecrementalOffer()
+
 function _update_pwl_cost_expression(
+    ::P,
     container::OptimizationContainer,
     ::Type{T},
     component_name::String,
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
-) where {T <: PSY.Component}
-    # TODO decremental
-    pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
+) where {P <: AbstractPiecewiseLinearSlopeParameter, T <: PSY.Component}
+    pwl_var_container = get_variable(container, _linear_block_param(P), T)
     resolution = get_resolution(container)
     dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     gen_cost = JuMP.AffExpr(0.0)
@@ -216,6 +224,7 @@ _index_into_param(cost_data, ::VariableType) = cost_data
 
 # General case
 function update_variable_cost!(
+    ::ObjectiveFunctionParameter,
     container::OptimizationContainer,
     parameter_array::DenseAxisArray{T},
     parameter_multiplier::JuMPFloatArray,
@@ -245,6 +254,7 @@ end
 
 # Special case for PiecewiseStepData
 function update_variable_cost!(
+    slope_param::AbstractPiecewiseLinearSlopeParameter,
     container::OptimizationContainer,
     function_data::PSY.PiecewiseStepData,
     parameter_multiplier::JuMPFloatArray,
@@ -255,7 +265,7 @@ function update_variable_cost!(
     component_name = PSY.get_name(component)
     # TODO handle per-tranche multiplier if necessary
     mult_ = 1.0 # parameter_multiplier[component_name, time_period, 1]
-    converted_data = get_piecewise_incrementalcurve_per_system_unit(
+    converted_data = get_piecewise_curve_per_system_unit(
         function_data,
         PSY.UnitSystem.NATURAL_UNITS,  # PSY's cost_function_timeseries.jl says this will always be natural units
         get_base_power(container),
@@ -263,6 +273,7 @@ function update_variable_cost!(
     )
     gen_cost =
         _update_pwl_cost_expression(
+            slope_param,
             container,
             T,
             component_name,
@@ -276,6 +287,7 @@ end
 
 # Special case for fuel cost
 function update_variable_cost!(
+    ::FuelCostParameter,
     container::OptimizationContainer,
     parameter_array::JuMPFloatArray,
     parameter_multiplier::JuMPFloatArray,

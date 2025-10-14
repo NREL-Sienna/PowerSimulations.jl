@@ -288,14 +288,14 @@ power units.
 Note that the costs (y-axis) are in \$/MWh, \$/(sys pu h) or \$/(device pu h), so they also
 require transformation.
 """
-function get_piecewise_incrementalcurve_per_system_unit(
+function get_piecewise_curve_per_system_unit(
     cost_component::PSY.PiecewiseStepData,
     unit_system::PSY.UnitSystem,
     system_base_power::Float64,
     device_base_power::Float64,
 )
     return PSY.PiecewiseStepData(
-        get_piecewise_incrementalcurve_per_system_unit(
+        get_piecewise_curve_per_system_unit(
             PSY.get_x_coords(cost_component),
             PSY.get_y_coords(cost_component),
             unit_system,
@@ -305,14 +305,14 @@ function get_piecewise_incrementalcurve_per_system_unit(
     )
 end
 
-function get_piecewise_incrementalcurve_per_system_unit(
+function get_piecewise_curve_per_system_unit(
     x_coords::AbstractVector,
     y_coords::AbstractVector,
     unit_system::PSY.UnitSystem,
     system_base_power::Float64,
     device_base_power::Float64,
 )
-    return _get_piecewise_incrementalcurve_per_system_unit(
+    return _get_piecewise_curve_per_system_unit(
         x_coords,
         y_coords,
         Val{unit_system}(),
@@ -321,7 +321,7 @@ function get_piecewise_incrementalcurve_per_system_unit(
     )
 end
 
-function _get_piecewise_incrementalcurve_per_system_unit(
+function _get_piecewise_curve_per_system_unit(
     x_coords::AbstractVector,
     y_coords::AbstractVector,
     ::Val{PSY.UnitSystem.SYSTEM_BASE},
@@ -331,7 +331,7 @@ function _get_piecewise_incrementalcurve_per_system_unit(
     return x_coords, y_coords
 end
 
-function _get_piecewise_incrementalcurve_per_system_unit(
+function _get_piecewise_curve_per_system_unit(
     x_coords::AbstractVector,
     y_coords::AbstractVector,
     ::Val{PSY.UnitSystem.DEVICE_BASE},
@@ -344,7 +344,7 @@ function _get_piecewise_incrementalcurve_per_system_unit(
     return x_coords_normalized, y_coords_normalized
 end
 
-function _get_piecewise_incrementalcurve_per_system_unit(
+function _get_piecewise_curve_per_system_unit(
     x_coords::AbstractVector,
     y_coords::AbstractVector,
     ::Val{PSY.UnitSystem.NATURAL_UNITS},

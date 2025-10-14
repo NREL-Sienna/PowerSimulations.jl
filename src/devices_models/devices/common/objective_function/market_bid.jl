@@ -74,6 +74,10 @@ _has_market_bid_cost(device::PSY.StaticInjection) =
 
 _has_market_bid_cost(::PSY.RenewableNonDispatch) = false
 
+_has_market_bid_cost(::PSY.PowerLoad) = false # PowerLoads don't even have operation cost.
+_has_market_bid_cost(device::PSY.InterruptiblePowerLoad) =
+    PSY.get_operation_cost(device) isa PSY.MarketBidCost
+
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 
@@ -333,12 +337,13 @@ end
 "Validate MarketBidCosts and add the appropriate parameters"
 function process_market_bid_parameters!(
     container::OptimizationContainer,
-    devices,
+    devices_in,
     model::DeviceModel,
     incremental::Bool = true,
     decremental::Bool = false,
 )
-    devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
+    devices = filter(_has_market_bid_cost, collect(devices_in))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
+    isempty(devices) && return
     for param in (
         StartupCostParameter(),
         ShutdownCostParameter(),
@@ -616,7 +621,7 @@ function _get_pwl_data(
         unit_system = PSY.get_power_units(cost_data)
     end
 
-    breakpoints, slopes = get_piecewise_incrementalcurve_per_system_unit(
+    breakpoints, slopes = get_piecewise_curve_per_system_unit(
         breakpoint_cost_component,
         slope_cost_component,
         unit_system,
@@ -705,7 +710,7 @@ function _add_pwl_term!(
     power_units = PSY.get_power_units(cost_data)
     cost_component = PSY.get_function_data(value_curve)
     device_base_power = PSY.get_base_power(component)
-    data = get_piecewise_incrementalcurve_per_system_unit(
+    data = get_piecewise_curve_per_system_unit(
         cost_component,
         power_units,
         base_power,
@@ -766,7 +771,7 @@ function _add_variable_cost_to_objective!(
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     add_pwl_term!(
-        false, # I suspect this is a problem. could very well be decremental, storage
+        false,
         container,
         component,
         cost_function,
@@ -840,6 +845,7 @@ end
 
 function _add_service_bid_cost!(::OptimizationContainer, ::PSY.Component, ::PSY.Service) end
 
+# "copy-paste and change incremental to decremental" here. Refactor?
 function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -873,6 +879,11 @@ function _add_vom_cost_to_objective!(
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
     decremental_cost_curves = get_input_offer_curves(op_cost)
+    if is_time_variant(decremental_cost_curves)
+        # TODO this might imply a change to the MBC struct?
+        @warn "Decremental curves are time variant, there is no VOM cost source. Skipping VOM cost."
+        return
+    end
     _add_vom_cost_to_objective_helper!(
         container,
         T(),
