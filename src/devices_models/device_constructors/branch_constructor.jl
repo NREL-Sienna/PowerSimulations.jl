@@ -1106,6 +1106,312 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLoss},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(model, sys)
+
+    #####################
+    ##### Variables #####
+    #####################
+    V = HVDCTwoTerminalVSCLoss
+    # Add Power Variable
+    add_variables!(container, HVDCActiveDCPowerSentFromVariable, devices, V()) # p_c^{ac,from}
+    add_variables!(container, HVDCActiveDCPowerSentToVariable, devices, V()) # p_c^{ac,from}
+    add_variables!(container, ConverterPowerDirection, devices, V()) #κ
+    # Add Voltage Variables: v_dc, v^sq, δ^v, z^v
+    add_variables!(container, DCVoltageFrom, devices, V()) # v_dc^{from}
+    add_variables!(container, DCVoltageTo, devices, V()) # v_dc^{from}
+    add_variables!(container, SquaredDCVoltageFrom, devices, V()) # v_dc^{sq, from}
+    add_variables!(container, SquaredDCVoltageTo, devices, V()) # # v_dc^{sq, to}
+
+    # Add Current Variables: i, δ^i, z^i, i+, i-
+    add_variables!(container, ConverterCurrent, devices, V()) # i
+    add_variables!(container, SquaredConverterCurrent, devices, V()) # i^sq
+    # Losses
+    add_variables!(container, ConverterPositiveCurrent, devices, V()) # i^+
+    add_variables!(container, ConverterNegativeCurrent, devices, V()) # i^- 
+    add_variables!(container, ConverterCurrentDirection, devices, V())
+    add_variables!(container, HVDCLosses, devices, V())
+
+    # Add Bilinear Variables: γ, γ^{sq}
+    add_variables!(
+        container,
+        AuxBilinearConverterVariableFrom,
+        devices,
+        V(),
+    ) # γ^{from}
+    add_variables!(
+        container,
+        AuxBilinearSquaredConverterVariableFrom,
+        devices,
+        V(),
+    ) # γ^{sq,from}
+    add_variables!(
+        container,
+        AuxBilinearConverterVariableTo,
+        devices,
+        V(),
+    ) # γ^{to}
+    add_variables!(
+        container,
+        AuxBilinearSquaredConverterVariableTo,
+        devices,
+        V(),
+    ) # γ^{sq,to}
+    _add_sparse_pwl_interpolation_variables!(container, devices, model)
+
+    #####################
+    #### Expressions ####
+    #####################
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        devices,
+        model,
+    )
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        devices,
+        model,
+    )
+
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCActiveDCPowerSentFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCActiveDCPowerSentToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
+
+    # HVDCActivePowerReceivedFromVariable: DC Power Received on From Bus
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActiveDCPowerSentFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    # HVDCActivePowerReceivedToVariable: DC Power Received on To Bus
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActiveDCPowerSentToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
+    # TODO: Add losses to balance expression to get full AC
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLoss},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices = get_available_components(model, sys)
+    # TODO Constraints
+    add_constraints!(
+        container,
+        ConverterPowerCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterDirectionConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterCurrentBalanceConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterMcCormickEnvelopes,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationVoltageConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationCurrentConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationBilinearConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        CurrentAbsoluteValueConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ConverterLossesCalculationConstraint,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+#### VSC Bilinear ###
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLossBilinear},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    devices = get_available_components(model, sys)
+
+    #####################
+    ##### Variables #####
+    #####################
+    V = HVDCTwoTerminalVSCLossBilinear
+    # Add Power Variable
+    add_variables!(container, HVDCActiveDCPowerSentFromVariable, devices, V()) # p_c^{dc,from}
+    add_variables!(container, HVDCActiveDCPowerSentToVariable, devices, V()) # p_c^{dc,to}
+    # Add Reactive Power Variable
+    add_variables!(container, HVDCReactivePowerSentFromVariable, devices, V()) # q_c^{from}
+    add_variables!(container, HVDCReactivePowerSentToVariable, devices, V()) # q_c^{to}
+    # Add Voltage Variables: v_dc
+    add_variables!(container, DCVoltageFrom, devices, V()) # v_dc^{from}
+    add_variables!(container, DCVoltageTo, devices, V()) # v_dc^{to}
+
+    # Add Current Variables: i
+    add_variables!(container, ConverterCurrent, devices, V()) # i
+    # Losses
+    add_variables!(container, HVDCLosses, devices, V())
+
+    #####################
+    #### Expressions ####
+    #####################
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        devices,
+        model,
+    )
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        devices,
+        model,
+    )
+
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCActiveDCPowerSentFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCActiveDCPowerSentToVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCLosses,
+        devices,
+        model,
+        network_model,
+    )
+
+    # HVDCActivePowerSentFromVariable: DC Power Received on From Bus
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActiveDCPowerSentFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    # HVDCActivePowerSentToVariable: DC Power Received on To Bus
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActiveDCPowerSentToVariable,
     model::DeviceModel{T, HVDCTwoTerminalLCC},
     network_model::NetworkModel{<:PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
@@ -1227,11 +1533,18 @@ function construct_device!(
     add_to_expression!(
         container,
         ActivePowerBalance,
+        HVDCLosses,
         HVDCActivePowerReceivedToVariable,
         devices,
         model,
         network_model,
     )
+
+    # HVDCReactivePowerSentFromVariable: Reactive power sent on From Bus
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        HVDCReactivePowerSentFromVariable,
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1240,6 +1553,11 @@ function construct_device!(
         model,
         network_model,
     )
+    # HVDCReactivePowerSentToVariable: Reactive power sent on To Bus
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        HVDCReactivePowerSentToVariable,
     add_to_expression!(
         container,
         ReactivePowerBalance,
@@ -1257,6 +1575,14 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLossBilinear},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    devices = get_available_components(model, sys)
+    # TODO Constraints
+    add_constraints!(
+        container,
+        ConverterACPowerCalculationConstraint,
     model::DeviceModel{T, HVDCTwoTerminalLCC},
     network_model::NetworkModel{<:PM.ACPPowerModel},
 ) where {T <: PSY.TwoTerminalLCCLine}
@@ -1270,6 +1596,7 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        ConverterCurrentBalanceConstraint,
         HVDCInverterDCLineVoltageConstraint,
         devices,
         model,
@@ -1277,6 +1604,7 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        ConverterLossesCalculationConstraint,
         HVDCRectifierOverlapAngleConstraint,
         devices,
         model,
@@ -1284,11 +1612,80 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        FlowApparentPowerLimitConstraint,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+###### VSC Quadratic #######
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLossQuadratic},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    devices = get_available_components(model, sys)
+
+    #####################
+    ##### Variables #####
+    #####################
+    V = HVDCTwoTerminalVSCLossQuadratic
+    # Add Power Variable
+    add_variables!(container, HVDCActiveDCPowerSentFromVariable, devices, V()) # p_c^{dc,from}
+    add_variables!(container, HVDCActiveDCPowerSentToVariable, devices, V()) # p_c^{dc,to}
+    # Add Reactive Power Variable
+    add_variables!(container, HVDCReactivePowerSentFromVariable, devices, V()) # q_c^{from}
+    add_variables!(container, HVDCReactivePowerSentToVariable, devices, V()) # q_c^{to}
+    # Losses
+    add_variables!(container, HVDCLosses, devices, V())
+
+    #####################
+    #### Expressions ####
+    #####################
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        devices,
+        model,
+    )
+    add_expressions!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        devices,
+        model,
+    )
+
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerFromExpression,
+        HVDCActiveDCPowerSentFromVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReceivedHVDCActivePowerToExpression,
+        HVDCActiveDCPowerSentToVariable,
         HVDCInverterOverlapAngleConstraint,
         devices,
         model,
         network_model,
     )
+
+    # HVDCActivePowerSentFromVariable: DC Power Received on From Bus
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActiveDCPowerSentFromVariable,
     add_constraints!(
         container,
         HVDCRectifierPowerFactorAngleConstraint,
@@ -1296,6 +1693,10 @@ function construct_device!(
         model,
         network_model,
     )
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        HVDCActiveDCPowerSentToVariable,
     add_constraints!(
         container,
         HVDCInverterPowerFactorAngleConstraint,
@@ -1303,6 +1704,12 @@ function construct_device!(
         model,
         network_model,
     )
+
+    # HVDCReactivePowerSentFromVariable: Reactive power sent on From Bus
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        HVDCReactivePowerSentFromVariable,
     add_constraints!(
         container,
         HVDCRectifierACCurrentFlowConstraint,
@@ -1310,6 +1717,11 @@ function construct_device!(
         model,
         network_model,
     )
+    # HVDCReactivePowerSentToVariable: Reactive power sent on To Bus
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        HVDCReactivePowerSentToVariable,
     add_constraints!(
         container,
         HVDCInverterACCurrentFlowConstraint,
@@ -1317,6 +1729,24 @@ function construct_device!(
         model,
         network_model,
     )
+
+    # TODO: Add losses to balance expression to get full AC
+    add_feedforward_arguments!(container, model, devices)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.TwoTerminalVSCLine, HVDCTwoTerminalVSCLossQuadratic},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    devices = get_available_components(model, sys)
+
+    add_constraints!(
+        container,
+        ConverterLossesCalculationConstraint,
     add_constraints!(
         container,
         HVDCRectifierPowerCalculationConstraint,
@@ -1326,6 +1756,7 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        FlowApparentPowerLimitConstraint,
         HVDCInverterPowerCalculationConstraint,
         devices,
         model,
@@ -1333,11 +1764,16 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        ConverterPowerBalanceConstraint,
         HVDCTransmissionDCLineConstraint,
         devices,
         model,
         network_model,
     )
+
+    add_feedforward_constraints!(container, model, devices)
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_constraint_dual!(container, sys, model)
     return
 end
 

@@ -470,6 +470,7 @@ v_d^i = v_d^r - R_d I_d
 struct HVDCTransmissionDCLineConstraint <: ConstraintType end
 
 abstract type PowerVariableLimitsConstraint <: ConstraintType end
+
 """
 Struct to create the constraint to limit active power input expressions.
 For more information check [Device Formulations](@ref formulation_intro).
@@ -598,5 +599,192 @@ struct ImportExportBudgetConstraint <: ConstraintType end
 struct LineFlowBoundConstraint <: ConstraintType end
 
 abstract type EventConstraint <: ConstraintType end
+struct OutageConstraint <: EventConstraint end
+
+################ HVDC VSC McCormick Model ##################
+
+"""
+Struct to create the constraints that set the losses through a lossy Interconnecting Power Converter.
+
+The specified constraint is formulated as:
+```math
+\\begin{align*}
+& i_c^{dc} = \\sum_{j \\in \\mathcal{B}^{DC}} \\frac{1}{r_{i,j}} (v_i - v_j), \\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
+struct ConverterCurrentBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that compute the converter DC power based on current and voltage.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c = 0.5 \\cdot (γ^{sq} - v^{sq} - i^{sq}), \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& γ_c = v_c + i_c, \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterPowerCalculationConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that decide the operation direction of the converter.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& I_c^{min} (1 - κ_c) \\le i_c \\le κ_c * I_c^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& P_c^{min} (1 - κ_c) \\le p_c \\le κ_c * P_c^{max}, \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterDirectionConstraint <: ConstraintType end
+
+"""
+Struct to create the McCormick envelopes constraints that decide the bounds on the DC active power.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c \\ge V^{min} i_c + v_c I^{min} - I^{min}V^{min},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c \\ge V^{max} i_c + v_c I^{max} - I^{max}V^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c \\le V^{max} i_c + v_c I^{min} - I^{min}V^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c \\le V^{min} i_c + v_c I^{max} - I^{max}V^{min},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterMcCormickEnvelopes <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the voltage.
+In this case x = voltage and y = squared_voltage.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& x = x_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& y = y_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& z_k \\le \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+& z_k \\ge \\delta_{k+1},  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationVoltageConstraints <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the current.
+In this case x = current and y = squared_current.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& x = x_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& y = y_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& z_k \\le \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+& z_k \\ge \\delta_{k+1},  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationCurrentConstraints <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the bilinear variable γ.
+In this case x = γ and y = squared_γ.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& x = x_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& y = y_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& z_k \\le \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+& z_k \\ge \\delta_{k+1},  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationBilinearConstraints <: ConstraintType end
+
+"""
+Struct to create the constraints that set the absolute value for the current to use in losses through a lossy Interconnecting Power Converter.
+
+The specified constraint is formulated as:
+```math
+\\begin{align*}
+& i_c^{dc} = i_c^+ - i_c^-, \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
+& i_c^+ \\le I_{max} \\cdot \\nu_c,  \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
+& i_c^+ \\le I_{max} \\cdot (1 - \\nu_c),  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+\\end{align*}
+```
+"""
+struct CurrentAbsoluteValueConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that set the losses for the converter to use in losses through a lossy Interconnecting Power Converter.
+
+The specified constraint for the bilinear model is formulated as:
+```math
+\\begin{align*}
+& p_c^{loss} = a_c + b_c |i_c| + c_c i_c^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+\\end{align*}
+```
+
+For the quadratic model is formulated as:
+```math
+\\begin{align*}
+& p_c^{loss} = a_c + b_c |p_c^{from}| + c_c (p_c^{from})^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+\\end{align*}
+```
+"""
+struct ConverterLossesCalculationConstraint <: ConstraintType end
+
+################ HVDC VSC AC Bilinear Model ##################
+
+"""
+Struct to create the constraints that compute the converter DC power based on current and voltage.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c = v_c \\cdot i_c, \\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
+struct ConverterACPowerCalculationConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that decide the operation direction of the converter.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c * i_c \\ge 0.0,  \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct ConverterACDirectionConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that decide the flow apparent power limits to the VSC Line.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c^2 + q_c^2 \\le rating^2,  \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct FlowApparentPowerLimitConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that balance the DC Power to the VSC Line.
+
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c^{from} = - p_c^{to} - p_c^{loss}, \\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct ConverterPowerBalanceConstraint <: ConstraintType end
 struct ActivePowerOutageConstraint <: EventConstraint end
 struct ReactivePowerOutageConstraint <: EventConstraint end
