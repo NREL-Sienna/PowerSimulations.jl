@@ -1579,18 +1579,6 @@ function construct_service!(
         network_model,
     )
 
-    #ADD RAMPING CONSTRAINTS
-    add_constraints!(
-        container,
-        sys,
-        PostContingencyRampConstraint,
-        PostContingencyActivePowerReserveDeploymentVariable,
-        contributing_devices,
-        model,
-        network_model;
-        service = service,
-    )
-
     return
 end
 
