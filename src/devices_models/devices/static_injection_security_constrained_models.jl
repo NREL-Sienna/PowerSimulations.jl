@@ -602,7 +602,7 @@ function add_to_expression!(
             time_steps)
 
     reserve_deployment_variable = get_variable(container, U(), V)
-    mult = _get_variable_multiplier(U(), V, W())
+    mult_default = _get_variable_multiplier(U(), V, W())
 
     for outage in associated_outages
         associated_devices =
@@ -612,6 +612,8 @@ function add_to_expression!(
         for device in devices
             if device in associated_devices #The contributting device cannot contribute to the reserves deployment if it has the outage
                 mult = 0.0
+            else
+                mult = mult_default
             end
 
             name = PSY.get_name(device)
@@ -709,7 +711,7 @@ function add_to_expression!(
     )
 
     postcontingency_variable = get_variable(container, U(), V)
-    mult = _get_variable_multiplier(U(), V, W())
+    mult_default = _get_variable_multiplier(U(), V, W())
     network_reduction = get_network_reduction(network_model)
 
     for outage in associated_outages
@@ -720,6 +722,8 @@ function add_to_expression!(
         for device in devices
             if device in associated_devices #The contributing device cannot contribute to the power deployment if it has the outage
                 mult = 0.0
+            else
+                mult = mult_default
             end
             name = PSY.get_name(device)
             bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(device))
@@ -1875,7 +1879,7 @@ function add_to_expression!(
     )
 
     reserve_deployment_variable = get_variable(container, U(), R, service_name)
-    mult = get_variable_multiplier(U(), R, F())
+    mult_default = get_variable_multiplier(U(), R, F())
 
     for outage in associated_outages
         associated_devices =
@@ -1888,6 +1892,8 @@ function add_to_expression!(
 
             if device in associated_devices #The contributting device cannot contribute to the reserves deployment if it has the outage
                 mult = 0.0
+            else
+                mult = mult_default
             end
 
             for t in time_steps
@@ -1938,8 +1944,7 @@ function add_to_expression!(
     )
 
     reserve_deployment_variable = get_variable(container, U(), R, service_name)
-    mult = get_variable_multiplier(U(), R, F())
-
+    mult_default = get_variable_multiplier(U(), R, F())
     network_reduction = get_network_reduction(network_model)
 
     for outage in associated_outages
@@ -1950,8 +1955,9 @@ function add_to_expression!(
         for device in contributing_devices
             if device in associated_devices
                 mult = 0.0
+            else
+                mult = mult_default
             end
-
             name = PSY.get_name(device)
             bus_number = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(device))
 
