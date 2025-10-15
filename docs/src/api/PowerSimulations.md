@@ -313,7 +313,6 @@ FlowRateConstraintFromTo
 FlowRateConstraintToFrom
 HVDCPowerBalance
 NetworkFlowConstraint
-RateLimitConstraint
 PhaseAngleControlLimit
 ```
 

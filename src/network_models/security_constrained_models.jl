@@ -2,7 +2,7 @@
 Min and max limits for post-contingency branch flows for Abstract Branch Formulation and SecurityConstrainedPTDF Network formulation
 """
 function get_min_max_limits(
-    branch::PSY.ACBranch,
+    branch::PSY.ACTransmission,
     ::Type{<:PostContingencyEmergencyRateLimitConstrain},
     ::Type{<:AbstractBranchFormulation},
     ::NetworkModel{<:AbstractPTDFModel},

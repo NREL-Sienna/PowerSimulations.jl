@@ -88,10 +88,10 @@ end
 
 @testset "DC Power Flow Models for TwoTerminalGenericHVDCLine  with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
-        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
-        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, Transformer2W, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, Transformer2W, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TapTransformer, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, TapTransformer, "lb"),
     ]
 
     system = PSB.build_system(PSITestSystems, "c_sys14_dc")
@@ -458,12 +458,12 @@ end
 
 @testset "DC Power Flow Models for TwoTerminalGenericHVDCLine  Dispatch and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "ub"),
-        PSI.ConstraintKey(RateLimitConstraint, Line, "ub"),
-        PSI.ConstraintKey(RateLimitConstraint, Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "ub"),
-        PSI.ConstraintKey(RateLimitConstraint, Transformer2W, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, TapTransformer, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, Transformer2W, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TapTransformer, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, Transformer2W, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, TapTransformer, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "ub"),
         PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "lb"),
     ]
@@ -586,10 +586,10 @@ end
 
 @testset "AC Power Flow Models for TwoTerminalGenericHVDCLine  Flow Constraints and TapTransformer & Transformer2W Unbounded" begin
     ratelimit_constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraintFromTo, Transformer2W),
-        PSI.ConstraintKey(RateLimitConstraintToFrom, Transformer2W),
-        PSI.ConstraintKey(RateLimitConstraintFromTo, TapTransformer),
-        PSI.ConstraintKey(RateLimitConstraintToFrom, TapTransformer),
+        PSI.ConstraintKey(FlowRateConstraintFromTo, Transformer2W),
+        PSI.ConstraintKey(FlowRateConstraintToFrom, Transformer2W),
+        PSI.ConstraintKey(FlowRateConstraintFromTo, TapTransformer),
+        PSI.ConstraintKey(FlowRateConstraintToFrom, TapTransformer),
         PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "ub"),
         PSI.ConstraintKey(FlowRateConstraint, TwoTerminalGenericHVDCLine, "lb"),
     ]

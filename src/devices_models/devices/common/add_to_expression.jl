@@ -768,13 +768,15 @@ function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    devices::IS.FlattenIteratorWrapper{PSY.TwoTerminalGenericHVDCLine},
-    ::DeviceModel{PSY.TwoTerminalGenericHVDCLine, HVDCTwoTerminalDispatch},
+    devices::IS.FlattenIteratorWrapper{V},
+    ::DeviceModel{V, HVDCTwoTerminalDispatch},
     network_model::NetworkModel{AreaBalancePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
+    V <: PSY.TwoTerminalHVDC,
 }
+    # TODO: Implement topology check
     error(
         "here the check for appropriate topology needs to be done based on the network model and the network reduction",
     )
@@ -1719,12 +1721,12 @@ function _get_direction(
     direction_map::Dict{String, Int},
     network_reduction_data,
 )
-    # direction of segments from the user provided mapping: 
+    # direction of segments from the user provided mapping:
     mapping_directions = [
         _get_direction(arc_tuple, x, direction_map, network_reduction_data) for
         x in reduction_entry
     ]
-    # direction of segments relative to the reduced degree two chain: 
+    # direction of segments relative to the reduced degree two chain:
     _, segment_orientations =
         PNM._get_chain_data(arc_tuple, reduction_entry, network_reduction_data)
     segment_directions = [x == :FromTo ? 1.0 : -1.0 for x in segment_orientations]
@@ -1952,11 +1954,10 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     sys::PSY.System,
-    ::NetworkModel{W},
+    ::NetworkModel{AreaBalancePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-    W <: AreaBalancePowerModel,
 }
     variable = get_variable(container, U(), PSY.Area)
     expression = get_expression(container, T(), PSY.Area)
@@ -1965,7 +1966,7 @@ function add_to_expression!(
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.Area, W),
+            get_variable_multiplier(U(), PSY.Area, AreaBalancePowerModel),
         )
     end
     return
