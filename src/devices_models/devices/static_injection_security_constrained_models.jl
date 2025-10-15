@@ -1393,6 +1393,211 @@ function add_variables!(
     return
 end
 
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, F},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {SR <: PSY.AbstractReserve,
+    F <: ContingencyReserveWithDeliverabilityConstraints}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    
+    contributing_devices = get_contributing_devices(model)
+    has_requirement_ts =
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter)
+    if has_requirement_ts
+        add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+        add_variables!(
+            container,
+            ActivePowerReserveVariable,
+            service,
+            contributing_devices,
+            RampReserve(),
+        )
+        add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    end
+    
+    add_feedforward_arguments!(container, model, service)
+
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    if isempty(associated_outages)
+        @error "No associated outage supplemental attributes found for service $SR('$name') which is required for formulation $F. Remember to attach the same outage instance to the generator and the reserve product."
+        return
+    end
+
+    add_variables!(
+        container,
+        sys,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        service,
+        contributing_devices,
+        F(),
+    )
+
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, F},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {SR <: PSY.AbstractReserve,
+    F <: ContingencyReserveWithDeliverabilityConstraints}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    contributing_devices = get_contributing_devices(model)
+    
+    has_requirement_ts =
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter)
+    if has_requirement_ts
+        add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+        #add_constraints!(container, RampConstraint, service, contributing_devices, model) #TODO implement function for this formulation
+        objective_function!(container, service, model)
+    end
+
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
+
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    if isempty(associated_outages)
+        @error "No associated outage supplemental attributes found for service: $SR('$name') which is required for formulation $F. Remember to attach the same outage instance to the generator and the reserve product"
+        return
+    end
+
+    
+    # Consider if the expressions are needed or just create the constraint
+    add_to_expression!(#common
+        container,
+        sys,
+        PostContingencyActivePowerBalance,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    attribute_device_map = PSY.get_component_supplemental_attribute_pairs(
+        PSY.Generator,
+        PSY.UnplannedOutage,
+        sys,
+    )
+
+    add_to_expression!(#common
+        container,
+        PostContingencyActivePowerBalance,
+        ActivePowerVariable,
+        attribute_device_map,
+        service,
+        model,
+        network_model,
+    )
+
+    add_to_expression!(#common
+        container,
+        sys,
+        PostContingencyNodalActivePowerDeployment,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    add_to_expression!(#common
+        container,
+        PostContingencyNodalActivePowerDeployment,
+        ActivePowerVariable,
+        attribute_device_map,
+        service,
+        model,
+        network_model,
+    )
+
+    # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
+    add_to_expression!(#common
+        container,
+        sys,
+        PostContingencyBranchFlow,
+        FlowActivePowerVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    add_to_expression!(#common
+        container,
+        sys,
+        PostContingencyBranchFlow,
+        PostContingencyNodalActivePowerDeployment,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    
+
+    add_constraints!(#common
+        container,
+        PostContingencyGenerationBalanceConstraint,
+        PostContingencyActivePowerBalance,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    add_constraints!(#common
+        container,
+        PostContingencyEmergencyRateLimitConstraint,
+        PostContingencyBranchFlow,
+        PSY.get_available_components(PSY.ACTransmission, sys),
+        service,
+        model,
+        network_model,
+    )
+
+    if has_requirement_ts
+        add_constraints!(
+            container,
+            sys,
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            ActivePowerReserveVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            service,
+            model,
+            network_model,
+        )
+    else
+    end
+
+    return
+end
+
+
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,

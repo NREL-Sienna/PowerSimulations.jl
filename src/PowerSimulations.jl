@@ -38,6 +38,7 @@ export ServiceModel
 export RangeReserve
 export RampReserve
 export RampReserveWithDeliverabilityConstraints
+export ContingencyReserveWithDeliverabilityConstraints
 export StepwiseCostReserve
 export NonSpinningReserve
 export PIDSmoothACE
