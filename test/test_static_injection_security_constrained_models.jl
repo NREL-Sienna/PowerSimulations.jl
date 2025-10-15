@@ -29,10 +29,16 @@
                 PostContingencyEmergencyRateLimitConstraint,
                 PSY.VariableReserve{ReserveUp},
                 "Reserve1 -ub",
-            ), PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+            ),
+            PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
             PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
             PSI.ConstraintKey(
                 RequirementConstraint,
+                PSY.VariableReserve{ReserveUp},
+                "Reserve1",
+            ),
+            PSI.ConstraintKey(
+                RampConstraint,
                 PSY.VariableReserve{ReserveUp},
                 "Reserve1",
             ),
@@ -46,17 +52,12 @@
                 PSY.VariableReserve{ReserveUp},
                 "Reserve1",
             ),
-            PSI.ConstraintKey(
-                PostContingencyRampConstraint,
-                PSY.VariableReserve{ReserveUp},
-                "Reserve1",
-            ),
         ]
         PTDF_ref = IdDict{System, PTDF}(
             c_sys5 => PTDF(c_sys5),
         )
         test_results = IdDict{System, Vector{Int}}(
-            c_sys5 => [504, 0, 552, 432, 216],
+            c_sys5 => [504, 0, 600, 432, 216],
         )
         test_obj_values = IdDict{System, Float64}(
             c_sys5 => 329000.0,
@@ -65,6 +66,8 @@
             c_sys5 => ["Alta"],
         )
         for (ix, sys) in enumerate(systems)
+            gen = get_component(ThermalStandard, sys, "Solitude")
+            set_ramp_limits!(gen, (up = 0.4, down = 0.4)) #Increase ramp limits to make the problem feasible
             components_outages_names = components_outages_cases[sys]
             for component_name in components_outages_names
                 # --- Create Outage Data ---
@@ -140,10 +143,16 @@ end
             PostContingencyEmergencyRateLimitConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1 -ub",
-        ), PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        ),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(
             RequirementConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1",
         ),
@@ -154,11 +163,6 @@ end
         ),
         PSI.ConstraintKey(
             PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
-            PSY.VariableReserve{ReserveUp},
-            "Reserve1",
-        ),
-        PSI.ConstraintKey(
-            PostContingencyRampConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1",
         ),
@@ -256,6 +260,16 @@ end
             "Reserve11",
         ),
         PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve11",
+        ),
+        PSI.ConstraintKey(
             PostContingencyGenerationBalanceConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1",
@@ -274,18 +288,13 @@ end
             PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve11",
-        ),
-        PSI.ConstraintKey(
-            PostContingencyRampConstraint,
-            PSY.VariableReserve{ReserveUp},
-            "Reserve1",
         ),
     ]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [1104, 0, 1200, 600, 384],
+        c_sys5 => [1104, 0, 1296, 600, 384],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 254242.0,
@@ -397,6 +406,16 @@ end
             "Reserve1_2",
         ),
         PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
             PostContingencyGenerationBalanceConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1_1",
@@ -413,16 +432,6 @@ end
         ),
         PSI.ConstraintKey(
             PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
-            PSY.VariableReserve{ReserveUp},
-            "Reserve1_2",
-        ),
-        PSI.ConstraintKey(
-            PostContingencyRampConstraint,
-            PSY.VariableReserve{ReserveUp},
-            "Reserve1_1",
-        ),
-        PSI.ConstraintKey(
-            PostContingencyRampConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1_2",
         ),
@@ -431,7 +440,7 @@ end
         c_sys5_2area => PTDF(c_sys5_2area),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [1032, 0, 1392, 1200, 456],
+        c_sys5_2area => [1032, 0, 1536, 1200, 456],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5_2area => 497000.0,
