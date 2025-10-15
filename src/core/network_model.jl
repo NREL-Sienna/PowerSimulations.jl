@@ -193,6 +193,7 @@ function instantiate_network_model!(
         model.network_reduction = PNM.get_network_reduction_data(PNM.Ybus(sys))
         _assign_subnetworks_to_buses(model, sys)
     end
+    PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
