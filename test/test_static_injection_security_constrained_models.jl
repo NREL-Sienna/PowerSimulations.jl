@@ -185,12 +185,7 @@ end
             gen = get_component(ThermalStandard, sys, "Solitude")
             set_ramp_limits!(gen, (up = 0.4, down = 0.4)) #Increase ramp limits to make the problem feasible
             reserve_up = get_component(VariableReserve{ReserveUp}, sys, "Reserve1")
-            # remove_time_series!(
-            #     sys,
-            #     Deterministic,
-            #     reserve_up,
-            #     "requirement",
-            # )
+            
             components_outages_names = components_outages_cases[sys]
             for component_name in components_outages_names
                 # --- Create Outage Data ---
@@ -272,20 +267,19 @@ end
             PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
             PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
             PSI.ConstraintKey(
-                RequirementConstraint,
-                PSY.VariableReserve{ReserveUp},
-                "Reserve1",
-            ),
-            
-            PSI.ConstraintKey(
                 PostContingencyGenerationBalanceConstraint,
                 PSY.VariableReserve{ReserveUp},
                 "Reserve1",
             ),
             PSI.ConstraintKey(
-                PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+                PostContingencyActivePowerGenerationLimitsConstraint,
                 PSY.VariableReserve{ReserveUp},
-                "Reserve1",
+                "Reserve1 -lb",
+            ),
+            PSI.ConstraintKey(
+                PostContingencyActivePowerGenerationLimitsConstraint,
+                PSY.VariableReserve{ReserveUp},
+                "Reserve1 -ub",
             ),
         ]
         PTDF_ref = IdDict{System, PTDF}(
