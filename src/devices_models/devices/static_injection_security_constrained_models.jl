@@ -1397,7 +1397,6 @@ function add_variables!(
     return
 end
 
-
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -1411,10 +1410,11 @@ function construct_service!(
     name = get_service_name(model)
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
-    
+
     contributing_devices = get_contributing_devices(model)
     has_requirement_ts =
-        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) && length(PSY.get_time_series_keys(service)) > 0
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) &&
+        length(PSY.get_time_series_keys(service)) > 0
     if has_requirement_ts
         add_parameters!(container, RequirementTimeSeriesParameter, service, model)
         add_variables!(
@@ -1426,7 +1426,7 @@ function construct_service!(
         )
         add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     end
-    
+
     add_feedforward_arguments!(container, model, service)
 
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
@@ -1463,9 +1463,16 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     has_requirement_ts =
-        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) && length(PSY.get_time_series_keys(service)) > 0
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) &&
+        length(PSY.get_time_series_keys(service)) > 0
     if has_requirement_ts
-        add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+        add_constraints!(
+            container,
+            RequirementConstraint,
+            service,
+            contributing_devices,
+            model,
+        )
         add_constraints!(container, RampConstraint, service, contributing_devices, model)
         objective_function!(container, service, model)
     end
@@ -1618,7 +1625,6 @@ function construct_service!(
     return
 end
 
-
 function add_to_expression!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -1691,7 +1697,6 @@ function add_to_expression!(
     return
 end
 
-
 """
 Add post-contingency rate limit constraints for Generators for G-1 formulation
 """
@@ -1716,7 +1721,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
-    
+
     con_lb =
         add_constraints_container!(
             container,
@@ -1740,7 +1745,7 @@ function add_constraints!(
         )
 
     expressions = get_expression(container, U(), R, service_name)
-    
+
     for device in contributing_devices
         device_name = get_name(device)
 
@@ -1780,12 +1785,9 @@ function add_constraints!(
             end
         end
     end
-    
+
     return
 end
-
-
-
 
 function construct_service!(
     container::OptimizationContainer,

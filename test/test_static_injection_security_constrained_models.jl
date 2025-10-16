@@ -112,11 +112,10 @@
     end
 end
 
-
 @testset "G-n with contingency reserves deliverability constraints including responding reserves only up, reserve requirement, and reduction of parallel circuits" begin
     for add_parallel_line in [true, false]
         c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-        
+
         if add_parallel_line
             l4 = get_component(Line, c_sys5, "4")
             add_parallel_ac_transmission!(c_sys5, l4, PSY.Line)
@@ -185,7 +184,7 @@ end
             gen = get_component(ThermalStandard, sys, "Solitude")
             set_ramp_limits!(gen, (up = 0.4, down = 0.4)) #Increase ramp limits to make the problem feasible
             reserve_up = get_component(VariableReserve{ReserveUp}, sys, "Reserve1")
-            
+
             components_outages_names = components_outages_cases[sys]
             for component_name in components_outages_names
                 # --- Create Outage Data ---
@@ -229,12 +228,10 @@ end
     end
 end
 
-
-
 @testset "G-n with contingency reserves deliverability constraints including responding reserves only up, NO reserve requirement, and reduction of parallel circuits" begin
     for add_parallel_line in [true, false]
         c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
-        
+
         if add_parallel_line
             l4 = get_component(Line, c_sys5, "4")
             add_parallel_ac_transmission!(c_sys5, l4, PSY.Line)
@@ -346,8 +343,6 @@ end
         end
     end
 end
-
-
 
 @testset "Test if G-n with reserves deliverability constraints builds when there is a device without set_device_model!()" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
