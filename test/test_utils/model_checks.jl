@@ -34,7 +34,6 @@ function psi_constraint_test(
         if get(constraints, con, nothing) !== nothing
             @test true
         else
-            @show con
             @error con
             @test false
         end
