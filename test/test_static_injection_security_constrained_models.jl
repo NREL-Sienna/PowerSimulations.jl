@@ -69,6 +69,7 @@
             gen = get_component(ThermalStandard, sys, "Solitude")
             set_ramp_limits!(gen, (up = 0.4, down = 0.4)) #Increase ramp limits to make the problem feasible
             components_outages_names = components_outages_cases[sys]
+            reserve_up = get_component(VariableReserve{ReserveUp}, sys, "Reserve1")
             for component_name in components_outages_names
                 # --- Create Outage Data ---
                 transition_data = GeometricDistributionForcedOutage(;
@@ -78,7 +79,6 @@
                 # --- Add Outage Supplemental attribute to device and services that should respond ---
                 component = get_component(ThermalStandard, sys, component_name)
                 add_supplemental_attribute!(sys, component, transition_data)
-                reserve_up = get_component(VariableReserve{ReserveUp}, sys, "Reserve1")
                 add_supplemental_attribute!(sys, reserve_up, transition_data)
             end
             template = get_thermal_dispatch_template_network(
@@ -108,6 +108,11 @@
                 test_obj_values[sys],
                 10000,
             )
+            res = OptimizationProblemResults(ps_model)
+            compare_outage_power_and_deployed_reserves(
+                sys,
+                res,
+                reserve_up)
         end
     end
 end
