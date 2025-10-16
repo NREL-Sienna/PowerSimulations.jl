@@ -521,7 +521,7 @@ in its most basic formulation is of the form:
 P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
 ```
 """
-struct PostContingencyActivePowerVariableLimitsConstraint <:
+struct PostContingencyActivePowerGenerationLimitsConstraint <:
        PostContingencyVariableLimitsConstraint end
 
 """

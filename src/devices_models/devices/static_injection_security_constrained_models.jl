@@ -236,7 +236,7 @@ function construct_device!(
     add_constraints!(
         container,
         sys,
-        PostContingencyActivePowerVariableLimitsConstraint,
+        PostContingencyActivePowerGenerationLimitsConstraint,
         PostContingencyActivePowerGeneration,
         devices,
         model,
@@ -421,7 +421,7 @@ function add_constraints!(
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: PostContingencyActivePowerVariableLimitsConstraint,
+    T <: PostContingencyActivePowerGenerationLimitsConstraint,
     U <: PostContingencyActivePowerGeneration,
     V <: PSY.Generator,
     W <: AbstractSecurityConstrainedUnitCommitment,
@@ -1414,7 +1414,7 @@ function construct_service!(
     
     contributing_devices = get_contributing_devices(model)
     has_requirement_ts =
-        haskey(get_time_series_names(model), RequirementTimeSeriesParameter)
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) && length(PSY.get_time_series_keys(service)) > 0
     if has_requirement_ts
         add_parameters!(container, RequirementTimeSeriesParameter, service, model)
         add_variables!(
@@ -1461,12 +1461,12 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
-    
+
     has_requirement_ts =
-        haskey(get_time_series_names(model), RequirementTimeSeriesParameter)
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) && length(PSY.get_time_series_keys(service)) > 0
     if has_requirement_ts
         add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-        #add_constraints!(container, RampConstraint, service, contributing_devices, model) #TODO implement function for this formulation
+        add_constraints!(container, RampConstraint, service, contributing_devices, model)
         objective_function!(container, service, model)
     end
 
@@ -1488,8 +1488,6 @@ function construct_service!(
         return
     end
 
-    
-    # Consider if the expressions are needed or just create the constraint
     add_to_expression!(#common
         container,
         sys,
@@ -1596,10 +1594,199 @@ function construct_service!(
             network_model,
         )
     else
+        add_to_expression!(
+            container,
+            sys,
+            PostContingencyActivePowerGeneration,
+            ActivePowerVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            service,
+            model,
+            network_model,
+        )
+        add_constraints!(
+            container,
+            sys,
+            PostContingencyActivePowerGenerationLimitsConstraint,
+            PostContingencyActivePowerGeneration,
+            contributing_devices,
+            service,
+            model,
+            network_model,
+        )
     end
 
     return
 end
+
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    ::Type{D},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyActivePowerGeneration,
+    U <: ActivePowerVariable,
+    D <: PostContingencyActivePowerReserveDeploymentVariable,
+    V <: PSY.Generator,
+    R <: PSY.AbstractReserve,
+    F <: ContingencyReserveWithDeliverabilityConstraints,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+    expression = lazy_container_addition!(
+        container,
+        T(),
+        R,
+        string.(IS.get_uuid.(associated_outages)),
+        PSY.get_name.(contributing_devices),
+        time_steps;
+        meta = service_name,
+    )
+
+    variable_generator = get_variable(container, U(), V)
+    reserve_deployment_variable = get_variable(container, D(), R, service_name)
+
+    for generator in contributing_devices
+        variable_generator = get_variable(container, U(), typeof(generator))
+        generator_name = get_name(generator)
+
+        for outage in associated_outages
+            associated_devices =
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = PSY.Generator,
+                )
+
+            generator_is_in_associated_devices = generator in associated_devices
+
+            outage_id = string(IS.get_uuid(outage))
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expression[outage_id, generator_name, t],
+                    variable_generator[generator_name, t],
+                    1.0,
+                )
+                if generator_is_in_associated_devices
+                    continue
+                end
+                _add_to_jump_expression!(
+                    expression[outage_id, generator_name, t],
+                    reserve_deployment_variable[outage_id, generator_name, t],
+                    1.0,
+                )
+            end
+        end
+    end
+    return
+end
+
+
+"""
+Add post-contingency rate limit constraints for Generators for G-1 formulation
+"""
+
+function add_constraints!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyActivePowerGenerationLimitsConstraint,
+    U <: PostContingencyActivePowerGeneration,
+    V <: PSY.Generator,
+    R <: PSY.AbstractReserve,
+    F <: ContingencyReserveWithDeliverabilityConstraints,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    
+    con_lb =
+        add_constraints_container!(
+            container,
+            T(),
+            R,
+            string.(IS.get_uuid.(associated_outages)),
+            PSY.get_name.(contributing_devices),
+            time_steps;
+            meta = "$service_name -lb",
+        )
+
+    con_ub =
+        add_constraints_container!(
+            container,
+            T(),
+            R,
+            string.(IS.get_uuid.(associated_outages)),
+            PSY.get_name.(contributing_devices),
+            time_steps;
+            meta = "$service_name -ub",
+        )
+
+    expressions = get_expression(container, U(), R, service_name)
+    
+    for device in contributing_devices
+        device_name = get_name(device)
+
+        for outage in associated_outages
+            associated_devices =
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = PSY.Generator,
+                )
+
+            generator_is_in_associated_devices = device in associated_devices
+
+            outage_id = string(IS.get_uuid(outage))
+
+            limits = PSY.get_active_power_limits(device)
+
+            for t in time_steps
+                #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
+                if generator_is_in_associated_devices
+                    con_ub[outage_id, device_name, t] =
+                        JuMP.@constraint(get_jump_model(container),
+                            expressions[outage_id, device_name, t] == 0.0)
+                    con_lb[outage_id, device_name, t] =
+                        JuMP.@constraint(get_jump_model(container),
+                            expressions[outage_id, device_name, t] == 0.0)
+                    continue
+                end
+                con_ub[outage_id, device_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[outage_id, device_name, t] <=
+                        limits.max)
+                con_lb[outage_id, device_name, t] =
+                    JuMP.@constraint(get_jump_model(container),
+                        expressions[outage_id, device_name, t] >=
+                        limits.min)
+            end
+        end
+    end
+    
+    return
+end
+
+
 
 
 function construct_service!(
