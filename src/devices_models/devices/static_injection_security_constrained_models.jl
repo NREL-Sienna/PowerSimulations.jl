@@ -1070,11 +1070,10 @@ function add_constraints!(
         )
     expressions = get_expression(container, U(), R, "")
     for ac_type in ac_transmission_types
-        !(ac_type in network_model.modeled_branch_types) && continue
+        !(ac_type ∈ modeled_branch_types) && continue
         for map in NETWORK_REDUCTION_MAPS
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, ac_type) && continue
-            #!haskey(network_model.modeled_branch_types, ac_type) && continue
             for (_, reduction_entry) in network_reduction_map[ac_type]
                 limits =
                     get_min_max_limits(reduction_entry, T, StaticBranch)
@@ -2530,7 +2529,7 @@ function add_constraints!(
         )
     expressions = get_expression(container, U(), R, service_name)
     for ac_type in ac_transmission_types
-        !(ac_type in network_model.modeled_branch_types) && continue
+        !(ac_type in modeled_branch_types) && continue
         for map in NETWORK_REDUCTION_MAPS
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, ac_type) && continue
