@@ -1488,7 +1488,7 @@ function construct_service!(
         return
     end
 
-    add_to_expression!(#common
+    add_to_expression!(
         container,
         sys,
         PostContingencyActivePowerBalance,
@@ -1505,7 +1505,7 @@ function construct_service!(
         sys,
     )
 
-    add_to_expression!(#common
+    add_to_expression!(
         container,
         PostContingencyActivePowerBalance,
         ActivePowerVariable,
@@ -1515,7 +1515,7 @@ function construct_service!(
         network_model,
     )
 
-    add_to_expression!(#common
+    add_to_expression!(
         container,
         sys,
         PostContingencyNodalActivePowerDeployment,
@@ -1526,7 +1526,7 @@ function construct_service!(
         network_model,
     )
 
-    add_to_expression!(#common
+    add_to_expression!(
         container,
         PostContingencyNodalActivePowerDeployment,
         ActivePowerVariable,
@@ -1537,7 +1537,7 @@ function construct_service!(
     )
 
     # #ADD EXPRESSION TO CALCULATE POST CONTINGENCY FLOW FOR EACH Branch
-    add_to_expression!(#common
+    add_to_expression!(
         container,
         sys,
         PostContingencyBranchFlow,
@@ -1559,9 +1559,7 @@ function construct_service!(
         network_model,
     )
 
-    
-
-    add_constraints!(#common
+    add_constraints!(
         container,
         PostContingencyGenerationBalanceConstraint,
         PostContingencyActivePowerBalance,
@@ -1571,7 +1569,7 @@ function construct_service!(
         network_model,
     )
 
-    add_constraints!(#common
+    add_constraints!(
         container,
         PostContingencyEmergencyRateLimitConstraint,
         PostContingencyBranchFlow,
@@ -1676,7 +1674,7 @@ function add_to_expression!(
             for t in time_steps
                 _add_to_jump_expression!(
                     expression[outage_id, generator_name, t],
-                    variable_generator[generator_name, t],
+                    reserve_deployment_variable[outage_id, generator_name, t],
                     1.0,
                 )
                 if generator_is_in_associated_devices
@@ -1684,7 +1682,7 @@ function add_to_expression!(
                 end
                 _add_to_jump_expression!(
                     expression[outage_id, generator_name, t],
-                    reserve_deployment_variable[outage_id, generator_name, t],
+                    variable_generator[generator_name, t],
                     1.0,
                 )
             end
