@@ -47,7 +47,10 @@
 
     # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
     @test isapprox(
-        data.bus_activepower_injection[data.bus_lookup[get_number(get_to(arc))], :] *
+        data.bus_activepower_injection[
+            PowerFlows.get_bus_lookup(data)[get_number(get_to(arc))],
+            :,
+        ] *
         base_power,
         filter(row -> row[:name] == get_name(line), phase_results)[!, :value],
         atol = 1e-9,
@@ -266,7 +269,8 @@ end
         table_format = TableFormat.WIDE,
     )
     @test isapprox(
-        data.bus_activepower_injection[data.bus_lookup[get_number(to)], :] * base_power,
+        data.bus_activepower_injection[PowerFlows.get_bus_lookup(data)[get_number(to)], :] *
+        base_power,
         hvdc_from_to[:, "DC1"],
         atol = 1e-9,
         rtol = 0,
