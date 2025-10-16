@@ -550,9 +550,6 @@ function add_to_expression!(
             time_steps)
 
     for (device, outage) in generator_outages_pairs
-        # if !(outage in associated_outages)
-        #     continue
-        # end
 
         outage_id = string(IS.get_uuid(outage))
         name = PSY.get_name(device)
