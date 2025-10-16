@@ -335,7 +335,6 @@ function construct_device!(
     network_reduction = get_network_reduction(network_model)
     branches_names = PNM.get_retained_branches_names(network_reduction)
 
-    # TODO: Security constrained. This method might not be needed. Analyze why is here
     branches = get_available_components(
         b -> PSY.get_name(b) in branches_names,
         PSY.ACTransmission,

@@ -38,7 +38,6 @@ function add_to_expression!(
         branch_name = get_name(branch)
 
         for (branch_outage, outage) in associated_outages_pairs
-            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
             if branch_outage == branch
                 continue
             end
@@ -120,7 +119,6 @@ function add_constraints!(
         )
 
         for (branch_outage, outage) in associated_outages_pairs
-            #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE LINE RESPECT TO ITSELF?
             if branch == branch_outage
                 continue
             end

@@ -481,7 +481,6 @@ function add_constraints!(
             )
 
             for t in time_steps
-                #TODO HOW WE SHOULD HANDLE THE EXPRESSIONS AND CONSTRAINTS RELATED TO THE OUTAGE OF THE GENERATOR RESPECT TO ITSELF?
                 if generator_is_in_associated_devices
                     con_ub[outage_id, device_name, t] =
                         JuMP.@constraint(get_jump_model(container),
@@ -511,7 +510,7 @@ _get_variable_multiplier(
     _::ActivePowerVariable,
     ::Type{<:PSY.Generator},
     ::AbstractSecurityConstrainedUnitCommitment,
-) = -1.0 #"_" avoids ambiguity
+) = -1.0
 _get_variable_multiplier(
     _::PostContingencyActivePowerChangeVariable,
     ::Type{<:PSY.Generator},

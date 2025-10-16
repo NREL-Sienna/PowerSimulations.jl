@@ -77,10 +77,10 @@ end
 function _search_for_reduced_branch_expression(
     reduction_tracker::BranchReductionOptimizationTracker,
     series_chain::Vector{Any},
-    component_key_1::Type{U},
-    component_key_2::String,
-    expression_key_1::Type{T},
-    expression_key_2::Int,
+    component_type::Type{U},
+    component_name::String,
+    expression_type::Type{T},
+    expression_stage::Int,
     t::Int,
 ) where {
     T <: PostContingencyExpressions,
@@ -94,8 +94,8 @@ function _search_for_reduced_branch_expression(
             if _has_keys_nested(
                 reduced_branch_expression_tracker,
                 [
-                    (component_key_1, component_key_2),
-                    (expression_key_1, expression_key_2),
+                    (component_type, component_name),
+                    (expression_type, expression_stage),
                     first(segment_names),
                     t,
                 ],
@@ -159,11 +159,11 @@ end
 function _add_expression_to_tracker!(
     ::BranchReductionOptimizationTracker,
     ::JuMP.AffExpr,
-    reduction_entry::PSY.ACTransmission,
-    component_key_1::Type{U},
-    component_key_2::String,
-    expression_key_1::Type{T},
-    expression_key_2::Int,
+    ::PSY.ACTransmission,
+    ::Type{U},
+    ::String,
+    ::Type{T},
+    ::Int,
     t::Int,
 ) where {
     T <: PostContingencyExpressions,
@@ -175,11 +175,11 @@ end
 function _add_expression_to_tracker!(
     ::BranchReductionOptimizationTracker,
     ::JuMP.AffExpr,
-    reduction_entry::Set{PSY.ACTransmission},
-    component_key_1::Type{U},
-    component_key_2::String,
-    expression_key_1::Type{T},
-    expression_key_2::Int,
+    ::Set{PSY.ACTransmission},
+    ::Type{U},
+    ::String,
+    ::Type{T},
+    ::Int,
     t::Int,
 ) where {
     T <: PostContingencyExpressions,
@@ -192,10 +192,10 @@ function _add_expression_to_tracker!(
     reduction_tracker::BranchReductionOptimizationTracker,
     expression::JuMP.AffExpr,
     reduction_entry::Vector{Any},
-    component_key_1::Type{U},
-    component_key_2::String,
-    expression_key_1::Type{T},
-    expression_key_2::Int,
+    component_type::Type{U},
+    component_name::String,
+    expression_type::Type{T},
+    expression_stage::Int,
     t::Int,
 ) where {
     T <: PostContingencyExpressions,
@@ -207,10 +207,10 @@ function _add_expression_to_tracker!(
             _add_to_expression_tracker!(
                 reduction_tracker,
                 expression,
-                component_key_1,
-                component_key_2,
-                expression_key_1,
-                expression_key_2,
+                component_type,
+                component_name,
+                expression_type,
+                expression_stage,
                 segment_name,
                 t,
             )
@@ -222,10 +222,10 @@ end
 function _add_to_expression_tracker!(
     reduction_tracker::BranchReductionOptimizationTracker,
     expression::JuMP.AffExpr,
-    component_key_1::Type{U},
-    component_key_2::String,
-    expression_key_1::Type{T},
-    expression_key_2::Int,
+    component_type::Type{U},
+    component_name::String,
+    expression_type::Type{T},
+    expression_stage::Int,
     segment_name::String,
     t::Int,
 ) where {
@@ -235,7 +235,7 @@ function _add_to_expression_tracker!(
     reduced_branch_expression_tracker = get_expression_dict(reduction_tracker)
     level_1_map = get!(
         reduced_branch_expression_tracker,
-        (component_key_1, component_key_2),
+        (component_type, component_name),
         Dict{
             Tuple{Type{<:ISOPT.ExpressionType}, Int},
             Dict{String, Dict{Int, JuMP.AffExpr}},
@@ -244,7 +244,7 @@ function _add_to_expression_tracker!(
     level_2_map =
         get!(
             level_1_map,
-            (expression_key_1, expression_key_2),
+            (expression_type, expression_stage),
             Dict{String, Dict{Int, JuMP.AffExpr}}(),
         )
     level_3_map = get!(level_2_map, segment_name, Dict{Int, JuMP.AffExpr}())
@@ -375,7 +375,7 @@ function get_branch_name_variable_axis(nrd::PNM.NetworkReductionData)
     name_axis = Vector{String}()
     for T in ac_transmission_types
         names_by_type = get_branch_name_variable_axis(all_branch_maps_by_type, T)
-        name_axis = vcat(name_axis, names_by_type) # TODO change implementation to avoid repeated concatonating  
+        name_axis = vcat(name_axis, names_by_type) # TODO change implementation to avoid repeated concatenating - Matt
     end
     return name_axis
 end
