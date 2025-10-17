@@ -14,6 +14,18 @@ Auxiliary Variable for Thermal Generation Models that solve for power above min
 struct PowerOutput <: AuxVariableType end
 
 """
+Auxiliary Variable of DC Current Variables for DC Lines formulations
+Docs abbreviation: ``i_l^{dc}``
+"""
+struct DCLineCurrent <: AuxVariableType end
+
+"""
+Auxiliary Variable of DC Current Variables for DC Lines formulations
+Docs abbreviation: ``p_l^{loss}``
+"""
+struct DCLineLosses <: AuxVariableType end
+
+"""
 Auxiliary Variables that are calculated using a `PowerFlowEvaluationModel`
 """
 abstract type PowerFlowAuxVariableType <: AuxVariableType end
