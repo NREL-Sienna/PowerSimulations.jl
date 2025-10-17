@@ -852,16 +852,19 @@ function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
         [only(@combine(df, :total = sum(:value)).total) for df in values(ground_truth_2)]
     ground_truth_diff = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
 
+    # An assumption in this line of testing is that our perturbations are small enough that
+    # they don't actually change the decisions, just slightly alter the cost. If this assert
+    # triggers, that assumption is likely violated.
+    @assert isapprox(total1, total2; atol = 10, rtol = 0.01) "total1 ($total1) and total2 ($total2) are supposed to differ, but they differ by an improbably large amount ($ground_truth_diff) -- the perturbations are likely affecting the decisions"
+
     obj1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
     obj2 = PSI.read_optimizer_stats(res2)[!, "objective_value"]
     obj_diff = obj2 .- obj1
 
     # Make sure there is some real difference between the two scenarios
-    # TODO MBC
-    #@assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))
+    @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))  # Always passes on 3273dda on my machine -GKS
     # Make sure the difference is reflected correctly in the objective value
-    # TODO MBC
-    #@test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
+    @test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))  # Always passes on my machine as of the commit that adds this message -GKS
 end
 
 """
@@ -1002,15 +1005,19 @@ approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
 end
 
 @testset "MarketBidCost with time series startup and shutdown, ThermalMultiStart" begin
+    # The arguments to create_multistart_sys were tuned empirically to ensure (a) the
+    # behavior under test is exercised and (b) the small perturbations to the costs aren't
+    # enough to change the decisions that form the correct solution
+
     # Scenario 1: hot and warm starts
-    c_sys5_pglib0a = create_multistart_sys(false, 1.0, 7.5; add_ts = false)
-    c_sys5_pglib1a = create_multistart_sys(false, 1.0, 7.5)
-    c_sys5_pglib2a = create_multistart_sys(true, 1.0, 7.5)
+    c_sys5_pglib0a = create_multistart_sys(false, 1.0, 7.4; add_ts = false)
+    c_sys5_pglib1a = create_multistart_sys(false, 1.0, 7.4)
+    c_sys5_pglib2a = create_multistart_sys(true, 1.0, 7.4)
 
     # Scenario 2: hot and cold starts
-    c_sys5_pglib0b = create_multistart_sys(false, 1.05, 7.5; add_ts = false)
-    c_sys5_pglib1b = create_multistart_sys(false, 1.05, 7.5)
-    c_sys5_pglib2b = create_multistart_sys(true, 1.05, 7.5)
+    c_sys5_pglib0b = create_multistart_sys(false, 1.05, 7.4; add_ts = false)
+    c_sys5_pglib1b = create_multistart_sys(false, 1.05, 7.4)
+    c_sys5_pglib2b = create_multistart_sys(true, 1.05, 7.4)
 
     test_generic_mbc_equivalence(c_sys5_pglib0a, c_sys5_pglib1a; multistart = true)
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
@@ -1023,8 +1030,7 @@ end
             multistart = true,
             simulation = use_simulation,
         )
-        # TODO MBC
-        # @test all(isapprox.(decisions1, decisions2))
+        @test all(isapprox.(decisions1, decisions2))  # Always passes on my machine as of the commit that adds this message -GKS
         # NOTE not all of the decision types here have >= 1, we'll do another scenario such that we get full decision coverage across both of them:
 
         (decisions1_2, decisions2_2) = run_startup_shutdown_obj_fun_test(
@@ -1035,8 +1041,7 @@ end
         )
         @test all(isapprox.(decisions1_2, decisions2_2))
         # Make sure our tests included all types of startups and shutdowns
-        # TODO MBC
-        #@test all(approx_geq_1.(decisions1 .+ decisions1_2))
+        @test all(approx_geq_1.(decisions1 .+ decisions1_2))  # Always passes on my machine as of the commit that adds this message -GKS
     end
 end
 
