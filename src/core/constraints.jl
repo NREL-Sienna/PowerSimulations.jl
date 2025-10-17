@@ -567,7 +567,6 @@ abstract type EventConstraint <: ConstraintType end
 struct ActivePowerOutageConstraint <: EventConstraint end
 struct ReactivePowerOutageConstraint <: EventConstraint end
 
-
 ############################################################
 ########## Multi-Terminal Converter Constraints ############
 ############################################################

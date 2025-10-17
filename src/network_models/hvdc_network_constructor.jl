@@ -18,7 +18,13 @@ function construct_hvdc_network!(
     dc_buses = get_available_components(transmission_model, PSY.DCBus, sys)
     @assert !isempty(dc_buses) "No DC buses found in the system. Consider adding DC Buses or removing HVDC network model."
 
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, transmission_model, hvdc_model)
+    add_constraints!(
+        container,
+        NodalBalanceActiveConstraint,
+        sys,
+        transmission_model,
+        hvdc_model,
+    )
     # TODO: duals
     #add_constraint_dual!(container, sys, hvdc_model)
     return
@@ -35,7 +41,13 @@ function construct_hvdc_network!(
     @assert !isempty(dc_buses) "No DC buses found in the system."
     add_variables!(container, DCVoltage, dc_buses, hvdc_model)
 
-    add_constraints!(container, NodalBalanceCurrentConstraint, sys, transmission_model, hvdc_model)
+    add_constraints!(
+        container,
+        NodalBalanceCurrentConstraint,
+        sys,
+        transmission_model,
+        hvdc_model,
+    )
     # TODO: duals
     #add_constraint_dual!(container, sys, hvdc_model)
     return

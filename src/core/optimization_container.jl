@@ -738,7 +738,6 @@ function build_impl!(
     transmission_model = get_network_model(template)
     hvdc_model = get_hvdc_network_model(template)
 
-
     initialize_system_expressions!(
         container,
         get_network_model(template),
@@ -746,7 +745,6 @@ function build_impl!(
         sys,
         transmission_model.network_reduction.bus_reduction_map)
 
-    
     initialize_hvdc_system_expressions!(
         container,
         transmission_model,

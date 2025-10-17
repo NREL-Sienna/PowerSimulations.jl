@@ -118,7 +118,7 @@ Sets the network model in a template.
 function set_hvdc_network_model!(
     template::ProblemTemplate,
     model::Type{U},
-) where U <: AbstractHVDCNetworkModel
+) where {U <: AbstractHVDCNetworkModel}
     set_hvdc_network_model!(template.network_model, model())
     return
 end

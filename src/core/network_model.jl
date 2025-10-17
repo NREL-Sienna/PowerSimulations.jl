@@ -119,7 +119,6 @@ has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
 get_subsystem(m::NetworkModel) = m.subsystem
 get_hvdc_network_model(m::NetworkModel) = m.hvdc_network_model
 
-
 set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
 set_hvdc_network_model!(m::NetworkModel, val::AbstractHVDCNetworkModel) =
     m.hvdc_network_model = val

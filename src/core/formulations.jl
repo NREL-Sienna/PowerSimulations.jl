@@ -181,7 +181,6 @@ LossLess InterconnectingConverter Model
 """
 struct LossLessConverter <: AbstractConverterFormulation end
 
-
 """
 Linear Loss InterconnectingConverter Model
 """
@@ -280,7 +279,6 @@ import PowerModels: QCRMPowerModel
 
 import PowerModels: QCLSPowerModel
 
-
 ############################## HVDC Network Model Formulations ##################################
 abstract type AbstractHVDCNetworkModel end
 
@@ -292,8 +290,6 @@ struct TransportHVDCNetworkModel <: AbstractHVDCNetworkModel end
 DC Voltage HVDC network model, where currents are solved based on DC voltage difference between DC buses
 """
 struct VoltageDispatchHVDCNetworkModel <: AbstractHVDCNetworkModel end
-
-
 
 """
 Abstract type for Service Formulations (a.k.a Models)
