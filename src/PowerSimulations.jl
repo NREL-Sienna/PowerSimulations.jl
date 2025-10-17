@@ -26,6 +26,10 @@ export AreaPTDFPowerModel
 export SecurityConstrainedPTDFPowerModel
 export SecurityConstrainedAreaPTDFPowerModel
 
+# HVDC Network Relevant exports
+export TransportHVDCNetworkModel
+export VoltageDispatchHVDCNetworkModel
+
 ######## Device Models ########
 export DeviceModel
 export FixedOutput
@@ -678,6 +682,7 @@ include("devices_models/device_constructors/source_constructor.jl")
 
 # Network constructors
 include("network_models/network_constructor.jl")
+include("network_models/hvdc_network_constructor.jl")
 
 # Templates for Operation Problems
 include("operation/operation_problem_templates.jl")
