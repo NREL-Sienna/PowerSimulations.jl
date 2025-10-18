@@ -62,6 +62,7 @@ export PhaseAngleControl
 ######## HVDC models ########
 export LossLessConverter
 export LossLessLine
+export DCLossyLine
 ######## Load Models ########
 export StaticPowerLoad
 export PowerLoadInterruption
@@ -138,6 +139,8 @@ export set_device_model!
 export set_service_model!
 export set_network_model!
 export get_network_formulation
+export get_hvdc_network_model
+export set_hvdc_network_model!
 ## Results interfaces
 export SimulationResultsExport
 export export_results
@@ -254,6 +257,8 @@ export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 export PostContingencyActivePowerChangeVariable
 export PostContingencyActivePowerReserveDeploymentVariable
+export DCVoltage
+export DCLineCurrent
 
 # Auxiliary variables
 export TimeDurationOn
@@ -331,6 +336,8 @@ export PostContingencyRampConstraint
 export ImportExportBudgetConstraint
 export PiecewiseLinearBlockIncrementalOfferConstraint
 export PiecewiseLinearBlockDecrementalOfferConstraint
+export NodalBalanceCurrentConstraint
+export DCLineCurrentConstraint
 
 # Parameters
 # Time Series Parameters
@@ -378,6 +385,7 @@ export PostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
 export PostContingencyActivePowerBalance
 export NetActivePower
+export DCCurrentBalance
 
 #################################################################################
 # Imports
