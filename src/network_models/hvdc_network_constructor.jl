@@ -39,7 +39,7 @@ function construct_hvdc_network!(
 ) where {T <: PM.AbstractPowerModel}
     dc_buses = get_available_components(transmission_model, PSY.DCBus, sys)
     @assert !isempty(dc_buses) "No DC buses found in the system."
-    add_variables!(container, DCVoltage, dc_buses, hvdc_model)
+    add_variable!(container, DCVoltage(), dc_buses, hvdc_model)
 
     add_constraints!(
         container,
