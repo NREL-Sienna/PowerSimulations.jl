@@ -570,6 +570,15 @@ struct ReactivePowerOutageConstraint <: EventConstraint end
 ############################################################
 ########## Multi-Terminal Converter Constraints ############
 ############################################################
+"""
+Struct to create the constraints that set the current flowing through a DC line.
+```math
+\\begin{align*}
+& i_l^{dc} = \\frac{1}{r_l} (v_{from,l} - v_{to,l}), \\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
+struct DCLineCurrentConstraint <: ConstraintType end
 
 struct NodalBalanceCurrentConstraint <: ConstraintType end
 
