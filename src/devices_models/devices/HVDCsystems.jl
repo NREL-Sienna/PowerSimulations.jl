@@ -42,9 +42,28 @@ end
 
 
 get_variable_binary(::FlowActivePowerVariable, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = false
+get_variable_binary(::DCLineCurrent, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = false
 get_variable_warm_start_value(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_active_power_flow(d)
 get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[1]
 get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[2]
+# This is an approximation for DC lines since the actual current limit depends on the voltage, that is a variable in the optimization problem
+function get_variable_lower_bound(::DCLineCurrent, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation)
+    p_min_flow = _get_flow_bounds(d)[1]
+    arc = PSY.get_arc(d)
+    bus_from = arc.from
+    bus_to = arc.to
+    max_v = max(PSY.get_magnitude(bus_from), PSY.get_magnitude(bus_to))
+    return p_min_flow / max_v
+end
+# This is an approximation for DC lines since the actual current limit depends on the voltage, that is a variable in the optimization problem
+function get_variable_upper_bound(::DCLineCurrent, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation)
+    p_max_flow = _get_flow_bounds(d)[2]
+    arc = PSY.get_arc(d)
+    bus_from = arc.from
+    bus_to = arc.to
+    max_v = max(PSY.get_magnitude(bus_from), PSY.get_magnitude(bus_to))
+    return p_max_flow / max_v
+end
 get_variable_multiplier(_, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = 1.0
 
 requires_initialization(::AbstractConverterFormulation) = false
@@ -93,6 +112,10 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 
+############################################
+############## Expressions #################
+############################################
+
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -101,10 +124,10 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
-    T <: ActivePowerBalance,
-    U <: FlowActivePowerVariable,
+    T <: Union{ActivePowerBalance, DCCurrentBalance},
+    U <: Union{FlowActivePowerVariable, DCLineCurrent},
     V <: PSY.TModelHVDCLine,
-    W <: LossLessLine,
+    W <: Union{LossLessLine, DCLossyLine},
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
@@ -367,6 +390,57 @@ function add_to_expression!(
 
     return
 end
+
+############################################
+############## Constraints #################
+############################################
+
+function add_constraints!(
+        container::OptimizationContainer,
+        ::Type{DCLineCurrentConstraint},
+        devices::IS.FlattenIteratorWrapper{T},
+        model::DeviceModel{T, U},
+        network_model::NetworkModel{V},
+    ) where {T <: PSY.TModelHVDCLine, U <: DCLossyLine, V <: PM.AbstractPowerModel}
+    variable = get_variable(container, DCLineCurrent(), T)
+    dc_voltage = get_variable(container, DCVoltage(), PSY.DCBus)
+    time_steps = get_time_steps(container)
+    constraints = add_constraints_container!(
+        container,
+        DCLineCurrentConstraint(),
+        T,
+        PSY.get_name.(devices),
+        time_steps,
+    )
+
+    for d in devices
+        arc = PSY.get_arc(d)
+        from_bus_name = PSY.get_name(arc.from)
+        to_bus_name = PSY.get_name(arc.to)
+        name = PSY.get_name(d)
+        r = PSY.get_r(d)
+        if iszero(r)
+            for t in time_steps
+                constraints[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    dc_voltage[from_bus_name, t] == dc_voltage[to_bus_name, t]
+                )
+            end
+        else
+            for t in get_time_steps(container)
+                constraints[name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    variable[name, t] == (dc_voltage[from_bus_name, t] - dc_voltage[to_bus_name, t]) / r
+                )
+            end
+        end
+    end
+    return
+end
+
+############################################
+########### Objective Function #############
+############################################
 
 function objective_function!(
     ::OptimizationContainer,
