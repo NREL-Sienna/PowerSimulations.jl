@@ -15,12 +15,6 @@ struct PowerOutput <: AuxVariableType end
 
 """
 Auxiliary Variable of DC Current Variables for DC Lines formulations
-Docs abbreviation: ``i_l^{dc}``
-"""
-struct DCLineCurrent <: AuxVariableType end
-
-"""
-Auxiliary Variable of DC Current Variables for DC Lines formulations
 Docs abbreviation: ``p_l^{loss}``
 """
 struct DCLineLosses <: AuxVariableType end

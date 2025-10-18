@@ -179,6 +179,12 @@ struct VoltageAngle <: VariableType end
 #########################################
 
 """
+Struct to dispatch the variable of DC Current Variables for DC Lines formulations
+Docs abbreviation: ``i_l^{dc}``
+"""
+struct DCLineCurrent <: VariableType end
+
+"""
 Struct to dispatch the creation of Voltage Variables for DC formulations
 Docs abbreviation: ``v^{dc}``
 """
