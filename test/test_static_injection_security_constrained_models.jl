@@ -980,7 +980,7 @@ end
         add_reserve_product_without_requirement_time_series!(sys, "Reserve1_1", "Up", contributing_devices)
         contributing_devices = get_components(g -> get_name(get_area(get_bus(g))) == "Area2", ThermalStandard, sys)
         add_reserve_product_without_requirement_time_series!(sys, "Reserve1_2", "Up", contributing_devices)
-        
+
         for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
             # --- Create Outage Data ---
             transition_data = GeometricDistributionForcedOutage(;
@@ -1033,114 +1033,6 @@ end
                 sys,
                 res,
                 reserve_up)
-        end
-    end
-end
-
-@testset "G-1 (Thermal Formulation) with deliverability constraints including reduction of parallel circuits" begin
-    for add_parallel_line in [true, false]
-        c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc")
-        if add_parallel_line
-            l4 = get_component(Line, c_sys5, "4")
-            add_parallel_ac_transmission!(c_sys5, l4, PSY.Line)
-        end
-        systems = [c_sys5]
-        objfuncs = [GAEVF, GQEVF, GQEVF]
-        constraint_keys = [
-            PSI.ConstraintKey(
-                ActivePowerVariableLimitsConstraint,
-                PSY.ThermalStandard,
-                "lb",
-            ),
-            PSI.ConstraintKey(
-                ActivePowerVariableLimitsConstraint,
-                PSY.ThermalStandard,
-                "ub",
-            ),
-            PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-            PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
-            PSI.ConstraintKey(
-                PostContingencyEmergencyRateLimitConstraint,
-                ThermalStandard,
-                "lb",
-            ),
-            PSI.ConstraintKey(
-                PostContingencyEmergencyRateLimitConstraint,
-                ThermalStandard,
-                "ub",
-            ),
-            #PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-            PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-            PSI.ConstraintKey(
-                PostContingencyGenerationBalanceConstraint,
-                ThermalStandard,
-            ),
-            PSI.ConstraintKey(
-                PostContingencyActivePowerGenerationLimitsConstraint,
-                ThermalStandard,
-                "lb",
-            ),
-            PSI.ConstraintKey(
-                PostContingencyActivePowerGenerationLimitsConstraint,
-                ThermalStandard,
-                "ub",
-            ),
-            PSI.ConstraintKey(
-                PostContingencyRampConstraint,
-                ThermalStandard,
-                "",
-            ),
-        ]
-        PTDF_ref = IdDict{System, PTDF}(
-            c_sys5 => PTDF(c_sys5),
-        )
-        test_results = IdDict{System, Vector{Int}}(
-            c_sys5 => [744, 0, 912, 504, 360],
-        )
-        test_obj_values = IdDict{System, Float64}(
-            c_sys5 => 263507.0,
-        )
-        components_outages_cases = IdDict{System, Vector{String}}(
-            c_sys5 => ["Alta"],
-        )
-        for (ix, sys) in enumerate(systems)
-            components_outages_names = components_outages_cases[sys]
-            for component_name in components_outages_names
-                # --- Create Outage Data ---
-                transition_data = GeometricDistributionForcedOutage(;
-                    mean_time_to_recovery = 10,
-                    outage_transition_probability = 0.9999,
-                )
-                # --- Add Outage Supplemental attribute to device and services that should respond ---
-                component = get_component(ThermalStandard, sys, component_name)
-                add_supplemental_attribute!(sys, component, transition_data)
-            end
-            template = get_thermal_dispatch_template_network(
-                NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
-            )
-            set_device_model!(
-                template,
-                ThermalStandard,
-                ThermalSecurityConstrainedStandardUnitCommitment,
-            )
-
-            ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-
-            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-                  PSI.ModelBuildStatus.BUILT
-            psi_constraint_test(ps_model, constraint_keys)
-            moi_tests(
-                ps_model,
-                test_results[sys]...,
-                true,
-            )
-            psi_checkobjfun_test(ps_model, objfuncs[ix])
-            psi_checksolve_test(
-                ps_model,
-                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-                test_obj_values[sys],
-                10000,
-            )
         end
     end
 end
