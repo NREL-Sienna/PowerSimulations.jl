@@ -61,6 +61,7 @@ export PhaseAngleControl
 
 ######## HVDC models ########
 export LossLessConverter
+export QuadraticLossConverter
 export LossLessLine
 export DCLossyLine
 ######## Load Models ########
@@ -259,6 +260,21 @@ export PostContingencyActivePowerChangeVariable
 export PostContingencyActivePowerReserveDeploymentVariable
 export DCVoltage
 export DCLineCurrent
+export ConverterPowerDirection
+export ConverterCurrent
+export SquaredConverterCurrent
+export InterpolationSquaredCurrentVariable
+export InterpolationBinarySquaredCurrentVariable
+export ConverterPositiveCurrent
+export ConverterNegativeCurrent
+export ConverterBinaryAbsoluteValueCurrent
+export SquaredDCVoltage
+export InterpolationSquaredVoltageVariable
+export InterpolationBinarySquaredVoltageVariable
+export AuxBilinearConverterVariable
+export AuxBilinearSquaredConverterVariable
+export InterpolationSquaredBilinearVariable
+export InterpolationBinarySquaredBilinearVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -338,6 +354,8 @@ export PiecewiseLinearBlockIncrementalOfferConstraint
 export PiecewiseLinearBlockDecrementalOfferConstraint
 export NodalBalanceCurrentConstraint
 export DCLineCurrentConstraint
+export ConverterPowerCalculationConstraint
+export ConverterMcCormickEnvelopes
 
 # Parameters
 # Time Series Parameters
