@@ -78,8 +78,8 @@ end
 
 function get_initial_conditions_device_model(
     ::OperationModel,
-    model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
-)
+    model::DeviceModel{PSY.TModelHVDCLine, D},
+) where {D <: Union{LossLessLine, DCLossyLine}}
     return model
 end
 
@@ -111,6 +111,41 @@ function get_default_attributes(
 )
     return Dict{String, Any}()
 end
+
+
+############################################
+######## Quadratic Converter Model #########
+############################################
+
+## Binaries ###
+get_variable_binary(::ConverterPowerDirection, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+get_variable_binary(::ConverterCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::ConverterPositiveCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::ConverterNegativeCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::ConverterBinaryAbsoluteValueCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+get_variable_binary(::SquaredConverterCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::InterpolationSquaredCurrentVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::InterpolationBinarySquaredCurrentVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+get_variable_binary(::SquaredDCVoltage, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::InterpolationSquaredVoltageVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::InterpolationBinarySquaredVoltageVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+get_variable_binary(::AuxBilinearConverterVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::AuxBilinearSquaredConverterVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::InterpolationSquaredBilinearVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
+get_variable_binary(::InterpolationBinarySquaredBilinearVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+
+### Warm Start ###
+get_variable_warm_start_value(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_dc_current(d)
+
+### Lower Bounds ###
+get_variable_lower_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = -PSY.get_max_dc_current(d)
+
+### Upper Bounds ###
+get_variable_upper_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_max_dc_current(d)
+
+
+
+#! format: on
 
 ############################################
 ############## Expressions #################
@@ -153,7 +188,6 @@ function add_to_expression!(
     return
 end
 
-
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -174,7 +208,7 @@ function add_to_expression!(
         U,
         devices,
         device_model,
-        network_model
+        network_model,
     )
     return
 end
@@ -238,7 +272,6 @@ function _add_to_expression!(
     end
     return
 end
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -320,7 +353,6 @@ function add_to_expression!(
     V <: PSY.InterconnectingConverter,
     W <: AbstractConverterFormulation,
 }
-
     variable = get_variable(container, U(), V)
     expression_dc = get_expression(container, T(), PSY.DCBus)
     sys_expr = get_expression(container, T(), PSY.System)
@@ -339,7 +371,66 @@ function add_to_expression!(
                 expression_dc[bus_number_dc, t],
                 variable[name, t],
                 -1.0,
-        )
+            )
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerVariable,
+    V <: PSY.InterconnectingConverter,
+    W <: QuadraticLossConverter,
+}
+    variable = get_variable(container, U(), V)
+    sys_expr = get_expression(container, T(), PSY.System)
+    for d in devices
+        name = PSY.get_name(d)
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                sys_expr[ref_bus, t],
+                variable[name, t],
+                get_variable_multiplier(U(), V, W()),
+            )
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{CopperPlatePowerModel},
+) where {
+    T <: DCCurrentBalance,
+    U <: ConverterCurrent,
+    V <: PSY.InterconnectingConverter,
+    W <: QuadraticLossConverter,
+}
+    variable = get_variable(container, U(), V)
+    expression_dc = get_expression(container, T(), PSY.DCBus)
+    for d in devices
+        name = PSY.get_name(d)
+        bus_number_dc = PSY.get_number(PSY.get_dc_bus(d))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                expression_dc[bus_number_dc, t],
+                variable[name, t],
+                -1.0,
+            )
         end
     end
     return
@@ -357,7 +448,7 @@ function add_to_expression!(
     U <: ActivePowerVariable,
     V <: PSY.InterconnectingConverter,
     W <: AbstractConverterFormulation,
-    X <: PTDFPowerModel
+    X <: PTDFPowerModel,
 }
     variable = get_variable(container, U(), V)
     expression_dc = get_expression(container, T(), PSY.DCBus)
@@ -384,7 +475,7 @@ function add_to_expression!(
                 expression_dc[bus_number_dc, t],
                 variable[name, t],
                 -1.0,
-        )
+            )
         end
     end
 
@@ -395,13 +486,14 @@ end
 ############## Constraints #################
 ############################################
 
+############## HVDC Lines ##################
 function add_constraints!(
-        container::OptimizationContainer,
-        ::Type{DCLineCurrentConstraint},
-        devices::IS.FlattenIteratorWrapper{T},
-        model::DeviceModel{T, U},
-        network_model::NetworkModel{V},
-    ) where {T <: PSY.TModelHVDCLine, U <: DCLossyLine, V <: PM.AbstractPowerModel}
+    container::OptimizationContainer,
+    ::Type{DCLineCurrentConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {T <: PSY.TModelHVDCLine, U <: DCLossyLine, V <: PM.AbstractPowerModel}
     variable = get_variable(container, DCLineCurrent(), T)
     dc_voltage = get_variable(container, DCVoltage(), PSY.DCBus)
     time_steps = get_time_steps(container)
@@ -430,9 +522,164 @@ function add_constraints!(
             for t in get_time_steps(container)
                 constraints[name, t] = JuMP.@constraint(
                     get_jump_model(container),
-                    variable[name, t] == (dc_voltage[from_bus_name, t] - dc_voltage[to_bus_name, t]) / r
+                    variable[name, t] ==
+                    (dc_voltage[from_bus_name, t] - dc_voltage[to_bus_name, t]) / r
                 )
             end
+        end
+    end
+    return
+end
+
+############## Converters ##################
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ConverterPowerCalculationConstraint},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{X},
+) where {
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+    X <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    varcurrent = get_variable(container, ConverterCurrent(), U)
+    var_dcvoltage = get_variable(container, DCVoltage(), PSY.DCBus)
+    var_sq_current = get_variable(container, SquaredConverterCurrent(), U)
+    var_sq_voltage = get_variable(container, SquaredDCVoltage(), U)
+    var_bilinear = get_variable(container, AuxBilinearConverterVariable(), U)
+    var_sq_bilinear = get_variable(container, AuxBilinearSquaredConverterVariable(), U)
+    var_ac_power = get_variable(container, ActivePowerVariable(), U)
+    ipc_names = axes(varcurrent, 1)
+    constraint =
+        add_constraints_container!(
+            container,
+            ConverterPowerCalculationConstraint(),
+            U,
+            ipc_names,
+            time_steps,
+        )
+    constraint_aux =
+        add_constraints_container!(
+            container,
+            ConverterPowerCalculationConstraint(),
+            U,
+            ipc_names,
+            time_steps;
+            meta = "aux",
+        )
+
+    # TODO Loss
+    loss = 0.0
+    for device in devices
+        name = PSY.get_name(device)
+        dc_bus_name = PSY.get_name(PSY.get_dc_bus(device))
+        for t in time_steps
+            # p_ac = p_dc + loss, where p_dc = v_dc * i_dc = 0.5 * (bilinear - v_dc^2 - i_dc^2)
+            constraint[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_ac_power[name, t] ==
+                0.5 * (
+                    var_sq_bilinear[name, t] - var_sq_voltage[name, t] -
+                    var_sq_current[name, t]
+                ) + loss
+            )
+            constraint_aux[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_bilinear[name, t] ==
+                var_dcvoltage[dc_bus_name, t] + varcurrent[name, t]
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ConverterMcCormickEnvelopes},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{X},
+) where {
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+    X <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    varcurrent = get_variable(container, ConverterCurrent(), U)
+    var_dcvoltage = get_variable(container, DCVoltage(), PSY.DCBus)
+    var_dc_power = get_variable(container, ActivePowerVariable(), U)
+    ipc_names = axes(varcurrent, 1)
+    constraint1_under =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            ipc_names,
+            time_steps;
+            meta = "under_1",
+        )
+    constraint2_under =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            ipc_names,
+            time_steps;
+            meta = "under_2",
+        )
+    constraint1_over =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            ipc_names,
+            time_steps;
+            meta = "over_1",
+        )
+    constraint2_over =
+        add_constraints_container!(
+            container,
+            ConverterMcCormickEnvelopes(),
+            U,
+            ipc_names,
+            time_steps;
+            meta = "over_2",
+        )
+
+    for device in devices
+        name = PSY.get_name(device)
+        dc_bus = PSY.get_dc_bus(device)
+        dc_bus_name = PSY.get_name(dc_bus)
+        V_min, V_max = PSY.get_voltage_limits(dc_bus)
+        I_max = PSY.get_max_dc_current(device)
+        I_min = -I_max
+        for t in time_steps
+            constraint1_under[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] >=
+                V_min * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_min -
+                I_min * V_min
+            )
+            constraint2_under[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] >=
+                V_max * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_max -
+                I_max * V_max
+            )
+            constraint1_over[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] <=
+                V_max * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_min -
+                I_min * V_max
+            )
+            constraint2_over[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_dc_power[name, t] <=
+                V_min * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_max -
+                I_max * V_min
+            )
         end
     end
     return
@@ -445,8 +692,8 @@ end
 function objective_function!(
     ::OptimizationContainer,
     ::IS.FlattenIteratorWrapper{PSY.InterconnectingConverter},
-    ::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
+    ::DeviceModel{PSY.InterconnectingConverter, D},
     ::Type{<:PM.AbstractPowerModel},
-)
+) where {D <: AbstractConverterFormulation}
     return
 end
