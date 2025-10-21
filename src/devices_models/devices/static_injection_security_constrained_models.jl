@@ -1469,16 +1469,15 @@ function construct_service!(
             model,
         )
         add_constraints!(container, RampConstraint, service, contributing_devices, model)
+        add_constraints!(
+            container,
+            ParticipationFractionConstraint,
+            service,
+            contributing_devices,
+            model,
+        )
         objective_function!(container, service, model)
     end
-
-    add_constraints!(
-        container,
-        ParticipationFractionConstraint,
-        service,
-        contributing_devices,
-        model,
-    )
 
     add_feedforward_constraints!(container, model, service)
 
