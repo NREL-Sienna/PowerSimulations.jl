@@ -125,11 +125,18 @@ function construct_device!(
     #### Expressions ####
     #####################
 
-    # No losses for now: ActivePowerVariable = DCPower and ACPower
     add_to_expression!(
         container,
         ActivePowerBalance,
         ActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        DCCurrentBalance,
+        ConverterCurrent,
         devices,
         model,
         network_model,
@@ -152,26 +159,18 @@ function construct_device!(
 
     add_constraints!(
         container,
-        sys,
-        ConverterCurrentBalanceConstraint,
-        devices,
-        model,
-        network_model,
-    )
-    add_constraints!(
-        container,
         ConverterPowerCalculationConstraint,
         devices,
         model,
         network_model,
     )
-    add_constraints!(
-        container,
-        ConverterDirectionConstraint,
-        devices,
-        model,
-        network_model,
-    )
+    #add_constraints!(
+    #    container,
+    #    ConverterDirectionConstraint,
+    #    devices,
+    #    model,
+    #    network_model,
+    #)
     add_constraints!(
         container,
         ConverterMcCormickEnvelopes,
