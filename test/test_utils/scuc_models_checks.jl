@@ -88,10 +88,10 @@ function compare_outage_power_and_deployed_reserves(
         sys,
         service
     )
-
+    service_name = PSY.get_name(service)
     reserve_dict = get_reserve_total_power_by_step_dict(
         variablesdict, 
-        "PostContingencyActivePowerReserveDeploymentVariable__VariableReserve__ReserveUp__Reserve1", 
+        "PostContingencyActivePowerReserveDeploymentVariable__VariableReserve__ReserveUp__" * service_name, 
         associated_outages, 
         contributing_devices;
         col_name = "name2"

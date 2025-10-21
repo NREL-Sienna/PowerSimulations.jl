@@ -229,6 +229,11 @@ end
                 test_obj_values[sys],
                 10000,
             )
+            res = OptimizationProblemResults(ps_model)
+            compare_outage_power_and_deployed_reserves(
+                sys,
+                res,
+                reserve_up)
         end
     end
 end
@@ -345,6 +350,11 @@ end
                 test_obj_values[sys],
                 10000,
             )
+            res = OptimizationProblemResults(ps_model)
+            compare_outage_power_and_deployed_reserves(
+                sys,
+                res,
+                reserve_up)
         end
     end
 end
@@ -732,6 +742,14 @@ end
             test_obj_values[sys],
             10000,
         )
+        res = OptimizationProblemResults(ps_model)
+        for reserve_name in reserve_names
+            reserve_up = get_component(VariableReserve{ReserveUp}, sys, reserve_name)
+            compare_outage_power_and_deployed_reserves(
+                sys,
+                res,
+                reserve_up)
+        end
     end
 end
 
