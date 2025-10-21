@@ -1036,3 +1036,127 @@ end
         end
     end
 end
+
+
+
+@testset "G-n with Ramp reserve deliverability constraints with CopperPlatePowerModel" begin
+    c_sys5_2area = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
+    transform_single_time_series!(c_sys5_2area, Hour(24), Hour(1))
+    systems = [c_sys5_2area]
+    objfuncs = [GAEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"),
+
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(
+            RequirementConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            RequirementConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyGenerationBalanceConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyGenerationBalanceConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+    ]
+    PTDF_ref = IdDict{System, PTDF}(
+        c_sys5_2area => PTDF(c_sys5_2area),
+    )
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5_2area => [720, 0, 624, 288, 120],
+    )
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5_2area => 497494.48,
+    )
+    components_outages_cases = IdDict{System, Tuple{Vector{String}, Vector{String}}}(
+        c_sys5_2area => (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"]),
+    )
+    for (ix, sys) in enumerate(systems)
+        components_outages_names, reserve_names = components_outages_cases[sys]
+        for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
+            # --- Create Outage Data ---
+            transition_data = GeometricDistributionForcedOutage(;
+                mean_time_to_recovery = 10,
+                outage_transition_probability = 0.9999,
+            )
+            # --- Add Outage Supplemental attribute to device and services that should respond ---
+            component = get_component(ThermalStandard, sys, component_name)
+            add_supplemental_attribute!(sys, component, transition_data)
+            reserve_up = get_component(VariableReserve{ReserveUp}, sys, reserve_name)
+            add_supplemental_attribute!(sys, reserve_up, transition_data)
+        end
+
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(CopperPlatePowerModel; PTDF_matrix = PTDF_ref[sys]),
+        )
+        set_service_model!(template,
+            ServiceModel(
+                VariableReserve{ReserveUp},
+                RampReserveWithDeliverabilityConstraints,
+                "Reserve1_1",
+            ))
+        set_service_model!(template,
+            ServiceModel(
+                VariableReserve{ReserveUp},
+                RampReserveWithDeliverabilityConstraints,
+                "Reserve1_2",
+            ))
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_keys)
+        moi_tests(
+            ps_model,
+            test_results[sys]...,
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+        res = OptimizationProblemResults(ps_model)
+        for reserve_name in reserve_names
+            reserve_up = get_component(VariableReserve{ReserveUp}, sys, reserve_name)
+            compare_outage_power_and_deployed_reserves(
+                sys,
+                res,
+                reserve_up)
+        end
+    end
+end
+
