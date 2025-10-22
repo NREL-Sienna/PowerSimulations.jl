@@ -622,3 +622,48 @@ The specified constraints are formulated as:
 ```
 """
 struct ConverterMcCormickEnvelopes <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the voltage.
+In this case x = voltage and y = squared_voltage.
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& x = x_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& y = y_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& z_k \\le \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+& z_k \\ge \\delta_{k+1},  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationVoltageConstraints <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the current.
+In this case x = current and y = squared_current.
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& x = x_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& y = y_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& z_k \\le \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+& z_k \\ge \\delta_{k+1},  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationCurrentConstraints <: ConstraintType end
+
+"""
+Struct to create the Quadratic PWL interpolation constraints that decide square value of the bilinear variable γ.
+In this case x = γ and y = squared_γ.
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& x = x_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& y = y_0 + \\sum_{k=1}^K (x_{k} - x_{k-1}) \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& z_k \\le \\delta_k,  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+& z_k \\ge \\delta_{k+1},  \\quad \\forall t \\in \\{1,\\dots, T\\}, \\forall k \\in \\{1,\\dots, K-1\\} \\\\
+\\end{align*}
+```
+"""
+struct InterpolationBilinearConstraints <: ConstraintType end
