@@ -75,7 +75,7 @@ _has_market_bid_cost(device::PSY.StaticInjection) =
 _has_market_bid_cost(::PSY.RenewableNonDispatch) = false
 
 _has_market_bid_cost(::PSY.PowerLoad) = false # PowerLoads don't even have operation cost.
-_has_market_bid_cost(device::PSY.InterruptiblePowerLoad) =
+_has_market_bid_cost(device::PSY.ControllableLoad) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
@@ -230,9 +230,9 @@ function validate_mbc_component(
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
         if x != PSY.single_start_up_to_stages(0.0)
-            println(
-                "Nonzero startup cost detected for renewable generation or storage device $(get_name(device)).",
-            )
+            #println(
+            @warn "Nonzero startup cost detected for renewable generation or storage device $(get_name(device))."
+            # )
         end
     end
 end
@@ -245,9 +245,9 @@ function validate_mbc_component(
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
         if x != 0.0
-            println(
-                "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device)).",
-            )
+            #println(
+            @warn "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device))."
+            #)
         end
     end
 end
@@ -261,9 +261,9 @@ function validate_mbc_component(
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                println(
-                    "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device)).",
-                )
+                #println(
+                @warn "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device))."
+                #)
             end
         end
     end
@@ -278,9 +278,9 @@ function validate_mbc_component(
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                println(
-                    "Nonzero no-load cost detected for storage device $(get_name(device)).",
-                )
+                #println(
+                @warn "Nonzero no-load cost detected for storage device $(get_name(device))."
+                #)
             end
         end
     end
@@ -407,8 +407,8 @@ end
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
 _include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
 _include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
-_include_min_gen_power_in_constraint(::PSY.InterruptiblePowerLoad, ::ActivePowerVariable) =
-    false
+_include_min_gen_power_in_constraint(::PSY.ControllableLoad, ::ActivePowerVariable) =
+    false # TODO LK: is this correct?
 _include_min_gen_power_in_constraint(::Any, ::PowerAboveMinimumVariable) = false
 
 """

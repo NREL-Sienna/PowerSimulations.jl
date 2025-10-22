@@ -6,7 +6,6 @@ Create cost curves with varying slope breakpoints, slope magnitudes, and cost at
 for InterruptibleLoad market bid cost testing. Each test scenario should produce measurably 
 different objective values when the load curtailment levels change.
 """
-
 function build_test_systems_with_different_curves()
     systems = Dict{String, PSY.System}()
 
@@ -121,21 +120,14 @@ function analyze_results(results)
         curtail_diff = data["total_curtailment"] - baseline_curtail
         obj_pct = (obj_diff / baseline_obj) * 100
 
-        #=
-        println("$name vs baseline:")
-        println("  Objective difference: $(round(obj_diff, digits=2)) ($(round(obj_pct, digits=2))%)")
-        println("  Curtailment difference: $(round(curtail_diff, digits=2)) MW")
-        =#
-
-        # we are minimizing the objective function: I checked. First one--the fact that increasing
-        # the min cost has zero effect on the objective function--is suspicious.
+        # we're minimizing the objective function
         if name == "steep_slopes"
-            # @test obj_diff > 0 # steeper slope should make curtailment more expensive TODO failing, 0.0
+            @test obj_diff < 0 # steeper demand curve => more $ of benefit per MWh => lower objective
             @test curtail_diff < 0 # Steeper slopes should reduce curtailment
         elseif name == "high_min_cost"
-            # @test obj_diff > 0 # Higher minimum cost should increase objective TODO failing, negative.
+            @test obj_diff < 0 # more benefit per MWh => lower objective
         elseif name == "cheap_curtailment"
-            # @test obj_diff < 0 # Cheaper curtailment should decrease objective TODO failing, positive.
+            @test obj_diff > 0 # less $ benefit per MWh => higher objective
             @test curtail_diff > 0 # Cheaper curtailment should increase curtailment amount
         elseif name == "early_steep"
             # The early steep curve should affect behavior differently depending on curtailment levels

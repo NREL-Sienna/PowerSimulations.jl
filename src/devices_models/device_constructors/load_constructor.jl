@@ -1,3 +1,4 @@
+# AbstractPowerModel + ControllableLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -80,6 +81,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + ControllableLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -144,6 +146,7 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + PowerLoadInterruption device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -232,6 +235,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + PowerLoadInterruption device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -301,6 +305,7 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + StaticPowerLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -339,6 +344,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + StaticPowerLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -380,6 +386,7 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + StaticLoad, but with non-StaticPowerLoad device models
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -416,6 +423,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + StaticLoad, but with non-StaticPowerLoad device models
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,

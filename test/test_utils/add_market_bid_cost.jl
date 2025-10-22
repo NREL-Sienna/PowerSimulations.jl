@@ -115,7 +115,7 @@ function extend_mbc!(
     for comp in get_components(active_components, sys)
         op_cost = get_operation_cost(comp)
         @assert op_cost isa MarketBidCost
-        for (getter, setter_initial, setter_incremental, incr_or_decr) in (
+        for (getter, setter_initial, setter_curves, incr_or_decr) in (
             (
                 get_incremental_offer_curves,
                 set_incremental_initial_input!,
@@ -165,17 +165,10 @@ function extend_mbc!(
                 incr_x,
                 incr_y,
             )
-            add_time_series!(sys, comp, my_initial_ts)
-            add_time_series!(sys, comp, my_pwl_ts)
-            for key in get_time_series_keys(comp)
-                ts = get_time_series(comp, key)
-                name = get_name(ts)
-                if name == initial_name
-                    setter_initial(op_cost, key)
-                elseif name == variable_name
-                    setter_incremental(op_cost, key)
-                end
-            end
+            initial_key = add_time_series!(sys, comp, my_initial_ts)
+            curve_key = add_time_series!(sys, comp, my_pwl_ts)
+            setter_initial(op_cost, initial_key)
+            setter_curves(op_cost, curve_key)
         end
     end
 end

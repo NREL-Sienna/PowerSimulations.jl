@@ -222,9 +222,13 @@ _index_into_param(cost_data, ::T) where {T <: Union{StartVariable, MultiStartVar
     start_up_cost(cost_data, T())
 _index_into_param(cost_data, ::VariableType) = cost_data
 
+get_update_multiplier(::DecrementalCostAtMinParameter) = -1.0
+get_update_multiplier(::IncrementalCostAtMinParameter) = 1.0
+get_update_multiplier(::ObjectiveFunctionParameter) = 1.0
+
 # General case
 function update_variable_cost!(
-    ::ObjectiveFunctionParameter,
+    parameter::ObjectiveFunctionParameter,
     container::OptimizationContainer,
     parameter_array::DenseAxisArray{T},
     parameter_multiplier::JuMPFloatArray,
@@ -235,11 +239,12 @@ function update_variable_cost!(
     component_name = PSY.get_name(component)
     cost_data = parameter_array[component_name, time_period]
     mult_ = parameter_multiplier[component_name, time_period]
+    mult2 = get_update_multiplier(parameter)
     for MyVariableType in get_variable_types(attributes)
         variable = get_variable(container, MyVariableType(), U)
         my_cost_data = _index_into_param(cost_data, MyVariableType())
         iszero(my_cost_data) && continue
-        cost_expr = variable[component_name, time_period] * my_cost_data * mult_
+        cost_expr = variable[component_name, time_period] * my_cost_data * mult_ * mult2
         add_to_objective_variant_expression!(container, cost_expr)
         set_expression!(
             container,
@@ -251,6 +256,9 @@ function update_variable_cost!(
     end
     return
 end
+
+get_update_multiplier(::IncrementalPiecewiseLinearSlopeParameter) = 1.0
+get_update_multiplier(::DecrementalPiecewiseLinearSlopeParameter) = -1.0
 
 # Special case for PiecewiseStepData
 function update_variable_cost!(
@@ -265,6 +273,7 @@ function update_variable_cost!(
     component_name = PSY.get_name(component)
     # TODO handle per-tranche multiplier if necessary
     mult_ = 1.0 # parameter_multiplier[component_name, time_period, 1]
+    mult2 = get_update_multiplier(slope_param) # TODO LK: confirm this is right
     converted_data = get_piecewise_curve_per_system_unit(
         function_data,
         PSY.UnitSystem.NATURAL_UNITS,  # PSY's cost_function_timeseries.jl says this will always be natural units
@@ -280,7 +289,7 @@ function update_variable_cost!(
             time_period,
             converted_data,
         )
-    add_to_objective_variant_expression!(container, mult_ * gen_cost)
+    add_to_objective_variant_expression!(container, mult2 * mult_ * gen_cost)
     set_expression!(container, ProductionCostExpression, gen_cost, component, time_period)
     return
 end

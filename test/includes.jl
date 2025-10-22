@@ -34,6 +34,7 @@ import LinearAlgebra
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
+const PFS = PowerFlows
 const PSB = PowerSystemCaseBuilder
 const PNM = PowerNetworkMatrices
 const ISOPT = InfrastructureSystems.Optimization
