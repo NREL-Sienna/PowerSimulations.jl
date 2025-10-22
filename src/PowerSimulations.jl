@@ -327,7 +327,7 @@ export StartupTimeLimitTemperatureConstraint
 export PostContingencyActivePowerGenerationLimitsConstraint
 export PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint
 export PostContingencyGenerationBalanceConstraint
-export PostContingencyRampConstraint
+export PostContingencyCopperPlateBalanceConstraint
 export ImportExportBudgetConstraint
 export PiecewiseLinearBlockIncrementalOfferConstraint
 export PiecewiseLinearBlockDecrementalOfferConstraint
@@ -377,6 +377,7 @@ export ActivePowerRangeExpressionUB
 export PostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
 export PostContingencyActivePowerBalance
+export PostContingencyAreaActivePowerDeployment
 export NetActivePower
 
 #################################################################################

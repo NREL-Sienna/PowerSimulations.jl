@@ -49,6 +49,7 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
+struct PostContingencyCopperPlateBalanceConstraint <: PostContingencyConstraintType end
 
 """
 Struct to create the constraint to balance active power.

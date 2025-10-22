@@ -88,7 +88,7 @@ function construct_service!(
     model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {SR <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
@@ -138,7 +138,7 @@ function construct_service!(
     model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{<:AbstractPTDFModel},
+    network_model::NetworkModel{<:PM.AbstractDCPModel},
 ) where {SR <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
@@ -479,7 +479,7 @@ function construct_service!(
     model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractPowerModel},
+    ::NetworkModel{<:PM.AbstractDCPModel},
 ) where {SR <: PSY.AbstractReserve,
     F <: RampReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
@@ -524,7 +524,7 @@ function construct_service!(
     model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    network_model::NetworkModel{<:AbstractPTDFModel},
+    network_model::NetworkModel{<:PM.AbstractDCPModel},
 ) where {SR <: PSY.AbstractReserve,
     F <: RampReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
@@ -1503,3 +1503,370 @@ function construct_service!(
 
     return
 end
+
+
+
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyAreaActivePowerDeployment,
+    U <: AbstractContingencyVariableType,
+    V <: PSY.Generator,
+    R <: PSY.AbstractReserve,
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AreaBalancePowerModel,
+}
+    @info "Adding to expression: $(T) for service: $(R) with formulation: $(F)************************"
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+    area_names = PSY.get_name.(PSY.get_components(PSY.Area, sys))
+
+    expression = lazy_container_addition!(
+        container,
+        T(),
+        R,
+        string.(IS.get_uuid.(associated_outages)),
+        area_names,
+        time_steps;
+        meta = service_name,
+    )
+
+    reserve_deployment_variable = get_variable(container, U(), R, service_name)
+    mult_default = get_variable_multiplier(U(), R, F())
+
+    for outage in associated_outages
+        associated_devices =
+            PSY.get_associated_components(sys, outage; component_type = PSY.Generator) #Use PSY.Generator To make sure it considers ALL generators associated with the outage instance
+        outage_id = string(IS.get_uuid(outage))
+
+        for device in contributing_devices
+            if device in associated_devices
+                mult = 0.0
+            else
+                mult = mult_default
+            end
+            name = PSY.get_name(device)
+            area_name = PSY.get_name(PSY.get_area(PSY.get_bus(device)))
+
+            for t in time_steps
+                _add_to_jump_expression!(
+                    expression[outage_id, area_name, t],
+                    reserve_deployment_variable[outage_id, name, t],
+                    mult,
+                )
+            end
+        end
+    end
+
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    network_model::NetworkModel{N},
+) where {
+    T <: PostContingencyAreaActivePowerDeployment,
+    U <: VariableType,
+    R <: PSY.AbstractReserve,
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AreaBalancePowerModel,
+}
+    @info "2.Adding to expression: $(T) for service: $(R) with formulation: $(F)************************"
+    attribute_device_map = PSY.get_component_supplemental_attribute_pairs(
+        PSY.Generator,
+        PSY.UnplannedOutage,
+        sys,
+    )
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+    area_names = PSY.get_name.(PSY.get_components(PSY.Area, sys))
+
+    expression = lazy_container_addition!(
+        container,
+        T(),
+        R,
+        string.(IS.get_uuid.(associated_outages)),
+        area_names,
+        time_steps;
+        meta = service_name,
+    )
+
+    for (device, outage) in attribute_device_map
+        if !(outage in associated_outages)
+            continue
+        end
+        name_outage = string(IS.get_uuid(outage))
+        name = PSY.get_name(device)
+        variable = get_variable(container, U(), typeof(device))
+        mult = get_variable_multiplier(U(), typeof(device), F())
+        area_name = PSY.get_name(PSY.get_area(PSY.get_bus(device)))
+        for t in time_steps
+            _add_to_jump_expression!(
+                expression[name_outage, area_name, t],
+                variable[name, t],
+                mult,
+            )
+        end
+    end
+
+    return
+end
+
+"""
+Add Post-contingency CopperPlateBalanceConstraints
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::Type{T},
+    ::Type{U},
+    ::Type{Y},
+    service::R,
+    reserves_model::ServiceModel{R, F},
+    ::NetworkModel{N},
+) where {
+    T <: PostContingencyCopperPlateBalanceConstraint,
+    U <: PostContingencyAreaActivePowerDeployment,
+    Y <: ActivePowerBalance,
+    R <: PSY.AbstractReserve,
+    F <: AbstractSecurityConstrainedReservesFormulation,
+    N <: AreaBalancePowerModel}
+    time_steps = get_time_steps(container)
+
+    devices = PSY.get_components(PSY.Area, sys)
+    area_names = PSY.get_name.(devices)
+
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+
+    con = add_constraints_container!(
+        container,
+        T(),
+        R,
+        string.(IS.get_uuid.(associated_outages)),
+        area_names,
+        time_steps;
+        meta = service_name,
+    )
+
+    contingency_expression = get_expression(
+        container,
+        U(),
+        R,
+        service_name,
+    )
+    expression = get_expression(
+        container,
+        Y(),
+        PSY.Area,
+    )
+
+    for outage in associated_outages
+        outage_id = string(IS.get_uuid(outage))
+
+        for area in devices
+            area_name = PSY.get_name(area)
+
+            for t in time_steps
+                con[outage_id, area_name, t] = JuMP.@constraint(
+                    get_jump_model(container),
+                    contingency_expression[outage_id, area_name, t] + expression[area_name, t] == 
+                    0.0    
+                )
+            end
+        end
+    end
+    return
+end
+
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{SR, F},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    ::NetworkModel{<:AreaBalancePowerModel},
+) where {SR <: PSY.AbstractReserve,
+    F <: RampReserveWithDeliverabilityConstraints}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
+    contributing_devices = get_contributing_devices(model)
+
+    add_variables!(
+        container,
+        ActivePowerReserveVariable,
+        service,
+        contributing_devices,
+        RampReserve(),
+    )
+
+    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
+    add_feedforward_arguments!(container, model, service)
+
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    if isempty(associated_outages)
+        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for service formulation $F."
+        return
+    end
+
+    add_variables!(
+        container,
+        sys,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        service,
+        contributing_devices,
+        F(),
+    )
+
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, F},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{<:AreaBalancePowerModel},
+) where {SR <: PSY.AbstractReserve,
+    F <: RampReserveWithDeliverabilityConstraints}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    contributing_devices = get_contributing_devices(model)
+
+    add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+    add_constraints!(container, RampConstraint, service, contributing_devices, model)
+    add_constraints!(
+        container,
+        ParticipationFractionConstraint,
+        service,
+        contributing_devices,
+        model,
+    )
+
+    objective_function!(container, service, model)
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
+
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    if isempty(associated_outages)
+        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for service formulation $F."
+        return
+    end
+
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyActivePowerBalance,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    attribute_device_map = PSY.get_component_supplemental_attribute_pairs(
+        PSY.Generator,
+        PSY.UnplannedOutage,
+        sys,
+    )
+
+    add_to_expression!(
+        container,
+        PostContingencyActivePowerBalance,
+        ActivePowerVariable,
+        attribute_device_map,
+        service,
+        model,
+        network_model,
+    )
+   
+
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyAreaActivePowerDeployment,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyAreaActivePowerDeployment,
+        ActivePowerVariable,
+        service,
+        model,
+        network_model,
+    )
+    
+
+   
+    add_constraints!(
+        container,
+        sys,
+        PostContingencyCopperPlateBalanceConstraint,
+        PostContingencyAreaActivePowerDeployment,
+        ActivePowerBalance,
+        service,
+        model,
+        network_model,
+    )
+
+    
+    add_constraints!(
+        container,
+        sys,
+        PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+        ActivePowerReserveVariable,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    add_constraints!(
+        container,
+        PostContingencyGenerationBalanceConstraint,
+        PostContingencyActivePowerBalance,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    return
+end
+
+
+

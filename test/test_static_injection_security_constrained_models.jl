@@ -1160,3 +1160,181 @@ end
     end
 end
 
+
+
+@testset "G-n with Ramp reserve deliverability constraints with AreaBalance PowerModel" begin
+    constraint_keys = [
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"),
+
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
+        PSI.ConstraintKey(
+            RequirementConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            RequirementConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            RampConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyGenerationBalanceConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyGenerationBalanceConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyCopperPlateBalanceConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyCopperPlateBalanceConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2",
+        ),
+    ]
+
+    c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
+    transform_single_time_series!(c_sys, Hour(24), Hour(1))
+    components_outages_names, reserve_names = (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"])
+
+    for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
+        # --- Create Outage Data ---
+        transition_data = GeometricDistributionForcedOutage(;
+            mean_time_to_recovery = 10,
+            outage_transition_probability = 0.9999,
+        )
+        # --- Add Outage Supplemental attribute to device and services that should respond ---
+        component = get_component(ThermalStandard, c_sys, component_name)
+        add_supplemental_attribute!(c_sys, component, transition_data)
+        reserve_up = get_component(VariableReserve{ReserveUp}, c_sys, reserve_name)
+        add_supplemental_attribute!(c_sys, reserve_up, transition_data)
+    end
+
+
+    template = get_thermal_dispatch_template_network(NetworkModel(AreaBalancePowerModel))
+    set_device_model!(template, AreaInterchange, StaticBranch)
+
+    set_service_model!(template,
+        ServiceModel(
+            VariableReserve{ReserveUp},
+            RampReserveWithDeliverabilityConstraints,
+            "Reserve1_1",
+        ))
+    set_service_model!(template,
+        ServiceModel(
+            VariableReserve{ReserveUp},
+            RampReserveWithDeliverabilityConstraints,
+            "Reserve1_2",
+        ))
+
+    ps_model =
+        DecisionModel(template, c_sys; resolution = Hour(1), optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    
+    psi_constraint_test(ps_model, constraint_keys)
+
+
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    moi_tests(ps_model, 744, 0, 648, 312, 240, false)
+
+    opt_container = PSI.get_optimization_container(ps_model)
+    copper_plate_constraints =
+        PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
+    @test size(copper_plate_constraints) == (2, 24)
+
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 497494, 1)
+
+    results = OptimizationProblemResults(ps_model)
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
+    # The values for these tests come from the data
+    @test all(interarea_flow[!, "1_2"] .<= 150)
+    @test all(interarea_flow[!, "1_2"] .>= -150)
+
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
+    zone_1_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_1", "Park City_1", "Sundance_1", "Brighton_1", "Alta_1"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_1_gen .+ zone_1_load .- interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+
+    zone_2_load = sum(eachcol(load[!, ["Bus4_2", "Bus3_2", "Bus2_2"]]))
+    zone_2_gen = sum(
+        eachcol(
+            thermal_gen[
+                !,
+                ["Solitude_2", "Park City_2", "Sundance_2", "Brighton_2", "Alta_2"],
+            ],
+        ),
+    )
+    @test all(
+        isapprox.(
+            sum(zone_2_gen .+ zone_2_load .+ interarea_flow[!, "1_2"]; dims = 2),
+            0.0;
+            atol = 1e-3,
+        ),
+    )
+
+    res = OptimizationProblemResults(ps_model)
+    for reserve_name in reserve_names
+        reserve_up = get_component(VariableReserve{ReserveUp}, c_sys, reserve_name)
+        compare_outage_power_and_deployed_reserves(
+            c_sys,
+            res,
+            reserve_up)
+    end
+end

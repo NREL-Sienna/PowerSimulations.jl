@@ -23,6 +23,7 @@ struct PTDFBranchFlow <: ExpressionType end
 struct PostContingencyBranchFlow <: PostContingencyExpressions end
 struct PostContingencyActivePowerGeneration <: PostContingencyExpressions end
 struct PostContingencyNodalActivePowerDeployment <: PostContingencyExpressions end
+struct PostContingencyAreaActivePowerDeployment <: PostContingencyExpressions end
 struct NetActivePower <: ExpressionType end
 
 should_write_resulting_value(::Type{<:CostExpressions}) = true
