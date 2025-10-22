@@ -51,19 +51,21 @@ function add_parallel_ac_transmission!(
     add_component!(sys, ac_transmission_copy)
 end
 
-
 function add_reserve_product_without_requirement_time_series!(
     sys::PSY.System,
     name::String,
     direction::String,
-    contributing_devices::Union{IS.FlattenIteratorWrapper{<:PSY.Generator}, Vector{<:PSY.Generator}},
+    contributing_devices::Union{
+        IS.FlattenIteratorWrapper{<:PSY.Generator},
+        Vector{<:PSY.Generator},
+    },
 )
     AS_DIRECTION_MAP = Dict(
         "Up" => ReserveUp,
-        "Down" => ReserveDown
+        "Down" => ReserveDown,
     )
     as_direction = AS_DIRECTION_MAP[direction]
-    reserve_instance = VariableReserve{as_direction}(
+    reserve_instance = VariableReserve{as_direction}(;
         name = name,
         available = true,
         time_frame = 0.0,

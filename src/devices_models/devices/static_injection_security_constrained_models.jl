@@ -1368,8 +1368,6 @@ function add_constraints!(
     return
 end
 
-
-
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -1503,9 +1501,6 @@ function construct_service!(
 
     return
 end
-
-
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -1656,7 +1651,6 @@ function add_constraints!(
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-
     con = add_constraints_container!(
         container,
         T(),
@@ -1688,15 +1682,15 @@ function add_constraints!(
             for t in time_steps
                 con[outage_id, area_name, t] = JuMP.@constraint(
                     get_jump_model(container),
-                    contingency_expression[outage_id, area_name, t] + expression[area_name, t] == 
-                    0.0    
+                    contingency_expression[outage_id, area_name, t] +
+                    expression[area_name, t] ==
+                    0.0
                 )
             end
         end
     end
     return
 end
-
 
 function construct_service!(
     container::OptimizationContainer,
@@ -1806,7 +1800,6 @@ function construct_service!(
         model,
         network_model,
     )
-   
 
     add_to_expression!(
         container,
@@ -1828,9 +1821,7 @@ function construct_service!(
         model,
         network_model,
     )
-    
 
-   
     add_constraints!(
         container,
         sys,
@@ -1842,7 +1833,6 @@ function construct_service!(
         network_model,
     )
 
-    
     add_constraints!(
         container,
         sys,
@@ -1867,6 +1857,3 @@ function construct_service!(
 
     return
 end
-
-
-

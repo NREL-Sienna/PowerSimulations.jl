@@ -753,7 +753,6 @@ end
     end
 end
 
-
 @testset "G-n with Contingency reserve deliverability constraints with AreaPTDFPowerModel, reserves only up, reserve requirement" begin
     c_sys5_2area = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
     transform_single_time_series!(c_sys5_2area, Hour(24), Hour(1))
@@ -929,7 +928,6 @@ end
         ),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
-
         PSI.ConstraintKey(
             PostContingencyGenerationBalanceConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -940,26 +938,25 @@ end
             PSY.VariableReserve{ReserveUp},
             "Reserve1_2",
         ),
-        
         PSI.ConstraintKey(
-                PostContingencyActivePowerGenerationLimitsConstraint,
-                PSY.VariableReserve{ReserveUp},
-                "Reserve1_1 -lb",
-            ),
-        PSI.ConstraintKey(
-                PostContingencyActivePowerGenerationLimitsConstraint,
-                PSY.VariableReserve{ReserveUp},
-                "Reserve1_1 -ub",
+            PostContingencyActivePowerGenerationLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1 -lb",
         ),
         PSI.ConstraintKey(
-                PostContingencyActivePowerGenerationLimitsConstraint,
-                PSY.VariableReserve{ReserveUp},
-                "Reserve1_2 -lb",
-            ),
+            PostContingencyActivePowerGenerationLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_1 -ub",
+        ),
         PSI.ConstraintKey(
-                PostContingencyActivePowerGenerationLimitsConstraint,
-                PSY.VariableReserve{ReserveUp},
-                "Reserve1_2 -ub",
+            PostContingencyActivePowerGenerationLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2 -lb",
+        ),
+        PSI.ConstraintKey(
+            PostContingencyActivePowerGenerationLimitsConstraint,
+            PSY.VariableReserve{ReserveUp},
+            "Reserve1_2 -ub",
         ),
     ]
     PTDF_ref = IdDict{System, PTDF}(
@@ -976,10 +973,28 @@ end
     )
     for (ix, sys) in enumerate(systems)
         components_outages_names, reserve_names = components_outages_cases[sys]
-        contributing_devices = get_components(g -> get_name(get_area(get_bus(g))) == "Area1", ThermalStandard, sys)
-        add_reserve_product_without_requirement_time_series!(sys, "Reserve1_1", "Up", contributing_devices)
-        contributing_devices = get_components(g -> get_name(get_area(get_bus(g))) == "Area2", ThermalStandard, sys)
-        add_reserve_product_without_requirement_time_series!(sys, "Reserve1_2", "Up", contributing_devices)
+        contributing_devices = get_components(
+            g -> get_name(get_area(get_bus(g))) == "Area1",
+            ThermalStandard,
+            sys,
+        )
+        add_reserve_product_without_requirement_time_series!(
+            sys,
+            "Reserve1_1",
+            "Up",
+            contributing_devices,
+        )
+        contributing_devices = get_components(
+            g -> get_name(get_area(get_bus(g))) == "Area2",
+            ThermalStandard,
+            sys,
+        )
+        add_reserve_product_without_requirement_time_series!(
+            sys,
+            "Reserve1_2",
+            "Up",
+            contributing_devices,
+        )
 
         for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
             # --- Create Outage Data ---
@@ -1037,8 +1052,6 @@ end
     end
 end
 
-
-
 @testset "G-n with Ramp reserve deliverability constraints with CopperPlatePowerModel" begin
     c_sys5_2area = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
     transform_single_time_series!(c_sys5_2area, Hour(24), Hour(1))
@@ -1046,9 +1059,7 @@ end
     objfuncs = [GAEVF]
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"),
-
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"), PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(
             RequirementConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -1160,14 +1171,10 @@ end
     end
 end
 
-
-
 @testset "G-n with Ramp reserve deliverability constraints with AreaBalance PowerModel" begin
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"),
-
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
+        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"), PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
         PSI.ConstraintKey(
             RequirementConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -1222,7 +1229,8 @@ end
 
     c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
     transform_single_time_series!(c_sys, Hour(24), Hour(1))
-    components_outages_names, reserve_names = (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"])
+    components_outages_names, reserve_names =
+        (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"])
 
     for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
         # --- Create Outage Data ---
@@ -1236,7 +1244,6 @@ end
         reserve_up = get_component(VariableReserve{ReserveUp}, c_sys, reserve_name)
         add_supplemental_attribute!(c_sys, reserve_up, transition_data)
     end
-
 
     template = get_thermal_dispatch_template_network(NetworkModel(AreaBalancePowerModel))
     set_device_model!(template, AreaInterchange, StaticBranch)
@@ -1259,9 +1266,8 @@ end
 
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    
-    psi_constraint_test(ps_model, constraint_keys)
 
+    psi_constraint_test(ps_model, constraint_keys)
 
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
